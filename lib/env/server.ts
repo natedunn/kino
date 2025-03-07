@@ -8,6 +8,7 @@ export const env = createEnv({
 		GITHUB_CLIENT_ID: z.string(),
 		GITHUB_CLIENT_SECRET: z.string(),
 		ADMIN_EMAIL: z.string(),
+		POLAR_ACCESS_TOKEN: z.string(),
 	},
 	experimental__runtimeEnv: process.env,
 	isServer: typeof window === 'undefined',

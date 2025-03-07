@@ -1,17 +1,29 @@
 import type { NextRequest } from 'next/server';
 
 import { cache } from 'react';
+import { polar } from '@polar-sh/better-auth';
+import { Polar } from '@polar-sh/sdk';
 import { betterAuth } from 'better-auth';
+import { emailHarmony } from 'better-auth-harmony';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { nextCookies } from 'better-auth/next-js';
-import { admin, username } from 'better-auth/plugins';
+import { admin, apiKey, organization, twoFactor, username } from 'better-auth/plugins';
 import * as H from 'next/headers';
 
 import { db } from '@/kit/db';
 import { userSchema } from '@/lib/db/schema/auth';
 import { env } from '@/lib/env/server';
 
+const client = new Polar({
+	accessToken: env.POLAR_ACCESS_TOKEN,
+	// Use 'sandbox' if you're using the Polar Sandbox environment
+	// Remember that access tokens, products, etc. are completely separated between environments.
+	// Access tokens obtained in Production are for instance not usable in the Sandbox environment.
+	server: 'sandbox',
+});
+
 export const auth = betterAuth({
+	appName: 'Kino',
 	emailAndPassword: {
 		enabled: true,
 	},
@@ -34,11 +46,51 @@ export const auth = betterAuth({
 	},
 	plugins: [
 		nextCookies(),
+		twoFactor(),
+		username(),
 		admin({
 			defaultRole: 'member',
 			adminRole: ['admin'],
 		}),
-		username(),
+		organization(),
+		apiKey(),
+		polar({
+			client,
+			// Enable automatic Polar Customer creation on signup
+			createCustomerOnSignUp: true,
+			// Enable customer portal
+			enableCustomerPortal: true, // Deployed under /portal for authenticated users
+			// Configure checkout
+			checkout: {
+				enabled: true,
+				products: [
+					{
+						productId: '3453cca5-a3e7-45de-932a-a0882cfd65a9', // ID of Product from Polar Dashboard
+						slug: '/checkout/pro1', // Custom slug for easy reference in Checkout URL, e.g. /checkout/pro
+					},
+					{
+						productId: 'c3338122-95bb-4213-863f-89b763cd3889', // ID of Product from Polar Dashboard
+						slug: '/checkout/pro2', // Custom slug for easy reference in Checkout URL, e.g. /checkout/pro
+					},
+					{
+						productId: 'a64ff40f-fc5d-4943-83b8-519a727be43e', // ID of Product from Polar Dashboard
+						slug: '/checkout/pro3', // Custom slug for easy reference in Checkout URL, e.g. /checkout/pro
+					},
+					{
+						productId: 'becd31b9-5884-4b75-9f43-6e682233baa2', // ID of Product from Polar Dashboard
+						slug: '/checkout/pro4', // Custom slug for easy reference in Checkout URL, e.g. /checkout/pro
+					},
+				],
+				successUrl: '/success?checkout_id={CHECKOUT_ID}',
+			},
+			// Incoming Webhooks handler will be installed at /polar/webhooks
+			webhooks: {
+				secret: process.env.POLAR_WEBHOOK_SECRET!,
+				onPayload: async (e) => {
+					console.log(e);
+				},
+			},
+		}),
 	],
 	user: {
 		additionalFields: {
