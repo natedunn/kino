@@ -1,13 +1,15 @@
+'server only';
+
 import type { NextRequest } from 'next/server';
 
 import { cache } from 'react';
 import { polar } from '@polar-sh/better-auth';
 import { Polar } from '@polar-sh/sdk';
 import { betterAuth } from 'better-auth';
-import { emailHarmony } from 'better-auth-harmony';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { nextCookies } from 'better-auth/next-js';
 import { admin, apiKey, organization, twoFactor, username } from 'better-auth/plugins';
+import consola from 'consola';
 import * as H from 'next/headers';
 
 import { db } from '@/kit/db';
@@ -16,10 +18,7 @@ import { env } from '@/lib/env/server';
 
 const client = new Polar({
 	accessToken: env.POLAR_ACCESS_TOKEN,
-	// Use 'sandbox' if you're using the Polar Sandbox environment
-	// Remember that access tokens, products, etc. are completely separated between environments.
-	// Access tokens obtained in Production are for instance not usable in the Sandbox environment.
-	server: 'sandbox',
+	server: env.NODE_ENV === 'production' ? 'production' : 'sandbox',
 });
 
 export const auth = betterAuth({
@@ -87,14 +86,14 @@ export const auth = betterAuth({
 			webhooks: {
 				secret: process.env.POLAR_WEBHOOK_SECRET!,
 				onPayload: async (e) => {
-					console.log(e);
+					consola.box(e);
 				},
 			},
 		}),
 	],
 	user: {
 		additionalFields: {
-			// This purely exists to make sure the username is required
+			// This purely exists to make sure the username is required when running auth table generation
 			username: {
 				type: 'string',
 				required: true,
