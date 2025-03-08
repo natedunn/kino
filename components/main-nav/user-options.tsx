@@ -8,12 +8,12 @@ import { Link } from '../link';
 
 const { signOut } = createAuthClient();
 
-export const UserOptions = ({ email }: { email?: string }) => {
+export const UserOptions = ({ identifier }: { identifier?: string }) => {
 	const router = useRouter();
 
 	return (
 		<React.Fragment>
-			{email ? (
+			{identifier ? (
 				<button
 					className='link-as-text'
 					onClick={async () => {
@@ -21,7 +21,7 @@ export const UserOptions = ({ email }: { email?: string }) => {
 						router.refresh();
 					}}
 				>
-					Sign out <span className='hidden md:inline'>({email})</span>
+					Sign out <span className='hidden md:inline'>({identifier})</span>
 				</button>
 			) : (
 				<Link className='link-as-text' href='/sign-in'>
