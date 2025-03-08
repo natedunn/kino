@@ -1,4 +1,5 @@
-//
+import { createConsola } from 'consola';
+
 // Get Base Url
 type getBaseUrlArgs =
 	| {
@@ -50,3 +51,10 @@ export async function tryCatch<T, E = Error>(promise: Promise<T>): Promise<Resul
 		return { data: null, error: error as E };
 	}
 }
+
+export const logger = createConsola({
+	formatOptions: {
+		colors: true,
+		compact: false,
+	},
+});

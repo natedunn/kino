@@ -1,20 +1,22 @@
-// import { confirm } from '@inquirer/prompts';
-import consola from 'consola';
 import { sql } from 'drizzle-orm';
 
 import { httpDb } from '@/kit/db';
 
+import 'dotenv/config';
+
+import { logger } from '@/kit/utils';
+
 export const truncate = async () => {
-	const answer = consola.prompt('Are you sure you want to truncate all tables?', {
+	const answer = logger.prompt('Are you sure you want to truncate all tables?', {
 		type: 'confirm',
 	});
 
 	if (!answer) {
-		consola.error('Truncating all tables cancelled');
+		logger.error('Truncating all tables cancelled');
 		process.exit(0);
 	}
 
-	consola.start('Truncating tables...');
+	logger.start('Truncating tables...');
 
 	const start = Date.now();
 
@@ -33,13 +35,13 @@ export const truncate = async () => {
 
 	const end = Date.now();
 
-	consola.success('✅ Truncating completed in', end - start, 'ms');
+	logger.success('✅ Truncating completed in', end - start, 'ms');
 
 	process.exit(0);
 };
 
 truncate().catch((err) => {
-	consola.error('Truncating failed');
-	consola.error(err);
+	logger.error('Truncating failed');
+	logger.error(err);
 	process.exit(1);
 });

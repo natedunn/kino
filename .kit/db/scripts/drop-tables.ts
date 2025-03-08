@@ -1,19 +1,19 @@
-import { consola } from 'consola';
 import { sql } from 'drizzle-orm';
 
 import { httpDb } from '@/kit/db';
+import { logger } from '@/kit/utils';
 
 export const dropTables = async () => {
-	const answer = await consola.prompt('Are you sure you want to drop all tables?', {
+	const answer = await logger.prompt('Are you sure you want to drop all tables?', {
 		type: 'confirm',
 	});
 
 	if (!answer) {
-		consola.error('❌ Dropping all tables cancelled');
+		logger.error('❌ Dropping all tables cancelled');
 		process.exit(0);
 	}
 
-	consola.start('⏳ Dropping all tables in database...');
+	logger.start('⏳ Dropping all tables in database...');
 
 	const start = Date.now();
 
@@ -33,13 +33,13 @@ export const dropTables = async () => {
 
 	const end = Date.now();
 
-	consola.success('Dropped all tables in', end - start, 'ms');
+	logger.success('Dropped all tables in', end - start, 'ms');
 
 	process.exit(0);
 };
 
 dropTables().catch((err) => {
-	consola.error('❌ Dropping all tables failed');
-	consola.error(err);
+	logger.error('❌ Dropping all tables failed');
+	logger.error(err);
 	process.exit(1);
 });
