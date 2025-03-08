@@ -2,6 +2,8 @@ import { vercel } from '@t3-oss/env-core/presets-zod';
 import { createEnv } from '@t3-oss/env-nextjs';
 import { z } from 'zod';
 
+import { logger } from '../../.kit/utils';
+
 export const env = createEnv({
 	extends: [vercel()],
 	client: {
@@ -13,4 +15,8 @@ export const env = createEnv({
 		NEXT_PUBLIC_NODE_ENV: process.env.NODE_ENV,
 	},
 	isServer: typeof window === 'undefined',
+	onValidationError: (error) => {
+		logger.error('Invalid environment variables (client): ', error);
+		process.exit(1);
+	},
 });

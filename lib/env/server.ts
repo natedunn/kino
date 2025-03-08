@@ -18,4 +18,8 @@ export const env = createEnv({
 	},
 	experimental__runtimeEnv: process.env,
 	isServer: typeof window === 'undefined',
+	onValidationError: (error) => {
+		logger.error('Invalid environment variables (server): ', error);
+		process.exit(1);
+	},
 });
