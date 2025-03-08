@@ -1,4 +1,4 @@
-import type { AppRouter } from '@/kit/api';
+import type { AppRouter } from '@/kit/api/app-router';
 
 import {
 	createTRPCClient,
