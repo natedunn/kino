@@ -19,7 +19,9 @@
 		"db:reset": "pnpm run db:drop-tables && pnpm run db:drop && pnpm run db:migrate && pnpm run db:generate && pnpm run db:migrate && pnpm run db:seed",
 		"db:reseed": "pnpm run db:truncate && pnpm run db:seed",
 		"db:introspect": "drizzle-kit introspect",
-		"db:auth": "npx @better-auth/cli generate --config ./.kit/auth/index.ts --output ./lib/db/tables/auth.ts"
+		"db:auth": "npx @better-auth/cli generate --config ./.kit/auth/index.ts --output ./lib/db/tables/auth.ts",
+		"prettier": "prettier --write .",
+		"tsc": "tsc --incremental false"
 	},
 	"dependencies": {
 		"@better-fetch/fetch": "^1.1.15",
