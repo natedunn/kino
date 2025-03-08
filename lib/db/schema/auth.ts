@@ -10,6 +10,8 @@ import * as auth from '../tables/auth';
 // User
 const refineUser = {
 	role: () => z.enum(['member', 'admin']),
+	// Setting as optional because this column is mostly a database check for uniqueness
+	normalizedEmail: (v) => v.optional(),
 } satisfies BuildRefine<typeof auth.user>;
 
 export const userSchema = {
