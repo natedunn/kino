@@ -96,6 +96,7 @@ CREATE TABLE "user" (
 	"created_at" timestamp NOT NULL,
 	"updated_at" timestamp NOT NULL,
 	"two_factor_enabled" boolean,
+	"normalized_email" text,
 	"username" text NOT NULL,
 	"display_username" text,
 	"role" text,
@@ -103,6 +104,7 @@ CREATE TABLE "user" (
 	"ban_reason" text,
 	"ban_expires" timestamp,
 	CONSTRAINT "user_email_unique" UNIQUE("email"),
+	CONSTRAINT "user_normalized_email_unique" UNIQUE("normalized_email"),
 	CONSTRAINT "user_username_unique" UNIQUE("username")
 );
 --> statement-breakpoint
