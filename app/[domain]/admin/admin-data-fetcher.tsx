@@ -6,6 +6,7 @@ import { useTRPC } from '@/kit/api/fetcher/client';
 
 export const AdminDataFetcher = () => {
 	const trpc = useTRPC();
+
 	const { data, status, error } = useQuery(
 		trpc.example.listUsers.queryOptions(undefined, {
 			retry: 0,

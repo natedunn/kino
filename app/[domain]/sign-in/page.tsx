@@ -5,15 +5,20 @@ import { redirect } from 'next/navigation';
 
 import { getAuth } from '@/kit/auth';
 import { signInSearchParams } from '@/lib/params/search-params';
+import { deconstructDomain } from '@/lib/utils/deconstruct-domain';
 
 import { GithubButton } from './_components/github-button';
 
 type PageProps = {
+	params: Promise<{ domain: string }>;
 	searchParams: Promise<SearchParams>;
 };
 
-export default async function SignInPage({ searchParams }: PageProps) {
+export default async function SignInPage({ params, searchParams }: PageProps) {
 	const { session } = await getAuth();
+
+	const domain = await params;
+	const { subdomain } = deconstructDomain(domain.domain);
 
 	const { redirectTo } = await signInSearchParams(searchParams);
 
@@ -35,7 +40,7 @@ export default async function SignInPage({ searchParams }: PageProps) {
 			</div>
 			<div className='mt-6 font-mono font-bold bg-muted p-3 md:p-6 border'>
 				<div className='flex flex-col gap-4'>
-					<GithubButton disabled={!!session} redirectTo={redirectTo} />
+					<GithubButton disabled={!!session} redirectTo={redirectTo} subdomain={subdomain} />
 				</div>
 			</div>
 		</React.Fragment>

@@ -2,7 +2,7 @@ import { Link } from '@/components/link';
 
 export default async function NotFoundPage() {
 	return (
-		<div className='flex flex-col items-center justify-center h-screen'>
+		<div className='flex flex-col items-center justify-center py-24'>
 			<div className='text-3xl font-bold'>404 - Not Found</div>
 			<div>
 				This page does not exist.{' '}

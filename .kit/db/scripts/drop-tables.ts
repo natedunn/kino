@@ -1,19 +1,19 @@
 import { sql } from 'drizzle-orm';
 
 import { httpDb } from '@/kit/db';
-import { logger } from '@/kit/utils';
+import { log } from '@/kit/utils';
 
 export const dropTables = async () => {
-	const answer = await logger.prompt('Are you sure you want to drop all tables?', {
+	const answer = await log.prompt('Are you sure you want to drop all tables?', {
 		type: 'confirm',
 	});
 
 	if (!answer) {
-		logger.error('❌ Dropping all tables cancelled');
+		log.error('❌ Dropping all tables cancelled');
 		process.exit(0);
 	}
 
-	logger.start('⏳ Dropping all tables in database...');
+	log.start('⏳ Dropping all tables in database...');
 
 	const start = Date.now();
 
@@ -33,13 +33,13 @@ export const dropTables = async () => {
 
 	const end = Date.now();
 
-	logger.success('Dropped all tables in', end - start, 'ms');
+	log.success('Dropped all tables in', end - start, 'ms');
 
 	process.exit(0);
 };
 
 dropTables().catch((err) => {
-	logger.error('❌ Dropping all tables failed');
-	logger.error(err);
+	log.error('❌ Dropping all tables failed');
+	log.error(err);
 	process.exit(1);
 });

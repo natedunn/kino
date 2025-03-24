@@ -4,28 +4,39 @@ import React from 'react';
 
 import { Button } from '@/components/ui/button';
 import { authClient } from '@/kit/auth/client';
-import { getBaseUrl } from '@/kit/utils';
+import { env } from '@/lib/env/shared';
 
 export const GithubButton = ({
 	disabled = false,
 	redirectTo,
+	subdomain,
 }: {
 	disabled?: boolean;
 	redirectTo?: string | null;
+	subdomain: string | null;
 }) => {
 	const [loading, setLoading] = React.useState(false);
-	const { signIn } = authClient;
+
+	const rootDomain = env.NEXT_PUBLIC_ROOT_DOMAIN;
+	const protocol = rootDomain.includes('localhost') ? 'http://' : 'https://';
+	const base = `${protocol}${subdomain ? `${subdomain}.` : ''}${env.NEXT_PUBLIC_ROOT_DOMAIN}`;
 
 	return (
 		<Button
 			onClick={async () => {
 				setLoading(true);
-				await signIn.social({
+
+				const res = await authClient.signIn.social({
 					provider: 'github',
-					callbackURL: `${getBaseUrl({
-						relativePath: false,
-					})}${redirectTo ?? ''}`,
+					callbackURL: `${base}${redirectTo ?? ''}`,
+					fetchOptions: {
+						baseURL: `${base}/api/auth`,
+					},
 				});
+
+				if (res.error) {
+					setLoading(false);
+				}
 			}}
 			disabled={disabled}
 		>

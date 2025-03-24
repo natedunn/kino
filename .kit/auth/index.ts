@@ -13,6 +13,7 @@ import {
 	admin,
 	apiKey,
 	createAuthMiddleware,
+	oAuthProxy,
 	organization,
 	twoFactor,
 	username,
@@ -21,15 +22,32 @@ import * as H from 'next/headers';
 
 import { db } from '@/kit/db';
 import { userSchema } from '@/lib/db/schema/auth';
-import { env } from '@/lib/env/server';
+import { env as envSever } from '@/lib/env/server';
+import { env as envShared } from '@/lib/env/shared';
+
+import { getBaseUrl } from '../utils';
 
 const polarClient = new Polar({
-	accessToken: env.POLAR_ACCESS_TOKEN,
-	server: env.NODE_ENV === 'production' ? 'production' : 'sandbox',
+	accessToken: envSever.POLAR_ACCESS_TOKEN,
+	server: envShared.NODE_ENV === 'production' ? 'production' : 'sandbox',
 });
 
 export const auth = betterAuth({
 	appName: 'Kino',
+	baseURL: getBaseUrl({
+		relativePath: false,
+	}),
+	advanced: {
+		crossSubDomainCookies: {
+			enabled: true,
+			domain: `.${envShared.NEXT_PUBLIC_ROOT_DOMAIN}`,
+		},
+		defaultCookieAttributes: {
+			partitioned: true,
+			domain: `.${envShared.NEXT_PUBLIC_ROOT_DOMAIN}`,
+		},
+	},
+	trustedOrigins: ['http://localhost:3000', `*.${envShared.NEXT_PUBLIC_ROOT_DOMAIN}`],
 	emailAndPassword: {
 		enabled: true,
 	},
@@ -38,20 +56,24 @@ export const auth = betterAuth({
 	}),
 	socialProviders: {
 		github: {
-			clientId: env.GITHUB_CLIENT_ID,
-			clientSecret: env.GITHUB_CLIENT_SECRET,
+			clientId: envSever.GITHUB_CLIENT_ID,
+			clientSecret: envSever.GITHUB_CLIENT_SECRET,
 			mapProfileToUser: async (profile) => {
 				return {
 					username: profile.login,
 					email: profile.email,
 					image: profile.avatar_url,
-					role: env.ADMIN_EMAIL === profile.email ? 'admin' : 'member',
+					role: envSever.ADMIN_EMAIL === profile.email ? 'admin' : 'member',
 				};
 			},
 		},
 	},
 	plugins: [
 		nextCookies(),
+		oAuthProxy({
+			currentURL: 'http://localhost:3000',
+			productionURL: 'http://localhost:3000',
+		}),
 		twoFactor(),
 		emailHarmony(),
 		username(),
@@ -63,7 +85,7 @@ export const auth = betterAuth({
 		apiKey(),
 		polar({
 			client: polarClient,
-			createCustomerOnSignUp: true,
+			// createCustomerOnSignUp: true,
 			enableCustomerPortal: true,
 			getCustomerCreateParams: async ({ user }) => {
 				return {
@@ -95,7 +117,7 @@ export const auth = betterAuth({
 			},
 			// Incoming Webhooks handler will be installed at /polar/webhooks
 			webhooks: {
-				secret: env.POLAR_WEBHOOK_SECRET,
+				secret: envSever.POLAR_WEBHOOK_SECRET,
 				// someWebhookHandler: async (e) => {}
 			},
 		}),

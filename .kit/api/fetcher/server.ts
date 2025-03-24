@@ -14,7 +14,9 @@ import { getBaseUrl } from '@/kit/utils';
 
 const options = {
 	transformer: superjson,
-	url: `${getBaseUrl()}/api/trpc`,
+	url: `${getBaseUrl({
+		relativePath: false,
+	})}/api/trpc`,
 	headers: async () => {
 		const headers = new Headers(await H.headers());
 

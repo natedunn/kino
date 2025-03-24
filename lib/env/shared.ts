@@ -4,11 +4,13 @@ import { z } from 'zod';
 
 export const env = createEnv({
 	extends: [vercel()],
-	client: {
-		NEXT_PUBLIC_KEY: z.string().optional(),
+	shared: {
+		NEXT_PUBLIC_ROOT_DOMAIN: z.string(),
+		NODE_ENV: z.enum(['development', 'production']).default('production'),
 	},
 	runtimeEnv: {
-		NEXT_PUBLIC_KEY: process.env.NEXT_PUBLIC_KEY,
+		NEXT_PUBLIC_ROOT_DOMAIN: process.env.NEXT_PUBLIC_ROOT_DOMAIN,
+		NODE_ENV: process.env.NODE_ENV,
 	},
 	isServer: typeof window === 'undefined',
 });

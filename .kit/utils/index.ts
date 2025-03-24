@@ -1,30 +1,30 @@
 import { createConsola } from 'consola';
 
-// Get Base Url
-type getBaseUrlArgs =
-	| {
-			relativePath?: boolean;
-	  }
-	| undefined;
+import { env } from '@/lib/env/shared';
 
-export const getBaseUrl = (
-	{ relativePath }: getBaseUrlArgs = {
-		relativePath: true,
-	}
-) => {
+// Get Base Url
+export const getBaseUrl = ({
+	relativePath = true,
+}: {
+	relativePath?: boolean;
+} = {}) => {
 	if (relativePath && typeof window !== 'undefined') {
 		// browser should use relative path
 		return '';
 	}
+
 	if (process.env.VERCEL_URL) {
 		// reference for vercel.com
-		return `https://${process.env.VERCEL_URL}`;
+		return `https://${env.VERCEL_URL}`;
 	}
 
-	if (process.env.RENDER_INTERNAL_HOSTNAME) {
-		// reference for render.com
-		return `http://${process.env.RENDER_INTERNAL_HOSTNAME}:${process.env.PORT}`;
+	if (env.NEXT_PUBLIC_ROOT_DOMAIN) {
+		if (env.NEXT_PUBLIC_ROOT_DOMAIN.includes('localhost')) {
+			return `http://${env.NEXT_PUBLIC_ROOT_DOMAIN}`;
+		}
+		return `https://${env.NEXT_PUBLIC_ROOT_DOMAIN}`;
 	}
+
 	// assume localhost
 	return `http://localhost:${process.env.PORT ?? 3000}`;
 };
@@ -52,7 +52,9 @@ export async function tryCatch<T, E = Error>(promise: Promise<T>): Promise<Resul
 	}
 }
 
-export const logger = createConsola({
+//
+// Logger with Consola
+export const log = createConsola({
 	formatOptions: {
 		colors: true,
 		compact: false,

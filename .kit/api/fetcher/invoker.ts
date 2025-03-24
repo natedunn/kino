@@ -6,13 +6,15 @@ import { t } from '@/kit/api';
 import { appRouter } from '@/kit/api/app-router';
 import { createInnerTRPCContext } from '@/kit/api/context';
 import { getAuth } from '@/kit/auth';
-import { getBaseUrl, logger } from '@/kit/utils';
+import { getBaseUrl, log } from '@/kit/utils';
 
 const createContext = cache(async () => {
 	const headers = await H.headers();
 	const cookies = await H.cookies();
 
-	const baseUrl = getBaseUrl();
+	const baseUrl = getBaseUrl({
+		relativePath: false,
+	});
 	const req = new NextRequest(`${baseUrl}`, { headers }) as NextRequest;
 
 	return {
@@ -30,6 +32,6 @@ const createContext = cache(async () => {
 const createCaller = t.createCallerFactory(appRouter);
 export const api = createCaller(createContext, {
 	onError: ({ error }) => {
-		logger.error('Error in tRPC server invoker', error);
+		log.error('Error in tRPC server invoker', error);
 	},
 });

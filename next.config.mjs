@@ -7,6 +7,7 @@ const jiti = createJiti(fileURLToPath(import.meta.url));
 
 jiti('./lib/env/server');
 jiti('./lib/env/client');
+jiti('./lib/env/shared');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {

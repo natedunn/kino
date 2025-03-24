@@ -4,19 +4,19 @@ import { httpDb } from '@/kit/db';
 
 import 'dotenv/config';
 
-import { logger } from '@/kit/utils';
+import { log } from '@/kit/utils';
 
 export const truncate = async () => {
-	const answer = logger.prompt('Are you sure you want to truncate all tables?', {
+	const answer = log.prompt('Are you sure you want to truncate all tables?', {
 		type: 'confirm',
 	});
 
 	if (!answer) {
-		logger.error('Truncating all tables cancelled');
+		log.error('Truncating all tables cancelled');
 		process.exit(0);
 	}
 
-	logger.start('Truncating tables...');
+	log.start('Truncating tables...');
 
 	const start = Date.now();
 
@@ -35,13 +35,13 @@ export const truncate = async () => {
 
 	const end = Date.now();
 
-	logger.success('✅ Truncating completed in', end - start, 'ms');
+	log.success('✅ Truncating completed in', end - start, 'ms');
 
 	process.exit(0);
 };
 
 truncate().catch((err) => {
-	logger.error('Truncating failed');
-	logger.error(err);
+	log.error('Truncating failed');
+	log.error(err);
 	process.exit(1);
 });

@@ -41,9 +41,7 @@ export function ApiProvider(props: ClientProviderProps) {
 
 	const options = {
 		transformer: superjson,
-		url: `${getBaseUrl({
-			relativePath: false,
-		})}/api/trpc`,
+		url: `${getBaseUrl()}/api/trpc`,
 		headers() {
 			const headers = new Map(props.headers);
 			headers.set('x-trpc-source', 'nextjs-react');
