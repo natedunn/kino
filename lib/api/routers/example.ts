@@ -42,6 +42,7 @@ export const exampleRouter = t.router({
 				limit: 10,
 			},
 			fetchOptions: {
+				baseURL: `${protocol}${host}/api/auth`,
 				headers: ctx.req.headers,
 			},
 		});
