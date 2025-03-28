@@ -12,6 +12,7 @@ export const env = createEnv({
 		ADMIN_EMAIL: z.string(),
 		POLAR_ACCESS_TOKEN: z.string(),
 		POLAR_WEBHOOK_SECRET: z.string(),
+		OAUTH_PROXY_REDIRECT_URI: z.string(),
 	},
 	experimental__runtimeEnv: process.env,
 	isServer: typeof window === 'undefined',

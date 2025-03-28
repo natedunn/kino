@@ -4,7 +4,10 @@ import React from 'react';
 
 import { Button } from '@/components/ui/button';
 import { authClient } from '@/kit/auth/client';
-import { env } from '@/lib/env/shared';
+import { getBaseUrl } from '@/kit/utils';
+import { createURL } from '@/lib/utils/create-url';
+
+// import { env } from '@/lib/env/shared';
 
 export const GithubButton = ({
 	disabled = false,
@@ -17,9 +20,34 @@ export const GithubButton = ({
 }) => {
 	const [loading, setLoading] = React.useState(false);
 
-	const rootDomain = env.NEXT_PUBLIC_ROOT_DOMAIN;
-	const protocol = rootDomain.includes('localhost') ? 'http://' : 'https://';
-	const base = `${protocol}${subdomain ? `${subdomain}.` : ''}${env.NEXT_PUBLIC_ROOT_DOMAIN}`;
+	// const rootDomain = env.NEXT_PUBLIC_ROOT_DOMAIN;
+	// const protocol = rootDomain.includes('localhost') ? 'http://' : 'https://';
+	// const base = `${protocol}${subdomain ? `${subdomain}.` : ''}${env.NEXT_PUBLIC_ROOT_DOMAIN}`;
+
+	const base = getBaseUrl({
+		relativePath: false,
+		protocol: false,
+	});
+
+	console.log('base', base);
+
+	const callbackURL = createURL({
+		domain: base,
+		subdomain,
+		path: redirectTo ?? '',
+	});
+
+	const fetchBaseUrl = createURL({
+		domain: base,
+		subdomain,
+		path: '/api/auth',
+	});
+
+	if (!callbackURL || !fetchBaseUrl) {
+		throw new Error('Invalid URL parameters');
+	}
+
+	console.log('URL', callbackURL, fetchBaseUrl);
 
 	return (
 		<Button
@@ -28,9 +56,9 @@ export const GithubButton = ({
 
 				const res = await authClient.signIn.social({
 					provider: 'github',
-					callbackURL: `${base}${redirectTo ?? ''}`,
+					callbackURL: '/',
 					fetchOptions: {
-						baseURL: `${base}/api/auth`,
+						baseURL: fetchBaseUrl,
 					},
 				});
 

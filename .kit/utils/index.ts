@@ -5,28 +5,33 @@ import { env } from '@/lib/env/shared';
 // Get Base Url
 export const getBaseUrl = ({
 	relativePath = true,
+	protocol = true,
 }: {
 	relativePath?: boolean;
+	protocol?: boolean;
 } = {}) => {
 	if (relativePath && typeof window !== 'undefined') {
+		log.warn('Using relative path');
 		// browser should use relative path
 		return '';
 	}
 
 	if (process.env.VERCEL_URL) {
+		log.warn('Using Vercel URL');
 		// reference for vercel.com
-		return `https://${env.VERCEL_URL}`;
+		return `${protocol ? 'https://' : ''}${env.VERCEL_URL}`;
 	}
 
 	if (env.NEXT_PUBLIC_ROOT_DOMAIN) {
+		log.warn('Using NEXT_PUBLIC_ROOT_DOMAIN');
 		if (env.NEXT_PUBLIC_ROOT_DOMAIN.includes('localhost')) {
-			return `http://${env.NEXT_PUBLIC_ROOT_DOMAIN}`;
+			return `${protocol ? 'http://' : ''}${env.NEXT_PUBLIC_ROOT_DOMAIN}`;
 		}
-		return `https://${env.NEXT_PUBLIC_ROOT_DOMAIN}`;
+		return `${protocol ? 'https://' : ''}${env.NEXT_PUBLIC_ROOT_DOMAIN}`;
 	}
 
 	// assume localhost
-	return `http://localhost:${process.env.PORT ?? 3000}`;
+	return `${protocol ? 'http://' : ''}localhost:${process.env.PORT ?? 3000}`;
 };
 
 //

@@ -22,13 +22,13 @@ import * as H from 'next/headers';
 
 import { db } from '@/kit/db';
 import { userSchema } from '@/lib/db/schema/auth';
-import { env as envSever } from '@/lib/env/server';
+import { env as envServer } from '@/lib/env/server';
 import { env as envShared } from '@/lib/env/shared';
 
 import { getBaseUrl } from '../utils';
 
 const polarClient = new Polar({
-	accessToken: envSever.POLAR_ACCESS_TOKEN,
+	accessToken: envServer.POLAR_ACCESS_TOKEN,
 	server: envShared.NODE_ENV === 'production' ? 'production' : 'sandbox',
 });
 
@@ -47,7 +47,10 @@ export const auth = betterAuth({
 			domain: `.${envShared.NEXT_PUBLIC_ROOT_DOMAIN}`,
 		},
 	},
-	trustedOrigins: ['http://localhost:3000', `*.${envShared.NEXT_PUBLIC_ROOT_DOMAIN}`],
+	trustedOrigins: [
+		'http://localhost:3000',
+		`*.${envShared.NEXT_PUBLIC_ROOT_DOMAIN}`, //
+	],
 	emailAndPassword: {
 		enabled: true,
 	},
@@ -56,24 +59,22 @@ export const auth = betterAuth({
 	}),
 	socialProviders: {
 		github: {
-			clientId: envSever.GITHUB_CLIENT_ID,
-			clientSecret: envSever.GITHUB_CLIENT_SECRET,
+			clientId: envServer.GITHUB_CLIENT_ID,
+			clientSecret: envServer.GITHUB_CLIENT_SECRET,
+			redirectURI: envServer.OAUTH_PROXY_REDIRECT_URI,
 			mapProfileToUser: async (profile) => {
 				return {
 					username: profile.login,
 					email: profile.email,
 					image: profile.avatar_url,
-					role: envSever.ADMIN_EMAIL === profile.email ? 'admin' : 'member',
+					role: envServer.ADMIN_EMAIL === profile.email ? 'admin' : 'member',
 				};
 			},
 		},
 	},
 	plugins: [
 		nextCookies(),
-		oAuthProxy({
-			currentURL: 'http://localhost:3000',
-			productionURL: 'http://localhost:3000',
-		}),
+		oAuthProxy(),
 		twoFactor(),
 		emailHarmony(),
 		username(),
@@ -117,7 +118,7 @@ export const auth = betterAuth({
 			},
 			// Incoming Webhooks handler will be installed at /polar/webhooks
 			webhooks: {
-				secret: envSever.POLAR_WEBHOOK_SECRET,
+				secret: envServer.POLAR_WEBHOOK_SECRET,
 				// someWebhookHandler: async (e) => {}
 			},
 		}),
