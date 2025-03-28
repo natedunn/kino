@@ -2,7 +2,7 @@ import { betterFetch } from '@better-fetch/fetch';
 import { z } from 'zod';
 
 import { t } from '@/kit/api';
-import { authClient } from '@/kit/auth/client';
+import { authClient, test_authClient } from '@/kit/auth/client';
 import { db } from '@/kit/db';
 import { getBaseUrl, log } from '@/kit/utils';
 
@@ -37,13 +37,9 @@ export const exampleRouter = t.router({
 
 		log.box(`${protocol}${host}`);
 
-		const { data: test } = await authClient.admin.listUsers({
+		const { data: test } = await test_authClient(ctx.req).admin.listUsers({
 			query: {
 				limit: 10,
-			},
-			fetchOptions: {
-				baseURL: `${protocol}${host}/api/auth`,
-				headers: ctx.req.headers,
 			},
 		});
 

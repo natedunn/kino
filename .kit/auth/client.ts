@@ -1,3 +1,5 @@
+import type { NextRequest } from 'next/server';
+
 import {
 	adminClient,
 	apiKeyClient,
@@ -11,10 +13,7 @@ import { getBaseUrl } from '@/kit/utils';
 
 import { log } from '../utils';
 
-export const authClient = createAuthClient({
-	baseURL: getBaseUrl({
-		relativePath: false,
-	}),
+const options = {
 	fetchOptions: {
 		onError: (error) => {
 			log.error('better-auth client error: ', error);
@@ -27,4 +26,24 @@ export const authClient = createAuthClient({
 		organizationClient(),
 		apiKeyClient(),
 	],
+} satisfies Parameters<typeof createAuthClient>[0];
+
+export const authClient = createAuthClient({
+	baseURL: getBaseUrl({
+		relativePath: false,
+	}),
+	...options,
 });
+
+export const test_authClient = (req: NextRequest) => {
+	const host = req.headers.get('x-forwarded-host') || req.headers.get('host');
+	const protocol = host?.includes('localhost') ? 'http://' : 'https://';
+
+	return createAuthClient({
+		baseURL: `${protocol}${host}`,
+		...options,
+		fetchOptions: {
+			headers: req.headers,
+		},
+	});
+};
