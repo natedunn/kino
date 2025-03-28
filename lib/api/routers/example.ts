@@ -32,6 +32,11 @@ export const exampleRouter = t.router({
 			limit: 10,
 		});
 
+		const host = ctx.req.headers.get('x-forwarded-host') || ctx.req.headers.get('host');
+		const protocol = host?.includes('localhost') ? 'http://' : 'https://';
+
+		log.box(`${protocol}${host}`);
+
 		const { data: test } = await authClient.admin.listUsers({
 			query: {
 				limit: 10,
@@ -41,19 +46,17 @@ export const exampleRouter = t.router({
 			},
 		});
 
-		// const test = await fetch(
+		// const test = await fetch(`${protocol}${host}/api/auth/admin/list-users?limit=10`);
+
+		log.warn(ctx.req.headers.get('x-forwarded-host'), ctx.req.headers.get('host'), test);
+
+		// log.info(
+		// 	'testing',
 		// 	`${getBaseUrl({
 		// 		relativePath: false,
-		// 	})}/api/auth/admin/list-users?limit=10`
+		// 	})}/api/auth/admin/list-users?limit=10`,
+		// 	test
 		// );
-
-		log.info(
-			'testing',
-			`${getBaseUrl({
-				relativePath: false,
-			})}/api/auth/admin/list-users?limit=10`,
-			test
-		);
 
 		return {
 			adminEmail: user.email,

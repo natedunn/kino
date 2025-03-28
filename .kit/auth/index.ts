@@ -61,7 +61,11 @@ export const auth = betterAuth({
 		github: {
 			clientId: envServer.GITHUB_CLIENT_ID,
 			clientSecret: envServer.GITHUB_CLIENT_SECRET,
-			redirectURI: envServer.OAUTH_PROXY_REDIRECT_URI,
+			...(envServer?.OAUTH_PROXY_REDIRECT_URI
+				? {
+						redirectURI: envServer.OAUTH_PROXY_REDIRECT_URI,
+					}
+				: {}),
 			mapProfileToUser: async (profile) => {
 				return {
 					username: profile.login,
@@ -74,7 +78,7 @@ export const auth = betterAuth({
 	},
 	plugins: [
 		nextCookies(),
-		oAuthProxy(),
+		...(envServer?.OAUTH_PROXY_REDIRECT_URI ? [oAuthProxy()] : []),
 		twoFactor(),
 		emailHarmony(),
 		username(),

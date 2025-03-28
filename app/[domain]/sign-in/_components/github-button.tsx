@@ -27,6 +27,7 @@ export const GithubButton = ({
 	const base = getBaseUrl({
 		relativePath: false,
 		protocol: false,
+		skipVercelUrl: true,
 	});
 
 	console.log('base', base);
@@ -47,7 +48,7 @@ export const GithubButton = ({
 		throw new Error('Invalid URL parameters');
 	}
 
-	console.log('URL', callbackURL, fetchBaseUrl);
+	// console.log('URL', callbackURL, fetchBaseUrl);
 
 	return (
 		<Button
@@ -56,7 +57,7 @@ export const GithubButton = ({
 
 				const res = await authClient.signIn.social({
 					provider: 'github',
-					callbackURL: '/',
+					callbackURL,
 					fetchOptions: {
 						baseURL: fetchBaseUrl,
 					},
