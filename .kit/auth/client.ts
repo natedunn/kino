@@ -28,22 +28,24 @@ const options = {
 	],
 } satisfies Parameters<typeof createAuthClient>[0];
 
-export const authClient = createAuthClient({
+export const _authClientOld = createAuthClient({
 	baseURL: getBaseUrl({
 		relativePath: false,
 	}),
 	...options,
 });
 
-export const test_authClient = (req: NextRequest) => {
-	const host = req.headers.get('x-forwarded-host') || req.headers.get('host');
+export const authClient = (req?: NextRequest) => {
+	const host = req?.headers.get('x-forwarded-host') || req?.headers.get('host');
 	const protocol = host?.includes('localhost') ? 'http://' : 'https://';
 
 	return createAuthClient({
-		baseURL: `${protocol}${host}`,
+		baseURL: req
+			? `${protocol}${host}`
+			: getBaseUrl({
+					relativePath: false,
+				}),
 		...options,
-		fetchOptions: {
-			headers: req.headers,
-		},
+		...(req ? { fetchOptions: { headers: req.headers } } : {}),
 	});
 };
