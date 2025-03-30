@@ -1,6 +1,6 @@
 import type { SearchParams } from 'nuqs/server';
 
-import { api } from '@/kit/api/fetcher/server';
+import { api } from '@/kit/api/fetcher/invoker';
 import { exampleSearchParams } from '@/lib/params/search-params';
 
 type OpenFetcherProps = {
@@ -9,6 +9,6 @@ type OpenFetcherProps = {
 
 export const OpenFetcher = async ({ searchParams }: OpenFetcherProps) => {
 	const { exampleString } = await exampleSearchParams(searchParams);
-	const data = await api.example.open.query(exampleString);
+	const data = await api.example.open(exampleString);
 	return JSON.stringify(data, null, 2);
 };
