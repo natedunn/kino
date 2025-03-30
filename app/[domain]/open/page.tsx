@@ -1,17 +1,14 @@
 import type { SearchParams } from 'nuqs/server';
 
-import React from 'react';
+import React, { Suspense } from 'react';
 
-import { api } from '@/kit/api/fetcher/invoker';
-import { exampleSearchParams } from '@/lib/params/search-params';
+import { OpenFetcher } from './open-fetcher';
 
 type PageProps = {
 	searchParams: Promise<SearchParams>;
 };
 
 export default async function HomePage({ searchParams }: PageProps) {
-	const { exampleString } = await exampleSearchParams(searchParams);
-	const data = await api.example.open(exampleString);
 	return (
 		<React.Fragment>
 			<div className='space-y-6'>
@@ -22,7 +19,11 @@ export default async function HomePage({ searchParams }: PageProps) {
 				</p>
 			</div>
 			<pre className='mt-6 code code-box'>
-				<code>{JSON.stringify(data, null, 2)}</code>
+				<code>
+					<Suspense fallback={<div>Loading...</div>}>
+						<OpenFetcher searchParams={searchParams} />
+					</Suspense>
+				</code>
 			</pre>
 		</React.Fragment>
 	);
