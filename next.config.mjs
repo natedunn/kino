@@ -12,7 +12,7 @@ jiti('./lib/env/shared');
 /** @type {import('next').NextConfig} */
 const nextConfig = {
 	experimental: {
-		reactCompiler: true,
+		// reactCompiler: true,
 	},
 };
 

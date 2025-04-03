@@ -3,6 +3,7 @@ import { ThemeProvider } from 'next-themes';
 import * as H from 'next/headers';
 import { NuqsAdapter as NuqsProvider } from 'nuqs/adapters/next/app';
 
+import { Toaster } from '@/components/ui/sonner';
 import { ApiProvider } from '@/kit/api/api-provider';
 
 export default async function Providers({
@@ -13,10 +14,13 @@ export default async function Providers({
 	const headers = new Headers(await H.headers());
 
 	return (
-		<ThemeProvider attribute='class' defaultTheme='system'>
+		<React.Fragment>
 			<NuqsProvider>
-				<ApiProvider headers={headers}>{children}</ApiProvider>
+				<ThemeProvider attribute='class' defaultTheme='system'>
+					<ApiProvider headers={headers}>{children}</ApiProvider>
+				</ThemeProvider>
 			</NuqsProvider>
-		</ThemeProvider>
+			<Toaster />
+		</React.Fragment>
 	);
 }

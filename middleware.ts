@@ -5,8 +5,6 @@ import { NextResponse } from 'next/server';
 import { env } from './lib/env/shared';
 import { getValidSubdomain } from './lib/utils/get-valid-subdomain';
 
-// import { getSessionCookie } from 'better-auth/cookies';
-
 // const authGuardUrls = ['/console'];
 
 export async function middleware(req: NextRequest) {
@@ -16,8 +14,6 @@ export async function middleware(req: NextRequest) {
 		'.localhost:3000',
 		`.${env.NEXT_PUBLIC_ROOT_DOMAIN}`
 	);
-
-	// console.log(req);
 
 	// Special case for Vercel preview deployment URLs
 	if (
@@ -31,14 +27,18 @@ export async function middleware(req: NextRequest) {
 	// Get the pathname of the request (e.g. /, /about, /acme/feedback)
 	const path = `${url.pathname}${searchParams.length > 0 ? `?${searchParams}` : ''}`;
 
-	if (path.includes('/api')) {
-		const subdomain = !getValidSubdomain(hostname);
-		console.log('subdomain with path >>>>>>>>>', hostname, getValidSubdomain(hostname));
-		if (subdomain) {
-			return NextResponse.redirect(new URL(`${hostname}${path}`, req.url));
-		}
-		return NextResponse.next();
+	if (hostname === `admin.${process.env.NEXT_PUBLIC_ROOT_DOMAIN}`) {
+		return NextResponse.rewrite(new URL(`/admin${path === '/' ? '' : path}`, req.url));
 	}
+
+	// if (path.includes('/api')) {
+	// 	const subdomain = !getValidSubdomain(hostname);
+	// 	console.log('subdomain with path >>>>>>>>>', hostname, getValidSubdomain(hostname));
+	// 	if (subdomain) {
+	// 		return NextResponse.redirect(new URL(`${hostname}${path}`, req.url));
+	// 	}
+	// 	return NextResponse.next();
+	// }
 
 	if (hostname === 'localhost:3000' || hostname === process.env.NEXT_PUBLIC_ROOT_DOMAIN) {
 		// rewrite root application to `/home` folder

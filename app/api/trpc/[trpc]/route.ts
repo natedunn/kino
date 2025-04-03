@@ -13,7 +13,7 @@ const handler = (req: NextRequest) => {
 		router: appRouter,
 		createContext: () => createTRPCContext({ req }),
 		onError: ({ error }) => {
-			log.error('Error in tRPC handler (route.ts):', error);
+			log.error('Error in tRPC handler (route.ts)', '\n', '\n 🚫', error);
 		},
 	});
 };

@@ -3,7 +3,7 @@
 import React from 'react';
 
 import { Button } from '@/components/ui/button';
-import { _authClientOld } from '@/kit/auth/client';
+import { authClient } from '@/kit/auth/client';
 import { getBaseUrl } from '@/kit/utils';
 import { createURL } from '@/lib/utils/create-url';
 
@@ -55,7 +55,7 @@ export const GithubButton = ({
 			onClick={async () => {
 				setLoading(true);
 
-				const res = await _authClientOld.signIn.social({
+				const res = await authClient().signIn.social({
 					provider: 'github',
 					callbackURL,
 					fetchOptions: {

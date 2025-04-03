@@ -33,7 +33,7 @@ export default async function RootLayout({
 			<body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
 				<Providers>
 					<div className='flex flex-col items-center px-6'>
-						<div className='w-full max-w-[32rem] md:py-12'>
+						<div className='w-full container'>
 							<MainNav />
 							<div className='mt-4'>{children}</div>
 							<div className='border-t pt-6 mt-12'></div>

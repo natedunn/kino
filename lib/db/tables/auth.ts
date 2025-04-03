@@ -12,7 +12,7 @@ export const user = pgTable('user', {
 	normalizedEmail: text('normalized_email').unique(),
 	username: text('username').notNull().unique(),
 	displayUsername: text('display_username'),
-	role: text('role'),
+	role: text('role').notNull(),
 	banned: boolean('banned'),
 	banReason: text('ban_reason'),
 	banExpires: timestamp('ban_expires'),
