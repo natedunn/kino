@@ -4,9 +4,9 @@ import { z } from 'zod';
 
 import { authClient } from '@/kit/auth/client';
 import { db } from '@/kit/db';
-// import { log } from '@/kit/utils';
+import { log } from '@/kit/utils';
 import { userSchema } from '@/lib/db/schema/auth';
-import { user } from '@/lib/db/tables/auth';
+import { account, user } from '@/lib/db/tables/auth';
 import { env } from '@/lib/env/server';
 
 import { procedure } from '../procedures';
@@ -23,24 +23,32 @@ export const adminRouter = {
 					limit: 10,
 				})
 		)
-		.query(async ({ ctx, input }) => {
-			const { data } = await authClient(ctx.req).admin.listUsers({
-				query: {
-					limit: input.limit,
-				},
-			});
+		.query(async ({ input }) => {
+			const data = await db
+				.select()
+				.from(user)
+				.leftJoin(account, eq(user.id, account.userId))
+				.limit(input.limit);
+
+			const users = data.map((row) => ({
+				...row.user,
+				providerId: row.account?.providerId,
+			}));
+
+			const parsedUsers = userSchema.read
+				.pick({
+					id: true,
+					username: true,
+					email: true,
+					role: true,
+				})
+				.merge(z.object({ providerId: z.string().optional() }))
+				.array()
+				.nullable()
+				.parse(users ?? null);
 
 			return {
-				users: userSchema.read
-					.pick({
-						id: true,
-						username: true,
-						email: true,
-						role: true,
-					})
-					.array()
-					.nullable()
-					.parse(data?.users ?? null),
+				users: parsedUsers,
 				limit: input.limit,
 			};
 		}),

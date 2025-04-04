@@ -65,6 +65,22 @@ export const UsersTable = () => {
 				enableSorting: false,
 			},
 			{
+				id: 'providerId',
+				accessorKey: 'providerId',
+				header: ({ column }) => {
+					return <DataTableColumnHeader column={column} title='Provider ID' />;
+				},
+				cell: ({ row }) => {
+					if (!row.getValue('providerId')) {
+						return <div>n/a</div>;
+					}
+					return <div>{row.getValue('providerId')}</div>;
+				},
+				meta: {
+					label: 'Provider ID',
+				},
+			},
+			{
 				id: 'action',
 				accessorKey: 'action',
 				header: ({ column }) => {
