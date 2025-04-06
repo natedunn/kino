@@ -40,6 +40,7 @@ export const adminRouter = {
 					username: true,
 					email: true,
 					role: true,
+					banned: true,
 				})
 				.merge(z.object({ providerId: z.string().optional() }))
 				.array()

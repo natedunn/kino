@@ -81,6 +81,17 @@ export const UsersTable = () => {
 				},
 			},
 			{
+				id: 'banned',
+				accessorKey: 'banned',
+				header: ({ column }) => {
+					return <DataTableColumnHeader column={column} title='Banned' />;
+				},
+				meta: {
+					label: 'Banned',
+				},
+				enableSorting: false,
+			},
+			{
 				id: 'action',
 				accessorKey: 'action',
 				header: ({ column }) => {
@@ -103,10 +114,7 @@ export const UsersTable = () => {
 									refetch();
 								}}
 								initialData={{
-									id: row.original.id,
-									username: row.original.username,
-									role: row.original.role,
-									email: row.original.email,
+									...row.original,
 								}}
 								dialogProps={editDialog.props}
 							/>

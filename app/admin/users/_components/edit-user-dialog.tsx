@@ -81,6 +81,7 @@ export const EditUserDialog = ({
 				username: true,
 				email: true,
 				role: true,
+				banned: true,
 			}),
 		},
 		defaultValues: initialData,
