@@ -4,7 +4,6 @@ import { z } from 'zod';
 
 import { authClient } from '@/kit/auth/client';
 import { db } from '@/kit/db';
-import { log } from '@/kit/utils';
 import { userSchema } from '@/lib/db/schema/auth';
 import { account, user } from '@/lib/db/tables/auth';
 import { env } from '@/lib/env/server';
@@ -76,5 +75,23 @@ export const adminRouter = {
 			}
 
 			await db.update(user).set(input).where(eq(user.id, input.id));
+		}),
+	banUser: procedure.admin
+		.input(
+			z.object({
+				userId: z.string(),
+			})
+		)
+		.mutation(async ({ ctx, input }) => {
+			if (input.userId === ctx.auth.user.id) {
+				throw new TRPCError({
+					code: 'BAD_REQUEST',
+					message: 'Cannot ban yourself',
+				});
+			}
+
+			await authClient(ctx.req).admin.banUser({
+				userId: input.userId,
+			});
 		}),
 };

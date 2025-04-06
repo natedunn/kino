@@ -2,12 +2,13 @@ import type { API } from '@/kit/api/app-router';
 import type { ArraySingle } from '@/kit/types/utils';
 import type { DialogProps } from '@radix-ui/react-dialog';
 
-import { useCallback } from 'react';
+import React from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
 	Select,
 	SelectContent,
@@ -15,6 +16,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
 import {
 	Sheet,
 	SheetContent,
@@ -29,7 +31,7 @@ import { userSchema } from '@/lib/db/schema/auth';
 
 type QueriedUser = NonNullable<ArraySingle<API['output']['admin']['listAllUsers']['users']>>;
 
-export const EditUserModal = ({
+export const EditUserDialog = ({
 	initialData,
 	dialogProps,
 	onSave,
@@ -38,6 +40,9 @@ export const EditUserModal = ({
 	dialogProps: DialogProps;
 	onSave?: () => void;
 }) => {
+	const [code] = React.useState(() => Math.random().toString(36).slice(2));
+	const [enteredCode, setEnteredCode] = React.useState('');
+
 	const trpc = useTRPC();
 
 	const {
@@ -57,6 +62,18 @@ export const EditUserModal = ({
 		})
 	);
 
+	const { mutate: banUserMutation } = useMutation(
+		trpc.admin.banUser.mutationOptions({
+			onSuccess: () => {
+				toast.success('User banned successfully');
+			},
+			onError: (error) => {
+				log.warn(error);
+				toast.error(error.message);
+			},
+		})
+	);
+
 	const form = useAppForm({
 		validators: {
 			onChange: userSchema.read.pick({
@@ -68,7 +85,6 @@ export const EditUserModal = ({
 		},
 		defaultValues: initialData,
 		onSubmit: ({ value }) => {
-			console.log(value);
 			updateUserMutation({
 				...value,
 				prevEmail: initialData.email,
@@ -76,7 +92,7 @@ export const EditUserModal = ({
 		},
 	});
 
-	const handleSubmit = useCallback(
+	const handleSubmit = React.useCallback(
 		(e: React.FormEvent) => {
 			e.preventDefault();
 			e.stopPropagation();
@@ -162,6 +178,32 @@ export const EditUserModal = ({
 										</field.FormItem>
 									)}
 								</form.AppField>
+								<div>
+									<div className='mb-2 space-y-2'>
+										<Label>Ban User</Label>
+										<div className='text-muted-foreground text-sm'>
+											Type <span className='font-mono border p-0.5'>{code}</span> to confirm
+										</div>
+									</div>
+									<div className='flex gap-2 items-center'>
+										<Input placeholder={code} onChange={(e) => setEnteredCode(e.target.value)} />
+										<Button
+											disabled={code !== enteredCode}
+											type='button'
+											variant='destructive'
+											onClick={() => {
+												if (code === enteredCode) {
+													banUserMutation({
+														userId: initialData.id,
+													});
+												}
+											}}
+										>
+											Ban
+										</Button>
+									</div>
+								</div>
+								<Separator />
 								<div className='flex gap-4 flex-wrap items-center justify-between'>
 									<Button type='submit' disabled={isPending}>
 										{isPending ? 'Saving...' : 'Save'}

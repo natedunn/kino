@@ -16,7 +16,7 @@ import { useTRPC } from '@/kit/api/fetcher/client';
 import { useDataTable } from '@/lib/hooks/use-data-table';
 import { useDialog } from '@/lib/hooks/use-dialog';
 
-import { EditUserModal } from './edit-user-modal';
+import { EditUserDialog } from './edit-user-dialog';
 
 type QueriedUser = ArraySingle<API['output']['admin']['listAllUsers']['users']>;
 
@@ -97,7 +97,7 @@ export const UsersTable = () => {
 								<Pencil className='!size-3' />
 								<span>Edit</span>
 							</Button>
-							<EditUserModal
+							<EditUserDialog
 								onSave={() => {
 									editDialog.trigger();
 									refetch();
