@@ -13,11 +13,12 @@ export const dropTables = async () => {
 		process.exit(0);
 	}
 
-	log.warn('This script has been turned off due to it not working.');
+	log.error('This script has been turned off due to it not working.');
+	process.exit(0);
 
 	// log.start('⏳ Dropping all tables in database...');
 
-	const start = Date.now();
+	// const start = Date.now();
 
 	// const query = sql<string>`SELECT table_name
 	//     FROM information_schema.tables
@@ -33,11 +34,11 @@ export const dropTables = async () => {
 	// 	await httpDb.execute(query);
 	// }
 
-	const end = Date.now();
+	// const end = Date.now();
 
-	log.success('Dropped all tables in', end - start, 'ms');
+	// log.success('Dropped all tables in', end - start, 'ms');
 
-	process.exit(0);
+	// process.exit(0);
 };
 
 dropTables().catch((err) => {

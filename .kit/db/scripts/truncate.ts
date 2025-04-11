@@ -18,26 +18,29 @@ export const truncate = async () => {
 
 	log.start('Truncating tables...');
 
-	const start = Date.now();
-
-	const query = sql<string>`SELECT table_name
-      FROM information_schema.tables
-      WHERE table_schema = 'public';
-    `;
-
-	const result = await httpDb.execute(query);
-	const tables = result.rows;
-
-	for (const table of tables) {
-		const query = sql.raw(`TRUNCATE TABLE "${table.table_name}" CASCADE;`);
-		await httpDb.execute(query);
-	}
-
-	const end = Date.now();
-
-	log.success('✅ Truncating completed in', end - start, 'ms');
-
+	log.error('This script has been turned off due to it not working.');
 	process.exit(0);
+
+	// const start = Date.now();
+
+	// const query = sql<string>`SELECT table_name
+	//     FROM information_schema.tables
+	//     WHERE table_schema = 'public';
+	//   `;
+
+	// const result = await httpDb.execute(query);
+	// const tables = result.rows;
+
+	// for (const table of tables) {
+	// 	const query = sql.raw(`TRUNCATE TABLE "${table.table_name}" CASCADE;`);
+	// 	await httpDb.execute(query);
+	// }
+
+	// const end = Date.now();
+
+	// log.success('✅ Truncating completed in', end - start, 'ms');
+
+	// process.exit(0);
 };
 
 truncate().catch((err) => {
