@@ -1,3 +1,5 @@
+// TODO: delete this file on full migration to TiDB/MySQL
+
 import { sql } from 'drizzle-orm';
 
 import { httpDb } from '@/kit/db';
