@@ -1,6 +1,6 @@
-import { sql } from 'drizzle-orm';
+// import { sql } from 'drizzle-orm';
 
-import { httpDb } from '@/kit/db';
+// import { httpDb } from '@/kit/db';
 import { log } from '@/kit/utils';
 
 export const dropTables = async () => {
@@ -13,23 +13,25 @@ export const dropTables = async () => {
 		process.exit(0);
 	}
 
-	log.start('⏳ Dropping all tables in database...');
+	log.warn('This script has been turned off due to it not working.');
+
+	// log.start('⏳ Dropping all tables in database...');
 
 	const start = Date.now();
 
-	const query = sql<string>`SELECT table_name
-      FROM information_schema.tables
-      WHERE table_schema = 'public'
-        AND table_type = 'BASE TABLE';
-    `;
+	// const query = sql<string>`SELECT table_name
+	//     FROM information_schema.tables
+	//     WHERE table_schema = 'public'
+	//       AND table_type = 'BASE TABLE';
+	//   `;
 
-	const result = await httpDb.execute(query);
-	const tables = result.rows;
+	// const result = await httpDb.execute(query);
+	// const tables = result.rows;
 
-	for (const table of tables) {
-		const query = sql.raw(`DROP TABLE "${table.table_name}" CASCADE;`);
-		await httpDb.execute(query);
-	}
+	// for (const table of tables) {
+	// 	const query = sql.raw(`DROP TABLE "${table.table_name}" CASCADE;`);
+	// 	await httpDb.execute(query);
+	// }
 
 	const end = Date.now();
 
