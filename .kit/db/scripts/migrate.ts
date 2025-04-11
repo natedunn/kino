@@ -1,9 +1,9 @@
-import { migrate } from 'drizzle-orm/neon-http/migrator';
+import { migrate } from 'drizzle-orm/tidb-serverless/migrator';
 
 import { httpDb } from '@/kit/db';
 import { log } from '@/kit/utils';
 
-import { setupGlobalUpdateTrigger } from './setup';
+// import { setupGlobalUpdateTrigger } from './setup';
 
 const runMigrate = async () => {
 	const answer = await log.prompt('Are you sure you want to run migrations?', {
@@ -17,7 +17,7 @@ const runMigrate = async () => {
 	log.start('Running migrations...');
 	const start = Date.now();
 
-	await setupGlobalUpdateTrigger();
+	// await setupGlobalUpdateTrigger();
 	await migrate(httpDb, { migrationsFolder: './migrations' });
 
 	const end = Date.now();
