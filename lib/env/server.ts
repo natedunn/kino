@@ -9,7 +9,7 @@ export const env = createEnv({
 		BETTER_AUTH_SECRET: z.string(),
 		GITHUB_CLIENT_ID: z.string(),
 		GITHUB_CLIENT_SECRET: z.string(),
-		ADMIN_EMAIL: z.string(),
+		SUPER_ADMIN_EMAIL: z.string(),
 		POLAR_ACCESS_TOKEN: z.string(),
 		POLAR_WEBHOOK_SECRET: z.string(),
 		OAUTH_PROXY_REDIRECT_URI: z.string().optional(),

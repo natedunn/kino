@@ -61,17 +61,17 @@ export const adminRouter = {
 			)
 		)
 		.mutation(async ({ input }) => {
-			if (env.ADMIN_EMAIL === input.prevEmail && env.ADMIN_EMAIL !== input.email) {
+			if (env.SUPER_ADMIN_EMAIL === input.prevEmail && env.SUPER_ADMIN_EMAIL !== input.email) {
 				throw new TRPCError({
 					code: 'BAD_REQUEST',
-					message: `Cannot change ${env.ADMIN_EMAIL} your email to ${input.email}. Update env variables before making this change.`,
+					message: `Cannot change ${env.SUPER_ADMIN_EMAIL} your email to ${input.email}. Update env variables before making this change.`,
 				});
 			}
 
-			if (input.role !== 'admin' && env.ADMIN_EMAIL === input.email) {
+			if (input.role !== 'admin' && env.SUPER_ADMIN_EMAIL === input.email) {
 				throw new TRPCError({
 					code: 'BAD_REQUEST',
-					message: `Cannot change ${env.ADMIN_EMAIL} to non-admin role. Update env variables before making this change.`,
+					message: `Cannot change ${env.SUPER_ADMIN_EMAIL} to non-admin role. Update env variables before making this change.`,
 				});
 			}
 

@@ -71,7 +71,7 @@ export const auth = betterAuth({
 					username: profile.login,
 					email: profile.email,
 					image: profile.avatar_url,
-					role: envServer.ADMIN_EMAIL === profile.email ? 'admin' : 'member',
+					role: envServer.SUPER_ADMIN_EMAIL === profile.email ? 'admin' : 'member',
 				};
 			},
 		},
