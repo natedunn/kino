@@ -1,19 +1,16 @@
-import type { NeonQueryFunction } from '@neondatabase/serverless';
+// import type { NeonQueryFunction } from '@neondatabase/serverless';
 
-import { neon, Pool } from '@neondatabase/serverless';
-import { drizzle as drizzleHttp } from 'drizzle-orm/neon-http';
-import { drizzle } from 'drizzle-orm/neon-serverless';
+// import { neon, Pool } from '@neondatabase/serverless';
+// import { drizzle } from 'drizzle-orm/neon-serverless';
+// import { drizzle as drizzleHttp } from 'drizzle-orm/neon-http';
+import { connect } from '@tidbcloud/serverless';
+import { drizzle } from 'drizzle-orm/tidb-serverless';
 
 import { env } from '@/lib/env/server';
 
 import * as tables from '../../lib/db/tables';
 
-// Serverless
-const connection = new Pool({ connectionString: env.DATABASE_URL });
-export const db = drizzle(connection, {
-	schema: tables,
-});
+export const client = connect({ url: env.DATABASE_URL });
+export const db = drizzle({ client, schema: tables });
 
-// HTTP
-const sql: NeonQueryFunction<boolean, boolean> = neon(env.DATABASE_URL);
-export const httpDb = drizzleHttp(sql);
+export const httpDb = db;
