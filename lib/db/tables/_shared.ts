@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { integer, serial, timestamp, varchar } from 'drizzle-orm/pg-core';
+import { int, serial, timestamp, varchar } from 'drizzle-orm/mysql-core';
 
 export const defaults = {
 	randomId: sql`LPAD(LEFT(REPLACE(REPLACE(REPLACE(encode(convert_to(md5(random()::text), 'utf-8'), 'base64'), '/', ''), '+', ''), '=', ''), 15), 15, '0')`,
@@ -13,6 +13,6 @@ export const defaultColumns = () => {
 		createdAt: timestamp('created_at').default(defaults.currentTimestamp).notNull(),
 		updatedAt: timestamp('updated_at').default(defaults.currentTimestamp).notNull(),
 		deletedAt: timestamp('deleted_at'),
-		updates: integer('updates').default(0).notNull(),
+		updates: int('updates').default(0).notNull(),
 	};
 };

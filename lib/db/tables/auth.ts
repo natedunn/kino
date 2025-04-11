@@ -1,16 +1,16 @@
-import { boolean, integer, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
+import { boolean, int, mysqlTable, text, timestamp, varchar } from 'drizzle-orm/mysql-core';
 
-export const user = pgTable('user', {
-	id: text('id').primaryKey(),
+export const user = mysqlTable('user', {
+	id: varchar('id', { length: 36 }).primaryKey(),
 	name: text('name').notNull(),
-	email: text('email').notNull().unique(),
+	email: varchar('email', { length: 255 }).notNull().unique(),
 	emailVerified: boolean('email_verified').notNull(),
 	image: text('image'),
 	createdAt: timestamp('created_at').notNull(),
 	updatedAt: timestamp('updated_at').notNull(),
 	twoFactorEnabled: boolean('two_factor_enabled'),
-	normalizedEmail: text('normalized_email').unique(),
-	username: text('username').notNull().unique(),
+	normalizedEmail: varchar('normalized_email', { length: 255 }).unique(),
+	username: varchar('username', { length: 255 }).notNull().unique(),
 	displayUsername: text('display_username'),
 	role: text('role').notNull(),
 	banned: boolean('banned'),
@@ -18,26 +18,26 @@ export const user = pgTable('user', {
 	banExpires: timestamp('ban_expires'),
 });
 
-export const session = pgTable('session', {
-	id: text('id').primaryKey(),
+export const session = mysqlTable('session', {
+	id: varchar('id', { length: 36 }).primaryKey(),
 	expiresAt: timestamp('expires_at').notNull(),
-	token: text('token').notNull().unique(),
+	token: varchar('token', { length: 255 }).notNull().unique(),
 	createdAt: timestamp('created_at').notNull(),
 	updatedAt: timestamp('updated_at').notNull(),
 	ipAddress: text('ip_address'),
 	userAgent: text('user_agent'),
-	userId: text('user_id')
+	userId: varchar('user_id', { length: 36 })
 		.notNull()
 		.references(() => user.id, { onDelete: 'cascade' }),
 	impersonatedBy: text('impersonated_by'),
 	activeOrganizationId: text('active_organization_id'),
 });
 
-export const account = pgTable('account', {
-	id: text('id').primaryKey(),
+export const account = mysqlTable('account', {
+	id: varchar('id', { length: 36 }).primaryKey(),
 	accountId: text('account_id').notNull(),
 	providerId: text('provider_id').notNull(),
-	userId: text('user_id')
+	userId: varchar('user_id', { length: 36 })
 		.notNull()
 		.references(() => user.id, { onDelete: 'cascade' }),
 	accessToken: text('access_token'),
@@ -51,8 +51,8 @@ export const account = pgTable('account', {
 	updatedAt: timestamp('updated_at').notNull(),
 });
 
-export const verification = pgTable('verification', {
-	id: text('id').primaryKey(),
+export const verification = mysqlTable('verification', {
+	id: varchar('id', { length: 36 }).primaryKey(),
 	identifier: text('identifier').notNull(),
 	value: text('value').notNull(),
 	expiresAt: timestamp('expires_at').notNull(),
@@ -60,68 +60,68 @@ export const verification = pgTable('verification', {
 	updatedAt: timestamp('updated_at'),
 });
 
-export const twoFactor = pgTable('two_factor', {
-	id: text('id').primaryKey(),
+export const twoFactor = mysqlTable('two_factor', {
+	id: varchar('id', { length: 36 }).primaryKey(),
 	secret: text('secret').notNull(),
 	backupCodes: text('backup_codes').notNull(),
-	userId: text('user_id')
+	userId: varchar('user_id', { length: 36 })
 		.notNull()
 		.references(() => user.id, { onDelete: 'cascade' }),
 });
 
-export const organization = pgTable('organization', {
-	id: text('id').primaryKey(),
+export const organization = mysqlTable('organization', {
+	id: varchar('id', { length: 36 }).primaryKey(),
 	name: text('name').notNull(),
-	slug: text('slug').unique(),
+	slug: varchar('slug', { length: 255 }).unique(),
 	logo: text('logo'),
 	createdAt: timestamp('created_at').notNull(),
 	metadata: text('metadata'),
 });
 
-export const member = pgTable('member', {
-	id: text('id').primaryKey(),
-	organizationId: text('organization_id')
+export const member = mysqlTable('member', {
+	id: varchar('id', { length: 36 }).primaryKey(),
+	organizationId: varchar('organization_id', { length: 36 })
 		.notNull()
 		.references(() => organization.id, { onDelete: 'cascade' }),
-	userId: text('user_id')
+	userId: varchar('user_id', { length: 36 })
 		.notNull()
 		.references(() => user.id, { onDelete: 'cascade' }),
 	role: text('role').notNull(),
 	createdAt: timestamp('created_at').notNull(),
 });
 
-export const invitation = pgTable('invitation', {
-	id: text('id').primaryKey(),
-	organizationId: text('organization_id')
+export const invitation = mysqlTable('invitation', {
+	id: varchar('id', { length: 36 }).primaryKey(),
+	organizationId: varchar('organization_id', { length: 36 })
 		.notNull()
 		.references(() => organization.id, { onDelete: 'cascade' }),
 	email: text('email').notNull(),
 	role: text('role'),
 	status: text('status').notNull(),
 	expiresAt: timestamp('expires_at').notNull(),
-	inviterId: text('inviter_id')
+	inviterId: varchar('inviter_id', { length: 36 })
 		.notNull()
 		.references(() => user.id, { onDelete: 'cascade' }),
 });
 
-export const apikey = pgTable('apikey', {
-	id: text('id').primaryKey(),
+export const apikey = mysqlTable('apikey', {
+	id: varchar('id', { length: 36 }).primaryKey(),
 	name: text('name'),
 	start: text('start'),
 	prefix: text('prefix'),
 	key: text('key').notNull(),
-	userId: text('user_id')
+	userId: varchar('user_id', { length: 36 })
 		.notNull()
 		.references(() => user.id, { onDelete: 'cascade' }),
-	refillInterval: integer('refill_interval'),
-	refillAmount: integer('refill_amount'),
+	refillInterval: int('refill_interval'),
+	refillAmount: int('refill_amount'),
 	lastRefillAt: timestamp('last_refill_at'),
 	enabled: boolean('enabled'),
 	rateLimitEnabled: boolean('rate_limit_enabled'),
-	rateLimitTimeWindow: integer('rate_limit_time_window'),
-	rateLimitMax: integer('rate_limit_max'),
-	requestCount: integer('request_count'),
-	remaining: integer('remaining'),
+	rateLimitTimeWindow: int('rate_limit_time_window'),
+	rateLimitMax: int('rate_limit_max'),
+	requestCount: int('request_count'),
+	remaining: int('remaining'),
 	lastRequest: timestamp('last_request'),
 	expiresAt: timestamp('expires_at'),
 	createdAt: timestamp('created_at').notNull(),
