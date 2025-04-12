@@ -6,14 +6,17 @@ import { log } from '@/kit/utils';
 // import { setupGlobalUpdateTrigger } from './setup';
 
 const runMigrate = async () => {
-	const answer = await log.prompt('Are you sure you want to run migrations?', {
-		type: 'confirm',
-	});
+	if (!process.env.SKIP_MIGRATION_PROMPT || process.env.SKIP_MIGRATION_PROMPT !== 'true') {
+		const answer = await log.prompt('Are you sure you want to run migrations?', {
+			type: 'confirm',
+		});
 
-	if (!answer) {
-		log.error('Migrations cancelled');
-		process.exit(0);
+		if (!answer) {
+			log.error('Migrations cancelled');
+			process.exit(0);
+		}
 	}
+
 	log.start('Running migrations...');
 	const start = Date.now();
 
