@@ -1,0 +1,26 @@
+{
+	"compilerOptions": {
+		"strict": true,
+		"esModuleInterop": true,
+		"jsx": "react-jsx",
+		"module": "ESNext",
+		"types": [],
+		"moduleResolution": "Bundler",
+		"lib": ["DOM", "DOM.Iterable", "ES2024"],
+		"isolatedModules": true,
+		"resolveJsonModule": true,
+		"skipLibCheck": true,
+		"target": "ES2024",
+		"allowJs": true,
+		"forceConsistentCasingInFileNames": true,
+		"allowSyntheticDefaultImports": true,
+		"baseUrl": ".",
+		"paths": {
+			"~api": ["src/lib/api/index.ts"],
+			"@/*": ["src/*"]
+		},
+		"noEmit": true
+	},
+	"include": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"],
+	"exclude": ["node_modules"]
+}
