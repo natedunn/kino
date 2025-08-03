@@ -1,7 +1,5 @@
 import { createFileRoute, Outlet } from '@tanstack/react-router';
 
-import { MainNav } from '@/routes/_default/-components/main-nav';
-
 // const checkTeamExists = async (slug: string) => {
 // 	return slug === 'acme';
 // };
@@ -15,8 +13,6 @@ export const Route = createFileRoute('/_default')({
 });
 
 function RouteComponent() {
-	const { user } = Route.useLoaderData();
-
 	return (
 		<main className='flex h-screen flex-col'>
 			<div className='container flex flex-1'>
