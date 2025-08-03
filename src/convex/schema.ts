@@ -19,46 +19,14 @@ export const userSchema = z.object({
 	urls: z.object({ url: z.string().url(), text: z.string() }).array().optional().default([]),
 });
 
-export const postSchema = z.object({
-	_id: zid('post'),
-	_creationTime: z.number(),
-	projectId: zid('project'),
-	userAuthorId: zid('user'),
-	content: z.string().min(1).max(500),
-	projectIsPrivate: z.boolean().default(false),
-	stage: z.string(),
-	editedTime: z.string().datetime().default(new Date().toISOString()),
-});
-
-export const postLikeSchema = z.object({
-	_id: zid('postLike'),
-	userId: zid('user'),
-	postId: zid('post'),
-});
-
-export const postCommentSchema = z.object({
-	_id: zid('postComment'),
-	_creationTime: z.number(),
-	updatedTime: z.number(),
-	deletedTime: z.number().optional(),
-	postId: zid('post'),
-	userId: zid('user'),
-	content: z.string().min(1).max(500),
-	parentPostCommentId: zid('postComment').optional(),
-});
-
 export const projectSchema = z.object({
 	_id: zid('project'),
 	ownerUserId: zid('user'),
 	name: z.string().max(100).min(1),
 	description: z.string().max(280).optional(),
-	projectStartDate: z.string().datetime().optional(),
 	urls: z.object({ url: z.string().url(), text: z.string() }).array().optional(),
-	stack: z.string().array().optional(),
-	model: z.string().array().optional(),
 	private: z.boolean(),
 	logoUrl: z.string().url().optional(),
-	stage: z.string(),
 	slug: z
 		.string()
 		.regex(/^[a-z0-9_]+(?:-[a-z0-9_]+)*$/, {
@@ -80,6 +48,24 @@ export const projectUserSchema = z.object({
 	projectIsPrivate: z.boolean(),
 });
 
+export const feedback = z.object({
+	_id: zid('feedback'),
+	_creationTime: z.number(),
+	updatedTime: z.number().optional().default(Date.now()),
+	deletedTime: z.number().optional(),
+	content: z.string().min(1).max(500),
+	authorUserId: zid('user'),
+	projectId: zid('project'),
+	upvotes: z.number().default(0),
+});
+
+export const feedbackComments = z.object({
+	_id: zid('feedbackComments'),
+	_creationTime: z.number(),
+	feedbackId: zid('feedback'),
+	authorUserId: zid('user'),
+});
+
 /**
  * ✨ All Schemas
  */
@@ -88,18 +74,6 @@ const schema = defineSchema({
 		.index('by_username', ['username'])
 		.index('by_email', ['email'])
 		.index('by_globalRole', ['globalRole']),
-	post: defineZTable(postSchema)
-		.index('by_userAuthorId', ['userAuthorId'])
-		.index('by_projectId', ['projectId'])
-		.index('by_projectIsPrivate', ['projectIsPrivate'])
-		.index('by_projectId_projectIsPrivate', ['projectId', 'projectIsPrivate']),
-	postComment: defineZTable(postCommentSchema)
-		.index('by_postId', ['postId'])
-		.index('by_userId', ['userId'])
-		.index('by_parentPostCommentId', ['parentPostCommentId']),
-	postLike: defineZTable(postLikeSchema)
-		.index('by_userId', ['userId'])
-		.index('by_postId', ['postId']),
 	project: defineZTable(projectSchema)
 		.index('by_ownerUserId', ['ownerUserId'])
 		.index('by_slug', ['slug'])

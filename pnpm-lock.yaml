@@ -167,6 +167,9 @@ importers:
       tailwindcss:
         specifier: ^4.1.11
         version: 4.1.11
+      tailwindcss-hocus:
+        specifier: ^1.0.0
+        version: 1.0.0(tailwindcss@4.1.11)
       unenv:
         specifier: ^1.10.0
         version: 1.10.0
@@ -5143,6 +5146,11 @@ packages:
 
   tailwind-merge@3.3.1:
     resolution: {integrity: sha512-gBXpgUm/3rp1lMZZrM/w7D8GKqshif0zAymAhbCyIt8KMe+0v9DQ7cdYLR4FHH/cKpdTXb+A/tKKU3eolfsI+g==}
+
+  tailwindcss-hocus@1.0.0:
+    resolution: {integrity: sha512-PLgBHiCHZOCgY/VtRuatNwsqzqf1aYa7GI2+ZxwUbh/U8A9yn9baow3G3HUc+bPALLxC/yDcDZhznRY8efwVKQ==}
+    peerDependencies:
+      tailwindcss: ^4.0.0
 
   tailwindcss@4.1.11:
     resolution: {integrity: sha512-2E9TBm6MDD/xKYe+dvJZAmg3yxIEDNRc0jwlNyDg/4Fil2QcSLjFKGVff0lAf1jjeaArlG/M75Ey/EYr/OJtBA==}
@@ -10961,6 +10969,10 @@ snapshots:
   system-architecture@0.1.0: {}
 
   tailwind-merge@3.3.1: {}
+
+  tailwindcss-hocus@1.0.0(tailwindcss@4.1.11):
+    dependencies:
+      tailwindcss: 4.1.11
 
   tailwindcss@4.1.11: {}
 

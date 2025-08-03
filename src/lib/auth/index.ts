@@ -1,7 +1,7 @@
 import { convexAdapter } from '@convex-dev/better-auth';
 import { convex } from '@convex-dev/better-auth/plugins';
 import { betterAuth } from 'better-auth';
-import { username } from 'better-auth/plugins';
+import { organization, username } from 'better-auth/plugins';
 
 import { GenericCtx } from '@/convex/_generated/server';
 import { betterAuthComponent } from '@/convex/api/auth';
@@ -37,6 +37,7 @@ export const createAuth = (ctx: GenericCtx) => {
 				minUsernameLength: 3,
 				maxUsernameLength: 20,
 			}),
+			organization(),
 			convex(),
 		],
 	});

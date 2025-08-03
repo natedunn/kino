@@ -2,7 +2,6 @@
 .output/
 .prettierrc
 .tanstack/
-**/api
 **/build
 **/public
 **/public
