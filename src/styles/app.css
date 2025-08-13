@@ -190,12 +190,18 @@
 	}
 }
 
+.container-no-center {
+	--max-width: 80rem;
+	max-width: var(--max-width);
+	padding-inline: 2rem;
+}
+
 .disable-transitions * {
 	transition: none !important;
 }
 
 .link-text {
-	@apply decoration-2 underline-offset-2 hover:underline hover:decoration-foreground/75;
+	@apply decoration-foreground/20 decoration-2 underline-offset-2 hover:underline hover:decoration-foreground/75;
 }
 
 @utility text-gradient-primary {

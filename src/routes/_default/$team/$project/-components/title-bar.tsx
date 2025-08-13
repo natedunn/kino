@@ -1,23 +1,12 @@
-import { ChevronRight } from 'lucide-react';
-
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import {
-	Breadcrumb,
-	BreadcrumbItem,
-	BreadcrumbList,
-	BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb';
-
-import { Route } from '../@layout';
-
 type TitleBarProps = {
 	children: React.ReactNode;
 };
 
 export const TitleBar = ({ children }: TitleBarProps) => {
-	return (
-		<div className='flex h-14 w-full items-center border-b border-border bg-muted/50 px-6'>
-			{children}
-		</div>
-	);
+	// return (
+	// 	<div className='m-4 flex h-14 w-full items-center rounded-xl border border-border bg-gradient-to-b from-muted/70 to-muted/50 px-6 shadow-[0px_10px_16px_-3px_rgba(0,_0,_0,_0.05)] backdrop-blur-md'>
+	// 		{children}
+	// 	</div>
+	// );
+	return <div className='m-4 px-4'>{children}</div>;
 };

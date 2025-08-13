@@ -15,7 +15,7 @@ export const Route = createFileRoute('/_default')({
 function RouteComponent() {
 	return (
 		<main className='flex h-screen flex-col'>
-			<div className='container flex flex-1'>
+			<div className='flex flex-1'>
 				<Outlet />
 			</div>
 			<footer className='mt-auto border-t border-border py-4 text-center text-sm text-muted-foreground'>

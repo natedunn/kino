@@ -126,8 +126,8 @@ const Comment = ({ item }: { item: Item }) => {
 	};
 
 	return (
-		<li className='update-comment relative flex border'>
-			<div className='flex flex-col items-center justify-start border-r bg-muted pt-3 pl-4'>
+		<li className='update-comment relative flex rounded-lg border'>
+			<div className='flex flex-col items-center justify-start rounded-l-lg border-r bg-muted pt-3 pl-4'>
 				<div className='relative z-10 -mr-4 size-8 overflow-hidden rounded-full border bg-gradient-to-tr from-white/50 to-accent shadow-xl shadow-black'>
 					<img
 						className='mt-0.5 size-8'

@@ -72,8 +72,8 @@ function RouteComponent() {
 			</TitleBar>
 
 			<header>
-				<div className='border-b bg-muted/50'>
-					<div className='container flex items-start gap-4 px-8 pt-12 pb-6'>
+				<div className='m-4 w-full rounded-lg border bg-muted'>
+					<div className='container flex items-start gap-4 px-8 pt-16 pb-6'>
 						<div className='mt-1'>
 							<CircleDot size={28} className='text-primary' />
 						</div>
@@ -86,7 +86,7 @@ function RouteComponent() {
 					</div>
 				</div>
 			</header>
-			<main className='p-6'>
+			<main className='p-4'>
 				<div className='grid gap-4 md:grid-cols-12'>
 					<div className='order-first md:order-last md:col-span-4'>
 						<div className='sticky top-4 flex flex-col gap-4'>

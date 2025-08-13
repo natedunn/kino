@@ -1,6 +1,6 @@
 export const AssignedTo = () => {
 	return (
-		<div className='flex border bg-muted/50'>
+		<div className='flex rounded-xl border'>
 			<div className='flex items-center justify-center border-r bg-muted px-4'>
 				<div className='mr-[-2.25rem] size-10 overflow-hidden rounded-full border'>
 					<img src='https://i.pravatar.cc/150?img=natedunn' alt='natedunn' />
