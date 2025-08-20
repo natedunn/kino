@@ -1,8 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { Link, LinkProps } from '@tanstack/react-router';
-import { ClassValue } from 'clsx';
+import { useEffect, useState } from 'react';
 import {
 	BarChart3,
 	Bell,
@@ -12,11 +10,9 @@ import {
 	Command,
 	FileSpreadsheet,
 	FileText,
-	LucideIcon,
 	Map,
 	MessageCircle,
 	MessageSquare,
-	MoreHorizontal,
 	Rss,
 	Search,
 	Users,
@@ -34,22 +30,21 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { UserDropdown } from '@/components/user-dropdown';
 
+import { DynamicNavigation, NavigationItem } from './dynamic-nav';
+
 export function ProjectNav({ team, project }: { team: string; project: string }) {
 	const [isCommandOpen, setIsCommandOpen] = useState(false);
-	const [visibleFeatures, setVisibleFeatures] = useState<number>(11);
-	const featuresContainerRef = useRef<HTMLDivElement>(null);
-	const featureButtonRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
 	const params = {
 		team,
 		project,
 	};
 
-	const features = [
+	const features: NavigationItem[] = [
 		{
 			children: 'Overview',
 			icon: BarChart3,
-			to: '/$team/$project/',
+			to: '/$team/$project',
 			params: (prev) => ({ ...prev, ...params }),
 		},
 		{
@@ -92,11 +87,7 @@ export function ProjectNav({ team, project }: { team: string; project: string })
 		{ children: 'Jobs', icon: Briefcase, to: '/' },
 		{ children: 'Wiki', icon: BookOpen, to: '/' },
 		{ children: 'Feeds', icon: Rss, to: '/' },
-	] as (Omit<LinkProps, 'children'> & {
-		className?: ClassValue;
-		children: string;
-		icon?: LucideIcon | string;
-	})[];
+	];
 
 	const notifications = [
 		{
@@ -120,67 +111,6 @@ export function ProjectNav({ team, project }: { team: string; project: string })
 	];
 
 	useEffect(() => {
-		const calculateVisibleFeatures = () => {
-			if (!featuresContainerRef.current) return;
-
-			const container = featuresContainerRef.current;
-			const containerWidth = container.offsetWidth;
-
-			// Reserve space for the "more" button (approximately 40px)
-			const moreButtonWidth = 40;
-			const availableWidth = containerWidth - moreButtonWidth;
-
-			let totalWidth = 0;
-			let visibleCount = 0;
-
-			// Measure actual button widths
-			for (let i = 0; i < features.length; i++) {
-				const buttonRef = featureButtonRefs.current[i];
-				if (!buttonRef) {
-					// If button isn't rendered yet, estimate width based on text length
-					// Icon (16px) + padding (16px) + text width (approx 8px per char) + gap (8px)
-					const estimatedWidth = 40 + features[i].children.length * 8;
-					totalWidth += estimatedWidth;
-				} else {
-					// Use actual measured width
-					totalWidth += buttonRef.offsetWidth + 4; // +4 for gap
-				}
-
-				if (totalWidth <= availableWidth) {
-					visibleCount = i + 1;
-				} else {
-					break;
-				}
-			}
-
-			// Ensure at least one item is visible
-			setVisibleFeatures(Math.max(1, visibleCount));
-		};
-
-		// Initial calculation
-		calculateVisibleFeatures();
-
-		// Recalculate on resize
-		const handleResize = () => {
-			// Small delay to ensure DOM has updated
-			setTimeout(calculateVisibleFeatures, 10);
-		};
-
-		window.addEventListener('resize', handleResize);
-
-		// Also recalculate when buttons are rendered (for initial load)
-		const observer = new ResizeObserver(calculateVisibleFeatures);
-		if (featuresContainerRef.current) {
-			observer.observe(featuresContainerRef.current);
-		}
-
-		return () => {
-			window.removeEventListener('resize', handleResize);
-			observer.disconnect();
-		};
-	}, []); // Removed features from the dependency array
-
-	useEffect(() => {
 		const handleKeyDown = (e: KeyboardEvent) => {
 			if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
 				e.preventDefault();
@@ -191,9 +121,6 @@ export function ProjectNav({ team, project }: { team: string; project: string })
 		document.addEventListener('keydown', handleKeyDown);
 		return () => document.removeEventListener('keydown', handleKeyDown);
 	}, []);
-
-	const visibleFeaturesList = features.slice(0, visibleFeatures);
-	const hiddenFeatures = features.slice(visibleFeatures);
 
 	return (
 		<>
@@ -293,61 +220,7 @@ export function ProjectNav({ team, project }: { team: string; project: string })
 					<div className='container'>
 						{/* Bottom row */}
 						<div className='flex items-center justify-between py-2'>
-							{/* Left: Features with dynamic overflow handling */}
-							<div ref={featuresContainerRef} className='flex min-w-0 flex-1 items-center gap-1'>
-								{visibleFeaturesList.map((feature, index) => {
-									const Icon = feature.icon;
-									return (
-										<Button
-											key={feature.children}
-											ref={(el) => {
-												featureButtonRefs.current[index] = el;
-											}}
-											variant='ghost'
-											size='sm'
-											className='flex shrink-0 items-center gap-2 text-sm'
-											asChild
-										>
-											<Link to={feature.to} params={feature.params}>
-												{typeof Icon === 'string'
-													? Icon
-													: Icon && <Icon className='size-4 text-muted-foreground' />}
-												<span>{feature.children}</span>
-											</Link>
-										</Button>
-									);
-								})}
-
-								{hiddenFeatures.length > 0 && (
-									<DropdownMenu>
-										<DropdownMenuTrigger asChild>
-											<Button variant='ghost' size='sm' className='shrink-0'>
-												<MoreHorizontal className='h-4 w-4' />
-												<span className='sr-only'>More features</span>
-											</Button>
-										</DropdownMenuTrigger>
-										<DropdownMenuContent>
-											{hiddenFeatures.map((feature) => {
-												const Icon = feature.icon;
-												return (
-													<DropdownMenuItem key={feature.children} asChild>
-														<Link
-															to={feature.to}
-															params={feature.params}
-															className='flex items-center gap-2'
-														>
-															{typeof Icon === 'string'
-																? Icon
-																: Icon && <Icon className='size-4 text-muted-foreground' />}
-															{feature.children}
-														</Link>
-													</DropdownMenuItem>
-												);
-											})}
-										</DropdownMenuContent>
-									</DropdownMenu>
-								)}
-							</div>
+							<DynamicNavigation items={features} />
 						</div>
 					</div>
 				</div>
