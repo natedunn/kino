@@ -139,8 +139,8 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 				</ScriptOnce>
 				{children}
 				<Toaster position='top-right' closeButton richColors />
-				<TanStackRouterDevtools position='bottom-right' />
-				<ReactQueryDevtools buttonPosition='bottom-left' />
+				{/* <TanStackRouterDevtools position='bottom-right' /> */}
+				{/* <ReactQueryDevtools buttonPosition='bottom-left' /> */}
 				<Scripts />
 			</body>
 		</html>

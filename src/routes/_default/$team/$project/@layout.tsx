@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet } from '@tanstack/react-router';
 
-import { ProjectNav } from '@/routes/_default/$team/$project/-components/project-navigation';
+import { ProjectNav } from '@/routes/_default/$team/$project/-components/project-nav';
 
 export const Route = createFileRoute('/_default/$team/$project')({
 	component: RouteComponent,
@@ -12,9 +12,7 @@ function RouteComponent() {
 	return (
 		<div className='flex flex-1 flex-col'>
 			<ProjectNav team={teamSlug} project={projectSlug} />
-			<div>
-				<Outlet />
-			</div>
+			<Outlet />
 		</div>
 	);
 }

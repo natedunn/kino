@@ -40,7 +40,7 @@ export default function BoardsMenu({
 				onClick={handleSelectAll}
 				className={cn(
 					'flex w-full items-center justify-between rounded-lg px-4 py-3 text-left text-sm font-medium transition-colors',
-					'text-muted-foreground hocus:bg-accent',
+					'cursor-pointer text-muted-foreground hocus:bg-accent',
 					allSelected ? 'bg-muted text-foreground' : 'text-muted-foreground'
 				)}
 			>
