@@ -126,18 +126,18 @@ const Comment = ({ item }: { item: Item }) => {
 	};
 
 	return (
-		<li className='update-comment relative flex rounded-lg border'>
-			<div className='flex flex-col items-center justify-start rounded-l-lg border-r bg-muted pt-3 pl-4'>
+		<li className='update-comment relative flex overflow-hidden rounded-lg border'>
+			<div className='flex flex-col items-center justify-start border-r bg-muted pt-3 pl-4'>
 				<div className='relative z-10 -mr-4 size-8 overflow-hidden rounded-full border bg-gradient-to-tr from-white/50 to-accent shadow-xl shadow-black'>
 					<img
-						className='mt-0.5 size-8'
+						className='size-8'
 						src={`https://i.pravatar.cc/150?img=${item.user.username}`}
 						alt=''
 					/>
 				</div>
 			</div>
-			<div className='flex w-full flex-col'>
-				<div className='flex w-full justify-between gap-2 bg-muted/50 px-6 py-4 text-muted-foreground'>
+			<div className='flex w-full flex-col bg-background'>
+				<div className='flex w-full justify-between gap-2 px-6 py-4'>
 					<span>
 						<a
 							className='hocus:underline'
@@ -146,12 +146,12 @@ const Comment = ({ item }: { item: Item }) => {
 							@{item.user.username}
 						</a>
 						{` `}
-						commented
+						<span className='text-muted-foreground'>commented</span>
 					</span>
 					<div>12/12/2023</div>
 				</div>
 				<Separator className='w-full' />
-				<div className='flex flex-col gap-4 bg-muted/50 p-4'>
+				<div className='flex flex-col gap-4 p-4'>
 					<div dangerouslySetInnerHTML={{ __html: item.content }} />
 					{!!item.commentAttachments && (
 						<div className='flex flex-col gap-2'>
@@ -283,7 +283,7 @@ const Status = ({ item }: { item: Item }) => {
 
 	return (
 		<li className='relative z-10 bg-background'>
-			<div className='flex items-center gap-2 border border-primary/20 bg-gradient-to-r from-primary/10 to-muted p-4 first-of-type:mt-0'>
+			<div className='flex items-center gap-2 rounded-lg border border-primary/20 bg-gradient-to-r from-primary/10 to-primary/20 p-4 first-of-type:mt-0'>
 				<div>
 					<Icon size={20} className='text-primary' />
 				</div>
