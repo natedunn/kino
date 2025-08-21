@@ -14,7 +14,7 @@ function RouteComponent() {
 	const { team, project } = Route.useParams();
 
 	return (
-		<div className='container'>
+		<div className='container overflow-visible'>
 			<div className='grid-cols-12 gap-10 py-6 md:grid'>
 				<div className='md:col-span-3'>
 					<div className='sticky top-6 flex flex-col overflow-hidden rounded-lg border'>

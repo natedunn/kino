@@ -32,7 +32,15 @@ import { UserDropdown } from '@/components/user-dropdown';
 
 import { DynamicNavigation, NavigationItem } from './dynamic-nav';
 
-export function ProjectNav({ team, project }: { team: string; project: string }) {
+export function ProjectNav({
+	team,
+	project,
+	onNavCalculation,
+}: {
+	team: string;
+	project: string;
+	onNavCalculation: (state: boolean) => void;
+}) {
 	const [isCommandOpen, setIsCommandOpen] = useState(false);
 
 	const params = {
@@ -216,7 +224,10 @@ export function ProjectNav({ team, project }: { team: string; project: string })
 					</div>
 				</div>
 
-				<DynamicNavigation items={features} />
+				<DynamicNavigation
+					items={features}
+					onStateChange={(state) => onNavCalculation(state.isCalculating)}
+				/>
 			</nav>
 
 			<CommandPalette open={isCommandOpen} onOpenChange={setIsCommandOpen} />

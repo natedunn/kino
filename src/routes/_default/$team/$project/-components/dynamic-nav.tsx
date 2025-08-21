@@ -22,16 +22,26 @@ export interface NavigationItem extends Omit<LinkProps, 'children'> {
 interface DynamicNavigationProps {
 	items: NavigationItem[];
 	className?: string;
+	onStateChange?: (state: { isCalculating: boolean }) => void;
 }
 
-export function DynamicNavigation({ items }: DynamicNavigationProps) {
+export function DynamicNavigation({ items, onStateChange }: DynamicNavigationProps) {
 	const [visibleItems, setVisibleItems] = useState<number>(10);
 	const containerRef = useRef<HTMLDivElement>(null);
 	const itemButtonRefs = useRef<(HTMLButtonElement | null)[]>([]);
+	// const [isCalculated, setIsCalculated] = useState<boolean>(false);
+	const [isCalculating, setIsCalculating] = useState<boolean>(true);
+
+	useEffect(() => {
+		onStateChange?.({ isCalculating });
+	}, [isCalculating, onStateChange]);
 
 	useEffect(() => {
 		const calculateVisibleItems = () => {
-			if (!containerRef.current) return;
+			if (!containerRef.current) {
+				setIsCalculating(false);
+				return;
+			}
 
 			const container = containerRef.current;
 			const containerWidth = container.offsetWidth;
@@ -73,6 +83,7 @@ export function DynamicNavigation({ items }: DynamicNavigationProps) {
 			if (Math.abs(finalCount - visibleItems) > 0) {
 				setVisibleItems(finalCount);
 			}
+			setIsCalculating(false);
 		};
 
 		// Initial calculation with a delay to ensure DOM is ready
@@ -81,6 +92,7 @@ export function DynamicNavigation({ items }: DynamicNavigationProps) {
 		// Debounced resize handler to prevent excessive calculations
 		let resizeTimeout: NodeJS.Timeout;
 		const handleResize = () => {
+			setIsCalculating(true);
 			clearTimeout(resizeTimeout);
 			resizeTimeout = setTimeout(calculateVisibleItems, 100);
 		};
@@ -89,6 +101,7 @@ export function DynamicNavigation({ items }: DynamicNavigationProps) {
 
 		// Observer for container size changes
 		const observer = new ResizeObserver(() => {
+			setIsCalculating(true);
 			clearTimeout(resizeTimeout);
 			resizeTimeout = setTimeout(calculateVisibleItems, 50);
 		});

@@ -1,4 +1,4 @@
-import { ChevronDown, Monitor, Moon, Sun, User } from 'lucide-react';
+import { ChevronDown, Moon, Sun, User } from 'lucide-react';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
