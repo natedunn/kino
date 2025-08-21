@@ -11,9 +11,7 @@
 import { createServerRootRoute } from '@tanstack/react-start/server'
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as DashboardAtlayoutRouteImport } from './routes/dashboard/@layout'
 import { Route as DefaultAtlayoutRouteImport } from './routes/_default/@layout'
-import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
 import { Route as DefaultIndexRouteImport } from './routes/_default/index'
 import { Route as BlankSignInRouteImport } from './routes/_blank/sign-in'
 import { Route as Blank404RouteImport } from './routes/_blank/404'
@@ -37,19 +35,9 @@ import { ServerRoute as ApiAuthSplatServerRouteImport } from './routes/api/auth/
 
 const rootServerRouteImport = createServerRootRoute()
 
-const DashboardAtlayoutRoute = DashboardAtlayoutRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const DefaultAtlayoutRoute = DefaultAtlayoutRouteImport.update({
   id: '/_default',
   getParentRoute: () => rootRouteImport,
-} as any)
-const DashboardIndexRoute = DashboardIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => DashboardAtlayoutRoute,
 } as any)
 const DefaultIndexRoute = DefaultIndexRouteImport.update({
   id: '/',
@@ -165,11 +153,9 @@ const ApiAuthSplatServerRoute = ApiAuthSplatServerRouteImport.update({
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/dashboard': typeof DashboardAtlayoutRouteWithChildren
   '/404': typeof Blank404Route
   '/sign-in': typeof BlankSignInRoute
   '/': typeof DefaultIndexRoute
-  '/dashboard/': typeof DashboardIndexRoute
   '/$team/$project': typeof DefaultTeamProjectAtlayoutRouteWithChildren
   '/$team/settings': typeof DefaultTeamSettingsRoute
   '/create/team': typeof DefaultCreateTeamRoute
@@ -191,7 +177,6 @@ export interface FileRoutesByTo {
   '/404': typeof Blank404Route
   '/sign-in': typeof BlankSignInRoute
   '/': typeof DefaultIndexRoute
-  '/dashboard': typeof DashboardIndexRoute
   '/$team/$project': typeof DefaultTeamProjectAtlayoutRouteWithChildren
   '/$team/settings': typeof DefaultTeamSettingsRoute
   '/create/team': typeof DefaultCreateTeamRoute
@@ -211,11 +196,9 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_default': typeof DefaultAtlayoutRouteWithChildren
-  '/dashboard': typeof DashboardAtlayoutRouteWithChildren
   '/_blank/404': typeof Blank404Route
   '/_blank/sign-in': typeof BlankSignInRoute
   '/_default/': typeof DefaultIndexRoute
-  '/dashboard/': typeof DashboardIndexRoute
   '/_default/$team/$project': typeof DefaultTeamProjectAtlayoutRouteWithChildren
   '/_default/$team/settings': typeof DefaultTeamSettingsRoute
   '/_default/create/team': typeof DefaultCreateTeamRoute
@@ -236,11 +219,9 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/dashboard'
     | '/404'
     | '/sign-in'
     | '/'
-    | '/dashboard/'
     | '/$team/$project'
     | '/$team/settings'
     | '/create/team'
@@ -262,7 +243,6 @@ export interface FileRouteTypes {
     | '/404'
     | '/sign-in'
     | '/'
-    | '/dashboard'
     | '/$team/$project'
     | '/$team/settings'
     | '/create/team'
@@ -281,11 +261,9 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/_default'
-    | '/dashboard'
     | '/_blank/404'
     | '/_blank/sign-in'
     | '/_default/'
-    | '/dashboard/'
     | '/_default/$team/$project'
     | '/_default/$team/settings'
     | '/_default/create/team'
@@ -306,7 +284,6 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   DefaultAtlayoutRoute: typeof DefaultAtlayoutRouteWithChildren
-  DashboardAtlayoutRoute: typeof DashboardAtlayoutRouteWithChildren
   Blank404Route: typeof Blank404Route
   BlankSignInRoute: typeof BlankSignInRoute
 }
@@ -334,26 +311,12 @@ export interface RootServerRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/dashboard': {
-      id: '/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardAtlayoutRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/_default': {
       id: '/_default'
       path: ''
       fullPath: ''
       preLoaderRoute: typeof DefaultAtlayoutRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/dashboard/': {
-      id: '/dashboard/'
-      path: '/'
-      fullPath: '/dashboard/'
-      preLoaderRoute: typeof DashboardIndexRouteImport
-      parentRoute: typeof DashboardAtlayoutRoute
     }
     '/_default/': {
       id: '/_default/'
@@ -574,20 +537,8 @@ const DefaultAtlayoutRouteWithChildren = DefaultAtlayoutRoute._addFileChildren(
   DefaultAtlayoutRouteChildren,
 )
 
-interface DashboardAtlayoutRouteChildren {
-  DashboardIndexRoute: typeof DashboardIndexRoute
-}
-
-const DashboardAtlayoutRouteChildren: DashboardAtlayoutRouteChildren = {
-  DashboardIndexRoute: DashboardIndexRoute,
-}
-
-const DashboardAtlayoutRouteWithChildren =
-  DashboardAtlayoutRoute._addFileChildren(DashboardAtlayoutRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
   DefaultAtlayoutRoute: DefaultAtlayoutRouteWithChildren,
-  DashboardAtlayoutRoute: DashboardAtlayoutRouteWithChildren,
   Blank404Route: Blank404Route,
   BlankSignInRoute: BlankSignInRoute,
 }

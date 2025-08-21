@@ -9,11 +9,7 @@ import { betterAuthComponent } from '@/convex/api/auth';
 export const createAuth = (ctx: GenericCtx) => {
 	return betterAuth({
 		baseURL: process.env.VITE_BASE_URL as string,
-		trustedOrigins: [
-			'http://localhost:3000',
-			'https://buildstory.com',
-			'https://buildinpublic.club',
-		],
+		trustedOrigins: ['http://localhost:3000', 'https://usekino.com'],
 		database: convexAdapter(ctx, betterAuthComponent),
 		account: {
 			accountLinking: {

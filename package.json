@@ -7,7 +7,7 @@
 	"scripts": {
 		"dev": "npx convex dev --once && npm-run-all --parallel dev:convex dev:start",
 		"dev:convex": "convex dev",
-		"dev:start": "vite dev --port 3000",
+		"dev:start": "vite dev --port 3000 --host",
 		"seed": "npx convex dev --once && npx convex import --table tasks sampleData.jsonl",
 		"build:deploy": "npx convex deploy --cmd 'vite build'",
 		"build": "vite build",
@@ -58,7 +58,6 @@
 		"generate-random-username": "^2.0.0",
 		"lucide-react": "^0.525.0",
 		"motion": "^12.23.6",
-		"next-themes": "^0.4.6",
 		"postcss": "^8.5.6",
 		"prettier-plugin-tailwindcss": "^0.6.13",
 		"react": "^19.1.0",

@@ -1,19 +1,12 @@
-import { createFileRoute, Link } from '@tanstack/react-router';
+import { createFileRoute } from '@tanstack/react-router';
 import { CircleCheck, CircleDot, CircleDotDashed } from 'lucide-react';
 
-import {
-	Breadcrumb,
-	BreadcrumbItem,
-	BreadcrumbList,
-	BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 
 import { AssignedTo } from '../-components/assigned-to';
 import Updates from '../-components/updates';
-import { TitleBar } from '../../-components/title-bar';
 
 export const Route = createFileRoute('/_default/$team/$project/feedback/$feedbackId/')({
 	component: RouteComponent,
@@ -36,8 +29,6 @@ const Status = ({ status }: { status: Status }) => {
 };
 
 function RouteComponent() {
-	const { team, project, feedbackId } = Route.useParams();
-
 	const feedback = {
 		id: 'blah',
 		title: 'This is a feature request',
@@ -50,29 +41,8 @@ function RouteComponent() {
 
 	return (
 		<div>
-			<TitleBar>
-				<Breadcrumb>
-					<BreadcrumbList>
-						<BreadcrumbItem>
-							<Link
-								className='link-text'
-								to='/$team/$project/feedback'
-								params={{
-									team,
-									project,
-								}}
-							>
-								Feedback
-							</Link>
-						</BreadcrumbItem>
-						<BreadcrumbSeparator />
-						<BreadcrumbItem className='text-foreground'>#{feedbackId}</BreadcrumbItem>
-					</BreadcrumbList>
-				</Breadcrumb>
-			</TitleBar>
-
-			<header>
-				<div className='m-4 w-full rounded-lg border bg-muted'>
+			<header className=''>
+				<div className='w-full border-b bg-muted/50'>
 					<div className='container flex items-start gap-4 px-8 pt-16 pb-6'>
 						<div className='mt-1'>
 							<CircleDot size={28} className='text-primary' />
@@ -86,72 +56,72 @@ function RouteComponent() {
 					</div>
 				</div>
 			</header>
-			<main className='p-4'>
-				<div className='grid gap-4 md:grid-cols-12'>
-					<div className='order-first md:order-last md:col-span-4'>
-						<div className='sticky top-4 flex flex-col gap-4'>
-							{/* Assigned to */}
-							<AssignedTo />
-							<div className='border bg-muted p-4'>
-								<span className='text-xs font-bold tracking-wide uppercase opacity-25 select-none'>
-									Details
-								</span>
-								<ul className='mt-4 flex w-full flex-col justify-center gap-3'>
-									<li className='flex w-full justify-between gap-2'>
-										<span className='text-xs font-semibold tracking-wide uppercase opacity-50'>
-											Status:
-										</span>
-										<Status status={feedback.status as Status} />
-									</li>
-									<li className='flex w-full items-center justify-between gap-2'>
-										<span className='text-xs font-semibold tracking-wide uppercase opacity-50'>
-											Upvotes:
-										</span>{' '}
-										<span className='rounded bg-accent p-1 text-xs font-semibold tracking-wide uppercase opacity-50'>
-											{feedback.upvotes}
-										</span>
-									</li>
-									<li className='flex w-full items-center justify-between gap-2'>
-										<span className='text-xs font-semibold tracking-wide uppercase opacity-50'>
-											Assigned By:
-										</span>{' '}
-										<a className='text-sm hocus:underline' href={`/console/p/nothing/u/acme`}>
-											{feedback.assignedBy}
-										</a>
-									</li>
-									<li className='flex w-full items-center justify-between gap-2'>
-										<span className='text-xs font-semibold tracking-wide uppercase opacity-50'>
-											Board:
-										</span>{' '}
-										<span className='text-xs font-semibold tracking-wide uppercase opacity-50'>
-											{feedback.filedIn}
-										</span>
-									</li>
-								</ul>
-							</div>
-							<div className='flex flex-col gap-2'>
-								<Button variant='outline' className='gap-2'>
-									<CircleCheck size={16} />
-									Mark as complete
-								</Button>
-								<Button variant='outline' className='gap-2'>
-									<CircleDotDashed size={16} />
-									Mark as in progress
-								</Button>
+			<div className='relative'>
+				<div className='absolute h-64 w-full bg-gradient-to-t from-background to-muted/50'></div>
+				<div className='relative z-10 container py-10'>
+					<div className='grid gap-10 md:grid-cols-12'>
+						<div className='order-first md:order-last md:col-span-4'>
+							<div className='sticky top-4 flex flex-col gap-4'>
+								{/* Assigned to */}
+								<AssignedTo />
+								<div className='rounded-lg border bg-muted p-4'>
+									<ul className='flex w-full flex-col justify-center gap-3'>
+										<li className='flex w-full justify-between gap-2'>
+											<span className='text-xs font-semibold tracking-wide uppercase opacity-50'>
+												Status:
+											</span>
+											<Status status={feedback.status as Status} />
+										</li>
+										<li className='flex w-full items-center justify-between gap-2'>
+											<span className='text-xs font-semibold tracking-wide uppercase opacity-50'>
+												Upvotes:
+											</span>{' '}
+											<span className='rounded bg-accent p-1 text-xs font-semibold tracking-wide uppercase opacity-50'>
+												{feedback.upvotes}
+											</span>
+										</li>
+										<li className='flex w-full items-center justify-between gap-2'>
+											<span className='text-xs font-semibold tracking-wide uppercase opacity-50'>
+												Assigned By:
+											</span>{' '}
+											<a className='text-sm hocus:underline' href={`/console/p/nothing/u/acme`}>
+												{feedback.assignedBy}
+											</a>
+										</li>
+										<li className='flex w-full items-center justify-between gap-2'>
+											<span className='text-xs font-semibold tracking-wide uppercase opacity-50'>
+												Board:
+											</span>{' '}
+											<span className='text-xs font-semibold tracking-wide uppercase opacity-50'>
+												{feedback.filedIn}
+											</span>
+										</li>
+									</ul>
+								</div>
+								<div className='flex flex-col gap-2'>
+									<Button variant='outline' className='gap-2'>
+										<CircleCheck size={16} />
+										Mark as complete
+									</Button>
+									<Button variant='outline' className='gap-2'>
+										<CircleDotDashed size={16} />
+										Mark as in progress
+									</Button>
+								</div>
 							</div>
 						</div>
-					</div>
-					<div className='md:col-span-8'>
-						<Updates />
-						<div className='mt-6 flex gap-3 rounded-lg border bg-accent/30 p-4'>
-							<Textarea rows={1} placeholder='Leave a comment...' />
-							<div>
-								<Button className='gap-2'>Comment</Button>
+						<div className='md:col-span-8'>
+							<Updates />
+							<div className='mt-6 flex gap-3 rounded-lg border bg-accent/30 p-4'>
+								<Textarea rows={1} placeholder='Leave a comment...' />
+								<div>
+									<Button className='gap-2'>Comment</Button>
+								</div>
 							</div>
 						</div>
 					</div>
 				</div>
-			</main>
+			</div>
 		</div>
 	);
 }

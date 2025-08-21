@@ -1,25 +1,31 @@
+import { Link } from '@tanstack/react-router';
 import { ChevronUp } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 
-export const FeedbackCard = () => {
+export const FeedbackCard = ({ team, project }: { team: string; project: string }) => {
 	return (
-		<li className='flex border'>
+		<li className='flex overflow-hidden rounded-lg border'>
 			<div className='border-r bg-muted p-4'>
 				<Button
 					variant='outline'
 					size='sm'
-					className='h-auto flex-col !bg-background py-2 select-none'
+					className='h-auto flex-col !bg-background py-2 select-none hocus:!bg-primary hocus:!text-background dark:hocus:!text-foreground'
 				>
 					<ChevronUp size={20} />
 					123
 				</Button>
 			</div>
-			<a
-				href='#'
-				className='group flex flex-col p-4 transition-colors duration-100 ease-in-out focus:outline-primary dark:hover:bg-accent/25 hocus:bg-accent/50'
+			<Link
+				to='/$team/$project/feedback/$feedbackId'
+				params={{
+					team,
+					project,
+					feedbackId: '123',
+				}}
+				className='group flex flex-col p-4 transition-colors duration-100 ease-in-out hocus:bg-muted/50 hocus:outline-primary'
 			>
-				<span className='text-xl font-medium underline-offset-2 group-focus:underline'>
+				<span className='text-xl font-medium underline-offset-2 group-hocus:underline'>
 					Link to resources pages is broken
 				</span>
 				<div className='mt-2 space-y-4 text-sm text-foreground/75'>
@@ -37,7 +43,7 @@ export const FeedbackCard = () => {
 						Filed in <span className='font-medium text-primary'>Bugs</span>
 					</div>
 				</div>
-			</a>
+			</Link>
 		</li>
 	);
 };
