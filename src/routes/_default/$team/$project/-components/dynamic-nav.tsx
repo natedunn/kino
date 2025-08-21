@@ -24,8 +24,8 @@ interface DynamicNavigationProps {
 	className?: string;
 }
 
-export function DynamicNavigation({ items, className = '' }: DynamicNavigationProps) {
-	const [visibleItems, setVisibleItems] = useState<number>(2);
+export function DynamicNavigation({ items }: DynamicNavigationProps) {
+	const [visibleItems, setVisibleItems] = useState<number>(10);
 	const containerRef = useRef<HTMLDivElement>(null);
 	const itemButtonRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
@@ -109,55 +109,59 @@ export function DynamicNavigation({ items, className = '' }: DynamicNavigationPr
 	const hiddenItems = items.slice(visibleItems);
 
 	return (
-		<div ref={containerRef} className={`flex min-w-0 flex-1 items-center gap-1 ${className}`}>
-			{visibleItemsList.map((item, index) => {
-				const Icon = item.icon;
-				return (
-					<Button
-						key={item.children}
-						ref={(el) => {
-							itemButtonRefs.current[index] = el;
-						}}
-						variant='ghost'
-						size='sm'
-						className='flex shrink-0 items-center gap-2 !text-xs md:text-sm'
-						asChild
-					>
-						<Link to={item.to} params={item.params}>
-							{typeof Icon === 'string'
-								? Icon
-								: Icon && <Icon className='size-4 text-muted-foreground' />}
-							<span>{item.children}</span>
-						</Link>
-					</Button>
-				);
-			})}
+		<div ref={containerRef} className='relative overflow-x-hidden border-t bg-muted/30'>
+			<div className='container'>
+				<div className={`flex flex-nowrap items-center gap-1 py-2`}>
+					{visibleItemsList.map((item, index) => {
+						const Icon = item.icon;
+						return (
+							<Button
+								key={item.children}
+								ref={(el) => {
+									itemButtonRefs.current[index] = el;
+								}}
+								variant='ghost'
+								size='sm'
+								className='flex shrink-0 items-center gap-2 !text-xs md:text-sm'
+								asChild
+							>
+								<Link to={item.to} params={item.params}>
+									{typeof Icon === 'string'
+										? Icon
+										: Icon && <Icon className='size-4 text-muted-foreground' />}
+									<span>{item.children}</span>
+								</Link>
+							</Button>
+						);
+					})}
 
-			{hiddenItems.length > 0 && (
-				<DropdownMenu>
-					<DropdownMenuTrigger asChild>
-						<Button variant='ghost' size='sm' className='shrink-0'>
-							<MoreHorizontal className='h-4 w-4' />
-							<span className='sr-only'>More features</span>
-						</Button>
-					</DropdownMenuTrigger>
-					<DropdownMenuContent>
-						{hiddenItems.map((item) => {
-							const Icon = item.icon;
-							return (
-								<DropdownMenuItem key={item.children} asChild>
-									<Link to={item.to} params={item.params} className='flex items-center gap-2'>
-										{typeof Icon === 'string'
-											? Icon
-											: Icon && <Icon className='size-4 text-muted-foreground' />}
-										{item.children}
-									</Link>
-								</DropdownMenuItem>
-							);
-						})}
-					</DropdownMenuContent>
-				</DropdownMenu>
-			)}
+					{hiddenItems.length > 0 && (
+						<DropdownMenu>
+							<DropdownMenuTrigger asChild>
+								<Button variant='ghost' size='sm' className='shrink-0'>
+									<MoreHorizontal className='h-4 w-4' />
+									<span className='sr-only'>More features</span>
+								</Button>
+							</DropdownMenuTrigger>
+							<DropdownMenuContent>
+								{hiddenItems.map((item) => {
+									const Icon = item.icon;
+									return (
+										<DropdownMenuItem key={item.children} asChild>
+											<Link to={item.to} params={item.params} className='flex items-center gap-2'>
+												{typeof Icon === 'string'
+													? Icon
+													: Icon && <Icon className='size-4 text-muted-foreground' />}
+												{item.children}
+											</Link>
+										</DropdownMenuItem>
+									);
+								})}
+							</DropdownMenuContent>
+						</DropdownMenu>
+					)}
+				</div>
+			</div>
 		</div>
 	);
 }

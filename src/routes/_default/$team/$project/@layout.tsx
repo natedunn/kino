@@ -10,7 +10,7 @@ function RouteComponent() {
 	const { team: teamSlug, project: projectSlug } = Route.useParams();
 
 	return (
-		<div className='flex flex-1 flex-col'>
+		<div className='flex flex-1 flex-col overflow-hidden'>
 			<ProjectNav team={teamSlug} project={projectSlug} />
 			<Outlet />
 		</div>

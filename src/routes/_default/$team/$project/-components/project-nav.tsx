@@ -216,14 +216,7 @@ export function ProjectNav({ team, project }: { team: string; project: string })
 					</div>
 				</div>
 
-				<div className='border-t bg-muted/30'>
-					<div className='container'>
-						{/* Bottom row */}
-						<div className='flex items-center justify-between py-2'>
-							<DynamicNavigation items={features} />
-						</div>
-					</div>
-				</div>
+				<DynamicNavigation items={features} />
 			</nav>
 
 			<CommandPalette open={isCommandOpen} onOpenChange={setIsCommandOpen} />
