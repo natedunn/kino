@@ -1,9 +1,12 @@
-import { Link } from '@tanstack/react-router';
+import { Link, useRouter } from '@tanstack/react-router';
 import { ChevronUp } from 'lucide-react';
 
+import { ClickableContainer } from '@/components/ clickable-container';
 import { Button } from '@/components/ui/button';
 
 export const FeedbackCard = ({ team, project }: { team: string; project: string }) => {
+	const router = useRouter();
+
 	return (
 		<li className='flex overflow-hidden rounded-lg border'>
 			<div className='border-r bg-muted p-4'>
@@ -16,12 +19,16 @@ export const FeedbackCard = ({ team, project }: { team: string; project: string 
 					123
 				</Button>
 			</div>
-			<Link
-				to='/$team/$project/feedback/$feedbackId'
-				params={{
-					team,
-					project,
-					feedbackId: '123',
+			<ClickableContainer
+				onClick={() => {
+					router.navigate({
+						to: '/$team/$project/feedback/$feedbackId',
+						params: {
+							team,
+							project,
+							feedbackId: '123',
+						},
+					});
 				}}
 				className='group flex flex-col p-4 transition-colors duration-100 ease-in-out hocus:bg-muted/50 hocus:outline-primary'
 			>
@@ -43,7 +50,7 @@ export const FeedbackCard = ({ team, project }: { team: string; project: string 
 						Filed in <span className='font-medium text-primary'>Bugs</span>
 					</div>
 				</div>
-			</Link>
+			</ClickableContainer>
 		</li>
 	);
 };
