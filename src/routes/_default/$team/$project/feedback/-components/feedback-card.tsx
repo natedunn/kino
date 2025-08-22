@@ -1,4 +1,4 @@
-import { Link, useRouter } from '@tanstack/react-router';
+import { useRouter } from '@tanstack/react-router';
 import { ChevronUp } from 'lucide-react';
 
 import { ClickableContainer } from '@/components/ clickable-container';
