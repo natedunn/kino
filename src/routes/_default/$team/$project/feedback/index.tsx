@@ -33,8 +33,10 @@ function RouteComponent() {
 				</div>
 				<div className='flex flex-col gap-4 md:col-span-9'>
 					<div className='overflow-hidden rounded-lg border border-primary bg-gradient-to-bl from-primary/10 to-primary/20 p-6'>
-						<h1 className='text-2xl font-bold'>We want to hear your feedback</h1>
-						<div className='text-muted-foreground'>
+						<h1 className='text-2xl font-bold text-primary dark:text-foreground'>
+							We want to hear your feedback
+						</h1>
+						<div className='text-foreground/50'>
 							Make sure to read the feedback rules and guidelines before posting.
 						</div>
 					</div>
