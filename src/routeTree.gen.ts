@@ -18,6 +18,7 @@ import { Route as Blank404RouteImport } from './routes/_blank/404'
 import { Route as DefaultSettingsIndexRouteImport } from './routes/_default/settings/index'
 import { Route as DefaultTeamIndexRouteImport } from './routes/_default/$team/index'
 import { Route as DefaultCreateTeamRouteImport } from './routes/_default/create/team'
+import { Route as DefaultCreateProjectRouteImport } from './routes/_default/create/project'
 import { Route as DefaultTeamSettingsRouteImport } from './routes/_default/$team/settings'
 import { Route as DefaultTeamProjectAtlayoutRouteImport } from './routes/_default/$team/$project/@layout'
 import { Route as DefaultProfileUsernameIndexRouteImport } from './routes/_default/profile/$username/index'
@@ -67,6 +68,11 @@ const DefaultTeamIndexRoute = DefaultTeamIndexRouteImport.update({
 const DefaultCreateTeamRoute = DefaultCreateTeamRouteImport.update({
   id: '/create/team',
   path: '/create/team',
+  getParentRoute: () => DefaultAtlayoutRoute,
+} as any)
+const DefaultCreateProjectRoute = DefaultCreateProjectRouteImport.update({
+  id: '/create/project',
+  path: '/create/project',
   getParentRoute: () => DefaultAtlayoutRoute,
 } as any)
 const DefaultTeamSettingsRoute = DefaultTeamSettingsRouteImport.update({
@@ -158,6 +164,7 @@ export interface FileRoutesByFullPath {
   '/': typeof DefaultIndexRoute
   '/$team/$project': typeof DefaultTeamProjectAtlayoutRouteWithChildren
   '/$team/settings': typeof DefaultTeamSettingsRoute
+  '/create/project': typeof DefaultCreateProjectRoute
   '/create/team': typeof DefaultCreateTeamRoute
   '/$team': typeof DefaultTeamIndexRoute
   '/settings': typeof DefaultSettingsIndexRoute
@@ -179,6 +186,7 @@ export interface FileRoutesByTo {
   '/': typeof DefaultIndexRoute
   '/$team/$project': typeof DefaultTeamProjectAtlayoutRouteWithChildren
   '/$team/settings': typeof DefaultTeamSettingsRoute
+  '/create/project': typeof DefaultCreateProjectRoute
   '/create/team': typeof DefaultCreateTeamRoute
   '/$team': typeof DefaultTeamIndexRoute
   '/settings': typeof DefaultSettingsIndexRoute
@@ -201,6 +209,7 @@ export interface FileRoutesById {
   '/_default/': typeof DefaultIndexRoute
   '/_default/$team/$project': typeof DefaultTeamProjectAtlayoutRouteWithChildren
   '/_default/$team/settings': typeof DefaultTeamSettingsRoute
+  '/_default/create/project': typeof DefaultCreateProjectRoute
   '/_default/create/team': typeof DefaultCreateTeamRoute
   '/_default/$team/': typeof DefaultTeamIndexRoute
   '/_default/settings/': typeof DefaultSettingsIndexRoute
@@ -224,6 +233,7 @@ export interface FileRouteTypes {
     | '/'
     | '/$team/$project'
     | '/$team/settings'
+    | '/create/project'
     | '/create/team'
     | '/$team'
     | '/settings'
@@ -245,6 +255,7 @@ export interface FileRouteTypes {
     | '/'
     | '/$team/$project'
     | '/$team/settings'
+    | '/create/project'
     | '/create/team'
     | '/$team'
     | '/settings'
@@ -266,6 +277,7 @@ export interface FileRouteTypes {
     | '/_default/'
     | '/_default/$team/$project'
     | '/_default/$team/settings'
+    | '/_default/create/project'
     | '/_default/create/team'
     | '/_default/$team/'
     | '/_default/settings/'
@@ -358,6 +370,13 @@ declare module '@tanstack/react-router' {
       path: '/create/team'
       fullPath: '/create/team'
       preLoaderRoute: typeof DefaultCreateTeamRouteImport
+      parentRoute: typeof DefaultAtlayoutRoute
+    }
+    '/_default/create/project': {
+      id: '/_default/create/project'
+      path: '/create/project'
+      fullPath: '/create/project'
+      preLoaderRoute: typeof DefaultCreateProjectRouteImport
       parentRoute: typeof DefaultAtlayoutRoute
     }
     '/_default/$team/settings': {
@@ -517,6 +536,7 @@ interface DefaultAtlayoutRouteChildren {
   DefaultIndexRoute: typeof DefaultIndexRoute
   DefaultTeamProjectAtlayoutRoute: typeof DefaultTeamProjectAtlayoutRouteWithChildren
   DefaultTeamSettingsRoute: typeof DefaultTeamSettingsRoute
+  DefaultCreateProjectRoute: typeof DefaultCreateProjectRoute
   DefaultCreateTeamRoute: typeof DefaultCreateTeamRoute
   DefaultTeamIndexRoute: typeof DefaultTeamIndexRoute
   DefaultSettingsIndexRoute: typeof DefaultSettingsIndexRoute
@@ -527,6 +547,7 @@ const DefaultAtlayoutRouteChildren: DefaultAtlayoutRouteChildren = {
   DefaultIndexRoute: DefaultIndexRoute,
   DefaultTeamProjectAtlayoutRoute: DefaultTeamProjectAtlayoutRouteWithChildren,
   DefaultTeamSettingsRoute: DefaultTeamSettingsRoute,
+  DefaultCreateProjectRoute: DefaultCreateProjectRoute,
   DefaultCreateTeamRoute: DefaultCreateTeamRoute,
   DefaultTeamIndexRoute: DefaultTeamIndexRoute,
   DefaultSettingsIndexRoute: DefaultSettingsIndexRoute,
