@@ -2,8 +2,11 @@ import { getOneFrom } from 'convex-helpers/server/relationships';
 import { zid } from 'convex-helpers/server/zod';
 import { paginationOptsValidator } from 'convex/server';
 
+import { createAuth } from '@/lib/auth';
+
 import { Id } from '../_generated/dataModel';
 import { userSchema } from '../schema';
+import { betterAuthComponent } from './auth';
 import { procedure } from './procedure';
 import { getUserByIdentifier, getUserByIdentifierSchema, userUpdateSchema } from './users.utils';
 
@@ -97,27 +100,13 @@ export const update = procedure.authed.external.mutation({
 	},
 });
 
-/**
- *
- * Sync a user with the database
- *
- * @param [args.type] type of update ('created' | 'updated' | 'deleted')
- * @param [args.user] as typed in {@link userSchema}
- * @returns The updated user
- */
-// export const syncUser = procedure.base.internal.mutation({
-// 	args: z.object({
-// 		type: z.enum(['created', 'updated', 'deleted']),
-// 		user: userSchema.omit({ _id: true }),
-// 	}),
-// 	handler: async (ctx, args) => {
-// 		if (args.type === 'deleted') {
-// 			// TODO: mark as deleted in db
-// 			return;
-// 		}
-// 		return updateLocalUser({
-// 			ctx: ctx.db,
-// 			user: args.user,
-// 		});
-// 	},
-// });
+export const getTeamList = procedure.authed.external.query({
+	args: {},
+	handler: async (ctx) => {
+		const auth = createAuth(ctx);
+		const teams = await auth.api.listOrganizations({
+			headers: await betterAuthComponent.getHeaders(ctx),
+		});
+		return { teams };
+	},
+});

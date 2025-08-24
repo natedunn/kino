@@ -24,7 +24,7 @@ export const { createUser, deleteUser, updateUser, createSession, isAuthenticate
 				email: user.email,
 				name: user.name,
 				username: user?.username ?? generatedUsername,
-				imageUrl: user.image,
+				imageUrl: typeof user.image === 'string' ? user.image : undefined,
 				banned: false,
 				globalRole: 'user',
 				private: false,
@@ -37,13 +37,17 @@ export const { createUser, deleteUser, updateUser, createSession, isAuthenticate
 			await ctx.db.delete(userId as Id<'user'>);
 		},
 		onUpdateUser: async (ctx, user) => {
+			if (!user.username) {
+				console.error('No username provided in onUpdateUser.');
+			}
+
 			// Keep the user's email synced
 			const userId = user.userId as Id<'user'>;
 			await ctx.db.patch(userId, {
 				email: user.email,
 				name: user.name,
-				imageUrl: user.image,
-				username: user.username,
+				imageUrl: typeof user.image === 'string' ? user.image : undefined,
+				username: typeof user.username === 'string' ? user.username : undefined,
 			});
 		},
 	});
