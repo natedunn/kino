@@ -39,7 +39,7 @@ export function ProjectNav({
 }: {
 	team: string;
 	project: string;
-	onNavCalculation: (state: boolean) => void;
+	onNavCalculation: (isCalculating: boolean) => void;
 }) {
 	const [isCommandOpen, setIsCommandOpen] = useState(false);
 
