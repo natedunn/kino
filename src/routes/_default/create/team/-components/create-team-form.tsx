@@ -1,8 +1,8 @@
 import React from 'react';
-import { convexQuery, useConvexMutation } from '@convex-dev/react-query';
+import { useConvexMutation } from '@convex-dev/react-query';
 import { Label } from '@radix-ui/react-dropdown-menu';
 import { useForm } from '@tanstack/react-form';
-import { useMutation, useSuspenseQuery } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { ConvexError } from 'convex/values';
 import z from 'zod';
 
@@ -12,7 +12,6 @@ import { LabelWrapper } from '@/components/label';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { createTeamSchema } from '@/convex/api/team.utils';
-import { authClient } from '@/lib/auth/auth-client';
 import { cn } from '@/lib/utils';
 
 const formSchema = createTeamSchema;
