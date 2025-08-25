@@ -16,13 +16,14 @@ import { Route as DefaultIndexRouteImport } from './routes/_default/index'
 import { Route as BlankSignOutRouteImport } from './routes/_blank/sign-out'
 import { Route as BlankSignInRouteImport } from './routes/_blank/sign-in'
 import { Route as Blank404RouteImport } from './routes/_blank/404'
+import { Route as DefaultCreateAtlayoutRouteImport } from './routes/_default/create/@layout'
 import { Route as DefaultSettingsIndexRouteImport } from './routes/_default/settings/index'
 import { Route as DefaultTeamIndexRouteImport } from './routes/_default/$team/index'
-import { Route as DefaultCreateProjectRouteImport } from './routes/_default/create/project'
 import { Route as DefaultTeamSettingsRouteImport } from './routes/_default/$team/settings'
 import { Route as DefaultTeamProjectAtlayoutRouteImport } from './routes/_default/$team/$project/@layout'
 import { Route as DefaultProfileUsernameIndexRouteImport } from './routes/_default/profile/$username/index'
 import { Route as DefaultCreateTeamIndexRouteImport } from './routes/_default/create/team/index'
+import { Route as DefaultCreateProjectIndexRouteImport } from './routes/_default/create/project/index'
 import { Route as DefaultTeamProjectChatAtlayoutRouteImport } from './routes/_default/$team/$project/chat/@layout'
 import { Route as DefaultTeamProjectUpdatesIndexRouteImport } from './routes/_default/$team/$project/updates/index'
 import { Route as DefaultTeamProjectRoadmapIndexRouteImport } from './routes/_default/$team/$project/roadmap/index'
@@ -61,6 +62,11 @@ const Blank404Route = Blank404RouteImport.update({
   path: '/404',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DefaultCreateAtlayoutRoute = DefaultCreateAtlayoutRouteImport.update({
+  id: '/create',
+  path: '/create',
+  getParentRoute: () => DefaultAtlayoutRoute,
+} as any)
 const DefaultSettingsIndexRoute = DefaultSettingsIndexRouteImport.update({
   id: '/settings/',
   path: '/settings/',
@@ -69,11 +75,6 @@ const DefaultSettingsIndexRoute = DefaultSettingsIndexRouteImport.update({
 const DefaultTeamIndexRoute = DefaultTeamIndexRouteImport.update({
   id: '/$team/',
   path: '/$team/',
-  getParentRoute: () => DefaultAtlayoutRoute,
-} as any)
-const DefaultCreateProjectRoute = DefaultCreateProjectRouteImport.update({
-  id: '/create/project',
-  path: '/create/project',
   getParentRoute: () => DefaultAtlayoutRoute,
 } as any)
 const DefaultTeamSettingsRoute = DefaultTeamSettingsRouteImport.update({
@@ -94,10 +95,16 @@ const DefaultProfileUsernameIndexRoute =
     getParentRoute: () => DefaultAtlayoutRoute,
   } as any)
 const DefaultCreateTeamIndexRoute = DefaultCreateTeamIndexRouteImport.update({
-  id: '/create/team/',
-  path: '/create/team/',
-  getParentRoute: () => DefaultAtlayoutRoute,
+  id: '/team/',
+  path: '/team/',
+  getParentRoute: () => DefaultCreateAtlayoutRoute,
 } as any)
+const DefaultCreateProjectIndexRoute =
+  DefaultCreateProjectIndexRouteImport.update({
+    id: '/project/',
+    path: '/project/',
+    getParentRoute: () => DefaultCreateAtlayoutRoute,
+  } as any)
 const DefaultTeamProjectChatAtlayoutRoute =
   DefaultTeamProjectChatAtlayoutRouteImport.update({
     id: '/chat',
@@ -165,16 +172,17 @@ const ApiAuthSplatServerRoute = ApiAuthSplatServerRouteImport.update({
 } as any)
 
 export interface FileRoutesByFullPath {
+  '/create': typeof DefaultCreateAtlayoutRouteWithChildren
   '/404': typeof Blank404Route
   '/sign-in': typeof BlankSignInRoute
   '/sign-out': typeof BlankSignOutRoute
   '/': typeof DefaultIndexRoute
   '/$team/$project': typeof DefaultTeamProjectAtlayoutRouteWithChildren
   '/$team/settings': typeof DefaultTeamSettingsRoute
-  '/create/project': typeof DefaultCreateProjectRoute
   '/$team': typeof DefaultTeamIndexRoute
   '/settings': typeof DefaultSettingsIndexRoute
   '/$team/$project/chat': typeof DefaultTeamProjectChatAtlayoutRouteWithChildren
+  '/create/project': typeof DefaultCreateProjectIndexRoute
   '/create/team': typeof DefaultCreateTeamIndexRoute
   '/profile/$username': typeof DefaultProfileUsernameIndexRoute
   '/$team/$project/chat/': typeof DefaultTeamProjectChatIndexRoute
@@ -188,15 +196,16 @@ export interface FileRoutesByFullPath {
   '/$team/$project/feedback/$feedbackId': typeof DefaultTeamProjectFeedbackFeedbackIdIndexRoute
 }
 export interface FileRoutesByTo {
+  '/create': typeof DefaultCreateAtlayoutRouteWithChildren
   '/404': typeof Blank404Route
   '/sign-in': typeof BlankSignInRoute
   '/sign-out': typeof BlankSignOutRoute
   '/': typeof DefaultIndexRoute
   '/$team/$project': typeof DefaultTeamProjectAtlayoutRouteWithChildren
   '/$team/settings': typeof DefaultTeamSettingsRoute
-  '/create/project': typeof DefaultCreateProjectRoute
   '/$team': typeof DefaultTeamIndexRoute
   '/settings': typeof DefaultSettingsIndexRoute
+  '/create/project': typeof DefaultCreateProjectIndexRoute
   '/create/team': typeof DefaultCreateTeamIndexRoute
   '/profile/$username': typeof DefaultProfileUsernameIndexRoute
   '/$team/$project/chat': typeof DefaultTeamProjectChatIndexRoute
@@ -212,16 +221,17 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_default': typeof DefaultAtlayoutRouteWithChildren
+  '/_default/create': typeof DefaultCreateAtlayoutRouteWithChildren
   '/_blank/404': typeof Blank404Route
   '/_blank/sign-in': typeof BlankSignInRoute
   '/_blank/sign-out': typeof BlankSignOutRoute
   '/_default/': typeof DefaultIndexRoute
   '/_default/$team/$project': typeof DefaultTeamProjectAtlayoutRouteWithChildren
   '/_default/$team/settings': typeof DefaultTeamSettingsRoute
-  '/_default/create/project': typeof DefaultCreateProjectRoute
   '/_default/$team/': typeof DefaultTeamIndexRoute
   '/_default/settings/': typeof DefaultSettingsIndexRoute
   '/_default/$team/$project/chat': typeof DefaultTeamProjectChatAtlayoutRouteWithChildren
+  '/_default/create/project/': typeof DefaultCreateProjectIndexRoute
   '/_default/create/team/': typeof DefaultCreateTeamIndexRoute
   '/_default/profile/$username/': typeof DefaultProfileUsernameIndexRoute
   '/_default/$team/$project/chat/': typeof DefaultTeamProjectChatIndexRoute
@@ -237,16 +247,17 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
+    | '/create'
     | '/404'
     | '/sign-in'
     | '/sign-out'
     | '/'
     | '/$team/$project'
     | '/$team/settings'
-    | '/create/project'
     | '/$team'
     | '/settings'
     | '/$team/$project/chat'
+    | '/create/project'
     | '/create/team'
     | '/profile/$username'
     | '/$team/$project/chat/'
@@ -260,15 +271,16 @@ export interface FileRouteTypes {
     | '/$team/$project/feedback/$feedbackId'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/create'
     | '/404'
     | '/sign-in'
     | '/sign-out'
     | '/'
     | '/$team/$project'
     | '/$team/settings'
-    | '/create/project'
     | '/$team'
     | '/settings'
+    | '/create/project'
     | '/create/team'
     | '/profile/$username'
     | '/$team/$project/chat'
@@ -283,16 +295,17 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/_default'
+    | '/_default/create'
     | '/_blank/404'
     | '/_blank/sign-in'
     | '/_blank/sign-out'
     | '/_default/'
     | '/_default/$team/$project'
     | '/_default/$team/settings'
-    | '/_default/create/project'
     | '/_default/$team/'
     | '/_default/settings/'
     | '/_default/$team/$project/chat'
+    | '/_default/create/project/'
     | '/_default/create/team/'
     | '/_default/profile/$username/'
     | '/_default/$team/$project/chat/'
@@ -371,6 +384,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Blank404RouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_default/create': {
+      id: '/_default/create'
+      path: '/create'
+      fullPath: '/create'
+      preLoaderRoute: typeof DefaultCreateAtlayoutRouteImport
+      parentRoute: typeof DefaultAtlayoutRoute
+    }
     '/_default/settings/': {
       id: '/_default/settings/'
       path: '/settings'
@@ -383,13 +403,6 @@ declare module '@tanstack/react-router' {
       path: '/$team'
       fullPath: '/$team'
       preLoaderRoute: typeof DefaultTeamIndexRouteImport
-      parentRoute: typeof DefaultAtlayoutRoute
-    }
-    '/_default/create/project': {
-      id: '/_default/create/project'
-      path: '/create/project'
-      fullPath: '/create/project'
-      preLoaderRoute: typeof DefaultCreateProjectRouteImport
       parentRoute: typeof DefaultAtlayoutRoute
     }
     '/_default/$team/settings': {
@@ -415,10 +428,17 @@ declare module '@tanstack/react-router' {
     }
     '/_default/create/team/': {
       id: '/_default/create/team/'
-      path: '/create/team'
+      path: '/team'
       fullPath: '/create/team'
       preLoaderRoute: typeof DefaultCreateTeamIndexRouteImport
-      parentRoute: typeof DefaultAtlayoutRoute
+      parentRoute: typeof DefaultCreateAtlayoutRoute
+    }
+    '/_default/create/project/': {
+      id: '/_default/create/project/'
+      path: '/project'
+      fullPath: '/create/project'
+      preLoaderRoute: typeof DefaultCreateProjectIndexRouteImport
+      parentRoute: typeof DefaultCreateAtlayoutRoute
     }
     '/_default/$team/$project/chat': {
       id: '/_default/$team/$project/chat'
@@ -504,6 +524,21 @@ declare module '@tanstack/react-start/server' {
   }
 }
 
+interface DefaultCreateAtlayoutRouteChildren {
+  DefaultCreateProjectIndexRoute: typeof DefaultCreateProjectIndexRoute
+  DefaultCreateTeamIndexRoute: typeof DefaultCreateTeamIndexRoute
+}
+
+const DefaultCreateAtlayoutRouteChildren: DefaultCreateAtlayoutRouteChildren = {
+  DefaultCreateProjectIndexRoute: DefaultCreateProjectIndexRoute,
+  DefaultCreateTeamIndexRoute: DefaultCreateTeamIndexRoute,
+}
+
+const DefaultCreateAtlayoutRouteWithChildren =
+  DefaultCreateAtlayoutRoute._addFileChildren(
+    DefaultCreateAtlayoutRouteChildren,
+  )
+
 interface DefaultTeamProjectChatAtlayoutRouteChildren {
   DefaultTeamProjectChatIndexRoute: typeof DefaultTeamProjectChatIndexRoute
   DefaultTeamProjectChatChatIdIndexRoute: typeof DefaultTeamProjectChatChatIdIndexRoute
@@ -553,24 +588,22 @@ const DefaultTeamProjectAtlayoutRouteWithChildren =
   )
 
 interface DefaultAtlayoutRouteChildren {
+  DefaultCreateAtlayoutRoute: typeof DefaultCreateAtlayoutRouteWithChildren
   DefaultIndexRoute: typeof DefaultIndexRoute
   DefaultTeamProjectAtlayoutRoute: typeof DefaultTeamProjectAtlayoutRouteWithChildren
   DefaultTeamSettingsRoute: typeof DefaultTeamSettingsRoute
-  DefaultCreateProjectRoute: typeof DefaultCreateProjectRoute
   DefaultTeamIndexRoute: typeof DefaultTeamIndexRoute
   DefaultSettingsIndexRoute: typeof DefaultSettingsIndexRoute
-  DefaultCreateTeamIndexRoute: typeof DefaultCreateTeamIndexRoute
   DefaultProfileUsernameIndexRoute: typeof DefaultProfileUsernameIndexRoute
 }
 
 const DefaultAtlayoutRouteChildren: DefaultAtlayoutRouteChildren = {
+  DefaultCreateAtlayoutRoute: DefaultCreateAtlayoutRouteWithChildren,
   DefaultIndexRoute: DefaultIndexRoute,
   DefaultTeamProjectAtlayoutRoute: DefaultTeamProjectAtlayoutRouteWithChildren,
   DefaultTeamSettingsRoute: DefaultTeamSettingsRoute,
-  DefaultCreateProjectRoute: DefaultCreateProjectRoute,
   DefaultTeamIndexRoute: DefaultTeamIndexRoute,
   DefaultSettingsIndexRoute: DefaultSettingsIndexRoute,
-  DefaultCreateTeamIndexRoute: DefaultCreateTeamIndexRoute,
   DefaultProfileUsernameIndexRoute: DefaultProfileUsernameIndexRoute,
 }
 

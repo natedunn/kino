@@ -1,5 +1,5 @@
 import { convexQuery } from '@convex-dev/react-query';
-import { createFileRoute, redirect } from '@tanstack/react-router';
+import { createFileRoute } from '@tanstack/react-router';
 
 import { api } from '~api';
 
@@ -8,12 +8,6 @@ import { CreateTeamForm } from './-components/create-team-form';
 export const Route = createFileRoute('/_default/create/team/')({
 	component: RouteComponent,
 	loader: async ({ context }) => {
-		if (!context.user) {
-			throw redirect({
-				to: '/sign-in',
-			});
-		}
-
 		const data = await context.queryClient.ensureQueryData(convexQuery(api.user.getTeamList, {}));
 
 		return {
