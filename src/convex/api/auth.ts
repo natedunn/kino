@@ -1,6 +1,6 @@
 import { AuthFunctions, BetterAuth, PublicAuthFunctions } from '@convex-dev/better-auth';
 import { User } from 'better-auth';
-import generateRandomUsername from 'generate-random-username';
+import { adjectives, nouns, uniqueUsernameGenerator } from 'unique-username-generator';
 
 import { api, components, internal } from '../_generated/api';
 import { DataModel, Id } from '../_generated/dataModel';
@@ -18,7 +18,13 @@ export const betterAuthComponent = new BetterAuth(components.betterAuth, {
 export const { createUser, deleteUser, updateUser, createSession, isAuthenticated } =
 	betterAuthComponent.createAuthFunctions<DataModel>({
 		onCreateUser: async (ctx, user) => {
-			const generatedUsername = generateRandomUsername({ separator: '_' });
+			const generatedUsername = uniqueUsernameGenerator({
+				length: 39,
+				separator: '',
+				style: 'pascalCase',
+				dictionaries: [adjectives, nouns],
+				randomDigits: 3,
+			});
 
 			const userId = await ctx.db.insert('user', {
 				email: user.email,
