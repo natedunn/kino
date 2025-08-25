@@ -2,6 +2,7 @@ import { getOneFrom } from 'convex-helpers/server/relationships';
 import { zid } from 'convex-helpers/server/zod';
 import { paginationOptsValidator } from 'convex/server';
 
+import { limits } from '@/config/limits';
 import { createAuth } from '@/lib/auth';
 
 import { Id } from '../_generated/dataModel';
@@ -100,13 +101,29 @@ export const update = procedure.authed.external.mutation({
 	},
 });
 
-export const getTeamList = procedure.authed.external.query({
+export const getTeamList = procedure.base.external.query({
 	args: {},
 	handler: async (ctx) => {
+		const userIdentity = await ctx.auth.getUserIdentity();
+
+		if (!userIdentity) {
+			return null;
+		}
+
 		const auth = createAuth(ctx);
 		const teams = await auth.api.listOrganizations({
 			headers: await betterAuthComponent.getHeaders(ctx),
 		});
-		return { teams };
+
+		const user = await betterAuthComponent.getAuthUser(ctx);
+
+		let limit: number;
+		if (user?.role === 'admin') {
+			limit = limits.admin.MAX_TEAMS;
+		} else {
+			limit = limits.free.MAX_TEAMS;
+		}
+
+		return { teams, underLimit: teams.length < limit };
 	},
 });
