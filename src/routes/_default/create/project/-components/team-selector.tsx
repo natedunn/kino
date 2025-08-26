@@ -28,26 +28,18 @@ export const TeamSelector = ({ activeTeamId }: { activeTeamId: string | undefine
 		}
 	};
 
-	React.useEffect(() => {
-		console.log('data', data);
-		console.log('activeTeamId', activeTeamId);
-	}, [activeTeamId, data]);
-
-	const value = activeTeamId ?? data?.teams[0]?.id;
-
 	return (
 		<div>
-			<Select value={value} onValueChange={handleChange}>
+			<Select value={activeTeamId ?? undefined} onValueChange={handleChange}>
 				<SelectTrigger className='w-[180px]'>
 					<SelectValue placeholder='Select Team' />
 				</SelectTrigger>
 				<SelectContent>
-					{value &&
-						data?.teams.map((team) => (
-							<SelectItem key={team.id} value={team.id}>
-								{team.name}
-							</SelectItem>
-						))}
+					{data?.teams.map((team) => (
+						<SelectItem key={team.id} value={team.id}>
+							{team.name}
+						</SelectItem>
+					))}
 				</SelectContent>
 			</Select>
 		</div>

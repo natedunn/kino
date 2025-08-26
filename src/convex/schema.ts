@@ -109,10 +109,11 @@ const schema = defineSchema({
 		.index('by_email', ['email'])
 		.index('by_globalRole', ['globalRole']),
 	project: defineZTable(projectSchema)
-		// .index('by_ownerUserId', ['ownerUserId'])
+		.index('by_teamId', ['teamId'])
 		.index('by_slug', ['slug'])
 		.index('by_private', ['private'])
 		.index('by_updatedTime', ['updatedTime'])
+		.index('by_teamId_slug', ['teamId', 'slug'])
 		.index('by_private_updateTime', ['private', 'updatedTime']),
 	projectUser: defineZTable(projectUserSchema)
 		.index('by_projectId', ['projectId'])

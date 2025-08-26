@@ -23,6 +23,9 @@ export const CreateTeamForm = ({ underLimit }: { underLimit: boolean }) => {
 
 	const { mutate: createTeam } = useMutation({
 		mutationFn: useConvexMutation(api.team.create),
+		onSuccess: () => {
+			form.reset();
+		},
 		onError: (error) => {
 			if (error instanceof ConvexError) {
 				setFormError(error.data.message);
@@ -49,7 +52,7 @@ export const CreateTeamForm = ({ underLimit }: { underLimit: boolean }) => {
 		validators: {
 			onChange: formSchema,
 		},
-		onSubmit: async ({ value, formApi }) => {
+		onSubmit: async ({ value }) => {
 			setFormError(undefined);
 			createTeam({
 				name: value.name,
@@ -60,7 +63,6 @@ export const CreateTeamForm = ({ underLimit }: { underLimit: boolean }) => {
 						}
 					: {}),
 			});
-			formApi.reset();
 		},
 	});
 

@@ -33,6 +33,9 @@ export const CreateProjectForm = ({
 
 	const { mutate: createProject } = useMutation({
 		mutationFn: useConvexMutation(api.project.create),
+		onSuccess: () => {
+			form.reset();
+		},
 		onError: (error) => {
 			if (error instanceof ConvexError) {
 				setFormError(error.data.message);
@@ -52,7 +55,7 @@ export const CreateProjectForm = ({
 		validators: {
 			onChange: formSchema,
 		},
-		onSubmit: async ({ value, formApi }) => {
+		onSubmit: async ({ value }) => {
 			setFormError(undefined);
 			createProject({
 				name: value.name,
@@ -60,7 +63,6 @@ export const CreateProjectForm = ({
 				private: value.private,
 				teamId: value.teamId,
 			});
-			formApi.reset();
 		},
 	});
 

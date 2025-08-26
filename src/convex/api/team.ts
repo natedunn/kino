@@ -1,3 +1,4 @@
+import { BetterAuthError } from 'better-auth';
 import { ConvexError } from 'convex/values';
 
 import { limits } from '@/config/limits';
@@ -32,10 +33,17 @@ export const create = procedure.authed.external.mutation({
 			});
 		}
 
-		const team = await auth.api.createOrganization({
-			body: args,
-			headers: await betterAuthComponent.getHeaders(ctx),
-		});
+		const team = await auth.api
+			.createOrganization({
+				body: args,
+				headers: await betterAuthComponent.getHeaders(ctx),
+			})
+			.catch((error: BetterAuthError) => {
+				throw new ConvexError({
+					message: error.message,
+					code: '500',
+				});
+			});
 
 		return team;
 	},

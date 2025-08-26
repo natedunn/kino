@@ -1,3 +1,4 @@
+import React from 'react';
 import { convexQuery } from '@convex-dev/react-query';
 import { createFileRoute, Link, redirect } from '@tanstack/react-router';
 import { Plus } from 'lucide-react';
@@ -5,6 +6,7 @@ import { Plus } from 'lucide-react';
 import { api } from '~api';
 import { Button } from '@/components/ui/button';
 import { Label, LabelWrapper } from '@/components/ui/label';
+import { Skeleton } from '@/components/ui/skeleton';
 import { authClient } from '@/lib/auth/auth-client';
 
 import { CreateProjectForm } from './-components/create-project-form';
@@ -20,12 +22,16 @@ export const Route = createFileRoute('/_default/create/project/')({
 				to: '/create/team',
 			});
 		}
+
+		return {
+			teams,
+		};
 	},
 });
 
 function RouteComponent() {
-	const { data: activeTeam } = authClient.useActiveOrganization();
-
+	// const { teams } = Route.useLoaderData();
+	const { data: activeOrg, isPending } = authClient.useActiveOrganization();
 	return (
 		<div className='relative w-full'>
 			<div className='absolute top-0 right-0 left-0 z-0 h-64 w-full bg-gradient-to-t from-background to-muted'></div>
@@ -35,7 +41,11 @@ function RouteComponent() {
 						<LabelWrapper>
 							<Label className='text-muted-foreground'>Change active team</Label>
 						</LabelWrapper>
-						<TeamSelector activeTeamId={activeTeam?.id} />
+						{isPending ? (
+							<Skeleton className='h-[42px] w-[180px]' />
+						) : (
+							<TeamSelector activeTeamId={activeOrg?.id} />
+						)}
 					</div>
 					<div>
 						<Button variant='secondary' asChild>
@@ -47,12 +57,22 @@ function RouteComponent() {
 					</div>
 				</div>
 				<div className='mt-6'>
-					{!!activeTeam && (
+					{isPending && (
+						<div className='flex flex-col'>
+							<Skeleton className='h-64 w-full' />
+						</div>
+					)}
+					{!!activeOrg && !isPending && (
 						<CreateProjectForm
-							activeTeamName={activeTeam.name}
-							activeTeamId={activeTeam.id}
+							activeTeamName={activeOrg.name}
+							activeTeamId={activeOrg.id}
 							underLimit={true}
 						/>
+					)}
+					{!activeOrg && !isPending && (
+						<div className='flex items-center justify-center rounded-lg border border-border/50 bg-muted p-20 text-center text-2xl font-bold text-muted-foreground'>
+							Choose an active organization above.
+						</div>
 					)}
 				</div>
 			</div>
