@@ -5,6 +5,7 @@ import { createAuth } from '@/lib/auth';
 import { betterAuthComponent } from './auth';
 import { procedure } from './procedure';
 import { createProjectSchema } from './project.utils';
+import { verify } from './utils/verify';
 
 export const create = procedure.authed.external.mutation({
 	args: createProjectSchema,
@@ -29,8 +30,15 @@ export const create = procedure.authed.external.mutation({
 			});
 		}
 
-		await ctx.db.insert('project', {
-			...args,
+		await verify.insert({
+			ctx,
+			tableName: 'project',
+			data: args,
+			onFail: ({ uniqueRow }) => {
+				throw new ConvexError({
+					message: `A project with the slug of '${uniqueRow?.existingData.slug}' already exists for this team.`,
+				});
+			},
 		});
 	},
 });
