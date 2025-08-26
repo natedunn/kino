@@ -331,42 +331,42 @@ const verifyConfig = ({
 		}
 	};
 
-	const grouped = async <
-		TN extends keyof DataModel,
-		TI extends NamedTableInfo<DataModel, TN>,
-		D extends Partial<TI['document']>,
-	>({
-		ctx,
-		tableName,
-		data,
-		verify,
-		onFail,
-	}: VerifyArgs<TN, TI, D> & {
-		verify: ('uniqueColumn' | 'uniqueRow' | 'editableColumn')[];
-	}) => {
-		let verifiedData = data;
+	// const grouped = async <
+	// 	TN extends keyof DataModel,
+	// 	TI extends NamedTableInfo<DataModel, TN>,
+	// 	D extends Partial<TI['document']>,
+	// >({
+	// 	ctx,
+	// 	tableName,
+	// 	data,
+	// 	verify,
+	// 	onFail,
+	// }: VerifyArgs<TN, TI, D> & {
+	// 	verify: ('uniqueColumn' | 'uniqueRow' | 'editableColumn')[];
+	// }) => {
+	// 	let verifiedData = data;
 
-		verifiedData = verify.includes('editableColumn')
-			? await verifyColumnEditable({ ctx, tableName, data, onFail })
-			: data;
+	// 	verifiedData = verify.includes('editableColumn')
+	// 		? await verifyColumnEditable({ ctx, tableName, data, onFail })
+	// 		: data;
 
-		if (verify.includes('uniqueColumn')) {
-			await verifyColumnUniqueness({
-				ctx,
-				tableName,
-				data: verifiedData,
-				onFail,
-			});
-		}
+	// 	if (verify.includes('uniqueColumn')) {
+	// 		await verifyColumnUniqueness({
+	// 			ctx,
+	// 			tableName,
+	// 			data: verifiedData,
+	// 			onFail,
+	// 		});
+	// 	}
 
-		if (verify.includes('uniqueRow')) {
-			await verifyRowUniqueness({ ctx, tableName, data: verifiedData, onFail });
-		}
+	// 	if (verify.includes('uniqueRow')) {
+	// 		await verifyRowUniqueness({ ctx, tableName, data: verifiedData, onFail });
+	// 	}
 
-		return {
-			data: verifiedData,
-		};
-	};
+	// 	return {
+	// 		data: verifiedData,
+	// 	};
+	// };
 
 	const all = async <
 		TN extends keyof DataModel,
@@ -421,13 +421,62 @@ const verifyConfig = ({
 		};
 	};
 
+	const insert = async <
+		TN extends keyof DataModel,
+		TI extends NamedTableInfo<DataModel, TN>,
+		D extends Partial<TI['document']>,
+	>({
+		ctx,
+		tableName,
+		data,
+		onFail,
+	}: VerifyArgs<TN, TI, D> & {}) => {
+		const verifiedData = await all({
+			ctx,
+			tableName,
+			data,
+			onFail,
+		});
+
+		return ctx.db.insert(
+			tableName,
+			// @ts-expect-error
+			verifiedData.data
+		);
+	};
+
+	const update = async <
+		TN extends keyof DataModel,
+		TI extends NamedTableInfo<DataModel, TN>,
+		D extends Partial<TI['document']>,
+	>({
+		ctx,
+		tableName,
+		data,
+		onFail,
+	}: VerifyArgs<TN, TI, D> & {}) => {
+		const verifiedData = await all({
+			ctx,
+			tableName,
+			data,
+			onFail,
+		});
+
+		return ctx.db.patch(
+			// @ts-expect-error
+			verifiedData.data._id,
+			verifiedData.data
+		);
+	};
+
 	return {
 		verify: {
 			editableColumn: verifyColumnEditable,
 			uniqueColumn: verifyColumnUniqueness,
 			uniqueRow: verifyRowUniqueness,
 			nonEmptyColumn: verifyNonEmptyColumns,
-			grouped,
+			insert,
+			update,
 			all,
 		},
 		config: configOptions,
@@ -441,14 +490,13 @@ export const { verify } = verifyConfig({
 			indexes: ['by_email', 'by_username'],
 			identifiers: ['_id'],
 		},
-		project: {
-			indexes: ['by_slug'],
-			identifiers: ['_id'],
-		},
 	},
 	uniqueRows: {
 		projectUser: {
 			by_projectUser: ['projectId', 'userId'],
+		},
+		project: {
+			by_teamId_slug: ['teamId', 'slug'],
 		},
 	},
 	uneditableColumns: {
