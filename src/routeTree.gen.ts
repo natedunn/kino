@@ -8,7 +8,6 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { createFileRoute } from '@tanstack/react-router'
 import { createServerRootRoute } from '@tanstack/react-start/server'
 
 import { Route as rootRouteImport } from './routes/__root'
@@ -18,6 +17,7 @@ import { Route as BlankSignOutRouteImport } from './routes/_blank/sign-out'
 import { Route as BlankSignInRouteImport } from './routes/_blank/sign-in'
 import { Route as Blank404RouteImport } from './routes/_blank/404'
 import { Route as DefaultCreateAtlayoutRouteImport } from './routes/_default/create/@layout'
+import { Route as DefaultOrgAtlayoutRouteImport } from './routes/_default/$org/@layout'
 import { Route as DefaultSettingsIndexRouteImport } from './routes/_default/settings/index'
 import { Route as DefaultOrgSettingsRouteImport } from './routes/_default/$org/settings'
 import { Route as DefaultOrgDefaultAtlayoutRouteImport } from './routes/_default/$org/_default/@layout'
@@ -38,17 +38,11 @@ import { Route as DefaultOrgProjectFeedbackFeedbackIdIndexRouteImport } from './
 import { Route as DefaultOrgProjectChatChatIdIndexRouteImport } from './routes/_default/$org/$project/chat/$chatId/index'
 import { ServerRoute as ApiAuthSplatServerRouteImport } from './routes/api/auth/$'
 
-const DefaultOrgRouteImport = createFileRoute('/_default/$org')()
 const rootServerRouteImport = createServerRootRoute()
 
 const DefaultAtlayoutRoute = DefaultAtlayoutRouteImport.update({
   id: '/_default',
   getParentRoute: () => rootRouteImport,
-} as any)
-const DefaultOrgRoute = DefaultOrgRouteImport.update({
-  id: '/$org',
-  path: '/$org',
-  getParentRoute: () => DefaultAtlayoutRoute,
 } as any)
 const DefaultIndexRoute = DefaultIndexRouteImport.update({
   id: '/',
@@ -75,6 +69,11 @@ const DefaultCreateAtlayoutRoute = DefaultCreateAtlayoutRouteImport.update({
   path: '/create',
   getParentRoute: () => DefaultAtlayoutRoute,
 } as any)
+const DefaultOrgAtlayoutRoute = DefaultOrgAtlayoutRouteImport.update({
+  id: '/$org',
+  path: '/$org',
+  getParentRoute: () => DefaultAtlayoutRoute,
+} as any)
 const DefaultSettingsIndexRoute = DefaultSettingsIndexRouteImport.update({
   id: '/settings/',
   path: '/settings/',
@@ -83,18 +82,18 @@ const DefaultSettingsIndexRoute = DefaultSettingsIndexRouteImport.update({
 const DefaultOrgSettingsRoute = DefaultOrgSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
-  getParentRoute: () => DefaultOrgRoute,
+  getParentRoute: () => DefaultOrgAtlayoutRoute,
 } as any)
 const DefaultOrgDefaultAtlayoutRoute =
   DefaultOrgDefaultAtlayoutRouteImport.update({
     id: '/_default',
-    getParentRoute: () => DefaultOrgRoute,
+    getParentRoute: () => DefaultOrgAtlayoutRoute,
   } as any)
 const DefaultOrgProjectAtlayoutRoute =
   DefaultOrgProjectAtlayoutRouteImport.update({
-    id: '/$org/$project',
-    path: '/$org/$project',
-    getParentRoute: () => DefaultAtlayoutRoute,
+    id: '/$project',
+    path: '/$project',
+    getParentRoute: () => DefaultOrgAtlayoutRoute,
   } as any)
 const DefaultProfileUsernameIndexRoute =
   DefaultProfileUsernameIndexRouteImport.update({
@@ -185,13 +184,13 @@ const ApiAuthSplatServerRoute = ApiAuthSplatServerRouteImport.update({
 } as any)
 
 export interface FileRoutesByFullPath {
+  '/$org': typeof DefaultOrgDefaultAtlayoutRouteWithChildren
   '/create': typeof DefaultCreateAtlayoutRouteWithChildren
   '/404': typeof Blank404Route
   '/sign-in': typeof BlankSignInRoute
   '/sign-out': typeof BlankSignOutRoute
   '/': typeof DefaultIndexRoute
   '/$org/$project': typeof DefaultOrgProjectAtlayoutRouteWithChildren
-  '/$org': typeof DefaultOrgDefaultAtlayoutRouteWithChildren
   '/$org/settings': typeof DefaultOrgSettingsRoute
   '/settings': typeof DefaultSettingsIndexRoute
   '/$org/$project/chat': typeof DefaultOrgProjectChatAtlayoutRouteWithChildren
@@ -210,13 +209,13 @@ export interface FileRoutesByFullPath {
   '/$org/$project/feedback/$feedbackId': typeof DefaultOrgProjectFeedbackFeedbackIdIndexRoute
 }
 export interface FileRoutesByTo {
+  '/$org': typeof DefaultOrgDefaultIndexRoute
   '/create': typeof DefaultCreateAtlayoutRouteWithChildren
   '/404': typeof Blank404Route
   '/sign-in': typeof BlankSignInRoute
   '/sign-out': typeof BlankSignOutRoute
   '/': typeof DefaultIndexRoute
   '/$org/$project': typeof DefaultOrgProjectAtlayoutRouteWithChildren
-  '/$org': typeof DefaultOrgDefaultIndexRoute
   '/$org/settings': typeof DefaultOrgSettingsRoute
   '/settings': typeof DefaultSettingsIndexRoute
   '/create/project': typeof DefaultCreateProjectIndexRoute
@@ -235,13 +234,13 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_default': typeof DefaultAtlayoutRouteWithChildren
+  '/_default/$org': typeof DefaultOrgAtlayoutRouteWithChildren
   '/_default/create': typeof DefaultCreateAtlayoutRouteWithChildren
   '/_blank/404': typeof Blank404Route
   '/_blank/sign-in': typeof BlankSignInRoute
   '/_blank/sign-out': typeof BlankSignOutRoute
   '/_default/': typeof DefaultIndexRoute
   '/_default/$org/$project': typeof DefaultOrgProjectAtlayoutRouteWithChildren
-  '/_default/$org': typeof DefaultOrgRouteWithChildren
   '/_default/$org/_default': typeof DefaultOrgDefaultAtlayoutRouteWithChildren
   '/_default/$org/settings': typeof DefaultOrgSettingsRoute
   '/_default/settings/': typeof DefaultSettingsIndexRoute
@@ -263,13 +262,13 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
+    | '/$org'
     | '/create'
     | '/404'
     | '/sign-in'
     | '/sign-out'
     | '/'
     | '/$org/$project'
-    | '/$org'
     | '/$org/settings'
     | '/settings'
     | '/$org/$project/chat'
@@ -288,13 +287,13 @@ export interface FileRouteTypes {
     | '/$org/$project/feedback/$feedbackId'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/$org'
     | '/create'
     | '/404'
     | '/sign-in'
     | '/sign-out'
     | '/'
     | '/$org/$project'
-    | '/$org'
     | '/$org/settings'
     | '/settings'
     | '/create/project'
@@ -312,13 +311,13 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/_default'
+    | '/_default/$org'
     | '/_default/create'
     | '/_blank/404'
     | '/_blank/sign-in'
     | '/_blank/sign-out'
     | '/_default/'
     | '/_default/$org/$project'
-    | '/_default/$org'
     | '/_default/$org/_default'
     | '/_default/$org/settings'
     | '/_default/settings/'
@@ -375,13 +374,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DefaultAtlayoutRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_default/$org': {
-      id: '/_default/$org'
-      path: '/$org'
-      fullPath: '/$org'
-      preLoaderRoute: typeof DefaultOrgRouteImport
-      parentRoute: typeof DefaultAtlayoutRoute
-    }
     '/_default/': {
       id: '/_default/'
       path: '/'
@@ -417,6 +409,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DefaultCreateAtlayoutRouteImport
       parentRoute: typeof DefaultAtlayoutRoute
     }
+    '/_default/$org': {
+      id: '/_default/$org'
+      path: '/$org'
+      fullPath: '/$org'
+      preLoaderRoute: typeof DefaultOrgAtlayoutRouteImport
+      parentRoute: typeof DefaultAtlayoutRoute
+    }
     '/_default/settings/': {
       id: '/_default/settings/'
       path: '/settings'
@@ -429,21 +428,21 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/$org/settings'
       preLoaderRoute: typeof DefaultOrgSettingsRouteImport
-      parentRoute: typeof DefaultOrgRoute
+      parentRoute: typeof DefaultOrgAtlayoutRoute
     }
     '/_default/$org/_default': {
       id: '/_default/$org/_default'
-      path: '/$org'
+      path: ''
       fullPath: '/$org'
       preLoaderRoute: typeof DefaultOrgDefaultAtlayoutRouteImport
-      parentRoute: typeof DefaultOrgRoute
+      parentRoute: typeof DefaultOrgAtlayoutRoute
     }
     '/_default/$org/$project': {
       id: '/_default/$org/$project'
-      path: '/$org/$project'
+      path: '/$project'
       fullPath: '/$org/$project'
       preLoaderRoute: typeof DefaultOrgProjectAtlayoutRouteImport
-      parentRoute: typeof DefaultAtlayoutRoute
+      parentRoute: typeof DefaultOrgAtlayoutRoute
     }
     '/_default/profile/$username/': {
       id: '/_default/profile/$username/'
@@ -557,21 +556,6 @@ declare module '@tanstack/react-start/server' {
   }
 }
 
-interface DefaultCreateAtlayoutRouteChildren {
-  DefaultCreateProjectIndexRoute: typeof DefaultCreateProjectIndexRoute
-  DefaultCreateTeamIndexRoute: typeof DefaultCreateTeamIndexRoute
-}
-
-const DefaultCreateAtlayoutRouteChildren: DefaultCreateAtlayoutRouteChildren = {
-  DefaultCreateProjectIndexRoute: DefaultCreateProjectIndexRoute,
-  DefaultCreateTeamIndexRoute: DefaultCreateTeamIndexRoute,
-}
-
-const DefaultCreateAtlayoutRouteWithChildren =
-  DefaultCreateAtlayoutRoute._addFileChildren(
-    DefaultCreateAtlayoutRouteChildren,
-  )
-
 interface DefaultOrgProjectChatAtlayoutRouteChildren {
   DefaultOrgProjectChatIndexRoute: typeof DefaultOrgProjectChatIndexRoute
   DefaultOrgProjectChatChatIdIndexRoute: typeof DefaultOrgProjectChatChatIdIndexRoute
@@ -634,34 +618,48 @@ const DefaultOrgDefaultAtlayoutRouteWithChildren =
     DefaultOrgDefaultAtlayoutRouteChildren,
   )
 
-interface DefaultOrgRouteChildren {
+interface DefaultOrgAtlayoutRouteChildren {
+  DefaultOrgProjectAtlayoutRoute: typeof DefaultOrgProjectAtlayoutRouteWithChildren
   DefaultOrgDefaultAtlayoutRoute: typeof DefaultOrgDefaultAtlayoutRouteWithChildren
   DefaultOrgSettingsRoute: typeof DefaultOrgSettingsRoute
 }
 
-const DefaultOrgRouteChildren: DefaultOrgRouteChildren = {
+const DefaultOrgAtlayoutRouteChildren: DefaultOrgAtlayoutRouteChildren = {
+  DefaultOrgProjectAtlayoutRoute: DefaultOrgProjectAtlayoutRouteWithChildren,
   DefaultOrgDefaultAtlayoutRoute: DefaultOrgDefaultAtlayoutRouteWithChildren,
   DefaultOrgSettingsRoute: DefaultOrgSettingsRoute,
 }
 
-const DefaultOrgRouteWithChildren = DefaultOrgRoute._addFileChildren(
-  DefaultOrgRouteChildren,
-)
+const DefaultOrgAtlayoutRouteWithChildren =
+  DefaultOrgAtlayoutRoute._addFileChildren(DefaultOrgAtlayoutRouteChildren)
+
+interface DefaultCreateAtlayoutRouteChildren {
+  DefaultCreateProjectIndexRoute: typeof DefaultCreateProjectIndexRoute
+  DefaultCreateTeamIndexRoute: typeof DefaultCreateTeamIndexRoute
+}
+
+const DefaultCreateAtlayoutRouteChildren: DefaultCreateAtlayoutRouteChildren = {
+  DefaultCreateProjectIndexRoute: DefaultCreateProjectIndexRoute,
+  DefaultCreateTeamIndexRoute: DefaultCreateTeamIndexRoute,
+}
+
+const DefaultCreateAtlayoutRouteWithChildren =
+  DefaultCreateAtlayoutRoute._addFileChildren(
+    DefaultCreateAtlayoutRouteChildren,
+  )
 
 interface DefaultAtlayoutRouteChildren {
+  DefaultOrgAtlayoutRoute: typeof DefaultOrgAtlayoutRouteWithChildren
   DefaultCreateAtlayoutRoute: typeof DefaultCreateAtlayoutRouteWithChildren
   DefaultIndexRoute: typeof DefaultIndexRoute
-  DefaultOrgProjectAtlayoutRoute: typeof DefaultOrgProjectAtlayoutRouteWithChildren
-  DefaultOrgRoute: typeof DefaultOrgRouteWithChildren
   DefaultSettingsIndexRoute: typeof DefaultSettingsIndexRoute
   DefaultProfileUsernameIndexRoute: typeof DefaultProfileUsernameIndexRoute
 }
 
 const DefaultAtlayoutRouteChildren: DefaultAtlayoutRouteChildren = {
+  DefaultOrgAtlayoutRoute: DefaultOrgAtlayoutRouteWithChildren,
   DefaultCreateAtlayoutRoute: DefaultCreateAtlayoutRouteWithChildren,
   DefaultIndexRoute: DefaultIndexRoute,
-  DefaultOrgProjectAtlayoutRoute: DefaultOrgProjectAtlayoutRouteWithChildren,
-  DefaultOrgRoute: DefaultOrgRouteWithChildren,
   DefaultSettingsIndexRoute: DefaultSettingsIndexRoute,
   DefaultProfileUsernameIndexRoute: DefaultProfileUsernameIndexRoute,
 }

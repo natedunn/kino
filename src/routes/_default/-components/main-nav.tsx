@@ -1,5 +1,3 @@
-import { features } from 'process';
-
 import React from 'react';
 import {
 	DropdownMenu,
@@ -9,7 +7,6 @@ import {
 	DropdownMenuTrigger,
 } from '@radix-ui/react-dropdown-menu';
 import { Link } from '@tanstack/react-router';
-import { Authenticated, AuthLoading, Unauthenticated } from 'convex/react';
 import { Bell, Command, Search } from 'lucide-react';
 
 import { CommandPalette } from '@/components/command-palette';
@@ -21,10 +18,19 @@ import { API } from '@/lib/api';
 type MainNavProps = {
 	user: API['user']['getUserIndexes'] | null | undefined;
 	children?: React.ReactNode;
-	project?: string;
+	project?: {
+		id: string;
+		slug: string;
+		name: string;
+	};
+	org?: {
+		id: string;
+		slug: string;
+		name: string;
+	};
 };
 
-export const MainNav = ({ user, project, children }: MainNavProps) => {
+export const MainNav = ({ user, org, project, children }: MainNavProps) => {
 	const [isCommandOpen, setIsCommandOpen] = React.useState(false);
 
 	const notifications = [
@@ -70,20 +76,37 @@ export const MainNav = ({ user, project, children }: MainNavProps) => {
 						<div className='flex min-w-0 flex-shrink-0 items-center gap-3'>
 							<div className='flex items-center gap-2'>
 								<div className='flex h-8 w-8 items-center justify-center rounded-full bg-primary'>
-									<span className='text-sm font-bold text-primary-foreground'>G</span>
+									<span className='text-sm font-bold text-primary-foreground'>K</span>
 								</div>
-								<div className='-ml-3 flex h-8 w-8 items-center justify-center rounded-full bg-foreground ring-2 ring-background'>
-									<span className='text-sm font-bold text-background'>O</span>
-								</div>
+								{!!org && (
+									<div className='-ml-3 flex h-8 w-8 items-center justify-center rounded-full bg-foreground ring-2 ring-background'>
+										<span className='text-sm font-bold text-background'>
+											{org.name[0].toUpperCase()}
+										</span>
+									</div>
+								)}
 							</div>
 							<div className='hidden min-w-0 items-center gap-1 text-sm sm:flex'>
-								<a href='#' className='hover:underline'>
-									Organization
-								</a>
-								<span className='text-muted-foreground'>/</span>
-								<a href='#' className='hover:underline'>
-									Project
-								</a>
+								{!!org && (
+									<Link to='/$org' params={(prev) => ({ ...prev, org: org.slug })}>
+										{org.name}
+									</Link>
+								)}
+								{!!project && !!org && (
+									<>
+										<span className='text-muted-foreground'>/</span>
+										<Link
+											to='/$org/$project'
+											params={(prev) => ({
+												...prev,
+												org: org.slug,
+												project: project.slug,
+											})}
+										>
+											Project
+										</Link>
+									</>
+								)}
 							</div>
 						</div>
 

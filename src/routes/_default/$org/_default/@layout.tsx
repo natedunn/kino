@@ -7,7 +7,7 @@ export const Route = createFileRoute('/_default/$org/_default')({
 	loader: async ({ context }) => {
 		return {
 			user: context.user,
-		}
+		};
 	},
 });
 
@@ -16,10 +16,7 @@ function RouteComponent() {
 
 	return (
 		<div className='flex flex-1 flex-col'>
-			<MainNav user={user} />
-			<div>
-				<Outlet />
-			</div>
+			<Outlet />
 		</div>
-	)
+	);
 }

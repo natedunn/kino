@@ -1,5 +1,6 @@
 import { BetterAuthError } from 'better-auth';
 import { ConvexError } from 'convex/values';
+import { z } from 'zod';
 
 import { limits } from '@/config/limits';
 import { createAuth } from '@/lib/auth';
@@ -46,5 +47,28 @@ export const create = procedure.authed.external.mutation({
 			});
 
 		return org;
+	},
+});
+
+export const getFullOrg = procedure.base.external.query({
+	args: {
+		orgSlug: z.string(),
+	},
+	handler: async (ctx, args) => {
+		const auth = createAuth(ctx);
+
+		try {
+			const org = await auth.api.getFullOrganization({
+				query: {
+					organizationSlug: args.orgSlug,
+				},
+				headers: await betterAuthComponent.getHeaders(ctx),
+			});
+
+			return org;
+		} catch (error) {
+			// console.error(error);
+			return null;
+		}
 	},
 });
