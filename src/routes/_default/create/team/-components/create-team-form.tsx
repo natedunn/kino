@@ -11,10 +11,10 @@ import { InlineAlert } from '@/components/inline-alert';
 import { LabelWrapper } from '@/components/label';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { createTeamSchema } from '@/convex/api/team.utils';
+import { createOrgSchema } from '@/convex/api/org.utils';
 import { cn } from '@/lib/utils';
 
-const formSchema = createTeamSchema;
+const formSchema = createOrgSchema;
 
 type FormSchema = z.infer<typeof formSchema>;
 

@@ -119,9 +119,9 @@ export const getTeamList = procedure.base.external.query({
 
 		let limit: number;
 		if (user?.role === 'admin') {
-			limit = limits.admin.MAX_TEAMS;
+			limit = limits.admin.MAX_ORGS;
 		} else {
-			limit = limits.free.MAX_TEAMS;
+			limit = limits.free.MAX_ORGS;
 		}
 
 		return { teams, underLimit: teams.length < limit };

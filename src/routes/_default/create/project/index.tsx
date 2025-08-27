@@ -10,7 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { authClient } from '@/lib/auth/auth-client';
 
 import { CreateProjectForm } from './-components/create-project-form';
-import { TeamSelector } from './-components/team-selector';
+import { OrgSelector } from './-components/org-selector';
 
 export const Route = createFileRoute('/_default/create/project/')({
 	component: RouteComponent,
@@ -44,7 +44,7 @@ function RouteComponent() {
 						{isPending ? (
 							<Skeleton className='h-[42px] w-[180px]' />
 						) : (
-							<TeamSelector activeTeamId={activeOrg?.id} />
+							<OrgSelector activeOrgId={activeOrg?.id} />
 						)}
 					</div>
 					<div>
@@ -64,8 +64,8 @@ function RouteComponent() {
 					)}
 					{!!activeOrg && !isPending && (
 						<CreateProjectForm
-							activeTeamName={activeOrg.name}
-							activeTeamId={activeOrg.id}
+							activeOrgName={activeOrg.name}
+							activeOrgId={activeOrg.id}
 							underLimit={true}
 						/>
 					)}

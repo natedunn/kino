@@ -6,5 +6,5 @@ export const createProjectSchema = projectSchema.pick({
 	urls: true,
 	private: true,
 	slug: true,
-	teamId: true,
+	orgId: true,
 });

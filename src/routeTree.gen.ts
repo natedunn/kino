@@ -8,6 +8,7 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
+import { createFileRoute } from '@tanstack/react-router'
 import { createServerRootRoute } from '@tanstack/react-start/server'
 
 import { Route as rootRouteImport } from './routes/__root'
@@ -18,29 +19,36 @@ import { Route as BlankSignInRouteImport } from './routes/_blank/sign-in'
 import { Route as Blank404RouteImport } from './routes/_blank/404'
 import { Route as DefaultCreateAtlayoutRouteImport } from './routes/_default/create/@layout'
 import { Route as DefaultSettingsIndexRouteImport } from './routes/_default/settings/index'
-import { Route as DefaultTeamIndexRouteImport } from './routes/_default/$team/index'
-import { Route as DefaultTeamSettingsRouteImport } from './routes/_default/$team/settings'
-import { Route as DefaultTeamProjectAtlayoutRouteImport } from './routes/_default/$team/$project/@layout'
+import { Route as DefaultOrgSettingsRouteImport } from './routes/_default/$org/settings'
+import { Route as DefaultOrgDefaultAtlayoutRouteImport } from './routes/_default/$org/_default/@layout'
+import { Route as DefaultOrgProjectAtlayoutRouteImport } from './routes/_default/$org/$project/@layout'
 import { Route as DefaultProfileUsernameIndexRouteImport } from './routes/_default/profile/$username/index'
 import { Route as DefaultCreateTeamIndexRouteImport } from './routes/_default/create/team/index'
 import { Route as DefaultCreateProjectIndexRouteImport } from './routes/_default/create/project/index'
-import { Route as DefaultTeamProjectChatAtlayoutRouteImport } from './routes/_default/$team/$project/chat/@layout'
-import { Route as DefaultTeamProjectUpdatesIndexRouteImport } from './routes/_default/$team/$project/updates/index'
-import { Route as DefaultTeamProjectRoadmapIndexRouteImport } from './routes/_default/$team/$project/roadmap/index'
-import { Route as DefaultTeamProjectOverviewIndexRouteImport } from './routes/_default/$team/$project/overview/index'
-import { Route as DefaultTeamProjectFilesIndexRouteImport } from './routes/_default/$team/$project/files/index'
-import { Route as DefaultTeamProjectFeedbackIndexRouteImport } from './routes/_default/$team/$project/feedback/index'
-import { Route as DefaultTeamProjectDiscussionsIndexRouteImport } from './routes/_default/$team/$project/discussions/index'
-import { Route as DefaultTeamProjectChatIndexRouteImport } from './routes/_default/$team/$project/chat/index'
-import { Route as DefaultTeamProjectFeedbackFeedbackIdIndexRouteImport } from './routes/_default/$team/$project/feedback/$feedbackId/index'
-import { Route as DefaultTeamProjectChatChatIdIndexRouteImport } from './routes/_default/$team/$project/chat/$chatId/index'
+import { Route as DefaultOrgDefaultIndexRouteImport } from './routes/_default/$org/_default/index'
+import { Route as DefaultOrgProjectChatAtlayoutRouteImport } from './routes/_default/$org/$project/chat/@layout'
+import { Route as DefaultOrgProjectUpdatesIndexRouteImport } from './routes/_default/$org/$project/updates/index'
+import { Route as DefaultOrgProjectRoadmapIndexRouteImport } from './routes/_default/$org/$project/roadmap/index'
+import { Route as DefaultOrgProjectOverviewIndexRouteImport } from './routes/_default/$org/$project/overview/index'
+import { Route as DefaultOrgProjectFilesIndexRouteImport } from './routes/_default/$org/$project/files/index'
+import { Route as DefaultOrgProjectFeedbackIndexRouteImport } from './routes/_default/$org/$project/feedback/index'
+import { Route as DefaultOrgProjectDiscussionsIndexRouteImport } from './routes/_default/$org/$project/discussions/index'
+import { Route as DefaultOrgProjectChatIndexRouteImport } from './routes/_default/$org/$project/chat/index'
+import { Route as DefaultOrgProjectFeedbackFeedbackIdIndexRouteImport } from './routes/_default/$org/$project/feedback/$feedbackId/index'
+import { Route as DefaultOrgProjectChatChatIdIndexRouteImport } from './routes/_default/$org/$project/chat/$chatId/index'
 import { ServerRoute as ApiAuthSplatServerRouteImport } from './routes/api/auth/$'
 
+const DefaultOrgRouteImport = createFileRoute('/_default/$org')()
 const rootServerRouteImport = createServerRootRoute()
 
 const DefaultAtlayoutRoute = DefaultAtlayoutRouteImport.update({
   id: '/_default',
   getParentRoute: () => rootRouteImport,
+} as any)
+const DefaultOrgRoute = DefaultOrgRouteImport.update({
+  id: '/$org',
+  path: '/$org',
+  getParentRoute: () => DefaultAtlayoutRoute,
 } as any)
 const DefaultIndexRoute = DefaultIndexRouteImport.update({
   id: '/',
@@ -72,20 +80,20 @@ const DefaultSettingsIndexRoute = DefaultSettingsIndexRouteImport.update({
   path: '/settings/',
   getParentRoute: () => DefaultAtlayoutRoute,
 } as any)
-const DefaultTeamIndexRoute = DefaultTeamIndexRouteImport.update({
-  id: '/$team/',
-  path: '/$team/',
-  getParentRoute: () => DefaultAtlayoutRoute,
+const DefaultOrgSettingsRoute = DefaultOrgSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => DefaultOrgRoute,
 } as any)
-const DefaultTeamSettingsRoute = DefaultTeamSettingsRouteImport.update({
-  id: '/$team/settings',
-  path: '/$team/settings',
-  getParentRoute: () => DefaultAtlayoutRoute,
-} as any)
-const DefaultTeamProjectAtlayoutRoute =
-  DefaultTeamProjectAtlayoutRouteImport.update({
-    id: '/$team/$project',
-    path: '/$team/$project',
+const DefaultOrgDefaultAtlayoutRoute =
+  DefaultOrgDefaultAtlayoutRouteImport.update({
+    id: '/_default',
+    getParentRoute: () => DefaultOrgRoute,
+  } as any)
+const DefaultOrgProjectAtlayoutRoute =
+  DefaultOrgProjectAtlayoutRouteImport.update({
+    id: '/$org/$project',
+    path: '/$org/$project',
     getParentRoute: () => DefaultAtlayoutRoute,
   } as any)
 const DefaultProfileUsernameIndexRoute =
@@ -105,65 +113,70 @@ const DefaultCreateProjectIndexRoute =
     path: '/project/',
     getParentRoute: () => DefaultCreateAtlayoutRoute,
   } as any)
-const DefaultTeamProjectChatAtlayoutRoute =
-  DefaultTeamProjectChatAtlayoutRouteImport.update({
+const DefaultOrgDefaultIndexRoute = DefaultOrgDefaultIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DefaultOrgDefaultAtlayoutRoute,
+} as any)
+const DefaultOrgProjectChatAtlayoutRoute =
+  DefaultOrgProjectChatAtlayoutRouteImport.update({
     id: '/chat',
     path: '/chat',
-    getParentRoute: () => DefaultTeamProjectAtlayoutRoute,
+    getParentRoute: () => DefaultOrgProjectAtlayoutRoute,
   } as any)
-const DefaultTeamProjectUpdatesIndexRoute =
-  DefaultTeamProjectUpdatesIndexRouteImport.update({
+const DefaultOrgProjectUpdatesIndexRoute =
+  DefaultOrgProjectUpdatesIndexRouteImport.update({
     id: '/updates/',
     path: '/updates/',
-    getParentRoute: () => DefaultTeamProjectAtlayoutRoute,
+    getParentRoute: () => DefaultOrgProjectAtlayoutRoute,
   } as any)
-const DefaultTeamProjectRoadmapIndexRoute =
-  DefaultTeamProjectRoadmapIndexRouteImport.update({
+const DefaultOrgProjectRoadmapIndexRoute =
+  DefaultOrgProjectRoadmapIndexRouteImport.update({
     id: '/roadmap/',
     path: '/roadmap/',
-    getParentRoute: () => DefaultTeamProjectAtlayoutRoute,
+    getParentRoute: () => DefaultOrgProjectAtlayoutRoute,
   } as any)
-const DefaultTeamProjectOverviewIndexRoute =
-  DefaultTeamProjectOverviewIndexRouteImport.update({
+const DefaultOrgProjectOverviewIndexRoute =
+  DefaultOrgProjectOverviewIndexRouteImport.update({
     id: '/overview/',
     path: '/overview/',
-    getParentRoute: () => DefaultTeamProjectAtlayoutRoute,
+    getParentRoute: () => DefaultOrgProjectAtlayoutRoute,
   } as any)
-const DefaultTeamProjectFilesIndexRoute =
-  DefaultTeamProjectFilesIndexRouteImport.update({
+const DefaultOrgProjectFilesIndexRoute =
+  DefaultOrgProjectFilesIndexRouteImport.update({
     id: '/files/',
     path: '/files/',
-    getParentRoute: () => DefaultTeamProjectAtlayoutRoute,
+    getParentRoute: () => DefaultOrgProjectAtlayoutRoute,
   } as any)
-const DefaultTeamProjectFeedbackIndexRoute =
-  DefaultTeamProjectFeedbackIndexRouteImport.update({
+const DefaultOrgProjectFeedbackIndexRoute =
+  DefaultOrgProjectFeedbackIndexRouteImport.update({
     id: '/feedback/',
     path: '/feedback/',
-    getParentRoute: () => DefaultTeamProjectAtlayoutRoute,
+    getParentRoute: () => DefaultOrgProjectAtlayoutRoute,
   } as any)
-const DefaultTeamProjectDiscussionsIndexRoute =
-  DefaultTeamProjectDiscussionsIndexRouteImport.update({
+const DefaultOrgProjectDiscussionsIndexRoute =
+  DefaultOrgProjectDiscussionsIndexRouteImport.update({
     id: '/discussions/',
     path: '/discussions/',
-    getParentRoute: () => DefaultTeamProjectAtlayoutRoute,
+    getParentRoute: () => DefaultOrgProjectAtlayoutRoute,
   } as any)
-const DefaultTeamProjectChatIndexRoute =
-  DefaultTeamProjectChatIndexRouteImport.update({
+const DefaultOrgProjectChatIndexRoute =
+  DefaultOrgProjectChatIndexRouteImport.update({
     id: '/',
     path: '/',
-    getParentRoute: () => DefaultTeamProjectChatAtlayoutRoute,
+    getParentRoute: () => DefaultOrgProjectChatAtlayoutRoute,
   } as any)
-const DefaultTeamProjectFeedbackFeedbackIdIndexRoute =
-  DefaultTeamProjectFeedbackFeedbackIdIndexRouteImport.update({
+const DefaultOrgProjectFeedbackFeedbackIdIndexRoute =
+  DefaultOrgProjectFeedbackFeedbackIdIndexRouteImport.update({
     id: '/feedback/$feedbackId/',
     path: '/feedback/$feedbackId/',
-    getParentRoute: () => DefaultTeamProjectAtlayoutRoute,
+    getParentRoute: () => DefaultOrgProjectAtlayoutRoute,
   } as any)
-const DefaultTeamProjectChatChatIdIndexRoute =
-  DefaultTeamProjectChatChatIdIndexRouteImport.update({
+const DefaultOrgProjectChatChatIdIndexRoute =
+  DefaultOrgProjectChatChatIdIndexRouteImport.update({
     id: '/$chatId/',
     path: '/$chatId/',
-    getParentRoute: () => DefaultTeamProjectChatAtlayoutRoute,
+    getParentRoute: () => DefaultOrgProjectChatAtlayoutRoute,
   } as any)
 const ApiAuthSplatServerRoute = ApiAuthSplatServerRouteImport.update({
   id: '/api/auth/$',
@@ -177,23 +190,24 @@ export interface FileRoutesByFullPath {
   '/sign-in': typeof BlankSignInRoute
   '/sign-out': typeof BlankSignOutRoute
   '/': typeof DefaultIndexRoute
-  '/$team/$project': typeof DefaultTeamProjectAtlayoutRouteWithChildren
-  '/$team/settings': typeof DefaultTeamSettingsRoute
-  '/$team': typeof DefaultTeamIndexRoute
+  '/$org/$project': typeof DefaultOrgProjectAtlayoutRouteWithChildren
+  '/$org': typeof DefaultOrgDefaultAtlayoutRouteWithChildren
+  '/$org/settings': typeof DefaultOrgSettingsRoute
   '/settings': typeof DefaultSettingsIndexRoute
-  '/$team/$project/chat': typeof DefaultTeamProjectChatAtlayoutRouteWithChildren
+  '/$org/$project/chat': typeof DefaultOrgProjectChatAtlayoutRouteWithChildren
+  '/$org/': typeof DefaultOrgDefaultIndexRoute
   '/create/project': typeof DefaultCreateProjectIndexRoute
   '/create/team': typeof DefaultCreateTeamIndexRoute
   '/profile/$username': typeof DefaultProfileUsernameIndexRoute
-  '/$team/$project/chat/': typeof DefaultTeamProjectChatIndexRoute
-  '/$team/$project/discussions': typeof DefaultTeamProjectDiscussionsIndexRoute
-  '/$team/$project/feedback': typeof DefaultTeamProjectFeedbackIndexRoute
-  '/$team/$project/files': typeof DefaultTeamProjectFilesIndexRoute
-  '/$team/$project/overview': typeof DefaultTeamProjectOverviewIndexRoute
-  '/$team/$project/roadmap': typeof DefaultTeamProjectRoadmapIndexRoute
-  '/$team/$project/updates': typeof DefaultTeamProjectUpdatesIndexRoute
-  '/$team/$project/chat/$chatId': typeof DefaultTeamProjectChatChatIdIndexRoute
-  '/$team/$project/feedback/$feedbackId': typeof DefaultTeamProjectFeedbackFeedbackIdIndexRoute
+  '/$org/$project/chat/': typeof DefaultOrgProjectChatIndexRoute
+  '/$org/$project/discussions': typeof DefaultOrgProjectDiscussionsIndexRoute
+  '/$org/$project/feedback': typeof DefaultOrgProjectFeedbackIndexRoute
+  '/$org/$project/files': typeof DefaultOrgProjectFilesIndexRoute
+  '/$org/$project/overview': typeof DefaultOrgProjectOverviewIndexRoute
+  '/$org/$project/roadmap': typeof DefaultOrgProjectRoadmapIndexRoute
+  '/$org/$project/updates': typeof DefaultOrgProjectUpdatesIndexRoute
+  '/$org/$project/chat/$chatId': typeof DefaultOrgProjectChatChatIdIndexRoute
+  '/$org/$project/feedback/$feedbackId': typeof DefaultOrgProjectFeedbackFeedbackIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/create': typeof DefaultCreateAtlayoutRouteWithChildren
@@ -201,22 +215,22 @@ export interface FileRoutesByTo {
   '/sign-in': typeof BlankSignInRoute
   '/sign-out': typeof BlankSignOutRoute
   '/': typeof DefaultIndexRoute
-  '/$team/$project': typeof DefaultTeamProjectAtlayoutRouteWithChildren
-  '/$team/settings': typeof DefaultTeamSettingsRoute
-  '/$team': typeof DefaultTeamIndexRoute
+  '/$org/$project': typeof DefaultOrgProjectAtlayoutRouteWithChildren
+  '/$org': typeof DefaultOrgDefaultIndexRoute
+  '/$org/settings': typeof DefaultOrgSettingsRoute
   '/settings': typeof DefaultSettingsIndexRoute
   '/create/project': typeof DefaultCreateProjectIndexRoute
   '/create/team': typeof DefaultCreateTeamIndexRoute
   '/profile/$username': typeof DefaultProfileUsernameIndexRoute
-  '/$team/$project/chat': typeof DefaultTeamProjectChatIndexRoute
-  '/$team/$project/discussions': typeof DefaultTeamProjectDiscussionsIndexRoute
-  '/$team/$project/feedback': typeof DefaultTeamProjectFeedbackIndexRoute
-  '/$team/$project/files': typeof DefaultTeamProjectFilesIndexRoute
-  '/$team/$project/overview': typeof DefaultTeamProjectOverviewIndexRoute
-  '/$team/$project/roadmap': typeof DefaultTeamProjectRoadmapIndexRoute
-  '/$team/$project/updates': typeof DefaultTeamProjectUpdatesIndexRoute
-  '/$team/$project/chat/$chatId': typeof DefaultTeamProjectChatChatIdIndexRoute
-  '/$team/$project/feedback/$feedbackId': typeof DefaultTeamProjectFeedbackFeedbackIdIndexRoute
+  '/$org/$project/chat': typeof DefaultOrgProjectChatIndexRoute
+  '/$org/$project/discussions': typeof DefaultOrgProjectDiscussionsIndexRoute
+  '/$org/$project/feedback': typeof DefaultOrgProjectFeedbackIndexRoute
+  '/$org/$project/files': typeof DefaultOrgProjectFilesIndexRoute
+  '/$org/$project/overview': typeof DefaultOrgProjectOverviewIndexRoute
+  '/$org/$project/roadmap': typeof DefaultOrgProjectRoadmapIndexRoute
+  '/$org/$project/updates': typeof DefaultOrgProjectUpdatesIndexRoute
+  '/$org/$project/chat/$chatId': typeof DefaultOrgProjectChatChatIdIndexRoute
+  '/$org/$project/feedback/$feedbackId': typeof DefaultOrgProjectFeedbackFeedbackIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -226,23 +240,25 @@ export interface FileRoutesById {
   '/_blank/sign-in': typeof BlankSignInRoute
   '/_blank/sign-out': typeof BlankSignOutRoute
   '/_default/': typeof DefaultIndexRoute
-  '/_default/$team/$project': typeof DefaultTeamProjectAtlayoutRouteWithChildren
-  '/_default/$team/settings': typeof DefaultTeamSettingsRoute
-  '/_default/$team/': typeof DefaultTeamIndexRoute
+  '/_default/$org/$project': typeof DefaultOrgProjectAtlayoutRouteWithChildren
+  '/_default/$org': typeof DefaultOrgRouteWithChildren
+  '/_default/$org/_default': typeof DefaultOrgDefaultAtlayoutRouteWithChildren
+  '/_default/$org/settings': typeof DefaultOrgSettingsRoute
   '/_default/settings/': typeof DefaultSettingsIndexRoute
-  '/_default/$team/$project/chat': typeof DefaultTeamProjectChatAtlayoutRouteWithChildren
+  '/_default/$org/$project/chat': typeof DefaultOrgProjectChatAtlayoutRouteWithChildren
+  '/_default/$org/_default/': typeof DefaultOrgDefaultIndexRoute
   '/_default/create/project/': typeof DefaultCreateProjectIndexRoute
   '/_default/create/team/': typeof DefaultCreateTeamIndexRoute
   '/_default/profile/$username/': typeof DefaultProfileUsernameIndexRoute
-  '/_default/$team/$project/chat/': typeof DefaultTeamProjectChatIndexRoute
-  '/_default/$team/$project/discussions/': typeof DefaultTeamProjectDiscussionsIndexRoute
-  '/_default/$team/$project/feedback/': typeof DefaultTeamProjectFeedbackIndexRoute
-  '/_default/$team/$project/files/': typeof DefaultTeamProjectFilesIndexRoute
-  '/_default/$team/$project/overview/': typeof DefaultTeamProjectOverviewIndexRoute
-  '/_default/$team/$project/roadmap/': typeof DefaultTeamProjectRoadmapIndexRoute
-  '/_default/$team/$project/updates/': typeof DefaultTeamProjectUpdatesIndexRoute
-  '/_default/$team/$project/chat/$chatId/': typeof DefaultTeamProjectChatChatIdIndexRoute
-  '/_default/$team/$project/feedback/$feedbackId/': typeof DefaultTeamProjectFeedbackFeedbackIdIndexRoute
+  '/_default/$org/$project/chat/': typeof DefaultOrgProjectChatIndexRoute
+  '/_default/$org/$project/discussions/': typeof DefaultOrgProjectDiscussionsIndexRoute
+  '/_default/$org/$project/feedback/': typeof DefaultOrgProjectFeedbackIndexRoute
+  '/_default/$org/$project/files/': typeof DefaultOrgProjectFilesIndexRoute
+  '/_default/$org/$project/overview/': typeof DefaultOrgProjectOverviewIndexRoute
+  '/_default/$org/$project/roadmap/': typeof DefaultOrgProjectRoadmapIndexRoute
+  '/_default/$org/$project/updates/': typeof DefaultOrgProjectUpdatesIndexRoute
+  '/_default/$org/$project/chat/$chatId/': typeof DefaultOrgProjectChatChatIdIndexRoute
+  '/_default/$org/$project/feedback/$feedbackId/': typeof DefaultOrgProjectFeedbackFeedbackIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -252,23 +268,24 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/sign-out'
     | '/'
-    | '/$team/$project'
-    | '/$team/settings'
-    | '/$team'
+    | '/$org/$project'
+    | '/$org'
+    | '/$org/settings'
     | '/settings'
-    | '/$team/$project/chat'
+    | '/$org/$project/chat'
+    | '/$org/'
     | '/create/project'
     | '/create/team'
     | '/profile/$username'
-    | '/$team/$project/chat/'
-    | '/$team/$project/discussions'
-    | '/$team/$project/feedback'
-    | '/$team/$project/files'
-    | '/$team/$project/overview'
-    | '/$team/$project/roadmap'
-    | '/$team/$project/updates'
-    | '/$team/$project/chat/$chatId'
-    | '/$team/$project/feedback/$feedbackId'
+    | '/$org/$project/chat/'
+    | '/$org/$project/discussions'
+    | '/$org/$project/feedback'
+    | '/$org/$project/files'
+    | '/$org/$project/overview'
+    | '/$org/$project/roadmap'
+    | '/$org/$project/updates'
+    | '/$org/$project/chat/$chatId'
+    | '/$org/$project/feedback/$feedbackId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/create'
@@ -276,22 +293,22 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/sign-out'
     | '/'
-    | '/$team/$project'
-    | '/$team/settings'
-    | '/$team'
+    | '/$org/$project'
+    | '/$org'
+    | '/$org/settings'
     | '/settings'
     | '/create/project'
     | '/create/team'
     | '/profile/$username'
-    | '/$team/$project/chat'
-    | '/$team/$project/discussions'
-    | '/$team/$project/feedback'
-    | '/$team/$project/files'
-    | '/$team/$project/overview'
-    | '/$team/$project/roadmap'
-    | '/$team/$project/updates'
-    | '/$team/$project/chat/$chatId'
-    | '/$team/$project/feedback/$feedbackId'
+    | '/$org/$project/chat'
+    | '/$org/$project/discussions'
+    | '/$org/$project/feedback'
+    | '/$org/$project/files'
+    | '/$org/$project/overview'
+    | '/$org/$project/roadmap'
+    | '/$org/$project/updates'
+    | '/$org/$project/chat/$chatId'
+    | '/$org/$project/feedback/$feedbackId'
   id:
     | '__root__'
     | '/_default'
@@ -300,23 +317,25 @@ export interface FileRouteTypes {
     | '/_blank/sign-in'
     | '/_blank/sign-out'
     | '/_default/'
-    | '/_default/$team/$project'
-    | '/_default/$team/settings'
-    | '/_default/$team/'
+    | '/_default/$org/$project'
+    | '/_default/$org'
+    | '/_default/$org/_default'
+    | '/_default/$org/settings'
     | '/_default/settings/'
-    | '/_default/$team/$project/chat'
+    | '/_default/$org/$project/chat'
+    | '/_default/$org/_default/'
     | '/_default/create/project/'
     | '/_default/create/team/'
     | '/_default/profile/$username/'
-    | '/_default/$team/$project/chat/'
-    | '/_default/$team/$project/discussions/'
-    | '/_default/$team/$project/feedback/'
-    | '/_default/$team/$project/files/'
-    | '/_default/$team/$project/overview/'
-    | '/_default/$team/$project/roadmap/'
-    | '/_default/$team/$project/updates/'
-    | '/_default/$team/$project/chat/$chatId/'
-    | '/_default/$team/$project/feedback/$feedbackId/'
+    | '/_default/$org/$project/chat/'
+    | '/_default/$org/$project/discussions/'
+    | '/_default/$org/$project/feedback/'
+    | '/_default/$org/$project/files/'
+    | '/_default/$org/$project/overview/'
+    | '/_default/$org/$project/roadmap/'
+    | '/_default/$org/$project/updates/'
+    | '/_default/$org/$project/chat/$chatId/'
+    | '/_default/$org/$project/feedback/$feedbackId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -355,6 +374,13 @@ declare module '@tanstack/react-router' {
       fullPath: ''
       preLoaderRoute: typeof DefaultAtlayoutRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_default/$org': {
+      id: '/_default/$org'
+      path: '/$org'
+      fullPath: '/$org'
+      preLoaderRoute: typeof DefaultOrgRouteImport
+      parentRoute: typeof DefaultAtlayoutRoute
     }
     '/_default/': {
       id: '/_default/'
@@ -398,25 +424,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DefaultSettingsIndexRouteImport
       parentRoute: typeof DefaultAtlayoutRoute
     }
-    '/_default/$team/': {
-      id: '/_default/$team/'
-      path: '/$team'
-      fullPath: '/$team'
-      preLoaderRoute: typeof DefaultTeamIndexRouteImport
-      parentRoute: typeof DefaultAtlayoutRoute
+    '/_default/$org/settings': {
+      id: '/_default/$org/settings'
+      path: '/settings'
+      fullPath: '/$org/settings'
+      preLoaderRoute: typeof DefaultOrgSettingsRouteImport
+      parentRoute: typeof DefaultOrgRoute
     }
-    '/_default/$team/settings': {
-      id: '/_default/$team/settings'
-      path: '/$team/settings'
-      fullPath: '/$team/settings'
-      preLoaderRoute: typeof DefaultTeamSettingsRouteImport
-      parentRoute: typeof DefaultAtlayoutRoute
+    '/_default/$org/_default': {
+      id: '/_default/$org/_default'
+      path: '/$org'
+      fullPath: '/$org'
+      preLoaderRoute: typeof DefaultOrgDefaultAtlayoutRouteImport
+      parentRoute: typeof DefaultOrgRoute
     }
-    '/_default/$team/$project': {
-      id: '/_default/$team/$project'
-      path: '/$team/$project'
-      fullPath: '/$team/$project'
-      preLoaderRoute: typeof DefaultTeamProjectAtlayoutRouteImport
+    '/_default/$org/$project': {
+      id: '/_default/$org/$project'
+      path: '/$org/$project'
+      fullPath: '/$org/$project'
+      preLoaderRoute: typeof DefaultOrgProjectAtlayoutRouteImport
       parentRoute: typeof DefaultAtlayoutRoute
     }
     '/_default/profile/$username/': {
@@ -440,75 +466,82 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DefaultCreateProjectIndexRouteImport
       parentRoute: typeof DefaultCreateAtlayoutRoute
     }
-    '/_default/$team/$project/chat': {
-      id: '/_default/$team/$project/chat'
-      path: '/chat'
-      fullPath: '/$team/$project/chat'
-      preLoaderRoute: typeof DefaultTeamProjectChatAtlayoutRouteImport
-      parentRoute: typeof DefaultTeamProjectAtlayoutRoute
-    }
-    '/_default/$team/$project/updates/': {
-      id: '/_default/$team/$project/updates/'
-      path: '/updates'
-      fullPath: '/$team/$project/updates'
-      preLoaderRoute: typeof DefaultTeamProjectUpdatesIndexRouteImport
-      parentRoute: typeof DefaultTeamProjectAtlayoutRoute
-    }
-    '/_default/$team/$project/roadmap/': {
-      id: '/_default/$team/$project/roadmap/'
-      path: '/roadmap'
-      fullPath: '/$team/$project/roadmap'
-      preLoaderRoute: typeof DefaultTeamProjectRoadmapIndexRouteImport
-      parentRoute: typeof DefaultTeamProjectAtlayoutRoute
-    }
-    '/_default/$team/$project/overview/': {
-      id: '/_default/$team/$project/overview/'
-      path: '/overview'
-      fullPath: '/$team/$project/overview'
-      preLoaderRoute: typeof DefaultTeamProjectOverviewIndexRouteImport
-      parentRoute: typeof DefaultTeamProjectAtlayoutRoute
-    }
-    '/_default/$team/$project/files/': {
-      id: '/_default/$team/$project/files/'
-      path: '/files'
-      fullPath: '/$team/$project/files'
-      preLoaderRoute: typeof DefaultTeamProjectFilesIndexRouteImport
-      parentRoute: typeof DefaultTeamProjectAtlayoutRoute
-    }
-    '/_default/$team/$project/feedback/': {
-      id: '/_default/$team/$project/feedback/'
-      path: '/feedback'
-      fullPath: '/$team/$project/feedback'
-      preLoaderRoute: typeof DefaultTeamProjectFeedbackIndexRouteImport
-      parentRoute: typeof DefaultTeamProjectAtlayoutRoute
-    }
-    '/_default/$team/$project/discussions/': {
-      id: '/_default/$team/$project/discussions/'
-      path: '/discussions'
-      fullPath: '/$team/$project/discussions'
-      preLoaderRoute: typeof DefaultTeamProjectDiscussionsIndexRouteImport
-      parentRoute: typeof DefaultTeamProjectAtlayoutRoute
-    }
-    '/_default/$team/$project/chat/': {
-      id: '/_default/$team/$project/chat/'
+    '/_default/$org/_default/': {
+      id: '/_default/$org/_default/'
       path: '/'
-      fullPath: '/$team/$project/chat/'
-      preLoaderRoute: typeof DefaultTeamProjectChatIndexRouteImport
-      parentRoute: typeof DefaultTeamProjectChatAtlayoutRoute
+      fullPath: '/$org/'
+      preLoaderRoute: typeof DefaultOrgDefaultIndexRouteImport
+      parentRoute: typeof DefaultOrgDefaultAtlayoutRoute
     }
-    '/_default/$team/$project/feedback/$feedbackId/': {
-      id: '/_default/$team/$project/feedback/$feedbackId/'
+    '/_default/$org/$project/chat': {
+      id: '/_default/$org/$project/chat'
+      path: '/chat'
+      fullPath: '/$org/$project/chat'
+      preLoaderRoute: typeof DefaultOrgProjectChatAtlayoutRouteImport
+      parentRoute: typeof DefaultOrgProjectAtlayoutRoute
+    }
+    '/_default/$org/$project/updates/': {
+      id: '/_default/$org/$project/updates/'
+      path: '/updates'
+      fullPath: '/$org/$project/updates'
+      preLoaderRoute: typeof DefaultOrgProjectUpdatesIndexRouteImport
+      parentRoute: typeof DefaultOrgProjectAtlayoutRoute
+    }
+    '/_default/$org/$project/roadmap/': {
+      id: '/_default/$org/$project/roadmap/'
+      path: '/roadmap'
+      fullPath: '/$org/$project/roadmap'
+      preLoaderRoute: typeof DefaultOrgProjectRoadmapIndexRouteImport
+      parentRoute: typeof DefaultOrgProjectAtlayoutRoute
+    }
+    '/_default/$org/$project/overview/': {
+      id: '/_default/$org/$project/overview/'
+      path: '/overview'
+      fullPath: '/$org/$project/overview'
+      preLoaderRoute: typeof DefaultOrgProjectOverviewIndexRouteImport
+      parentRoute: typeof DefaultOrgProjectAtlayoutRoute
+    }
+    '/_default/$org/$project/files/': {
+      id: '/_default/$org/$project/files/'
+      path: '/files'
+      fullPath: '/$org/$project/files'
+      preLoaderRoute: typeof DefaultOrgProjectFilesIndexRouteImport
+      parentRoute: typeof DefaultOrgProjectAtlayoutRoute
+    }
+    '/_default/$org/$project/feedback/': {
+      id: '/_default/$org/$project/feedback/'
+      path: '/feedback'
+      fullPath: '/$org/$project/feedback'
+      preLoaderRoute: typeof DefaultOrgProjectFeedbackIndexRouteImport
+      parentRoute: typeof DefaultOrgProjectAtlayoutRoute
+    }
+    '/_default/$org/$project/discussions/': {
+      id: '/_default/$org/$project/discussions/'
+      path: '/discussions'
+      fullPath: '/$org/$project/discussions'
+      preLoaderRoute: typeof DefaultOrgProjectDiscussionsIndexRouteImport
+      parentRoute: typeof DefaultOrgProjectAtlayoutRoute
+    }
+    '/_default/$org/$project/chat/': {
+      id: '/_default/$org/$project/chat/'
+      path: '/'
+      fullPath: '/$org/$project/chat/'
+      preLoaderRoute: typeof DefaultOrgProjectChatIndexRouteImport
+      parentRoute: typeof DefaultOrgProjectChatAtlayoutRoute
+    }
+    '/_default/$org/$project/feedback/$feedbackId/': {
+      id: '/_default/$org/$project/feedback/$feedbackId/'
       path: '/feedback/$feedbackId'
-      fullPath: '/$team/$project/feedback/$feedbackId'
-      preLoaderRoute: typeof DefaultTeamProjectFeedbackFeedbackIdIndexRouteImport
-      parentRoute: typeof DefaultTeamProjectAtlayoutRoute
+      fullPath: '/$org/$project/feedback/$feedbackId'
+      preLoaderRoute: typeof DefaultOrgProjectFeedbackFeedbackIdIndexRouteImport
+      parentRoute: typeof DefaultOrgProjectAtlayoutRoute
     }
-    '/_default/$team/$project/chat/$chatId/': {
-      id: '/_default/$team/$project/chat/$chatId/'
+    '/_default/$org/$project/chat/$chatId/': {
+      id: '/_default/$org/$project/chat/$chatId/'
       path: '/$chatId'
-      fullPath: '/$team/$project/chat/$chatId'
-      preLoaderRoute: typeof DefaultTeamProjectChatChatIdIndexRouteImport
-      parentRoute: typeof DefaultTeamProjectChatAtlayoutRoute
+      fullPath: '/$org/$project/chat/$chatId'
+      preLoaderRoute: typeof DefaultOrgProjectChatChatIdIndexRouteImport
+      parentRoute: typeof DefaultOrgProjectChatAtlayoutRoute
     }
   }
 }
@@ -539,60 +572,87 @@ const DefaultCreateAtlayoutRouteWithChildren =
     DefaultCreateAtlayoutRouteChildren,
   )
 
-interface DefaultTeamProjectChatAtlayoutRouteChildren {
-  DefaultTeamProjectChatIndexRoute: typeof DefaultTeamProjectChatIndexRoute
-  DefaultTeamProjectChatChatIdIndexRoute: typeof DefaultTeamProjectChatChatIdIndexRoute
+interface DefaultOrgProjectChatAtlayoutRouteChildren {
+  DefaultOrgProjectChatIndexRoute: typeof DefaultOrgProjectChatIndexRoute
+  DefaultOrgProjectChatChatIdIndexRoute: typeof DefaultOrgProjectChatChatIdIndexRoute
 }
 
-const DefaultTeamProjectChatAtlayoutRouteChildren: DefaultTeamProjectChatAtlayoutRouteChildren =
+const DefaultOrgProjectChatAtlayoutRouteChildren: DefaultOrgProjectChatAtlayoutRouteChildren =
   {
-    DefaultTeamProjectChatIndexRoute: DefaultTeamProjectChatIndexRoute,
-    DefaultTeamProjectChatChatIdIndexRoute:
-      DefaultTeamProjectChatChatIdIndexRoute,
+    DefaultOrgProjectChatIndexRoute: DefaultOrgProjectChatIndexRoute,
+    DefaultOrgProjectChatChatIdIndexRoute:
+      DefaultOrgProjectChatChatIdIndexRoute,
   }
 
-const DefaultTeamProjectChatAtlayoutRouteWithChildren =
-  DefaultTeamProjectChatAtlayoutRoute._addFileChildren(
-    DefaultTeamProjectChatAtlayoutRouteChildren,
+const DefaultOrgProjectChatAtlayoutRouteWithChildren =
+  DefaultOrgProjectChatAtlayoutRoute._addFileChildren(
+    DefaultOrgProjectChatAtlayoutRouteChildren,
   )
 
-interface DefaultTeamProjectAtlayoutRouteChildren {
-  DefaultTeamProjectChatAtlayoutRoute: typeof DefaultTeamProjectChatAtlayoutRouteWithChildren
-  DefaultTeamProjectDiscussionsIndexRoute: typeof DefaultTeamProjectDiscussionsIndexRoute
-  DefaultTeamProjectFeedbackIndexRoute: typeof DefaultTeamProjectFeedbackIndexRoute
-  DefaultTeamProjectFilesIndexRoute: typeof DefaultTeamProjectFilesIndexRoute
-  DefaultTeamProjectOverviewIndexRoute: typeof DefaultTeamProjectOverviewIndexRoute
-  DefaultTeamProjectRoadmapIndexRoute: typeof DefaultTeamProjectRoadmapIndexRoute
-  DefaultTeamProjectUpdatesIndexRoute: typeof DefaultTeamProjectUpdatesIndexRoute
-  DefaultTeamProjectFeedbackFeedbackIdIndexRoute: typeof DefaultTeamProjectFeedbackFeedbackIdIndexRoute
+interface DefaultOrgProjectAtlayoutRouteChildren {
+  DefaultOrgProjectChatAtlayoutRoute: typeof DefaultOrgProjectChatAtlayoutRouteWithChildren
+  DefaultOrgProjectDiscussionsIndexRoute: typeof DefaultOrgProjectDiscussionsIndexRoute
+  DefaultOrgProjectFeedbackIndexRoute: typeof DefaultOrgProjectFeedbackIndexRoute
+  DefaultOrgProjectFilesIndexRoute: typeof DefaultOrgProjectFilesIndexRoute
+  DefaultOrgProjectOverviewIndexRoute: typeof DefaultOrgProjectOverviewIndexRoute
+  DefaultOrgProjectRoadmapIndexRoute: typeof DefaultOrgProjectRoadmapIndexRoute
+  DefaultOrgProjectUpdatesIndexRoute: typeof DefaultOrgProjectUpdatesIndexRoute
+  DefaultOrgProjectFeedbackFeedbackIdIndexRoute: typeof DefaultOrgProjectFeedbackFeedbackIdIndexRoute
 }
 
-const DefaultTeamProjectAtlayoutRouteChildren: DefaultTeamProjectAtlayoutRouteChildren =
+const DefaultOrgProjectAtlayoutRouteChildren: DefaultOrgProjectAtlayoutRouteChildren =
   {
-    DefaultTeamProjectChatAtlayoutRoute:
-      DefaultTeamProjectChatAtlayoutRouteWithChildren,
-    DefaultTeamProjectDiscussionsIndexRoute:
-      DefaultTeamProjectDiscussionsIndexRoute,
-    DefaultTeamProjectFeedbackIndexRoute: DefaultTeamProjectFeedbackIndexRoute,
-    DefaultTeamProjectFilesIndexRoute: DefaultTeamProjectFilesIndexRoute,
-    DefaultTeamProjectOverviewIndexRoute: DefaultTeamProjectOverviewIndexRoute,
-    DefaultTeamProjectRoadmapIndexRoute: DefaultTeamProjectRoadmapIndexRoute,
-    DefaultTeamProjectUpdatesIndexRoute: DefaultTeamProjectUpdatesIndexRoute,
-    DefaultTeamProjectFeedbackFeedbackIdIndexRoute:
-      DefaultTeamProjectFeedbackFeedbackIdIndexRoute,
+    DefaultOrgProjectChatAtlayoutRoute:
+      DefaultOrgProjectChatAtlayoutRouteWithChildren,
+    DefaultOrgProjectDiscussionsIndexRoute:
+      DefaultOrgProjectDiscussionsIndexRoute,
+    DefaultOrgProjectFeedbackIndexRoute: DefaultOrgProjectFeedbackIndexRoute,
+    DefaultOrgProjectFilesIndexRoute: DefaultOrgProjectFilesIndexRoute,
+    DefaultOrgProjectOverviewIndexRoute: DefaultOrgProjectOverviewIndexRoute,
+    DefaultOrgProjectRoadmapIndexRoute: DefaultOrgProjectRoadmapIndexRoute,
+    DefaultOrgProjectUpdatesIndexRoute: DefaultOrgProjectUpdatesIndexRoute,
+    DefaultOrgProjectFeedbackFeedbackIdIndexRoute:
+      DefaultOrgProjectFeedbackFeedbackIdIndexRoute,
   }
 
-const DefaultTeamProjectAtlayoutRouteWithChildren =
-  DefaultTeamProjectAtlayoutRoute._addFileChildren(
-    DefaultTeamProjectAtlayoutRouteChildren,
+const DefaultOrgProjectAtlayoutRouteWithChildren =
+  DefaultOrgProjectAtlayoutRoute._addFileChildren(
+    DefaultOrgProjectAtlayoutRouteChildren,
   )
+
+interface DefaultOrgDefaultAtlayoutRouteChildren {
+  DefaultOrgDefaultIndexRoute: typeof DefaultOrgDefaultIndexRoute
+}
+
+const DefaultOrgDefaultAtlayoutRouteChildren: DefaultOrgDefaultAtlayoutRouteChildren =
+  {
+    DefaultOrgDefaultIndexRoute: DefaultOrgDefaultIndexRoute,
+  }
+
+const DefaultOrgDefaultAtlayoutRouteWithChildren =
+  DefaultOrgDefaultAtlayoutRoute._addFileChildren(
+    DefaultOrgDefaultAtlayoutRouteChildren,
+  )
+
+interface DefaultOrgRouteChildren {
+  DefaultOrgDefaultAtlayoutRoute: typeof DefaultOrgDefaultAtlayoutRouteWithChildren
+  DefaultOrgSettingsRoute: typeof DefaultOrgSettingsRoute
+}
+
+const DefaultOrgRouteChildren: DefaultOrgRouteChildren = {
+  DefaultOrgDefaultAtlayoutRoute: DefaultOrgDefaultAtlayoutRouteWithChildren,
+  DefaultOrgSettingsRoute: DefaultOrgSettingsRoute,
+}
+
+const DefaultOrgRouteWithChildren = DefaultOrgRoute._addFileChildren(
+  DefaultOrgRouteChildren,
+)
 
 interface DefaultAtlayoutRouteChildren {
   DefaultCreateAtlayoutRoute: typeof DefaultCreateAtlayoutRouteWithChildren
   DefaultIndexRoute: typeof DefaultIndexRoute
-  DefaultTeamProjectAtlayoutRoute: typeof DefaultTeamProjectAtlayoutRouteWithChildren
-  DefaultTeamSettingsRoute: typeof DefaultTeamSettingsRoute
-  DefaultTeamIndexRoute: typeof DefaultTeamIndexRoute
+  DefaultOrgProjectAtlayoutRoute: typeof DefaultOrgProjectAtlayoutRouteWithChildren
+  DefaultOrgRoute: typeof DefaultOrgRouteWithChildren
   DefaultSettingsIndexRoute: typeof DefaultSettingsIndexRoute
   DefaultProfileUsernameIndexRoute: typeof DefaultProfileUsernameIndexRoute
 }
@@ -600,9 +660,8 @@ interface DefaultAtlayoutRouteChildren {
 const DefaultAtlayoutRouteChildren: DefaultAtlayoutRouteChildren = {
   DefaultCreateAtlayoutRoute: DefaultCreateAtlayoutRouteWithChildren,
   DefaultIndexRoute: DefaultIndexRoute,
-  DefaultTeamProjectAtlayoutRoute: DefaultTeamProjectAtlayoutRouteWithChildren,
-  DefaultTeamSettingsRoute: DefaultTeamSettingsRoute,
-  DefaultTeamIndexRoute: DefaultTeamIndexRoute,
+  DefaultOrgProjectAtlayoutRoute: DefaultOrgProjectAtlayoutRouteWithChildren,
+  DefaultOrgRoute: DefaultOrgRouteWithChildren,
   DefaultSettingsIndexRoute: DefaultSettingsIndexRoute,
   DefaultProfileUsernameIndexRoute: DefaultProfileUsernameIndexRoute,
 }

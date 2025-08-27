@@ -12,20 +12,20 @@ export const create = procedure.authed.external.mutation({
 	handler: async (ctx, args) => {
 		const auth = createAuth(ctx);
 
-		const teams = await auth.api.listOrganizations({
+		const orgs = await auth.api.listOrganizations({
 			headers: await betterAuthComponent.getHeaders(ctx),
 		});
 
-		if (teams.length === 0) {
+		if (orgs.length === 0) {
 			throw new ConvexError({
-				message: 'No teams found',
+				message: 'No orgs found',
 				code: '404',
 			});
 		}
 
-		if (!teams.find((team) => team.id === args.teamId)) {
+		if (!orgs.find((org) => org.id === args.orgId)) {
 			throw new ConvexError({
-				message: 'Cannot find team or does not have permission',
+				message: 'Cannot find org or does not have permission',
 				code: '403',
 			});
 		}

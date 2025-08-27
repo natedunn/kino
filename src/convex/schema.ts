@@ -34,7 +34,7 @@ export const userSchema = z.object({
 
 export const projectSchema = z.object({
 	...SHARED_SCHEMA('project'),
-	teamId: z.string(),
+	orgId: z.string().optional(),
 	name: z.string().max(100).min(1),
 	description: z.string().max(280).optional(),
 	urls: z.object({ url: z.string().url(), text: z.string() }).array().optional(),
@@ -109,11 +109,11 @@ const schema = defineSchema({
 		.index('by_email', ['email'])
 		.index('by_globalRole', ['globalRole']),
 	project: defineZTable(projectSchema)
-		.index('by_teamId', ['teamId'])
+		.index('by_orgId', ['orgId'])
 		.index('by_slug', ['slug'])
 		.index('by_private', ['private'])
 		.index('by_updatedTime', ['updatedTime'])
-		.index('by_teamId_slug', ['teamId', 'slug'])
+		.index('by_orgId_slug', ['orgId', 'slug'])
 		.index('by_private_updateTime', ['private', 'updatedTime']),
 	projectUser: defineZTable(projectUserSchema)
 		.index('by_projectId', ['projectId'])

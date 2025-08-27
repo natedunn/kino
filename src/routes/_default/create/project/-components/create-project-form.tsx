@@ -22,12 +22,12 @@ type FormSchema = z.infer<typeof formSchema>;
 
 export const CreateProjectForm = ({
 	underLimit,
-	activeTeamName,
-	activeTeamId,
+	activeOrgName,
+	activeOrgId,
 }: {
 	underLimit: boolean;
-	activeTeamName: string;
-	activeTeamId: string;
+	activeOrgName: string;
+	activeOrgId: string;
 }) => {
 	const [formError, setFormError] = React.useState<string>();
 
@@ -47,7 +47,7 @@ export const CreateProjectForm = ({
 		name: '',
 		slug: '',
 		private: false,
-		teamId: activeTeamId,
+		orgId: activeOrgId,
 	};
 
 	const form = useForm({
@@ -61,7 +61,7 @@ export const CreateProjectForm = ({
 				name: value.name,
 				slug: value.slug,
 				private: value.private,
-				teamId: value.teamId,
+				orgId: value.orgId,
 			});
 		},
 	});
@@ -73,11 +73,9 @@ export const CreateProjectForm = ({
 				<span className='inline-flex items-center gap-2 rounded-lg bg-gradient-to-bl from-foreground/30 to-foreground/10 px-2 py-1 font-bold text-foreground shadow-2xl shadow-foreground/50'>
 					<Avatar className='size-6 rounded-full'>
 						{/* <AvatarImage src={user.avatar} alt={user.name} /> */}
-						<AvatarFallback className='rounded-lg'>
-							{activeTeamName[0].toUpperCase()}
-						</AvatarFallback>
+						<AvatarFallback className='rounded-lg'>{activeOrgName[0].toUpperCase()}</AvatarFallback>
 					</Avatar>
-					<span>{activeTeamName}</span>
+					<span>{activeOrgName}</span>
 				</span>
 			</h1>
 			{!underLimit && (

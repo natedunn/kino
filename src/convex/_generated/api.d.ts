@@ -9,11 +9,11 @@
  */
 
 import type * as api_auth from "../api/auth.js";
+import type * as api_org from "../api/org.js";
 import type * as api_procedure_authed from "../api/procedure/authed.js";
 import type * as api_procedure_base from "../api/procedure/base.js";
 import type * as api_procedure_index from "../api/procedure/index.js";
 import type * as api_project from "../api/project.js";
-import type * as api_team from "../api/team.js";
 import type * as api_user from "../api/user.js";
 import type * as api_utils_table from "../api/utils/table.js";
 import type * as api_utils_trigger from "../api/utils/trigger.js";
@@ -37,11 +37,11 @@ import type {
  */
 declare const fullApi: ApiFromModules<{
   "api/auth": typeof api_auth;
+  "api/org": typeof api_org;
   "api/procedure/authed": typeof api_procedure_authed;
   "api/procedure/base": typeof api_procedure_base;
   "api/procedure/index": typeof api_procedure_index;
   "api/project": typeof api_project;
-  "api/team": typeof api_team;
   "api/user": typeof api_user;
   "api/utils/table": typeof api_utils_table;
   "api/utils/trigger": typeof api_utils_trigger;

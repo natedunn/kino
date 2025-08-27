@@ -496,7 +496,7 @@ export const { verify } = verifyConfig({
 			by_projectUser: ['projectId', 'userId'],
 		},
 		project: {
-			by_teamId_slug: ['teamId', 'slug'],
+			by_orgId_slug: ['orgId', 'slug'],
 		},
 	},
 	uneditableColumns: {
