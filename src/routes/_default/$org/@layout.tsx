@@ -14,6 +14,12 @@ export const Route = createFileRoute('/_default/$org')({
 			})
 		);
 
+		await context.queryClient.ensureQueryData(
+			convexQuery(api.project.getManyByOrg, {
+				orgSlug: params.org,
+			})
+		);
+
 		if (!org) {
 			notFound({
 				throw: true,

@@ -1,9 +1,10 @@
+import { mergedStream, stream } from 'convex-helpers/server/stream';
 import { ConvexError } from 'convex/values';
 import z from 'zod';
 
 import { createAuth } from '@/lib/auth';
 
-import { projectSchema } from '../schema';
+import schema, { projectSchema } from '../schema';
 import { betterAuthComponent } from './auth';
 import { procedure } from './procedure';
 import { createProjectSchema, selectProjectSchema, updateProjectSchema } from './project.utils';
@@ -67,10 +68,54 @@ export const update = procedure.authed.external.mutation({
 	},
 });
 
-// export const getManyByOrg = procedure.base.external.query({
-// 	args: {},
-// 	handler: async (ctx) => {},
-// });
+export const getManyByOrg = procedure.base.external.query({
+	args: {
+		orgSlug: z.string(),
+		limit: z.number().optional(),
+	},
+	handler: async (ctx, args) => {
+		const auth = createAuth(ctx);
+
+		const memberOrgs = await auth.api
+			.listOrganizations({
+				headers: await betterAuthComponent.getHeaders(ctx),
+			})
+			.catch(() => null);
+
+		let publicProjects = stream(ctx.db, schema)
+			.query('project')
+			.withIndex('by_orgSlug_visibility_updatedAt', (q) =>
+				q.eq('orgSlug', args.orgSlug).eq('visibility', 'public')
+			);
+		let privateProjects: typeof publicProjects | undefined;
+		let archivedProjects: typeof publicProjects | undefined;
+
+		if (memberOrgs && memberOrgs.find((org) => org.slug === args.orgSlug)) {
+			privateProjects = stream(ctx.db, schema)
+				.query('project')
+				.withIndex('by_orgSlug_visibility_updatedAt', (q) =>
+					q.eq('orgSlug', args.orgSlug).eq('visibility', 'private')
+				);
+
+			archivedProjects = stream(ctx.db, schema)
+				.query('project')
+				.withIndex('by_orgSlug_visibility_updatedAt', (q) =>
+					q.eq('orgSlug', args.orgSlug).eq('visibility', 'archived')
+				);
+		}
+
+		const mergedProjects = mergedStream(
+			[
+				publicProjects,
+				...(privateProjects ? [privateProjects] : []),
+				...(archivedProjects ? [archivedProjects] : []),
+			],
+			['updatedTime']
+		).take(args.limit ?? 10);
+
+		return mergedProjects;
+	},
+});
 
 export const getFullProject = procedure.base.external.query({
 	args: projectSchema
@@ -83,8 +128,6 @@ export const getFullProject = procedure.base.external.query({
 			})
 		),
 	handler: async (ctx, args) => {
-		// const auth = createAuth(ctx);
-
 		const project = await ctx.db
 			.query('project')
 			.withIndex('by_orgSlug_slug', (q) => q.eq('orgSlug', args.orgSlug).eq('slug', args.slug))

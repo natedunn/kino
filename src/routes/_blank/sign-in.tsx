@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from '@tanstack/react-router';
+import { createFileRoute, Link, redirect } from '@tanstack/react-router';
 import { ChevronLeft } from 'lucide-react';
 import { Separator } from 'src/components/ui/separator';
 import z from 'zod';
@@ -11,9 +11,15 @@ const searchValidator = z.object({
 });
 
 export const Route = createFileRoute('/_blank/sign-in')({
-	// ssr: false,
 	validateSearch: searchValidator,
 	component: RouteComponent,
+	loader: async ({ context }) => {
+		if (context.userId) {
+			throw redirect({
+				to: '/',
+			});
+		}
+	},
 });
 
 function RouteComponent() {
@@ -33,26 +39,6 @@ function RouteComponent() {
 					>
 						Sign in
 					</Button>
-					{/* <SignedOut>
-						<div>
-							<h1 className='text-2xl'>Sign in or create an account</h1>
-							<h2 className='mt-2 text-muted-foreground'>Join the community of builders.</h2>
-						</div>
-						<div className='flex items-center gap-4'>
-							<SignInButton>
-								<Button variant='outline'>
-									<LogIn />
-									Sign In
-								</Button>
-							</SignInButton>
-							<SignUpButton>
-								<Button>
-									<Plus />
-									Create Account
-								</Button>
-							</SignUpButton>
-						</div>
-					</SignedOut> */}
 					<div>
 						<Separator className='mb-4' />
 						<Link

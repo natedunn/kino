@@ -38,7 +38,8 @@ export const projectSchema = z.object({
 	name: z.string().max(100).min(1),
 	description: z.string().max(280).optional(),
 	urls: z.object({ url: z.string().url(), text: z.string() }).array().optional(),
-	private: z.boolean(),
+	private: z.boolean().optional(),
+	visibility: z.enum(['private', 'public', 'archived']).optional(),
 	logoUrl: z.string().url().optional(),
 	slug: z
 		.string()
@@ -111,10 +112,9 @@ const schema = defineSchema({
 	project: defineZTable(projectSchema)
 		.index('by_orgSlug', ['orgSlug'])
 		.index('by_slug', ['slug'])
-		.index('by_private', ['private'])
 		.index('by_updatedTime', ['updatedTime'])
 		.index('by_orgSlug_slug', ['orgSlug', 'slug'])
-		.index('by_private_updateTime', ['private', 'updatedTime']),
+		.index('by_orgSlug_visibility_updatedAt', ['orgSlug', 'visibility', 'updatedTime']),
 	projectUser: defineZTable(projectUserSchema)
 		.index('by_projectId', ['projectId'])
 		.index('by_userId', ['userId'])
