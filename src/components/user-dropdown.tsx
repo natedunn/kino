@@ -1,5 +1,7 @@
+import { useNavigate } from '@tanstack/react-router';
 import { ChevronDown, Moon, Sun, User } from 'lucide-react';
 
+import { API } from '~api';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -12,8 +14,11 @@ import {
 	DropdownMenuSubTrigger,
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { authClient } from '@/lib/auth/auth-client';
 
-export function UserDropdown() {
+export function UserDropdown({ user }: { user: NonNullable<API['user']['get']> }) {
+	const navigate = useNavigate();
+
 	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
@@ -24,7 +29,7 @@ export function UserDropdown() {
 							<User className='h-3 w-3' />
 						</AvatarFallback>
 					</Avatar>
-					<span className='hidden text-sm font-medium sm:inline'>username</span>
+					<span className='hidden text-sm font-medium sm:inline'>{user.username}</span>
 					<ChevronDown className='h-3 w-3' />
 				</Button>
 			</DropdownMenuTrigger>
@@ -60,7 +65,16 @@ export function UserDropdown() {
 				</DropdownMenuSub>
 				<DropdownMenuItem>Settings</DropdownMenuItem>
 				<DropdownMenuSeparator />
-				<DropdownMenuItem>Sign out</DropdownMenuItem>
+				<DropdownMenuItem
+					onClick={() => {
+						authClient.signOut();
+						navigate({
+							to: '/sign-in',
+						});
+					}}
+				>
+					Sign out
+				</DropdownMenuItem>
 			</DropdownMenuContent>
 		</DropdownMenu>
 	);

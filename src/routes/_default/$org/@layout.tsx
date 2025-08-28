@@ -7,44 +7,27 @@ import { MainNav } from '../-components/main-nav';
 
 export const Route = createFileRoute('/_default/$org')({
 	component: RouteComponent,
-	beforeLoad: async ({ context, params }) => {
+	loader: async ({ context, params }) => {
 		const org = await context.queryClient.ensureQueryData(
 			convexQuery(api.org.getFullOrg, {
 				orgSlug: params.org,
 			})
 		);
 
-		return {
-			org: org!,
-		};
-	},
-	loader: async ({ context }) => {
-		if (!context.org) {
+		if (!org) {
 			notFound({
 				throw: true,
 			});
 		}
-
-		return {
-			user: context.user,
-			org: context.org,
-		};
 	},
 });
 
 function RouteComponent() {
-	const { user, org } = Route.useLoaderData();
+	const { userId } = Route.useRouteContext();
 
 	return (
 		<div className='flex flex-1 flex-col'>
-			<MainNav
-				user={user}
-				org={{
-					id: org.id,
-					slug: org.slug,
-					name: org.name,
-				}}
-			/>
+			<MainNav userId={userId} />
 			<Outlet />
 		</div>
 	);

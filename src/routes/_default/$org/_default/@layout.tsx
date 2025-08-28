@@ -1,7 +1,5 @@
 import { createFileRoute, Outlet } from '@tanstack/react-router';
 
-import { MainNav } from '../../-components/main-nav';
-
 export const Route = createFileRoute('/_default/$org/_default')({
 	component: RouteComponent,
 	loader: async ({ context }) => {
@@ -12,8 +10,6 @@ export const Route = createFileRoute('/_default/$org/_default')({
 });
 
 function RouteComponent() {
-	const { user } = Route.useLoaderData();
-
 	return (
 		<div className='flex flex-1 flex-col'>
 			<Outlet />

@@ -1,14 +1,21 @@
+import { convexQuery } from '@convex-dev/react-query';
 import { createFileRoute, Outlet } from '@tanstack/react-router';
 
-// const checkTeamExists = async (slug: string) => {
-// 	return slug === 'acme';
-// };
+import { api } from '~api';
+import { Id } from '@/convex/_generated/dataModel';
 
 export const Route = createFileRoute('/_default')({
-	beforeLoad: async () => {},
 	component: RouteComponent,
 	loader: async ({ context }) => {
-		return { user: context.user, isAdmin: context.user?.globalRole === 'admin' };
+		if (context.user?._id) {
+			await context.queryClient.ensureQueryData(
+				convexQuery(api.user.get, {
+					_id: context.user._id as Id<'user'>,
+				})
+			);
+		}
+
+		return { isAdmin: context.user?.globalRole === 'admin' };
 	},
 });
 

@@ -445,7 +445,7 @@ const verifyConfig = ({
 		);
 	};
 
-	const update = async <
+	const patch = async <
 		TN extends keyof DataModel,
 		TI extends NamedTableInfo<DataModel, TN>,
 		D extends Partial<TI['document']>,
@@ -476,7 +476,7 @@ const verifyConfig = ({
 			uniqueRow: verifyRowUniqueness,
 			nonEmptyColumn: verifyNonEmptyColumns,
 			insert,
-			update,
+			patch,
 			all,
 		},
 		config: configOptions,
@@ -496,7 +496,7 @@ export const { verify } = verifyConfig({
 			by_projectUser: ['projectId', 'userId'],
 		},
 		project: {
-			by_orgId_slug: ['orgId', 'slug'],
+			by_orgSlug_slug: ['orgSlug', 'slug'],
 		},
 	},
 	uneditableColumns: {

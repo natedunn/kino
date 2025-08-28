@@ -1,4 +1,5 @@
 import React from 'react';
+import { convexQuery } from '@convex-dev/react-query';
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -6,53 +7,68 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from '@radix-ui/react-dropdown-menu';
-import { Link } from '@tanstack/react-router';
+import { useSuspenseQuery } from '@tanstack/react-query';
+import { Link, useParams } from '@tanstack/react-router';
 import { Bell, Command, Search } from 'lucide-react';
 
 import { CommandPalette } from '@/components/command-palette';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { UserDropdown } from '@/components/user-dropdown';
-import { API } from '@/lib/api';
+import { Id } from '@/convex/_generated/dataModel';
+import { api } from '@/lib/api';
+
+const notifications = [
+	{
+		id: 1,
+		title: 'New issue assigned',
+		description: 'Bug report #123 needs attention',
+		time: '2 min ago',
+	},
+	{
+		id: 2,
+		title: 'PR review requested',
+		description: 'Feature/auth-system ready for review',
+		time: '1 hour ago',
+	},
+	{
+		id: 3,
+		title: 'Deployment successful',
+		description: 'Production deploy completed',
+		time: '3 hours ago',
+	},
+];
 
 type MainNavProps = {
-	user: API['user']['getUserIndexes'] | null | undefined;
+	userId: Id<'user'> | null | undefined;
 	children?: React.ReactNode;
-	project?: {
-		id: string;
-		slug: string;
-		name: string;
-	};
 	org?: {
-		id: string;
 		slug: string;
 		name: string;
 	};
 };
 
-export const MainNav = ({ user, org, project, children }: MainNavProps) => {
+export const MainNav = ({ userId, children }: MainNavProps) => {
 	const [isCommandOpen, setIsCommandOpen] = React.useState(false);
 
-	const notifications = [
-		{
-			id: 1,
-			title: 'New issue assigned',
-			description: 'Bug report #123 needs attention',
-			time: '2 min ago',
-		},
-		{
-			id: 2,
-			title: 'PR review requested',
-			description: 'Feature/auth-system ready for review',
-			time: '1 hour ago',
-		},
-		{
-			id: 3,
-			title: 'Deployment successful',
-			description: 'Production deploy completed',
-			time: '3 hours ago',
-		},
-	];
+	const orgParams = useParams({
+		from: '/_default/$org',
+		shouldThrow: false,
+	});
+
+	const projectParams = useParams({
+		from: '/_default/$org/$project',
+		shouldThrow: false,
+	});
+
+	const orgSlug = orgParams?.org;
+	const projectSlug = projectParams?.project;
+
+	const { data: user } = useSuspenseQuery(
+		convexQuery(api.user.get, {
+			_id: userId,
+		})
+	);
 
 	React.useEffect(() => {
 		const handleKeyDown = (e: KeyboardEvent) => {
@@ -68,7 +84,7 @@ export const MainNav = ({ user, org, project, children }: MainNavProps) => {
 
 	return (
 		<>
-			<nav className='border-b bg-background'>
+			<nav className='border-b bg-muted'>
 				<div className='container'>
 					{/* Top row */}
 					<div className='flex items-center justify-between py-3'>
@@ -78,32 +94,37 @@ export const MainNav = ({ user, org, project, children }: MainNavProps) => {
 								<div className='flex h-8 w-8 items-center justify-center rounded-full bg-primary'>
 									<span className='text-sm font-bold text-primary-foreground'>K</span>
 								</div>
-								{!!org && (
+								{!!orgSlug && (
 									<div className='-ml-3 flex h-8 w-8 items-center justify-center rounded-full bg-foreground ring-2 ring-background'>
 										<span className='text-sm font-bold text-background'>
-											{org.name[0].toUpperCase()}
+											{String(orgSlug)[0].toUpperCase()}
 										</span>
 									</div>
 								)}
 							</div>
-							<div className='hidden min-w-0 items-center gap-1 text-sm sm:flex'>
-								{!!org && (
-									<Link to='/$org' params={(prev) => ({ ...prev, org: org.slug })}>
-										{org.name}
+							<div className='hidden min-w-0 items-center gap-1 text-sm sm:flex md:text-base'>
+								{!!orgSlug && (
+									<Link
+										to='/$org'
+										className='link-text !no-underline hocus:!underline'
+										params={(prev) => ({ ...prev, org: orgSlug })}
+									>
+										{orgSlug}
 									</Link>
 								)}
-								{!!project && !!org && (
+								{!!orgSlug && !!projectSlug && (
 									<>
 										<span className='text-muted-foreground'>/</span>
 										<Link
 											to='/$org/$project'
+											className='link-text !no-underline hocus:!underline'
 											params={(prev) => ({
 												...prev,
-												org: org.slug,
-												project: project.slug,
+												org: orgSlug,
+												project: projectSlug,
 											})}
 										>
-											Project
+											{projectSlug}
 										</Link>
 									</>
 								)}
@@ -172,7 +193,7 @@ export const MainNav = ({ user, org, project, children }: MainNavProps) => {
 								</DropdownMenuContent>
 							</DropdownMenu>
 
-							<UserDropdown />
+							{user && <UserDropdown user={user} />}
 						</div>
 					</div>
 				</div>

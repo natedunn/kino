@@ -23,11 +23,11 @@ type FormSchema = z.infer<typeof formSchema>;
 export const CreateProjectForm = ({
 	underLimit,
 	activeOrgName,
-	activeOrgId,
+	activeOrgSlug,
 }: {
 	underLimit: boolean;
 	activeOrgName: string;
-	activeOrgId: string;
+	activeOrgSlug: string;
 }) => {
 	const [formError, setFormError] = React.useState<string>();
 
@@ -47,7 +47,7 @@ export const CreateProjectForm = ({
 		name: '',
 		slug: '',
 		private: false,
-		orgId: activeOrgId,
+		orgSlug: activeOrgSlug,
 	};
 
 	const form = useForm({
@@ -61,7 +61,7 @@ export const CreateProjectForm = ({
 				name: value.name,
 				slug: value.slug,
 				private: value.private,
-				orgId: value.orgId,
+				orgSlug: value.orgSlug,
 			});
 		},
 	});

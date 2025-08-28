@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { limits } from '@/config/limits';
 import { createAuth } from '@/lib/auth';
 
+import { components } from '../_generated/api';
 import { betterAuthComponent } from './auth';
 import { createOrgSchema } from './org.utils';
 import { procedure } from './procedure';
@@ -55,19 +56,23 @@ export const getFullOrg = procedure.base.external.query({
 		orgSlug: z.string(),
 	},
 	handler: async (ctx, args) => {
-		const auth = createAuth(ctx);
-
 		try {
-			const org = await auth.api.getFullOrganization({
-				query: {
-					organizationSlug: args.orgSlug,
-				},
-				headers: await betterAuthComponent.getHeaders(ctx),
+			const org = await ctx.runQuery(components.betterAuth.lib.findOne, {
+				model: 'organization',
+				where: [{ field: 'slug', operator: 'eq', value: args.orgSlug }],
 			});
 
-			return org;
-		} catch (error) {
-			// console.error(error);
+			const parsedOrg = z
+				.object({
+					_creationTime: z.number(),
+					_id: z.string(),
+					name: z.string(),
+					slug: z.string(),
+				})
+				.parse(org);
+
+			return parsedOrg;
+		} catch {
 			return null;
 		}
 	},

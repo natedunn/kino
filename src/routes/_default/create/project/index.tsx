@@ -65,7 +65,7 @@ function RouteComponent() {
 					{!!activeOrg && !isPending && (
 						<CreateProjectForm
 							activeOrgName={activeOrg.name}
-							activeOrgId={activeOrg.id}
+							activeOrgSlug={activeOrg.slug}
 							underLimit={true}
 						/>
 					)}

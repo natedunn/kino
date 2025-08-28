@@ -63,7 +63,7 @@ export const SecondaryMenuLayout = ({ title, children, items }: SecondaryMenuPro
 				<div className='flex h-14 items-center border-b bg-muted/50 px-6 text-sm'>{title}</div>
 				<div className='flex flex-col'>
 					{items.map((item) => {
-						return <MenuItem key={item.to as string} {...item} />;
+						return <MenuItem key={`${item.to}-${String(item.children)}` as string} {...item} />;
 					})}
 				</div>
 			</div>

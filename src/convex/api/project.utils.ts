@@ -6,5 +6,21 @@ export const createProjectSchema = projectSchema.pick({
 	urls: true,
 	private: true,
 	slug: true,
-	orgId: true,
+	orgSlug: true,
+});
+
+export const updateProjectSchema = createProjectSchema.merge(
+	projectSchema.pick({
+		_id: true,
+	})
+);
+
+export const selectProjectSchema = projectSchema.pick({
+	_id: true,
+	name: true,
+	description: true,
+	urls: true,
+	private: true,
+	slug: true,
+	orgSlug: true,
 });
