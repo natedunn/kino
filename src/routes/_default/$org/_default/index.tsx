@@ -1,6 +1,6 @@
 import { convexQuery } from '@convex-dev/react-query';
 import { useSuspenseQuery } from '@tanstack/react-query';
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, Link } from '@tanstack/react-router';
 
 import { api } from '~api';
 
@@ -19,13 +19,25 @@ function RouteComponent() {
 
 	return (
 		<div className='container'>
-			{projects?.map((project) => {
-				return (
-					<div key={project._id}>
-						{project.name} - {project.visibility}
-					</div>
-				);
-			})}
+			<div className='mt-6 flex items-center gap-4'>
+				{projects?.map((project) => {
+					return (
+						<Link
+							key={project._id}
+							to='/$org/$project'
+							params={(prev) => ({
+								...prev,
+								org: orgSlug,
+								project: project.slug,
+							})}
+						>
+							<span className='inline-flex gap-3 rounded border bg-muted p-4 hocus:border-foreground/50 hocus:bg-accent/50'>
+								{project.name} - {project.visibility}
+							</span>
+						</Link>
+					);
+				})}
+			</div>
 		</div>
 	);
 }
