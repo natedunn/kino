@@ -52,6 +52,7 @@ export const getUserByIdentifier = async <T extends boolean = false>(
 ): Promise<T extends true ? UserSelectSchema : UserSelectSchema | null> => {
 	if (Object.keys(args).length === 0) {
 		console.warn('No identifier provided');
+		return null as T extends true ? never : null;
 	}
 
 	let user;
