@@ -1,12 +1,5 @@
 import React from 'react';
 import { convexQuery } from '@convex-dev/react-query';
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuSeparator,
-	DropdownMenuTrigger,
-} from '@radix-ui/react-dropdown-menu';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { Link, useParams } from '@tanstack/react-router';
 import { Bell, Command, Search } from 'lucide-react';
@@ -14,6 +7,13 @@ import { Bell, Command, Search } from 'lucide-react';
 import { CommandPalette } from '@/components/command-palette';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { UserDropdown } from '@/components/user-dropdown';
 import { Id } from '@/convex/_generated/dataModel';
 import { api } from '@/lib/api';
@@ -171,7 +171,7 @@ export const MainNav = ({ userId, children }: MainNavProps) => {
 										</Badge>
 									</Button>
 								</DropdownMenuTrigger>
-								<DropdownMenuContent align='end' className='w-80'>
+								<DropdownMenuContent align='end' className='z-20 w-80'>
 									<div className='px-3 py-2 text-sm font-semibold'>Notifications</div>
 									<DropdownMenuSeparator />
 									{notifications.map((notification) => (
