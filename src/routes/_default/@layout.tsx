@@ -7,13 +7,11 @@ import { Id } from '@/convex/_generated/dataModel';
 export const Route = createFileRoute('/_default')({
 	component: RouteComponent,
 	loader: async ({ context }) => {
-		if (context.user?._id) {
-			await context.queryClient.ensureQueryData(
-				convexQuery(api.user.get, {
-					_id: context.user._id as Id<'user'>,
-				})
-			);
-		}
+		await context.queryClient.ensureQueryData(
+			convexQuery(api.user.get, {
+				_id: context.user?._id as Id<'user'>,
+			})
+		);
 
 		return { isAdmin: context.user?.globalRole === 'admin' };
 	},
