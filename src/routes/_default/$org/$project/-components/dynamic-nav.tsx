@@ -5,17 +5,17 @@ import { Link, LinkProps } from '@tanstack/react-router';
 import { ClassValue } from 'clsx';
 import {
 	BarChart3,
-	BookOpen,
-	Briefcase,
+	// BookOpen,
+	// Briefcase,
 	Calendar,
-	FileSpreadsheet,
+	// FileSpreadsheet,
 	FileText,
 	LucideIcon,
 	Map,
 	MessageCircle,
 	MessageSquare,
 	MoreHorizontal,
-	Rss,
+	// Rss,
 	Users,
 } from 'lucide-react';
 
@@ -89,10 +89,10 @@ export function DynamicNavigation({ orgSlug, projectSlug, onStateChange }: Dynam
 			to: '/$org/$project/chat',
 			params: (prev) => ({ ...prev, ...params }),
 		},
-		{ children: 'Forms', icon: FileSpreadsheet, to: '/' },
-		{ children: 'Jobs', icon: Briefcase, to: '/' },
-		{ children: 'Wiki', icon: BookOpen, to: '/' },
-		{ children: 'Feeds', icon: Rss, to: '/' },
+		// { children: 'Forms', icon: FileSpreadsheet, to: '/' },
+		// { children: 'Jobs', icon: Briefcase, to: '/' },
+		// { children: 'Wiki', icon: BookOpen, to: '/' },
+		// { children: 'Feeds', icon: Rss, to: '/' },
 	];
 
 	const [visibleItems, setVisibleItems] = useState<number>(10);
