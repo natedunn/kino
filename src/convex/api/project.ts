@@ -134,10 +134,14 @@ export const getFullProject = procedure.base.external.query({
 			.unique();
 
 		if (project?.private || !project) {
-			throw new ConvexError({
-				message: 'Project not found',
-				code: '404',
-			});
+			// throw new ConvexError({
+			// 	message: 'Project not found',
+			// 	code: '404',
+			// });
+
+			console.error('Project not found');
+
+			return null;
 		}
 
 		return selectProjectSchema.parse(project);
