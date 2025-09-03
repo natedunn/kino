@@ -1,36 +1,11 @@
 import { zid } from 'convex-helpers/server/zod';
-import { defineSchema, GenericDataModel, TableNamesInDataModel } from 'convex/server';
+import { defineSchema } from 'convex/server';
 import { z } from 'zod';
 
 import { defineZTable } from '@/convex/api/utils/table';
 
-export const SHARED_SCHEMA = <
-	DataModel extends GenericDataModel,
-	TableName extends TableNamesInDataModel<DataModel> = TableNamesInDataModel<DataModel>,
->(
-	id: TableName
-) => {
-	return {
-		_id: zid(id),
-		_creationTime: z.number(),
-		deletedTime: z.number().optional(),
-		updatedTime: z.number().optional().default(Date.now()),
-	};
-};
-
-export const userSchema = z.object({
-	...SHARED_SCHEMA('user'),
-	email: z.string().email(),
-	imageUrl: z.string().url().optional(),
-	username: z.string().min(3).max(20),
-	name: z.string().min(1).max(100),
-	bio: z.string().max(150).optional(),
-	banned: z.boolean().default(false),
-	private: z.boolean().default(false),
-	globalRole: z.enum(['user', 'admin']).default('user'),
-	location: z.string().optional(),
-	urls: z.object({ url: z.string().url(), text: z.string() }).array().optional().default([]),
-});
+import { SHARED_SCHEMA } from './schema/_shared';
+import { userSchema } from './schema/user.schema';
 
 export const projectSchema = z.object({
 	...SHARED_SCHEMA('project'),

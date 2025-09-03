@@ -1,7 +1,7 @@
 import { useRouter } from '@tanstack/react-router';
 import { ChevronUp } from 'lucide-react';
 
-import { ClickableContainer } from '@/components/ clickable-container';
+import { ClickableContainer } from '@/components/clickable-container';
 import { Button } from '@/components/ui/button';
 
 export const FeedbackCard = ({

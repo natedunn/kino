@@ -15,11 +15,13 @@ import type * as api_procedure_base from "../api/procedure/base.js";
 import type * as api_procedure_index from "../api/procedure/index.js";
 import type * as api_project from "../api/project.js";
 import type * as api_user from "../api/user.js";
+import type * as api_utils_r2 from "../api/utils/r2.js";
 import type * as api_utils_table from "../api/utils/table.js";
 import type * as api_utils_trigger from "../api/utils/trigger.js";
 import type * as api_utils_types from "../api/utils/types.js";
 import type * as api_utils_verify from "../api/utils/verify.js";
 import type * as http from "../http.js";
+import type * as schema__shared from "../schema/_shared.js";
 
 import type {
   ApiFromModules,
@@ -43,11 +45,13 @@ declare const fullApi: ApiFromModules<{
   "api/procedure/index": typeof api_procedure_index;
   "api/project": typeof api_project;
   "api/user": typeof api_user;
+  "api/utils/r2": typeof api_utils_r2;
   "api/utils/table": typeof api_utils_table;
   "api/utils/trigger": typeof api_utils_trigger;
   "api/utils/types": typeof api_utils_types;
   "api/utils/verify": typeof api_utils_verify;
   http: typeof http;
+  "schema/_shared": typeof schema__shared;
 }>;
 declare const fullApiWithMounts: typeof fullApi;
 
@@ -2155,6 +2159,130 @@ export declare const components: {
               };
         },
         any
+      >;
+    };
+  };
+  r2: {
+    lib: {
+      deleteMetadata: FunctionReference<
+        "mutation",
+        "internal",
+        { bucket: string; key: string },
+        null
+      >;
+      deleteObject: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          accessKeyId: string;
+          bucket: string;
+          endpoint: string;
+          key: string;
+          secretAccessKey: string;
+        },
+        null
+      >;
+      deleteR2Object: FunctionReference<
+        "action",
+        "internal",
+        {
+          accessKeyId: string;
+          bucket: string;
+          endpoint: string;
+          key: string;
+          secretAccessKey: string;
+        },
+        null
+      >;
+      getMetadata: FunctionReference<
+        "query",
+        "internal",
+        {
+          accessKeyId: string;
+          bucket: string;
+          endpoint: string;
+          key: string;
+          secretAccessKey: string;
+        },
+        {
+          bucket: string;
+          bucketLink: string;
+          contentType?: string;
+          key: string;
+          lastModified: string;
+          link: string;
+          sha256?: string;
+          size?: number;
+          url: string;
+        } | null
+      >;
+      listMetadata: FunctionReference<
+        "query",
+        "internal",
+        {
+          accessKeyId: string;
+          bucket: string;
+          cursor?: string;
+          endpoint: string;
+          limit?: number;
+          secretAccessKey: string;
+        },
+        {
+          continueCursor: string;
+          isDone: boolean;
+          page: Array<{
+            bucket: string;
+            bucketLink: string;
+            contentType?: string;
+            key: string;
+            lastModified: string;
+            link: string;
+            sha256?: string;
+            size?: number;
+            url: string;
+          }>;
+          pageStatus?: null | "SplitRecommended" | "SplitRequired";
+          splitCursor?: null | string;
+        }
+      >;
+      store: FunctionReference<
+        "action",
+        "internal",
+        {
+          accessKeyId: string;
+          bucket: string;
+          endpoint: string;
+          secretAccessKey: string;
+          url: string;
+        },
+        any
+      >;
+      syncMetadata: FunctionReference<
+        "action",
+        "internal",
+        {
+          accessKeyId: string;
+          bucket: string;
+          endpoint: string;
+          key: string;
+          onComplete?: string;
+          secretAccessKey: string;
+        },
+        null
+      >;
+      upsertMetadata: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          bucket: string;
+          contentType?: string;
+          key: string;
+          lastModified: string;
+          link: string;
+          sha256?: string;
+          size?: number;
+        },
+        { isNew: boolean }
       >;
     };
   };

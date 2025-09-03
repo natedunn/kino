@@ -69,7 +69,7 @@ export function ProfileDropdown({ user, onSignOut }: UserDropdownProps) {
 					</Link>
 				</DropdownMenuItem>
 				<DropdownMenuItem asChild>
-					<Link to='/dashboard' className='flex w-full cursor-pointer items-center gap-2'>
+					<Link to='/' className='flex w-full cursor-pointer items-center gap-2'>
 						<Settings className='h-4 w-4' />
 						<span>Dashboard</span>
 					</Link>

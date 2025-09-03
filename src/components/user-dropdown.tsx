@@ -23,8 +23,8 @@ export function UserDropdown({ user }: { user: NonNullable<API['user']['get']> }
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
 				<Button variant='ghost' size='sm' className='flex items-center gap-2'>
-					<Avatar className='h-6 w-6'>
-						<AvatarImage src='/placeholder.svg?height=24&width=24' />
+					<Avatar className='h-6 w-6 border'>
+						<AvatarImage src={user.imageUrl} />
 						<AvatarFallback>
 							<User className='h-3 w-3' />
 						</AvatarFallback>
@@ -63,7 +63,15 @@ export function UserDropdown({ user }: { user: NonNullable<API['user']['get']> }
 						</DropdownMenuItem>
 					</DropdownMenuSubContent>
 				</DropdownMenuSub>
-				<DropdownMenuItem>Settings</DropdownMenuItem>
+				<DropdownMenuItem
+					onClick={() => {
+						navigate({
+							to: '/profile/settings',
+						});
+					}}
+				>
+					Settings
+				</DropdownMenuItem>
 				<DropdownMenuSeparator />
 				<DropdownMenuItem
 					onClick={() => {

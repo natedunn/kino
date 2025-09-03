@@ -4,7 +4,8 @@ import { GenericQueryCtx } from 'convex/server';
 import z from 'zod';
 
 import { DataModel, Doc, Id } from '../_generated/dataModel';
-import { userSchema } from '../schema';
+import { userSchema, userSelectSchema, UserSelectSchema } from '../schema/user.schema';
+import { userUploadsR2 } from './utils/r2';
 
 export const getUserByIdentifierSchema = z.object({
 	_id: userSchema.shape._id.nullish(),
@@ -13,31 +14,6 @@ export const getUserByIdentifierSchema = z.object({
 });
 
 type GetUserIdentifier = z.infer<typeof getUserByIdentifierSchema>;
-
-export const userSelectSchema = userSchema
-	.pick({
-		username: true,
-		email: true,
-		imageUrl: true,
-		location: true,
-		urls: true,
-		bio: true,
-		private: true,
-		name: true,
-		banned: true,
-		_creationTime: true,
-	})
-	.merge(
-		z.object({
-			_id: zid('user'),
-		})
-	);
-
-export type UserSelectSchema = z.infer<typeof userSelectSchema>;
-
-export const userUpdateSchema = userSchema.partial();
-
-export type UserUpdateSchema = z.infer<typeof userUpdateSchema>;
 
 /**
  * Helper function to get a user by a given identifier.
@@ -89,7 +65,22 @@ export const getUserByIdentifier = async <T extends boolean = false>(
 		}
 	}
 
-	return userSelectSchema.parse(user);
+	const { imageUrl, imageKey, ...rest } = user;
+
+	let image: string | undefined;
+	if (imageKey) {
+		image = await userUploadsR2.getUrl(imageKey, {
+			expiresIn: 60 * 60 * 24,
+		});
+	} else {
+		image = imageUrl;
+	}
+
+	return userSelectSchema.parse({
+		...rest,
+		imageKey,
+		imageUrl: image,
+	});
 };
 
 /**

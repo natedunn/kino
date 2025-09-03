@@ -22,6 +22,7 @@ import { Route as DefaultSettingsIndexRouteImport } from './routes/_default/sett
 import { Route as DefaultOrgSettingsRouteImport } from './routes/_default/$org/settings'
 import { Route as DefaultOrgDefaultAtlayoutRouteImport } from './routes/_default/$org/_default/@layout'
 import { Route as DefaultOrgProjectAtlayoutRouteImport } from './routes/_default/$org/$project/@layout'
+import { Route as DefaultProfileSettingsIndexRouteImport } from './routes/_default/profile/settings/index'
 import { Route as DefaultProfileUsernameIndexRouteImport } from './routes/_default/profile/$username/index'
 import { Route as DefaultCreateTeamIndexRouteImport } from './routes/_default/create/team/index'
 import { Route as DefaultCreateProjectIndexRouteImport } from './routes/_default/create/project/index'
@@ -94,6 +95,12 @@ const DefaultOrgProjectAtlayoutRoute =
     id: '/$project',
     path: '/$project',
     getParentRoute: () => DefaultOrgAtlayoutRoute,
+  } as any)
+const DefaultProfileSettingsIndexRoute =
+  DefaultProfileSettingsIndexRouteImport.update({
+    id: '/profile/settings/',
+    path: '/profile/settings/',
+    getParentRoute: () => DefaultAtlayoutRoute,
   } as any)
 const DefaultProfileUsernameIndexRoute =
   DefaultProfileUsernameIndexRouteImport.update({
@@ -198,6 +205,7 @@ export interface FileRoutesByFullPath {
   '/create/project': typeof DefaultCreateProjectIndexRoute
   '/create/team': typeof DefaultCreateTeamIndexRoute
   '/profile/$username': typeof DefaultProfileUsernameIndexRoute
+  '/profile/settings': typeof DefaultProfileSettingsIndexRoute
   '/$org/$project/chat/': typeof DefaultOrgProjectChatIndexRoute
   '/$org/$project/discussions': typeof DefaultOrgProjectDiscussionsIndexRoute
   '/$org/$project/feedback': typeof DefaultOrgProjectFeedbackIndexRoute
@@ -221,6 +229,7 @@ export interface FileRoutesByTo {
   '/create/project': typeof DefaultCreateProjectIndexRoute
   '/create/team': typeof DefaultCreateTeamIndexRoute
   '/profile/$username': typeof DefaultProfileUsernameIndexRoute
+  '/profile/settings': typeof DefaultProfileSettingsIndexRoute
   '/$org/$project/chat': typeof DefaultOrgProjectChatIndexRoute
   '/$org/$project/discussions': typeof DefaultOrgProjectDiscussionsIndexRoute
   '/$org/$project/feedback': typeof DefaultOrgProjectFeedbackIndexRoute
@@ -249,6 +258,7 @@ export interface FileRoutesById {
   '/_default/create/project/': typeof DefaultCreateProjectIndexRoute
   '/_default/create/team/': typeof DefaultCreateTeamIndexRoute
   '/_default/profile/$username/': typeof DefaultProfileUsernameIndexRoute
+  '/_default/profile/settings/': typeof DefaultProfileSettingsIndexRoute
   '/_default/$org/$project/chat/': typeof DefaultOrgProjectChatIndexRoute
   '/_default/$org/$project/discussions/': typeof DefaultOrgProjectDiscussionsIndexRoute
   '/_default/$org/$project/feedback/': typeof DefaultOrgProjectFeedbackIndexRoute
@@ -276,6 +286,7 @@ export interface FileRouteTypes {
     | '/create/project'
     | '/create/team'
     | '/profile/$username'
+    | '/profile/settings'
     | '/$org/$project/chat/'
     | '/$org/$project/discussions'
     | '/$org/$project/feedback'
@@ -299,6 +310,7 @@ export interface FileRouteTypes {
     | '/create/project'
     | '/create/team'
     | '/profile/$username'
+    | '/profile/settings'
     | '/$org/$project/chat'
     | '/$org/$project/discussions'
     | '/$org/$project/feedback'
@@ -326,6 +338,7 @@ export interface FileRouteTypes {
     | '/_default/create/project/'
     | '/_default/create/team/'
     | '/_default/profile/$username/'
+    | '/_default/profile/settings/'
     | '/_default/$org/$project/chat/'
     | '/_default/$org/$project/discussions/'
     | '/_default/$org/$project/feedback/'
@@ -443,6 +456,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/$org/$project'
       preLoaderRoute: typeof DefaultOrgProjectAtlayoutRouteImport
       parentRoute: typeof DefaultOrgAtlayoutRoute
+    }
+    '/_default/profile/settings/': {
+      id: '/_default/profile/settings/'
+      path: '/profile/settings'
+      fullPath: '/profile/settings'
+      preLoaderRoute: typeof DefaultProfileSettingsIndexRouteImport
+      parentRoute: typeof DefaultAtlayoutRoute
     }
     '/_default/profile/$username/': {
       id: '/_default/profile/$username/'
@@ -654,6 +674,7 @@ interface DefaultAtlayoutRouteChildren {
   DefaultIndexRoute: typeof DefaultIndexRoute
   DefaultSettingsIndexRoute: typeof DefaultSettingsIndexRoute
   DefaultProfileUsernameIndexRoute: typeof DefaultProfileUsernameIndexRoute
+  DefaultProfileSettingsIndexRoute: typeof DefaultProfileSettingsIndexRoute
 }
 
 const DefaultAtlayoutRouteChildren: DefaultAtlayoutRouteChildren = {
@@ -662,6 +683,7 @@ const DefaultAtlayoutRouteChildren: DefaultAtlayoutRouteChildren = {
   DefaultIndexRoute: DefaultIndexRoute,
   DefaultSettingsIndexRoute: DefaultSettingsIndexRoute,
   DefaultProfileUsernameIndexRoute: DefaultProfileUsernameIndexRoute,
+  DefaultProfileSettingsIndexRoute: DefaultProfileSettingsIndexRoute,
 }
 
 const DefaultAtlayoutRouteWithChildren = DefaultAtlayoutRoute._addFileChildren(

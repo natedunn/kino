@@ -1,15 +1,18 @@
 import { getOneFrom } from 'convex-helpers/server/relationships';
 import { zid } from 'convex-helpers/server/zod';
-import { paginationOptsValidator } from 'convex/server';
+import { GenericQueryCtx, paginationOptsValidator } from 'convex/server';
+import { ConvexError } from 'convex/values';
+import { z } from 'zod';
 
 import { limits } from '@/config/limits';
 import { createAuth } from '@/lib/auth';
 
-import { Id } from '../_generated/dataModel';
-import { userSchema } from '../schema';
+import { DataModel, Id } from '../_generated/dataModel';
+import { userSchema, userUpdateSchema } from '../schema/user.schema';
 import { betterAuthComponent } from './auth';
 import { procedure } from './procedure';
-import { getUserByIdentifier, getUserByIdentifierSchema, userUpdateSchema } from './users.utils';
+import { getUserByIdentifier, getUserByIdentifierSchema } from './user.utils';
+import { userUploadsR2 } from './utils/r2';
 
 /**
  * Get a user by their identifier.
@@ -89,11 +92,17 @@ export const getUserImage = procedure.base.external.query({
 export const update = procedure.authed.external.mutation({
 	args: userUpdateSchema,
 	handler: async (ctx, args) => {
-		const { userIdentity } = ctx;
+		const auth = createAuth(ctx);
 
-		const { username, name, email, _id, ...rest } = args;
+		const { username, name, ..._rest } = args;
 
-		await ctx.db.patch(userIdentity.subject as Id<'user'>, rest);
+		await auth.api.updateUser({
+			body: {
+				username,
+				name,
+			},
+			headers: await betterAuthComponent.getHeaders(ctx),
+		});
 
 		return {
 			success: true,
@@ -125,5 +134,64 @@ export const getTeamList = procedure.base.external.query({
 		}
 
 		return { teams, underLimit: teams.length < limit };
+	},
+});
+
+export const { generateUploadUrl, syncMetadata } = userUploadsR2.clientApi({
+	checkUpload: async (ctx: GenericQueryCtx<DataModel>, bucket) => {
+		const userIdentity = await ctx.auth.getUserIdentity();
+
+		if (!userIdentity) {
+			throw new ConvexError({
+				code: '404',
+				message: 'Forbidden — user is not authenticated',
+			});
+		}
+
+		if (bucket === process.env.R2_USER_UPLOADS_BUCKET) {
+			// Run a check here if we need it
+		}
+	},
+	onUpload: async (ctx, _bucket, key) => {
+		const userIdentity = await ctx.auth.getUserIdentity();
+
+		if (!userIdentity) {
+			throw new ConvexError({
+				code: '500',
+				message: 'Internal server error — user is not authenticated (even though they should be)',
+			});
+		}
+
+		const userIdFromKey = key.split('_')[1].split('.')[0];
+
+		if (userIdFromKey !== userIdentity.subject) {
+			throw new ConvexError({
+				code: '403',
+				message: 'Forbidden — user is not authorized (even though they should be)',
+			});
+		}
+
+		const typeFromKey = key.split('_')[0];
+
+		if (typeFromKey === 'PFP') {
+			await ctx.db.patch(userIdentity.subject as Id<'user'>, {
+				imageKey: key,
+			});
+		} else {
+			throw new ConvexError({
+				code: '404',
+				message: 'Could not find the correct type for operation',
+			});
+		}
+	},
+});
+
+export const generateUserUploadUrl = procedure.authed.external.mutation({
+	args: {
+		type: z.enum(['PFP']),
+	},
+	handler: async (ctx, args) => {
+		const key = `${args.type}_${ctx.user._id}${args.type !== 'PFP' ? `.${crypto.randomUUID()}` : ''}`;
+		return userUploadsR2.generateUploadUrl(key);
 	},
 });

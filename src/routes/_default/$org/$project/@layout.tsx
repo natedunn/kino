@@ -23,29 +23,31 @@ export const Route = createFileRoute('/_default/$org/$project')({
 	// },
 	component: RouteComponent,
 	loader: async ({ context, params }) => {
-		const project = await context.queryClient.ensureQueryData(
-			convexQuery(api.project.getFullProject, {
-				orgSlug: params.org,
-				slug: params.project,
-			})
-		);
+		if (params.org !== '.well-known' || params.project !== 'appspecific') {
+			const project = await context.queryClient.ensureQueryData(
+				convexQuery(api.project.getFullProject, {
+					orgSlug: params.org,
+					slug: params.project,
+				})
+			);
 
-		const org = await context.queryClient.ensureQueryData(
-			convexQuery(api.org.getFullOrg, {
-				orgSlug: params.org,
-			})
-		);
+			const org = await context.queryClient.ensureQueryData(
+				convexQuery(api.org.getFullOrg, {
+					orgSlug: params.org,
+				})
+			);
 
-		if (!project || !org) {
-			notFound({
-				throw: true,
-			});
+			if (!project || !org) {
+				notFound({
+					throw: true,
+				});
+			}
+
+			return {
+				org: org,
+				project: project,
+			};
 		}
-
-		return {
-			org: org,
-			project: project,
-		};
 	},
 });
 
