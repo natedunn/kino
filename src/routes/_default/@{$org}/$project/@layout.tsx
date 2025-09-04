@@ -4,23 +4,12 @@ import { useSuspenseQuery } from '@tanstack/react-query';
 import { createFileRoute, notFound, Outlet } from '@tanstack/react-router';
 
 import { api } from '~api';
+import { NotFound } from '@/components/_not-found';
 import { cn } from '@/lib/utils';
 
 import { DynamicNavigation } from './-components/dynamic-nav';
 
-export const Route = createFileRoute('/_default/$org/$project')({
-	// beforeLoad: async ({ context, params }) => {
-	// 	const project = await context.queryClient.ensureQueryData(
-	// 		convexQuery(api.project.getFullProject, {
-	// 			orgId: context.org.id,
-	// 			slug: params.project,
-	// 		})
-	// 	);
-
-	// 	return {
-	// 		project: project!,
-	// 	};
-	// },
+export const Route = createFileRoute('/_default/@{$org}/$project')({
 	component: RouteComponent,
 	loader: async ({ context, params }) => {
 		if (params.org !== '.well-known' || params.project !== 'appspecific') {
@@ -48,6 +37,13 @@ export const Route = createFileRoute('/_default/$org/$project')({
 				project: project,
 			};
 		}
+	},
+	notFoundComponent: () => {
+		return (
+			<div className='container'>
+				<NotFound />
+			</div>
+		);
 	},
 });
 

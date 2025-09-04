@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 import { AssignedTo } from '../-components/assigned-to';
 import Updates from '../-components/updates';
 
-export const Route = createFileRoute('/_default/$org/$project/feedback/$feedbackId/')({
+export const Route = createFileRoute('/_default/@{$org}/$project/feedback/$feedbackId/')({
 	component: RouteComponent,
 });
 

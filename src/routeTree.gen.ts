@@ -17,26 +17,26 @@ import { Route as BlankSignOutRouteImport } from './routes/_blank/sign-out'
 import { Route as BlankSignInRouteImport } from './routes/_blank/sign-in'
 import { Route as Blank404RouteImport } from './routes/_blank/404'
 import { Route as DefaultCreateAtlayoutRouteImport } from './routes/_default/create/@layout'
-import { Route as DefaultOrgAtlayoutRouteImport } from './routes/_default/$org/@layout'
+import { Route as DefaultAtChar123orgChar125AtlayoutRouteImport } from './routes/_default/@{$org}/@layout'
 import { Route as DefaultSettingsIndexRouteImport } from './routes/_default/settings/index'
-import { Route as DefaultOrgSettingsRouteImport } from './routes/_default/$org/settings'
-import { Route as DefaultOrgDefaultAtlayoutRouteImport } from './routes/_default/$org/_default/@layout'
-import { Route as DefaultOrgProjectAtlayoutRouteImport } from './routes/_default/$org/$project/@layout'
+import { Route as DefaultAtChar123orgChar125SettingsRouteImport } from './routes/_default/@{$org}/settings'
+import { Route as DefaultAtChar123orgChar125DefaultAtlayoutRouteImport } from './routes/_default/@{$org}/_default/@layout'
+import { Route as DefaultAtChar123orgChar125ProjectAtlayoutRouteImport } from './routes/_default/@{$org}/$project/@layout'
 import { Route as DefaultProfileSettingsIndexRouteImport } from './routes/_default/profile/settings/index'
 import { Route as DefaultProfileUsernameIndexRouteImport } from './routes/_default/profile/$username/index'
 import { Route as DefaultCreateTeamIndexRouteImport } from './routes/_default/create/team/index'
 import { Route as DefaultCreateProjectIndexRouteImport } from './routes/_default/create/project/index'
-import { Route as DefaultOrgDefaultIndexRouteImport } from './routes/_default/$org/_default/index'
-import { Route as DefaultOrgProjectChatAtlayoutRouteImport } from './routes/_default/$org/$project/chat/@layout'
-import { Route as DefaultOrgProjectUpdatesIndexRouteImport } from './routes/_default/$org/$project/updates/index'
-import { Route as DefaultOrgProjectRoadmapIndexRouteImport } from './routes/_default/$org/$project/roadmap/index'
-import { Route as DefaultOrgProjectOverviewIndexRouteImport } from './routes/_default/$org/$project/overview/index'
-import { Route as DefaultOrgProjectFilesIndexRouteImport } from './routes/_default/$org/$project/files/index'
-import { Route as DefaultOrgProjectFeedbackIndexRouteImport } from './routes/_default/$org/$project/feedback/index'
-import { Route as DefaultOrgProjectDiscussionsIndexRouteImport } from './routes/_default/$org/$project/discussions/index'
-import { Route as DefaultOrgProjectChatIndexRouteImport } from './routes/_default/$org/$project/chat/index'
-import { Route as DefaultOrgProjectFeedbackFeedbackIdIndexRouteImport } from './routes/_default/$org/$project/feedback/$feedbackId/index'
-import { Route as DefaultOrgProjectChatChatIdIndexRouteImport } from './routes/_default/$org/$project/chat/$chatId/index'
+import { Route as DefaultAtChar123orgChar125DefaultIndexRouteImport } from './routes/_default/@{$org}/_default/index'
+import { Route as DefaultAtChar123orgChar125ProjectChatAtlayoutRouteImport } from './routes/_default/@{$org}/$project/chat/@layout'
+import { Route as DefaultAtChar123orgChar125ProjectUpdatesIndexRouteImport } from './routes/_default/@{$org}/$project/updates/index'
+import { Route as DefaultAtChar123orgChar125ProjectRoadmapIndexRouteImport } from './routes/_default/@{$org}/$project/roadmap/index'
+import { Route as DefaultAtChar123orgChar125ProjectOverviewIndexRouteImport } from './routes/_default/@{$org}/$project/overview/index'
+import { Route as DefaultAtChar123orgChar125ProjectFilesIndexRouteImport } from './routes/_default/@{$org}/$project/files/index'
+import { Route as DefaultAtChar123orgChar125ProjectFeedbackIndexRouteImport } from './routes/_default/@{$org}/$project/feedback/index'
+import { Route as DefaultAtChar123orgChar125ProjectDiscussionsIndexRouteImport } from './routes/_default/@{$org}/$project/discussions/index'
+import { Route as DefaultAtChar123orgChar125ProjectChatIndexRouteImport } from './routes/_default/@{$org}/$project/chat/index'
+import { Route as DefaultAtChar123orgChar125ProjectFeedbackFeedbackIdIndexRouteImport } from './routes/_default/@{$org}/$project/feedback/$feedbackId/index'
+import { Route as DefaultAtChar123orgChar125ProjectChatChatIdIndexRouteImport } from './routes/_default/@{$org}/$project/chat/$chatId/index'
 import { ServerRoute as ApiAuthSplatServerRouteImport } from './routes/api/auth/$'
 
 const rootServerRouteImport = createServerRootRoute()
@@ -70,31 +70,33 @@ const DefaultCreateAtlayoutRoute = DefaultCreateAtlayoutRouteImport.update({
   path: '/create',
   getParentRoute: () => DefaultAtlayoutRoute,
 } as any)
-const DefaultOrgAtlayoutRoute = DefaultOrgAtlayoutRouteImport.update({
-  id: '/$org',
-  path: '/$org',
-  getParentRoute: () => DefaultAtlayoutRoute,
-} as any)
+const DefaultAtChar123orgChar125AtlayoutRoute =
+  DefaultAtChar123orgChar125AtlayoutRouteImport.update({
+    id: '/@{$org}',
+    path: '/@{$org}',
+    getParentRoute: () => DefaultAtlayoutRoute,
+  } as any)
 const DefaultSettingsIndexRoute = DefaultSettingsIndexRouteImport.update({
   id: '/settings/',
   path: '/settings/',
   getParentRoute: () => DefaultAtlayoutRoute,
 } as any)
-const DefaultOrgSettingsRoute = DefaultOrgSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => DefaultOrgAtlayoutRoute,
-} as any)
-const DefaultOrgDefaultAtlayoutRoute =
-  DefaultOrgDefaultAtlayoutRouteImport.update({
-    id: '/_default',
-    getParentRoute: () => DefaultOrgAtlayoutRoute,
+const DefaultAtChar123orgChar125SettingsRoute =
+  DefaultAtChar123orgChar125SettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => DefaultAtChar123orgChar125AtlayoutRoute,
   } as any)
-const DefaultOrgProjectAtlayoutRoute =
-  DefaultOrgProjectAtlayoutRouteImport.update({
+const DefaultAtChar123orgChar125DefaultAtlayoutRoute =
+  DefaultAtChar123orgChar125DefaultAtlayoutRouteImport.update({
+    id: '/_default',
+    getParentRoute: () => DefaultAtChar123orgChar125AtlayoutRoute,
+  } as any)
+const DefaultAtChar123orgChar125ProjectAtlayoutRoute =
+  DefaultAtChar123orgChar125ProjectAtlayoutRouteImport.update({
     id: '/$project',
     path: '/$project',
-    getParentRoute: () => DefaultOrgAtlayoutRoute,
+    getParentRoute: () => DefaultAtChar123orgChar125AtlayoutRoute,
   } as any)
 const DefaultProfileSettingsIndexRoute =
   DefaultProfileSettingsIndexRouteImport.update({
@@ -119,70 +121,71 @@ const DefaultCreateProjectIndexRoute =
     path: '/project/',
     getParentRoute: () => DefaultCreateAtlayoutRoute,
   } as any)
-const DefaultOrgDefaultIndexRoute = DefaultOrgDefaultIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => DefaultOrgDefaultAtlayoutRoute,
-} as any)
-const DefaultOrgProjectChatAtlayoutRoute =
-  DefaultOrgProjectChatAtlayoutRouteImport.update({
-    id: '/chat',
-    path: '/chat',
-    getParentRoute: () => DefaultOrgProjectAtlayoutRoute,
-  } as any)
-const DefaultOrgProjectUpdatesIndexRoute =
-  DefaultOrgProjectUpdatesIndexRouteImport.update({
-    id: '/updates/',
-    path: '/updates/',
-    getParentRoute: () => DefaultOrgProjectAtlayoutRoute,
-  } as any)
-const DefaultOrgProjectRoadmapIndexRoute =
-  DefaultOrgProjectRoadmapIndexRouteImport.update({
-    id: '/roadmap/',
-    path: '/roadmap/',
-    getParentRoute: () => DefaultOrgProjectAtlayoutRoute,
-  } as any)
-const DefaultOrgProjectOverviewIndexRoute =
-  DefaultOrgProjectOverviewIndexRouteImport.update({
-    id: '/overview/',
-    path: '/overview/',
-    getParentRoute: () => DefaultOrgProjectAtlayoutRoute,
-  } as any)
-const DefaultOrgProjectFilesIndexRoute =
-  DefaultOrgProjectFilesIndexRouteImport.update({
-    id: '/files/',
-    path: '/files/',
-    getParentRoute: () => DefaultOrgProjectAtlayoutRoute,
-  } as any)
-const DefaultOrgProjectFeedbackIndexRoute =
-  DefaultOrgProjectFeedbackIndexRouteImport.update({
-    id: '/feedback/',
-    path: '/feedback/',
-    getParentRoute: () => DefaultOrgProjectAtlayoutRoute,
-  } as any)
-const DefaultOrgProjectDiscussionsIndexRoute =
-  DefaultOrgProjectDiscussionsIndexRouteImport.update({
-    id: '/discussions/',
-    path: '/discussions/',
-    getParentRoute: () => DefaultOrgProjectAtlayoutRoute,
-  } as any)
-const DefaultOrgProjectChatIndexRoute =
-  DefaultOrgProjectChatIndexRouteImport.update({
+const DefaultAtChar123orgChar125DefaultIndexRoute =
+  DefaultAtChar123orgChar125DefaultIndexRouteImport.update({
     id: '/',
     path: '/',
-    getParentRoute: () => DefaultOrgProjectChatAtlayoutRoute,
+    getParentRoute: () => DefaultAtChar123orgChar125DefaultAtlayoutRoute,
   } as any)
-const DefaultOrgProjectFeedbackFeedbackIdIndexRoute =
-  DefaultOrgProjectFeedbackFeedbackIdIndexRouteImport.update({
+const DefaultAtChar123orgChar125ProjectChatAtlayoutRoute =
+  DefaultAtChar123orgChar125ProjectChatAtlayoutRouteImport.update({
+    id: '/chat',
+    path: '/chat',
+    getParentRoute: () => DefaultAtChar123orgChar125ProjectAtlayoutRoute,
+  } as any)
+const DefaultAtChar123orgChar125ProjectUpdatesIndexRoute =
+  DefaultAtChar123orgChar125ProjectUpdatesIndexRouteImport.update({
+    id: '/updates/',
+    path: '/updates/',
+    getParentRoute: () => DefaultAtChar123orgChar125ProjectAtlayoutRoute,
+  } as any)
+const DefaultAtChar123orgChar125ProjectRoadmapIndexRoute =
+  DefaultAtChar123orgChar125ProjectRoadmapIndexRouteImport.update({
+    id: '/roadmap/',
+    path: '/roadmap/',
+    getParentRoute: () => DefaultAtChar123orgChar125ProjectAtlayoutRoute,
+  } as any)
+const DefaultAtChar123orgChar125ProjectOverviewIndexRoute =
+  DefaultAtChar123orgChar125ProjectOverviewIndexRouteImport.update({
+    id: '/overview/',
+    path: '/overview/',
+    getParentRoute: () => DefaultAtChar123orgChar125ProjectAtlayoutRoute,
+  } as any)
+const DefaultAtChar123orgChar125ProjectFilesIndexRoute =
+  DefaultAtChar123orgChar125ProjectFilesIndexRouteImport.update({
+    id: '/files/',
+    path: '/files/',
+    getParentRoute: () => DefaultAtChar123orgChar125ProjectAtlayoutRoute,
+  } as any)
+const DefaultAtChar123orgChar125ProjectFeedbackIndexRoute =
+  DefaultAtChar123orgChar125ProjectFeedbackIndexRouteImport.update({
+    id: '/feedback/',
+    path: '/feedback/',
+    getParentRoute: () => DefaultAtChar123orgChar125ProjectAtlayoutRoute,
+  } as any)
+const DefaultAtChar123orgChar125ProjectDiscussionsIndexRoute =
+  DefaultAtChar123orgChar125ProjectDiscussionsIndexRouteImport.update({
+    id: '/discussions/',
+    path: '/discussions/',
+    getParentRoute: () => DefaultAtChar123orgChar125ProjectAtlayoutRoute,
+  } as any)
+const DefaultAtChar123orgChar125ProjectChatIndexRoute =
+  DefaultAtChar123orgChar125ProjectChatIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => DefaultAtChar123orgChar125ProjectChatAtlayoutRoute,
+  } as any)
+const DefaultAtChar123orgChar125ProjectFeedbackFeedbackIdIndexRoute =
+  DefaultAtChar123orgChar125ProjectFeedbackFeedbackIdIndexRouteImport.update({
     id: '/feedback/$feedbackId/',
     path: '/feedback/$feedbackId/',
-    getParentRoute: () => DefaultOrgProjectAtlayoutRoute,
+    getParentRoute: () => DefaultAtChar123orgChar125ProjectAtlayoutRoute,
   } as any)
-const DefaultOrgProjectChatChatIdIndexRoute =
-  DefaultOrgProjectChatChatIdIndexRouteImport.update({
+const DefaultAtChar123orgChar125ProjectChatChatIdIndexRoute =
+  DefaultAtChar123orgChar125ProjectChatChatIdIndexRouteImport.update({
     id: '/$chatId/',
     path: '/$chatId/',
-    getParentRoute: () => DefaultOrgProjectChatAtlayoutRoute,
+    getParentRoute: () => DefaultAtChar123orgChar125ProjectChatAtlayoutRoute,
   } as any)
 const ApiAuthSplatServerRoute = ApiAuthSplatServerRouteImport.update({
   id: '/api/auth/$',
@@ -191,163 +194,163 @@ const ApiAuthSplatServerRoute = ApiAuthSplatServerRouteImport.update({
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/$org': typeof DefaultOrgDefaultAtlayoutRouteWithChildren
+  '/@{$org}': typeof DefaultAtChar123orgChar125DefaultAtlayoutRouteWithChildren
   '/create': typeof DefaultCreateAtlayoutRouteWithChildren
   '/404': typeof Blank404Route
   '/sign-in': typeof BlankSignInRoute
   '/sign-out': typeof BlankSignOutRoute
   '/': typeof DefaultIndexRoute
-  '/$org/$project': typeof DefaultOrgProjectAtlayoutRouteWithChildren
-  '/$org/settings': typeof DefaultOrgSettingsRoute
+  '/@{$org}/$project': typeof DefaultAtChar123orgChar125ProjectAtlayoutRouteWithChildren
+  '/@{$org}/settings': typeof DefaultAtChar123orgChar125SettingsRoute
   '/settings': typeof DefaultSettingsIndexRoute
-  '/$org/$project/chat': typeof DefaultOrgProjectChatAtlayoutRouteWithChildren
-  '/$org/': typeof DefaultOrgDefaultIndexRoute
+  '/@{$org}/$project/chat': typeof DefaultAtChar123orgChar125ProjectChatAtlayoutRouteWithChildren
+  '/@{$org}/': typeof DefaultAtChar123orgChar125DefaultIndexRoute
   '/create/project': typeof DefaultCreateProjectIndexRoute
   '/create/team': typeof DefaultCreateTeamIndexRoute
   '/profile/$username': typeof DefaultProfileUsernameIndexRoute
   '/profile/settings': typeof DefaultProfileSettingsIndexRoute
-  '/$org/$project/chat/': typeof DefaultOrgProjectChatIndexRoute
-  '/$org/$project/discussions': typeof DefaultOrgProjectDiscussionsIndexRoute
-  '/$org/$project/feedback': typeof DefaultOrgProjectFeedbackIndexRoute
-  '/$org/$project/files': typeof DefaultOrgProjectFilesIndexRoute
-  '/$org/$project/overview': typeof DefaultOrgProjectOverviewIndexRoute
-  '/$org/$project/roadmap': typeof DefaultOrgProjectRoadmapIndexRoute
-  '/$org/$project/updates': typeof DefaultOrgProjectUpdatesIndexRoute
-  '/$org/$project/chat/$chatId': typeof DefaultOrgProjectChatChatIdIndexRoute
-  '/$org/$project/feedback/$feedbackId': typeof DefaultOrgProjectFeedbackFeedbackIdIndexRoute
+  '/@{$org}/$project/chat/': typeof DefaultAtChar123orgChar125ProjectChatIndexRoute
+  '/@{$org}/$project/discussions': typeof DefaultAtChar123orgChar125ProjectDiscussionsIndexRoute
+  '/@{$org}/$project/feedback': typeof DefaultAtChar123orgChar125ProjectFeedbackIndexRoute
+  '/@{$org}/$project/files': typeof DefaultAtChar123orgChar125ProjectFilesIndexRoute
+  '/@{$org}/$project/overview': typeof DefaultAtChar123orgChar125ProjectOverviewIndexRoute
+  '/@{$org}/$project/roadmap': typeof DefaultAtChar123orgChar125ProjectRoadmapIndexRoute
+  '/@{$org}/$project/updates': typeof DefaultAtChar123orgChar125ProjectUpdatesIndexRoute
+  '/@{$org}/$project/chat/$chatId': typeof DefaultAtChar123orgChar125ProjectChatChatIdIndexRoute
+  '/@{$org}/$project/feedback/$feedbackId': typeof DefaultAtChar123orgChar125ProjectFeedbackFeedbackIdIndexRoute
 }
 export interface FileRoutesByTo {
-  '/$org': typeof DefaultOrgDefaultIndexRoute
+  '/@{$org}': typeof DefaultAtChar123orgChar125DefaultIndexRoute
   '/create': typeof DefaultCreateAtlayoutRouteWithChildren
   '/404': typeof Blank404Route
   '/sign-in': typeof BlankSignInRoute
   '/sign-out': typeof BlankSignOutRoute
   '/': typeof DefaultIndexRoute
-  '/$org/$project': typeof DefaultOrgProjectAtlayoutRouteWithChildren
-  '/$org/settings': typeof DefaultOrgSettingsRoute
+  '/@{$org}/$project': typeof DefaultAtChar123orgChar125ProjectAtlayoutRouteWithChildren
+  '/@{$org}/settings': typeof DefaultAtChar123orgChar125SettingsRoute
   '/settings': typeof DefaultSettingsIndexRoute
   '/create/project': typeof DefaultCreateProjectIndexRoute
   '/create/team': typeof DefaultCreateTeamIndexRoute
   '/profile/$username': typeof DefaultProfileUsernameIndexRoute
   '/profile/settings': typeof DefaultProfileSettingsIndexRoute
-  '/$org/$project/chat': typeof DefaultOrgProjectChatIndexRoute
-  '/$org/$project/discussions': typeof DefaultOrgProjectDiscussionsIndexRoute
-  '/$org/$project/feedback': typeof DefaultOrgProjectFeedbackIndexRoute
-  '/$org/$project/files': typeof DefaultOrgProjectFilesIndexRoute
-  '/$org/$project/overview': typeof DefaultOrgProjectOverviewIndexRoute
-  '/$org/$project/roadmap': typeof DefaultOrgProjectRoadmapIndexRoute
-  '/$org/$project/updates': typeof DefaultOrgProjectUpdatesIndexRoute
-  '/$org/$project/chat/$chatId': typeof DefaultOrgProjectChatChatIdIndexRoute
-  '/$org/$project/feedback/$feedbackId': typeof DefaultOrgProjectFeedbackFeedbackIdIndexRoute
+  '/@{$org}/$project/chat': typeof DefaultAtChar123orgChar125ProjectChatIndexRoute
+  '/@{$org}/$project/discussions': typeof DefaultAtChar123orgChar125ProjectDiscussionsIndexRoute
+  '/@{$org}/$project/feedback': typeof DefaultAtChar123orgChar125ProjectFeedbackIndexRoute
+  '/@{$org}/$project/files': typeof DefaultAtChar123orgChar125ProjectFilesIndexRoute
+  '/@{$org}/$project/overview': typeof DefaultAtChar123orgChar125ProjectOverviewIndexRoute
+  '/@{$org}/$project/roadmap': typeof DefaultAtChar123orgChar125ProjectRoadmapIndexRoute
+  '/@{$org}/$project/updates': typeof DefaultAtChar123orgChar125ProjectUpdatesIndexRoute
+  '/@{$org}/$project/chat/$chatId': typeof DefaultAtChar123orgChar125ProjectChatChatIdIndexRoute
+  '/@{$org}/$project/feedback/$feedbackId': typeof DefaultAtChar123orgChar125ProjectFeedbackFeedbackIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_default': typeof DefaultAtlayoutRouteWithChildren
-  '/_default/$org': typeof DefaultOrgAtlayoutRouteWithChildren
+  '/_default/@{$org}': typeof DefaultAtChar123orgChar125AtlayoutRouteWithChildren
   '/_default/create': typeof DefaultCreateAtlayoutRouteWithChildren
   '/_blank/404': typeof Blank404Route
   '/_blank/sign-in': typeof BlankSignInRoute
   '/_blank/sign-out': typeof BlankSignOutRoute
   '/_default/': typeof DefaultIndexRoute
-  '/_default/$org/$project': typeof DefaultOrgProjectAtlayoutRouteWithChildren
-  '/_default/$org/_default': typeof DefaultOrgDefaultAtlayoutRouteWithChildren
-  '/_default/$org/settings': typeof DefaultOrgSettingsRoute
+  '/_default/@{$org}/$project': typeof DefaultAtChar123orgChar125ProjectAtlayoutRouteWithChildren
+  '/_default/@{$org}/_default': typeof DefaultAtChar123orgChar125DefaultAtlayoutRouteWithChildren
+  '/_default/@{$org}/settings': typeof DefaultAtChar123orgChar125SettingsRoute
   '/_default/settings/': typeof DefaultSettingsIndexRoute
-  '/_default/$org/$project/chat': typeof DefaultOrgProjectChatAtlayoutRouteWithChildren
-  '/_default/$org/_default/': typeof DefaultOrgDefaultIndexRoute
+  '/_default/@{$org}/$project/chat': typeof DefaultAtChar123orgChar125ProjectChatAtlayoutRouteWithChildren
+  '/_default/@{$org}/_default/': typeof DefaultAtChar123orgChar125DefaultIndexRoute
   '/_default/create/project/': typeof DefaultCreateProjectIndexRoute
   '/_default/create/team/': typeof DefaultCreateTeamIndexRoute
   '/_default/profile/$username/': typeof DefaultProfileUsernameIndexRoute
   '/_default/profile/settings/': typeof DefaultProfileSettingsIndexRoute
-  '/_default/$org/$project/chat/': typeof DefaultOrgProjectChatIndexRoute
-  '/_default/$org/$project/discussions/': typeof DefaultOrgProjectDiscussionsIndexRoute
-  '/_default/$org/$project/feedback/': typeof DefaultOrgProjectFeedbackIndexRoute
-  '/_default/$org/$project/files/': typeof DefaultOrgProjectFilesIndexRoute
-  '/_default/$org/$project/overview/': typeof DefaultOrgProjectOverviewIndexRoute
-  '/_default/$org/$project/roadmap/': typeof DefaultOrgProjectRoadmapIndexRoute
-  '/_default/$org/$project/updates/': typeof DefaultOrgProjectUpdatesIndexRoute
-  '/_default/$org/$project/chat/$chatId/': typeof DefaultOrgProjectChatChatIdIndexRoute
-  '/_default/$org/$project/feedback/$feedbackId/': typeof DefaultOrgProjectFeedbackFeedbackIdIndexRoute
+  '/_default/@{$org}/$project/chat/': typeof DefaultAtChar123orgChar125ProjectChatIndexRoute
+  '/_default/@{$org}/$project/discussions/': typeof DefaultAtChar123orgChar125ProjectDiscussionsIndexRoute
+  '/_default/@{$org}/$project/feedback/': typeof DefaultAtChar123orgChar125ProjectFeedbackIndexRoute
+  '/_default/@{$org}/$project/files/': typeof DefaultAtChar123orgChar125ProjectFilesIndexRoute
+  '/_default/@{$org}/$project/overview/': typeof DefaultAtChar123orgChar125ProjectOverviewIndexRoute
+  '/_default/@{$org}/$project/roadmap/': typeof DefaultAtChar123orgChar125ProjectRoadmapIndexRoute
+  '/_default/@{$org}/$project/updates/': typeof DefaultAtChar123orgChar125ProjectUpdatesIndexRoute
+  '/_default/@{$org}/$project/chat/$chatId/': typeof DefaultAtChar123orgChar125ProjectChatChatIdIndexRoute
+  '/_default/@{$org}/$project/feedback/$feedbackId/': typeof DefaultAtChar123orgChar125ProjectFeedbackFeedbackIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/$org'
+    | '/@{$org}'
     | '/create'
     | '/404'
     | '/sign-in'
     | '/sign-out'
     | '/'
-    | '/$org/$project'
-    | '/$org/settings'
+    | '/@{$org}/$project'
+    | '/@{$org}/settings'
     | '/settings'
-    | '/$org/$project/chat'
-    | '/$org/'
+    | '/@{$org}/$project/chat'
+    | '/@{$org}/'
     | '/create/project'
     | '/create/team'
     | '/profile/$username'
     | '/profile/settings'
-    | '/$org/$project/chat/'
-    | '/$org/$project/discussions'
-    | '/$org/$project/feedback'
-    | '/$org/$project/files'
-    | '/$org/$project/overview'
-    | '/$org/$project/roadmap'
-    | '/$org/$project/updates'
-    | '/$org/$project/chat/$chatId'
-    | '/$org/$project/feedback/$feedbackId'
+    | '/@{$org}/$project/chat/'
+    | '/@{$org}/$project/discussions'
+    | '/@{$org}/$project/feedback'
+    | '/@{$org}/$project/files'
+    | '/@{$org}/$project/overview'
+    | '/@{$org}/$project/roadmap'
+    | '/@{$org}/$project/updates'
+    | '/@{$org}/$project/chat/$chatId'
+    | '/@{$org}/$project/feedback/$feedbackId'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/$org'
+    | '/@{$org}'
     | '/create'
     | '/404'
     | '/sign-in'
     | '/sign-out'
     | '/'
-    | '/$org/$project'
-    | '/$org/settings'
+    | '/@{$org}/$project'
+    | '/@{$org}/settings'
     | '/settings'
     | '/create/project'
     | '/create/team'
     | '/profile/$username'
     | '/profile/settings'
-    | '/$org/$project/chat'
-    | '/$org/$project/discussions'
-    | '/$org/$project/feedback'
-    | '/$org/$project/files'
-    | '/$org/$project/overview'
-    | '/$org/$project/roadmap'
-    | '/$org/$project/updates'
-    | '/$org/$project/chat/$chatId'
-    | '/$org/$project/feedback/$feedbackId'
+    | '/@{$org}/$project/chat'
+    | '/@{$org}/$project/discussions'
+    | '/@{$org}/$project/feedback'
+    | '/@{$org}/$project/files'
+    | '/@{$org}/$project/overview'
+    | '/@{$org}/$project/roadmap'
+    | '/@{$org}/$project/updates'
+    | '/@{$org}/$project/chat/$chatId'
+    | '/@{$org}/$project/feedback/$feedbackId'
   id:
     | '__root__'
     | '/_default'
-    | '/_default/$org'
+    | '/_default/@{$org}'
     | '/_default/create'
     | '/_blank/404'
     | '/_blank/sign-in'
     | '/_blank/sign-out'
     | '/_default/'
-    | '/_default/$org/$project'
-    | '/_default/$org/_default'
-    | '/_default/$org/settings'
+    | '/_default/@{$org}/$project'
+    | '/_default/@{$org}/_default'
+    | '/_default/@{$org}/settings'
     | '/_default/settings/'
-    | '/_default/$org/$project/chat'
-    | '/_default/$org/_default/'
+    | '/_default/@{$org}/$project/chat'
+    | '/_default/@{$org}/_default/'
     | '/_default/create/project/'
     | '/_default/create/team/'
     | '/_default/profile/$username/'
     | '/_default/profile/settings/'
-    | '/_default/$org/$project/chat/'
-    | '/_default/$org/$project/discussions/'
-    | '/_default/$org/$project/feedback/'
-    | '/_default/$org/$project/files/'
-    | '/_default/$org/$project/overview/'
-    | '/_default/$org/$project/roadmap/'
-    | '/_default/$org/$project/updates/'
-    | '/_default/$org/$project/chat/$chatId/'
-    | '/_default/$org/$project/feedback/$feedbackId/'
+    | '/_default/@{$org}/$project/chat/'
+    | '/_default/@{$org}/$project/discussions/'
+    | '/_default/@{$org}/$project/feedback/'
+    | '/_default/@{$org}/$project/files/'
+    | '/_default/@{$org}/$project/overview/'
+    | '/_default/@{$org}/$project/roadmap/'
+    | '/_default/@{$org}/$project/updates/'
+    | '/_default/@{$org}/$project/chat/$chatId/'
+    | '/_default/@{$org}/$project/feedback/$feedbackId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -422,11 +425,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DefaultCreateAtlayoutRouteImport
       parentRoute: typeof DefaultAtlayoutRoute
     }
-    '/_default/$org': {
-      id: '/_default/$org'
-      path: '/$org'
-      fullPath: '/$org'
-      preLoaderRoute: typeof DefaultOrgAtlayoutRouteImport
+    '/_default/@{$org}': {
+      id: '/_default/@{$org}'
+      path: '/@{$org}'
+      fullPath: '/@{$org}'
+      preLoaderRoute: typeof DefaultAtChar123orgChar125AtlayoutRouteImport
       parentRoute: typeof DefaultAtlayoutRoute
     }
     '/_default/settings/': {
@@ -436,26 +439,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DefaultSettingsIndexRouteImport
       parentRoute: typeof DefaultAtlayoutRoute
     }
-    '/_default/$org/settings': {
-      id: '/_default/$org/settings'
+    '/_default/@{$org}/settings': {
+      id: '/_default/@{$org}/settings'
       path: '/settings'
-      fullPath: '/$org/settings'
-      preLoaderRoute: typeof DefaultOrgSettingsRouteImport
-      parentRoute: typeof DefaultOrgAtlayoutRoute
+      fullPath: '/@{$org}/settings'
+      preLoaderRoute: typeof DefaultAtChar123orgChar125SettingsRouteImport
+      parentRoute: typeof DefaultAtChar123orgChar125AtlayoutRoute
     }
-    '/_default/$org/_default': {
-      id: '/_default/$org/_default'
+    '/_default/@{$org}/_default': {
+      id: '/_default/@{$org}/_default'
       path: ''
-      fullPath: '/$org'
-      preLoaderRoute: typeof DefaultOrgDefaultAtlayoutRouteImport
-      parentRoute: typeof DefaultOrgAtlayoutRoute
+      fullPath: '/@{$org}'
+      preLoaderRoute: typeof DefaultAtChar123orgChar125DefaultAtlayoutRouteImport
+      parentRoute: typeof DefaultAtChar123orgChar125AtlayoutRoute
     }
-    '/_default/$org/$project': {
-      id: '/_default/$org/$project'
+    '/_default/@{$org}/$project': {
+      id: '/_default/@{$org}/$project'
       path: '/$project'
-      fullPath: '/$org/$project'
-      preLoaderRoute: typeof DefaultOrgProjectAtlayoutRouteImport
-      parentRoute: typeof DefaultOrgAtlayoutRoute
+      fullPath: '/@{$org}/$project'
+      preLoaderRoute: typeof DefaultAtChar123orgChar125ProjectAtlayoutRouteImport
+      parentRoute: typeof DefaultAtChar123orgChar125AtlayoutRoute
     }
     '/_default/profile/settings/': {
       id: '/_default/profile/settings/'
@@ -485,82 +488,82 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DefaultCreateProjectIndexRouteImport
       parentRoute: typeof DefaultCreateAtlayoutRoute
     }
-    '/_default/$org/_default/': {
-      id: '/_default/$org/_default/'
+    '/_default/@{$org}/_default/': {
+      id: '/_default/@{$org}/_default/'
       path: '/'
-      fullPath: '/$org/'
-      preLoaderRoute: typeof DefaultOrgDefaultIndexRouteImport
-      parentRoute: typeof DefaultOrgDefaultAtlayoutRoute
+      fullPath: '/@{$org}/'
+      preLoaderRoute: typeof DefaultAtChar123orgChar125DefaultIndexRouteImport
+      parentRoute: typeof DefaultAtChar123orgChar125DefaultAtlayoutRoute
     }
-    '/_default/$org/$project/chat': {
-      id: '/_default/$org/$project/chat'
+    '/_default/@{$org}/$project/chat': {
+      id: '/_default/@{$org}/$project/chat'
       path: '/chat'
-      fullPath: '/$org/$project/chat'
-      preLoaderRoute: typeof DefaultOrgProjectChatAtlayoutRouteImport
-      parentRoute: typeof DefaultOrgProjectAtlayoutRoute
+      fullPath: '/@{$org}/$project/chat'
+      preLoaderRoute: typeof DefaultAtChar123orgChar125ProjectChatAtlayoutRouteImport
+      parentRoute: typeof DefaultAtChar123orgChar125ProjectAtlayoutRoute
     }
-    '/_default/$org/$project/updates/': {
-      id: '/_default/$org/$project/updates/'
+    '/_default/@{$org}/$project/updates/': {
+      id: '/_default/@{$org}/$project/updates/'
       path: '/updates'
-      fullPath: '/$org/$project/updates'
-      preLoaderRoute: typeof DefaultOrgProjectUpdatesIndexRouteImport
-      parentRoute: typeof DefaultOrgProjectAtlayoutRoute
+      fullPath: '/@{$org}/$project/updates'
+      preLoaderRoute: typeof DefaultAtChar123orgChar125ProjectUpdatesIndexRouteImport
+      parentRoute: typeof DefaultAtChar123orgChar125ProjectAtlayoutRoute
     }
-    '/_default/$org/$project/roadmap/': {
-      id: '/_default/$org/$project/roadmap/'
+    '/_default/@{$org}/$project/roadmap/': {
+      id: '/_default/@{$org}/$project/roadmap/'
       path: '/roadmap'
-      fullPath: '/$org/$project/roadmap'
-      preLoaderRoute: typeof DefaultOrgProjectRoadmapIndexRouteImport
-      parentRoute: typeof DefaultOrgProjectAtlayoutRoute
+      fullPath: '/@{$org}/$project/roadmap'
+      preLoaderRoute: typeof DefaultAtChar123orgChar125ProjectRoadmapIndexRouteImport
+      parentRoute: typeof DefaultAtChar123orgChar125ProjectAtlayoutRoute
     }
-    '/_default/$org/$project/overview/': {
-      id: '/_default/$org/$project/overview/'
+    '/_default/@{$org}/$project/overview/': {
+      id: '/_default/@{$org}/$project/overview/'
       path: '/overview'
-      fullPath: '/$org/$project/overview'
-      preLoaderRoute: typeof DefaultOrgProjectOverviewIndexRouteImport
-      parentRoute: typeof DefaultOrgProjectAtlayoutRoute
+      fullPath: '/@{$org}/$project/overview'
+      preLoaderRoute: typeof DefaultAtChar123orgChar125ProjectOverviewIndexRouteImport
+      parentRoute: typeof DefaultAtChar123orgChar125ProjectAtlayoutRoute
     }
-    '/_default/$org/$project/files/': {
-      id: '/_default/$org/$project/files/'
+    '/_default/@{$org}/$project/files/': {
+      id: '/_default/@{$org}/$project/files/'
       path: '/files'
-      fullPath: '/$org/$project/files'
-      preLoaderRoute: typeof DefaultOrgProjectFilesIndexRouteImport
-      parentRoute: typeof DefaultOrgProjectAtlayoutRoute
+      fullPath: '/@{$org}/$project/files'
+      preLoaderRoute: typeof DefaultAtChar123orgChar125ProjectFilesIndexRouteImport
+      parentRoute: typeof DefaultAtChar123orgChar125ProjectAtlayoutRoute
     }
-    '/_default/$org/$project/feedback/': {
-      id: '/_default/$org/$project/feedback/'
+    '/_default/@{$org}/$project/feedback/': {
+      id: '/_default/@{$org}/$project/feedback/'
       path: '/feedback'
-      fullPath: '/$org/$project/feedback'
-      preLoaderRoute: typeof DefaultOrgProjectFeedbackIndexRouteImport
-      parentRoute: typeof DefaultOrgProjectAtlayoutRoute
+      fullPath: '/@{$org}/$project/feedback'
+      preLoaderRoute: typeof DefaultAtChar123orgChar125ProjectFeedbackIndexRouteImport
+      parentRoute: typeof DefaultAtChar123orgChar125ProjectAtlayoutRoute
     }
-    '/_default/$org/$project/discussions/': {
-      id: '/_default/$org/$project/discussions/'
+    '/_default/@{$org}/$project/discussions/': {
+      id: '/_default/@{$org}/$project/discussions/'
       path: '/discussions'
-      fullPath: '/$org/$project/discussions'
-      preLoaderRoute: typeof DefaultOrgProjectDiscussionsIndexRouteImport
-      parentRoute: typeof DefaultOrgProjectAtlayoutRoute
+      fullPath: '/@{$org}/$project/discussions'
+      preLoaderRoute: typeof DefaultAtChar123orgChar125ProjectDiscussionsIndexRouteImport
+      parentRoute: typeof DefaultAtChar123orgChar125ProjectAtlayoutRoute
     }
-    '/_default/$org/$project/chat/': {
-      id: '/_default/$org/$project/chat/'
+    '/_default/@{$org}/$project/chat/': {
+      id: '/_default/@{$org}/$project/chat/'
       path: '/'
-      fullPath: '/$org/$project/chat/'
-      preLoaderRoute: typeof DefaultOrgProjectChatIndexRouteImport
-      parentRoute: typeof DefaultOrgProjectChatAtlayoutRoute
+      fullPath: '/@{$org}/$project/chat/'
+      preLoaderRoute: typeof DefaultAtChar123orgChar125ProjectChatIndexRouteImport
+      parentRoute: typeof DefaultAtChar123orgChar125ProjectChatAtlayoutRoute
     }
-    '/_default/$org/$project/feedback/$feedbackId/': {
-      id: '/_default/$org/$project/feedback/$feedbackId/'
+    '/_default/@{$org}/$project/feedback/$feedbackId/': {
+      id: '/_default/@{$org}/$project/feedback/$feedbackId/'
       path: '/feedback/$feedbackId'
-      fullPath: '/$org/$project/feedback/$feedbackId'
-      preLoaderRoute: typeof DefaultOrgProjectFeedbackFeedbackIdIndexRouteImport
-      parentRoute: typeof DefaultOrgProjectAtlayoutRoute
+      fullPath: '/@{$org}/$project/feedback/$feedbackId'
+      preLoaderRoute: typeof DefaultAtChar123orgChar125ProjectFeedbackFeedbackIdIndexRouteImport
+      parentRoute: typeof DefaultAtChar123orgChar125ProjectAtlayoutRoute
     }
-    '/_default/$org/$project/chat/$chatId/': {
-      id: '/_default/$org/$project/chat/$chatId/'
+    '/_default/@{$org}/$project/chat/$chatId/': {
+      id: '/_default/@{$org}/$project/chat/$chatId/'
       path: '/$chatId'
-      fullPath: '/$org/$project/chat/$chatId'
-      preLoaderRoute: typeof DefaultOrgProjectChatChatIdIndexRouteImport
-      parentRoute: typeof DefaultOrgProjectChatAtlayoutRoute
+      fullPath: '/@{$org}/$project/chat/$chatId'
+      preLoaderRoute: typeof DefaultAtChar123orgChar125ProjectChatChatIdIndexRouteImport
+      parentRoute: typeof DefaultAtChar123orgChar125ProjectChatAtlayoutRoute
     }
   }
 }
@@ -576,82 +579,95 @@ declare module '@tanstack/react-start/server' {
   }
 }
 
-interface DefaultOrgProjectChatAtlayoutRouteChildren {
-  DefaultOrgProjectChatIndexRoute: typeof DefaultOrgProjectChatIndexRoute
-  DefaultOrgProjectChatChatIdIndexRoute: typeof DefaultOrgProjectChatChatIdIndexRoute
+interface DefaultAtChar123orgChar125ProjectChatAtlayoutRouteChildren {
+  DefaultAtChar123orgChar125ProjectChatIndexRoute: typeof DefaultAtChar123orgChar125ProjectChatIndexRoute
+  DefaultAtChar123orgChar125ProjectChatChatIdIndexRoute: typeof DefaultAtChar123orgChar125ProjectChatChatIdIndexRoute
 }
 
-const DefaultOrgProjectChatAtlayoutRouteChildren: DefaultOrgProjectChatAtlayoutRouteChildren =
+const DefaultAtChar123orgChar125ProjectChatAtlayoutRouteChildren: DefaultAtChar123orgChar125ProjectChatAtlayoutRouteChildren =
   {
-    DefaultOrgProjectChatIndexRoute: DefaultOrgProjectChatIndexRoute,
-    DefaultOrgProjectChatChatIdIndexRoute:
-      DefaultOrgProjectChatChatIdIndexRoute,
+    DefaultAtChar123orgChar125ProjectChatIndexRoute:
+      DefaultAtChar123orgChar125ProjectChatIndexRoute,
+    DefaultAtChar123orgChar125ProjectChatChatIdIndexRoute:
+      DefaultAtChar123orgChar125ProjectChatChatIdIndexRoute,
   }
 
-const DefaultOrgProjectChatAtlayoutRouteWithChildren =
-  DefaultOrgProjectChatAtlayoutRoute._addFileChildren(
-    DefaultOrgProjectChatAtlayoutRouteChildren,
+const DefaultAtChar123orgChar125ProjectChatAtlayoutRouteWithChildren =
+  DefaultAtChar123orgChar125ProjectChatAtlayoutRoute._addFileChildren(
+    DefaultAtChar123orgChar125ProjectChatAtlayoutRouteChildren,
   )
 
-interface DefaultOrgProjectAtlayoutRouteChildren {
-  DefaultOrgProjectChatAtlayoutRoute: typeof DefaultOrgProjectChatAtlayoutRouteWithChildren
-  DefaultOrgProjectDiscussionsIndexRoute: typeof DefaultOrgProjectDiscussionsIndexRoute
-  DefaultOrgProjectFeedbackIndexRoute: typeof DefaultOrgProjectFeedbackIndexRoute
-  DefaultOrgProjectFilesIndexRoute: typeof DefaultOrgProjectFilesIndexRoute
-  DefaultOrgProjectOverviewIndexRoute: typeof DefaultOrgProjectOverviewIndexRoute
-  DefaultOrgProjectRoadmapIndexRoute: typeof DefaultOrgProjectRoadmapIndexRoute
-  DefaultOrgProjectUpdatesIndexRoute: typeof DefaultOrgProjectUpdatesIndexRoute
-  DefaultOrgProjectFeedbackFeedbackIdIndexRoute: typeof DefaultOrgProjectFeedbackFeedbackIdIndexRoute
+interface DefaultAtChar123orgChar125ProjectAtlayoutRouteChildren {
+  DefaultAtChar123orgChar125ProjectChatAtlayoutRoute: typeof DefaultAtChar123orgChar125ProjectChatAtlayoutRouteWithChildren
+  DefaultAtChar123orgChar125ProjectDiscussionsIndexRoute: typeof DefaultAtChar123orgChar125ProjectDiscussionsIndexRoute
+  DefaultAtChar123orgChar125ProjectFeedbackIndexRoute: typeof DefaultAtChar123orgChar125ProjectFeedbackIndexRoute
+  DefaultAtChar123orgChar125ProjectFilesIndexRoute: typeof DefaultAtChar123orgChar125ProjectFilesIndexRoute
+  DefaultAtChar123orgChar125ProjectOverviewIndexRoute: typeof DefaultAtChar123orgChar125ProjectOverviewIndexRoute
+  DefaultAtChar123orgChar125ProjectRoadmapIndexRoute: typeof DefaultAtChar123orgChar125ProjectRoadmapIndexRoute
+  DefaultAtChar123orgChar125ProjectUpdatesIndexRoute: typeof DefaultAtChar123orgChar125ProjectUpdatesIndexRoute
+  DefaultAtChar123orgChar125ProjectFeedbackFeedbackIdIndexRoute: typeof DefaultAtChar123orgChar125ProjectFeedbackFeedbackIdIndexRoute
 }
 
-const DefaultOrgProjectAtlayoutRouteChildren: DefaultOrgProjectAtlayoutRouteChildren =
+const DefaultAtChar123orgChar125ProjectAtlayoutRouteChildren: DefaultAtChar123orgChar125ProjectAtlayoutRouteChildren =
   {
-    DefaultOrgProjectChatAtlayoutRoute:
-      DefaultOrgProjectChatAtlayoutRouteWithChildren,
-    DefaultOrgProjectDiscussionsIndexRoute:
-      DefaultOrgProjectDiscussionsIndexRoute,
-    DefaultOrgProjectFeedbackIndexRoute: DefaultOrgProjectFeedbackIndexRoute,
-    DefaultOrgProjectFilesIndexRoute: DefaultOrgProjectFilesIndexRoute,
-    DefaultOrgProjectOverviewIndexRoute: DefaultOrgProjectOverviewIndexRoute,
-    DefaultOrgProjectRoadmapIndexRoute: DefaultOrgProjectRoadmapIndexRoute,
-    DefaultOrgProjectUpdatesIndexRoute: DefaultOrgProjectUpdatesIndexRoute,
-    DefaultOrgProjectFeedbackFeedbackIdIndexRoute:
-      DefaultOrgProjectFeedbackFeedbackIdIndexRoute,
+    DefaultAtChar123orgChar125ProjectChatAtlayoutRoute:
+      DefaultAtChar123orgChar125ProjectChatAtlayoutRouteWithChildren,
+    DefaultAtChar123orgChar125ProjectDiscussionsIndexRoute:
+      DefaultAtChar123orgChar125ProjectDiscussionsIndexRoute,
+    DefaultAtChar123orgChar125ProjectFeedbackIndexRoute:
+      DefaultAtChar123orgChar125ProjectFeedbackIndexRoute,
+    DefaultAtChar123orgChar125ProjectFilesIndexRoute:
+      DefaultAtChar123orgChar125ProjectFilesIndexRoute,
+    DefaultAtChar123orgChar125ProjectOverviewIndexRoute:
+      DefaultAtChar123orgChar125ProjectOverviewIndexRoute,
+    DefaultAtChar123orgChar125ProjectRoadmapIndexRoute:
+      DefaultAtChar123orgChar125ProjectRoadmapIndexRoute,
+    DefaultAtChar123orgChar125ProjectUpdatesIndexRoute:
+      DefaultAtChar123orgChar125ProjectUpdatesIndexRoute,
+    DefaultAtChar123orgChar125ProjectFeedbackFeedbackIdIndexRoute:
+      DefaultAtChar123orgChar125ProjectFeedbackFeedbackIdIndexRoute,
   }
 
-const DefaultOrgProjectAtlayoutRouteWithChildren =
-  DefaultOrgProjectAtlayoutRoute._addFileChildren(
-    DefaultOrgProjectAtlayoutRouteChildren,
+const DefaultAtChar123orgChar125ProjectAtlayoutRouteWithChildren =
+  DefaultAtChar123orgChar125ProjectAtlayoutRoute._addFileChildren(
+    DefaultAtChar123orgChar125ProjectAtlayoutRouteChildren,
   )
 
-interface DefaultOrgDefaultAtlayoutRouteChildren {
-  DefaultOrgDefaultIndexRoute: typeof DefaultOrgDefaultIndexRoute
+interface DefaultAtChar123orgChar125DefaultAtlayoutRouteChildren {
+  DefaultAtChar123orgChar125DefaultIndexRoute: typeof DefaultAtChar123orgChar125DefaultIndexRoute
 }
 
-const DefaultOrgDefaultAtlayoutRouteChildren: DefaultOrgDefaultAtlayoutRouteChildren =
+const DefaultAtChar123orgChar125DefaultAtlayoutRouteChildren: DefaultAtChar123orgChar125DefaultAtlayoutRouteChildren =
   {
-    DefaultOrgDefaultIndexRoute: DefaultOrgDefaultIndexRoute,
+    DefaultAtChar123orgChar125DefaultIndexRoute:
+      DefaultAtChar123orgChar125DefaultIndexRoute,
   }
 
-const DefaultOrgDefaultAtlayoutRouteWithChildren =
-  DefaultOrgDefaultAtlayoutRoute._addFileChildren(
-    DefaultOrgDefaultAtlayoutRouteChildren,
+const DefaultAtChar123orgChar125DefaultAtlayoutRouteWithChildren =
+  DefaultAtChar123orgChar125DefaultAtlayoutRoute._addFileChildren(
+    DefaultAtChar123orgChar125DefaultAtlayoutRouteChildren,
   )
 
-interface DefaultOrgAtlayoutRouteChildren {
-  DefaultOrgProjectAtlayoutRoute: typeof DefaultOrgProjectAtlayoutRouteWithChildren
-  DefaultOrgDefaultAtlayoutRoute: typeof DefaultOrgDefaultAtlayoutRouteWithChildren
-  DefaultOrgSettingsRoute: typeof DefaultOrgSettingsRoute
+interface DefaultAtChar123orgChar125AtlayoutRouteChildren {
+  DefaultAtChar123orgChar125ProjectAtlayoutRoute: typeof DefaultAtChar123orgChar125ProjectAtlayoutRouteWithChildren
+  DefaultAtChar123orgChar125DefaultAtlayoutRoute: typeof DefaultAtChar123orgChar125DefaultAtlayoutRouteWithChildren
+  DefaultAtChar123orgChar125SettingsRoute: typeof DefaultAtChar123orgChar125SettingsRoute
 }
 
-const DefaultOrgAtlayoutRouteChildren: DefaultOrgAtlayoutRouteChildren = {
-  DefaultOrgProjectAtlayoutRoute: DefaultOrgProjectAtlayoutRouteWithChildren,
-  DefaultOrgDefaultAtlayoutRoute: DefaultOrgDefaultAtlayoutRouteWithChildren,
-  DefaultOrgSettingsRoute: DefaultOrgSettingsRoute,
-}
+const DefaultAtChar123orgChar125AtlayoutRouteChildren: DefaultAtChar123orgChar125AtlayoutRouteChildren =
+  {
+    DefaultAtChar123orgChar125ProjectAtlayoutRoute:
+      DefaultAtChar123orgChar125ProjectAtlayoutRouteWithChildren,
+    DefaultAtChar123orgChar125DefaultAtlayoutRoute:
+      DefaultAtChar123orgChar125DefaultAtlayoutRouteWithChildren,
+    DefaultAtChar123orgChar125SettingsRoute:
+      DefaultAtChar123orgChar125SettingsRoute,
+  }
 
-const DefaultOrgAtlayoutRouteWithChildren =
-  DefaultOrgAtlayoutRoute._addFileChildren(DefaultOrgAtlayoutRouteChildren)
+const DefaultAtChar123orgChar125AtlayoutRouteWithChildren =
+  DefaultAtChar123orgChar125AtlayoutRoute._addFileChildren(
+    DefaultAtChar123orgChar125AtlayoutRouteChildren,
+  )
 
 interface DefaultCreateAtlayoutRouteChildren {
   DefaultCreateProjectIndexRoute: typeof DefaultCreateProjectIndexRoute
@@ -669,7 +685,7 @@ const DefaultCreateAtlayoutRouteWithChildren =
   )
 
 interface DefaultAtlayoutRouteChildren {
-  DefaultOrgAtlayoutRoute: typeof DefaultOrgAtlayoutRouteWithChildren
+  DefaultAtChar123orgChar125AtlayoutRoute: typeof DefaultAtChar123orgChar125AtlayoutRouteWithChildren
   DefaultCreateAtlayoutRoute: typeof DefaultCreateAtlayoutRouteWithChildren
   DefaultIndexRoute: typeof DefaultIndexRoute
   DefaultSettingsIndexRoute: typeof DefaultSettingsIndexRoute
@@ -678,7 +694,8 @@ interface DefaultAtlayoutRouteChildren {
 }
 
 const DefaultAtlayoutRouteChildren: DefaultAtlayoutRouteChildren = {
-  DefaultOrgAtlayoutRoute: DefaultOrgAtlayoutRouteWithChildren,
+  DefaultAtChar123orgChar125AtlayoutRoute:
+    DefaultAtChar123orgChar125AtlayoutRouteWithChildren,
   DefaultCreateAtlayoutRoute: DefaultCreateAtlayoutRouteWithChildren,
   DefaultIndexRoute: DefaultIndexRoute,
   DefaultSettingsIndexRoute: DefaultSettingsIndexRoute,

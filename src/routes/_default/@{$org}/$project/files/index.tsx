@@ -4,7 +4,7 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbList } from '@/components/ui/brea
 
 import { TitleBar } from '../-components/title-bar';
 
-export const Route = createFileRoute('/_default/$org/$project/roadmap/')({
+export const Route = createFileRoute('/_default/@{$org}/$project/files/')({
 	component: RouteComponent,
 });
 
@@ -14,7 +14,7 @@ function RouteComponent() {
 			<TitleBar>
 				<Breadcrumb>
 					<BreadcrumbList>
-						<BreadcrumbItem className='text-foreground'>Roadmap</BreadcrumbItem>
+						<BreadcrumbItem className='text-foreground'>Files</BreadcrumbItem>
 					</BreadcrumbList>
 				</Breadcrumb>
 			</TitleBar>

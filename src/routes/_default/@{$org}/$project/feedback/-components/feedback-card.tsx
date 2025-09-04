@@ -28,7 +28,7 @@ export const FeedbackCard = ({
 			<ClickableContainer
 				onClick={() => {
 					router.navigate({
-						to: '/$org/$project/feedback/$feedbackId',
+						to: '/@{$org}/$project/feedback/$feedbackId',
 						params: {
 							org: orgSlug,
 							project: projectSlug,

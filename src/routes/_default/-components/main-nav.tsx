@@ -52,12 +52,12 @@ export const MainNav = ({ userId, children }: MainNavProps) => {
 	const [isCommandOpen, setIsCommandOpen] = React.useState(false);
 
 	const orgParams = useParams({
-		from: '/_default/$org',
+		from: '/_default/@{$org}',
 		shouldThrow: false,
 	});
 
 	const projectParams = useParams({
-		from: '/_default/$org/$project',
+		from: '/_default/@{$org}/$project',
 		shouldThrow: false,
 	});
 
@@ -105,7 +105,7 @@ export const MainNav = ({ userId, children }: MainNavProps) => {
 							<div className='hidden min-w-0 items-center gap-1 text-sm sm:flex md:text-base'>
 								{!!orgSlug && (
 									<Link
-										to='/$org'
+										to='/@{$org}'
 										className='link-text !no-underline hocus:!underline'
 										params={(prev) => ({ ...prev, org: orgSlug })}
 									>
@@ -116,7 +116,7 @@ export const MainNav = ({ userId, children }: MainNavProps) => {
 									<>
 										<span className='text-muted-foreground'>/</span>
 										<Link
-											to='/$org/$project'
+											to='/@{$org}/$project'
 											className='link-text !no-underline hocus:!underline'
 											params={(prev) => ({
 												...prev,

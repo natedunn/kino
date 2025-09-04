@@ -4,8 +4,15 @@ import { createFileRoute, Link } from '@tanstack/react-router';
 
 import { api } from '~api';
 
-export const Route = createFileRoute('/_default/$org/_default/')({
+export const Route = createFileRoute('/_default/@{$org}/_default/')({
 	component: RouteComponent,
+	loader: async ({ context, params }) => {
+		await context.queryClient.ensureQueryData(
+			convexQuery(api.project.getManyByOrg, {
+				orgSlug: params.org,
+			})
+		);
+	},
 });
 
 function RouteComponent() {
@@ -24,7 +31,7 @@ function RouteComponent() {
 					return (
 						<Link
 							key={project._id}
-							to='/$org/$project'
+							to='/@{$org}/$project'
 							params={(prev) => ({
 								...prev,
 								org: orgSlug,

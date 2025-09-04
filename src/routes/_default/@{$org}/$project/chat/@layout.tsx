@@ -2,7 +2,7 @@ import { createFileRoute, Outlet } from '@tanstack/react-router';
 
 import { SecondaryMenuLayout } from '../-components/secondary-menu-layout';
 
-export const Route = createFileRoute('/_default/$org/$project/chat')({
+export const Route = createFileRoute('/_default/@{$org}/$project/chat')({
 	component: RouteComponent,
 });
 
@@ -14,7 +14,7 @@ function RouteComponent() {
 			title='Channels'
 			items={[
 				{
-					to: '/$org/$project/chat/$chatId',
+					to: '/@{$org}/$project/chat/$chatId',
 					params: {
 						org,
 						project,
@@ -24,7 +24,7 @@ function RouteComponent() {
 					icon: '✨',
 				},
 				{
-					to: '/$org/$project/chat/$chatId',
+					to: '/@{$org}/$project/chat/$chatId',
 					params: {
 						org,
 						project,
@@ -34,7 +34,7 @@ function RouteComponent() {
 					icon: '⚙️',
 				},
 				{
-					to: '/$org/$project/chat/$chatId',
+					to: '/@{$org}/$project/chat/$chatId',
 					params: {
 						org,
 						project,

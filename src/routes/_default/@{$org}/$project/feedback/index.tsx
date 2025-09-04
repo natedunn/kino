@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import BoardsMenu from './-components/boards-menu';
 import { FeedbackCard } from './-components/feedback-card';
 
-export const Route = createFileRoute('/_default/$org/$project/feedback/')({
+export const Route = createFileRoute('/_default/@{$org}/$project/feedback/')({
 	component: RouteComponent,
 });
 
@@ -44,5 +44,5 @@ function RouteComponent() {
 				</div>
 			</div>
 		</div>
-	);
+	)
 }

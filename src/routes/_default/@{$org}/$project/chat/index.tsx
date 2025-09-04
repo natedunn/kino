@@ -4,7 +4,7 @@ import { BreadcrumbItem, BreadcrumbList, BreadcrumbSeparator } from '@/component
 
 import { TitleBar } from '../-components/title-bar';
 
-export const Route = createFileRoute('/_default/$org/$project/chat/')({
+export const Route = createFileRoute('/_default/@{$org}/$project/chat/')({
 	component: RouteComponent,
 });
 
