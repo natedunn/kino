@@ -4,7 +4,6 @@ export const createProjectSchema = projectSchema.pick({
 	name: true,
 	description: true,
 	urls: true,
-	private: true,
 	slug: true,
 	orgSlug: true,
 });

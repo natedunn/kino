@@ -13,8 +13,7 @@ export const projectSchema = z.object({
 	name: z.string().max(100).min(1),
 	description: z.string().max(280).optional(),
 	urls: z.object({ url: z.string().url(), text: z.string() }).array().optional(),
-	private: z.boolean().optional(),
-	visibility: z.enum(['private', 'public', 'archived']).optional(),
+	visibility: z.enum(['private', 'public', 'archived']),
 	logoUrl: z.string().url().optional(),
 	slug: z
 		.string()

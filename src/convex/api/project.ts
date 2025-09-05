@@ -133,14 +133,8 @@ export const getFullProject = procedure.base.external.query({
 			.withIndex('by_orgSlug_slug', (q) => q.eq('orgSlug', args.orgSlug).eq('slug', args.slug))
 			.unique();
 
-		if (project?.private || !project) {
-			// throw new ConvexError({
-			// 	message: 'Project not found',
-			// 	code: '404',
-			// });
-
+		if (project?.visibility === 'private' || !project) {
 			console.error('Project not found');
-
 			return null;
 		}
 
