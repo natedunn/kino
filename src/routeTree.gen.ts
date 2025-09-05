@@ -27,10 +27,10 @@ import { Route as DefaultProfileUsernameIndexRouteImport } from './routes/_defau
 import { Route as DefaultCreateTeamIndexRouteImport } from './routes/_default/create/team/index'
 import { Route as DefaultCreateProjectIndexRouteImport } from './routes/_default/create/project/index'
 import { Route as DefaultAtChar123orgChar125DefaultIndexRouteImport } from './routes/_default/@{$org}/_default/index'
+import { Route as DefaultAtChar123orgChar125ProjectIndexRouteImport } from './routes/_default/@{$org}/$project/index'
 import { Route as DefaultAtChar123orgChar125ProjectChatAtlayoutRouteImport } from './routes/_default/@{$org}/$project/chat/@layout'
 import { Route as DefaultAtChar123orgChar125ProjectUpdatesIndexRouteImport } from './routes/_default/@{$org}/$project/updates/index'
 import { Route as DefaultAtChar123orgChar125ProjectRoadmapIndexRouteImport } from './routes/_default/@{$org}/$project/roadmap/index'
-import { Route as DefaultAtChar123orgChar125ProjectOverviewIndexRouteImport } from './routes/_default/@{$org}/$project/overview/index'
 import { Route as DefaultAtChar123orgChar125ProjectFilesIndexRouteImport } from './routes/_default/@{$org}/$project/files/index'
 import { Route as DefaultAtChar123orgChar125ProjectFeedbackIndexRouteImport } from './routes/_default/@{$org}/$project/feedback/index'
 import { Route as DefaultAtChar123orgChar125ProjectDiscussionsIndexRouteImport } from './routes/_default/@{$org}/$project/discussions/index'
@@ -127,6 +127,12 @@ const DefaultAtChar123orgChar125DefaultIndexRoute =
     path: '/',
     getParentRoute: () => DefaultAtChar123orgChar125DefaultAtlayoutRoute,
   } as any)
+const DefaultAtChar123orgChar125ProjectIndexRoute =
+  DefaultAtChar123orgChar125ProjectIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => DefaultAtChar123orgChar125ProjectAtlayoutRoute,
+  } as any)
 const DefaultAtChar123orgChar125ProjectChatAtlayoutRoute =
   DefaultAtChar123orgChar125ProjectChatAtlayoutRouteImport.update({
     id: '/chat',
@@ -143,12 +149,6 @@ const DefaultAtChar123orgChar125ProjectRoadmapIndexRoute =
   DefaultAtChar123orgChar125ProjectRoadmapIndexRouteImport.update({
     id: '/roadmap/',
     path: '/roadmap/',
-    getParentRoute: () => DefaultAtChar123orgChar125ProjectAtlayoutRoute,
-  } as any)
-const DefaultAtChar123orgChar125ProjectOverviewIndexRoute =
-  DefaultAtChar123orgChar125ProjectOverviewIndexRouteImport.update({
-    id: '/overview/',
-    path: '/overview/',
     getParentRoute: () => DefaultAtChar123orgChar125ProjectAtlayoutRoute,
   } as any)
 const DefaultAtChar123orgChar125ProjectFilesIndexRoute =
@@ -204,6 +204,7 @@ export interface FileRoutesByFullPath {
   '/@{$org}/settings': typeof DefaultAtChar123orgChar125SettingsRoute
   '/settings': typeof DefaultSettingsIndexRoute
   '/@{$org}/$project/chat': typeof DefaultAtChar123orgChar125ProjectChatAtlayoutRouteWithChildren
+  '/@{$org}/$project/': typeof DefaultAtChar123orgChar125ProjectIndexRoute
   '/@{$org}/': typeof DefaultAtChar123orgChar125DefaultIndexRoute
   '/create/project': typeof DefaultCreateProjectIndexRoute
   '/create/team': typeof DefaultCreateTeamIndexRoute
@@ -213,7 +214,6 @@ export interface FileRoutesByFullPath {
   '/@{$org}/$project/discussions': typeof DefaultAtChar123orgChar125ProjectDiscussionsIndexRoute
   '/@{$org}/$project/feedback': typeof DefaultAtChar123orgChar125ProjectFeedbackIndexRoute
   '/@{$org}/$project/files': typeof DefaultAtChar123orgChar125ProjectFilesIndexRoute
-  '/@{$org}/$project/overview': typeof DefaultAtChar123orgChar125ProjectOverviewIndexRoute
   '/@{$org}/$project/roadmap': typeof DefaultAtChar123orgChar125ProjectRoadmapIndexRoute
   '/@{$org}/$project/updates': typeof DefaultAtChar123orgChar125ProjectUpdatesIndexRoute
   '/@{$org}/$project/chat/$chatId': typeof DefaultAtChar123orgChar125ProjectChatChatIdIndexRoute
@@ -226,9 +226,9 @@ export interface FileRoutesByTo {
   '/sign-in': typeof BlankSignInRoute
   '/sign-out': typeof BlankSignOutRoute
   '/': typeof DefaultIndexRoute
-  '/@{$org}/$project': typeof DefaultAtChar123orgChar125ProjectAtlayoutRouteWithChildren
   '/@{$org}/settings': typeof DefaultAtChar123orgChar125SettingsRoute
   '/settings': typeof DefaultSettingsIndexRoute
+  '/@{$org}/$project': typeof DefaultAtChar123orgChar125ProjectIndexRoute
   '/create/project': typeof DefaultCreateProjectIndexRoute
   '/create/team': typeof DefaultCreateTeamIndexRoute
   '/profile/$username': typeof DefaultProfileUsernameIndexRoute
@@ -237,7 +237,6 @@ export interface FileRoutesByTo {
   '/@{$org}/$project/discussions': typeof DefaultAtChar123orgChar125ProjectDiscussionsIndexRoute
   '/@{$org}/$project/feedback': typeof DefaultAtChar123orgChar125ProjectFeedbackIndexRoute
   '/@{$org}/$project/files': typeof DefaultAtChar123orgChar125ProjectFilesIndexRoute
-  '/@{$org}/$project/overview': typeof DefaultAtChar123orgChar125ProjectOverviewIndexRoute
   '/@{$org}/$project/roadmap': typeof DefaultAtChar123orgChar125ProjectRoadmapIndexRoute
   '/@{$org}/$project/updates': typeof DefaultAtChar123orgChar125ProjectUpdatesIndexRoute
   '/@{$org}/$project/chat/$chatId': typeof DefaultAtChar123orgChar125ProjectChatChatIdIndexRoute
@@ -257,6 +256,7 @@ export interface FileRoutesById {
   '/_default/@{$org}/settings': typeof DefaultAtChar123orgChar125SettingsRoute
   '/_default/settings/': typeof DefaultSettingsIndexRoute
   '/_default/@{$org}/$project/chat': typeof DefaultAtChar123orgChar125ProjectChatAtlayoutRouteWithChildren
+  '/_default/@{$org}/$project/': typeof DefaultAtChar123orgChar125ProjectIndexRoute
   '/_default/@{$org}/_default/': typeof DefaultAtChar123orgChar125DefaultIndexRoute
   '/_default/create/project/': typeof DefaultCreateProjectIndexRoute
   '/_default/create/team/': typeof DefaultCreateTeamIndexRoute
@@ -266,7 +266,6 @@ export interface FileRoutesById {
   '/_default/@{$org}/$project/discussions/': typeof DefaultAtChar123orgChar125ProjectDiscussionsIndexRoute
   '/_default/@{$org}/$project/feedback/': typeof DefaultAtChar123orgChar125ProjectFeedbackIndexRoute
   '/_default/@{$org}/$project/files/': typeof DefaultAtChar123orgChar125ProjectFilesIndexRoute
-  '/_default/@{$org}/$project/overview/': typeof DefaultAtChar123orgChar125ProjectOverviewIndexRoute
   '/_default/@{$org}/$project/roadmap/': typeof DefaultAtChar123orgChar125ProjectRoadmapIndexRoute
   '/_default/@{$org}/$project/updates/': typeof DefaultAtChar123orgChar125ProjectUpdatesIndexRoute
   '/_default/@{$org}/$project/chat/$chatId/': typeof DefaultAtChar123orgChar125ProjectChatChatIdIndexRoute
@@ -285,6 +284,7 @@ export interface FileRouteTypes {
     | '/@{$org}/settings'
     | '/settings'
     | '/@{$org}/$project/chat'
+    | '/@{$org}/$project/'
     | '/@{$org}/'
     | '/create/project'
     | '/create/team'
@@ -294,7 +294,6 @@ export interface FileRouteTypes {
     | '/@{$org}/$project/discussions'
     | '/@{$org}/$project/feedback'
     | '/@{$org}/$project/files'
-    | '/@{$org}/$project/overview'
     | '/@{$org}/$project/roadmap'
     | '/@{$org}/$project/updates'
     | '/@{$org}/$project/chat/$chatId'
@@ -307,9 +306,9 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/sign-out'
     | '/'
-    | '/@{$org}/$project'
     | '/@{$org}/settings'
     | '/settings'
+    | '/@{$org}/$project'
     | '/create/project'
     | '/create/team'
     | '/profile/$username'
@@ -318,7 +317,6 @@ export interface FileRouteTypes {
     | '/@{$org}/$project/discussions'
     | '/@{$org}/$project/feedback'
     | '/@{$org}/$project/files'
-    | '/@{$org}/$project/overview'
     | '/@{$org}/$project/roadmap'
     | '/@{$org}/$project/updates'
     | '/@{$org}/$project/chat/$chatId'
@@ -337,6 +335,7 @@ export interface FileRouteTypes {
     | '/_default/@{$org}/settings'
     | '/_default/settings/'
     | '/_default/@{$org}/$project/chat'
+    | '/_default/@{$org}/$project/'
     | '/_default/@{$org}/_default/'
     | '/_default/create/project/'
     | '/_default/create/team/'
@@ -346,7 +345,6 @@ export interface FileRouteTypes {
     | '/_default/@{$org}/$project/discussions/'
     | '/_default/@{$org}/$project/feedback/'
     | '/_default/@{$org}/$project/files/'
-    | '/_default/@{$org}/$project/overview/'
     | '/_default/@{$org}/$project/roadmap/'
     | '/_default/@{$org}/$project/updates/'
     | '/_default/@{$org}/$project/chat/$chatId/'
@@ -495,6 +493,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DefaultAtChar123orgChar125DefaultIndexRouteImport
       parentRoute: typeof DefaultAtChar123orgChar125DefaultAtlayoutRoute
     }
+    '/_default/@{$org}/$project/': {
+      id: '/_default/@{$org}/$project/'
+      path: '/'
+      fullPath: '/@{$org}/$project/'
+      preLoaderRoute: typeof DefaultAtChar123orgChar125ProjectIndexRouteImport
+      parentRoute: typeof DefaultAtChar123orgChar125ProjectAtlayoutRoute
+    }
     '/_default/@{$org}/$project/chat': {
       id: '/_default/@{$org}/$project/chat'
       path: '/chat'
@@ -514,13 +519,6 @@ declare module '@tanstack/react-router' {
       path: '/roadmap'
       fullPath: '/@{$org}/$project/roadmap'
       preLoaderRoute: typeof DefaultAtChar123orgChar125ProjectRoadmapIndexRouteImport
-      parentRoute: typeof DefaultAtChar123orgChar125ProjectAtlayoutRoute
-    }
-    '/_default/@{$org}/$project/overview/': {
-      id: '/_default/@{$org}/$project/overview/'
-      path: '/overview'
-      fullPath: '/@{$org}/$project/overview'
-      preLoaderRoute: typeof DefaultAtChar123orgChar125ProjectOverviewIndexRouteImport
       parentRoute: typeof DefaultAtChar123orgChar125ProjectAtlayoutRoute
     }
     '/_default/@{$org}/$project/files/': {
@@ -599,10 +597,10 @@ const DefaultAtChar123orgChar125ProjectChatAtlayoutRouteWithChildren =
 
 interface DefaultAtChar123orgChar125ProjectAtlayoutRouteChildren {
   DefaultAtChar123orgChar125ProjectChatAtlayoutRoute: typeof DefaultAtChar123orgChar125ProjectChatAtlayoutRouteWithChildren
+  DefaultAtChar123orgChar125ProjectIndexRoute: typeof DefaultAtChar123orgChar125ProjectIndexRoute
   DefaultAtChar123orgChar125ProjectDiscussionsIndexRoute: typeof DefaultAtChar123orgChar125ProjectDiscussionsIndexRoute
   DefaultAtChar123orgChar125ProjectFeedbackIndexRoute: typeof DefaultAtChar123orgChar125ProjectFeedbackIndexRoute
   DefaultAtChar123orgChar125ProjectFilesIndexRoute: typeof DefaultAtChar123orgChar125ProjectFilesIndexRoute
-  DefaultAtChar123orgChar125ProjectOverviewIndexRoute: typeof DefaultAtChar123orgChar125ProjectOverviewIndexRoute
   DefaultAtChar123orgChar125ProjectRoadmapIndexRoute: typeof DefaultAtChar123orgChar125ProjectRoadmapIndexRoute
   DefaultAtChar123orgChar125ProjectUpdatesIndexRoute: typeof DefaultAtChar123orgChar125ProjectUpdatesIndexRoute
   DefaultAtChar123orgChar125ProjectFeedbackFeedbackIdIndexRoute: typeof DefaultAtChar123orgChar125ProjectFeedbackFeedbackIdIndexRoute
@@ -612,14 +610,14 @@ const DefaultAtChar123orgChar125ProjectAtlayoutRouteChildren: DefaultAtChar123or
   {
     DefaultAtChar123orgChar125ProjectChatAtlayoutRoute:
       DefaultAtChar123orgChar125ProjectChatAtlayoutRouteWithChildren,
+    DefaultAtChar123orgChar125ProjectIndexRoute:
+      DefaultAtChar123orgChar125ProjectIndexRoute,
     DefaultAtChar123orgChar125ProjectDiscussionsIndexRoute:
       DefaultAtChar123orgChar125ProjectDiscussionsIndexRoute,
     DefaultAtChar123orgChar125ProjectFeedbackIndexRoute:
       DefaultAtChar123orgChar125ProjectFeedbackIndexRoute,
     DefaultAtChar123orgChar125ProjectFilesIndexRoute:
       DefaultAtChar123orgChar125ProjectFilesIndexRoute,
-    DefaultAtChar123orgChar125ProjectOverviewIndexRoute:
-      DefaultAtChar123orgChar125ProjectOverviewIndexRoute,
     DefaultAtChar123orgChar125ProjectRoadmapIndexRoute:
       DefaultAtChar123orgChar125ProjectRoadmapIndexRoute,
     DefaultAtChar123orgChar125ProjectUpdatesIndexRoute:
