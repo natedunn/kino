@@ -19,7 +19,6 @@ export const selectProjectSchema = projectSchema.pick({
 	name: true,
 	description: true,
 	urls: true,
-	// private: true,
 	slug: true,
 	orgSlug: true,
 	visibility: true,

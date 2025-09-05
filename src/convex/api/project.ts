@@ -133,7 +133,11 @@ export const getFullProject = procedure.base.external.query({
 			.withIndex('by_orgSlug_slug', (q) => q.eq('orgSlug', args.orgSlug).eq('slug', args.slug))
 			.unique();
 
-		if (project?.visibility === 'private' || !project) {
+		if (
+			// TODO: Add authorization checks
+			// project?.visibility === 'private' ||
+			!project
+		) {
 			console.error('Project not found');
 			return null;
 		}
