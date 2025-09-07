@@ -46,7 +46,7 @@ export const CreateProjectForm = ({
 	const defaultValues: FormSchema = {
 		name: '',
 		slug: '',
-		private: false,
+		visibility: 'public',
 		orgSlug: activeOrgSlug,
 	};
 
@@ -60,7 +60,7 @@ export const CreateProjectForm = ({
 			createProject({
 				name: value.name,
 				slug: value.slug,
-				private: value.private,
+				visibility: value.visibility,
 				orgSlug: value.orgSlug,
 			});
 		},
@@ -133,7 +133,7 @@ export const CreateProjectForm = ({
 					}}
 				</form.Field>
 
-				<form.Field name='private'>
+				{/* <form.Field name='private'>
 					{(field) => {
 						return (
 							<div className='flex items-end gap-3'>
@@ -156,7 +156,7 @@ export const CreateProjectForm = ({
 							</div>
 						);
 					}}
-				</form.Field>
+				</form.Field> */}
 
 				{!!formError && <InlineAlert variant='danger'>{formError}</InlineAlert>}
 
