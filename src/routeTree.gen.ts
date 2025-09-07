@@ -35,8 +35,10 @@ import { Route as DefaultAtChar123orgChar125ProjectFilesIndexRouteImport } from 
 import { Route as DefaultAtChar123orgChar125ProjectFeedbackIndexRouteImport } from './routes/_default/@{$org}/$project/feedback/index'
 import { Route as DefaultAtChar123orgChar125ProjectDiscussionsIndexRouteImport } from './routes/_default/@{$org}/$project/discussions/index'
 import { Route as DefaultAtChar123orgChar125ProjectChatIndexRouteImport } from './routes/_default/@{$org}/$project/chat/index'
+import { Route as DefaultAtChar123orgChar125ProjectFeedbackNewIndexRouteImport } from './routes/_default/@{$org}/$project/feedback/new/index'
 import { Route as DefaultAtChar123orgChar125ProjectFeedbackFeedbackIdIndexRouteImport } from './routes/_default/@{$org}/$project/feedback/$feedbackId/index'
 import { Route as DefaultAtChar123orgChar125ProjectChatChatIdIndexRouteImport } from './routes/_default/@{$org}/$project/chat/$chatId/index'
+import { Route as DefaultAtChar123orgChar125ProjectFeedbackBoardNewIndexRouteImport } from './routes/_default/@{$org}/$project/feedback/board/new/index'
 import { ServerRoute as ApiAuthSplatServerRouteImport } from './routes/api/auth/$'
 
 const rootServerRouteImport = createServerRootRoute()
@@ -175,6 +177,12 @@ const DefaultAtChar123orgChar125ProjectChatIndexRoute =
     path: '/',
     getParentRoute: () => DefaultAtChar123orgChar125ProjectChatAtlayoutRoute,
   } as any)
+const DefaultAtChar123orgChar125ProjectFeedbackNewIndexRoute =
+  DefaultAtChar123orgChar125ProjectFeedbackNewIndexRouteImport.update({
+    id: '/feedback/new/',
+    path: '/feedback/new/',
+    getParentRoute: () => DefaultAtChar123orgChar125ProjectAtlayoutRoute,
+  } as any)
 const DefaultAtChar123orgChar125ProjectFeedbackFeedbackIdIndexRoute =
   DefaultAtChar123orgChar125ProjectFeedbackFeedbackIdIndexRouteImport.update({
     id: '/feedback/$feedbackId/',
@@ -186,6 +194,12 @@ const DefaultAtChar123orgChar125ProjectChatChatIdIndexRoute =
     id: '/$chatId/',
     path: '/$chatId/',
     getParentRoute: () => DefaultAtChar123orgChar125ProjectChatAtlayoutRoute,
+  } as any)
+const DefaultAtChar123orgChar125ProjectFeedbackBoardNewIndexRoute =
+  DefaultAtChar123orgChar125ProjectFeedbackBoardNewIndexRouteImport.update({
+    id: '/feedback/board/new/',
+    path: '/feedback/board/new/',
+    getParentRoute: () => DefaultAtChar123orgChar125ProjectAtlayoutRoute,
   } as any)
 const ApiAuthSplatServerRoute = ApiAuthSplatServerRouteImport.update({
   id: '/api/auth/$',
@@ -218,6 +232,8 @@ export interface FileRoutesByFullPath {
   '/@{$org}/$project/updates': typeof DefaultAtChar123orgChar125ProjectUpdatesIndexRoute
   '/@{$org}/$project/chat/$chatId': typeof DefaultAtChar123orgChar125ProjectChatChatIdIndexRoute
   '/@{$org}/$project/feedback/$feedbackId': typeof DefaultAtChar123orgChar125ProjectFeedbackFeedbackIdIndexRoute
+  '/@{$org}/$project/feedback/new': typeof DefaultAtChar123orgChar125ProjectFeedbackNewIndexRoute
+  '/@{$org}/$project/feedback/board/new': typeof DefaultAtChar123orgChar125ProjectFeedbackBoardNewIndexRoute
 }
 export interface FileRoutesByTo {
   '/@{$org}': typeof DefaultAtChar123orgChar125DefaultIndexRoute
@@ -241,6 +257,8 @@ export interface FileRoutesByTo {
   '/@{$org}/$project/updates': typeof DefaultAtChar123orgChar125ProjectUpdatesIndexRoute
   '/@{$org}/$project/chat/$chatId': typeof DefaultAtChar123orgChar125ProjectChatChatIdIndexRoute
   '/@{$org}/$project/feedback/$feedbackId': typeof DefaultAtChar123orgChar125ProjectFeedbackFeedbackIdIndexRoute
+  '/@{$org}/$project/feedback/new': typeof DefaultAtChar123orgChar125ProjectFeedbackNewIndexRoute
+  '/@{$org}/$project/feedback/board/new': typeof DefaultAtChar123orgChar125ProjectFeedbackBoardNewIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -270,6 +288,8 @@ export interface FileRoutesById {
   '/_default/@{$org}/$project/updates/': typeof DefaultAtChar123orgChar125ProjectUpdatesIndexRoute
   '/_default/@{$org}/$project/chat/$chatId/': typeof DefaultAtChar123orgChar125ProjectChatChatIdIndexRoute
   '/_default/@{$org}/$project/feedback/$feedbackId/': typeof DefaultAtChar123orgChar125ProjectFeedbackFeedbackIdIndexRoute
+  '/_default/@{$org}/$project/feedback/new/': typeof DefaultAtChar123orgChar125ProjectFeedbackNewIndexRoute
+  '/_default/@{$org}/$project/feedback/board/new/': typeof DefaultAtChar123orgChar125ProjectFeedbackBoardNewIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -298,6 +318,8 @@ export interface FileRouteTypes {
     | '/@{$org}/$project/updates'
     | '/@{$org}/$project/chat/$chatId'
     | '/@{$org}/$project/feedback/$feedbackId'
+    | '/@{$org}/$project/feedback/new'
+    | '/@{$org}/$project/feedback/board/new'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/@{$org}'
@@ -321,6 +343,8 @@ export interface FileRouteTypes {
     | '/@{$org}/$project/updates'
     | '/@{$org}/$project/chat/$chatId'
     | '/@{$org}/$project/feedback/$feedbackId'
+    | '/@{$org}/$project/feedback/new'
+    | '/@{$org}/$project/feedback/board/new'
   id:
     | '__root__'
     | '/_default'
@@ -349,6 +373,8 @@ export interface FileRouteTypes {
     | '/_default/@{$org}/$project/updates/'
     | '/_default/@{$org}/$project/chat/$chatId/'
     | '/_default/@{$org}/$project/feedback/$feedbackId/'
+    | '/_default/@{$org}/$project/feedback/new/'
+    | '/_default/@{$org}/$project/feedback/board/new/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -549,6 +575,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DefaultAtChar123orgChar125ProjectChatIndexRouteImport
       parentRoute: typeof DefaultAtChar123orgChar125ProjectChatAtlayoutRoute
     }
+    '/_default/@{$org}/$project/feedback/new/': {
+      id: '/_default/@{$org}/$project/feedback/new/'
+      path: '/feedback/new'
+      fullPath: '/@{$org}/$project/feedback/new'
+      preLoaderRoute: typeof DefaultAtChar123orgChar125ProjectFeedbackNewIndexRouteImport
+      parentRoute: typeof DefaultAtChar123orgChar125ProjectAtlayoutRoute
+    }
     '/_default/@{$org}/$project/feedback/$feedbackId/': {
       id: '/_default/@{$org}/$project/feedback/$feedbackId/'
       path: '/feedback/$feedbackId'
@@ -562,6 +595,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/@{$org}/$project/chat/$chatId'
       preLoaderRoute: typeof DefaultAtChar123orgChar125ProjectChatChatIdIndexRouteImport
       parentRoute: typeof DefaultAtChar123orgChar125ProjectChatAtlayoutRoute
+    }
+    '/_default/@{$org}/$project/feedback/board/new/': {
+      id: '/_default/@{$org}/$project/feedback/board/new/'
+      path: '/feedback/board/new'
+      fullPath: '/@{$org}/$project/feedback/board/new'
+      preLoaderRoute: typeof DefaultAtChar123orgChar125ProjectFeedbackBoardNewIndexRouteImport
+      parentRoute: typeof DefaultAtChar123orgChar125ProjectAtlayoutRoute
     }
   }
 }
@@ -604,6 +644,8 @@ interface DefaultAtChar123orgChar125ProjectAtlayoutRouteChildren {
   DefaultAtChar123orgChar125ProjectRoadmapIndexRoute: typeof DefaultAtChar123orgChar125ProjectRoadmapIndexRoute
   DefaultAtChar123orgChar125ProjectUpdatesIndexRoute: typeof DefaultAtChar123orgChar125ProjectUpdatesIndexRoute
   DefaultAtChar123orgChar125ProjectFeedbackFeedbackIdIndexRoute: typeof DefaultAtChar123orgChar125ProjectFeedbackFeedbackIdIndexRoute
+  DefaultAtChar123orgChar125ProjectFeedbackNewIndexRoute: typeof DefaultAtChar123orgChar125ProjectFeedbackNewIndexRoute
+  DefaultAtChar123orgChar125ProjectFeedbackBoardNewIndexRoute: typeof DefaultAtChar123orgChar125ProjectFeedbackBoardNewIndexRoute
 }
 
 const DefaultAtChar123orgChar125ProjectAtlayoutRouteChildren: DefaultAtChar123orgChar125ProjectAtlayoutRouteChildren =
@@ -624,6 +666,10 @@ const DefaultAtChar123orgChar125ProjectAtlayoutRouteChildren: DefaultAtChar123or
       DefaultAtChar123orgChar125ProjectUpdatesIndexRoute,
     DefaultAtChar123orgChar125ProjectFeedbackFeedbackIdIndexRoute:
       DefaultAtChar123orgChar125ProjectFeedbackFeedbackIdIndexRoute,
+    DefaultAtChar123orgChar125ProjectFeedbackNewIndexRoute:
+      DefaultAtChar123orgChar125ProjectFeedbackNewIndexRoute,
+    DefaultAtChar123orgChar125ProjectFeedbackBoardNewIndexRoute:
+      DefaultAtChar123orgChar125ProjectFeedbackBoardNewIndexRoute,
   }
 
 const DefaultAtChar123orgChar125ProjectAtlayoutRouteWithChildren =

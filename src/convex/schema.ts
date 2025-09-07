@@ -1,83 +1,14 @@
-import { zid } from 'convex-helpers/server/zod';
 import { defineSchema } from 'convex/server';
-import { z } from 'zod';
 
 import { defineZTable } from '@/convex/api/utils/table';
 
-import { SHARED_SCHEMA } from './schema/_shared';
+import { feedback } from './schema/feedback.schema';
+import { feedbackBoard } from './schema/feedbackBoard.schema';
+import { feedbackComment } from './schema/feedbackComment.schema';
+import { feedbackCommentEmote } from './schema/feedbackCommentEmote.schema';
+import { projectSchema } from './schema/project.schema';
 import { userSchema } from './schema/user.schema';
 
-export const projectSchema = z.object({
-	...SHARED_SCHEMA('project'),
-	orgSlug: z.string(),
-	name: z.string().max(100).min(1),
-	description: z.string().max(280).optional(),
-	urls: z.object({ url: z.string().url(), text: z.string() }).array().optional(),
-	visibility: z.enum(['private', 'public', 'archived']),
-	logoUrl: z.string().url().optional(),
-	slug: z
-		.string()
-		.regex(/^[a-z0-9_]+(?:-[a-z0-9_]+)*$/, {
-			message:
-				'Invalid slug format. Slugs can only contain lowercase letters, numbers, underscores, and hyphens. They cannot start or end with a hyphen, or have consecutive hyphens.',
-		})
-		.min(1, 'Slug cannot be empty.')
-		.max(100, 'Slug cannot be longer than 100 characters.'),
-});
-
-export const projectUserSchema = z.object({
-	...SHARED_SCHEMA('projectUser'),
-	projectId: zid('project'),
-	userId: zid('user'),
-	role: z.enum(['admin', 'member', 'owner']).default('member'),
-	projectIsPrivate: z.boolean(),
-});
-
-export const feedbackBoard = z.object({
-	...SHARED_SCHEMA('feedbackBoard'),
-	name: z.string().min(1).max(50),
-	projectId: zid('project'),
-});
-
-export const feedback = z.object({
-	...SHARED_SCHEMA('feedback'),
-	content: z.string().min(1).max(500),
-	authorUserId: zid('user'),
-	projectId: zid('project'),
-	upvotes: z.number().default(0),
-	board: zid('feedbackBoard'),
-});
-
-export const feedbackComment = z.object({
-	...SHARED_SCHEMA('feedbackComment'),
-	feedbackId: zid('feedback'),
-	authorUserId: zid('user'),
-	replyFeedbackCommentId: zid('feedbackComment').optional(),
-	content: z.string().min(1).max(1200),
-	// emoteCounts: z.record(feedbackCommentEmotes.shape.content, z.number().optional()),
-});
-
-export const feedbackCommentEmote = z.object({
-	...SHARED_SCHEMA('feedbackCommentEmote'),
-	authorUserId: zid('user'),
-	content: z.enum([
-		// 👍 👎 😄 ❓ 🙁 🎉 👀 ❤️ 💀 🤯
-		'thumbsUp',
-		'thumbsDown',
-		'laugh',
-		'questionMark',
-		'sad',
-		'tada',
-		'eyes',
-		'heart',
-		'skull',
-		'explodingHead',
-	]),
-});
-
-/**
- * ✨ All Schemas
- */
 const schema = defineSchema({
 	user: defineZTable(userSchema)
 		.index('by_username', ['username'])
@@ -89,21 +20,18 @@ const schema = defineSchema({
 		.index('by_updatedTime', ['updatedTime'])
 		.index('by_orgSlug_slug', ['orgSlug', 'slug'])
 		.index('by_orgSlug_visibility_updatedAt', ['orgSlug', 'visibility', 'updatedTime']),
-	projectUser: defineZTable(projectUserSchema)
-		.index('by_projectId', ['projectId'])
-		.index('by_userId', ['userId'])
-		.index('by_userId_projectIsPrivate', ['projectIsPrivate', 'userId'])
-		.index('by_projectUser', ['projectId', 'userId']),
-	feedbackBoard: defineZTable(feedbackBoard),
+	feedbackBoard: defineZTable(feedbackBoard).index('by_projectId', ['projectId']),
 	feedback: defineZTable(feedback)
 		.index('by_projectId', ['projectId'])
+		.index('by_board', ['board'])
 		.index('by_authorUserId', ['authorUserId']),
 	feedbackComment: defineZTable(feedbackComment)
 		.index('by_feedbackId', ['feedbackId'])
 		.index('by_authorUserId', ['authorUserId']),
-	feedbackCommentEmote: defineZTable(feedbackCommentEmote).index('by_authorUserId', [
-		'authorUserId',
-	]),
+	feedbackCommentEmote: defineZTable(feedbackCommentEmote)
+		.index('by_authorUserId', ['authorUserId'])
+		.index('by_feedbackId', ['feedbackId'])
+		.index('by_feedbackCommentId', ['feedbackCommentId']),
 });
 
 export default schema;

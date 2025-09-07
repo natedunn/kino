@@ -2,12 +2,15 @@ import { mergedStream, stream } from 'convex-helpers/server/stream';
 import { ConvexError } from 'convex/values';
 import z from 'zod';
 
+import { defaultFeedbackBoards } from '@/config/defaults';
+import { projectSchema } from '@/convex/schema/project.schema';
 import { createAuth } from '@/lib/auth';
 
-import schema, { projectSchema } from '../schema';
+import schema from '../schema';
 import { betterAuthComponent } from './auth';
 import { procedure } from './procedure';
 import { createProjectSchema, selectProjectSchema, updateProjectSchema } from './project.utils';
+import { triggers } from './utils/trigger';
 import { verify } from './utils/verify';
 
 export const create = procedure.authed.external.mutation({
@@ -144,4 +147,25 @@ export const getFullProject = procedure.base.external.query({
 
 		return selectProjectSchema.parse(project);
 	},
+});
+
+triggers.register('project', async (ctx, change) => {
+	if (change.operation === 'insert') {
+		defaultFeedbackBoards.forEach(async (boardName) => {
+			await ctx.db.insert('feedbackBoard', {
+				name: boardName,
+				projectId: change.newDoc._id,
+			});
+		});
+	}
+	if (change.operation === 'delete') {
+		const boards = await ctx.db
+			.query('feedbackBoard')
+			.withIndex('by_projectId', (q) => q.eq('projectId', change.oldDoc._id))
+			.collect();
+
+		boards.forEach(async (board) => {
+			await ctx.db.delete(board._id);
+		});
+	}
 });

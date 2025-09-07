@@ -492,9 +492,6 @@ export const { verify } = verifyConfig({
 		},
 	},
 	uniqueRows: {
-		projectUser: {
-			by_projectUser: ['projectId', 'userId'],
-		},
 		project: {
 			by_orgSlug_slug: ['orgSlug', 'slug'],
 		},

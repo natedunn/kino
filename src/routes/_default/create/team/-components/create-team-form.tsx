@@ -11,7 +11,7 @@ import { InlineAlert } from '@/components/inline-alert';
 import { LabelWrapper } from '@/components/label';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { createOrgSchema } from '@/convex/api/org.utils';
+import { createOrgSchema } from '@/convex/schema/org.schema';
 import { cn } from '@/lib/utils';
 
 const formSchema = createOrgSchema;
@@ -22,7 +22,7 @@ export const CreateTeamForm = ({ underLimit }: { underLimit: boolean }) => {
 	const [formError, setFormError] = React.useState<string>();
 
 	const { mutate: createTeam } = useMutation({
-		mutationFn: useConvexMutation(api.team.create),
+		mutationFn: useConvexMutation(api.org.create),
 		onSuccess: () => {
 			form.reset();
 		},

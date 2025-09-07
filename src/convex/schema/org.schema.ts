@@ -12,3 +12,15 @@ export const createOrgSchema = z.object({
 		.max(100, 'Slug cannot be longer than 100 characters.'),
 	logo: z.string().optional(),
 });
+
+export const updateOrgSchema = createOrgSchema
+	.pick({
+		name: true,
+		logo: true,
+	})
+	.partial()
+	.merge(
+		createOrgSchema.pick({
+			slug: true,
+		})
+	);

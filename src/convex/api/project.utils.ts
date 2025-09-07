@@ -1,4 +1,4 @@
-import { projectSchema } from '../schema';
+import { projectSchema } from '@/convex/schema/project.schema';
 
 export const createProjectSchema = projectSchema.pick({
 	name: true,
@@ -6,6 +6,7 @@ export const createProjectSchema = projectSchema.pick({
 	urls: true,
 	slug: true,
 	orgSlug: true,
+	visibility: true,
 });
 
 export const updateProjectSchema = createProjectSchema.merge(
