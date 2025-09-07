@@ -1,4 +1,5 @@
 import React from 'react';
+import { useConvexMutation } from '@convex-dev/react-query';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import { useMutation as convexMutation } from 'convex/react';
@@ -33,7 +34,7 @@ export const UserEditForm = ({ user }: UserEditFormProps) => {
 	const [formError, setFormError] = React.useState<string>();
 
 	const { mutate: updateUser } = useMutation({
-		mutationFn: convexMutation(api.user.update),
+		mutationFn: useConvexMutation(api.user.update),
 		onSuccess: () => {
 			form.reset();
 		},
