@@ -2,15 +2,13 @@ import type { FeedbackBoardCreateSchema } from '@/convex/schema/feedbackBoard.sc
 
 import React from 'react';
 import { useConvexMutation } from '@convex-dev/react-query';
-import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
-import { ConvexError } from 'convex/values';
 
 import { api } from '~api';
 import { InlineAlert } from '@/components/inline-alert';
-import { Label, LabelWrapper } from '@/components/label';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useAppForm, useFormError } from '@/components/ui/tanstack-form';
 import { Textarea } from '@/components/ui/textarea';
 import { Id } from '@/convex/_generated/dataModel';
 import { feedbackBoardCreateSchema } from '@/convex/schema/feedbackBoard.schema';
@@ -20,102 +18,94 @@ const formSchema = feedbackBoardCreateSchema;
 type FormSchema = FeedbackBoardCreateSchema;
 
 export const CreateBoardForm = ({ projectId }: { projectId: Id<'project'> }) => {
-	const [formError, setFormError] = React.useState<string | null>(null);
+	const formError = useFormError();
 
 	const { mutate: createBoard } = useMutation({
 		mutationFn: useConvexMutation(api.feedbackBoard.create),
-		onSuccess: () => {
-			form.reset();
-		},
-		onError: (error) => {
-			if (error instanceof ConvexError) {
-				setFormError(error.data.message);
-			}
-		},
+		onSuccess: () => form.reset(),
+		onError: formError.setError,
 	});
 
-	const defaultValues: FormSchema = {
-		projectId,
-		name: '',
-		description: '',
-	};
-
-	const form = useForm({
-		defaultValues,
+	const form = useAppForm({
+		defaultValues: {
+			projectId,
+			name: '',
+			description: '',
+		} as FormSchema,
 		validators: {
 			onChange: formSchema,
 		},
-		onSubmit: ({ value }) => {
-			setFormError(null);
-			createBoard(value);
+		onSubmit: (opts) => {
+			formError.errorReset();
+			createBoard(opts.value);
 		},
 	});
 
+	const handleSubmit = React.useCallback(
+		(e: React.FormEvent) => {
+			e.preventDefault();
+			e.stopPropagation();
+			form.handleSubmit();
+		},
+		[form]
+	);
+
 	return (
 		<div>
-			<form
-				onSubmit={(e) => {
-					e.preventDefault();
-					e.stopPropagation();
-					form.handleSubmit();
-				}}
-				className='flex flex-col gap-6'
-			>
-				<form.Field name='name'>
-					{(field) => {
-						return (
-							<div className='flex items-end gap-3'>
-								<div className='flex flex-1 flex-col gap-2'>
-									<LabelWrapper>
-										<Label>Name</Label>
-									</LabelWrapper>
-									<div className='flex items-center gap-4'>
-										<Input
-											value={field.state.value}
-											onChange={(e) => field.handleChange(e.target.value)}
-										/>
-									</div>
-								</div>
-							</div>
-						);
-					}}
-				</form.Field>
-
-				<form.Field name='description'>
-					{(field) => {
-						return (
-							<div className='flex items-end gap-3'>
-								<div className='flex flex-1 flex-col gap-2'>
-									<LabelWrapper>
-										<Label>Description</Label>
-									</LabelWrapper>
-									<div className='flex items-center gap-4'>
-										<Textarea
-											value={field.state.value}
-											onChange={(e) => field.handleChange(e.target.value)}
-										/>
-									</div>
-								</div>
-							</div>
-						);
-					}}
-				</form.Field>
-
-				{!!formError && <InlineAlert variant='danger'>{formError}</InlineAlert>}
-
-				<div className='flex items-center gap-2'>
-					<form.Subscribe selector={(state) => [state.canSubmit, state.isSubmitting]}>
-						{([canSubmit, isSubmitting]) => (
-							<Button
-								type='submit'
-								className={cn({ 'opacity-50 grayscale select-none': !canSubmit })}
-							>
-								{isSubmitting ? 'Creating...' : 'Create'}
-							</Button>
+			<form.AppForm>
+				<form onSubmit={handleSubmit} className='flex flex-col gap-6'>
+					<form.AppField name='name'>
+						{(field) => (
+							<field.Provider>
+								<field.Label>Name</field.Label>
+								<field.Description>
+									Name of your public board. Must be unique to your project.
+								</field.Description>
+								<field.Control>
+									<Input
+										value={field.state.value}
+										onChange={(e) => field.handleChange(e.target.value)}
+									/>
+								</field.Control>
+								<field.Message />
+							</field.Provider>
 						)}
-					</form.Subscribe>
-				</div>
-			</form>
+					</form.AppField>
+
+					<form.AppField name='description'>
+						{(field) => (
+							<field.Provider>
+								<field.Label>Description</field.Label>
+								<field.Description>
+									Describe what feedback should belong in this board.
+								</field.Description>
+								<field.Control>
+									<Textarea
+										value={field.state.value}
+										onChange={(e) => field.handleChange(e.target.value)}
+									/>
+								</field.Control>
+								<field.Message />
+							</field.Provider>
+						)}
+					</form.AppField>
+
+					<formError.Message prefix='Unable to create board' />
+
+					<div>
+						<form.Subscribe selector={(state) => [state.canSubmit, state.isSubmitting]}>
+							{([canSubmit, isSubmitting]) => (
+								<Button
+									type='submit'
+									className={cn({ 'opacity-50 grayscale select-none': !canSubmit })}
+								>
+									{isSubmitting ? 'Creating...' : 'Create'}
+								</Button>
+							)}
+						</form.Subscribe>
+					</div>
+				</form>
+			</form.AppForm>
 		</div>
 	);
 };
