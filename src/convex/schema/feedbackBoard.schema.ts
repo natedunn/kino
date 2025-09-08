@@ -7,12 +7,14 @@ export const feedbackBoard = z.object({
 	...SHARED_SCHEMA('feedbackBoard'),
 	name: z.string().min(1).max(50),
 	projectId: zid('project'),
+	description: z.string().optional(),
 });
 
 export const feedbackBoardSelectSchema = feedbackBoard;
 export const feedbackBoardCreateSchema = feedbackBoard.pick({
 	name: true,
 	projectId: true,
+	description: true,
 });
 export const feedbackBoardUpdateSchema = feedbackBoard.partial();
 

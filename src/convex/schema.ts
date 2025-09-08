@@ -7,6 +7,7 @@ import { feedbackBoard } from './schema/feedbackBoard.schema';
 import { feedbackComment } from './schema/feedbackComment.schema';
 import { feedbackCommentEmote } from './schema/feedbackCommentEmote.schema';
 import { projectSchema } from './schema/project.schema';
+import { projectUser } from './schema/projectUser.schema';
 import { userSchema } from './schema/user.schema';
 
 const schema = defineSchema({
@@ -20,7 +21,14 @@ const schema = defineSchema({
 		.index('by_updatedTime', ['updatedTime'])
 		.index('by_orgSlug_slug', ['orgSlug', 'slug'])
 		.index('by_orgSlug_visibility_updatedAt', ['orgSlug', 'visibility', 'updatedTime']),
-	feedbackBoard: defineZTable(feedbackBoard).index('by_projectId', ['projectId']),
+	projectUser: defineZTable(projectUser).index('by_userId_projectId_role', [
+		'userId',
+		'projectId',
+		'role',
+	]),
+	feedbackBoard: defineZTable(feedbackBoard)
+		.index('by_projectId', ['projectId'])
+		.index('by_name_projectId', ['name', 'projectId']),
 	feedback: defineZTable(feedback)
 		.index('by_projectId', ['projectId'])
 		.index('by_board', ['board'])

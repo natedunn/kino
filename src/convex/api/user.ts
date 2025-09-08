@@ -14,12 +14,6 @@ import { procedure } from './procedure';
 import { getUserByIdentifier, getUserByIdentifierSchema } from './user.utils';
 import { userUploadsR2 } from './utils/r2';
 
-/**
- * Get a user by their identifier.
- *
- * @param args as typed in {@link getUserByIdentifierSchema}
- * @returns The user with the given identifier or null if not found.
- */
 export const get = procedure.base.external.query({
 	args: getUserByIdentifierSchema,
 	handler: async (ctx, args) => getUserByIdentifier(ctx, args),
@@ -43,12 +37,6 @@ export const getUserIndexes = procedure.base.external.query({
 	},
 });
 
-/**
- * Get a list of users.
- *
- * @param [args.paginationOpts] as typed in {@link paginationOptsValidator}
- * @returns A list of users
- */
 export const getList = procedure.base._convex.external.query({
 	args: { paginationOpts: paginationOptsValidator },
 	handler: async (ctx, args) => {
@@ -79,16 +67,6 @@ export const getUserImage = procedure.base.external.query({
 	},
 });
 
-/**
- * Externally update a user in Clerk.
- *
- * This means this should ALWAYS check if the user is authenticated first,
- * since it is not an internal action.
- *
- * @param [args.user] as typed in {@link userUpdateSchema}
- * @param [args.updateClerk] whether to update the user's Clerk ID
- * @returns The updated user
- */
 export const update = procedure.authed.external.mutation({
 	args: userUpdateSchema,
 	handler: async (ctx, args) => {

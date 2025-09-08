@@ -19,6 +19,8 @@ import type * as api_procedure_base from "../api/procedure/base.js";
 import type * as api_procedure_index from "../api/procedure/index.js";
 import type * as api_project from "../api/project.js";
 import type * as api_user from "../api/user.js";
+import type * as api_utils_checks_userCanEditOrg from "../api/utils/checks/userCanEditOrg.js";
+import type * as api_utils_checks_userCanEditProject from "../api/utils/checks/userCanEditProject.js";
 import type * as api_utils_queries from "../api/utils/queries.js";
 import type * as api_utils_r2 from "../api/utils/r2.js";
 import type * as api_utils_table from "../api/utils/table.js";
@@ -54,6 +56,8 @@ declare const fullApi: ApiFromModules<{
   "api/procedure/index": typeof api_procedure_index;
   "api/project": typeof api_project;
   "api/user": typeof api_user;
+  "api/utils/checks/userCanEditOrg": typeof api_utils_checks_userCanEditOrg;
+  "api/utils/checks/userCanEditProject": typeof api_utils_checks_userCanEditProject;
   "api/utils/queries": typeof api_utils_queries;
   "api/utils/r2": typeof api_utils_r2;
   "api/utils/table": typeof api_utils_table;

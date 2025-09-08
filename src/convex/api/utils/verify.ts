@@ -495,6 +495,9 @@ export const { verify } = verifyConfig({
 		project: {
 			by_orgSlug_slug: ['orgSlug', 'slug'],
 		},
+		feedbackBoard: {
+			by_name_projectId: ['name', 'projectId'],
+		},
 	},
 	uneditableColumns: {
 		user: [],
