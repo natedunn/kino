@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { ArrowDownWideNarrow, Check } from 'lucide-react';
 
+import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 
@@ -42,14 +43,16 @@ export default function BoardsMenu({
 					const isSelected = selectedCategories.includes(category);
 
 					return (
-						<button
+						<Button
+							variant='ghost'
 							key={category}
 							onClick={() => handleCategoryToggle(category)}
 							className={cn(
-								'flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm transition-colors',
-								'hover:bg-accent hover:text-accent-foreground',
-								'cursor-pointer hover:text-foreground',
-								isSelected ? 'bg-muted text-foreground' : 'text-muted-foreground'
+								'flex w-full justify-start text-left'
+								// 'flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm transition-colors',
+								// 'hover:bg-accent hover:text-accent-foreground',
+								// 'cursor-pointer hover:text-foreground',
+								// isSelected ? 'bg-muted text-foreground' : 'text-muted-foreground'
 							)}
 						>
 							<span>{category}</span>
@@ -61,7 +64,7 @@ export default function BoardsMenu({
 							>
 								{isSelected && <Check className='h-2 w-2 text-primary-foreground' />}
 							</div>
-						</button>
+						</Button>
 					);
 				})}
 			</div>

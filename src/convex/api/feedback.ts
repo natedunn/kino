@@ -3,7 +3,7 @@ import { triggers } from './utils/trigger';
 
 export const create = procedure.authed.external.mutation({
 	args: {},
-	handler: async (ctx) => {},
+	handler: async () => {},
 });
 
 triggers.register('feedback', async (ctx, change) => {

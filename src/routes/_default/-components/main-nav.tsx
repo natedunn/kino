@@ -14,9 +14,10 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { UserDropdown } from '@/components/user-dropdown';
 import { Id } from '@/convex/_generated/dataModel';
 import { api } from '@/lib/api';
+
+import { UserDropdown } from './user-dropdown';
 
 const notifications = [
 	{
@@ -131,12 +132,11 @@ export const MainNav = ({ userId, children }: MainNavProps) => {
 							</div>
 						</div>
 
-						{/* Center/Right: Search and user controls */}
 						<div className='flex flex-shrink-0 items-center gap-3'>
 							<div className='hidden md:block'>
 								<Button
 									variant='outline'
-									className='max-w-xs justify-start border-border bg-muted/50 px-3 py-2 text-muted-foreground hover:bg-muted'
+									className='max-w-xs justify-start border-border bg-muted/50 px-3 !py-4 text-muted-foreground hover:bg-muted'
 									onClick={() => setIsCommandOpen(true)}
 								>
 									<Search className='mr-2 h-4 w-4 flex-shrink-0' />
@@ -161,7 +161,7 @@ export const MainNav = ({ userId, children }: MainNavProps) => {
 
 							<DropdownMenu>
 								<DropdownMenuTrigger asChild>
-									<Button variant='ghost' size='sm' className='relative'>
+									<Button variant='ghost' size='icon' className='relative'>
 										<Bell className='h-4 w-4' />
 										<Badge
 											variant='destructive'

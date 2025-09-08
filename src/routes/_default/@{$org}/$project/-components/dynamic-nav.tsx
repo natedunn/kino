@@ -26,6 +26,7 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { cn } from '@/lib/utils';
 
 export interface NavigationItem extends Omit<LinkProps, 'children'> {
 	className?: ClassValue;
@@ -203,7 +204,7 @@ export function DynamicNavigation({ orgSlug, projectSlug, onStateChange }: Dynam
 								}}
 								variant='ghost'
 								size='sm'
-								className='flex shrink-0 items-center gap-2 !text-xs md:text-sm'
+								className={cn(['flex shrink-0 items-center gap-2 !text-xs md:text-sm', ''])}
 								asChild
 							>
 								<Link to={item.to} params={item.params}>

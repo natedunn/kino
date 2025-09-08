@@ -41,11 +41,11 @@ function RouteComponent() {
 					</div>
 				</div>
 				<div className='flex flex-col gap-4 py-8 md:col-span-9'>
-					<div className='overflow-shidden rounded-lg border border-primary bg-gradient-to-bl from-primary/10 to-primary/20 p-8'>
-						<h1 className='text-2xl font-bold text-primary dark:text-foreground'>
+					<div className='overflow-hidden rounded-lg border border-primary/50 bg-gradient-to-tl from-primary/20 to-primary/5 p-8'>
+						<h1 className='text-2xl font-bold text-primary dark:text-blue-50'>
 							We want to hear your feedback
 						</h1>
-						<div className='text-foreground/50'>
+						<div className='text-primary/75 dark:text-blue-300'>
 							Make sure to read the feedback rules and guidelines before posting.
 						</div>
 					</div>

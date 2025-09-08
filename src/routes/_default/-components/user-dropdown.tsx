@@ -22,11 +22,11 @@ export function UserDropdown({ user }: { user: NonNullable<API['user']['get']> }
 	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
-				<Button variant='ghost' size='sm' className='flex items-center gap-2'>
-					<Avatar className='h-6 w-6 border'>
+				<Button variant='ghost' className='flex items-center gap-2'>
+					<Avatar className='size-6 border'>
 						<AvatarImage src={user.imageUrl} />
 						<AvatarFallback>
-							<User className='h-3 w-3' />
+							<User className='size-5' />
 						</AvatarFallback>
 					</Avatar>
 					<span className='hidden text-sm font-medium sm:inline'>{user.username}</span>
