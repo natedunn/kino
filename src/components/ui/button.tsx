@@ -18,9 +18,9 @@ const buttonVariants = cva(
 					'bg-gradient-to-tl border border-foreground/20 hover:bg-accent',
 					'from-muted via-white to-white',
 					'hocus:from-muted hocus:via-muted hocus:to-white hocus:border-foreground/30',
-					'dark:from-foreground/20 dark:to-foreground/10 dark:via-foreground/10 dark:border-foreground/20',
-					'hocus:dark:from-foreground/30 hocus:dark:to-foreground/10 hocus:dark:via-foreground/10 hocus:dark:border-foreground/20',
-					'active:dark:bg-foreground/20',
+					'dark:from-foreground/10 dark:to-foreground/5 dark:via-foreground/5 dark:border-foreground/10',
+					'hocus:dark:from-foreground/20 hocus:dark:to-foreground/5 hocus:dark:via-foreground/5 hocus:dark:border-foreground/10',
+					'active:dark:bg-foreground/10',
 				],
 				secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
 				ghost: [
