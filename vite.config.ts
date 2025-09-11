@@ -18,8 +18,6 @@ export default defineConfig({
 		tanstackStart({
 			tsr: {
 				srcDirectory: 'src',
-				routeToken: '@layout',
-				// indexToken: '@index',
 			},
 			target: 'cloudflare-module',
 			customViteReactPlugin: true,

@@ -11,13 +11,13 @@ import { DataModel, Id } from '../_generated/dataModel';
 import { userSchema, userUpdateSchema } from '../schema/user.schema';
 import { betterAuthComponent } from './auth';
 import { procedure } from './procedure';
-import { getUserByIdentifier, getUserByIdentifierSchema } from './user.utils';
+// import { getUserByIdentifier, getUserByIdentifierSchema } from './user.utils';
 import { userUploadsR2 } from './utils/r2';
 
-export const get = procedure.base.external.query({
-	args: getUserByIdentifierSchema,
-	handler: async (ctx, args) => getUserByIdentifier(ctx, args),
-});
+// export const get = procedure.base.external.query({
+// 	args: getUserByIdentifierSchema,
+// 	handler: async (ctx, args) => getUserByIdentifier(ctx, args),
+// });
 
 export const getUserIndexes = procedure.base.external.query({
 	args: {

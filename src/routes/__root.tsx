@@ -31,7 +31,6 @@ const fetchAuth = createServerFn({ method: 'GET' }).handler(async () => {
 	const token = getCookie(sessionCookieName);
 	const request = getWebRequest();
 	const { session } = await fetchSession(request);
-
 	return {
 		userId: session?.user.id,
 		token,
@@ -47,24 +46,14 @@ export const Route = createRootRouteWithContext<{
 		const auth = await fetchAuth();
 		const { userId, token } = auth;
 
-		let user = null as API['user']['getUserIndexes'] | null;
-
+		// During SSR only (the only time serverHttpClient exists),
+		// set the auth token to make HTTP queries with.
 		if (token) {
 			ctx.context.convexQueryClient.serverHttpClient?.setAuth(token);
 		}
 
-		if (token && userId) {
-			user = await ctx.context.queryClient.ensureQueryData(
-				convexQuery(api.user.getUserIndexes, {
-					_id: userId as Id<'user'>,
-				})
-			);
-		}
-
 		return {
-			userId: user?._id ?? null,
-			user,
-			isAuthenticated: !!user,
+			userId,
 			token,
 		};
 	},
@@ -116,11 +105,9 @@ function RootComponent() {
 	const context = useRouteContext({ from: Route.id });
 	return (
 		<ConvexBetterAuthProvider client={context.convexClient} authClient={authClient}>
-			<ConvexQueryCacheProvider>
-				<RootDocument>
-					<Outlet />
-				</RootDocument>
-			</ConvexQueryCacheProvider>
+			<RootDocument>
+				<Outlet />
+			</RootDocument>
 		</ConvexBetterAuthProvider>
 	);
 }

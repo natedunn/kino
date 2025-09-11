@@ -4,6 +4,7 @@ import { adjectives, nouns, uniqueUsernameGenerator } from 'unique-username-gene
 
 import { api, components, internal } from '../_generated/api';
 import { DataModel, Id } from '../_generated/dataModel';
+import { createUserSchema, userSelectSchema } from '../schema/user.schema';
 import { procedure } from './procedure';
 
 const authFunctions: AuthFunctions = internal.api.auth;
@@ -26,15 +27,17 @@ export const { createUser, deleteUser, updateUser, createSession, isAuthenticate
 				randomDigits: 3,
 			});
 
-			const userId = await ctx.db.insert('user', {
+			const parsedUser = createUserSchema.parse({
 				email: user.email,
 				name: user.name,
 				username: user?.username ?? generatedUsername,
 				imageUrl: typeof user.image === 'string' ? user.image : undefined,
-				banned: false,
-				globalRole: 'user',
-				private: false,
+				// banned: false,
+				// globalRole: 'user',
+				// private: false,
 			});
+
+			const userId = await ctx.db.insert('user', parsedUser);
 
 			// This function must return the user id.
 			return userId;
@@ -75,7 +78,10 @@ export const getCurrentUser = procedure.base.external.query({
 			return null;
 		}
 
-		const user = await ctx.db.get(userMetadata.userId as Id<'user'>);
+		const userData = await ctx.db.get(userMetadata.userId as Id<'user'>);
+
+		const user = userSelectSchema.parse(userData);
+
 		return {
 			...user,
 			...userMetadata,

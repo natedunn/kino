@@ -1,10 +1,15 @@
 import { zid } from 'convex-helpers/server/zod';
 import { ConvexError } from 'convex/values';
+import z from 'zod';
 
-import { feedbackBoardCreateSchema } from '@/convex/schema/feedbackBoard.schema';
+import {
+	feedbackBoardCreateSchema,
+	feedbackBoardSelectSchema,
+	feedbackBoardUpdateSchema,
+} from '@/convex/schema/feedbackBoard.schema';
 
 import { procedure } from './procedure';
-import { checkUserCanEditProject } from './utils/checks/userCanEditProject';
+import { getProjectUserData } from './utils/queries/getProjectUserData';
 import { triggers } from './utils/trigger';
 import { verify } from './utils/verify';
 
@@ -12,10 +17,16 @@ export const create = procedure.authed.external.mutation({
 	args: feedbackBoardCreateSchema,
 	handler: async (ctx, args) => {
 		// Authorization check
-		await checkUserCanEditProject(ctx, {
-			userId: ctx.user._id,
+		const isProjectAdmin = await getProjectUserData(ctx, {
 			projectId: args.projectId,
 		});
+
+		if (!isProjectAdmin) {
+			throw new ConvexError({
+				message: 'User does not have permission',
+				code: '403',
+			});
+		}
 
 		// Insert if passed the authorization checks
 		await verify.insert({
@@ -34,16 +45,84 @@ export const create = procedure.authed.external.mutation({
 	},
 });
 
+export const update = procedure.authed.external.mutation({
+	args: feedbackBoardUpdateSchema.merge(
+		z.object({
+			projectSlug: z.string(),
+			orgSlug: z.string(),
+		})
+	),
+	handler: async (ctx, args) => {
+		const { orgSlug, projectSlug, ...data } = args;
+
+		const {
+			permissions: { canEdit },
+		} = await getProjectUserData(ctx, {
+			projectSlug: args.projectSlug,
+		});
+
+		if (!canEdit) {
+			throw new ConvexError({
+				message: 'User does not have permission',
+				code: '403',
+			});
+		}
+
+		await verify.patch({
+			ctx,
+			tableName: 'feedbackBoard',
+			data,
+			onFail: (args) => {
+				if (args.uniqueRow) {
+					throw new ConvexError({
+						message: 'Board with this name already exists',
+						code: '409',
+					});
+				}
+			},
+		});
+	},
+});
+
+export const get = procedure.base.external.query({
+	args: {
+		_id: zid('feedbackBoard'),
+		projectSlug: z.string(),
+		orgSlug: z.string(),
+	},
+	handler: async (ctx, args) => {
+		const {
+			permissions: { canView },
+		} = await getProjectUserData(ctx, {
+			projectSlug: args.projectSlug,
+		});
+
+		if (!canView) return null;
+
+		const board = await ctx.db.get(args._id);
+
+		if (!board) return null;
+
+		return feedbackBoardSelectSchema.parse(board);
+	},
+});
+
 export const _delete = procedure.authed.external.mutation({
 	args: {
 		boardId: zid('feedbackBoard'),
 		projectId: zid('project'),
 	},
 	handler: async (ctx, args) => {
-		await checkUserCanEditProject(ctx, {
-			userId: ctx.user._id,
+		const isProjectAdmin = await getProjectUserData(ctx, {
 			projectId: args.projectId,
 		});
+
+		if (!isProjectAdmin) {
+			throw new ConvexError({
+				message: 'User does not have permission',
+				code: '403',
+			});
+		}
 
 		await ctx.db.delete(args.boardId);
 	},

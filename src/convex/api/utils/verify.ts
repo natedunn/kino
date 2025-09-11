@@ -19,7 +19,9 @@ type OptionalIndexFields<T> = {
 };
 
 type UniqueRows = {
-	[key in keyof DataModel]?: OptionalIndexFields<ExtractIndexes<NamedTableInfo<DataModel, key>>>;
+	[key in keyof DataModel]?: OptionalIndexFields<ExtractIndexes<NamedTableInfo<DataModel, key>>> & {
+		identifiers: (keyof NamedTableInfo<DataModel, key>['document'])[];
+	};
 };
 
 type UneditableColumns = {
@@ -317,6 +319,21 @@ const verifyConfig = ({
 			})
 			.unique();
 
+		const identifiers = UNIQUE_ROW_INDEXES?.[tableName]?.['identifiers'];
+
+		if (!identifiers || identifiers.length === 0) {
+			return;
+		}
+
+		for (const identifier of identifiers) {
+			if (existing && existing[identifier] === data[identifier]) {
+				console.info(
+					`👍 Identifier of [${identifier as string}] matched. Skipping check for [${columnOne}] and [${columnTwo}]`
+				);
+				return;
+			}
+		}
+
 		if (existing) {
 			onFail?.({
 				uniqueRow: {
@@ -330,43 +347,6 @@ const verifyConfig = ({
 			});
 		}
 	};
-
-	// const grouped = async <
-	// 	TN extends keyof DataModel,
-	// 	TI extends NamedTableInfo<DataModel, TN>,
-	// 	D extends Partial<TI['document']>,
-	// >({
-	// 	ctx,
-	// 	tableName,
-	// 	data,
-	// 	verify,
-	// 	onFail,
-	// }: VerifyArgs<TN, TI, D> & {
-	// 	verify: ('uniqueColumn' | 'uniqueRow' | 'editableColumn')[];
-	// }) => {
-	// 	let verifiedData = data;
-
-	// 	verifiedData = verify.includes('editableColumn')
-	// 		? await verifyColumnEditable({ ctx, tableName, data, onFail })
-	// 		: data;
-
-	// 	if (verify.includes('uniqueColumn')) {
-	// 		await verifyColumnUniqueness({
-	// 			ctx,
-	// 			tableName,
-	// 			data: verifiedData,
-	// 			onFail,
-	// 		});
-	// 	}
-
-	// 	if (verify.includes('uniqueRow')) {
-	// 		await verifyRowUniqueness({ ctx, tableName, data: verifiedData, onFail });
-	// 	}
-
-	// 	return {
-	// 		data: verifiedData,
-	// 	};
-	// };
 
 	const all = async <
 		TN extends keyof DataModel,
@@ -494,12 +474,15 @@ export const { verify } = verifyConfig({
 	uniqueRows: {
 		project: {
 			by_orgSlug_slug: ['orgSlug', 'slug'],
+			identifiers: ['_id'],
 		},
 		feedbackBoard: {
 			by_name_projectId: ['name', 'projectId'],
+			identifiers: ['_id'],
 		},
 	},
 	uneditableColumns: {
 		user: [],
 	},
+	// defaultValues: {}
 });

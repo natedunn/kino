@@ -12,14 +12,20 @@ const buttonVariants = cva(
 			variant: {
 				default:
 					'bg-gradient-to-tl from-primary to-blue-400 hocus:to-blue-600 text-background hocus:border-blue-800 dark:text-foreground border border-blue-500 dark:border-blue-300 hocus:dark:border-blue-400',
-				destructive:
-					'bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60',
+				destructive: [
+					// 'bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60'
+					'bg-gradient-to-tl border',
+					'text-red-50 from-red-500 via-red-700 to-red-700 border-red-800',
+					'hocus:from-red-600 hocus:via-red-800 hocus:to-red-800 hocus:border-red-900 hocus:text-background',
+					'dark:from-red-500 dark:via-red-700 dark:to-red-700 dark:border-red-400',
+					'hocus:dark:from-red-600 hocus:dark:via-red-800 hocus:dark:to-red-800 hocus:dark:border-red-500 hocus:dark:text-red-50',
+				],
 				outline: [
-					'bg-gradient-to-tl border border-foreground/20 hover:bg-accent',
+					'bg-gradient-to-tl border border-foreground/30 hover:bg-accent',
 					'from-muted via-white to-white',
 					'hocus:from-muted hocus:via-muted hocus:to-white hocus:border-foreground/30',
-					'dark:from-foreground/10 dark:to-foreground/5 dark:via-foreground/5 dark:border-foreground/10',
-					'hocus:dark:from-foreground/20 hocus:dark:to-foreground/5 hocus:dark:via-foreground/5 hocus:dark:border-foreground/10',
+					'dark:from-foreground/10 dark:to-foreground/5 dark:via-foreground/5 dark:border-foreground/15',
+					'hocus:dark:!from-transparent hocus:dark:!to-foreground/10 hocus:dark:!via-transparent hocus:dark:!border-foreground/10',
 					'active:dark:bg-foreground/10',
 				],
 				secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',

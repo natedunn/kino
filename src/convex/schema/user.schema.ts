@@ -17,6 +17,8 @@ export const userSchema = z.object({
 	urls: z.object({ url: z.string().url(), text: z.string() }).array().optional().default([]),
 });
 
+export const createUserSchema = userSchema;
+
 export const userSelectSchema = userSchema.pick({
 	username: true,
 	email: true,
@@ -33,5 +35,6 @@ export const userSelectSchema = userSchema.pick({
 
 export const userUpdateSchema = userSchema.partial();
 
+export type CreateUserSchema = z.infer<typeof createUserSchema>;
 export type UserSelectSchema = z.infer<typeof userSelectSchema>;
 export type UserUpdateSchema = z.infer<typeof userUpdateSchema>;

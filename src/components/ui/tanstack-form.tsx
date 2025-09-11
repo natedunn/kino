@@ -125,7 +125,7 @@ function Message({ className, ...props }: React.ComponentProps<'p'>) {
 	);
 }
 
-export const useFormError = <F extends ReturnType<typeof useAppForm>>(form: F) => {
+export const useFormError = () => {
 	const [error, setError] = React.useState<Error | ConvexError<any> | null>(null);
 	const [errorMessage, setErrorMessage] = React.useState<string>('');
 
