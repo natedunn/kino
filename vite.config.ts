@@ -1,3 +1,5 @@
+import path from 'path';
+
 import tailwindcss from '@tailwindcss/vite';
 import { tanstackStart } from '@tanstack/react-start/plugin/vite';
 import viteReact from '@vitejs/plugin-react';
@@ -24,4 +26,9 @@ export default defineConfig({
 		}),
 		viteReact(),
 	],
+	resolve: {
+		alias: {
+			'@': path.resolve(__dirname, './src'),
+		},
+	},
 });
