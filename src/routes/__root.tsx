@@ -1,5 +1,5 @@
 import { ConvexBetterAuthProvider } from '@convex-dev/better-auth/react';
-import { convexQuery, ConvexQueryClient } from '@convex-dev/react-query';
+import { ConvexQueryClient } from '@convex-dev/react-query';
 import { QueryClient } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import {
@@ -13,14 +13,11 @@ import {
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools';
 import { createServerFn } from '@tanstack/react-start';
 import { getCookie, getWebRequest } from '@tanstack/react-start/server';
-import { ConvexQueryCacheProvider } from 'convex-helpers/react/cache';
 import { ConvexReactClient } from 'convex/react';
 
-import { API, api } from '~api';
 import { DefaultCatchBoundary } from '@/components/_default-catch-boundary';
 import { NotFound } from '@/components/_not-found';
 import { Toaster } from '@/components/ui/sonner';
-import { Id } from '@/convex/_generated/dataModel';
 import { authClient } from '@/lib/auth/auth-client';
 import { fetchSession, getCookieName } from '@/lib/auth/auth-server-utils';
 
