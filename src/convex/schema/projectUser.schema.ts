@@ -7,5 +7,5 @@ export const projectUser = z.object({
 	...SHARED_SCHEMA('project'),
 	userId: zid('user'),
 	projectId: zid('project'),
-	role: z.enum(['admin', 'owner', 'member']),
+	role: z.enum(['admin', 'member']),
 });

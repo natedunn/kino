@@ -9,7 +9,8 @@ import { createAuth } from '@/lib/auth';
 import { components } from '../_generated/api';
 import { betterAuthComponent } from './auth';
 import { procedure } from './procedure';
-import { getOrgBySlug } from './utils/queries';
+import { getOrgBySlug } from './utils/queries/getOrgBySlug';
+import { getOrgUserData } from './utils/queries/getOrgUserData';
 
 export const create = procedure.authed.external.mutation({
 	args: createOrgSchema,
@@ -63,6 +64,13 @@ export const update = procedure.authed.external.mutation({
 
 		const org = await getOrgBySlug(ctx, args.slug);
 
+		if (!org) {
+			throw new ConvexError({
+				message: 'Organization not found',
+				code: '404',
+			});
+		}
+
 		if (org._id !== member?.organizationId) {
 			throw new ConvexError({
 				message: 'User does not have permission',
@@ -91,6 +99,10 @@ export const getFullOrg = procedure.base.external.query({
 				where: [{ field: 'slug', operator: 'eq', value: args.orgSlug }],
 			});
 
+			const isOrgAdmin = await getOrgUserData(ctx, {
+				orgSlug: args.orgSlug,
+			});
+
 			const parsedOrg = z
 				.object({
 					_creationTime: z.number(),
@@ -100,7 +112,10 @@ export const getFullOrg = procedure.base.external.query({
 				})
 				.parse(org);
 
-			return parsedOrg;
+			return {
+				isOrgAdmin,
+				org: parsedOrg,
+			};
 		} catch {
 			return null;
 		}

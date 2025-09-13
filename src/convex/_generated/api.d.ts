@@ -9,6 +9,7 @@
  */
 
 import type * as api_auth from "../api/auth.js";
+import type * as api_features from "../api/features.js";
 import type * as api_feedback from "../api/feedback.js";
 import type * as api_feedbackBoard from "../api/feedbackBoard.js";
 import type * as api_feedbackComment from "../api/feedbackComment.js";
@@ -19,9 +20,10 @@ import type * as api_procedure_base from "../api/procedure/base.js";
 import type * as api_procedure_index from "../api/procedure/index.js";
 import type * as api_project from "../api/project.js";
 import type * as api_user from "../api/user.js";
-import type * as api_utils_checks_userCanEditOrg from "../api/utils/checks/userCanEditOrg.js";
-import type * as api_utils_checks_userCanEditProject from "../api/utils/checks/userCanEditProject.js";
-import type * as api_utils_queries from "../api/utils/queries.js";
+import type * as api_utils_queries_getInternalUserId from "../api/utils/queries/getInternalUserId.js";
+import type * as api_utils_queries_getOrgBySlug from "../api/utils/queries/getOrgBySlug.js";
+import type * as api_utils_queries_getOrgUserData from "../api/utils/queries/getOrgUserData.js";
+import type * as api_utils_queries_getProjectUserData from "../api/utils/queries/getProjectUserData.js";
 import type * as api_utils_r2 from "../api/utils/r2.js";
 import type * as api_utils_table from "../api/utils/table.js";
 import type * as api_utils_trigger from "../api/utils/trigger.js";
@@ -46,6 +48,7 @@ import type {
  */
 declare const fullApi: ApiFromModules<{
   "api/auth": typeof api_auth;
+  "api/features": typeof api_features;
   "api/feedback": typeof api_feedback;
   "api/feedbackBoard": typeof api_feedbackBoard;
   "api/feedbackComment": typeof api_feedbackComment;
@@ -56,9 +59,10 @@ declare const fullApi: ApiFromModules<{
   "api/procedure/index": typeof api_procedure_index;
   "api/project": typeof api_project;
   "api/user": typeof api_user;
-  "api/utils/checks/userCanEditOrg": typeof api_utils_checks_userCanEditOrg;
-  "api/utils/checks/userCanEditProject": typeof api_utils_checks_userCanEditProject;
-  "api/utils/queries": typeof api_utils_queries;
+  "api/utils/queries/getInternalUserId": typeof api_utils_queries_getInternalUserId;
+  "api/utils/queries/getOrgBySlug": typeof api_utils_queries_getOrgBySlug;
+  "api/utils/queries/getOrgUserData": typeof api_utils_queries_getOrgUserData;
+  "api/utils/queries/getProjectUserData": typeof api_utils_queries_getProjectUserData;
   "api/utils/r2": typeof api_utils_r2;
   "api/utils/table": typeof api_utils_table;
   "api/utils/trigger": typeof api_utils_trigger;

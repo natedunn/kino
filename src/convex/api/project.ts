@@ -3,13 +3,18 @@ import { ConvexError } from 'convex/values';
 import z from 'zod';
 
 import { defaultFeedbackBoards } from '@/config/defaults';
-import { projectSchema } from '@/convex/schema/project.schema';
+import {
+	createProjectSchema,
+	projectSchema,
+	selectProjectSchema,
+	updateProjectSchema,
+} from '@/convex/schema/project.schema';
 import { createAuth } from '@/lib/auth';
 
 import schema from '../schema';
 import { betterAuthComponent } from './auth';
 import { procedure } from './procedure';
-import { createProjectSchema, selectProjectSchema, updateProjectSchema } from './project.utils';
+import { getProjectUserData } from './utils/queries/getProjectUserData';
 import { triggers } from './utils/trigger';
 import { verify } from './utils/verify';
 
@@ -136,16 +141,29 @@ export const getFullProject = procedure.base.external.query({
 			.withIndex('by_orgSlug_slug', (q) => q.eq('orgSlug', args.orgSlug).eq('slug', args.slug))
 			.unique();
 
-		if (
-			// TODO: Add authorization checks
-			// project?.visibility === 'private' ||
-			!project
-		) {
-			console.error('Project not found');
+		if (!project) {
+			console.warn('No project found');
 			return null;
 		}
 
-		return selectProjectSchema.parse(project);
+		// const isProjectAdmin = await getProjectUserData(ctx, {
+		// 	projectId: project._id,
+		// });
+		const isProjectAdmin = false;
+
+		if (project?.visibility === 'private' && !isProjectAdmin) {
+			console.warn('Authenticated user is unable to view private project');
+			return null;
+		}
+
+		const data = {
+			isProjectAdmin,
+			project: selectProjectSchema.parse(project),
+		};
+
+		console.log(data);
+
+		return data;
 	},
 });
 

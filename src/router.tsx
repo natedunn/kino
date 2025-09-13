@@ -13,17 +13,19 @@ export function createRouter() {
 	if (!CONVEX_URL) {
 		throw new Error('missing VITE_CONVEX_URL envar');
 	}
-	const convex = new ConvexReactClient(CONVEX_URL, {
+	const convex = new ConvexReactClient(CONVEX_URL);
+
+	const convexQueryClient = new ConvexQueryClient(convex, {
 		unsavedChangesWarning: false,
 		expectAuth: true,
 	});
-	const convexQueryClient = new ConvexQueryClient(convex);
 
 	const queryClient: QueryClient = new QueryClient({
 		defaultOptions: {
 			queries: {
 				queryKeyHashFn: convexQueryClient.hashFn(),
 				queryFn: convexQueryClient.queryFn(),
+				gcTime: 5000,
 			},
 		},
 	});
@@ -36,6 +38,7 @@ export function createRouter() {
 			defaultErrorComponent: DefaultCatchBoundary,
 			defaultNotFoundComponent: () => <NotFound />,
 			scrollRestoration: true,
+			defaultPreloadStaleTime: 0,
 			context: { queryClient, convexClient: convex, convexQueryClient },
 			Wrap: ({ children }) => (
 				<ConvexProvider client={convexQueryClient.convexClient}>{children}</ConvexProvider>

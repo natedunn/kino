@@ -1,3 +1,5 @@
+import path from 'path';
+
 import tailwindcss from '@tailwindcss/vite';
 import { tanstackStart } from '@tanstack/react-start/plugin/vite';
 import viteReact from '@vitejs/plugin-react';
@@ -18,12 +20,15 @@ export default defineConfig({
 		tanstackStart({
 			tsr: {
 				srcDirectory: 'src',
-				routeToken: '@layout',
-				// indexToken: '@index',
 			},
 			target: 'cloudflare-module',
 			customViteReactPlugin: true,
 		}),
 		viteReact(),
 	],
+	resolve: {
+		alias: {
+			'@': path.resolve(__dirname, './src'),
+		},
+	},
 });

@@ -21,18 +21,16 @@ const schema = defineSchema({
 		.index('by_updatedTime', ['updatedTime'])
 		.index('by_orgSlug_slug', ['orgSlug', 'slug'])
 		.index('by_orgSlug_visibility_updatedAt', ['orgSlug', 'visibility', 'updatedTime']),
-	projectUser: defineZTable(projectUser).index('by_userId_projectId_role', [
-		'userId',
-		'projectId',
-		'role',
-	]),
-	feedbackBoard: defineZTable(feedbackBoard)
-		.index('by_projectId', ['projectId'])
-		.index('by_name_projectId', ['name', 'projectId']),
+	projectUser: defineZTable(projectUser)
+		.index('by_userId_projectId', ['userId', 'projectId'])
+		.index('by_userId_projectId_role', ['userId', 'projectId', 'role']),
 	feedback: defineZTable(feedback)
 		.index('by_projectId', ['projectId'])
 		.index('by_board', ['board'])
 		.index('by_authorUserId', ['authorUserId']),
+	feedbackBoard: defineZTable(feedbackBoard)
+		.index('by_projectId', ['projectId'])
+		.index('by_name_projectId', ['name', 'projectId']),
 	feedbackComment: defineZTable(feedbackComment)
 		.index('by_feedbackId', ['feedbackId'])
 		.index('by_authorUserId', ['authorUserId']),

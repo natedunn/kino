@@ -19,3 +19,33 @@ export const projectSchema = z.object({
 		.min(1, 'Slug cannot be empty.')
 		.max(100, 'Slug cannot be longer than 100 characters.'),
 });
+
+export const createProjectSchema = projectSchema.pick({
+	name: true,
+	description: true,
+	urls: true,
+	slug: true,
+	orgSlug: true,
+	visibility: true,
+});
+
+export const updateProjectSchema = createProjectSchema.merge(
+	projectSchema.pick({
+		_id: true,
+	})
+);
+
+export const selectProjectSchema = projectSchema.pick({
+	_id: true,
+	name: true,
+	description: true,
+	urls: true,
+	slug: true,
+	orgSlug: true,
+	visibility: true,
+});
+
+export type ProjectSchema = z.infer<typeof projectSchema>;
+export type SelectProjectSchema = z.infer<typeof selectProjectSchema>;
+export type CreateProjectSchema = z.infer<typeof createProjectSchema>;
+export type UpdateProjectSchema = z.infer<typeof updateProjectSchema>;
