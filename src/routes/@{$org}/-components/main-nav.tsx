@@ -14,7 +14,6 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Id } from '@/convex/_generated/dataModel';
 import { api } from '@/lib/api';
 
 import { UserDropdown } from './user-dropdown';
