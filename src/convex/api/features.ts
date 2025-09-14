@@ -26,11 +26,10 @@ export const feedback = procedure.base.external.query({
 		});
 
 		if (!canView) {
-			console.warn({
+			throw new ConvexError({
 				message: 'User does not have permission',
 				code: '403',
 			});
-			return null;
 		}
 
 		const boards = await ctx.db

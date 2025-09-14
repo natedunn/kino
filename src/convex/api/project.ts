@@ -160,8 +160,6 @@ export const getFullProject = procedure.base.external.query({
 			project: selectProjectSchema.parse(project),
 		};
 
-		console.log(data);
-
 		return data;
 	},
 });

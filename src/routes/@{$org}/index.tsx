@@ -24,8 +24,6 @@ function RouteComponent() {
 		})
 	);
 
-	console.log(projects);
-
 	return (
 		<div className='container'>
 			<div className='mt-6 flex items-center gap-4'>
