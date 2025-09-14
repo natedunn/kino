@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet } from '@tanstack/react-router';
 
-export const Route = createFileRoute('/@{$org}/$project/feedback/board/$board/@layout')({
+export const Route = createFileRoute('/@{$org}/$project/feedback/boards/$board/@layout')({
 	component: RouteComponent,
 });
 

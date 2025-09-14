@@ -1,12 +1,11 @@
 import { convexQuery } from '@convex-dev/react-query';
-import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
-import { ClientOnly, createFileRoute, Link } from '@tanstack/react-router';
-import { CirclePlus, Megaphone, SquareArrowOutUpRight } from 'lucide-react';
+import { useSuspenseQuery } from '@tanstack/react-query';
+import { createFileRoute, Link } from '@tanstack/react-router';
+import { CirclePlus, Megaphone } from 'lucide-react';
 import z from 'zod';
 
 import { api } from '~api';
-import { InlineAlert } from '@/components/inline-alert';
-import { Button, buttonVariants } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 
 import { BoardsNav } from './-components/boards-nav';
 import { FeedbackCard } from './-components/feedback-card';
@@ -32,26 +31,18 @@ export const Route = createFileRoute('/@{$org}/$project/feedback/')({
 function RouteComponent() {
 	const { org: orgSlug, project: projectSlug } = Route.useParams();
 
+	const { data: projectData } = useSuspenseQuery(
+		convexQuery(api.project.getFullProject, {
+			orgSlug,
+			slug: projectSlug,
+		})
+	);
+
 	const { data: feedback } = useSuspenseQuery(
 		convexQuery(api.features.feedback, {
 			projectSlug,
 		})
 	);
-
-	// const { data: projectData } = useQuery(
-	// 	convexQuery(api.project.getFullProject, {
-	// 		orgSlug,
-	// 		slug: projectSlug,
-	// 	})
-	// );
-
-	// if (!feedback) {
-	// 	return (
-	// 		<div className='container py-6'>
-	// 			<InlineAlert variant='danger'>There was an error loading the feedback page</InlineAlert>
-	// 		</div>
-	// 	);
-	// }
 
 	return (
 		<div className='container h-full overflow-visible'>
@@ -77,14 +68,10 @@ function RouteComponent() {
 									Boards
 								</span>
 								<div className='mt-2'>
-									{feedback?.boards ? (
-										<ClientOnly fallback={<div>Loading...</div>}>
-											<BoardsNav boards={feedback.boards} />
-										</ClientOnly>
-									) : null}
+									{!!feedback?.boards && <BoardsNav boards={feedback.boards} />}
 								</div>
 							</div>
-							{/* {projectData?.isProjectAdmin && (
+							{projectData?.isProjectAdmin && (
 								<div className='mt-6 pr-8'>
 									<span className='mx-2 inline-flex text-sm font-bold text-muted-foreground'>
 										Options
@@ -93,7 +80,7 @@ function RouteComponent() {
 										<FeedbackOptions />
 									</div>
 								</div>
-							)} */}
+							)}
 						</div>
 					</div>
 				</div>

@@ -1,12 +1,22 @@
 import React from 'react';
+import { convexQuery } from '@convex-dev/react-query';
 import { createFileRoute, Outlet } from '@tanstack/react-router';
 
+import { api } from '~api';
 import { NotFound } from '@/components/_not-found';
 import { cn } from '@/lib/utils';
 
 import { DynamicNavigation } from './-components/dynamic-nav';
 
 export const Route = createFileRoute('/@{$org}/$project')({
+	loader: async ({ context, params }) => {
+		await context.queryClient.ensureQueryData(
+			convexQuery(api.project.getFullProject, {
+				orgSlug: params.org,
+				slug: params.project,
+			})
+		);
+	},
 	notFoundComponent: () => {
 		return (
 			<div className='container'>

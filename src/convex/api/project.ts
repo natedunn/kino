@@ -146,10 +146,9 @@ export const getFullProject = procedure.base.external.query({
 			return null;
 		}
 
-		// const isProjectAdmin = await getProjectUserData(ctx, {
-		// 	projectId: project._id,
-		// });
-		const isProjectAdmin = false;
+		const isProjectAdmin = await getProjectUserData(ctx, {
+			projectId: project._id,
+		});
 
 		if (project?.visibility === 'private' && !isProjectAdmin) {
 			console.warn('Authenticated user is unable to view private project');

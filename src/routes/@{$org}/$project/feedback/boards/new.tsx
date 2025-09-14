@@ -6,7 +6,7 @@ import { api } from '~api';
 
 import { CreateBoardForm } from './-components/create-board-form';
 
-export const Route = createFileRoute('/@{$org}/$project/feedback/board/new')({
+export const Route = createFileRoute('/@{$org}/$project/feedback/boards/new')({
 	component: RouteComponent,
 });
 

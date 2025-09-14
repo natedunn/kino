@@ -8,7 +8,7 @@ import { Id } from '@/convex/_generated/dataModel';
 
 import { EditBoardForm } from './-components/edit-board-form';
 
-export const Route = createFileRoute('/@{$org}/$project/feedback/board/$board/edit')({
+export const Route = createFileRoute('/@{$org}/$project/feedback/boards/$board/edit')({
 	component: RouteComponent,
 	loader: async ({ context, params }) => {
 		const board = await context.queryClient.ensureQueryData(
