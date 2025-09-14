@@ -10,14 +10,14 @@ const searchValidator = z.object({
 	redirect: z.string().optional(),
 });
 
-export const Route = createFileRoute('/blank/sign-in')({
+export const Route = createFileRoute('/_blank/sign-in')({
 	validateSearch: searchValidator,
 	component: RouteComponent,
 	loader: async ({ context }) => {
 		if (context.userId) {
 			throw redirect({
 				to: '/',
-			})
+			});
 		}
 	},
 });
@@ -34,7 +34,7 @@ function RouteComponent() {
 							await authClient.signIn.social({
 								provider: 'github',
 								callbackURL: search.redirect,
-							})
+							});
 						}}
 					>
 						Sign in
@@ -52,5 +52,5 @@ function RouteComponent() {
 				</div>
 			</div>
 		</div>
-	)
+	);
 }

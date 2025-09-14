@@ -20,7 +20,7 @@ function RouteComponent() {
 		convexQuery(api.features.feedback, {
 			projectSlug: Route.useParams().project,
 		})
-	)
+	);
 
 	const boards = feedback?.boards;
 
@@ -95,9 +95,9 @@ function RouteComponent() {
 								</div>
 							</div>
 						</div>
-					)
+					);
 				})}
 			</div>
 		</div>
-	)
+	);
 }

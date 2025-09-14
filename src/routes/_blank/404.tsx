@@ -1,6 +1,6 @@
 import { createFileRoute, notFound } from '@tanstack/react-router';
 
-export const Route = createFileRoute('/blank/404')({
+export const Route = createFileRoute('/_blank/404')({
 	component: RouteComponent,
 	loader: async () => {
 		notFound({

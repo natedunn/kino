@@ -12,13 +12,13 @@ import { createServerRootRoute } from '@tanstack/react-start/server'
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AtChar123orgChar125RouteRouteImport } from './routes/@{$org}/route'
-import { Route as RouteRouteImport } from './routes/route'
 import { Route as SettingsIndexRouteImport } from './routes/settings/index'
+import { Route as MarketingIndexRouteImport } from './routes/_marketing/index'
 import { Route as AtChar123orgChar125IndexRouteImport } from './routes/@{$org}/index'
 import { Route as CreateAtlayoutRouteImport } from './routes/create/@layout'
-import { Route as BlankSignOutRouteImport } from './routes/blank/sign-out'
-import { Route as BlankSignInRouteImport } from './routes/blank/sign-in'
-import { Route as Blank404RouteImport } from './routes/blank/404'
+import { Route as BlankSignOutRouteImport } from './routes/_blank/sign-out'
+import { Route as BlankSignInRouteImport } from './routes/_blank/sign-in'
+import { Route as Blank404RouteImport } from './routes/_blank/404'
 import { Route as AtChar123orgChar125SettingsRouteImport } from './routes/@{$org}/settings'
 import { Route as AtChar123orgChar125ProjectRouteRouteImport } from './routes/@{$org}/$project/route'
 import { Route as ProfileSettingsIndexRouteImport } from './routes/profile/settings/index'
@@ -51,14 +51,14 @@ const AtChar123orgChar125RouteRoute =
     path: '/@{$org}',
     getParentRoute: () => rootRouteImport,
   } as any)
-const RouteRoute = RouteRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const SettingsIndexRoute = SettingsIndexRouteImport.update({
   id: '/settings/',
   path: '/settings/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MarketingIndexRoute = MarketingIndexRouteImport.update({
+  id: '/_marketing/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AtChar123orgChar125IndexRoute =
@@ -73,18 +73,18 @@ const CreateAtlayoutRoute = CreateAtlayoutRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const BlankSignOutRoute = BlankSignOutRouteImport.update({
-  id: '/blank/sign-out',
-  path: '/blank/sign-out',
+  id: '/_blank/sign-out',
+  path: '/sign-out',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BlankSignInRoute = BlankSignInRouteImport.update({
-  id: '/blank/sign-in',
-  path: '/blank/sign-in',
+  id: '/_blank/sign-in',
+  path: '/sign-in',
   getParentRoute: () => rootRouteImport,
 } as any)
 const Blank404Route = Blank404RouteImport.update({
-  id: '/blank/404',
-  path: '/blank/404',
+  id: '/_blank/404',
+  path: '/404',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AtChar123orgChar125SettingsRoute =
@@ -222,15 +222,15 @@ const ApiAuthSplatServerRoute = ApiAuthSplatServerRouteImport.update({
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof RouteRoute
   '/@{$org}': typeof AtChar123orgChar125RouteRouteWithChildren
   '/@{$org}/$project': typeof AtChar123orgChar125ProjectRouteRouteWithChildren
   '/@{$org}/settings': typeof AtChar123orgChar125SettingsRoute
-  '/blank/404': typeof Blank404Route
-  '/blank/sign-in': typeof BlankSignInRoute
-  '/blank/sign-out': typeof BlankSignOutRoute
+  '/404': typeof Blank404Route
+  '/sign-in': typeof BlankSignInRoute
+  '/sign-out': typeof BlankSignOutRoute
   '/create/@layout': typeof CreateAtlayoutRoute
   '/@{$org}/': typeof AtChar123orgChar125IndexRoute
+  '/': typeof MarketingIndexRoute
   '/settings': typeof SettingsIndexRoute
   '/@{$org}/$project/': typeof AtChar123orgChar125ProjectIndexRoute
   '/create/project': typeof CreateProjectIndexRoute
@@ -254,13 +254,13 @@ export interface FileRoutesByFullPath {
   '/@{$org}/$project/feedback/board/$board': typeof AtChar123orgChar125ProjectFeedbackBoardBoardIndexRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof RouteRoute
   '/@{$org}/settings': typeof AtChar123orgChar125SettingsRoute
-  '/blank/404': typeof Blank404Route
-  '/blank/sign-in': typeof BlankSignInRoute
-  '/blank/sign-out': typeof BlankSignOutRoute
+  '/404': typeof Blank404Route
+  '/sign-in': typeof BlankSignInRoute
+  '/sign-out': typeof BlankSignOutRoute
   '/create/@layout': typeof CreateAtlayoutRoute
   '/@{$org}': typeof AtChar123orgChar125IndexRoute
+  '/': typeof MarketingIndexRoute
   '/settings': typeof SettingsIndexRoute
   '/@{$org}/$project': typeof AtChar123orgChar125ProjectIndexRoute
   '/create/project': typeof CreateProjectIndexRoute
@@ -285,15 +285,15 @@ export interface FileRoutesByTo {
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof RouteRoute
   '/@{$org}': typeof AtChar123orgChar125RouteRouteWithChildren
   '/@{$org}/$project': typeof AtChar123orgChar125ProjectRouteRouteWithChildren
   '/@{$org}/settings': typeof AtChar123orgChar125SettingsRoute
-  '/blank/404': typeof Blank404Route
-  '/blank/sign-in': typeof BlankSignInRoute
-  '/blank/sign-out': typeof BlankSignOutRoute
+  '/_blank/404': typeof Blank404Route
+  '/_blank/sign-in': typeof BlankSignInRoute
+  '/_blank/sign-out': typeof BlankSignOutRoute
   '/create/@layout': typeof CreateAtlayoutRoute
   '/@{$org}/': typeof AtChar123orgChar125IndexRoute
+  '/_marketing/': typeof MarketingIndexRoute
   '/settings/': typeof SettingsIndexRoute
   '/@{$org}/$project/': typeof AtChar123orgChar125ProjectIndexRoute
   '/create/project/': typeof CreateProjectIndexRoute
@@ -319,15 +319,15 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/'
     | '/@{$org}'
     | '/@{$org}/$project'
     | '/@{$org}/settings'
-    | '/blank/404'
-    | '/blank/sign-in'
-    | '/blank/sign-out'
+    | '/404'
+    | '/sign-in'
+    | '/sign-out'
     | '/create/@layout'
     | '/@{$org}/'
+    | '/'
     | '/settings'
     | '/@{$org}/$project/'
     | '/create/project'
@@ -351,13 +351,13 @@ export interface FileRouteTypes {
     | '/@{$org}/$project/feedback/board/$board'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/'
     | '/@{$org}/settings'
-    | '/blank/404'
-    | '/blank/sign-in'
-    | '/blank/sign-out'
+    | '/404'
+    | '/sign-in'
+    | '/sign-out'
     | '/create/@layout'
     | '/@{$org}'
+    | '/'
     | '/settings'
     | '/@{$org}/$project'
     | '/create/project'
@@ -381,15 +381,15 @@ export interface FileRouteTypes {
     | '/@{$org}/$project/feedback/board/$board'
   id:
     | '__root__'
-    | '/'
     | '/@{$org}'
     | '/@{$org}/$project'
     | '/@{$org}/settings'
-    | '/blank/404'
-    | '/blank/sign-in'
-    | '/blank/sign-out'
+    | '/_blank/404'
+    | '/_blank/sign-in'
+    | '/_blank/sign-out'
     | '/create/@layout'
     | '/@{$org}/'
+    | '/_marketing/'
     | '/settings/'
     | '/@{$org}/$project/'
     | '/create/project/'
@@ -414,12 +414,12 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  RouteRoute: typeof RouteRoute
   AtChar123orgChar125RouteRoute: typeof AtChar123orgChar125RouteRouteWithChildren
   Blank404Route: typeof Blank404Route
   BlankSignInRoute: typeof BlankSignInRoute
   BlankSignOutRoute: typeof BlankSignOutRoute
   CreateAtlayoutRoute: typeof CreateAtlayoutRoute
+  MarketingIndexRoute: typeof MarketingIndexRoute
   SettingsIndexRoute: typeof SettingsIndexRoute
   CreateProjectIndexRoute: typeof CreateProjectIndexRoute
   CreateTeamIndexRoute: typeof CreateTeamIndexRoute
@@ -457,18 +457,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AtChar123orgChar125RouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof RouteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/settings/': {
       id: '/settings/'
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof SettingsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_marketing/': {
+      id: '/_marketing/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof MarketingIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/@{$org}/': {
@@ -485,24 +485,24 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CreateAtlayoutRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/blank/sign-out': {
-      id: '/blank/sign-out'
-      path: '/blank/sign-out'
-      fullPath: '/blank/sign-out'
+    '/_blank/sign-out': {
+      id: '/_blank/sign-out'
+      path: '/sign-out'
+      fullPath: '/sign-out'
       preLoaderRoute: typeof BlankSignOutRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/blank/sign-in': {
-      id: '/blank/sign-in'
-      path: '/blank/sign-in'
-      fullPath: '/blank/sign-in'
+    '/_blank/sign-in': {
+      id: '/_blank/sign-in'
+      path: '/sign-in'
+      fullPath: '/sign-in'
       preLoaderRoute: typeof BlankSignInRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/blank/404': {
-      id: '/blank/404'
-      path: '/blank/404'
-      fullPath: '/blank/404'
+    '/_blank/404': {
+      id: '/_blank/404'
+      path: '/404'
+      fullPath: '/404'
       preLoaderRoute: typeof Blank404RouteImport
       parentRoute: typeof rootRouteImport
     }
@@ -753,12 +753,12 @@ const AtChar123orgChar125RouteRouteWithChildren =
   )
 
 const rootRouteChildren: RootRouteChildren = {
-  RouteRoute: RouteRoute,
   AtChar123orgChar125RouteRoute: AtChar123orgChar125RouteRouteWithChildren,
   Blank404Route: Blank404Route,
   BlankSignInRoute: BlankSignInRoute,
   BlankSignOutRoute: BlankSignOutRoute,
   CreateAtlayoutRoute: CreateAtlayoutRoute,
+  MarketingIndexRoute: MarketingIndexRoute,
   SettingsIndexRoute: SettingsIndexRoute,
   CreateProjectIndexRoute: CreateProjectIndexRoute,
   CreateTeamIndexRoute: CreateTeamIndexRoute,

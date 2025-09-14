@@ -2,7 +2,6 @@ import React from 'react';
 import { convexQuery } from '@convex-dev/react-query';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { Link, useParams } from '@tanstack/react-router';
-import { Authenticated } from 'convex/react';
 import { Bell, Command, Search } from 'lucide-react';
 
 import { CommandPalette } from '@/components/command-palette';
@@ -53,17 +52,19 @@ export const MainNav = ({ children }: MainNavProps) => {
 	const [isCommandOpen, setIsCommandOpen] = React.useState(false);
 
 	const orgParams = useParams({
-		from: '/_default/@{$org}',
+		from: '/@{$org}',
 		shouldThrow: false,
 	});
 
 	const projectParams = useParams({
-		from: '/_default/@{$org}/$project',
+		from: '/@{$org}/$project',
 		shouldThrow: false,
 	});
 
 	const orgSlug = orgParams?.org;
 	const projectSlug = projectParams?.project;
+
+	const { data: user } = useSuspenseQuery(convexQuery(api.auth.getCurrentUser, {}));
 
 	React.useEffect(() => {
 		const handleKeyDown = (e: KeyboardEvent) => {
@@ -187,9 +188,7 @@ export const MainNav = ({ children }: MainNavProps) => {
 								</DropdownMenuContent>
 							</DropdownMenu>
 
-							{/* <Authenticated>
-								<UserDropdown />
-							</Authenticated> */}
+							{user ? <UserDropdown /> : <Link to='/sign-in'>Sign In</Link>}
 						</div>
 					</div>
 				</div>

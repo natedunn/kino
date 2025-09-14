@@ -1,12 +1,15 @@
 import { convexQuery } from '@convex-dev/react-query';
-import { ClientOnly, createFileRoute, Link, notFound, Outlet } from '@tanstack/react-router';
+import { createFileRoute, Outlet } from '@tanstack/react-router';
 
 import { api } from '~api';
 import { NotFound } from '@/components/_not-found';
 
-import { MainNav } from '../-components/main-nav';
+import { MainNav } from './-components/main-nav';
 
 export const Route = createFileRoute('/@{$org}')({
+	loader: async ({ context }) => {
+		await context.queryClient.ensureQueryData(convexQuery(api.auth.getCurrentUser, {}));
+	},
 	notFoundComponent: () => {
 		return (
 			<div className='container'>
@@ -26,14 +29,16 @@ export const Route = createFileRoute('/@{$org}')({
 
 function RouteComponent() {
 	return (
-		<div className='flex flex-1 flex-col'>
-			<Link to='/@{$org}' params={{ org: 'natedunn' }}>
-				Go to natedunn
-			</Link>
-			{/* <ClientOnly fallback={<div>Loading...</div>}>
+		<div className='flex h-screen w-full flex-col'>
+			<div className='flex w-full flex-1 flex-col'>
 				<MainNav />
-			</ClientOnly> */}
-			<Outlet />
+				<Outlet />
+			</div>
+			<footer className='mt-auto w-full border-t border-border py-4 text-center text-sm text-muted-foreground'>
+				<div className='container'>
+					<p>© {new Date().getFullYear()} Kino</p>
+				</div>
+			</footer>
 		</div>
 	);
 }

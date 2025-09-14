@@ -3,7 +3,7 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
 import { authClient } from '@/lib/auth/auth-client';
 
-export const Route = createFileRoute('/blank/sign-out')({
+export const Route = createFileRoute('/_blank/sign-out')({
 	component: RouteComponent,
 });
 
