@@ -1,10 +1,10 @@
 import { convexQuery } from '@convex-dev/react-query';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { createFileRoute, Link, notFound } from '@tanstack/react-router';
+import { Id } from 'convex/_generated/dataModel';
 import { ChevronLeft } from 'lucide-react';
 
 import { api } from '~api';
-import { Id } from '@/convex/_generated/dataModel';
 
 import { EditBoardForm } from './-components/edit-board-form';
 
@@ -17,7 +17,7 @@ export const Route = createFileRoute('/@{$org}/$project/feedback/boards/$board/e
 				projectSlug: params.project,
 				orgSlug: params.org,
 			})
-		)
+		);
 
 		if (!board) {
 			throw notFound();
@@ -34,7 +34,7 @@ function RouteComponent() {
 			projectSlug,
 			orgSlug,
 		})
-	)
+	);
 
 	if (!board) throw new Error('No board found.');
 
@@ -58,5 +58,5 @@ function RouteComponent() {
 				</div>
 			</div>
 		</div>
-	)
+	);
 }

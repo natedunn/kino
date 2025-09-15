@@ -1,6 +1,6 @@
-import { api as convexApi } from '../../convex/_generated/api';
+import { api } from '../_generated/api';
 
-export const api = convexApi.api;
+export { api };
 
 export type API = {
 	[K in keyof typeof api]: {

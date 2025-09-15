@@ -3,6 +3,7 @@ import { useConvexMutation } from '@convex-dev/react-query';
 import { Label } from '@radix-ui/react-dropdown-menu';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
+import { createProjectSchema } from 'convex/schema/project.schema';
 import { ConvexError } from 'convex/values';
 import z from 'zod';
 
@@ -13,7 +14,6 @@ import { LabelWrapper } from '@/components/label';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { createProjectSchema } from '@/convex/schema/project.schema';
 import { cn } from '@/lib/utils';
 
 const formSchema = createProjectSchema;

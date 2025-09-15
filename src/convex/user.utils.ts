@@ -1,10 +1,10 @@
 import { getOneFrom } from 'convex-helpers/server/relationships';
-import { zid } from 'convex-helpers/server/zod';
 import { GenericQueryCtx } from 'convex/server';
 import z from 'zod';
 
-import { DataModel, Doc, Id } from '../_generated/dataModel';
-import { userSchema, userSelectSchema, UserSelectSchema } from '../schema/user.schema';
+import { DataModel, Doc, Id } from './_generated/dataModel';
+import { authComponent } from './auth';
+import { userSchema, userSelectSchema, UserSelectSchema } from './schema/user.schema';
 import { userUploadsR2 } from './utils/r2';
 
 export const getUserByIdentifierSchema = z.object({
@@ -90,8 +90,8 @@ export const getUserByIdentifier = async <T extends boolean = false>(
  * @returns - The current authenticated Clerk user
  */
 export const getUser = async (ctx: Omit<GenericQueryCtx<DataModel>, never>) => {
-	const identity = await ctx.auth.getUserIdentity();
+	const userId = (await authComponent.getAuthUser(ctx))?.userId;
 	return getUserByIdentifier(ctx, {
-		_id: identity?.subject as Id<'user'>,
+		_id: userId as Id<'user'>,
 	});
 };

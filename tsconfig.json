@@ -16,7 +16,7 @@
 		"allowSyntheticDefaultImports": true,
 		"baseUrl": ".",
 		"paths": {
-			"~api": ["src/lib/api/index.ts"],
+			"~api": ["src/convex/utils/api.ts"],
 			"@/*": ["src/*"]
 		},
 		"noEmit": true

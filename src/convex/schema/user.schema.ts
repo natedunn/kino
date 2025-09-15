@@ -12,7 +12,6 @@ export const userSchema = z.object({
 	bio: z.string().max(150).optional(),
 	banned: z.boolean().default(false),
 	private: z.boolean().default(false),
-	globalRole: z.enum(['user', 'admin']).default('user'),
 	location: z.string().optional(),
 	urls: z.object({ url: z.string().url(), text: z.string() }).array().optional().default([]),
 });

@@ -8,12 +8,12 @@ import {
 	feedbackBoardUpdateSchema,
 } from '@/convex/schema/feedbackBoard.schema';
 
-import { procedure } from './procedure';
+import { zAuthedMutation, zQuery } from './utils/functions';
 import { getProjectUserData } from './utils/queries/getProjectUserData';
 import { triggers } from './utils/trigger';
 import { verify } from './utils/verify';
 
-export const create = procedure.authed.external.mutation({
+export const create = zAuthedMutation({
 	args: feedbackBoardCreateSchema,
 	handler: async (ctx, args) => {
 		// Authorization check
@@ -45,7 +45,7 @@ export const create = procedure.authed.external.mutation({
 	},
 });
 
-export const update = procedure.authed.external.mutation({
+export const update = zAuthedMutation({
 	args: feedbackBoardUpdateSchema.merge(
 		z.object({
 			projectSlug: z.string(),
@@ -84,7 +84,7 @@ export const update = procedure.authed.external.mutation({
 	},
 });
 
-export const get = procedure.base.external.query({
+export const get = zQuery({
 	args: {
 		_id: zid('feedbackBoard'),
 		projectSlug: z.string(),
@@ -107,7 +107,7 @@ export const get = procedure.base.external.query({
 	},
 });
 
-export const _delete = procedure.authed.external.mutation({
+export const _delete = zAuthedMutation({
 	args: {
 		boardId: zid('feedbackBoard'),
 		projectId: zid('project'),

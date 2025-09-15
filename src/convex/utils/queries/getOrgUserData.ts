@@ -1,9 +1,9 @@
+import { DataModel, Id } from 'convex/_generated/dataModel';
 import { GenericQueryCtx } from 'convex/server';
 import z from 'zod';
 
-import { DataModel, Id } from '@/convex/_generated/dataModel';
-
-import { components } from '../../../_generated/api';
+import { components } from '../../_generated/api';
+import { authComponent } from '../../auth';
 import { getInternalUserId } from './getInternalUserId';
 import { getOrgBySlug } from './getOrgBySlug';
 
@@ -35,9 +35,9 @@ export const getOrgUserData = async (
 	member: Member | null;
 	userId: Id<'user'> | null;
 }> => {
-	const userIdentity = await ctx.auth.getUserIdentity();
+	const userId = (await authComponent.getAuthUser(ctx))?.userId;
 
-	const internalUserId = await getInternalUserId(ctx, userIdentity?.subject as Id<'user'>);
+	const internalUserId = await getInternalUserId(ctx, userId as Id<'user'>);
 
 	const org = await getOrgBySlug(ctx, orgSlug);
 	if (!org) {
@@ -51,7 +51,7 @@ export const getOrgUserData = async (
 			},
 			org: null,
 			member: null,
-			userId: userIdentity?.subject as Id<'user'> | null,
+			userId: userId as Id<'user'> | null,
 		};
 	}
 
@@ -98,6 +98,6 @@ export const getOrgUserData = async (
 		},
 		org,
 		member,
-		userId: userIdentity?.subject as Id<'user'> | null,
+		userId: userId as Id<'user'> | null,
 	};
 };

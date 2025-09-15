@@ -1,6 +1,6 @@
 import { R2 } from '@convex-dev/r2';
 
-import { components } from '../../_generated/api';
+import { components } from '../_generated/api';
 
 export const userUploadsR2 = new R2(components.r2, {
 	R2_ACCESS_KEY_ID: process.env.R2_USER_UPLOADS_ACCESS_KEY_ID,

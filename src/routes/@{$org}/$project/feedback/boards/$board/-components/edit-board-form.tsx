@@ -1,4 +1,4 @@
-import type { FeedbackBoardSelectSchema } from '@/convex/schema/feedbackBoard.schema';
+import type { FeedbackBoardSelectSchema } from 'convex/schema/feedbackBoard.schema';
 
 import React from 'react';
 import { useConvexMutation } from '@convex-dev/react-query';

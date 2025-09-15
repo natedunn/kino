@@ -1,11 +1,21 @@
 import { ConvexError } from 'convex/values';
 import z from 'zod';
 
-import { feedbackBoardSelectSchema } from '../schema/feedbackBoard.schema';
-import { procedure } from './procedure';
+import { feedbackBoardSelectSchema } from './schema/feedbackBoard.schema';
+import { zQuery } from './utils/functions';
 import { getProjectUserData } from './utils/queries/getProjectUserData';
 
-export const feedback = procedure.base.external.query({
+// export const Test = zQuery({
+// 	args: {},
+// 	handler: async (ctx) => {
+// 		const test = await  ctx.runQuery(components.betterAuth.lib.findOne, {
+// 			model: 'user',
+
+// 		})
+// 	}
+// })
+
+export const feedback = zQuery({
 	args: {
 		projectSlug: z.string(),
 	},

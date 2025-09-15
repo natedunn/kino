@@ -1,8 +1,8 @@
 import { useForm } from '@tanstack/react-form';
+import { Id } from 'convex/_generated/dataModel';
+import { FeedbackCreateSchema, feedbackCreateSchema } from 'convex/schema/feedback.schema';
 
 import { useAppForm } from '@/components/ui/tanstack-form';
-import { Id } from '@/convex/_generated/dataModel';
-import { FeedbackCreateSchema, feedbackCreateSchema } from '@/convex/schema/feedback.schema';
 
 const formSchema = feedbackCreateSchema;
 type FormSchema = FeedbackCreateSchema;
