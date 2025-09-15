@@ -108,7 +108,7 @@ export const getFullOrg = zQuery({
 	},
 	handler: async (ctx, args) => {
 		try {
-			const org = await ctx.runQuery(components.betterAuth.lib.findOne, {
+			const org = await ctx.runQuery(components.betterAuth.adapter.findOne, {
 				model: 'organization',
 				where: [{ field: 'slug', operator: 'eq', value: args.orgSlug }],
 			});

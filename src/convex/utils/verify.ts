@@ -1,4 +1,4 @@
-import type { DataModel, Doc } from 'convex/_generated/dataModel';
+import type { DataModel, Doc } from '@/convex/_generated/dataModel';
 import type { Indexes as ExtractIndexes, GenericMutationCtx, NamedTableInfo } from 'convex/server';
 
 import { ConvexError } from 'convex/values';

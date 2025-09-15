@@ -1,8 +1,8 @@
 import { Link, useParams } from '@tanstack/react-router';
-import { FeedbackBoardSelectSchema } from 'convex/schema/feedbackBoard.schema';
 import { Box, ChevronRight } from 'lucide-react';
 
 import { buttonVariants } from '@/components/ui/button';
+import { FeedbackBoardSelectSchema } from '@/convex/schema/feedbackBoard.schema';
 import { cn } from '@/lib/utils';
 
 type BoardNavProps = {

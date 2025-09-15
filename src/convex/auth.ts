@@ -6,12 +6,11 @@ import { betterAuth } from 'better-auth';
 import { admin, organization, username } from 'better-auth/plugins';
 import { adjectives, nouns, uniqueUsernameGenerator } from 'unique-username-generator';
 
-import { components } from './_generated/api';
+import { components, internal } from './_generated/api';
 import { DataModel, Id } from './_generated/dataModel';
-import { internal } from './betterAuth/_generated/api';
+import { query } from './_generated/server';
 import authSchema from './betterAuth/schema';
 import { userSelectSchema } from './schema/user.schema';
-import { zQuery } from './utils/functions';
 
 const authFunctions: AuthFunctions = internal.auth;
 
@@ -20,7 +19,7 @@ export const authComponent = createClient<DataModel, typeof authSchema>(componen
 	local: {
 		schema: authSchema,
 	},
-	verbose: true,
+	verbose: false,
 	triggers: {
 		user: {
 			onCreate: async (ctx, authUser) => {
@@ -102,7 +101,7 @@ export const createAuth = (ctx: GenericCtx<DataModel>) => {
 
 // Example function for getting the current user
 // Feel free to edit, omit, etc.
-export const getCurrentUser = zQuery({
+export const getCurrentUser = query({
 	args: {},
 	handler: async (ctx) => {
 		const userMetadata = await authComponent.safeGetAuthUser(ctx);

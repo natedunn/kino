@@ -5,7 +5,7 @@ import { components } from '@/convex/_generated/api';
 import { DataModel } from '@/convex/_generated/dataModel';
 
 export const getOrgBySlug = async (ctx: GenericQueryCtx<DataModel>, slug: string) => {
-	const data = await ctx.runQuery(components.betterAuth.lib.findOne, {
+	const data = await ctx.runQuery(components.betterAuth.adapter.findOne, {
 		model: 'organization',
 		where: [{ field: 'slug', operator: 'eq', value: slug }],
 	});

@@ -1,6 +1,7 @@
-import { DataModel, Id } from 'convex/_generated/dataModel';
 import { GenericQueryCtx } from 'convex/server';
 import z from 'zod';
+
+import { DataModel, Id } from '@/convex/_generated/dataModel';
 
 import { components } from '../../_generated/api';
 import { authComponent } from '../../auth';
@@ -71,7 +72,7 @@ export const getOrgUserData = async (
 	}
 
 	// Check if user admin or owner
-	const memberData = await ctx.runQuery(components.betterAuth.lib.findOne, {
+	const memberData = await ctx.runQuery(components.betterAuth.adapter.findOne, {
 		model: 'member',
 		where: [
 			{ field: 'userId', operator: 'eq', value: internalUserId },
