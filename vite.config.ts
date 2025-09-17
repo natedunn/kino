@@ -7,19 +7,19 @@ import tsConfigPaths from 'vite-tsconfig-paths';
 
 export default defineConfig({
 	plugins: [
-		ViteRestart({
-			// Due to hydration issues, we need to restart the server on changes to the following files
-			restart: ['./src/styles/**/*.css'],
-		}),
+		tailwindcss(),
+		// ViteRestart({
+		// 	// Due to hydration issues, we need to restart the server on changes to the following files
+		// 	restart: ['./src/styles/**/*.css'],
+		// }),
 		tsConfigPaths({
 			projects: ['./tsconfig.json'],
 		}),
-		tailwindcss(),
 		tanstackStart({
 			tsr: {
 				srcDirectory: 'src',
 			},
-			target: 'vercel',
+			target: 'cloudflare-worker',
 			customViteReactPlugin: true,
 		}),
 		viteReact(),
