@@ -3,7 +3,7 @@
 	"name": "kino",
 	"compatibility_flags": ["nodejs_compat"],
 	"compatibility_date": "2025-04-03",
-	"main": ".output/server/index.mjs",
+	"main": "./.output/server/index.mjs",
 	"assets": {
 		"directory": "./.output/public/",
 		"binding": "ASSETS",
