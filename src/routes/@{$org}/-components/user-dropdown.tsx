@@ -3,7 +3,7 @@ import { useSuspenseQuery } from '@tanstack/react-query';
 import { useNavigate, useRouteContext } from '@tanstack/react-router';
 import { ChevronDown, Moon, Sun, User } from 'lucide-react';
 
-import { api } from '~api';
+import { API, api } from '~api';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -18,31 +18,15 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { authClient } from '@/lib/auth/auth-client';
 
-export function UserDropdown() {
+export function UserDropdown({ user }: { user: NonNullable<API['user']['getCurrentUser']> }) {
 	const navigate = useNavigate();
-
-	// const { userId } = useRouteContext({
-	// 	from: '__root__',
-	// });
-
-	// const { data: user } = useSuspenseQuery(
-	// 	convexQuery(api.user.get, {
-	// 		_id: userId ?? null,
-	// 	})
-	// );
-
-	const userData = useSuspenseQuery(convexQuery(api.user.getCurrentUser, {}));
-
-	if (!userData.data) return <div>Loading...</div>;
-
-	const user = userData.data;
 
 	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
 				<Button variant='ghost' className='flex items-center gap-2'>
 					<Avatar className='size-6 border'>
-						<AvatarImage src={user.imageUrl} />
+						<AvatarImage src={user.image} />
 						<AvatarFallback>
 							<User className='size-5' />
 						</AvatarFallback>

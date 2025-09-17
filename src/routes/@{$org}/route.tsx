@@ -8,7 +8,13 @@ import { MainNav } from './-components/main-nav';
 
 export const Route = createFileRoute('/@{$org}')({
 	loader: async ({ context }) => {
-		await context.queryClient.ensureQueryData(convexQuery(api.user.getCurrentUser, {}));
+		const user = await context.queryClient.ensureQueryData(
+			convexQuery(api.user.getCurrentUser, {})
+		);
+
+		return {
+			user,
+		};
 	},
 	notFoundComponent: () => {
 		return (
@@ -28,9 +34,11 @@ export const Route = createFileRoute('/@{$org}')({
 });
 
 function RouteComponent() {
+	const { user } = Route.useLoaderData();
 	return (
 		<div className='flex h-screen w-full flex-col'>
 			<div className='flex w-full flex-1 flex-col'>
+				{user?.username}
 				<MainNav />
 				<Outlet />
 			</div>

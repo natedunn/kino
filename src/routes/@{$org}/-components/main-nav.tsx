@@ -187,7 +187,7 @@ export const MainNav = ({ children }: MainNavProps) => {
 								</DropdownMenuContent>
 							</DropdownMenu>
 
-							{user ? <UserDropdown /> : <Link to='/sign-in'>Sign In</Link>}
+							{user ? <UserDropdown user={user} /> : <Link to='/sign-in'>Sign In</Link>}
 						</div>
 					</div>
 				</div>
