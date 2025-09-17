@@ -8,7 +8,7 @@ export const getInternalUserId = async (ctx: GenericQueryCtx<DataModel>, userId:
 		return null;
 	}
 	const user = await ctx
-		.runQuery(components.betterAuth.lib.findOne, {
+		.runQuery(components.betterAuth.adapter.findOne, {
 			model: 'user',
 			where: [{ field: 'userId', operator: 'eq', value: userId }],
 		})

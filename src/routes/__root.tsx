@@ -1,4 +1,5 @@
 import { ConvexBetterAuthProvider } from '@convex-dev/better-auth/react';
+import { fetchSession, getCookieName } from '@convex-dev/better-auth/react-start';
 import { ConvexQueryClient } from '@convex-dev/react-query';
 import { QueryClient } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
@@ -19,15 +20,14 @@ import { DefaultCatchBoundary } from '@/components/_default-catch-boundary';
 import { NotFound } from '@/components/_not-found';
 import { Toaster } from '@/components/ui/sonner';
 import { authClient } from '@/lib/auth/auth-client';
-import { fetchSession, getCookieName } from '@/lib/auth/auth-server-utils';
 
 import appCss from '../styles/app.css?url';
 
 const fetchAuth = createServerFn({ method: 'GET' }).handler(async () => {
-	const sessionCookieName = await getCookieName();
+	const { createAuth } = await import('@/convex/auth');
+	const { session } = await fetchSession(getWebRequest());
+	const sessionCookieName = getCookieName(createAuth);
 	const token = getCookie(sessionCookieName);
-	const request = getWebRequest();
-	const { session } = await fetchSession(request);
 	return {
 		userId: session?.user.id,
 		token,

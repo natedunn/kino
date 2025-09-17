@@ -15,11 +15,11 @@
 		"forceConsistentCasingInFileNames": true,
 		"allowSyntheticDefaultImports": true,
 		"baseUrl": ".",
+		"noEmit": true,
 		"paths": {
-			"~api": ["src/lib/api/index.ts"],
+			"~api": ["src/lib/api.ts"],
 			"@/*": ["src/*"]
-		},
-		"noEmit": true
+		}
 	},
 	"include": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"],
 	"exclude": ["node_modules"]

@@ -1,14 +1,10 @@
-import { createAuth } from '@/lib/auth';
-
-import { feedbackCommentCreateSchema } from '../schema/feedbackComment.schema';
-import { procedure } from './procedure';
+import { feedbackCommentCreateSchema } from './schema/feedbackComment.schema';
+import { zAuthedMutation } from './utils/functions';
 import { triggers } from './utils/trigger';
 
-export const create = procedure.authed.external.mutation({
+export const create = zAuthedMutation({
 	args: feedbackCommentCreateSchema,
-	handler: async (ctx, args) => {
-		const auth = createAuth(ctx);
-	},
+	handler: async () => {},
 });
 
 triggers.register('feedbackComment', async (ctx, change) => {

@@ -1,7 +1,5 @@
 import { defineSchema } from 'convex/server';
 
-import { defineZTable } from '@/convex/api/utils/table';
-
 import { feedback } from './schema/feedback.schema';
 import { feedbackBoard } from './schema/feedbackBoard.schema';
 import { feedbackComment } from './schema/feedbackComment.schema';
@@ -9,12 +7,10 @@ import { feedbackCommentEmote } from './schema/feedbackCommentEmote.schema';
 import { projectSchema } from './schema/project.schema';
 import { projectUser } from './schema/projectUser.schema';
 import { userSchema } from './schema/user.schema';
+import { defineZTable } from './utils/table';
 
 const schema = defineSchema({
-	user: defineZTable(userSchema)
-		.index('by_username', ['username'])
-		.index('by_email', ['email'])
-		.index('by_globalRole', ['globalRole']),
+	user: defineZTable(userSchema).index('by_username', ['username']).index('by_email', ['email']),
 	project: defineZTable(projectSchema)
 		.index('by_orgSlug', ['orgSlug'])
 		.index('by_slug', ['slug'])

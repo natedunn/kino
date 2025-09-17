@@ -1,10 +1,4 @@
-import { procedure } from './procedure';
 import { triggers } from './utils/trigger';
-
-export const create = procedure.authed.external.mutation({
-	args: {},
-	handler: async () => {},
-});
 
 triggers.register('feedback', async (ctx, change) => {
 	if (change.operation === 'delete') {

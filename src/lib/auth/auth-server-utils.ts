@@ -1,7 +1,7 @@
-import { reactStartHelpers } from '@convex-dev/better-auth/react-start';
+import { setupFetchClient } from '@convex-dev/better-auth/react-start';
 
-import { createAuth } from '@/lib/auth';
+import { createAuth } from '@/convex/api/auth';
 
-export const { fetchSession, reactStartHandler, getCookieName } = reactStartHelpers(createAuth, {
-	convexSiteUrl: import.meta.env.VITE_CONVEX_SITE_URL,
-});
+// These helpers call Convex functions using a token from
+// Better Auth's cookies, if available.
+export const { fetchQuery, fetchMutation, fetchAction } = await setupFetchClient(createAuth);

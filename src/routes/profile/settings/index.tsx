@@ -12,7 +12,7 @@ export const Route = createFileRoute('/profile/settings/')({
 	loader: async ({ context }) => {
 		if (!context.userId) {
 			throw redirect({
-				to: '/blank/sign-in',
+				to: '/sign-in',
 			});
 		}
 	},

@@ -9,52 +9,62 @@ import {
 	selectProjectSchema,
 	updateProjectSchema,
 } from '@/convex/schema/project.schema';
-import { createAuth } from '@/lib/auth';
 
-import schema from '../schema';
-import { betterAuthComponent } from './auth';
-import { procedure } from './procedure';
+import { authComponent, createAuth } from './auth';
+import schema from './schema';
+import { zAuthedMutation, zQuery } from './utils/functions';
 import { getProjectUserData } from './utils/queries/getProjectUserData';
 import { triggers } from './utils/trigger';
 import { verify } from './utils/verify';
 
-export const create = procedure.authed.external.mutation({
+export const create = zAuthedMutation({
 	args: createProjectSchema,
 	handler: async (ctx, args) => {
-		const auth = createAuth(ctx);
+		const headers = await authComponent.getHeaders(ctx);
 
-		const member = await auth.api.getActiveMember({
-			headers: await betterAuthComponent.getHeaders(ctx),
-		});
+		if (headers) {
+			const member = await createAuth(ctx).api.getActiveMember({
+				headers,
+			});
 
-		if (!member || (member?.role !== 'admin' && member?.role !== 'owner')) {
+			if (!member || (member?.role !== 'admin' && member?.role !== 'owner')) {
+				throw new ConvexError({
+					message: 'User does not have permission',
+					code: '403',
+				});
+			}
+
+			await verify.insert({
+				ctx,
+				tableName: 'project',
+				data: args,
+				onFail: ({ uniqueRow }) => {
+					throw new ConvexError({
+						message: `A project with the slug of '${uniqueRow?.existingData.slug}' already exists for this team.`,
+					});
+				},
+			});
+		} else {
 			throw new ConvexError({
-				message: 'User does not have permission',
-				code: '403',
+				message: 'Headers not defined',
+				code: '500',
 			});
 		}
-
-		await verify.insert({
-			ctx,
-			tableName: 'project',
-			data: args,
-			onFail: ({ uniqueRow }) => {
-				throw new ConvexError({
-					message: `A project with the slug of '${uniqueRow?.existingData.slug}' already exists for this team.`,
-				});
-			},
-		});
 	},
 });
 
-export const update = procedure.authed.external.mutation({
+export const update = zAuthedMutation({
 	args: updateProjectSchema,
 	handler: async (ctx, args) => {
-		const auth = createAuth(ctx);
+		const headers = await authComponent.getHeaders(ctx);
 
-		const member = await auth.api.getActiveMember({
-			headers: await betterAuthComponent.getHeaders(ctx),
-		});
+		let member = null;
+
+		if (headers) {
+			member = await createAuth(ctx).api.getActiveMember({
+				headers,
+			});
+		}
 
 		if (!member || (member?.role !== 'admin' && member?.role !== 'owner')) {
 			throw new ConvexError({
@@ -76,7 +86,7 @@ export const update = procedure.authed.external.mutation({
 	},
 });
 
-export const getManyByOrg = procedure.base.external.query({
+export const getManyByOrg = zQuery({
 	args: {
 		orgSlug: z.string(),
 		limit: z.number().optional(),
@@ -86,7 +96,7 @@ export const getManyByOrg = procedure.base.external.query({
 
 		const memberOrgs = await auth.api
 			.listOrganizations({
-				headers: await betterAuthComponent.getHeaders(ctx),
+				headers: await authComponent.getHeaders(ctx),
 			})
 			.catch(() => null);
 
@@ -125,7 +135,7 @@ export const getManyByOrg = procedure.base.external.query({
 	},
 });
 
-export const getFullProject = procedure.base.external.query({
+export const getFullProject = zQuery({
 	args: projectSchema
 		.pick({
 			slug: true,

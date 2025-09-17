@@ -3,13 +3,13 @@ import type { FeedbackBoardCreateSchema } from '@/convex/schema/feedbackBoard.sc
 import React from 'react';
 import { useConvexMutation } from '@convex-dev/react-query';
 import { useMutation } from '@tanstack/react-query';
+import { Id } from 'convex/_generated/dataModel';
 
 import { api } from '~api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAppForm, useFormError } from '@/components/ui/tanstack-form';
 import { Textarea } from '@/components/ui/textarea';
-import { Id } from '@/convex/_generated/dataModel';
 import { feedbackBoardCreateSchema } from '@/convex/schema/feedbackBoard.schema';
 import { cn } from '@/lib/utils';
 

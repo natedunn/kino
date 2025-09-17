@@ -5,21 +5,15 @@ import { ConvexError } from 'convex/values';
 import { z } from 'zod';
 
 import { limits } from '@/config/limits';
-import { createAuth } from '@/lib/auth';
+import { createAuth } from '@/convex/auth';
 
-import { DataModel, Id } from '../_generated/dataModel';
-import { userSchema, userUpdateSchema } from '../schema/user.schema';
-import { betterAuthComponent } from './auth';
-import { procedure } from './procedure';
-// import { getUserByIdentifier, getUserByIdentifierSchema } from './user.utils';
+import { DataModel, Id } from './_generated/dataModel';
+import { authComponent } from './auth';
+import { userSchema, userUpdateSchema } from './schema/user.schema';
+import { query, zAuthedMutation, zQuery } from './utils/functions';
 import { userUploadsR2 } from './utils/r2';
 
-// export const get = procedure.base.external.query({
-// 	args: getUserByIdentifierSchema,
-// 	handler: async (ctx, args) => getUserByIdentifier(ctx, args),
-// });
-
-export const getUserIndexes = procedure.base.external.query({
+export const getUserIndexes = zQuery({
 	args: {
 		_id: zid('user'),
 	},
@@ -31,13 +25,12 @@ export const getUserIndexes = procedure.base.external.query({
 				_id: true,
 				email: true,
 				username: true,
-				globalRole: true,
 			})
 			.parse(user);
 	},
 });
 
-export const getList = procedure.base._convex.external.query({
+export const getList = query({
 	args: { paginationOpts: paginationOptsValidator },
 	handler: async (ctx, args) => {
 		const results = ctx.db
@@ -52,7 +45,7 @@ export const getList = procedure.base._convex.external.query({
 	},
 });
 
-export const getUserImage = procedure.base.external.query({
+export const getUserImage = zQuery({
 	args: {
 		_id: zid('user'),
 	},
@@ -67,7 +60,7 @@ export const getUserImage = procedure.base.external.query({
 	},
 });
 
-export const update = procedure.authed.external.mutation({
+export const update = zAuthedMutation({
 	args: userUpdateSchema,
 	handler: async (ctx, args) => {
 		const auth = createAuth(ctx);
@@ -79,7 +72,7 @@ export const update = procedure.authed.external.mutation({
 				username,
 				name,
 			},
-			headers: await betterAuthComponent.getHeaders(ctx),
+			headers: await authComponent.getHeaders(ctx),
 		});
 
 		return {
@@ -88,28 +81,30 @@ export const update = procedure.authed.external.mutation({
 	},
 });
 
-export const getTeamList = procedure.base.external.query({
+export const getTeamList = zQuery({
 	args: {},
 	handler: async (ctx) => {
-		const userIdentity = await ctx.auth.getUserIdentity();
+		const userId = (await authComponent.getAuthUser(ctx))?.userId;
 
-		if (!userIdentity) {
+		if (!userId) {
 			return null;
 		}
 
 		const auth = createAuth(ctx);
 		const teams = await auth.api.listOrganizations({
-			headers: await betterAuthComponent.getHeaders(ctx),
+			headers: await authComponent.getHeaders(ctx),
 		});
 
-		const user = await betterAuthComponent.getAuthUser(ctx);
+		const user = await authComponent.getAuthUser(ctx);
 
-		let limit: number;
-		if (user?.role === 'admin') {
-			limit = limits.admin.MAX_ORGS;
-		} else {
-			limit = limits.free.MAX_ORGS;
-		}
+		// TODO reimplement this
+		let limit = limits.free.MAX_ORGS;
+		// let limit: number;
+		// if (user?.role === 'admin') {
+		// 	limit = limits.admin.MAX_ORGS;
+		// } else {
+		// 	limit = limits.free.MAX_ORGS;
+		// }
 
 		return { teams, underLimit: teams.length < limit };
 	},
@@ -117,9 +112,9 @@ export const getTeamList = procedure.base.external.query({
 
 export const { generateUploadUrl, syncMetadata } = userUploadsR2.clientApi({
 	checkUpload: async (ctx: GenericQueryCtx<DataModel>, bucket) => {
-		const userIdentity = await ctx.auth.getUserIdentity();
+		const userId = (await authComponent.getAuthUser(ctx))?.userId;
 
-		if (!userIdentity) {
+		if (!userId) {
 			throw new ConvexError({
 				code: '404',
 				message: 'Forbidden — user is not authenticated',
@@ -131,9 +126,9 @@ export const { generateUploadUrl, syncMetadata } = userUploadsR2.clientApi({
 		}
 	},
 	onUpload: async (ctx, _bucket, key) => {
-		const userIdentity = await ctx.auth.getUserIdentity();
+		const userId = (await authComponent.getAuthUser(ctx))?.userId;
 
-		if (!userIdentity) {
+		if (!userId) {
 			throw new ConvexError({
 				code: '500',
 				message: 'Internal server error — user is not authenticated (even though they should be)',
@@ -142,7 +137,7 @@ export const { generateUploadUrl, syncMetadata } = userUploadsR2.clientApi({
 
 		const userIdFromKey = key.split('_')[1].split('.')[0];
 
-		if (userIdFromKey !== userIdentity.subject) {
+		if (userIdFromKey !== userId) {
 			throw new ConvexError({
 				code: '403',
 				message: 'Forbidden — user is not authorized (even though they should be)',
@@ -152,7 +147,7 @@ export const { generateUploadUrl, syncMetadata } = userUploadsR2.clientApi({
 		const typeFromKey = key.split('_')[0];
 
 		if (typeFromKey === 'PFP') {
-			await ctx.db.patch(userIdentity.subject as Id<'user'>, {
+			await ctx.db.patch(userId as Id<'user'>, {
 				imageKey: key,
 			});
 		} else {
@@ -164,7 +159,7 @@ export const { generateUploadUrl, syncMetadata } = userUploadsR2.clientApi({
 	},
 });
 
-export const generateUserUploadUrl = procedure.authed.external.mutation({
+export const generateUserUploadUrl = zAuthedMutation({
 	args: {
 		type: z.enum(['PFP']),
 	},
