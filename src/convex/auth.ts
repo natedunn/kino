@@ -67,7 +67,7 @@ export const { onCreate, onUpdate, onDelete } = authComponent.triggersApi();
 
 export const createAuth = (ctx: GenericCtx<DataModel>) => {
 	return betterAuth({
-		baseURL: process.env.VITE_BASE_URL as string,
+		baseURL: process.env.SITE_URL!,
 		trustedOrigins: ['http://localhost:3000', 'https://usekino.com'],
 		database: authComponent.adapter(ctx),
 		account: {

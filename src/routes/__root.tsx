@@ -1,5 +1,5 @@
 import { ConvexBetterAuthProvider } from '@convex-dev/better-auth/react';
-import { fetchSession, getAuth, getCookieName } from '@convex-dev/better-auth/react-start';
+import { fetchSession, getCookieName } from '@convex-dev/better-auth/react-start';
 import { ConvexQueryClient } from '@convex-dev/react-query';
 import { QueryClient } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
@@ -13,23 +13,21 @@ import {
 } from '@tanstack/react-router';
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools';
 import { createServerFn } from '@tanstack/react-start';
-import { getWebRequest } from '@tanstack/react-start/server';
+import { getCookie, getWebRequest } from '@tanstack/react-start/server';
 import { ConvexReactClient } from 'convex/react';
 
 import { DefaultCatchBoundary } from '@/components/_default-catch-boundary';
 import { NotFound } from '@/components/_not-found';
 import { Toaster } from '@/components/ui/sonner';
-import { createAuth } from '@/convex/auth';
 import { authClient } from '@/lib/auth/auth-client';
 
 import appCss from '../styles/app.css?url';
 
 const fetchAuth = createServerFn({ method: 'GET' }).handler(async () => {
-	const request = getWebRequest();
-	const { getCookie } = await import('@tanstack/react-start/server');
+	const { createAuth } = await import('@/convex/auth');
+	const { session } = await fetchSession(getWebRequest());
 	const sessionCookieName = getCookieName(createAuth);
 	const token = getCookie(sessionCookieName);
-	const { session } = await fetchSession(request);
 	return {
 		userId: session?.user.id,
 		token,
