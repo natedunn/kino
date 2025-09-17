@@ -73,12 +73,12 @@
 		"tailwindcss": "^4.1.13",
 		"tailwindcss-hocus": "^1.0.0",
 		"unique-username-generator": "^1.5.1",
-		"vite": "^7.1.5",
 		"vite-plugin-restart": "^1.0.0",
 		"vite-tsconfig-paths": "^5.1.4",
 		"zod": "3.25.76"
 	},
 	"devDependencies": {
+		"@cloudflare/vite-plugin": "^1.13.2",
 		"@eslint/js": "^9.35.0",
 		"@types/node": "^24.3.1",
 		"@types/react": "^19.1.12",
@@ -93,7 +93,9 @@
 		"prettier": "^3.6.2",
 		"tw-animate-css": "^1.3.8",
 		"typescript": "^5.9.2",
-		"typescript-eslint": "^8.42.0"
+		"typescript-eslint": "^8.42.0",
+		"vite": "^7.1.5",
+		"wrangler": "^4.37.1"
 	},
 	"pnpm": {
 		"onlyBuiltDependencies": [
