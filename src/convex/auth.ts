@@ -19,7 +19,7 @@ export const authComponent = createClient<DataModel, typeof authSchema>(componen
 	local: {
 		schema: authSchema,
 	},
-	verbose: false,
+	verbose: true,
 	triggers: {
 		user: {
 			onCreate: async (ctx, authUser) => {

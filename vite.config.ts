@@ -6,13 +6,6 @@ import ViteRestart from 'vite-plugin-restart';
 import tsConfigPaths from 'vite-tsconfig-paths';
 
 export default defineConfig({
-	optimizeDeps: {
-		exclude: [
-			'tanstack-start-server-fn-manifest:v',
-			'tanstack-start-router-manifest:v',
-			'tanstack-start-server-routes-manifest:v',
-		],
-	},
 	plugins: [
 		tailwindcss(),
 		ViteRestart({
