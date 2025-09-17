@@ -15,6 +15,7 @@ import type * as betterAuth_adapter from "../betterAuth/adapter.js";
 import type * as betterAuth_auth from "../betterAuth/auth.js";
 import type * as betterAuth_generatedSchema from "../betterAuth/generatedSchema.js";
 import type * as betterAuth_org from "../betterAuth/org.js";
+import type * as betterAuth_user from "../betterAuth/user.js";
 import type * as features from "../features.js";
 import type * as feedback from "../feedback.js";
 import type * as feedbackBoard from "../feedbackBoard.js";
@@ -59,6 +60,7 @@ declare const fullApi: ApiFromModules<{
   "betterAuth/auth": typeof betterAuth_auth;
   "betterAuth/generatedSchema": typeof betterAuth_generatedSchema;
   "betterAuth/org": typeof betterAuth_org;
+  "betterAuth/user": typeof betterAuth_user;
   features: typeof features;
   feedback: typeof feedback;
   feedbackBoard: typeof feedbackBoard;
@@ -1538,6 +1540,14 @@ export declare const components: {
         "query",
         "internal",
         { slug: { slug?: null | string } },
+        any
+      >;
+    };
+    user: {
+      updateUsername: FunctionReference<
+        "mutation",
+        "internal",
+        { authId: string; username?: null | string },
         any
       >;
     };

@@ -63,7 +63,7 @@ export const MainNav = ({ children }: MainNavProps) => {
 	const orgSlug = orgParams?.org;
 	const projectSlug = projectParams?.project;
 
-	const { data: user } = useSuspenseQuery(convexQuery(api.auth.getCurrentUser, {}));
+	const { data: user } = useSuspenseQuery(convexQuery(api.user.getCurrentUser, {}));
 
 	React.useEffect(() => {
 		const handleKeyDown = (e: KeyboardEvent) => {

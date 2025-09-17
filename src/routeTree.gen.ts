@@ -11,6 +11,7 @@
 import { createServerRootRoute } from '@tanstack/react-start/server'
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as HomeRouteImport } from './routes/home'
 import { Route as AtChar123orgChar125RouteRouteImport } from './routes/@{$org}/route'
 import { Route as SettingsIndexRouteImport } from './routes/settings/index'
 import { Route as MarketingIndexRouteImport } from './routes/_marketing/index'
@@ -46,6 +47,11 @@ import { ServerRoute as ApiAuthSplatServerRouteImport } from './routes/api/auth/
 
 const rootServerRouteImport = createServerRootRoute()
 
+const HomeRoute = HomeRouteImport.update({
+  id: '/home',
+  path: '/home',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AtChar123orgChar125RouteRoute =
   AtChar123orgChar125RouteRouteImport.update({
     id: '/@{$org}',
@@ -230,6 +236,7 @@ const ApiAuthSplatServerRoute = ApiAuthSplatServerRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/@{$org}': typeof AtChar123orgChar125RouteRouteWithChildren
+  '/home': typeof HomeRoute
   '/@{$org}/$project': typeof AtChar123orgChar125ProjectRouteRouteWithChildren
   '/@{$org}/settings': typeof AtChar123orgChar125SettingsRoute
   '/404': typeof Blank404Route
@@ -262,6 +269,7 @@ export interface FileRoutesByFullPath {
   '/@{$org}/$project/feedback/boards/$board': typeof AtChar123orgChar125ProjectFeedbackBoardsBoardIndexRoute
 }
 export interface FileRoutesByTo {
+  '/home': typeof HomeRoute
   '/@{$org}/settings': typeof AtChar123orgChar125SettingsRoute
   '/404': typeof Blank404Route
   '/sign-in': typeof BlankSignInRoute
@@ -294,6 +302,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/@{$org}': typeof AtChar123orgChar125RouteRouteWithChildren
+  '/home': typeof HomeRoute
   '/@{$org}/$project': typeof AtChar123orgChar125ProjectRouteRouteWithChildren
   '/@{$org}/settings': typeof AtChar123orgChar125SettingsRoute
   '/_blank/404': typeof Blank404Route
@@ -329,6 +338,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/@{$org}'
+    | '/home'
     | '/@{$org}/$project'
     | '/@{$org}/settings'
     | '/404'
@@ -361,6 +371,7 @@ export interface FileRouteTypes {
     | '/@{$org}/$project/feedback/boards/$board'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/home'
     | '/@{$org}/settings'
     | '/404'
     | '/sign-in'
@@ -392,6 +403,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/@{$org}'
+    | '/home'
     | '/@{$org}/$project'
     | '/@{$org}/settings'
     | '/_blank/404'
@@ -426,6 +438,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   AtChar123orgChar125RouteRoute: typeof AtChar123orgChar125RouteRouteWithChildren
+  HomeRoute: typeof HomeRoute
   Blank404Route: typeof Blank404Route
   BlankSignInRoute: typeof BlankSignInRoute
   BlankSignOutRoute: typeof BlankSignOutRoute
@@ -461,6 +474,13 @@ export interface RootServerRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/home': {
+      id: '/home'
+      path: '/home'
+      fullPath: '/home'
+      preLoaderRoute: typeof HomeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/@{$org}': {
       id: '/@{$org}'
       path: '/@{$org}'
@@ -787,6 +807,7 @@ const AtChar123orgChar125RouteRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   AtChar123orgChar125RouteRoute: AtChar123orgChar125RouteRouteWithChildren,
+  HomeRoute: HomeRoute,
   Blank404Route: Blank404Route,
   BlankSignInRoute: BlankSignInRoute,
   BlankSignOutRoute: BlankSignOutRoute,

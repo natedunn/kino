@@ -8,9 +8,7 @@ import { adjectives, nouns, uniqueUsernameGenerator } from 'unique-username-gene
 
 import { components, internal } from './_generated/api';
 import { DataModel, Id } from './_generated/dataModel';
-import { query } from './_generated/server';
 import authSchema from './betterAuth/schema';
-import { userSelectSchema } from './schema/user.schema';
 
 const authFunctions: AuthFunctions = internal.auth;
 
@@ -19,7 +17,7 @@ export const authComponent = createClient<DataModel, typeof authSchema>(componen
 	local: {
 		schema: authSchema,
 	},
-	verbose: true,
+	verbose: false,
 	triggers: {
 		user: {
 			onCreate: async (ctx, authUser) => {
@@ -31,34 +29,21 @@ export const authComponent = createClient<DataModel, typeof authSchema>(componen
 					randomDigits: 3,
 				});
 
-				const userId = await ctx.db.insert('user', {
-					email: authUser.email,
-					name: authUser.name,
-					username: authUser.username ?? generatedUsername,
-					imageUrl: typeof authUser.image === 'string' ? authUser.image : undefined,
-					banned: false,
-					private: false,
-				});
+				const userId = await ctx.db.insert('user', {});
+
+				if (!authUser.username) {
+					await ctx.runMutation(components.betterAuth.user.updateUsername, {
+						authId: authUser._id,
+						username: generatedUsername,
+					});
+				}
 
 				await authComponent.setUserId(ctx, authUser._id, userId);
 			},
 			onDelete: async (ctx, user) => {
 				await ctx.db.delete(user.userId as Id<'user'>);
 			},
-			onUpdate: async (ctx, _oldUser, newUser) => {
-				if (!newUser.username) {
-					console.error('No username provided in onUpdateUser.');
-				}
-
-				// Keep the user's email synced
-				const userId = newUser.userId as Id<'user'>;
-				await ctx.db.patch(userId, {
-					email: newUser.email,
-					name: newUser.name,
-					imageUrl: typeof newUser.image === 'string' ? newUser.image : undefined,
-					username: typeof newUser.username === 'string' ? newUser.username : undefined,
-				});
-			},
+			onUpdate: async (_ctx, _oldUser, _newUser) => {},
 		},
 	},
 });
@@ -88,7 +73,6 @@ export const createAuth = (ctx: GenericCtx<DataModel>) => {
 		},
 		plugins: [
 			username({
-				// NOTE: make sure this matches zod schema for now
 				minUsernameLength: 3,
 				maxUsernameLength: 39,
 			}),
@@ -98,25 +82,3 @@ export const createAuth = (ctx: GenericCtx<DataModel>) => {
 		],
 	});
 };
-
-// Example function for getting the current user
-// Feel free to edit, omit, etc.
-export const getCurrentUser = query({
-	args: {},
-	handler: async (ctx) => {
-		const userMetadata = await authComponent.safeGetAuthUser(ctx);
-
-		if (!userMetadata) {
-			return null;
-		}
-
-		const userData = await ctx.db.get(userMetadata.userId as Id<'user'>);
-
-		const user = userSelectSchema.parse(userData);
-
-		return {
-			...user,
-			...userMetadata,
-		};
-	},
-});

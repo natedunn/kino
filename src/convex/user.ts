@@ -1,5 +1,3 @@
-import { getOneFrom } from 'convex-helpers/server/relationships';
-import { zid } from 'convex-helpers/server/zod';
 import { GenericQueryCtx, paginationOptsValidator } from 'convex/server';
 import { ConvexError } from 'convex/values';
 import { z } from 'zod';
@@ -9,35 +7,19 @@ import { createAuth } from '@/convex/auth';
 
 import { DataModel, Id } from './_generated/dataModel';
 import { authComponent } from './auth';
-import { userSchema, userUpdateSchema } from './schema/user.schema';
+import { safeGetUser } from './user.utils';
 import { query, zAuthedMutation, zQuery } from './utils/functions';
 import { userUploadsR2 } from './utils/r2';
-
-export const getUserIndexes = zQuery({
-	args: {
-		_id: zid('user'),
-	},
-	handler: async (ctx, args) => {
-		const user = await getOneFrom(ctx.db, 'user', 'by_id', args._id, '_id');
-
-		return userSchema
-			.pick({
-				_id: true,
-				email: true,
-				username: true,
-			})
-			.parse(user);
-	},
-});
 
 export const getList = query({
 	args: { paginationOpts: paginationOptsValidator },
 	handler: async (ctx, args) => {
 		const results = ctx.db
 			.query('user')
-			.filter((q) => {
-				return q.or(q.eq(q.field('private'), false), q.eq(q.field('private'), undefined));
-			})
+			// TODO: add a filter back
+			// .filter((q) => {
+			// 	return q.or(q.eq(q.field('private'), false), q.eq(q.field('private'), undefined));
+			// })
 			.order('desc')
 			.paginate(args.paginationOpts);
 
@@ -45,41 +27,26 @@ export const getList = query({
 	},
 });
 
-export const getUserImage = zQuery({
-	args: {
-		_id: zid('user'),
-	},
-	handler: async (ctx, args) => {
-		const user = await ctx.db.get(args._id);
+// export const update = zAuthedMutation({
+// 	args: userUpdateSchema,
+// 	handler: async (ctx, args) => {
+// 		const auth = createAuth(ctx);
 
-		if (!user) {
-			return null;
-		}
+// 		const { username, name, ..._rest } = args;
 
-		return user.imageUrl;
-	},
-});
+// 		await auth.api.updateUser({
+// 			body: {
+// 				username,
+// 				name,
+// 			},
+// 			headers: await authComponent.getHeaders(ctx),
+// 		});
 
-export const update = zAuthedMutation({
-	args: userUpdateSchema,
-	handler: async (ctx, args) => {
-		const auth = createAuth(ctx);
-
-		const { username, name, ..._rest } = args;
-
-		await auth.api.updateUser({
-			body: {
-				username,
-				name,
-			},
-			headers: await authComponent.getHeaders(ctx),
-		});
-
-		return {
-			success: true,
-		};
-	},
-});
+// 		return {
+// 			success: true,
+// 		};
+// 	},
+// });
 
 export const getTeamList = zQuery({
 	args: {},
@@ -107,6 +74,13 @@ export const getTeamList = zQuery({
 		// }
 
 		return { teams, underLimit: teams.length < limit };
+	},
+});
+
+export const getCurrentUser = query({
+	args: {},
+	handler: async (ctx) => {
+		return safeGetUser(ctx);
 	},
 });
 

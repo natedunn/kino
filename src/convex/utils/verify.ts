@@ -465,12 +465,7 @@ const verifyConfig = ({
 
 // Verify config
 export const { verify } = verifyConfig({
-	uniqueColumns: {
-		user: {
-			indexes: ['by_email', 'by_username'],
-			identifiers: ['_id'],
-		},
-	},
+	uniqueColumns: {},
 	uniqueRows: {
 		project: {
 			by_orgSlug_slug: ['orgSlug', 'slug'],

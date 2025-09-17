@@ -23,7 +23,7 @@ export const Route = createFileRoute('/_blank/sign-in')({
 });
 
 function RouteComponent() {
-	// const search = Route.useSearch();
+	const search = Route.useSearch();
 
 	return (
 		<div className='flex h-screen flex-col items-center justify-center'>
@@ -33,7 +33,7 @@ function RouteComponent() {
 						onClick={async () => {
 							await authClient.signIn.social({
 								provider: 'github',
-								// callbackURL: search.redirect,
+								callbackURL: search.redirect,
 							});
 						}}
 					>

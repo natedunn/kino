@@ -31,7 +31,7 @@ export function UserDropdown() {
 	// 	})
 	// );
 
-	const userData = useSuspenseQuery(convexQuery(api.auth.getCurrentUser, {}));
+	const userData = useSuspenseQuery(convexQuery(api.user.getCurrentUser, {}));
 
 	if (!userData.data) return <div>Loading...</div>;
 

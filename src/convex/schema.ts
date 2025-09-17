@@ -10,7 +10,7 @@ import { userSchema } from './schema/user.schema';
 import { defineZTable } from './utils/table';
 
 const schema = defineSchema({
-	user: defineZTable(userSchema).index('by_username', ['username']).index('by_email', ['email']),
+	user: defineZTable(userSchema),
 	project: defineZTable(projectSchema)
 		.index('by_orgSlug', ['orgSlug'])
 		.index('by_slug', ['slug'])

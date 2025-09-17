@@ -8,7 +8,7 @@ import { MainNav } from './-components/main-nav';
 
 export const Route = createFileRoute('/@{$org}')({
 	loader: async ({ context }) => {
-		await context.queryClient.ensureQueryData(convexQuery(api.auth.getCurrentUser, {}));
+		await context.queryClient.ensureQueryData(convexQuery(api.user.getCurrentUser, {}));
 	},
 	notFoundComponent: () => {
 		return (
