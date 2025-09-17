@@ -26,7 +26,7 @@ export default defineConfig({
 			tsr: {
 				srcDirectory: 'src',
 			},
-			target: 'cloudflare-worker',
+			target: 'vercel',
 			customViteReactPlugin: true,
 		}),
 		viteReact(),
