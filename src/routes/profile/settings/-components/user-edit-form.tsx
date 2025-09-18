@@ -6,25 +6,25 @@ import { useMutation as convexMutation } from 'convex/react';
 import { ConvexError } from 'convex/values';
 import z from 'zod';
 
-import { api } from '~api';
+import { API, api } from '~api';
 import { InlineAlert } from '@/components/inline-alert';
 import { Label, LabelWrapper } from '@/components/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { userUpdateSchema } from '@/convex/schema/user.schema';
+import { updateSafeUserSchema } from '@/convex/schema/user.schema';
 import { cn } from '@/lib/utils';
 
 const formSchema = z
 	.object({
 		files: z.instanceof(File).array().optional(),
 	})
-	.merge(userUpdateSchema);
+	.merge(updateSafeUserSchema);
 
 type FormSchema = z.infer<typeof formSchema>;
 
 type UserEditFormProps = {
-	user: z.infer<typeof userUpdateSchema>;
+	user: NonNullable<API['user']['getCurrentUser']>;
 };
 
 export const UserEditForm = ({ user }: UserEditFormProps) => {
@@ -61,7 +61,7 @@ export const UserEditForm = ({ user }: UserEditFormProps) => {
 	const defaultValues: FormSchema = {
 		files: undefined,
 		username: user.username,
-		imageUrl: user.imageUrl,
+		image: user.image,
 		name: user.name,
 	};
 
@@ -73,7 +73,7 @@ export const UserEditForm = ({ user }: UserEditFormProps) => {
 		onSubmit: async ({ value, formApi }) => {
 			setFormError(undefined);
 
-			const { files, imageUrl, ...rest } = value;
+			const { files, image, ...rest } = value;
 
 			if (files) {
 				await handleUpload(files);
@@ -102,13 +102,13 @@ export const UserEditForm = ({ user }: UserEditFormProps) => {
 									<Label>Avatar</Label>
 								</LabelWrapper>
 								<div className='flex items-center gap-4'>
-									{(field.state.value || user.imageUrl) && (
+									{(field.state.value || user.image) && (
 										<Avatar className='size-16 rounded-lg'>
 											<AvatarImage
 												src={
 													field.state.value?.[0]
 														? URL.createObjectURL(field.state.value[0])
-														: user.imageUrl
+														: user.image
 												}
 												alt={user.name}
 											/>

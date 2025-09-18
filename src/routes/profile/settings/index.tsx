@@ -27,7 +27,9 @@ function RouteComponent() {
 		<div className='flex flex-1 flex-col'>
 			<div className='container py-12'>
 				<h1 className='text-2xl font-bold'>Edit profile</h1>
-				<div className='mt-6'>{/* <UserEditForm user={user} /> */}</div>
+				<div className='mt-6'>
+					<UserEditForm user={user} />
+				</div>
 			</div>
 		</div>
 	);

@@ -17,12 +17,12 @@ export const safeGetUser = async (ctx: QueryCtx) => {
 
 	// Handler avatar image
 	let trueImage: string | undefined;
-	if (authUser?.image) {
-		trueImage = authUser.image;
-	} else if (user.imageKey) {
+	if (user.imageKey) {
 		trueImage = await userUploadsR2.getUrl(user.imageKey, {
 			expiresIn: 60 * 60 * 24,
 		});
+	} else if (authUser?.image) {
+		trueImage = authUser.image;
 	} else {
 		trueImage = undefined;
 	}

@@ -7,6 +7,7 @@ import { createAuth } from '@/convex/auth';
 
 import { DataModel, Id } from './_generated/dataModel';
 import { authComponent } from './auth';
+import { selectSafeUserSchema, updateSafeUserSchema } from './schema/user.schema';
 import { safeGetUser } from './user.utils';
 import { query, zAuthedMutation, zQuery } from './utils/functions';
 import { userUploadsR2 } from './utils/r2';
@@ -27,26 +28,21 @@ export const getList = query({
 	},
 });
 
-// export const update = zAuthedMutation({
-// 	args: userUpdateSchema,
-// 	handler: async (ctx, args) => {
-// 		const auth = createAuth(ctx);
+export const update = zAuthedMutation({
+	args: updateSafeUserSchema,
+	handler: async (ctx, args) => {
+		const auth = createAuth(ctx);
 
-// 		const { username, name, ..._rest } = args;
+		await auth.api.updateUser({
+			body: args,
+			headers: await authComponent.getHeaders(ctx),
+		});
 
-// 		await auth.api.updateUser({
-// 			body: {
-// 				username,
-// 				name,
-// 			},
-// 			headers: await authComponent.getHeaders(ctx),
-// 		});
-
-// 		return {
-// 			success: true,
-// 		};
-// 	},
-// });
+		return {
+			success: true,
+		};
+	},
+});
 
 export const getTeamList = zQuery({
 	args: {},
@@ -80,7 +76,8 @@ export const getTeamList = zQuery({
 export const getCurrentUser = query({
 	args: {},
 	handler: async (ctx) => {
-		return safeGetUser(ctx);
+		const user = await safeGetUser(ctx);
+		return selectSafeUserSchema.parse(user);
 	},
 });
 
@@ -100,7 +97,11 @@ export const { generateUploadUrl, syncMetadata } = userUploadsR2.clientApi({
 		}
 	},
 	onUpload: async (ctx, _bucket, key) => {
-		const userId = (await authComponent.getAuthUser(ctx))?.userId;
+		const user = await authComponent.getAuthUser(ctx);
+
+		console.log(user);
+
+		const userId = user?.userId;
 
 		if (!userId) {
 			throw new ConvexError({
@@ -138,7 +139,7 @@ export const generateUserUploadUrl = zAuthedMutation({
 		type: z.enum(['PFP']),
 	},
 	handler: async (ctx, args) => {
-		const key = `${args.type}_${ctx.user._id}${args.type !== 'PFP' ? `.${crypto.randomUUID()}` : ''}`;
+		const key = `${args.type}_${ctx.user.userId}${args.type !== 'PFP' ? `.${crypto.randomUUID()}` : ''}`;
 		return userUploadsR2.generateUploadUrl(key);
 	},
 });
