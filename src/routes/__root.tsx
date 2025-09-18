@@ -2,7 +2,6 @@ import { ConvexBetterAuthProvider } from '@convex-dev/better-auth/react';
 import { fetchSession, getCookieName } from '@convex-dev/better-auth/react-start';
 import { ConvexQueryClient } from '@convex-dev/react-query';
 import { QueryClient } from '@tanstack/react-query';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import {
 	createRootRouteWithContext,
 	HeadContent,
@@ -11,7 +10,6 @@ import {
 	Scripts,
 	useRouteContext,
 } from '@tanstack/react-router';
-import { TanStackRouterDevtools } from '@tanstack/react-router-devtools';
 import { createServerFn } from '@tanstack/react-start';
 import { getCookie, getWebRequest } from '@tanstack/react-start/server';
 import { ConvexReactClient } from 'convex/react';
@@ -22,6 +20,7 @@ import { Toaster } from '@/components/ui/sonner';
 import { authClient } from '@/lib/auth/auth-client';
 
 import appCss from '../styles/app.css?url';
+import { Devtools } from './-components/devtools';
 
 const fetchAuth = createServerFn({ method: 'GET' }).handler(async () => {
 	const { createAuth } = await import('@/convex/auth');
@@ -123,9 +122,8 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 					)`}
 				</ScriptOnce>
 				{children}
+				<Devtools />
 				<Toaster position='top-right' closeButton richColors />
-				<TanStackRouterDevtools position='bottom-right' />
-				<ReactQueryDevtools buttonPosition='bottom-left' />
 				<Scripts />
 			</body>
 		</html>
