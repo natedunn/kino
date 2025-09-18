@@ -18,7 +18,8 @@
 		"noEmit": true,
 		"paths": {
 			"~api": ["src/lib/api.ts"],
-			"@/*": ["src/*"]
+			"@/*": ["src/*"],
+			"@convex/*": ["src/convex/*"]
 		}
 	},
 	"include": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"],

@@ -4,11 +4,9 @@ import { z } from 'zod';
 
 import { limits } from '../config/limits';
 import { createOrgSchema, updateOrgSchema } from '../convex/schema/org.schema';
-import { components } from './_generated/api';
 import { authComponent, createAuth } from './auth';
 import { zAuthedMutation, zQuery } from './utils/functions';
-import { getOrgBySlug } from './utils/queries/getOrgBySlug';
-import { getOrgUserData } from './utils/queries/getOrgUserData';
+import { getOrgDetails } from './utils/queries/getOrgDetails';
 
 export const create = zAuthedMutation({
 	args: createOrgSchema,
@@ -63,75 +61,57 @@ export const create = zAuthedMutation({
 export const update = zAuthedMutation({
 	args: updateOrgSchema,
 	handler: async (ctx, args) => {
-		const headers = await authComponent.getHeaders(ctx);
+		const orgDetails = await getOrgDetails(ctx, {
+			slug: args.slug,
+		});
 
-		if (headers) {
-			const member = await createAuth(ctx).api.getActiveMember({
-				headers,
-			});
-
-			const org = await getOrgBySlug(ctx, args.slug);
-
-			if (!org) {
-				throw new ConvexError({
-					message: 'Organization not found',
-					code: '404',
-				});
-			}
-
-			if (org._id !== member?.organizationId) {
-				throw new ConvexError({
-					message: 'User does not have permission',
-					code: '403',
-				});
-			}
-
-			createAuth(ctx).api.updateOrganization({
-				headers,
-				body: {
-					organizationId: member?.organizationId,
-					data: args,
-				},
-			});
-		} else {
+		if (!orgDetails || !orgDetails.org) {
 			throw new ConvexError({
-				message: 'Headers not defined',
-				code: '500',
+				message: 'Organization not found',
+				code: '404',
 			});
 		}
+
+		if (!orgDetails.permissions.canEdit) {
+			throw new ConvexError({
+				message: 'User does not have permission',
+				code: '403',
+			});
+		}
+
+		await createAuth(ctx).api.updateOrganization({
+			headers: await authComponent.getHeaders(ctx),
+			body: {
+				organizationId: orgDetails.org?._id,
+				data: args,
+			},
+		});
 	},
 });
 
-export const getFullOrg = zQuery({
+export const getDetails = zQuery({
 	args: {
 		orgSlug: z.string(),
 	},
 	handler: async (ctx, args) => {
-		try {
-			const org = await ctx.runQuery(components.betterAuth.adapter.findOne, {
-				model: 'organization',
-				where: [{ field: 'slug', operator: 'eq', value: args.orgSlug }],
+		const org = await getOrgDetails(ctx, {
+			slug: args.orgSlug,
+		});
+
+		if (!org?.org) {
+			throw new ConvexError({
+				message: 'Organization not found',
+				code: '404',
 			});
-
-			const isOrgAdmin = await getOrgUserData(ctx, {
-				orgSlug: args.orgSlug,
-			});
-
-			const parsedOrg = z
-				.object({
-					_creationTime: z.number(),
-					_id: z.string(),
-					name: z.string(),
-					slug: z.string(),
-				})
-				.parse(org);
-
-			return {
-				isOrgAdmin,
-				org: parsedOrg,
-			};
-		} catch {
-			return null;
 		}
+
+		if (!org?.permissions.canView) {
+			throw new ConvexError({
+				message: 'User does not have permission',
+				code: '403',
+			});
+		}
+
+		return org;
 	},
 });

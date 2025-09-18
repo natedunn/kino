@@ -55,6 +55,9 @@ export const createAuth = (ctx: GenericCtx<DataModel>) => {
 		baseURL: process.env.SITE_URL!,
 		trustedOrigins: ['http://localhost:3000', 'https://usekino.com'],
 		database: authComponent.adapter(ctx),
+		logger: {
+			disabled: true,
+		},
 		account: {
 			accountLinking: {
 				enabled: true,

@@ -13,7 +13,8 @@
 		"allowSyntheticDefaultImports": true,
 		"paths": {
 			"@/*": ["../*"],
-			"~api": ["../lib/api/index.ts"]
+			"~api": ["../lib/api/index.ts"],
+			"@convex/*": ["./*"]
 		},
 
 		/* These compiler options are required by Convex */

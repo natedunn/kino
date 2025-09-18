@@ -3,9 +3,9 @@ import { GenericQueryCtx } from 'convex/server';
 import { DataModel, Id } from '@/convex/_generated/dataModel';
 import { SelectProjectSchema, selectProjectSchema } from '@/convex/schema/project.schema';
 
-import { getOrgUserData } from './getOrgUserData';
+import { getOrgDetails } from './getOrgDetails';
 
-type UserIsProjectAdmin =
+type GetProjectUserDetailsArgs =
 	| {
 			projectId: Id<'project'>;
 			projectSlug?: never;
@@ -14,11 +14,7 @@ type UserIsProjectAdmin =
 			projectId?: never;
 			projectSlug: string;
 	  };
-
-export const getProjectUserData = async (
-	ctx: GenericQueryCtx<DataModel>,
-	args: UserIsProjectAdmin
-): Promise<{
+type GetProjectUserDetailsReturn = Promise<{
 	permissions: {
 		isAdmin: boolean;
 		canEdit: boolean;
@@ -26,8 +22,13 @@ export const getProjectUserData = async (
 		canDelete: boolean;
 	};
 	project: SelectProjectSchema | null;
-	orgUser: Awaited<ReturnType<typeof getOrgUserData>> | null;
-}> => {
+	orgUser: Awaited<ReturnType<typeof getOrgDetails>> | null;
+}>;
+
+export const getProjectUserDetails = async (
+	ctx: GenericQueryCtx<DataModel>,
+	args: GetProjectUserDetailsArgs
+): GetProjectUserDetailsReturn => {
 	//
 	// Get project data
 	let projectData;
@@ -57,11 +58,11 @@ export const getProjectUserData = async (
 
 	//
 	// Get user's org data
-	const orgUserData = await getOrgUserData(ctx, {
-		orgSlug: project.orgSlug,
+	const orgDetails = await getOrgDetails(ctx, {
+		slug: project.orgSlug,
 	});
 
-	const userId = orgUserData.userId;
+	const userId = orgDetails?.userId;
 
 	if (!userId) {
 		return {
@@ -72,16 +73,18 @@ export const getProjectUserData = async (
 				canDelete: false,
 			},
 			project,
-			orgUser: orgUserData,
+			orgUser: orgDetails,
 		};
 	}
 
-	if (userId && !orgUserData.permissions.isAdmin) {
+	if (userId && !orgDetails.permissions.isAdmin) {
 		//
 		// If the user is not a admin or owner of the org, we will check for project permissions
 		const projectUser = await ctx.db
 			.query('projectUser')
-			.withIndex('by_userId_projectId', (q) => q.eq('userId', userId).eq('projectId', project._id))
+			.withIndex('by_userId_projectId', (q) =>
+				q.eq('userId', userId as Id<'user'>).eq('projectId', project._id)
+			)
 			.unique();
 
 		if (!projectUser) {
@@ -93,7 +96,7 @@ export const getProjectUserData = async (
 					canDelete: false,
 				},
 				project,
-				orgUser: orgUserData,
+				orgUser: orgDetails,
 			};
 		}
 
@@ -105,7 +108,7 @@ export const getProjectUserData = async (
 				canDelete: false,
 			},
 			project,
-			orgUser: orgUserData,
+			orgUser: orgDetails,
 		};
 	}
 
@@ -116,9 +119,9 @@ export const getProjectUserData = async (
 			isAdmin: true,
 			canEdit: true,
 			canView: true,
-			canDelete: orgUserData.member?.role === 'owner',
+			canDelete: orgDetails.member?.role === 'owner',
 		},
 		project,
-		orgUser: orgUserData,
+		orgUser: orgDetails,
 	};
 };

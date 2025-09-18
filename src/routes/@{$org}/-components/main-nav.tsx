@@ -1,6 +1,4 @@
 import React from 'react';
-import { convexQuery } from '@convex-dev/react-query';
-import { useSuspenseQuery } from '@tanstack/react-query';
 import { Link, useParams } from '@tanstack/react-router';
 import { Bell, Command, Search } from 'lucide-react';
 
@@ -14,7 +12,7 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { api } from '@/lib/api';
+import { API } from '@/lib/api';
 
 import { UserDropdown } from './user-dropdown';
 
@@ -45,9 +43,10 @@ type MainNavProps = {
 		slug: string;
 		name: string;
 	};
+	user: API['user']['getCurrentUser'];
 };
 
-export const MainNav = ({ children }: MainNavProps) => {
+export const MainNav = ({ children, user }: MainNavProps) => {
 	const [isCommandOpen, setIsCommandOpen] = React.useState(false);
 
 	const orgParams = useParams({
@@ -62,8 +61,6 @@ export const MainNav = ({ children }: MainNavProps) => {
 
 	const orgSlug = orgParams?.org;
 	const projectSlug = projectParams?.project;
-
-	const { data: user } = useSuspenseQuery(convexQuery(api.user.getCurrentUser, {}));
 
 	React.useEffect(() => {
 		const handleKeyDown = (e: KeyboardEvent) => {

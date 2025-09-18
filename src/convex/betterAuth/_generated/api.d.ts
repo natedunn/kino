@@ -1476,11 +1476,49 @@ export type Mounts = {
     >;
   };
   org: {
-    getOrg: FunctionReference<
+    get: FunctionReference<
       "query",
       "public",
-      { slug: { slug?: null | string } },
-      any
+      { slug?: null | string },
+      {
+        createdAt: number;
+        logo?: null | string;
+        metadata?: null | string;
+        name: string;
+        slug?: null | string;
+      } | null
+    >;
+    getDetails: FunctionReference<
+      "query",
+      "public",
+      { slug?: null | string },
+      {
+        member: {
+          _creationTime: number;
+          _id: string;
+          createdAt: number;
+          organizationId: string;
+          role: string;
+          userId: string;
+        } | null;
+        org: {
+          _creationTime: number;
+          _id: string;
+          createdAt: number;
+          logo?: null | string;
+          metadata?: null | string;
+          name: string;
+          slug?: null | string;
+        } | null;
+        permissions: {
+          canDelete: boolean;
+          canEdit: boolean;
+          canView: boolean;
+          isAdmin: boolean;
+          isOwner: boolean;
+        };
+        userId: string | null;
+      } | null
     >;
   };
   user: {

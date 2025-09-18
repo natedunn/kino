@@ -13,7 +13,7 @@ import {
 import { authComponent, createAuth } from './auth';
 import schema from './schema';
 import { zAuthedMutation, zQuery } from './utils/functions';
-import { getProjectUserData } from './utils/queries/getProjectUserData';
+import { getProjectUserDetails } from './utils/queries/getProjectUserDetails';
 import { triggers } from './utils/trigger';
 import { verify } from './utils/verify';
 
@@ -131,11 +131,11 @@ export const getManyByOrg = zQuery({
 			['updatedTime']
 		).take(args.limit ?? 10);
 
-		return mergedProjects;
+		return (await mergedProjects).length <= 0 ? null : mergedProjects;
 	},
 });
 
-export const getFullProject = zQuery({
+export const getDetails = zQuery({
 	args: projectSchema
 		.pick({
 			slug: true,
@@ -146,31 +146,28 @@ export const getFullProject = zQuery({
 			})
 		),
 	handler: async (ctx, args) => {
-		const project = await ctx.db
-			.query('project')
-			.withIndex('by_orgSlug_slug', (q) => q.eq('orgSlug', args.orgSlug).eq('slug', args.slug))
-			.unique();
-
-		if (!project) {
-			console.warn('No project found');
-			return null;
-		}
-
-		const isProjectAdmin = await getProjectUserData(ctx, {
-			projectId: project._id,
+		const {
+			project,
+			permissions: { canView },
+		} = await getProjectUserDetails(ctx, {
+			projectSlug: args.slug,
 		});
 
-		if (project?.visibility === 'private' && !isProjectAdmin) {
+		if (!project) {
+			throw new ConvexError({
+				message: 'Project not found',
+				code: '404',
+			});
+		}
+
+		if (!canView) {
 			console.warn('Authenticated user is unable to view private project');
 			return null;
 		}
 
-		const data = {
-			isProjectAdmin,
+		return {
 			project: selectProjectSchema.parse(project),
 		};
-
-		return data;
 	},
 });
 

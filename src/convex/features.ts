@@ -3,7 +3,7 @@ import z from 'zod';
 
 import { feedbackBoardSelectSchema } from './schema/feedbackBoard.schema';
 import { zQuery } from './utils/functions';
-import { getProjectUserData } from './utils/queries/getProjectUserData';
+import { getProjectUserDetails } from './utils/queries/getProjectUserDetails';
 
 // export const Test = zQuery({
 // 	args: {},
@@ -31,7 +31,7 @@ export const feedback = zQuery({
 
 		const {
 			permissions: { canView },
-		} = await getProjectUserData(ctx, {
+		} = await getProjectUserDetails(ctx, {
 			projectId: project._id,
 		});
 
