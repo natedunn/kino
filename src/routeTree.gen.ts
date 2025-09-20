@@ -21,6 +21,7 @@ import { Route as BlankSignOutRouteImport } from './routes/_blank/sign-out'
 import { Route as BlankSignInRouteImport } from './routes/_blank/sign-in'
 import { Route as Blank404RouteImport } from './routes/_blank/404'
 import { Route as AtChar123orgChar125SettingsRouteImport } from './routes/@{$org}/settings'
+import { Route as AtChar123orgChar125CreateProjectRouteImport } from './routes/@{$org}/create-project'
 import { Route as AtChar123orgChar125ProjectRouteRouteImport } from './routes/@{$org}/$project/route'
 import { Route as ProfileSettingsIndexRouteImport } from './routes/profile/settings/index'
 import { Route as ProfileUsernameIndexRouteImport } from './routes/profile/$username/index'
@@ -98,6 +99,12 @@ const AtChar123orgChar125SettingsRoute =
   AtChar123orgChar125SettingsRouteImport.update({
     id: '/settings',
     path: '/settings',
+    getParentRoute: () => AtChar123orgChar125RouteRoute,
+  } as any)
+const AtChar123orgChar125CreateProjectRoute =
+  AtChar123orgChar125CreateProjectRouteImport.update({
+    id: '/create-project',
+    path: '/create-project',
     getParentRoute: () => AtChar123orgChar125RouteRoute,
   } as any)
 const AtChar123orgChar125ProjectRouteRoute =
@@ -238,6 +245,7 @@ export interface FileRoutesByFullPath {
   '/@{$org}': typeof AtChar123orgChar125RouteRouteWithChildren
   '/home': typeof HomeRoute
   '/@{$org}/$project': typeof AtChar123orgChar125ProjectRouteRouteWithChildren
+  '/@{$org}/create-project': typeof AtChar123orgChar125CreateProjectRoute
   '/@{$org}/settings': typeof AtChar123orgChar125SettingsRoute
   '/404': typeof Blank404Route
   '/sign-in': typeof BlankSignInRoute
@@ -270,6 +278,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/home': typeof HomeRoute
+  '/@{$org}/create-project': typeof AtChar123orgChar125CreateProjectRoute
   '/@{$org}/settings': typeof AtChar123orgChar125SettingsRoute
   '/404': typeof Blank404Route
   '/sign-in': typeof BlankSignInRoute
@@ -304,6 +313,7 @@ export interface FileRoutesById {
   '/@{$org}': typeof AtChar123orgChar125RouteRouteWithChildren
   '/home': typeof HomeRoute
   '/@{$org}/$project': typeof AtChar123orgChar125ProjectRouteRouteWithChildren
+  '/@{$org}/create-project': typeof AtChar123orgChar125CreateProjectRoute
   '/@{$org}/settings': typeof AtChar123orgChar125SettingsRoute
   '/_blank/404': typeof Blank404Route
   '/_blank/sign-in': typeof BlankSignInRoute
@@ -340,6 +350,7 @@ export interface FileRouteTypes {
     | '/@{$org}'
     | '/home'
     | '/@{$org}/$project'
+    | '/@{$org}/create-project'
     | '/@{$org}/settings'
     | '/404'
     | '/sign-in'
@@ -372,6 +383,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/home'
+    | '/@{$org}/create-project'
     | '/@{$org}/settings'
     | '/404'
     | '/sign-in'
@@ -405,6 +417,7 @@ export interface FileRouteTypes {
     | '/@{$org}'
     | '/home'
     | '/@{$org}/$project'
+    | '/@{$org}/create-project'
     | '/@{$org}/settings'
     | '/_blank/404'
     | '/_blank/sign-in'
@@ -542,6 +555,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/@{$org}/settings'
       preLoaderRoute: typeof AtChar123orgChar125SettingsRouteImport
+      parentRoute: typeof AtChar123orgChar125RouteRoute
+    }
+    '/@{$org}/create-project': {
+      id: '/@{$org}/create-project'
+      path: '/create-project'
+      fullPath: '/@{$org}/create-project'
+      preLoaderRoute: typeof AtChar123orgChar125CreateProjectRouteImport
       parentRoute: typeof AtChar123orgChar125RouteRoute
     }
     '/@{$org}/$project': {
@@ -788,6 +808,7 @@ const AtChar123orgChar125ProjectRouteRouteWithChildren =
 
 interface AtChar123orgChar125RouteRouteChildren {
   AtChar123orgChar125ProjectRouteRoute: typeof AtChar123orgChar125ProjectRouteRouteWithChildren
+  AtChar123orgChar125CreateProjectRoute: typeof AtChar123orgChar125CreateProjectRoute
   AtChar123orgChar125SettingsRoute: typeof AtChar123orgChar125SettingsRoute
   AtChar123orgChar125IndexRoute: typeof AtChar123orgChar125IndexRoute
 }
@@ -796,6 +817,8 @@ const AtChar123orgChar125RouteRouteChildren: AtChar123orgChar125RouteRouteChildr
   {
     AtChar123orgChar125ProjectRouteRoute:
       AtChar123orgChar125ProjectRouteRouteWithChildren,
+    AtChar123orgChar125CreateProjectRoute:
+      AtChar123orgChar125CreateProjectRoute,
     AtChar123orgChar125SettingsRoute: AtChar123orgChar125SettingsRoute,
     AtChar123orgChar125IndexRoute: AtChar123orgChar125IndexRoute,
   }

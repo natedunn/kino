@@ -5,6 +5,8 @@ import { createFileRoute, Link } from '@tanstack/react-router';
 import { api } from '~api';
 import { Button } from '@/components/ui/button';
 
+import { NoPublicProjects } from './-components/no-public-projects';
+
 export const Route = createFileRoute('/@{$org}/')({
 	component: RouteComponent,
 	loader: async ({ context, params }) => {
@@ -25,24 +27,19 @@ function RouteComponent() {
 		})
 	);
 
-	const { data: org } = useSuspenseQuery(convexQuery(api.org.getDetails, { orgSlug }));
+	const { data: orgDetails } = useSuspenseQuery(convexQuery(api.org.getDetails, { orgSlug }));
+
+	if (!orgDetails.org) return null;
 
 	return (
 		<div className='container'>
 			<div className='mt-6 flex items-center gap-4'>
 				{!projects ? (
-					<div>
-						<div>
-							<span>No projects found.</span>
-						</div>
-						<div>
-							{org.permissions.canEdit && (
-								<div>
-									<Button>Create a new project</Button>
-								</div>
-							)}
-						</div>
-					</div>
+					<NoPublicProjects
+						orgSlug={orgSlug}
+						orgName={orgDetails.org.name}
+						canEdit={orgDetails.permissions.canEdit}
+					/>
 				) : (
 					projects?.map((project) => {
 						return (

@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { limits } from '@/config/limits';
 import { createAuth } from '@/convex/auth';
 
+import { components } from './_generated/api';
 import { DataModel, Id } from './_generated/dataModel';
 import { authComponent } from './auth';
 import { selectSafeUserSchema, updateSafeUserSchema } from './schema/user.schema';
@@ -77,6 +78,7 @@ export const getCurrentUser = query({
 	args: {},
 	handler: async (ctx) => {
 		const user = await safeGetUser(ctx);
+		if (!user) return null;
 		return selectSafeUserSchema.parse(user);
 	},
 });
