@@ -1,9 +1,11 @@
+import { components } from '@convex/_generated/api';
 import { GenericQueryCtx } from 'convex/server';
 
 import { DataModel, Id } from '@/convex/_generated/dataModel';
 import { SelectProjectSchema, selectProjectSchema } from '@/convex/schema/project.schema';
 
-import { getOrgDetails } from './getOrgDetails';
+// type OrgDetails = BetterAuthApi['org']['getDetails'];
+type OrgDetails = (typeof components.betterAuth.org.getDetails)['_returnType'];
 
 type GetProjectUserDetailsArgs =
 	| {
@@ -22,7 +24,7 @@ type GetProjectUserDetailsReturn = Promise<{
 		canDelete: boolean;
 	};
 	project: SelectProjectSchema | null;
-	orgUser: Awaited<ReturnType<typeof getOrgDetails>> | null;
+	orgDetails: OrgDetails | null;
 }>;
 
 export const getProjectUserDetails = async (
@@ -52,13 +54,11 @@ export const getProjectUserDetails = async (
 				canDelete: false,
 			},
 			project,
-			orgUser: null,
+			orgDetails: null,
 		};
 	}
 
-	//
-	// Get user's org data
-	const orgDetails = await getOrgDetails(ctx, {
+	const orgDetails = await ctx.runQuery(components.betterAuth.org.getDetails, {
 		slug: project.orgSlug,
 	});
 
@@ -73,7 +73,7 @@ export const getProjectUserDetails = async (
 				canDelete: false,
 			},
 			project,
-			orgUser: orgDetails,
+			orgDetails: orgDetails,
 		};
 	}
 
@@ -96,7 +96,7 @@ export const getProjectUserDetails = async (
 					canDelete: false,
 				},
 				project,
-				orgUser: orgDetails,
+				orgDetails: orgDetails,
 			};
 		}
 
@@ -108,7 +108,7 @@ export const getProjectUserDetails = async (
 				canDelete: false,
 			},
 			project,
-			orgUser: orgDetails,
+			orgDetails: orgDetails,
 		};
 	}
 
@@ -122,6 +122,6 @@ export const getProjectUserDetails = async (
 			canDelete: orgDetails.member?.role === 'owner',
 		},
 		project,
-		orgUser: orgDetails,
+		orgDetails: orgDetails,
 	};
 };

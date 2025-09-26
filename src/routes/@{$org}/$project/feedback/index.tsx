@@ -32,7 +32,7 @@ function RouteComponent() {
 	const { org: orgSlug, project: projectSlug } = Route.useParams();
 
 	const { data: projectData } = useSuspenseQuery(
-		convexQuery(api.project.getFullProject, {
+		convexQuery(api.project.getDetails, {
 			orgSlug,
 			slug: projectSlug,
 		})
@@ -71,7 +71,7 @@ function RouteComponent() {
 									{!!feedback?.boards && <BoardsNav boards={feedback.boards} />}
 								</div>
 							</div>
-							{projectData?.isProjectAdmin && (
+							{projectData?.permissions.canEdit && (
 								<div className='mt-6 pr-8'>
 									<span className='mx-2 inline-flex text-sm font-bold text-muted-foreground'>
 										Options

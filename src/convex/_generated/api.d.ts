@@ -28,7 +28,6 @@ import type * as schema__shared from "../schema/_shared.js";
 import type * as user from "../user.js";
 import type * as utils_context from "../utils/context.js";
 import type * as utils_functions from "../utils/functions.js";
-import type * as utils_queries_getOrgDetails from "../utils/queries/getOrgDetails.js";
 import type * as utils_queries_getProjectUserDetails from "../utils/queries/getProjectUserDetails.js";
 import type * as utils_r2 from "../utils/r2.js";
 import type * as utils_table from "../utils/table.js";
@@ -71,7 +70,6 @@ declare const fullApi: ApiFromModules<{
   user: typeof user;
   "utils/context": typeof utils_context;
   "utils/functions": typeof utils_functions;
-  "utils/queries/getOrgDetails": typeof utils_queries_getOrgDetails;
   "utils/queries/getProjectUserDetails": typeof utils_queries_getProjectUserDetails;
   "utils/r2": typeof utils_r2;
   "utils/table": typeof utils_table;
@@ -1537,17 +1535,18 @@ export declare const components: {
         "internal",
         { slug?: null | string },
         {
-          createdAt: number;
-          logo?: null | string;
-          metadata?: null | string;
+          _creationTime: number;
+          _id: string;
+          logo?: string;
+          metaData?: string | null;
           name: string;
-          slug?: null | string;
-        } | null
+          slug: string;
+        }
       >;
       getDetails: FunctionReference<
         "query",
         "internal",
-        { slug?: null | string },
+        { slug: string },
         {
           member: {
             _creationTime: number;
@@ -1560,11 +1559,10 @@ export declare const components: {
           org: {
             _creationTime: number;
             _id: string;
-            createdAt: number;
-            logo?: null | string;
-            metadata?: null | string;
+            logo?: string;
+            metaData?: string | null;
             name: string;
-            slug?: null | string;
+            slug: string;
           } | null;
           permissions: {
             canDelete: boolean;

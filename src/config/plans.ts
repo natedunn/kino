@@ -1,15 +1,15 @@
 export const plans = {
-	admin: {
+	ADMIN: {
 		cost: null,
 		title: 'Admin',
 		id: 'admin',
 	},
-	free: {
+	FREE: {
 		cost: null,
 		title: 'Base',
 		id: 'free',
 	},
-	one: {
+	ONE: {
 		cost: 1000,
 		title: 'One',
 		id: 'one',

@@ -21,12 +21,12 @@ import { Route as BlankSignOutRouteImport } from './routes/_blank/sign-out'
 import { Route as BlankSignInRouteImport } from './routes/_blank/sign-in'
 import { Route as Blank404RouteImport } from './routes/_blank/404'
 import { Route as AtChar123orgChar125SettingsRouteImport } from './routes/@{$org}/settings'
-import { Route as AtChar123orgChar125CreateProjectRouteImport } from './routes/@{$org}/create-project'
 import { Route as AtChar123orgChar125ProjectRouteRouteImport } from './routes/@{$org}/$project/route'
 import { Route as ProfileSettingsIndexRouteImport } from './routes/profile/settings/index'
 import { Route as ProfileUsernameIndexRouteImport } from './routes/profile/$username/index'
 import { Route as CreateTeamIndexRouteImport } from './routes/create/team/index'
 import { Route as CreateProjectIndexRouteImport } from './routes/create/project/index'
+import { Route as AtChar123orgChar125CreateProjectIndexRouteImport } from './routes/@{$org}/create-project/index'
 import { Route as AtChar123orgChar125ProjectIndexRouteImport } from './routes/@{$org}/$project/index'
 import { Route as AtChar123orgChar125ProjectUpdatesIndexRouteImport } from './routes/@{$org}/$project/updates/index'
 import { Route as AtChar123orgChar125ProjectRoadmapIndexRouteImport } from './routes/@{$org}/$project/roadmap/index'
@@ -101,12 +101,6 @@ const AtChar123orgChar125SettingsRoute =
     path: '/settings',
     getParentRoute: () => AtChar123orgChar125RouteRoute,
   } as any)
-const AtChar123orgChar125CreateProjectRoute =
-  AtChar123orgChar125CreateProjectRouteImport.update({
-    id: '/create-project',
-    path: '/create-project',
-    getParentRoute: () => AtChar123orgChar125RouteRoute,
-  } as any)
 const AtChar123orgChar125ProjectRouteRoute =
   AtChar123orgChar125ProjectRouteRouteImport.update({
     id: '/$project',
@@ -133,6 +127,12 @@ const CreateProjectIndexRoute = CreateProjectIndexRouteImport.update({
   path: '/create/project/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AtChar123orgChar125CreateProjectIndexRoute =
+  AtChar123orgChar125CreateProjectIndexRouteImport.update({
+    id: '/create-project/',
+    path: '/create-project/',
+    getParentRoute: () => AtChar123orgChar125RouteRoute,
+  } as any)
 const AtChar123orgChar125ProjectIndexRoute =
   AtChar123orgChar125ProjectIndexRouteImport.update({
     id: '/',
@@ -245,7 +245,6 @@ export interface FileRoutesByFullPath {
   '/@{$org}': typeof AtChar123orgChar125RouteRouteWithChildren
   '/home': typeof HomeRoute
   '/@{$org}/$project': typeof AtChar123orgChar125ProjectRouteRouteWithChildren
-  '/@{$org}/create-project': typeof AtChar123orgChar125CreateProjectRoute
   '/@{$org}/settings': typeof AtChar123orgChar125SettingsRoute
   '/404': typeof Blank404Route
   '/sign-in': typeof BlankSignInRoute
@@ -255,6 +254,7 @@ export interface FileRoutesByFullPath {
   '/': typeof MarketingIndexRoute
   '/settings': typeof SettingsIndexRoute
   '/@{$org}/$project/': typeof AtChar123orgChar125ProjectIndexRoute
+  '/@{$org}/create-project': typeof AtChar123orgChar125CreateProjectIndexRoute
   '/create/project': typeof CreateProjectIndexRoute
   '/create/team': typeof CreateTeamIndexRoute
   '/profile/$username': typeof ProfileUsernameIndexRoute
@@ -278,7 +278,6 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/home': typeof HomeRoute
-  '/@{$org}/create-project': typeof AtChar123orgChar125CreateProjectRoute
   '/@{$org}/settings': typeof AtChar123orgChar125SettingsRoute
   '/404': typeof Blank404Route
   '/sign-in': typeof BlankSignInRoute
@@ -288,6 +287,7 @@ export interface FileRoutesByTo {
   '/': typeof MarketingIndexRoute
   '/settings': typeof SettingsIndexRoute
   '/@{$org}/$project': typeof AtChar123orgChar125ProjectIndexRoute
+  '/@{$org}/create-project': typeof AtChar123orgChar125CreateProjectIndexRoute
   '/create/project': typeof CreateProjectIndexRoute
   '/create/team': typeof CreateTeamIndexRoute
   '/profile/$username': typeof ProfileUsernameIndexRoute
@@ -313,7 +313,6 @@ export interface FileRoutesById {
   '/@{$org}': typeof AtChar123orgChar125RouteRouteWithChildren
   '/home': typeof HomeRoute
   '/@{$org}/$project': typeof AtChar123orgChar125ProjectRouteRouteWithChildren
-  '/@{$org}/create-project': typeof AtChar123orgChar125CreateProjectRoute
   '/@{$org}/settings': typeof AtChar123orgChar125SettingsRoute
   '/_blank/404': typeof Blank404Route
   '/_blank/sign-in': typeof BlankSignInRoute
@@ -323,6 +322,7 @@ export interface FileRoutesById {
   '/_marketing/': typeof MarketingIndexRoute
   '/settings/': typeof SettingsIndexRoute
   '/@{$org}/$project/': typeof AtChar123orgChar125ProjectIndexRoute
+  '/@{$org}/create-project/': typeof AtChar123orgChar125CreateProjectIndexRoute
   '/create/project/': typeof CreateProjectIndexRoute
   '/create/team/': typeof CreateTeamIndexRoute
   '/profile/$username/': typeof ProfileUsernameIndexRoute
@@ -350,7 +350,6 @@ export interface FileRouteTypes {
     | '/@{$org}'
     | '/home'
     | '/@{$org}/$project'
-    | '/@{$org}/create-project'
     | '/@{$org}/settings'
     | '/404'
     | '/sign-in'
@@ -360,6 +359,7 @@ export interface FileRouteTypes {
     | '/'
     | '/settings'
     | '/@{$org}/$project/'
+    | '/@{$org}/create-project'
     | '/create/project'
     | '/create/team'
     | '/profile/$username'
@@ -383,7 +383,6 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/home'
-    | '/@{$org}/create-project'
     | '/@{$org}/settings'
     | '/404'
     | '/sign-in'
@@ -393,6 +392,7 @@ export interface FileRouteTypes {
     | '/'
     | '/settings'
     | '/@{$org}/$project'
+    | '/@{$org}/create-project'
     | '/create/project'
     | '/create/team'
     | '/profile/$username'
@@ -417,7 +417,6 @@ export interface FileRouteTypes {
     | '/@{$org}'
     | '/home'
     | '/@{$org}/$project'
-    | '/@{$org}/create-project'
     | '/@{$org}/settings'
     | '/_blank/404'
     | '/_blank/sign-in'
@@ -427,6 +426,7 @@ export interface FileRouteTypes {
     | '/_marketing/'
     | '/settings/'
     | '/@{$org}/$project/'
+    | '/@{$org}/create-project/'
     | '/create/project/'
     | '/create/team/'
     | '/profile/$username/'
@@ -557,13 +557,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AtChar123orgChar125SettingsRouteImport
       parentRoute: typeof AtChar123orgChar125RouteRoute
     }
-    '/@{$org}/create-project': {
-      id: '/@{$org}/create-project'
-      path: '/create-project'
-      fullPath: '/@{$org}/create-project'
-      preLoaderRoute: typeof AtChar123orgChar125CreateProjectRouteImport
-      parentRoute: typeof AtChar123orgChar125RouteRoute
-    }
     '/@{$org}/$project': {
       id: '/@{$org}/$project'
       path: '/$project'
@@ -598,6 +591,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/create/project'
       preLoaderRoute: typeof CreateProjectIndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/@{$org}/create-project/': {
+      id: '/@{$org}/create-project/'
+      path: '/create-project'
+      fullPath: '/@{$org}/create-project'
+      preLoaderRoute: typeof AtChar123orgChar125CreateProjectIndexRouteImport
+      parentRoute: typeof AtChar123orgChar125RouteRoute
     }
     '/@{$org}/$project/': {
       id: '/@{$org}/$project/'
@@ -808,19 +808,19 @@ const AtChar123orgChar125ProjectRouteRouteWithChildren =
 
 interface AtChar123orgChar125RouteRouteChildren {
   AtChar123orgChar125ProjectRouteRoute: typeof AtChar123orgChar125ProjectRouteRouteWithChildren
-  AtChar123orgChar125CreateProjectRoute: typeof AtChar123orgChar125CreateProjectRoute
   AtChar123orgChar125SettingsRoute: typeof AtChar123orgChar125SettingsRoute
   AtChar123orgChar125IndexRoute: typeof AtChar123orgChar125IndexRoute
+  AtChar123orgChar125CreateProjectIndexRoute: typeof AtChar123orgChar125CreateProjectIndexRoute
 }
 
 const AtChar123orgChar125RouteRouteChildren: AtChar123orgChar125RouteRouteChildren =
   {
     AtChar123orgChar125ProjectRouteRoute:
       AtChar123orgChar125ProjectRouteRouteWithChildren,
-    AtChar123orgChar125CreateProjectRoute:
-      AtChar123orgChar125CreateProjectRoute,
     AtChar123orgChar125SettingsRoute: AtChar123orgChar125SettingsRoute,
     AtChar123orgChar125IndexRoute: AtChar123orgChar125IndexRoute,
+    AtChar123orgChar125CreateProjectIndexRoute:
+      AtChar123orgChar125CreateProjectIndexRoute,
   }
 
 const AtChar123orgChar125RouteRouteWithChildren =

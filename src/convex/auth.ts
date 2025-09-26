@@ -6,7 +6,7 @@ import { betterAuth } from 'better-auth';
 import { admin, organization, username } from 'better-auth/plugins';
 import { adjectives, nouns, uniqueUsernameGenerator } from 'unique-username-generator';
 
-import { components, internal } from './_generated/api';
+import { api, components, internal } from './_generated/api';
 import { DataModel, Id } from './_generated/dataModel';
 import authSchema from './betterAuth/schema';
 
@@ -20,25 +20,24 @@ export const authComponent = createClient<DataModel, typeof authSchema>(componen
 	verbose: false,
 	triggers: {
 		user: {
-			onCreate: async (ctx, authUser) => {
+			onCreate: async (ctx, newUser) => {
 				const generatedUsername = uniqueUsernameGenerator({
-					length: 39,
+					length: 30,
 					separator: '',
-					style: 'pascalCase',
+					style: 'snakeCase',
 					dictionaries: [adjectives, nouns],
 					randomDigits: 3,
 				});
 
-				const userId = await ctx.db.insert('user', {});
+				const appUserId = await ctx.db.insert('user', {});
 
-				if (!authUser.username) {
-					await ctx.runMutation(components.betterAuth.user.updateUsername, {
-						authId: authUser._id,
-						username: generatedUsername,
-					});
-				}
+				await ctx.runMutation(api.user.onCreate, {
+					authId: newUser._id,
+					username: newUser.username ?? generatedUsername,
+					name: newUser.name,
+				});
 
-				await authComponent.setUserId(ctx, authUser._id, userId);
+				await authComponent.setUserId(ctx, newUser._id, appUserId);
 			},
 			onDelete: async (ctx, user) => {
 				await ctx.db.delete(user.userId as Id<'user'>);

@@ -11,7 +11,7 @@ import { DynamicNavigation } from './-components/dynamic-nav';
 export const Route = createFileRoute('/@{$org}/$project')({
 	loader: async ({ context, params }) => {
 		await context.queryClient.ensureQueryData(
-			convexQuery(api.project.getFullProject, {
+			convexQuery(api.project.getDetails, {
 				orgSlug: params.org,
 				slug: params.project,
 			})

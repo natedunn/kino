@@ -14,13 +14,13 @@ function RouteComponent() {
 	const { org: orgSlug, project: projectSlug } = Route.useParams();
 
 	const { data: projectData } = useSuspenseQuery(
-		convexQuery(api.project.getFullProject, {
+		convexQuery(api.project.getDetails, {
 			orgSlug,
 			slug: projectSlug,
 		})
-	)
+	);
 
-	if (!projectData) throw new Error('No project found');
+	if (!projectData?.project) throw new Error('No project found');
 
 	const { project } = projectData;
 
@@ -33,5 +33,5 @@ function RouteComponent() {
 				</div>
 			</div>
 		</div>
-	)
+	);
 }

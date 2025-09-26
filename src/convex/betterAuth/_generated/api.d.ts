@@ -1481,17 +1481,18 @@ export type Mounts = {
       "public",
       { slug?: null | string },
       {
-        createdAt: number;
-        logo?: null | string;
-        metadata?: null | string;
+        _creationTime: number;
+        _id: string;
+        logo?: string;
+        metaData?: string | null;
         name: string;
-        slug?: null | string;
-      } | null
+        slug: string;
+      }
     >;
     getDetails: FunctionReference<
       "query",
       "public",
-      { slug?: null | string },
+      { slug: string },
       {
         member: {
           _creationTime: number;
@@ -1504,11 +1505,10 @@ export type Mounts = {
         org: {
           _creationTime: number;
           _id: string;
-          createdAt: number;
-          logo?: null | string;
-          metadata?: null | string;
+          logo?: string;
+          metaData?: string | null;
           name: string;
-          slug?: null | string;
+          slug: string;
         } | null;
         permissions: {
           canDelete: boolean;

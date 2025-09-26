@@ -18,7 +18,7 @@
 	"keywords": [],
 	"author": "",
 	"dependencies": {
-		"@convex-dev/better-auth": "0.8.4",
+		"@convex-dev/better-auth": "0.8.6",
 		"@convex-dev/eslint-plugin": "0.0.1-alpha.4",
 		"@convex-dev/r2": "^0.7.3",
 		"@convex-dev/react-query": "0.0.0-alpha.11",

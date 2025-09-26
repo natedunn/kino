@@ -7,16 +7,16 @@ type Limit = {
 	};
 };
 
-export const limits: Limit = {
-	admin: {
+export const LIMITS: Limit = {
+	ADMIN: {
 		MAX_ORGS: 100,
 		MAX_PROJECTS: 100,
 	},
-	free: {
+	FREE: {
 		MAX_ORGS: 1,
 		MAX_PROJECTS: 1,
 	},
-	one: {
+	ONE: {
 		MAX_ORGS: 3,
 		MAX_PROJECTS: 3,
 	},

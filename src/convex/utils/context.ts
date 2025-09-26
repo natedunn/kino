@@ -7,7 +7,9 @@ import { triggers } from './trigger';
 export const queryCtx = NoOp;
 
 export const queryCtxAuthed = customCtx(async (ctx: QueryCtx) => {
-	const user = await authComponent.getAuthUser(ctx);
+	const user = await ctx.auth.getUserIdentity();
+
+	console.log(user);
 
 	if (!user) {
 		throw new Error('Authentication required -> verifyQueryCtx');

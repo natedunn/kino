@@ -3,7 +3,6 @@ import { useSuspenseQuery } from '@tanstack/react-query';
 import { createFileRoute, Link } from '@tanstack/react-router';
 
 import { api } from '~api';
-import { Button } from '@/components/ui/button';
 
 import { NoPublicProjects } from './-components/no-public-projects';
 
@@ -27,7 +26,7 @@ function RouteComponent() {
 		})
 	);
 
-	const { data: orgDetails } = useSuspenseQuery(convexQuery(api.org.getDetails, { orgSlug }));
+	const { data: orgDetails } = useSuspenseQuery(convexQuery(api.org.getDetails, { slug: orgSlug }));
 
 	if (!orgDetails.org) return null;
 

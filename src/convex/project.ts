@@ -6,12 +6,12 @@ import { defaultFeedbackBoards } from '@/config/defaults';
 import {
 	createProjectSchema,
 	projectSchema,
-	selectProjectSchema,
 	updateProjectSchema,
 } from '@/convex/schema/project.schema';
 
 import { authComponent, createAuth } from './auth';
 import schema from './schema';
+import { safeGetUser } from './user.utils';
 import { zAuthedMutation, zQuery } from './utils/functions';
 import { getProjectUserDetails } from './utils/queries/getProjectUserDetails';
 import { triggers } from './utils/trigger';
@@ -20,36 +20,30 @@ import { verify } from './utils/verify';
 export const create = zAuthedMutation({
 	args: createProjectSchema,
 	handler: async (ctx, args) => {
+		const user = await safeGetUser(ctx);
 		const headers = await authComponent.getHeaders(ctx);
 
-		if (headers) {
-			const member = await createAuth(ctx).api.getActiveMember({
-				headers,
-			});
+		const member = await createAuth(ctx).api.getActiveMember({
+			headers,
+		});
 
-			if (!member || (member?.role !== 'admin' && member?.role !== 'owner')) {
-				throw new ConvexError({
-					message: 'User does not have permission',
-					code: '403',
-				});
-			}
-
-			await verify.insert({
-				ctx,
-				tableName: 'project',
-				data: args,
-				onFail: ({ uniqueRow }) => {
-					throw new ConvexError({
-						message: `A project with the slug of '${uniqueRow?.existingData.slug}' already exists for this team.`,
-					});
-				},
-			});
-		} else {
+		if (!member || (member?.role !== 'admin' && member?.role !== 'owner')) {
 			throw new ConvexError({
-				message: 'Headers not defined',
-				code: '500',
+				message: 'User does not have permission',
+				code: '403',
 			});
 		}
+
+		await verify.insert({
+			ctx,
+			tableName: 'project',
+			data: args,
+			onFail: ({ uniqueRow }) => {
+				throw new ConvexError({
+					message: `A project with the slug of '${uniqueRow?.existingData.slug}' already exists for this team.`,
+				});
+			},
+		});
 	},
 });
 
@@ -146,28 +140,23 @@ export const getDetails = zQuery({
 			})
 		),
 	handler: async (ctx, args) => {
-		const {
-			project,
-			permissions: { canView },
-		} = await getProjectUserDetails(ctx, {
+		const projectDetails = await getProjectUserDetails(ctx, {
 			projectSlug: args.slug,
 		});
 
-		if (!project) {
+		if (!projectDetails.project) {
 			throw new ConvexError({
 				message: 'Project not found',
 				code: '404',
 			});
 		}
 
-		if (!canView) {
+		if (!projectDetails.permissions.canView) {
 			console.warn('Authenticated user is unable to view private project');
 			return null;
 		}
 
-		return {
-			project: selectProjectSchema.parse(project),
-		};
+		return projectDetails;
 	},
 });
 

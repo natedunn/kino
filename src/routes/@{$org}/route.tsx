@@ -15,7 +15,7 @@ export const Route = createFileRoute('/@{$org}')({
 		await context.queryClient
 			.ensureQueryData(
 				convexQuery(api.org.getDetails, {
-					orgSlug: params.org,
+					slug: params.org,
 				})
 			)
 			.catch((error) => {

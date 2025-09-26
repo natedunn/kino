@@ -2,15 +2,14 @@ import { GenericQueryCtx, paginationOptsValidator } from 'convex/server';
 import { ConvexError } from 'convex/values';
 import { z } from 'zod';
 
-import { limits } from '@/config/limits';
+import { LIMITS } from '@/config/limits';
 import { createAuth } from '@/convex/auth';
 
-import { components } from './_generated/api';
 import { DataModel, Id } from './_generated/dataModel';
 import { authComponent } from './auth';
-import { selectSafeUserSchema, updateSafeUserSchema } from './schema/user.schema';
+import { updateSafeUserSchema } from './schema/user.schema';
 import { safeGetUser } from './user.utils';
-import { query, zAuthedMutation, zQuery } from './utils/functions';
+import { query, zAuthedMutation, zMutation, zQuery } from './utils/functions';
 import { userUploadsR2 } from './utils/r2';
 
 export const getList = query({
@@ -26,6 +25,32 @@ export const getList = query({
 			.paginate(args.paginationOpts);
 
 		return results;
+	},
+});
+
+export const onCreate = zMutation({
+	args: {
+		authId: z.string(),
+		name: z.string(),
+		username: z.string(),
+	},
+	handler: async (ctx, args) => {
+		const auth = createAuth(ctx);
+		const authCtx = await auth.$context;
+
+		const username = args.username.toLowerCase();
+
+		await authCtx.internalAdapter.updateUser(args.authId, {
+			username,
+		});
+
+		await auth.api.createOrganization({
+			body: {
+				slug: username,
+				name: args.name,
+				userId: args.authId,
+			},
+		});
 	},
 });
 
@@ -62,7 +87,7 @@ export const getTeamList = zQuery({
 		const user = await authComponent.getAuthUser(ctx);
 
 		// TODO reimplement this
-		let limit = limits.free.MAX_ORGS;
+		let limit = LIMITS.FREE.MAX_ORGS;
 		// let limit: number;
 		// if (user?.role === 'admin') {
 		// 	limit = limits.admin.MAX_ORGS;
@@ -78,8 +103,7 @@ export const getCurrentUser = query({
 	args: {},
 	handler: async (ctx) => {
 		const user = await safeGetUser(ctx);
-		if (!user) return null;
-		return selectSafeUserSchema.parse(user);
+		return user ?? null;
 	},
 });
 

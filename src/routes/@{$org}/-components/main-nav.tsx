@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useParams } from '@tanstack/react-router';
+import { Link, useParams, useRouterState } from '@tanstack/react-router';
 import { Bell, Command, Search } from 'lucide-react';
 
 import { CommandPalette } from '@/components/command-palette';
@@ -48,6 +48,7 @@ type MainNavProps = {
 
 export const MainNav = ({ children, user }: MainNavProps) => {
 	const [isCommandOpen, setIsCommandOpen] = React.useState(false);
+	const routerState = useRouterState();
 
 	const orgParams = useParams({
 		from: '/@{$org}',
@@ -184,7 +185,18 @@ export const MainNav = ({ children, user }: MainNavProps) => {
 								</DropdownMenuContent>
 							</DropdownMenu>
 
-							{user ? <UserDropdown user={user} /> : <Link to='/sign-in'>Sign In</Link>}
+							{user ? (
+								<UserDropdown user={user} />
+							) : (
+								<Link
+									to='/sign-in'
+									search={{
+										redirect: routerState.location.pathname,
+									}}
+								>
+									Sign In
+								</Link>
+							)}
 						</div>
 					</div>
 				</div>
