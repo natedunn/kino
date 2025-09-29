@@ -205,5 +205,5 @@
 }
 
 @utility text-gradient-primary {
-	@apply inline-block bg-gradient-to-r from-orange-300 to-orange-400 bg-clip-text text-transparent dark:to-primary;
+	@apply inline-block bg-gradient-to-r from-blue-300 to-blue-400 bg-clip-text text-transparent dark:to-primary;
 }
