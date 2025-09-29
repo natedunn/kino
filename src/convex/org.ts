@@ -70,6 +70,13 @@ export const getDetails = zQuery({
 	handler: async (ctx, args) => {
 		const orgDetails = await ctx.runQuery(components.betterAuth.org.getDetails, args);
 
+		if (!orgDetails) {
+			throw new ConvexError({
+				message: 'Organization details not found',
+				code: '404',
+			});
+		}
+
 		if (!orgDetails?.org) {
 			throw new ConvexError({
 				message: 'Organization not found',
