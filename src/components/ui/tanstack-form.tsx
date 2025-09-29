@@ -1,12 +1,57 @@
 import * as React from 'react';
 import { Slot } from '@radix-ui/react-slot';
-import { createFormHook, createFormHookContexts, useStore } from '@tanstack/react-form';
+import {
+	AppFieldExtendedReactFormApi,
+	createFormHook,
+	createFormHookContexts,
+	useStore,
+} from '@tanstack/react-form';
 import { ConvexError } from 'convex/values';
 
 import { Label as LabelComponent } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 
 import { InlineAlert } from '../inline-alert';
+
+export const Form = (
+	props: React.ComponentProps<'form'> & {
+		onSubmit?: (e: React.FormEvent) => void;
+		form: AppFieldExtendedReactFormApi<
+			any,
+			any,
+			any,
+			any,
+			any,
+			any,
+			any,
+			any,
+			any,
+			any,
+			any,
+			any,
+			any,
+			any
+		>;
+	}
+) => {
+	const { children, onSubmit, form, ...rest } = props;
+
+	const handleSubmit = React.useCallback(
+		(e: React.FormEvent) => {
+			e.preventDefault();
+			e.stopPropagation();
+			onSubmit?.(e);
+			form.handleSubmit();
+		},
+		[form]
+	);
+
+	return (
+		<form {...rest} onSubmit={handleSubmit}>
+			{children}
+		</form>
+	);
+};
 
 const {
 	fieldContext,
@@ -25,7 +70,9 @@ const { useAppForm, withForm } = createFormHook({
 		Message,
 		Provider,
 	},
-	formComponents: {},
+	formComponents: {
+		Form,
+	},
 });
 
 type FormItemContextValue = {
