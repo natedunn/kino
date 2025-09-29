@@ -1,7 +1,7 @@
 import { selectOrgSchema } from '@convex/schema/org.schema';
 import { zodToConvex } from 'convex-helpers/server/zod';
 import { doc } from 'convex-helpers/validators';
-import { v } from 'convex/values';
+import { ConvexError, v } from 'convex/values';
 
 import { Id } from './_generated/dataModel';
 import { query } from './_generated/server';
@@ -19,6 +19,13 @@ export const get = query({
 			.query('organization')
 			.withIndex('slug', (q) => q.eq('slug', args.slug))
 			.unique();
+
+		if (!org) {
+			throw new ConvexError({
+				message: 'Organization not found (in component)',
+				code: '404',
+			});
+		}
 
 		return selectOrgSchema.parse(org);
 	},
@@ -60,7 +67,10 @@ export const getDetails = query({
 			.query('organization')
 			.withIndex('slug', (q) => q.eq('slug', args.slug))
 			.unique()
-			.then((res) => selectOrgSchema.parse(res))
+			.then((res) => {
+				if (!res) return null;
+				return selectOrgSchema.parse(res);
+			})
 			.catch((error) => {
 				console.error(error);
 				return null;
