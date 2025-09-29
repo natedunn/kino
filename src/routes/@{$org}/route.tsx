@@ -27,13 +27,7 @@ export const Route = createFileRoute('/@{$org}')({
 			user,
 		};
 	},
-	notFoundComponent: () => {
-		return (
-			<div className='container'>
-				<NotFound />
-			</div>
-		);
-	},
+	notFoundComponent: () => <NotFound isContainer />,
 	pendingComponent: () => {
 		return (
 			<div className='container'>
