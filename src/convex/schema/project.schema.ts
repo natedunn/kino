@@ -5,7 +5,7 @@ import { SHARED_SCHEMA } from './_shared';
 export const projectSchema = z.object({
 	...SHARED_SCHEMA('project'),
 	orgSlug: z.string(),
-	name: z.string().max(100).min(1),
+	name: z.string().min(1).max(100),
 	description: z.string().max(280).optional(),
 	urls: z.object({ url: z.string().url(), text: z.string() }).array().optional(),
 	visibility: z.enum(['private', 'public', 'archived']),
