@@ -27,7 +27,7 @@ export const Route = createFileRoute('/@{$org}/create-project/')({
 			})
 		);
 	},
-	notFoundComponent: () => <NotFound inContainer />,
+	notFoundComponent: () => <NotFound isContainer />,
 });
 
 function RouteComponent() {

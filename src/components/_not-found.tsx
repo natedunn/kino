@@ -8,14 +8,14 @@ import { buttonVariants } from './ui/button';
 
 export function NotFound({
 	className,
-	inContainer,
+	isContainer,
 }: {
 	className?: ClassValue;
-	inContainer?: boolean;
+	isContainer?: boolean;
 }) {
 	return (
-		<div className={cn(inContainer && 'container')}>
-			<div className={cn('space-y-2', inContainer && 'py-8', className)}>
+		<div className={cn(isContainer && 'container')}>
+			<div className={cn('space-y-2', isContainer && 'py-8', className)}>
 				<div>
 					<h1 className='text-gradient-primary text-4xl font-bold'>404</h1>
 					<h2 className='text-2xl font-bold text-muted-foreground'>
