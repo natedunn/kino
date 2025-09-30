@@ -1,10 +1,13 @@
 import { convexQuery } from '@convex-dev/react-query';
 import { useSuspenseQuery } from '@tanstack/react-query';
-import { createFileRoute, Link } from '@tanstack/react-router';
+import { createFileRoute } from '@tanstack/react-router';
+import { ArrowUpRight, CircleCheck, FolderOpen, User } from 'lucide-react';
 
 import { api } from '~api';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 import { NoPublicProjects } from './-components/no-public-projects';
+import { OrgProjects } from './-components/org-projects';
 
 export const Route = createFileRoute('/@{$org}/')({
 	component: RouteComponent,
@@ -31,33 +34,81 @@ function RouteComponent() {
 	if (!orgDetails.org) return null;
 
 	return (
-		<div className='container'>
-			<div className='mt-6 flex items-center gap-4'>
-				{!projects ? (
-					<NoPublicProjects
-						orgSlug={orgSlug}
-						orgName={orgDetails.org.name}
-						canEdit={orgDetails.permissions.canEdit}
-					/>
-				) : (
-					projects?.map((project) => {
-						return (
-							<Link
-								key={project._id}
-								to='/@{$org}/$project'
-								params={(prev) => ({
-									...prev,
-									org: orgSlug,
-									project: project.slug,
-								})}
-							>
-								<span className='inline-flex gap-3 rounded border bg-muted p-4 hocus:border-foreground/50 hocus:bg-accent/50'>
-									{project.name} - {project.visibility}
-								</span>
-							</Link>
-						);
-					})
-				)}
+		<div>
+			<div className='border-b bg-muted/50'>
+				<div className='container flex items-center gap-3 pt-12 pb-6'>
+					<div>
+						<Avatar className='size-10 border md:size-14'>
+							<AvatarFallback className='text-lg font-bold'>
+								{orgDetails.org.name[0].toUpperCase()}
+							</AvatarFallback>
+						</Avatar>
+					</div>
+					<h1 className='text-2xl font-bold md:text-4xl'>{orgDetails.org.name}</h1>
+				</div>
+			</div>
+			<div className='container'>
+				<div className='mt-6 flex items-center gap-4'>
+					{!projects ? (
+						<NoPublicProjects
+							orgSlug={orgSlug}
+							orgName={orgDetails.org.name}
+							canEdit={orgDetails.permissions.canEdit}
+						/>
+					) : (
+						<div className='w-full'>
+							<div className='flex flex-col justify-stretch gap-6 md:flex-row'>
+								<div className='inline-flex flex-auto flex-col gap-2 rounded-lg border bg-muted p-6'>
+									<div className='flex items-center gap-2'>
+										<span>
+											<User className='size-7' />
+										</span>
+										<span className='text-gradient-primary text-3xl font-bold'>7</span>
+									</div>
+									<span className='text-muted-foreground'>members</span>
+								</div>
+								<div className='inline-flex flex-auto flex-col gap-2 rounded-lg border bg-muted p-6'>
+									<div className='flex items-center gap-2'>
+										<span>
+											<CircleCheck className='size-7' />
+										</span>
+										<span className='text-gradient-primary text-3xl font-bold'>126</span>
+									</div>
+									<span className='text-muted-foreground'>closed items this month</span>
+								</div>
+								<div className='inline-flex flex-auto flex-col gap-2 rounded-lg border bg-muted p-6'>
+									<div className='flex items-center gap-2'>
+										<span>
+											<FolderOpen className='size-7' />
+										</span>
+										<span className='text-gradient-primary text-3xl font-bold'>12</span>
+									</div>
+									<span className='text-muted-foreground'>active projects</span>
+								</div>
+								<div className='inline-flex flex-auto flex-col gap-2 rounded-lg border bg-muted p-6'>
+									<div className='flex items-center gap-2'>
+										<span>
+											<ArrowUpRight className='size-7' />
+										</span>
+									</div>
+									<span>see all stats</span>
+								</div>
+							</div>
+							<div className='mt-12 grid w-full grid-cols-1 gap-12 md:grid-cols-12'>
+								<div className='col-span-1 md:col-span-8'>
+									<h3 className='text-xl font-bold'>Projects</h3>
+									<div className='mt-3'>
+										<OrgProjects orgSlug={orgSlug} projects={projects} />
+									</div>
+								</div>
+								<div className='col-span-1 md:col-span-4'>
+									<h3 className='text-xl font-bold'>Members</h3>
+									<div className='mt-3'>Members will go here</div>
+								</div>
+							</div>
+						</div>
+					)}
+				</div>
 			</div>
 		</div>
 	);
