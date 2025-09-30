@@ -25,7 +25,6 @@ import { Route as AtChar123orgChar125ProjectRouteRouteImport } from './routes/@{
 import { Route as ProfileSettingsIndexRouteImport } from './routes/profile/settings/index'
 import { Route as ProfileUsernameIndexRouteImport } from './routes/profile/$username/index'
 import { Route as CreateTeamIndexRouteImport } from './routes/create/team/index'
-import { Route as CreateProjectIndexRouteImport } from './routes/create/project/index'
 import { Route as AtChar123orgChar125CreateProjectIndexRouteImport } from './routes/@{$org}/create-project/index'
 import { Route as AtChar123orgChar125ProjectIndexRouteImport } from './routes/@{$org}/$project/index'
 import { Route as AtChar123orgChar125ProjectUpdatesIndexRouteImport } from './routes/@{$org}/$project/updates/index'
@@ -120,11 +119,6 @@ const ProfileUsernameIndexRoute = ProfileUsernameIndexRouteImport.update({
 const CreateTeamIndexRoute = CreateTeamIndexRouteImport.update({
   id: '/create/team/',
   path: '/create/team/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CreateProjectIndexRoute = CreateProjectIndexRouteImport.update({
-  id: '/create/project/',
-  path: '/create/project/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AtChar123orgChar125CreateProjectIndexRoute =
@@ -255,7 +249,6 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsIndexRoute
   '/@{$org}/$project/': typeof AtChar123orgChar125ProjectIndexRoute
   '/@{$org}/create-project': typeof AtChar123orgChar125CreateProjectIndexRoute
-  '/create/project': typeof CreateProjectIndexRoute
   '/create/team': typeof CreateTeamIndexRoute
   '/profile/$username': typeof ProfileUsernameIndexRoute
   '/profile/settings': typeof ProfileSettingsIndexRoute
@@ -288,7 +281,6 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsIndexRoute
   '/@{$org}/$project': typeof AtChar123orgChar125ProjectIndexRoute
   '/@{$org}/create-project': typeof AtChar123orgChar125CreateProjectIndexRoute
-  '/create/project': typeof CreateProjectIndexRoute
   '/create/team': typeof CreateTeamIndexRoute
   '/profile/$username': typeof ProfileUsernameIndexRoute
   '/profile/settings': typeof ProfileSettingsIndexRoute
@@ -323,7 +315,6 @@ export interface FileRoutesById {
   '/settings/': typeof SettingsIndexRoute
   '/@{$org}/$project/': typeof AtChar123orgChar125ProjectIndexRoute
   '/@{$org}/create-project/': typeof AtChar123orgChar125CreateProjectIndexRoute
-  '/create/project/': typeof CreateProjectIndexRoute
   '/create/team/': typeof CreateTeamIndexRoute
   '/profile/$username/': typeof ProfileUsernameIndexRoute
   '/profile/settings/': typeof ProfileSettingsIndexRoute
@@ -360,7 +351,6 @@ export interface FileRouteTypes {
     | '/settings'
     | '/@{$org}/$project/'
     | '/@{$org}/create-project'
-    | '/create/project'
     | '/create/team'
     | '/profile/$username'
     | '/profile/settings'
@@ -393,7 +383,6 @@ export interface FileRouteTypes {
     | '/settings'
     | '/@{$org}/$project'
     | '/@{$org}/create-project'
-    | '/create/project'
     | '/create/team'
     | '/profile/$username'
     | '/profile/settings'
@@ -427,7 +416,6 @@ export interface FileRouteTypes {
     | '/settings/'
     | '/@{$org}/$project/'
     | '/@{$org}/create-project/'
-    | '/create/project/'
     | '/create/team/'
     | '/profile/$username/'
     | '/profile/settings/'
@@ -458,7 +446,6 @@ export interface RootRouteChildren {
   CreateAtlayoutRoute: typeof CreateAtlayoutRoute
   MarketingIndexRoute: typeof MarketingIndexRoute
   SettingsIndexRoute: typeof SettingsIndexRoute
-  CreateProjectIndexRoute: typeof CreateProjectIndexRoute
   CreateTeamIndexRoute: typeof CreateTeamIndexRoute
   ProfileUsernameIndexRoute: typeof ProfileUsernameIndexRoute
   ProfileSettingsIndexRoute: typeof ProfileSettingsIndexRoute
@@ -583,13 +570,6 @@ declare module '@tanstack/react-router' {
       path: '/create/team'
       fullPath: '/create/team'
       preLoaderRoute: typeof CreateTeamIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/create/project/': {
-      id: '/create/project/'
-      path: '/create/project'
-      fullPath: '/create/project'
-      preLoaderRoute: typeof CreateProjectIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/@{$org}/create-project/': {
@@ -837,7 +817,6 @@ const rootRouteChildren: RootRouteChildren = {
   CreateAtlayoutRoute: CreateAtlayoutRoute,
   MarketingIndexRoute: MarketingIndexRoute,
   SettingsIndexRoute: SettingsIndexRoute,
-  CreateProjectIndexRoute: CreateProjectIndexRoute,
   CreateTeamIndexRoute: CreateTeamIndexRoute,
   ProfileUsernameIndexRoute: ProfileUsernameIndexRoute,
   ProfileSettingsIndexRoute: ProfileSettingsIndexRoute,

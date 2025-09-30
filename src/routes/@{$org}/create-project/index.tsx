@@ -4,7 +4,6 @@ import { createFileRoute, notFound } from '@tanstack/react-router';
 
 import { api } from '~api';
 import { NotFound } from '@/components/_not-found';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 import { CreateProjectForm } from './-create-project-form';
 
@@ -50,22 +49,9 @@ function RouteComponent() {
 	const { org } = orgDetails;
 
 	return (
-		<div>
-			<div className='border-b bg-muted/50 pt-12 pb-6'>
-				<div className='container'>
-					<h1 className='inline-flex flex-wrap items-center gap-y-1 text-3xl font-bold'>
-						<span className='mr-2 inline-block'>Create a new project for</span>
-						<span className='inline-flex items-center gap-2 rounded-lg px-2 text-foreground'>
-							<Avatar className='size-6 rounded-full border'>
-								<AvatarFallback className='rounded-lg'>{org.name[0].toUpperCase()}</AvatarFallback>
-							</Avatar>
-							<span>{org.name}</span>
-						</span>
-					</h1>
-				</div>
-			</div>
-			<div className='container py-4'>
-				<CreateProjectForm enabled={limits.canAddProjects} orgSlug={org.slug} />
+		<div className='flex flex-auto flex-col'>
+			<div className='container flex flex-auto flex-col'>
+				<CreateProjectForm enabled={limits.canAddProjects} orgSlug={org.slug} orgName={org.name} />
 			</div>
 		</div>
 	);

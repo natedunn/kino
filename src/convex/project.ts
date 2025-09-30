@@ -1,3 +1,4 @@
+import component from '@convex-dev/r2/convex.config';
 import { mergedStream, stream } from 'convex-helpers/server/stream';
 import { ConvexError } from 'convex/values';
 import z from 'zod';
@@ -9,9 +10,9 @@ import {
 	updateProjectSchema,
 } from '@/convex/schema/project.schema';
 
+import { components } from './_generated/api';
 import { authComponent, createAuth } from './auth';
 import schema from './schema';
-import { safeGetUser } from './user.utils';
 import { zAuthedMutation, zQuery } from './utils/functions';
 import { getProjectUserDetails } from './utils/queries/getProjectUserDetails';
 import { triggers } from './utils/trigger';
@@ -20,14 +21,18 @@ import { verify } from './utils/verify';
 export const create = zAuthedMutation({
 	args: createProjectSchema,
 	handler: async (ctx, args) => {
-		const user = await safeGetUser(ctx);
-		const headers = await authComponent.getHeaders(ctx);
-
-		const member = await createAuth(ctx).api.getActiveMember({
-			headers,
+		const orgDetails = await ctx.runQuery(components.betterAuth.org.getDetails, {
+			slug: args.orgSlug,
 		});
 
-		if (!member || (member?.role !== 'admin' && member?.role !== 'owner')) {
+		if (!orgDetails) {
+			throw new ConvexError({
+				message: 'Organization not found',
+				code: '404',
+			});
+		}
+
+		if (!orgDetails.permissions.canEdit) {
 			throw new ConvexError({
 				message: 'User does not have permission',
 				code: '403',
@@ -40,7 +45,7 @@ export const create = zAuthedMutation({
 			data: args,
 			onFail: ({ uniqueRow }) => {
 				throw new ConvexError({
-					message: `A project with the slug of '${uniqueRow?.existingData.slug}' already exists for this team.`,
+					message: `A project with the slug of '${uniqueRow?.existingData.slug}' already exists for this organization.`,
 				});
 			},
 		});
@@ -73,7 +78,7 @@ export const update = zAuthedMutation({
 			data: args,
 			onFail: ({ uniqueRow }) => {
 				throw new ConvexError({
-					message: `A project with the slug of '${uniqueRow?.existingData.slug}' already exists for this team.`,
+					message: `A project with the slug of '${uniqueRow?.existingData.slug}' already exists for this organization.`,
 				});
 			},
 		});
