@@ -1,6 +1,6 @@
 import { convexQuery } from '@convex-dev/react-query';
 import { useSuspenseQuery } from '@tanstack/react-query';
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, Link } from '@tanstack/react-router';
 import { ArrowUpRight, CircleCheck, FolderOpen, User } from 'lucide-react';
 
 import { api } from '~api';
@@ -96,14 +96,29 @@ function RouteComponent() {
 							</div>
 							<div className='mt-12 grid w-full grid-cols-1 gap-12 md:grid-cols-12'>
 								<div className='col-span-1 md:col-span-8'>
-									<h3 className='text-xl font-bold'>Projects</h3>
-									<div className='mt-3'>
+									<div className='flex items-center justify-between'>
+										<h3 className='text-2xl font-bold'>Projects</h3>
+										{orgDetails.permissions.canEdit && (
+											<div>
+												<Link
+													to='/@{$org}/create-project'
+													params={{
+														org: orgSlug,
+													}}
+													className='link-text'
+												>
+													Create a new project
+												</Link>
+											</div>
+										)}
+									</div>
+									<div className='mt-5'>
 										<OrgProjects orgSlug={orgSlug} projects={projects} />
 									</div>
 								</div>
 								<div className='col-span-1 md:col-span-4'>
-									<h3 className='text-xl font-bold'>Members</h3>
-									<div className='mt-3'>Members will go here</div>
+									<h3 className='text-2xl font-bold'>Members</h3>
+									<div className='mt-5'>Members will go here</div>
 								</div>
 							</div>
 						</div>
