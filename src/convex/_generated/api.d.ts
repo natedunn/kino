@@ -14,8 +14,10 @@ import type * as betterAuth__generated_server from "../betterAuth/_generated/ser
 import type * as betterAuth_adapter from "../betterAuth/adapter.js";
 import type * as betterAuth_auth from "../betterAuth/auth.js";
 import type * as betterAuth_generatedSchema from "../betterAuth/generatedSchema.js";
+import type * as betterAuth_members from "../betterAuth/members.js";
 import type * as betterAuth_org from "../betterAuth/org.js";
 import type * as betterAuth_user from "../betterAuth/user.js";
+import type * as betterAuth_utils from "../betterAuth/utils.js";
 import type * as features from "../features.js";
 import type * as feedback from "../feedback.js";
 import type * as feedbackBoard from "../feedbackBoard.js";
@@ -56,8 +58,10 @@ declare const fullApi: ApiFromModules<{
   "betterAuth/adapter": typeof betterAuth_adapter;
   "betterAuth/auth": typeof betterAuth_auth;
   "betterAuth/generatedSchema": typeof betterAuth_generatedSchema;
+  "betterAuth/members": typeof betterAuth_members;
   "betterAuth/org": typeof betterAuth_org;
   "betterAuth/user": typeof betterAuth_user;
+  "betterAuth/utils": typeof betterAuth_utils;
   features: typeof features;
   feedback: typeof feedback;
   feedbackBoard: typeof feedbackBoard;
@@ -1529,6 +1533,30 @@ export declare const components: {
         any
       >;
     };
+    members: {
+      getList: FunctionReference<
+        "query",
+        "internal",
+        { slug: string },
+        Array<{
+          _creationTime: number;
+          _id: string;
+          banExpires?: null | number;
+          banReason?: null | string;
+          banned?: null | boolean;
+          createdAt: number;
+          displayUsername?: null | string;
+          email: string;
+          emailVerified: boolean;
+          image?: null | string;
+          name: string;
+          role?: null | string;
+          updatedAt: number;
+          userId?: null | string;
+          username?: null | string;
+        }> | null
+      >;
+    };
     org: {
       get: FunctionReference<
         "query",
@@ -1576,6 +1604,28 @@ export declare const components: {
       >;
     };
     user: {
+      get: FunctionReference<
+        "query",
+        "internal",
+        { userId: string },
+        {
+          _creationTime: number;
+          _id: string;
+          banExpires?: null | number;
+          banReason?: null | string;
+          banned?: null | boolean;
+          createdAt: number;
+          displayUsername?: null | string;
+          email: string;
+          emailVerified: boolean;
+          image?: null | string;
+          name: string;
+          role?: null | string;
+          updatedAt: number;
+          userId?: null | string;
+          username?: null | string;
+        } | null
+      >;
       updateUsername: FunctionReference<
         "mutation",
         "internal",

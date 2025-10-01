@@ -1,5 +1,3 @@
-import { userInfo } from 'os';
-
 import { BetterAuthError } from 'better-auth';
 import { ConvexError } from 'convex/values';
 import z from 'zod';

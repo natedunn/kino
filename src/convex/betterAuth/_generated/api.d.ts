@@ -11,8 +11,10 @@
 import type * as adapter from "../adapter.js";
 import type * as auth from "../auth.js";
 import type * as generatedSchema from "../generatedSchema.js";
+import type * as members from "../members.js";
 import type * as org from "../org.js";
 import type * as user from "../user.js";
+import type * as utils from "../utils.js";
 
 import type {
   ApiFromModules,
@@ -32,8 +34,10 @@ declare const fullApi: ApiFromModules<{
   adapter: typeof adapter;
   auth: typeof auth;
   generatedSchema: typeof generatedSchema;
+  members: typeof members;
   org: typeof org;
   user: typeof user;
+  utils: typeof utils;
 }>;
 export type Mounts = {
   adapter: {
@@ -1475,6 +1479,30 @@ export type Mounts = {
       any
     >;
   };
+  members: {
+    getList: FunctionReference<
+      "query",
+      "public",
+      { slug: string },
+      Array<{
+        _creationTime: number;
+        _id: string;
+        banExpires?: null | number;
+        banReason?: null | string;
+        banned?: null | boolean;
+        createdAt: number;
+        displayUsername?: null | string;
+        email: string;
+        emailVerified: boolean;
+        image?: null | string;
+        name: string;
+        role?: null | string;
+        updatedAt: number;
+        userId?: null | string;
+        username?: null | string;
+      }> | null
+    >;
+  };
   org: {
     get: FunctionReference<
       "query",
@@ -1522,6 +1550,28 @@ export type Mounts = {
     >;
   };
   user: {
+    get: FunctionReference<
+      "query",
+      "public",
+      { userId: string },
+      {
+        _creationTime: number;
+        _id: string;
+        banExpires?: null | number;
+        banReason?: null | string;
+        banned?: null | boolean;
+        createdAt: number;
+        displayUsername?: null | string;
+        email: string;
+        emailVerified: boolean;
+        image?: null | string;
+        name: string;
+        role?: null | string;
+        updatedAt: number;
+        userId?: null | string;
+        username?: null | string;
+      } | null
+    >;
     updateUsername: FunctionReference<
       "mutation",
       "public",
