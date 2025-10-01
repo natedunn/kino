@@ -1,10 +1,11 @@
 import { convexQuery } from '@convex-dev/react-query';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { ArrowUpRight, CircleCheck, FolderOpen, User } from 'lucide-react';
+import { ArrowUpRight, CircleCheck, FolderOpen, Settings, User } from 'lucide-react';
 
 import { api } from '~api';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 
 import { NoPublicProjects } from './-components/no-public-projects';
 import { OrgProjects } from './-components/org-projects';
@@ -36,15 +37,25 @@ function RouteComponent() {
 	return (
 		<div>
 			<div className='border-b bg-muted/50'>
-				<div className='container flex items-center gap-3 pt-12 pb-6'>
-					<div>
-						<Avatar className='size-10 border md:size-14'>
-							<AvatarFallback className='text-lg font-bold'>
-								{orgDetails.org.name[0].toUpperCase()}
-							</AvatarFallback>
-						</Avatar>
+				<div className='container pt-12 pb-6'>
+					<div className='flex items-center justify-between'>
+						<div className='flex items-center gap-3'>
+							<div>
+								<Avatar className='size-10 border md:size-12'>
+									<AvatarFallback className='text-lg font-bold'>
+										{orgDetails.org.name[0].toUpperCase()}
+									</AvatarFallback>
+								</Avatar>
+							</div>
+							<h1 className='text-2xl font-bold md:text-3xl'>{orgDetails.org.name}</h1>
+						</div>
+						<div>
+							<Button variant='outline'>
+								<Settings />
+								Edit
+							</Button>
+						</div>
 					</div>
-					<h1 className='text-2xl font-bold md:text-4xl'>{orgDetails.org.name}</h1>
 				</div>
 			</div>
 			<div className='container'>
