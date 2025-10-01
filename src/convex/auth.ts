@@ -29,7 +29,9 @@ export const authComponent = createClient<DataModel, typeof authSchema>(componen
 					randomDigits: 3,
 				});
 
-				const appUserId = await ctx.db.insert('user', {});
+				const appUserId = await ctx.db.insert('user', {
+					imageUrl: newUser.image ?? undefined,
+				});
 
 				await ctx.runMutation(api.user.onCreate, {
 					authId: newUser._id,
@@ -42,7 +44,14 @@ export const authComponent = createClient<DataModel, typeof authSchema>(componen
 			onDelete: async (ctx, user) => {
 				await ctx.db.delete(user.userId as Id<'user'>);
 			},
-			onUpdate: async (_ctx, _oldUser, _newUser) => {},
+			onUpdate: async (_ctx, _oldUser, _newUser) => {
+				if (_oldUser._id !== _newUser._id) {
+					throw new Error('ID MISMATCH!');
+				}
+				await _ctx.db.patch(_newUser._id as Id<'user'>, {
+					imageUrl: _newUser.image ?? undefined,
+				});
+			},
 		},
 	},
 });
@@ -63,6 +72,12 @@ export const createAuth = (ctx: GenericCtx<DataModel>) => {
 			},
 		},
 		user: {
+			additionalFields: {
+				imageKey: {
+					type: 'string',
+					required: false,
+				},
+			},
 			deleteUser: {
 				enabled: true,
 			},
