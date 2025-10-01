@@ -1,10 +1,9 @@
-import { authComponent, createAuth } from '@convex/auth';
+import { doc, withSystemFields } from 'convex-helpers/validators';
 import { v } from 'convex/values';
-import { uniqueUsernameGenerator } from 'unique-username-generator';
 
 import { Id } from './_generated/dataModel';
-import { mutation } from './_generated/server';
-import { tables } from './generatedSchema';
+import { mutation, query } from './_generated/server';
+import schema, { tables } from './generatedSchema';
 
 export const updateUsername = mutation({
 	args: {
@@ -18,4 +17,19 @@ export const updateUsername = mutation({
 			username: args.username,
 		});
 	},
+});
+
+const user = doc(schema, 'user');
+
+export const get = query({
+	args: {
+		userId: v.string(),
+	},
+	handler: async (ctx, args) => {
+		return await ctx.db
+			.query('user')
+			.withIndex('userId', (q) => q.eq('userId', args.userId))
+			.unique();
+	},
+	returns: v.union(user, v.null()),
 });

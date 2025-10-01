@@ -6,6 +6,7 @@ import { ConvexError, v } from 'convex/values';
 import { Id } from './_generated/dataModel';
 import { query } from './_generated/server';
 import schema from './generatedSchema';
+import { getOrgBySlug } from './utils';
 
 const organization = doc(schema, 'organization');
 const member = doc(schema, 'member');
@@ -63,18 +64,7 @@ export const getDetails = query({
 			userId: publicUserId,
 		});
 
-		const org = await ctx.db
-			.query('organization')
-			.withIndex('slug', (q) => q.eq('slug', args.slug))
-			.unique()
-			.then((res) => {
-				if (!res) return null;
-				return selectOrgSchema.parse(res);
-			})
-			.catch((error) => {
-				console.error(error);
-				return null;
-			});
+		const org = await getOrgBySlug(ctx, args.slug);
 
 		if (!org) {
 			return createResponse();
