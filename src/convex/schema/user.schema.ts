@@ -1,5 +1,4 @@
 import { convexToZod } from 'convex-helpers/server/zod';
-import { defineTable } from 'convex/server';
 import { v } from 'convex/values';
 import { z } from 'zod';
 
@@ -28,6 +27,7 @@ const betterAuthUserSchema = convexToZod(
 export const userSchema = z.object({
 	...SHARED_SCHEMA('user'),
 	imageKey: z.string().optional(),
+	imageUrl: z.string().optional(),
 	bio: z.string().max(150).optional(),
 	location: z.string().optional(),
 	urls: z.object({ url: z.string().url(), text: z.string() }).array().optional(),
