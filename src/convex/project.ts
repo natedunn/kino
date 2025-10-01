@@ -1,4 +1,3 @@
-import component from '@convex-dev/r2/convex.config';
 import { mergedStream, stream } from 'convex-helpers/server/stream';
 import { ConvexError } from 'convex/values';
 import z from 'zod';
