@@ -6,7 +6,7 @@ import { SHARED_SCHEMA } from './_shared';
 export const feedbackComment = z.object({
 	...SHARED_SCHEMA('feedbackComment'),
 	feedbackId: zid('feedback'),
-	authorUserId: zid('user'),
+	authorProfileId: zid('profile'),
 	replyFeedbackCommentId: zid('feedbackComment').optional(),
 	content: z.string().min(1).max(1200),
 	// emoteCounts: z.record(feedbackCommentEmotes.shape.content, z.number().optional()),

@@ -24,27 +24,30 @@ const betterAuthUserSchema = convexToZod(
 	})
 );
 
-export const userSchema = z.object({
-	...SHARED_SCHEMA('user'),
+export const profileSchema = z.object({
+	...SHARED_SCHEMA('profile'),
 	imageKey: z.string().optional(),
 	imageUrl: z.string().optional(),
 	bio: z.string().max(150).optional(),
 	location: z.string().optional(),
 	urls: z.object({ url: z.string().url(), text: z.string() }).array().optional(),
+	userId: z.string(),
 });
 
-export const createUserSchema = userSchema;
+export const createProfileSchema = profileSchema;
 
-export const userSelectSchema = userSchema.pick({
+export const selectProfileSchema = profileSchema.pick({
 	_creationTime: true,
 	_id: true,
 	location: true,
 	urls: true,
 	bio: true,
 });
+export const updateProfileSchema = profileSchema.partial();
 
-export const selectSafeUserSchema = userSelectSchema.merge(betterAuthUserSchema);
-export const updateSafeUserSchema = userSchema
+// Merged with User
+export const selectProfileUserSchema = selectProfileSchema.merge(betterAuthUserSchema);
+export const updateProfileUserSchema = profileSchema
 	.pick({
 		imageKey: true,
 		bio: true,
@@ -59,8 +62,7 @@ export const updateSafeUserSchema = userSchema
 		})
 	);
 
-export const userUpdateSchema = userSchema.partial();
-
-export type CreateUserSchema = z.infer<typeof createUserSchema>;
-export type UserSelectSchema = z.infer<typeof userSelectSchema>;
-export type UserUpdateSchema = z.infer<typeof userUpdateSchema>;
+export type SelectSafeUserSchema = z.infer<typeof selectProfileUserSchema>;
+export type CreateProfileSchema = z.infer<typeof createProfileSchema>;
+export type SelectProfileSchema = z.infer<typeof selectProfileSchema>;
+export type UpdateProfileSchema = z.infer<typeof updateProfileSchema>;

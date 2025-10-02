@@ -1,4 +1,3 @@
-import { convexToZod } from 'convex-helpers/server/zod';
 import z from 'zod';
 
 // const betterAuthOrgSchema = convexToZod(

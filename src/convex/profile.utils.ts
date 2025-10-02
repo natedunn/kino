@@ -3,16 +3,16 @@ import { withoutSystemFields } from 'convex-helpers';
 import { Id } from './_generated/dataModel';
 import { QueryCtx } from './_generated/server';
 import { authComponent } from './auth';
-import { selectSafeUserSchema } from './schema/user.schema';
+import { selectProfileUserSchema } from './schema/profile.schema';
 import { userUploadsR2 } from './utils/r2';
 
-export const safeGetUser = async (ctx: QueryCtx) => {
+export const getProfileUser = async (ctx: QueryCtx) => {
 	const authUser = await authComponent.safeGetAuthUser(ctx);
 
 	if (!authUser?._id) {
 		return;
 	}
-	const user = await ctx.db.get(authUser.userId as Id<'user'>);
+	const user = await ctx.db.get(authUser.userId as Id<'profile'>);
 	if (!user) {
 		return;
 	}
@@ -37,5 +37,5 @@ export const safeGetUser = async (ctx: QueryCtx) => {
 		image: trueImage,
 	};
 
-	return selectSafeUserSchema.parse(mergedUser);
+	return selectProfileUserSchema.parse(mergedUser);
 };

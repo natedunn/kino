@@ -29,27 +29,32 @@ export const authComponent = createClient<DataModel, typeof authSchema>(componen
 					randomDigits: 3,
 				});
 
-				const appUserId = await ctx.db.insert('user', {
+				const profileId = await ctx.db.insert('profile', {
 					imageUrl: newUser.image ?? undefined,
+					userId: newUser._id,
 				});
 
-				await ctx.runMutation(api.user.onCreate, {
+				await ctx.runMutation(api.profile.onCreate, {
 					authId: newUser._id,
 					username: newUser.username ?? generatedUsername,
 					name: newUser.name,
 				});
 
-				await authComponent.setUserId(ctx, newUser._id, appUserId);
+				await authComponent.setUserId(ctx, newUser._id, profileId);
 			},
 			onDelete: async (ctx, user) => {
-				await ctx.db.delete(user.userId as Id<'user'>);
+				const profileId = user.userId as Id<'profile'>;
+				await ctx.db.delete(profileId);
 			},
-			onUpdate: async (_ctx, _oldUser, _newUser) => {
-				if (_oldUser._id !== _newUser._id) {
+			onUpdate: async (_ctx, oldUser, newUser) => {
+				if (oldUser._id !== newUser._id) {
 					throw new Error('ID MISMATCH!');
 				}
-				await _ctx.db.patch(_newUser._id as Id<'user'>, {
-					imageUrl: _newUser.image ?? undefined,
+
+				const profileId = newUser.userId as Id<'profile'>;
+
+				await _ctx.db.patch(profileId, {
+					imageUrl: newUser.image ?? undefined,
 				});
 			},
 		},

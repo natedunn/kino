@@ -6,7 +6,7 @@ import { SHARED_SCHEMA } from './_shared';
 export const feedback = z.object({
 	...SHARED_SCHEMA('feedback'),
 	content: z.string().min(1).max(500),
-	authorUserId: zid('user'),
+	authorProfileId: zid('profile'),
 	projectId: zid('project'),
 	upvotes: z.number().default(0),
 	board: zid('feedbackBoard'),

@@ -5,7 +5,7 @@ import { SHARED_SCHEMA } from './_shared';
 
 export const feedbackCommentEmote = z.object({
 	...SHARED_SCHEMA('feedbackCommentEmote'),
-	authorUserId: zid('user'),
+	authorProfileId: zid('profile'),
 	feedbackId: zid('feedback'),
 	feedbackCommentId: zid('feedbackComment'),
 	content: z.enum([

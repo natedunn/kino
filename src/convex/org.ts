@@ -6,7 +6,7 @@ import { LIMITS } from '../config/limits';
 import { createOrgSchema, updateOrgSchema } from '../convex/schema/org.schema';
 import { components } from './_generated/api';
 import { authComponent, createAuth } from './auth';
-import { safeGetUser } from './user.utils';
+import { getProfileUser } from './profile.utils';
 import { zAuthedMutation, zAuthedQuery, zQuery } from './utils/functions';
 
 export const create = zAuthedMutation({
@@ -100,7 +100,7 @@ export const limits = zAuthedQuery({
 	handler: async (ctx, args) => {
 		const createResponse = (permissions: { canAddProjects: boolean }) => permissions;
 
-		const user = await safeGetUser(ctx);
+		const user = await getProfileUser(ctx);
 
 		const projects = await ctx.db
 			.query('project')

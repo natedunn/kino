@@ -81,9 +81,9 @@ export const getProjectUserDetails = async (
 		//
 		// If the user is not a admin or owner of the org, we will check for project permissions
 		const projectUser = await ctx.db
-			.query('projectUser')
-			.withIndex('by_userId_projectId', (q) =>
-				q.eq('userId', userId as Id<'user'>).eq('projectId', project._id)
+			.query('projectProfile')
+			.withIndex('by_profileId_projectId', (q) =>
+				q.eq('profileId', userId as Id<'profile'>).eq('projectId', project._id)
 			)
 			.unique();
 

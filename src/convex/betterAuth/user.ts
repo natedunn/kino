@@ -1,4 +1,4 @@
-import { doc, withSystemFields } from 'convex-helpers/validators';
+import { doc } from 'convex-helpers/validators';
 import { v } from 'convex/values';
 
 import { Id } from './_generated/dataModel';

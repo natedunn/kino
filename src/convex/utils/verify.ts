@@ -477,7 +477,7 @@ export const { verify } = verifyConfig({
 		},
 	},
 	uneditableColumns: {
-		user: [],
+		profile: [],
 	},
 	// defaultValues: {}
 });

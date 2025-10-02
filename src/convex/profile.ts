@@ -7,8 +7,8 @@ import { createAuth } from '@/convex/auth';
 
 import { DataModel, Id } from './_generated/dataModel';
 import { authComponent } from './auth';
-import { updateSafeUserSchema } from './schema/user.schema';
-import { safeGetUser } from './user.utils';
+import { getProfileUser } from './profile.utils';
+import { updateProfileUserSchema } from './schema/profile.schema';
 import { query, zAuthedMutation, zMutation, zQuery } from './utils/functions';
 import { userUploadsR2 } from './utils/r2';
 
@@ -16,7 +16,7 @@ export const getList = query({
 	args: { paginationOpts: paginationOptsValidator },
 	handler: async (ctx, args) => {
 		const results = ctx.db
-			.query('user')
+			.query('profile')
 			// TODO: add a filter back
 			// .filter((q) => {
 			// 	return q.or(q.eq(q.field('private'), false), q.eq(q.field('private'), undefined));
@@ -55,7 +55,7 @@ export const onCreate = zMutation({
 });
 
 export const update = zAuthedMutation({
-	args: updateSafeUserSchema,
+	args: updateProfileUserSchema,
 	handler: async (ctx, args) => {
 		const auth = createAuth(ctx);
 
@@ -102,7 +102,7 @@ export const getTeamList = zQuery({
 export const getCurrentUser = query({
 	args: {},
 	handler: async (ctx) => {
-		const user = await safeGetUser(ctx);
+		const user = await getProfileUser(ctx);
 		return user ?? null;
 	},
 });
@@ -148,7 +148,7 @@ export const { generateUploadUrl, syncMetadata } = userUploadsR2.clientApi({
 		const typeFromKey = key.split('_')[0];
 
 		if (typeFromKey === 'PFP') {
-			await ctx.db.patch(userId as Id<'user'>, {
+			await ctx.db.patch(userId as Id<'profile'>, {
 				imageKey: key,
 			});
 		} else {

@@ -3,9 +3,9 @@ import z from 'zod';
 
 import { SHARED_SCHEMA } from './_shared';
 
-export const projectUser = z.object({
+export const projectProfile = z.object({
 	...SHARED_SCHEMA('project'),
-	userId: zid('user'),
+	profileId: zid('profile'),
 	projectId: zid('project'),
 	role: z.enum(['admin', 'member']),
 });

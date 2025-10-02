@@ -12,14 +12,14 @@ import { Label, LabelWrapper } from '@/components/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { updateSafeUserSchema } from '@/convex/schema/user.schema';
+import { updateProfileUserSchema } from '@/convex/schema/profile.schema';
 import { cn } from '@/lib/utils';
 
 const formSchema = z
 	.object({
 		files: z.instanceof(File).array().optional(),
 	})
-	.merge(updateSafeUserSchema);
+	.merge(updateProfileUserSchema);
 
 type FormSchema = z.infer<typeof formSchema>;
 
