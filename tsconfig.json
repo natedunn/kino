@@ -14,12 +14,11 @@
 		"allowJs": true,
 		"forceConsistentCasingInFileNames": true,
 		"allowSyntheticDefaultImports": true,
-		"baseUrl": ".",
 		"noEmit": true,
 		"paths": {
-			"~api": ["src/lib/api.ts"],
-			"@/*": ["src/*"],
-			"@convex/*": ["src/convex/*"]
+			"~api": ["./src/lib/api.ts"],
+			"@/*": ["./src/*"],
+			"@convex/*": ["./src/convex/*"]
 		}
 	},
 	"include": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"],
