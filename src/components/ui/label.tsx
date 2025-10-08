@@ -1,7 +1,8 @@
 import * as React from 'react';
 import * as LabelPrimitive from '@radix-ui/react-label';
-import { ExtendedComponentProps } from 'src/lib/types';
-import { cn } from 'src/lib/utils';
+
+import { ExtendedComponentProps } from '@/lib/types';
+import { cn } from '@/lib/utils';
 
 function LabelWrapper({ className, children, ...props }: ExtendedComponentProps<'div', {}>) {
 	return (

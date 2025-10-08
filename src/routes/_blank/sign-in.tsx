@@ -1,9 +1,9 @@
 import { createFileRoute, Link, redirect } from '@tanstack/react-router';
 import { ChevronLeft } from 'lucide-react';
-import { Separator } from 'src/components/ui/separator';
 import z from 'zod';
 
 import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 import { authClient } from '@/lib/auth/auth-client';
 
 const searchValidator = z.object({

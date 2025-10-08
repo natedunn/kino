@@ -1,7 +1,8 @@
 import type { AnyFieldApi } from '@tanstack/react-form';
 
 import { Ban, Check, Dot } from 'lucide-react';
-import { cn } from 'src/lib/utils';
+
+import { cn } from '@/lib/utils';
 
 export const FieldInfo = ({ field }: { field: AnyFieldApi }) => {
 	return (
