@@ -28,32 +28,6 @@ export const getList = query({
 	},
 });
 
-export const onCreate = zMutation({
-	args: {
-		authId: z.string(),
-		name: z.string(),
-		username: z.string(),
-	},
-	handler: async (ctx, args) => {
-		const auth = createAuth(ctx);
-		const authCtx = await auth.$context;
-
-		const username = args.username.toLowerCase();
-
-		await authCtx.internalAdapter.updateUser(args.authId, {
-			username,
-		});
-
-		await auth.api.createOrganization({
-			body: {
-				slug: username,
-				name: args.name,
-				userId: args.authId,
-			},
-		});
-	},
-});
-
 export const update = zAuthedMutation({
 	args: updateProfileUserSchema,
 	handler: async (ctx, args) => {

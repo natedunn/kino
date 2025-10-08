@@ -6,7 +6,7 @@ import { betterAuth } from 'better-auth';
 import { admin, organization, username } from 'better-auth/plugins';
 import { adjectives, nouns, uniqueUsernameGenerator } from 'unique-username-generator';
 
-import { api, components, internal } from './_generated/api';
+import { components, internal } from './_generated/api';
 import { DataModel, Id } from './_generated/dataModel';
 import authSchema from './betterAuth/schema';
 
@@ -29,15 +29,26 @@ export const authComponent = createClient<DataModel, typeof authSchema>(componen
 					randomDigits: 3,
 				});
 
+				const auth = createAuth(ctx);
+				const username = (newUser.username ?? generatedUsername).toLowerCase();
+
+				await auth.api.createOrganization({
+					body: {
+						slug: username,
+						name: newUser.name,
+						userId: newUser._id,
+					},
+				});
+
 				const profileId = await ctx.db.insert('profile', {
 					imageUrl: newUser.image ?? undefined,
 					userId: newUser._id,
 				});
 
-				await ctx.runMutation(api.profile.onCreate, {
+				// Directly updating the column prevents onChange from running below
+				await ctx.runMutation(components.betterAuth.user.updateUsername, {
+					username: username,
 					authId: newUser._id,
-					username: newUser.username ?? generatedUsername,
-					name: newUser.name,
 				});
 
 				await authComponent.setUserId(ctx, newUser._id, profileId);
@@ -46,16 +57,22 @@ export const authComponent = createClient<DataModel, typeof authSchema>(componen
 				const profileId = user.userId as Id<'profile'>;
 				await ctx.db.delete(profileId);
 			},
-			onUpdate: async (_ctx, oldUser, newUser) => {
+			onUpdate: async (ctx, oldUser, newUser) => {
 				if (oldUser._id !== newUser._id) {
 					throw new Error('ID MISMATCH!');
 				}
 
 				const profileId = newUser.userId as Id<'profile'>;
 
-				await _ctx.db.patch(profileId, {
-					imageUrl: newUser.image ?? undefined,
-				});
+				if (!profileId) {
+					console.error('Nothing to update: no userId found');
+
+					await ctx.db.get(profileId);
+
+					await ctx.db.patch(profileId, {
+						imageUrl: newUser.image ?? undefined,
+					});
+				}
 			},
 		},
 	},
