@@ -9,7 +9,7 @@ import { DataModel, Id } from './_generated/dataModel';
 import { authComponent } from './auth';
 import { getProfileUser } from './profile.utils';
 import { updateProfileUserSchema } from './schema/profile.schema';
-import { query, zAuthedMutation, zMutation, zQuery } from './utils/functions';
+import { query, zAuthedMutation, zQuery } from './utils/functions';
 import { userUploadsR2 } from './utils/r2';
 
 export const getList = query({
