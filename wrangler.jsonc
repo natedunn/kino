@@ -7,7 +7,4 @@
 	"observability": {
 		"enabled": true,
 	},
-	"vars": {
-		"MY_VAR": "Hello from Cloudflare",
-	},
 }
