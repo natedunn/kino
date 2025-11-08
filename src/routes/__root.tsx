@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { ConvexBetterAuthProvider } from '@convex-dev/better-auth/react';
 import { fetchSession, getCookieName } from '@convex-dev/better-auth/react-start';
 import { ConvexQueryClient } from '@convex-dev/react-query';
@@ -20,7 +21,11 @@ import { Toaster } from '@/components/ui/sonner';
 import { authClient } from '@/lib/auth/auth-client';
 
 import appCss from '../styles/app.css?url';
-import { Devtools } from './-components/devtools';
+
+// import { Devtools } from './-components/devtools';
+const Devtools = lazy(() =>
+	import('./-components/devtools').then((module) => ({ default: module.Devtools }))
+);
 
 const fetchAuth = createServerFn({ method: 'GET' }).handler(async () => {
 	const { createAuth } = await import('@/convex/auth');
@@ -122,7 +127,11 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 					)`}
 				</ScriptOnce>
 				{children}
-				{process.env.NODE_ENV === 'development' && <Devtools />}
+				{process.env.NODE_ENV === 'development' && (
+					<Suspense fallback={null}>
+						<Devtools />
+					</Suspense>
+				)}
 				<Toaster position='top-right' closeButton richColors />
 				<Scripts />
 			</body>

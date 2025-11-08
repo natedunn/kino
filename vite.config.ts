@@ -7,9 +7,6 @@ import ViteRestart from 'vite-plugin-restart';
 import tsConfigPaths from 'vite-tsconfig-paths';
 
 export default defineConfig({
-	ssr: {
-		external: ['@tanstack/devtools', '@tanstack/form'],
-	},
 	plugins: [
 		tailwindcss(),
 		ViteRestart({
