@@ -11,7 +11,7 @@ import {
 	useRouteContext,
 } from '@tanstack/react-router';
 import { createServerFn } from '@tanstack/react-start';
-import { getCookie, getWebRequest } from '@tanstack/react-start/server';
+import { getCookie, getRequest } from '@tanstack/react-start/server';
 import { ConvexReactClient } from 'convex/react';
 
 import { DefaultCatchBoundary } from '@/components/_default-catch-boundary';
@@ -24,7 +24,7 @@ import { Devtools } from './-components/devtools';
 
 const fetchAuth = createServerFn({ method: 'GET' }).handler(async () => {
 	const { createAuth } = await import('@/convex/auth');
-	const { session } = await fetchSession(getWebRequest());
+	const { session } = await fetchSession(getRequest());
 	const sessionCookieName = getCookieName(createAuth);
 	const token = getCookie(sessionCookieName);
 	return {

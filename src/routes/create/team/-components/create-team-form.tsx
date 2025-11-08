@@ -16,7 +16,7 @@ import { cn } from '@/lib/utils';
 
 const formSchema = createOrgSchema;
 
-type FormSchema = z.infer<typeof formSchema>;
+type FormSchema = z.infer<typeof createOrgSchema>;
 
 export const CreateTeamForm = ({ underLimit }: { underLimit: boolean }) => {
 	const [formError, setFormError] = React.useState<string>();

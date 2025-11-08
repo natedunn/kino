@@ -1,10 +1,10 @@
-import { convexToZod } from 'convex-helpers/server/zod';
+import { convexToZod, zid } from 'convex-helpers/server/zod4';
 import { v } from 'convex/values';
 import { z } from 'zod';
 
 import { SHARED_SCHEMA } from './_shared';
 
-const betterAuthUserSchema = convexToZod(
+export const betterAuthUserSchema = convexToZod(
 	v.object({
 		name: v.string(),
 		email: v.string(),
@@ -32,6 +32,11 @@ export const profileSchema = z.object({
 	location: z.string().optional(),
 	urls: z.object({ url: z.string().url(), text: z.string() }).array().optional(),
 	userId: z.string(),
+	// 👇 Better-Auth mirrors
+	username: z.string(),
+	email: z.email(),
+	role: z.string(),
+	name: z.string(),
 });
 
 export const createProfileSchema = profileSchema;
@@ -42,25 +47,49 @@ export const selectProfileSchema = profileSchema.pick({
 	location: true,
 	urls: true,
 	bio: true,
+	role: true,
+	username: true,
+	email: true,
+	imageUrl: true,
+	imageKey: true,
+	name: true,
+	userId: true,
 });
-export const updateProfileSchema = profileSchema.partial();
+export const updateProfileSchema = profileSchema.partial().pick({
+	username: true,
+	imageKey: true,
+	name: true,
+	bio: true,
+	urls: true,
+	location: true,
+});
 
 // Merged with User
 export const selectProfileUserSchema = selectProfileSchema.merge(betterAuthUserSchema);
-export const updateProfileUserSchema = profileSchema
-	.pick({
-		imageKey: true,
-		bio: true,
-		location: true,
-		urls: true,
-	})
-	.merge(
-		betterAuthUserSchema.pick({
+export const updateProfileUserSchema = z.object({
+	profile: profileSchema
+		.partial()
+		.pick({
+			imageKey: true,
+			bio: true,
+			location: true,
+			urls: true,
+		})
+		.and(
+			z.object({
+				_id: zid('profile'),
+				userId: z.string(),
+			})
+		),
+	user: betterAuthUserSchema
+		.pick({
 			name: true,
 			image: true,
 			username: true,
+			role: true,
 		})
-	);
+		.partial(),
+});
 
 export type SelectSafeUserSchema = z.infer<typeof selectProfileUserSchema>;
 export type CreateProfileSchema = z.infer<typeof createProfileSchema>;

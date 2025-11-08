@@ -1,10 +1,9 @@
 import { components } from '@convex/_generated/api';
+import { selectProjectSchema, SelectProjectSchema } from '@convex/schema/project.schema';
 import { GenericQueryCtx } from 'convex/server';
 
 import { DataModel, Id } from '@/convex/_generated/dataModel';
-import { SelectProjectSchema, selectProjectSchema } from '@/convex/schema/project.schema';
 
-// type OrgDetails = BetterAuthApi['org']['getDetails'];
 type OrgDetails = (typeof components.betterAuth.org.getDetails)['_returnType'];
 
 type GetProjectUserDetailsArgs =

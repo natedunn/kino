@@ -16,7 +16,11 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { authClient } from '@/lib/auth/auth-client';
 
-export function UserDropdown({ user }: { user: NonNullable<API['user']['getCurrentUser']> }) {
+export function UserDropdown({
+	user,
+}: {
+	user: NonNullable<API['profile']['getCurrentProfileUser']>;
+}) {
 	const navigate = useNavigate();
 
 	return (
@@ -24,9 +28,9 @@ export function UserDropdown({ user }: { user: NonNullable<API['user']['getCurre
 			<DropdownMenuTrigger asChild>
 				<Button variant='ghost' className='flex items-center gap-2'>
 					<Avatar className='size-6 border'>
-						<AvatarImage src={user.image} />
+						<AvatarImage src={user.imageUrl} />
 						<AvatarFallback>
-							<User className='size-5' />
+							<User className='size-4' />
 						</AvatarFallback>
 					</Avatar>
 					<span className='hidden text-sm font-medium sm:inline'>{user.username}</span>

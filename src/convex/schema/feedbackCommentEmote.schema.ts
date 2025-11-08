@@ -1,9 +1,9 @@
-import { zid } from 'convex-helpers/server/zod';
+import { zid } from 'convex-helpers/server/zod4';
 import { z } from 'zod';
 
 import { SHARED_SCHEMA } from './_shared';
 
-export const feedbackCommentEmote = z.object({
+export const feedbackCommentEmoteSchema = z.object({
 	...SHARED_SCHEMA('feedbackCommentEmote'),
 	authorProfileId: zid('profile'),
 	feedbackId: zid('feedback'),
@@ -23,4 +23,4 @@ export const feedbackCommentEmote = z.object({
 	]),
 });
 
-export type FeedbackCommentEmote = z.infer<typeof feedbackCommentEmote>;
+export type FeedbackCommentEmote = z.infer<typeof feedbackCommentEmoteSchema>;

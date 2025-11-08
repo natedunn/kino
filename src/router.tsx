@@ -8,7 +8,7 @@ import { DefaultCatchBoundary } from './components/_default-catch-boundary';
 import { NotFound } from './components/_not-found';
 import { routeTree } from './routeTree.gen';
 
-export function createRouter() {
+export function getRouter() {
 	const CONVEX_URL = (import.meta as any).env.VITE_CONVEX_URL!;
 	if (!CONVEX_URL) {
 		throw new Error('missing VITE_CONVEX_URL envar');
@@ -52,6 +52,6 @@ export function createRouter() {
 
 declare module '@tanstack/react-router' {
 	interface Register {
-		router: ReturnType<typeof createRouter>;
+		router: ReturnType<typeof getRouter>;
 	}
 }

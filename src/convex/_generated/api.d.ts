@@ -9,15 +9,6 @@
  */
 
 import type * as auth from "../auth.js";
-import type * as betterAuth__generated_api from "../betterAuth/_generated/api.js";
-import type * as betterAuth__generated_server from "../betterAuth/_generated/server.js";
-import type * as betterAuth_adapter from "../betterAuth/adapter.js";
-import type * as betterAuth_auth from "../betterAuth/auth.js";
-import type * as betterAuth_generatedSchema from "../betterAuth/generatedSchema.js";
-import type * as betterAuth_members from "../betterAuth/members.js";
-import type * as betterAuth_org from "../betterAuth/org.js";
-import type * as betterAuth_user from "../betterAuth/user.js";
-import type * as betterAuth_utils from "../betterAuth/utils.js";
 import type * as features from "../features.js";
 import type * as feedback from "../feedback.js";
 import type * as feedbackBoard from "../feedbackBoard.js";
@@ -53,15 +44,6 @@ import type {
  */
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
-  "betterAuth/_generated/api": typeof betterAuth__generated_api;
-  "betterAuth/_generated/server": typeof betterAuth__generated_server;
-  "betterAuth/adapter": typeof betterAuth_adapter;
-  "betterAuth/auth": typeof betterAuth_auth;
-  "betterAuth/generatedSchema": typeof betterAuth_generatedSchema;
-  "betterAuth/members": typeof betterAuth_members;
-  "betterAuth/org": typeof betterAuth_org;
-  "betterAuth/user": typeof betterAuth_user;
-  "betterAuth/utils": typeof betterAuth_utils;
   features: typeof features;
   feedback: typeof feedback;
   feedbackBoard: typeof feedbackBoard;
@@ -111,9 +93,9 @@ export declare const components: {
                   emailVerified: boolean;
                   image?: null | string;
                   name: string;
+                  profileId?: null | string;
                   role?: null | string;
                   updatedAt: number;
-                  userId?: null | string;
                   username?: null | string;
                 };
                 model: "user";
@@ -165,7 +147,7 @@ export declare const components: {
                   logo?: null | string;
                   metadata?: null | string;
                   name: string;
-                  slug?: null | string;
+                  slug: string;
                 };
                 model: "organization";
               }
@@ -224,8 +206,8 @@ export declare const components: {
                     | "banned"
                     | "banReason"
                     | "banExpires"
-                    | "userId"
-                    | "id";
+                    | "profileId"
+                    | "_id";
                   operator?:
                     | "lt"
                     | "lte"
@@ -233,6 +215,7 @@ export declare const components: {
                     | "gte"
                     | "eq"
                     | "in"
+                    | "not_in"
                     | "ne"
                     | "contains"
                     | "starts_with"
@@ -260,7 +243,7 @@ export declare const components: {
                     | "userId"
                     | "impersonatedBy"
                     | "activeOrganizationId"
-                    | "id";
+                    | "_id";
                   operator?:
                     | "lt"
                     | "lte"
@@ -268,6 +251,7 @@ export declare const components: {
                     | "gte"
                     | "eq"
                     | "in"
+                    | "not_in"
                     | "ne"
                     | "contains"
                     | "starts_with"
@@ -298,7 +282,7 @@ export declare const components: {
                     | "password"
                     | "createdAt"
                     | "updatedAt"
-                    | "id";
+                    | "_id";
                   operator?:
                     | "lt"
                     | "lte"
@@ -306,6 +290,7 @@ export declare const components: {
                     | "gte"
                     | "eq"
                     | "in"
+                    | "not_in"
                     | "ne"
                     | "contains"
                     | "starts_with"
@@ -329,7 +314,7 @@ export declare const components: {
                     | "expiresAt"
                     | "createdAt"
                     | "updatedAt"
-                    | "id";
+                    | "_id";
                   operator?:
                     | "lt"
                     | "lte"
@@ -337,6 +322,7 @@ export declare const components: {
                     | "gte"
                     | "eq"
                     | "in"
+                    | "not_in"
                     | "ne"
                     | "contains"
                     | "starts_with"
@@ -360,7 +346,7 @@ export declare const components: {
                     | "logo"
                     | "createdAt"
                     | "metadata"
-                    | "id";
+                    | "_id";
                   operator?:
                     | "lt"
                     | "lte"
@@ -368,6 +354,7 @@ export declare const components: {
                     | "gte"
                     | "eq"
                     | "in"
+                    | "not_in"
                     | "ne"
                     | "contains"
                     | "starts_with"
@@ -390,7 +377,7 @@ export declare const components: {
                     | "userId"
                     | "role"
                     | "createdAt"
-                    | "id";
+                    | "_id";
                   operator?:
                     | "lt"
                     | "lte"
@@ -398,6 +385,7 @@ export declare const components: {
                     | "gte"
                     | "eq"
                     | "in"
+                    | "not_in"
                     | "ne"
                     | "contains"
                     | "starts_with"
@@ -422,7 +410,7 @@ export declare const components: {
                     | "status"
                     | "expiresAt"
                     | "inviterId"
-                    | "id";
+                    | "_id";
                   operator?:
                     | "lt"
                     | "lte"
@@ -430,6 +418,7 @@ export declare const components: {
                     | "gte"
                     | "eq"
                     | "in"
+                    | "not_in"
                     | "ne"
                     | "contains"
                     | "starts_with"
@@ -447,7 +436,7 @@ export declare const components: {
                 model: "jwks";
                 where?: Array<{
                   connector?: "AND" | "OR";
-                  field: "publicKey" | "privateKey" | "createdAt" | "id";
+                  field: "publicKey" | "privateKey" | "createdAt" | "_id";
                   operator?:
                     | "lt"
                     | "lte"
@@ -455,6 +444,7 @@ export declare const components: {
                     | "gte"
                     | "eq"
                     | "in"
+                    | "not_in"
                     | "ne"
                     | "contains"
                     | "starts_with"
@@ -502,8 +492,8 @@ export declare const components: {
                     | "banned"
                     | "banReason"
                     | "banExpires"
-                    | "userId"
-                    | "id";
+                    | "profileId"
+                    | "_id";
                   operator?:
                     | "lt"
                     | "lte"
@@ -511,6 +501,7 @@ export declare const components: {
                     | "gte"
                     | "eq"
                     | "in"
+                    | "not_in"
                     | "ne"
                     | "contains"
                     | "starts_with"
@@ -538,7 +529,7 @@ export declare const components: {
                     | "userId"
                     | "impersonatedBy"
                     | "activeOrganizationId"
-                    | "id";
+                    | "_id";
                   operator?:
                     | "lt"
                     | "lte"
@@ -546,6 +537,7 @@ export declare const components: {
                     | "gte"
                     | "eq"
                     | "in"
+                    | "not_in"
                     | "ne"
                     | "contains"
                     | "starts_with"
@@ -576,7 +568,7 @@ export declare const components: {
                     | "password"
                     | "createdAt"
                     | "updatedAt"
-                    | "id";
+                    | "_id";
                   operator?:
                     | "lt"
                     | "lte"
@@ -584,6 +576,7 @@ export declare const components: {
                     | "gte"
                     | "eq"
                     | "in"
+                    | "not_in"
                     | "ne"
                     | "contains"
                     | "starts_with"
@@ -607,7 +600,7 @@ export declare const components: {
                     | "expiresAt"
                     | "createdAt"
                     | "updatedAt"
-                    | "id";
+                    | "_id";
                   operator?:
                     | "lt"
                     | "lte"
@@ -615,6 +608,7 @@ export declare const components: {
                     | "gte"
                     | "eq"
                     | "in"
+                    | "not_in"
                     | "ne"
                     | "contains"
                     | "starts_with"
@@ -638,7 +632,7 @@ export declare const components: {
                     | "logo"
                     | "createdAt"
                     | "metadata"
-                    | "id";
+                    | "_id";
                   operator?:
                     | "lt"
                     | "lte"
@@ -646,6 +640,7 @@ export declare const components: {
                     | "gte"
                     | "eq"
                     | "in"
+                    | "not_in"
                     | "ne"
                     | "contains"
                     | "starts_with"
@@ -668,7 +663,7 @@ export declare const components: {
                     | "userId"
                     | "role"
                     | "createdAt"
-                    | "id";
+                    | "_id";
                   operator?:
                     | "lt"
                     | "lte"
@@ -676,6 +671,7 @@ export declare const components: {
                     | "gte"
                     | "eq"
                     | "in"
+                    | "not_in"
                     | "ne"
                     | "contains"
                     | "starts_with"
@@ -700,7 +696,7 @@ export declare const components: {
                     | "status"
                     | "expiresAt"
                     | "inviterId"
-                    | "id";
+                    | "_id";
                   operator?:
                     | "lt"
                     | "lte"
@@ -708,6 +704,7 @@ export declare const components: {
                     | "gte"
                     | "eq"
                     | "in"
+                    | "not_in"
                     | "ne"
                     | "contains"
                     | "starts_with"
@@ -725,7 +722,7 @@ export declare const components: {
                 model: "jwks";
                 where?: Array<{
                   connector?: "AND" | "OR";
-                  field: "publicKey" | "privateKey" | "createdAt" | "id";
+                  field: "publicKey" | "privateKey" | "createdAt" | "_id";
                   operator?:
                     | "lt"
                     | "lte"
@@ -733,6 +730,7 @@ export declare const components: {
                     | "gte"
                     | "eq"
                     | "in"
+                    | "not_in"
                     | "ne"
                     | "contains"
                     | "starts_with"
@@ -784,6 +782,7 @@ export declare const components: {
               | "gte"
               | "eq"
               | "in"
+              | "not_in"
               | "ne"
               | "contains"
               | "starts_with"
@@ -823,6 +822,7 @@ export declare const components: {
               | "gte"
               | "eq"
               | "in"
+              | "not_in"
               | "ne"
               | "contains"
               | "starts_with"
@@ -855,9 +855,9 @@ export declare const components: {
                   emailVerified?: boolean;
                   image?: null | string;
                   name?: string;
+                  profileId?: null | string;
                   role?: null | string;
                   updatedAt?: number;
-                  userId?: null | string;
                   username?: null | string;
                 };
                 where?: Array<{
@@ -875,8 +875,8 @@ export declare const components: {
                     | "banned"
                     | "banReason"
                     | "banExpires"
-                    | "userId"
-                    | "id";
+                    | "profileId"
+                    | "_id";
                   operator?:
                     | "lt"
                     | "lte"
@@ -884,6 +884,7 @@ export declare const components: {
                     | "gte"
                     | "eq"
                     | "in"
+                    | "not_in"
                     | "ne"
                     | "contains"
                     | "starts_with"
@@ -922,7 +923,7 @@ export declare const components: {
                     | "userId"
                     | "impersonatedBy"
                     | "activeOrganizationId"
-                    | "id";
+                    | "_id";
                   operator?:
                     | "lt"
                     | "lte"
@@ -930,6 +931,7 @@ export declare const components: {
                     | "gte"
                     | "eq"
                     | "in"
+                    | "not_in"
                     | "ne"
                     | "contains"
                     | "starts_with"
@@ -974,7 +976,7 @@ export declare const components: {
                     | "password"
                     | "createdAt"
                     | "updatedAt"
-                    | "id";
+                    | "_id";
                   operator?:
                     | "lt"
                     | "lte"
@@ -982,6 +984,7 @@ export declare const components: {
                     | "gte"
                     | "eq"
                     | "in"
+                    | "not_in"
                     | "ne"
                     | "contains"
                     | "starts_with"
@@ -1012,7 +1015,7 @@ export declare const components: {
                     | "expiresAt"
                     | "createdAt"
                     | "updatedAt"
-                    | "id";
+                    | "_id";
                   operator?:
                     | "lt"
                     | "lte"
@@ -1020,6 +1023,7 @@ export declare const components: {
                     | "gte"
                     | "eq"
                     | "in"
+                    | "not_in"
                     | "ne"
                     | "contains"
                     | "starts_with"
@@ -1040,7 +1044,7 @@ export declare const components: {
                   logo?: null | string;
                   metadata?: null | string;
                   name?: string;
-                  slug?: null | string;
+                  slug?: string;
                 };
                 where?: Array<{
                   connector?: "AND" | "OR";
@@ -1050,7 +1054,7 @@ export declare const components: {
                     | "logo"
                     | "createdAt"
                     | "metadata"
-                    | "id";
+                    | "_id";
                   operator?:
                     | "lt"
                     | "lte"
@@ -1058,6 +1062,7 @@ export declare const components: {
                     | "gte"
                     | "eq"
                     | "in"
+                    | "not_in"
                     | "ne"
                     | "contains"
                     | "starts_with"
@@ -1086,7 +1091,7 @@ export declare const components: {
                     | "userId"
                     | "role"
                     | "createdAt"
-                    | "id";
+                    | "_id";
                   operator?:
                     | "lt"
                     | "lte"
@@ -1094,6 +1099,7 @@ export declare const components: {
                     | "gte"
                     | "eq"
                     | "in"
+                    | "not_in"
                     | "ne"
                     | "contains"
                     | "starts_with"
@@ -1126,7 +1132,7 @@ export declare const components: {
                     | "status"
                     | "expiresAt"
                     | "inviterId"
-                    | "id";
+                    | "_id";
                   operator?:
                     | "lt"
                     | "lte"
@@ -1134,6 +1140,7 @@ export declare const components: {
                     | "gte"
                     | "eq"
                     | "in"
+                    | "not_in"
                     | "ne"
                     | "contains"
                     | "starts_with"
@@ -1156,7 +1163,7 @@ export declare const components: {
                 };
                 where?: Array<{
                   connector?: "AND" | "OR";
-                  field: "publicKey" | "privateKey" | "createdAt" | "id";
+                  field: "publicKey" | "privateKey" | "createdAt" | "_id";
                   operator?:
                     | "lt"
                     | "lte"
@@ -1164,6 +1171,7 @@ export declare const components: {
                     | "gte"
                     | "eq"
                     | "in"
+                    | "not_in"
                     | "ne"
                     | "contains"
                     | "starts_with"
@@ -1206,9 +1214,9 @@ export declare const components: {
                   emailVerified?: boolean;
                   image?: null | string;
                   name?: string;
+                  profileId?: null | string;
                   role?: null | string;
                   updatedAt?: number;
-                  userId?: null | string;
                   username?: null | string;
                 };
                 where?: Array<{
@@ -1226,8 +1234,8 @@ export declare const components: {
                     | "banned"
                     | "banReason"
                     | "banExpires"
-                    | "userId"
-                    | "id";
+                    | "profileId"
+                    | "_id";
                   operator?:
                     | "lt"
                     | "lte"
@@ -1235,6 +1243,7 @@ export declare const components: {
                     | "gte"
                     | "eq"
                     | "in"
+                    | "not_in"
                     | "ne"
                     | "contains"
                     | "starts_with"
@@ -1273,7 +1282,7 @@ export declare const components: {
                     | "userId"
                     | "impersonatedBy"
                     | "activeOrganizationId"
-                    | "id";
+                    | "_id";
                   operator?:
                     | "lt"
                     | "lte"
@@ -1281,6 +1290,7 @@ export declare const components: {
                     | "gte"
                     | "eq"
                     | "in"
+                    | "not_in"
                     | "ne"
                     | "contains"
                     | "starts_with"
@@ -1325,7 +1335,7 @@ export declare const components: {
                     | "password"
                     | "createdAt"
                     | "updatedAt"
-                    | "id";
+                    | "_id";
                   operator?:
                     | "lt"
                     | "lte"
@@ -1333,6 +1343,7 @@ export declare const components: {
                     | "gte"
                     | "eq"
                     | "in"
+                    | "not_in"
                     | "ne"
                     | "contains"
                     | "starts_with"
@@ -1363,7 +1374,7 @@ export declare const components: {
                     | "expiresAt"
                     | "createdAt"
                     | "updatedAt"
-                    | "id";
+                    | "_id";
                   operator?:
                     | "lt"
                     | "lte"
@@ -1371,6 +1382,7 @@ export declare const components: {
                     | "gte"
                     | "eq"
                     | "in"
+                    | "not_in"
                     | "ne"
                     | "contains"
                     | "starts_with"
@@ -1391,7 +1403,7 @@ export declare const components: {
                   logo?: null | string;
                   metadata?: null | string;
                   name?: string;
-                  slug?: null | string;
+                  slug?: string;
                 };
                 where?: Array<{
                   connector?: "AND" | "OR";
@@ -1401,7 +1413,7 @@ export declare const components: {
                     | "logo"
                     | "createdAt"
                     | "metadata"
-                    | "id";
+                    | "_id";
                   operator?:
                     | "lt"
                     | "lte"
@@ -1409,6 +1421,7 @@ export declare const components: {
                     | "gte"
                     | "eq"
                     | "in"
+                    | "not_in"
                     | "ne"
                     | "contains"
                     | "starts_with"
@@ -1437,7 +1450,7 @@ export declare const components: {
                     | "userId"
                     | "role"
                     | "createdAt"
-                    | "id";
+                    | "_id";
                   operator?:
                     | "lt"
                     | "lte"
@@ -1445,6 +1458,7 @@ export declare const components: {
                     | "gte"
                     | "eq"
                     | "in"
+                    | "not_in"
                     | "ne"
                     | "contains"
                     | "starts_with"
@@ -1477,7 +1491,7 @@ export declare const components: {
                     | "status"
                     | "expiresAt"
                     | "inviterId"
-                    | "id";
+                    | "_id";
                   operator?:
                     | "lt"
                     | "lte"
@@ -1485,6 +1499,7 @@ export declare const components: {
                     | "gte"
                     | "eq"
                     | "in"
+                    | "not_in"
                     | "ne"
                     | "contains"
                     | "starts_with"
@@ -1507,7 +1522,7 @@ export declare const components: {
                 };
                 where?: Array<{
                   connector?: "AND" | "OR";
-                  field: "publicKey" | "privateKey" | "createdAt" | "id";
+                  field: "publicKey" | "privateKey" | "createdAt" | "_id";
                   operator?:
                     | "lt"
                     | "lte"
@@ -1515,6 +1530,7 @@ export declare const components: {
                     | "gte"
                     | "eq"
                     | "in"
+                    | "not_in"
                     | "ne"
                     | "contains"
                     | "starts_with"
@@ -1550,9 +1566,9 @@ export declare const components: {
           emailVerified: boolean;
           image?: null | string;
           name: string;
+          profileId?: null | string;
           role?: null | string;
           updatedAt: number;
-          userId?: null | string;
           username?: null | string;
         }> | null
       >;
@@ -1561,12 +1577,13 @@ export declare const components: {
       get: FunctionReference<
         "query",
         "internal",
-        { slug?: null | string },
+        { slug: string },
         {
           _creationTime: number;
           _id: string;
-          logo?: string;
-          metaData?: string | null;
+          createdAt: number;
+          logo?: null | string;
+          metadata?: null | string;
           name: string;
           slug: string;
         }
@@ -1587,8 +1604,9 @@ export declare const components: {
           org: {
             _creationTime: number;
             _id: string;
-            logo?: string;
-            metaData?: string | null;
+            createdAt: number;
+            logo?: null | string;
+            metadata?: null | string;
             name: string;
             slug: string;
           } | null;
@@ -1607,7 +1625,7 @@ export declare const components: {
       get: FunctionReference<
         "query",
         "internal",
-        { userId: string },
+        { profileId: string },
         {
           _creationTime: number;
           _id: string;
@@ -1620,16 +1638,16 @@ export declare const components: {
           emailVerified: boolean;
           image?: null | string;
           name: string;
+          profileId?: null | string;
           role?: null | string;
           updatedAt: number;
-          userId?: null | string;
           username?: null | string;
         } | null
       >;
-      updateUsername: FunctionReference<
+      updateUser: FunctionReference<
         "mutation",
         "internal",
-        { authId: string; username?: null | string },
+        { _id: string; profileId?: null | string; username?: null | string },
         any
       >;
     };

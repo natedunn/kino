@@ -18,16 +18,16 @@ export const Route = createFileRoute('/profile/settings/')({
 });
 
 function RouteComponent() {
-	const { data: user } = useSuspenseQuery(convexQuery(api.user.getCurrentUser, {}));
+	const { data: profile } = useSuspenseQuery(convexQuery(api.profile.getCurrentProfileUser, {}));
 
-	if (!user) return null;
+	if (!profile) return null;
 
 	return (
 		<div className='flex flex-1 flex-col'>
 			<div className='container py-12'>
 				<h1 className='text-2xl font-bold'>Edit profile</h1>
 				<div className='mt-6'>
-					<UserEditForm user={user} />
+					<UserEditForm profile={profile} />
 				</div>
 			</div>
 		</div>

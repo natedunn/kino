@@ -1,9 +1,7 @@
-import { withoutSystemFields } from 'convex-helpers';
-
 import { Id } from './_generated/dataModel';
 import { QueryCtx } from './_generated/server';
 import { authComponent } from './auth';
-import { selectProfileUserSchema } from './schema/profile.schema';
+import { selectProfileSchema } from './schema/profile.schema';
 import { userUploadsR2 } from './utils/r2';
 
 export const getProfileUser = async (ctx: QueryCtx) => {
@@ -12,30 +10,28 @@ export const getProfileUser = async (ctx: QueryCtx) => {
 	if (!authUser?._id) {
 		return;
 	}
-	const user = await ctx.db.get(authUser.userId as Id<'profile'>);
-	if (!user) {
+	const profile = await ctx.db.get(authUser.profileId as Id<'profile'>);
+	if (!profile) {
 		return;
 	}
 
-	// Handler avatar image
+	// Handle true avatar image
 	let trueImage: string | undefined;
-	if (user.imageKey) {
-		trueImage = await userUploadsR2.getUrl(user.imageKey, {
+	if (profile.imageKey) {
+		trueImage = await userUploadsR2.getUrl(profile.imageKey, {
 			expiresIn: 60 * 60 * 24,
 		});
 	} else if (authUser?.image) {
 		trueImage = authUser.image;
 	} else {
+		// TODO: set default image URL here
 		trueImage = undefined;
 	}
 
-	const { image, ...nonImageAuthUser } = authUser;
-
 	const mergedUser = {
-		...user, //
-		...withoutSystemFields(nonImageAuthUser),
-		image: trueImage,
+		...profile,
+		imageUrl: trueImage,
 	};
 
-	return selectProfileUserSchema.parse(mergedUser);
+	return selectProfileSchema.parse(mergedUser);
 };

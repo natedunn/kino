@@ -1,5 +1,3 @@
-import { selectOrgSchema } from '@convex/schema/org.schema';
-import { zodToConvex } from 'convex-helpers/server/zod';
 import { doc } from 'convex-helpers/validators';
 import { ConvexError, v } from 'convex/values';
 
@@ -28,9 +26,9 @@ export const get = query({
 			});
 		}
 
-		return selectOrgSchema.parse(org);
+		return org;
 	},
-	returns: zodToConvex(selectOrgSchema),
+	returns: organization,
 });
 
 export const getDetails = query({
@@ -44,7 +42,7 @@ export const getDetails = query({
 
 		if (internalUserId) {
 			const publicUser = await ctx.db.get(internalUserId);
-			publicUserId = publicUser?.userId ?? null;
+			publicUserId = publicUser?.profileId ?? null;
 		}
 
 		const createResponse = (
@@ -90,7 +88,7 @@ export const getDetails = query({
 	},
 	returns: v.union(
 		v.object({
-			org: zodToConvex(selectOrgSchema.nullable()),
+			org: v.union(organization, v.null()),
 			member: v.union(member, v.null()),
 			permissions: v.object({
 				isAdmin: v.boolean(),

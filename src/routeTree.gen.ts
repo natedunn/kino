@@ -8,9 +8,8 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { createServerRootRoute } from '@tanstack/react-start/server'
-
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TestRouteImport } from './routes/test'
 import { Route as HomeRouteImport } from './routes/home'
 import { Route as AtChar123orgChar125RouteRouteImport } from './routes/@{$org}/route'
 import { Route as SettingsIndexRouteImport } from './routes/settings/index'
@@ -27,6 +26,7 @@ import { Route as ProfileUsernameIndexRouteImport } from './routes/profile/$user
 import { Route as CreateTeamIndexRouteImport } from './routes/create/team/index'
 import { Route as AtChar123orgChar125CreateProjectIndexRouteImport } from './routes/@{$org}/create-project/index'
 import { Route as AtChar123orgChar125ProjectIndexRouteImport } from './routes/@{$org}/$project/index'
+import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as AtChar123orgChar125ProjectUpdatesIndexRouteImport } from './routes/@{$org}/$project/updates/index'
 import { Route as AtChar123orgChar125ProjectRoadmapIndexRouteImport } from './routes/@{$org}/$project/roadmap/index'
 import { Route as AtChar123orgChar125ProjectFilesIndexRouteImport } from './routes/@{$org}/$project/files/index'
@@ -43,10 +43,12 @@ import { Route as AtChar123orgChar125ProjectFeedbackBoardsNewRouteImport } from 
 import { Route as AtChar123orgChar125ProjectFeedbackBoardsBoardIndexRouteImport } from './routes/@{$org}/$project/feedback/boards/$board/index'
 import { Route as AtChar123orgChar125ProjectFeedbackBoardsBoardEditRouteImport } from './routes/@{$org}/$project/feedback/boards/$board/edit'
 import { Route as AtChar123orgChar125ProjectFeedbackBoardsBoardAtlayoutRouteImport } from './routes/@{$org}/$project/feedback/boards/$board/@layout'
-import { ServerRoute as ApiAuthSplatServerRouteImport } from './routes/api/auth/$'
 
-const rootServerRouteImport = createServerRootRoute()
-
+const TestRoute = TestRouteImport.update({
+  id: '/test',
+  path: '/test',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const HomeRoute = HomeRouteImport.update({
   id: '/home',
   path: '/home',
@@ -133,6 +135,11 @@ const AtChar123orgChar125ProjectIndexRoute =
     path: '/',
     getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
   } as any)
+const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
+  id: '/api/auth/$',
+  path: '/api/auth/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AtChar123orgChar125ProjectUpdatesIndexRoute =
   AtChar123orgChar125ProjectUpdatesIndexRouteImport.update({
     id: '/updates/',
@@ -229,15 +236,11 @@ const AtChar123orgChar125ProjectFeedbackBoardsBoardAtlayoutRoute =
     path: '/$board/@layout',
     getParentRoute: () => AtChar123orgChar125ProjectFeedbackBoardsRouteRoute,
   } as any)
-const ApiAuthSplatServerRoute = ApiAuthSplatServerRouteImport.update({
-  id: '/api/auth/$',
-  path: '/api/auth/$',
-  getParentRoute: () => rootServerRouteImport,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/@{$org}': typeof AtChar123orgChar125RouteRouteWithChildren
   '/home': typeof HomeRoute
+  '/test': typeof TestRoute
   '/@{$org}/$project': typeof AtChar123orgChar125ProjectRouteRouteWithChildren
   '/@{$org}/settings': typeof AtChar123orgChar125SettingsRoute
   '/404': typeof Blank404Route
@@ -247,6 +250,7 @@ export interface FileRoutesByFullPath {
   '/@{$org}/': typeof AtChar123orgChar125IndexRoute
   '/': typeof MarketingIndexRoute
   '/settings': typeof SettingsIndexRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
   '/@{$org}/$project/': typeof AtChar123orgChar125ProjectIndexRoute
   '/@{$org}/create-project': typeof AtChar123orgChar125CreateProjectIndexRoute
   '/create/team': typeof CreateTeamIndexRoute
@@ -271,6 +275,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/home': typeof HomeRoute
+  '/test': typeof TestRoute
   '/@{$org}/settings': typeof AtChar123orgChar125SettingsRoute
   '/404': typeof Blank404Route
   '/sign-in': typeof BlankSignInRoute
@@ -279,6 +284,7 @@ export interface FileRoutesByTo {
   '/@{$org}': typeof AtChar123orgChar125IndexRoute
   '/': typeof MarketingIndexRoute
   '/settings': typeof SettingsIndexRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
   '/@{$org}/$project': typeof AtChar123orgChar125ProjectIndexRoute
   '/@{$org}/create-project': typeof AtChar123orgChar125CreateProjectIndexRoute
   '/create/team': typeof CreateTeamIndexRoute
@@ -304,6 +310,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/@{$org}': typeof AtChar123orgChar125RouteRouteWithChildren
   '/home': typeof HomeRoute
+  '/test': typeof TestRoute
   '/@{$org}/$project': typeof AtChar123orgChar125ProjectRouteRouteWithChildren
   '/@{$org}/settings': typeof AtChar123orgChar125SettingsRoute
   '/_blank/404': typeof Blank404Route
@@ -313,6 +320,7 @@ export interface FileRoutesById {
   '/@{$org}/': typeof AtChar123orgChar125IndexRoute
   '/_marketing/': typeof MarketingIndexRoute
   '/settings/': typeof SettingsIndexRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
   '/@{$org}/$project/': typeof AtChar123orgChar125ProjectIndexRoute
   '/@{$org}/create-project/': typeof AtChar123orgChar125CreateProjectIndexRoute
   '/create/team/': typeof CreateTeamIndexRoute
@@ -340,6 +348,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/@{$org}'
     | '/home'
+    | '/test'
     | '/@{$org}/$project'
     | '/@{$org}/settings'
     | '/404'
@@ -349,6 +358,7 @@ export interface FileRouteTypes {
     | '/@{$org}/'
     | '/'
     | '/settings'
+    | '/api/auth/$'
     | '/@{$org}/$project/'
     | '/@{$org}/create-project'
     | '/create/team'
@@ -373,6 +383,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/home'
+    | '/test'
     | '/@{$org}/settings'
     | '/404'
     | '/sign-in'
@@ -381,6 +392,7 @@ export interface FileRouteTypes {
     | '/@{$org}'
     | '/'
     | '/settings'
+    | '/api/auth/$'
     | '/@{$org}/$project'
     | '/@{$org}/create-project'
     | '/create/team'
@@ -405,6 +417,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/@{$org}'
     | '/home'
+    | '/test'
     | '/@{$org}/$project'
     | '/@{$org}/settings'
     | '/_blank/404'
@@ -414,6 +427,7 @@ export interface FileRouteTypes {
     | '/@{$org}/'
     | '/_marketing/'
     | '/settings/'
+    | '/api/auth/$'
     | '/@{$org}/$project/'
     | '/@{$org}/create-project/'
     | '/create/team/'
@@ -440,40 +454,28 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   AtChar123orgChar125RouteRoute: typeof AtChar123orgChar125RouteRouteWithChildren
   HomeRoute: typeof HomeRoute
+  TestRoute: typeof TestRoute
   Blank404Route: typeof Blank404Route
   BlankSignInRoute: typeof BlankSignInRoute
   BlankSignOutRoute: typeof BlankSignOutRoute
   CreateAtlayoutRoute: typeof CreateAtlayoutRoute
   MarketingIndexRoute: typeof MarketingIndexRoute
   SettingsIndexRoute: typeof SettingsIndexRoute
+  ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   CreateTeamIndexRoute: typeof CreateTeamIndexRoute
   ProfileUsernameIndexRoute: typeof ProfileUsernameIndexRoute
   ProfileSettingsIndexRoute: typeof ProfileSettingsIndexRoute
 }
-export interface FileServerRoutesByFullPath {
-  '/api/auth/$': typeof ApiAuthSplatServerRoute
-}
-export interface FileServerRoutesByTo {
-  '/api/auth/$': typeof ApiAuthSplatServerRoute
-}
-export interface FileServerRoutesById {
-  __root__: typeof rootServerRouteImport
-  '/api/auth/$': typeof ApiAuthSplatServerRoute
-}
-export interface FileServerRouteTypes {
-  fileServerRoutesByFullPath: FileServerRoutesByFullPath
-  fullPaths: '/api/auth/$'
-  fileServerRoutesByTo: FileServerRoutesByTo
-  to: '/api/auth/$'
-  id: '__root__' | '/api/auth/$'
-  fileServerRoutesById: FileServerRoutesById
-}
-export interface RootServerRouteChildren {
-  ApiAuthSplatServerRoute: typeof ApiAuthSplatServerRoute
-}
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/test': {
+      id: '/test'
+      path: '/test'
+      fullPath: '/test'
+      preLoaderRoute: typeof TestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/home': {
       id: '/home'
       path: '/home'
@@ -585,6 +587,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/@{$org}/$project/'
       preLoaderRoute: typeof AtChar123orgChar125ProjectIndexRouteImport
       parentRoute: typeof AtChar123orgChar125ProjectRouteRoute
+    }
+    '/api/auth/$': {
+      id: '/api/auth/$'
+      path: '/api/auth/$'
+      fullPath: '/api/auth/$'
+      preLoaderRoute: typeof ApiAuthSplatRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/@{$org}/$project/updates/': {
       id: '/@{$org}/$project/updates/'
@@ -700,17 +709,6 @@ declare module '@tanstack/react-router' {
     }
   }
 }
-declare module '@tanstack/react-start/server' {
-  interface ServerFileRoutesByPath {
-    '/api/auth/$': {
-      id: '/api/auth/$'
-      path: '/api/auth/$'
-      fullPath: '/api/auth/$'
-      preLoaderRoute: typeof ApiAuthSplatServerRouteImport
-      parentRoute: typeof rootServerRouteImport
-    }
-  }
-}
 
 interface AtChar123orgChar125ProjectFeedbackBoardsRouteRouteChildren {
   AtChar123orgChar125ProjectFeedbackBoardsNewRoute: typeof AtChar123orgChar125ProjectFeedbackBoardsNewRoute
@@ -811,12 +809,14 @@ const AtChar123orgChar125RouteRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   AtChar123orgChar125RouteRoute: AtChar123orgChar125RouteRouteWithChildren,
   HomeRoute: HomeRoute,
+  TestRoute: TestRoute,
   Blank404Route: Blank404Route,
   BlankSignInRoute: BlankSignInRoute,
   BlankSignOutRoute: BlankSignOutRoute,
   CreateAtlayoutRoute: CreateAtlayoutRoute,
   MarketingIndexRoute: MarketingIndexRoute,
   SettingsIndexRoute: SettingsIndexRoute,
+  ApiAuthSplatRoute: ApiAuthSplatRoute,
   CreateTeamIndexRoute: CreateTeamIndexRoute,
   ProfileUsernameIndexRoute: ProfileUsernameIndexRoute,
   ProfileSettingsIndexRoute: ProfileSettingsIndexRoute,
@@ -824,9 +824,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-const rootServerRouteChildren: RootServerRouteChildren = {
-  ApiAuthSplatServerRoute: ApiAuthSplatServerRoute,
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
 }
-export const serverRouteTree = rootServerRouteImport
-  ._addFileChildren(rootServerRouteChildren)
-  ._addFileTypes<FileServerRouteTypes>()

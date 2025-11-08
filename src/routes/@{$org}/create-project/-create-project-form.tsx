@@ -93,7 +93,7 @@ export const CreateProjectForm = ({ enabled, orgSlug, orgName }: CreateProjectFo
 					<div className='relative z-10 mx-auto rounded-b-lg bg-foreground/10 px-2 py-0.5 text-sm text-muted-foreground'>
 						Preview
 					</div>
-					<div className='absolute inset-x-0 top-0 h-64 bg-gradient-to-tr from-background to-foreground/10'></div>
+					<div className='absolute inset-x-0 top-0 h-64 bg-linear-to-tr from-background to-foreground/10'></div>
 					<div className='z-10 flex w-full flex-col items-center justify-center pt-10'>
 						<div>
 							<Avatar className='size-24 border'>
@@ -142,10 +142,10 @@ export const CreateProjectForm = ({ enabled, orgSlug, orgName }: CreateProjectFo
 				<div className='mt-10'>
 					<form.AppForm>
 						{!enabled && (
-							<InlineAlert variant='warning' className='mt-6'>
+							<InlineAlert variant='warning' className='mb-6'>
 								Maximum projects created. Please{' '}
 								<a className='link-text' href='#'>
-									1 change your plan
+									change your plan
 								</a>{' '}
 								or contact support if you believe this is an error.
 							</InlineAlert>

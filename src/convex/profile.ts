@@ -1,6 +1,5 @@
 import { GenericQueryCtx, paginationOptsValidator } from 'convex/server';
-import { ConvexError } from 'convex/values';
-import { z } from 'zod';
+import { ConvexError, v } from 'convex/values';
 
 import { LIMITS } from '@/config/limits';
 import { createAuth } from '@/convex/auth';
@@ -9,8 +8,9 @@ import { DataModel, Id } from './_generated/dataModel';
 import { authComponent } from './auth';
 import { getProfileUser } from './profile.utils';
 import { updateProfileUserSchema } from './schema/profile.schema';
-import { query, zAuthedMutation, zQuery } from './utils/functions';
+import { mutation, query, zMutation, zQuery } from './utils/functions';
 import { userUploadsR2 } from './utils/r2';
+import { verify } from './utils/verify';
 
 export const getList = query({
 	args: { paginationOpts: paginationOptsValidator },
@@ -28,28 +28,47 @@ export const getList = query({
 	},
 });
 
-export const update = zAuthedMutation({
+export const update = zMutation({
 	args: updateProfileUserSchema,
 	handler: async (ctx, args) => {
-		const auth = createAuth(ctx);
-
-		await auth.api.updateUser({
-			body: args,
-			headers: await authComponent.getHeaders(ctx),
+		const { userId } = await verify.auth(ctx, {
+			throw: true,
 		});
 
-		return {
-			success: true,
-		};
+		if (userId !== args.profile.userId) {
+			throw new ConvexError({
+				message: 'User does not have permission',
+				code: '403',
+			});
+		}
+
+		const auth = createAuth(ctx);
+
+		const { userId: _userId, ...profileData } = args.profile;
+
+		// 1️⃣ Update profile-only data first...
+		await verify.patch({
+			ctx,
+			tableName: 'profile',
+			data: profileData,
+		});
+
+		// 2️⃣ ...then update user-only data (Better-Auth user data). This will
+		// then update profile data via Better-Auth's trigger. It more distance
+		// to travel, but it is the correct flow.
+		await auth.api.updateUser({
+			headers: await authComponent.getHeaders(ctx),
+			body: args.user,
+		});
 	},
 });
 
 export const getTeamList = zQuery({
 	args: {},
 	handler: async (ctx) => {
-		const userId = (await authComponent.getAuthUser(ctx))?.userId;
+		const profileId = (await authComponent.getAuthUser(ctx))?.profileId;
 
-		if (!userId) {
+		if (!profileId) {
 			return null;
 		}
 
@@ -61,19 +80,19 @@ export const getTeamList = zQuery({
 		const user = await authComponent.getAuthUser(ctx);
 
 		// TODO reimplement this
-		let limit = LIMITS.FREE.MAX_ORGS;
-		// let limit: number;
-		// if (user?.role === 'admin') {
-		// 	limit = limits.admin.MAX_ORGS;
-		// } else {
-		// 	limit = limits.free.MAX_ORGS;
-		// }
+		// let limit = LIMITS.FREE.MAX_ORGS;
+		let limit: number;
+		if (user?.role === 'admin') {
+			limit = LIMITS.ADMIN.MAX_ORGS;
+		} else {
+			limit = LIMITS.FREE.MAX_ORGS;
+		}
 
 		return { teams, underLimit: teams.length < limit };
 	},
 });
 
-export const getCurrentUser = query({
+export const getCurrentProfileUser = query({
 	args: {},
 	handler: async (ctx) => {
 		const user = await getProfileUser(ctx);
@@ -83,9 +102,9 @@ export const getCurrentUser = query({
 
 export const { generateUploadUrl, syncMetadata } = userUploadsR2.clientApi({
 	checkUpload: async (ctx: GenericQueryCtx<DataModel>, bucket) => {
-		const userId = (await authComponent.getAuthUser(ctx))?.userId;
+		const profileId = (await authComponent.getAuthUser(ctx))?.profileId;
 
-		if (!userId) {
+		if (!profileId) {
 			throw new ConvexError({
 				code: '404',
 				message: 'Forbidden — user is not authenticated',
@@ -101,7 +120,7 @@ export const { generateUploadUrl, syncMetadata } = userUploadsR2.clientApi({
 
 		console.log(user);
 
-		const userId = user?.userId;
+		const userId = user?.profileId;
 
 		if (!userId) {
 			throw new ConvexError({
@@ -134,12 +153,21 @@ export const { generateUploadUrl, syncMetadata } = userUploadsR2.clientApi({
 	},
 });
 
-export const generateUserUploadUrl = zAuthedMutation({
+export const generateUserUploadUrl = mutation({
 	args: {
-		type: z.enum(['PFP']),
+		type: v.string(),
 	},
 	handler: async (ctx, args) => {
-		const key = `${args.type}_${ctx.user.userId}${args.type !== 'PFP' ? `.${crypto.randomUUID()}` : ''}`;
+		const user = await authComponent.getAuthUser(ctx);
+
+		if (!user) {
+			throw new ConvexError({
+				message: 'Unauthorized — no user is authenticated',
+				code: '401',
+			});
+		}
+
+		const key = `${args.type}_${user.profileId}${args.type !== 'PFP' ? `.${crypto.randomUUID()}` : ''}`;
 		return userUploadsR2.generateUploadUrl(key);
 	},
 });

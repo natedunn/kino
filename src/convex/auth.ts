@@ -43,34 +43,41 @@ export const authComponent = createClient<DataModel, typeof authSchema>(componen
 				const profileId = await ctx.db.insert('profile', {
 					imageUrl: newUser.image ?? undefined,
 					userId: newUser._id,
+					email: newUser.email,
+					username,
+					role: 'member',
+					name: newUser.name,
 				});
 
 				// Directly updating the column prevents onChange from running below
-				await ctx.runMutation(components.betterAuth.user.updateUsername, {
+				await ctx.runMutation(components.betterAuth.user.updateUser, {
+					_id: newUser._id,
 					username: username,
-					authId: newUser._id,
+					profileId,
 				});
-
-				await authComponent.setUserId(ctx, newUser._id, profileId);
 			},
 			onDelete: async (ctx, user) => {
-				const profileId = user.userId as Id<'profile'>;
+				const profileId = user.profileId as Id<'profile'>;
 				await ctx.db.delete(profileId);
 			},
-			onUpdate: async (ctx, oldUser, newUser) => {
+			onUpdate: async (ctx, newUser, oldUser) => {
+				console.log(ctx, newUser, oldUser);
+
 				if (oldUser._id !== newUser._id) {
 					throw new Error('ID MISMATCH!');
 				}
 
-				const profileId = newUser.userId as Id<'profile'>;
+				const profileId = newUser.profileId as Id<'profile'>;
 
 				if (!profileId) {
 					console.error('Nothing to update: no userId found');
-
-					await ctx.db.get(profileId);
-
+				} else {
 					await ctx.db.patch(profileId, {
-						imageUrl: newUser.image ?? undefined,
+						imageUrl: newUser?.image ?? undefined,
+						username: newUser.username!,
+						email: newUser.email,
+						role: newUser?.role ?? 'member',
+						name: newUser.name,
 					});
 				}
 			},
@@ -95,7 +102,7 @@ export const createAuth = (ctx: GenericCtx<DataModel>) => {
 		},
 		user: {
 			additionalFields: {
-				imageKey: {
+				profileId: {
 					type: 'string',
 					required: false,
 				},

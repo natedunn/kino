@@ -7,14 +7,21 @@ import { createOrgSchema, updateOrgSchema } from '../convex/schema/org.schema';
 import { components } from './_generated/api';
 import { authComponent, createAuth } from './auth';
 import { getProfileUser } from './profile.utils';
-import { zAuthedMutation, zAuthedQuery, zQuery } from './utils/functions';
+import { zMutation, zQuery } from './utils/functions';
+import { verify } from './utils/verify';
 
-export const create = zAuthedMutation({
+export const create = zMutation({
 	args: createOrgSchema,
-	handler: async (ctx, args) => {
+	handler: async (ctx, _args) => {
+		await verify.auth(ctx, {
+			throw: true,
+		});
+
+		const args = createOrgSchema.parse(_args);
+
 		const headers = await authComponent.getHeaders(ctx);
 
-		const org = await createAuth(ctx)
+		await createAuth(ctx)
 			.api.createOrganization({
 				body: args,
 				headers,
@@ -25,14 +32,16 @@ export const create = zAuthedMutation({
 					code: '500',
 				});
 			});
-
-		return org;
 	},
 });
 
-export const update = zAuthedMutation({
+export const update = zMutation({
 	args: updateOrgSchema,
 	handler: async (ctx, args) => {
+		await verify.auth(ctx, {
+			throw: true,
+		});
+
 		const orgDetails = await ctx.runQuery(components.betterAuth.org.getDetails, {
 			slug: args.slug,
 		});
@@ -93,11 +102,15 @@ export const getDetails = zQuery({
 	},
 });
 
-export const limits = zAuthedQuery({
+export const limits = zQuery({
 	args: {
 		slug: z.string(),
 	},
 	handler: async (ctx, args) => {
+		await verify.auth(ctx, {
+			throw: true,
+		});
+
 		const createResponse = (permissions: { canAddProjects: boolean }) => permissions;
 
 		const user = await getProfileUser(ctx);

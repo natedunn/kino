@@ -1,5 +1,5 @@
 import { customAction, customMutation, customQuery } from 'convex-helpers/server/customFunctions';
-import { zCustomAction, zCustomMutation, zCustomQuery } from 'convex-helpers/server/zod';
+import { zCustomAction, zCustomMutation, zCustomQuery } from 'convex-helpers/server/zod4';
 
 import {
 	action as _action,
@@ -35,10 +35,3 @@ export const zInternalAction = zCustomAction(_internalAction, actionCtx);
 export const internalQuery = customQuery(_internalQuery, queryCtx);
 export const internalMutation = customMutation(_internalMutation, mutationCtx);
 export const internalAction = customAction(_internalAction, actionCtx);
-
-// Internal -> Authed
-// Note: there is no way to check for authentication in an action
-// export const zAuthedInternalQuery = zCustomQuery(_internalQuery, queryCtxAuthed);
-// export const zAuthedInternalMutation = zCustomMutation(_internalMutation, mutationCtxAuthed);
-// export const authedInternalQuery = customQuery(_internalQuery, queryCtxAuthed);
-// export const authedInternalMutation = customMutation(_internalMutation, mutationCtxAuthed);

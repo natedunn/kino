@@ -15,29 +15,27 @@ import { Input } from '@/components/ui/input';
 import { updateProfileUserSchema } from '@/convex/schema/profile.schema';
 import { cn } from '@/lib/utils';
 
-const formSchema = z
-	.object({
+const formSchema = updateProfileUserSchema.extend(
+	z.object({
 		files: z.instanceof(File).array().optional(),
-	})
-	.merge(updateProfileUserSchema);
+	}).shape
+);
 
 type FormSchema = z.infer<typeof formSchema>;
 
 type UserEditFormProps = {
-	user: NonNullable<API['user']['getCurrentUser']>;
+	profile: NonNullable<API['profile']['getCurrentProfileUser']>;
 };
 
-export const UserEditForm = ({ user }: UserEditFormProps) => {
-	const generateUserUploadUrl = convexMutation(api.user.generateUserUploadUrl);
-	const syncMetadata = convexMutation(api.user.syncMetadata);
+export const UserEditForm = ({ profile }: UserEditFormProps) => {
+	const generateUserUploadUrl = convexMutation(api.profile.generateUserUploadUrl);
+	const syncMetadata = convexMutation(api.profile.syncMetadata);
 
-	const [formError, setFormError] = React.useState<string>();
+	const [formError, setFormError] = React.useState<string | null>(null);
 
 	const { mutate: updateUser } = useMutation({
-		mutationFn: useConvexMutation(api.user.update),
-		onSuccess: () => {
-			form.reset();
-		},
+		mutationFn: useConvexMutation(api.profile.update),
+		onSuccess: () => form.reset(),
 		onError: (error) => {
 			if (error instanceof ConvexError) {
 				setFormError(error.data.message);
@@ -59,10 +57,14 @@ export const UserEditForm = ({ user }: UserEditFormProps) => {
 	}
 
 	const defaultValues: FormSchema = {
-		files: undefined,
-		username: user.username,
-		image: user.image,
-		name: user.name,
+		profile: {
+			_id: profile._id,
+			userId: profile.userId,
+		},
+		user: {
+			username: profile.username,
+			name: profile.name,
+		},
 	};
 
 	const form = useForm({
@@ -71,16 +73,21 @@ export const UserEditForm = ({ user }: UserEditFormProps) => {
 			onChange: formSchema,
 		},
 		onSubmit: async ({ value, formApi }) => {
-			setFormError(undefined);
+			console.log(value);
 
-			const { files, image, ...rest } = value;
+			setFormError(null);
+
+			const { files, ...rest } = value;
 
 			if (files) {
 				await handleUpload(files);
 				formApi.reset();
 			}
 
-			updateUser(rest);
+			updateUser({
+				profile: rest.profile,
+				user: rest.user,
+			});
 		},
 	});
 
@@ -102,23 +109,23 @@ export const UserEditForm = ({ user }: UserEditFormProps) => {
 									<Label>Avatar</Label>
 								</LabelWrapper>
 								<div className='flex items-center gap-4'>
-									{(field.state.value || user.image) && (
+									{(field.state.value || profile.imageUrl) && (
 										<Avatar className='size-16 rounded-lg'>
 											<AvatarImage
 												src={
 													field.state.value?.[0]
 														? URL.createObjectURL(field.state.value[0])
-														: user.image
+														: profile.imageUrl
 												}
-												alt={user.name}
+												alt={profile.name}
 											/>
-											<AvatarFallback className='rounded-lg'>{user.name?.[0]}</AvatarFallback>
+											<AvatarFallback className='rounded-lg'>{profile.name?.[0]}</AvatarFallback>
 										</Avatar>
 									)}
 									<div className='flex items-center'>
 										<Input
 											type='file'
-											className='!h-auto py-4 file:h-auto file:leading-4 hocus:bg-accent/50'
+											className='h-auto! py-4 file:h-auto file:leading-4 hocus:bg-accent/50'
 											onChange={(e) => {
 												if (e.target.files) {
 													field.handleChange([e.target.files[0]]);
@@ -133,7 +140,7 @@ export const UserEditForm = ({ user }: UserEditFormProps) => {
 				}}
 			</form.Field>
 
-			<form.Field name='username'>
+			<form.Field name='user.username'>
 				{(field) => {
 					return (
 						<div className='flex items-end gap-3'>
@@ -151,7 +158,7 @@ export const UserEditForm = ({ user }: UserEditFormProps) => {
 				}}
 			</form.Field>
 
-			<form.Field name='name'>
+			<form.Field name='user.name'>
 				{(field) => {
 					return (
 						<div className='flex items-end gap-3'>
@@ -174,7 +181,7 @@ export const UserEditForm = ({ user }: UserEditFormProps) => {
 					<LabelWrapper>
 						<Label>Email</Label>
 					</LabelWrapper>
-					<Input value={user.email} disabled />
+					<Input value={profile.email} disabled />
 				</div>
 			</div>
 

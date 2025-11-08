@@ -1,4 +1,4 @@
-import { zid } from 'convex-helpers/server/zod';
+import { zid } from 'convex-helpers/server/zod4';
 import { GenericDataModel, TableNamesInDataModel } from 'convex/server';
 import { z } from 'zod';
 
@@ -12,6 +12,6 @@ export const SHARED_SCHEMA = <
 		_id: zid(id),
 		_creationTime: z.number(),
 		deletedTime: z.number().optional(),
-		updatedTime: z.number().optional().default(Date.now()),
+		updatedTime: z.number().optional(),
 	};
 };

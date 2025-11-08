@@ -1,23 +1,13 @@
-import { ConvexError } from 'convex/values';
-import z from 'zod';
+import { ConvexError, v } from 'convex/values';
 
+import { feedbackSelectSchema } from './schema/feedback.schema';
 import { feedbackBoardSelectSchema } from './schema/feedbackBoard.schema';
-import { zQuery } from './utils/functions';
+import { query } from './utils/functions';
 import { getProjectUserDetails } from './utils/queries/getProjectUserDetails';
 
-// export const Test = zQuery({
-// 	args: {},
-// 	handler: async (ctx) => {
-// 		const test = await  ctx.runQuery(components.betterAuth.lib.findOne, {
-// 			model: 'user',
-
-// 		})
-// 	}
-// })
-
-export const feedback = zQuery({
+export const feedback = query({
 	args: {
-		projectSlug: z.string(),
+		projectSlug: v.string(),
 	},
 	handler: async (ctx, args) => {
 		const project = await ctx.db
@@ -53,8 +43,9 @@ export const feedback = zQuery({
 			.collect();
 
 		return {
-			boards: boards ? feedbackBoardSelectSchema.array().parse(boards) : null,
-			feedback: feedback ? feedbackBoardSelectSchema.array().parse(feedback) : null,
+			boards: boards && boards.length > 0 ? feedbackBoardSelectSchema.array().parse(boards) : null,
+			feedback:
+				feedback && feedback.length > 0 ? feedbackSelectSchema.array().parse(feedback) : null,
 		};
 	},
 });

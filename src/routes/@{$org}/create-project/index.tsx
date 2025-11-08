@@ -20,11 +20,13 @@ export const Route = createFileRoute('/@{$org}/create-project/')({
 			throw notFound();
 		}
 
-		await context.queryClient.ensureQueryData(
+		const limits = await context.queryClient.ensureQueryData(
 			convexQuery(api.org.limits, {
 				slug: params.org,
 			})
 		);
+
+		return { limits };
 	},
 	notFoundComponent: () => <NotFound isContainer />,
 });
@@ -32,14 +34,12 @@ export const Route = createFileRoute('/@{$org}/create-project/')({
 function RouteComponent() {
 	const { org: orgSlug } = Route.useParams();
 
+	const { limits } = Route.useLoaderData();
+
+	if (!limits) return null;
+
 	const { data: orgDetails } = useSuspenseQuery(
 		convexQuery(api.org.getDetails, {
-			slug: orgSlug,
-		})
-	);
-
-	const { data: limits } = useSuspenseQuery(
-		convexQuery(api.org.limits, {
 			slug: orgSlug,
 		})
 	);

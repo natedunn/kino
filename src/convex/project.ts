@@ -1,25 +1,30 @@
 import { mergedStream, stream } from 'convex-helpers/server/stream';
-import { ConvexError } from 'convex/values';
-import z from 'zod';
+import { ConvexError, v } from 'convex/values';
 
 import { defaultFeedbackBoards } from '@/config/defaults';
 import {
 	createProjectSchema,
-	projectSchema,
+	selectProjectSchema,
 	updateProjectSchema,
 } from '@/convex/schema/project.schema';
 
 import { components } from './_generated/api';
 import { authComponent, createAuth } from './auth';
 import schema from './schema';
-import { zAuthedMutation, zQuery } from './utils/functions';
+import { query, zAuthedMutation, zMutation, zQuery } from './utils/functions';
 import { getProjectUserDetails } from './utils/queries/getProjectUserDetails';
 import { triggers } from './utils/trigger';
 import { verify } from './utils/verify';
 
-export const create = zAuthedMutation({
+export const create = zMutation({
 	args: createProjectSchema,
 	handler: async (ctx, args) => {
+		await verify.auth(ctx, {
+			throw: true,
+		});
+
+		const validatedArgs = createProjectSchema.parse(args);
+
 		const orgDetails = await ctx.runQuery(components.betterAuth.org.getDetails, {
 			slug: args.orgSlug,
 		});
@@ -41,7 +46,7 @@ export const create = zAuthedMutation({
 		await verify.insert({
 			ctx,
 			tableName: 'project',
-			data: args,
+			data: validatedArgs,
 			onFail: ({ uniqueRow }) => {
 				throw new ConvexError({
 					message: `A project with the slug of '${uniqueRow?.existingData.slug}' already exists for this organization.`,
@@ -84,10 +89,10 @@ export const update = zAuthedMutation({
 	},
 });
 
-export const getManyByOrg = zQuery({
+export const getManyByOrg = query({
 	args: {
-		orgSlug: z.string(),
-		limit: z.number().optional(),
+		orgSlug: v.string(),
+		limit: v.optional(v.number()),
 	},
 	handler: async (ctx, args) => {
 		const auth = createAuth(ctx);
@@ -134,15 +139,10 @@ export const getManyByOrg = zQuery({
 });
 
 export const getDetails = zQuery({
-	args: projectSchema
-		.pick({
-			slug: true,
-		})
-		.merge(
-			z.object({
-				orgSlug: z.string(),
-			})
-		),
+	args: selectProjectSchema.pick({
+		orgSlug: true,
+		slug: true,
+	}),
 	handler: async (ctx, args) => {
 		const projectDetails = await getProjectUserDetails(ctx, {
 			projectSlug: args.slug,

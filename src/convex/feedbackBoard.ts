@@ -1,13 +1,12 @@
-import { zid } from 'convex-helpers/server/zod';
+import { zid } from 'convex-helpers/server/zod4';
 import { ConvexError } from 'convex/values';
 import z from 'zod';
 
+import { feedbackSelectSchema } from './schema/feedback.schema';
 import {
 	feedbackBoardCreateSchema,
-	feedbackBoardSelectSchema,
 	feedbackBoardUpdateSchema,
-} from '@/convex/schema/feedbackBoard.schema';
-
+} from './schema/feedbackBoard.schema';
 import { zAuthedMutation, zQuery } from './utils/functions';
 import { getProjectUserDetails } from './utils/queries/getProjectUserDetails';
 import { triggers } from './utils/trigger';
@@ -105,7 +104,7 @@ export const get = zQuery({
 
 		if (!board) return null;
 
-		return feedbackBoardSelectSchema.parse(board);
+		return feedbackSelectSchema.parse(board);
 	},
 });
 

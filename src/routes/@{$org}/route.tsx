@@ -9,7 +9,7 @@ import { MainNav } from './-components/main-nav';
 export const Route = createFileRoute('/@{$org}')({
 	loader: async ({ context, params }) => {
 		const user = await context.queryClient.ensureQueryData(
-			convexQuery(api.user.getCurrentUser, {})
+			convexQuery(api.profile.getCurrentProfileUser, {})
 		);
 
 		await context.queryClient
@@ -19,7 +19,7 @@ export const Route = createFileRoute('/@{$org}')({
 				})
 			)
 			.catch((error) => {
-				console.log(error);
+				console.error(error);
 				throw notFound();
 			});
 

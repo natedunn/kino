@@ -1,9 +1,9 @@
+import type { Id } from '@/convex/_generated/dataModel';
 import type { FeedbackBoardCreateSchema } from '@/convex/schema/feedbackBoard.schema';
 
 import React from 'react';
 import { useConvexMutation } from '@convex-dev/react-query';
 import { useMutation } from '@tanstack/react-query';
-import { Id } from 'convex/_generated/dataModel';
 
 import { api } from '~api';
 import { Button } from '@/components/ui/button';

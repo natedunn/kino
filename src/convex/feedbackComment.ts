@@ -1,11 +1,4 @@
-import { feedbackCommentCreateSchema } from './schema/feedbackComment.schema';
-import { zAuthedMutation } from './utils/functions';
 import { triggers } from './utils/trigger';
-
-export const create = zAuthedMutation({
-	args: feedbackCommentCreateSchema,
-	handler: async () => {},
-});
 
 triggers.register('feedbackComment', async (ctx, change) => {
 	if (change.operation === 'delete') {
