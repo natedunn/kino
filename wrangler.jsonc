@@ -1,7 +1,15 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "tanstack-start-app",
+	"name": "kino",
 	"compatibility_date": "2025-09-02",
 	"compatibility_flags": ["nodejs_compat"],
 	"main": "@tanstack/react-start/server-entry",
+	"observability": {
+		"logs": {
+			"enabled": false,
+			"head_sampling_rate": 1,
+			"invocation_logs": true,
+			"persist": true,
+		},
+	},
 }
