@@ -122,7 +122,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 					)`}
 				</ScriptOnce>
 				{children}
-				<Devtools />
+				{process.env.NODE_ENV === 'development' && <Devtools />}
 				<Toaster position='top-right' closeButton richColors />
 				<Scripts />
 			</body>

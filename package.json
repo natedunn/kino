@@ -12,7 +12,7 @@
 		"build": "vite build",
 		"db:generate": "npx @better-auth/cli generate --config ./src/convex/betterAuth/auth.ts --output ./src/convex/betterAuth/generatedSchema.ts -y",
 		"preview": "vite preview",
-		"deploy": "npm run build && wrangler deploy",
+		"deploy": "pnpm run build && wrangler deploy",
 		"cf-typegen": "wrangler types",
 		"shadcn": "pnpm dlx shadcn@canary",
 		"prettier": "prettier --write ."

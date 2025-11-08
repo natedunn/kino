@@ -7,8 +7,10 @@ import ViteRestart from 'vite-plugin-restart';
 import tsConfigPaths from 'vite-tsconfig-paths';
 
 export default defineConfig({
+	ssr: {
+		external: ['@tanstack/devtools', '@tanstack/form'],
+	},
 	plugins: [
-		cloudflare({ viteEnvironment: { name: 'ssr' } }),
 		tailwindcss(),
 		ViteRestart({
 			// Due to hydration issues, we need to restart the server on changes to the following files
@@ -17,6 +19,7 @@ export default defineConfig({
 		tsConfigPaths({
 			projects: ['./tsconfig.json'],
 		}),
+		cloudflare({ viteEnvironment: { name: 'ssr' } }),
 		tanstackStart({
 			srcDirectory: 'src',
 		}),
