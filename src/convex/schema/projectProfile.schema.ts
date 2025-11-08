@@ -1,5 +1,6 @@
-import { zid } from 'convex-helpers/server/zod4';
 import z from 'zod';
+
+import { zid } from '@/_modules/zod4';
 
 import { SHARED_SCHEMA } from './_shared';
 

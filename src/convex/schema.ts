@@ -1,5 +1,6 @@
-import { zodToConvex } from 'convex-helpers/server/zod4';
 import { defineSchema, defineTable } from 'convex/server';
+
+import { zodToConvex } from '@/_modules/zod4';
 
 import { feedbackSchema } from './schema/feedback.schema';
 import { feedbackBoardSchema } from './schema/feedbackBoard.schema';
