@@ -8,7 +8,7 @@ import { DataModel, Id } from './_generated/dataModel';
 import { authComponent } from './auth';
 import { getProfileUser } from './profile.utils';
 import { updateProfileUserSchema } from './schema/profile.schema';
-import { mutation, query, zMutation, zQuery } from './utils/functions';
+import { mutation, query, zMutation } from './utils/functions';
 import { userUploadsR2 } from './utils/r2';
 import { verify } from './utils/verify';
 
@@ -63,7 +63,7 @@ export const update = zMutation({
 	},
 });
 
-export const getTeamList = zQuery({
+export const getTeamList = query({
 	args: {},
 	handler: async (ctx) => {
 		const profileId = (await authComponent.getAuthUser(ctx))?.profileId;
