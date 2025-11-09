@@ -3,11 +3,15 @@ import tailwindcss from '@tailwindcss/vite';
 import { tanstackStart } from '@tanstack/react-start/plugin/vite';
 import viteReact from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
+import { analyzer } from 'vite-bundle-analyzer';
 import ViteRestart from 'vite-plugin-restart';
 import tsConfigPaths from 'vite-tsconfig-paths';
 
 export default defineConfig({
 	plugins: [
+		analyzer({
+			enabled: process.env.ANALYZE === 'true',
+		}),
 		tailwindcss(),
 		ViteRestart({
 			// Due to hydration issues, we need to restart the server on changes to the following files

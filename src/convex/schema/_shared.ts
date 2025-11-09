@@ -1,5 +1,5 @@
 import { GenericDataModel, TableNamesInDataModel } from 'convex/server';
-import { z } from 'zod';
+import * as z from 'zod';
 
 import { zid } from '@/_modules/zod4';
 

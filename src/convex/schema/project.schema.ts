@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import * as z from 'zod';
 
 import { SHARED_SCHEMA } from './_shared';
 

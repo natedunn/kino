@@ -1,5 +1,5 @@
 import { v } from 'convex/values';
-import { z } from 'zod';
+import * as z from 'zod';
 
 import { convexToZod, zid } from '@/_modules/zod4';
 
