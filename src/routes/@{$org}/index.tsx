@@ -30,6 +30,8 @@ function RouteComponent() {
 		})
 	);
 
+	console.log(projects);
+
 	const { data: orgDetails } = useSuspenseQuery(convexQuery(api.org.getDetails, { slug: orgSlug }));
 
 	if (!orgDetails.org) return null;
@@ -49,12 +51,22 @@ function RouteComponent() {
 							</div>
 							<h1 className='text-2xl font-bold md:text-3xl'>{orgDetails.org.name}</h1>
 						</div>
-						<div>
-							<Button variant='outline'>
-								<Settings />
-								Edit
-							</Button>
-						</div>
+						{orgDetails.permissions.canEdit && (
+							<div>
+								<Button variant='outline' asChild>
+									<Link
+										to='/@{$org}/edit'
+										params={(prev) => ({
+											...prev,
+											org: orgSlug,
+										})}
+									>
+										<Settings />
+										Edit
+									</Link>
+								</Button>
+							</div>
+						)}
 					</div>
 				</div>
 			</div>

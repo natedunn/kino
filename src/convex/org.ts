@@ -2,16 +2,18 @@ import { BetterAuthError } from 'better-auth';
 import { ConvexError } from 'convex/values';
 import z from 'zod';
 
+import { zodToConvex } from '@/_modules/zod4';
+
 import { LIMITS } from '../config/limits';
 import { createOrgSchema, updateOrgSchema } from '../convex/schema/org.schema';
 import { components } from './_generated/api';
 import { authComponent, createAuth } from './auth';
 import { getProfileUser } from './profile.utils';
-import { zMutation, zQuery } from './utils/functions';
+import { mutation, query } from './utils/functions';
 import { verify } from './utils/verify';
 
-export const create = zMutation({
-	args: createOrgSchema,
+export const create = mutation({
+	args: zodToConvex(createOrgSchema),
 	handler: async (ctx, _args) => {
 		await verify.auth(ctx, {
 			throw: true,
@@ -35,18 +37,20 @@ export const create = zMutation({
 	},
 });
 
-export const update = zMutation({
-	args: updateOrgSchema,
+export const update = mutation({
+	args: zodToConvex(updateOrgSchema),
 	handler: async (ctx, args) => {
+		const { auth, headers } = await authComponent.getAuth(createAuth, ctx);
+
 		await verify.auth(ctx, {
 			throw: true,
 		});
 
 		const orgDetails = await ctx.runQuery(components.betterAuth.org.getDetails, {
-			slug: args.slug,
+			slug: args.currentSlug,
 		});
 
-		if (!orgDetails || !orgDetails.org) {
+		if (!orgDetails || !orgDetails.org || !orgDetails.org._id) {
 			throw new ConvexError({
 				message: 'Organization not found',
 				code: '404',
@@ -60,20 +64,23 @@ export const update = zMutation({
 			});
 		}
 
-		await createAuth(ctx).api.updateOrganization({
-			headers: await authComponent.getHeaders(ctx),
+		const { currentSlug, ...data } = args;
+
+		await auth.api.updateOrganization({
+			headers,
 			body: {
-				organizationId: orgDetails.org?._id,
-				data: args,
+				organizationId: orgDetails.org._id,
+				data: {
+					...data,
+					slug: args.updatedSlug ?? currentSlug,
+				},
 			},
 		});
 	},
 });
 
-export const getDetails = zQuery({
-	args: {
-		slug: z.string(),
-	},
+export const getDetails = query({
+	args: zodToConvex(z.object({ slug: z.string() })),
 	handler: async (ctx, args) => {
 		const orgDetails = await ctx.runQuery(components.betterAuth.org.getDetails, args);
 
@@ -102,10 +109,10 @@ export const getDetails = zQuery({
 	},
 });
 
-export const limits = zQuery({
-	args: {
+export const limits = query({
+	args: zodToConvex({
 		slug: z.string(),
-	},
+	}),
 	handler: async (ctx, args) => {
 		await verify.auth(ctx, {
 			throw: true,

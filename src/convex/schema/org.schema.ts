@@ -35,8 +35,9 @@ export const updateOrgSchema = createOrgSchema
 		logo: true,
 	})
 	.partial()
-	.merge(
-		createOrgSchema.pick({
-			slug: true,
-		})
+	.extend(
+		z.object({
+			currentSlug: orgSchema.shape.slug,
+			updatedSlug: orgSchema.shape.slug.optional(),
+		}).shape
 	);

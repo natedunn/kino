@@ -24,6 +24,7 @@ import { Route as AtChar123orgChar125ProjectRouteRouteImport } from './routes/@{
 import { Route as ProfileSettingsIndexRouteImport } from './routes/profile/settings/index'
 import { Route as ProfileUsernameIndexRouteImport } from './routes/profile/$username/index'
 import { Route as CreateTeamIndexRouteImport } from './routes/create/team/index'
+import { Route as AtChar123orgChar125EditIndexRouteImport } from './routes/@{$org}/edit/index'
 import { Route as AtChar123orgChar125CreateProjectIndexRouteImport } from './routes/@{$org}/create-project/index'
 import { Route as AtChar123orgChar125ProjectIndexRouteImport } from './routes/@{$org}/$project/index'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
@@ -123,6 +124,12 @@ const CreateTeamIndexRoute = CreateTeamIndexRouteImport.update({
   path: '/create/team/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AtChar123orgChar125EditIndexRoute =
+  AtChar123orgChar125EditIndexRouteImport.update({
+    id: '/edit/',
+    path: '/edit/',
+    getParentRoute: () => AtChar123orgChar125RouteRoute,
+  } as any)
 const AtChar123orgChar125CreateProjectIndexRoute =
   AtChar123orgChar125CreateProjectIndexRouteImport.update({
     id: '/create-project/',
@@ -253,6 +260,7 @@ export interface FileRoutesByFullPath {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/@{$org}/$project/': typeof AtChar123orgChar125ProjectIndexRoute
   '/@{$org}/create-project': typeof AtChar123orgChar125CreateProjectIndexRoute
+  '/@{$org}/edit': typeof AtChar123orgChar125EditIndexRoute
   '/create/team': typeof CreateTeamIndexRoute
   '/profile/$username': typeof ProfileUsernameIndexRoute
   '/profile/settings': typeof ProfileSettingsIndexRoute
@@ -287,6 +295,7 @@ export interface FileRoutesByTo {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/@{$org}/$project': typeof AtChar123orgChar125ProjectIndexRoute
   '/@{$org}/create-project': typeof AtChar123orgChar125CreateProjectIndexRoute
+  '/@{$org}/edit': typeof AtChar123orgChar125EditIndexRoute
   '/create/team': typeof CreateTeamIndexRoute
   '/profile/$username': typeof ProfileUsernameIndexRoute
   '/profile/settings': typeof ProfileSettingsIndexRoute
@@ -323,6 +332,7 @@ export interface FileRoutesById {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/@{$org}/$project/': typeof AtChar123orgChar125ProjectIndexRoute
   '/@{$org}/create-project/': typeof AtChar123orgChar125CreateProjectIndexRoute
+  '/@{$org}/edit/': typeof AtChar123orgChar125EditIndexRoute
   '/create/team/': typeof CreateTeamIndexRoute
   '/profile/$username/': typeof ProfileUsernameIndexRoute
   '/profile/settings/': typeof ProfileSettingsIndexRoute
@@ -361,6 +371,7 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/@{$org}/$project/'
     | '/@{$org}/create-project'
+    | '/@{$org}/edit'
     | '/create/team'
     | '/profile/$username'
     | '/profile/settings'
@@ -395,6 +406,7 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/@{$org}/$project'
     | '/@{$org}/create-project'
+    | '/@{$org}/edit'
     | '/create/team'
     | '/profile/$username'
     | '/profile/settings'
@@ -430,6 +442,7 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/@{$org}/$project/'
     | '/@{$org}/create-project/'
+    | '/@{$org}/edit/'
     | '/create/team/'
     | '/profile/$username/'
     | '/profile/settings/'
@@ -573,6 +586,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/create/team'
       preLoaderRoute: typeof CreateTeamIndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/@{$org}/edit/': {
+      id: '/@{$org}/edit/'
+      path: '/edit'
+      fullPath: '/@{$org}/edit'
+      preLoaderRoute: typeof AtChar123orgChar125EditIndexRouteImport
+      parentRoute: typeof AtChar123orgChar125RouteRoute
     }
     '/@{$org}/create-project/': {
       id: '/@{$org}/create-project/'
@@ -789,6 +809,7 @@ interface AtChar123orgChar125RouteRouteChildren {
   AtChar123orgChar125SettingsRoute: typeof AtChar123orgChar125SettingsRoute
   AtChar123orgChar125IndexRoute: typeof AtChar123orgChar125IndexRoute
   AtChar123orgChar125CreateProjectIndexRoute: typeof AtChar123orgChar125CreateProjectIndexRoute
+  AtChar123orgChar125EditIndexRoute: typeof AtChar123orgChar125EditIndexRoute
 }
 
 const AtChar123orgChar125RouteRouteChildren: AtChar123orgChar125RouteRouteChildren =
@@ -799,6 +820,7 @@ const AtChar123orgChar125RouteRouteChildren: AtChar123orgChar125RouteRouteChildr
     AtChar123orgChar125IndexRoute: AtChar123orgChar125IndexRoute,
     AtChar123orgChar125CreateProjectIndexRoute:
       AtChar123orgChar125CreateProjectIndexRoute,
+    AtChar123orgChar125EditIndexRoute: AtChar123orgChar125EditIndexRoute,
   }
 
 const AtChar123orgChar125RouteRouteWithChildren =

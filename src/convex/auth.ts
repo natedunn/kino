@@ -19,6 +19,27 @@ export const authComponent = createClient<DataModel, typeof authSchema>(componen
 	},
 	verbose: false,
 	triggers: {
+		organization: {
+			onUpdate: async (ctx, newDoc, oldDoc) => {
+				if (newDoc._id !== oldDoc._id) {
+					throw new Error('Id mismatch in organization onUpdate trigger.');
+				}
+
+				// Update projects that have outdated slug
+				if (newDoc.slug !== oldDoc.slug) {
+					const projects = await ctx.db
+						.query('project')
+						.withIndex('by_orgSlug', (q) => q.eq('orgSlug', oldDoc.slug))
+						.collect();
+
+					for (const project of projects) {
+						await ctx.db.patch(project._id, {
+							orgSlug: newDoc.slug,
+						});
+					}
+				}
+			},
+		},
 		user: {
 			onCreate: async (ctx, newUser) => {
 				const generatedUsername = uniqueUsernameGenerator({

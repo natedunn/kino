@@ -1,6 +1,7 @@
 import { GenericQueryCtx, paginationOptsValidator } from 'convex/server';
 import { ConvexError, v } from 'convex/values';
 
+import { zodToConvex } from '@/_modules/zod4';
 import { LIMITS } from '@/config/limits';
 import { createAuth } from '@/convex/auth';
 
@@ -8,7 +9,7 @@ import { DataModel, Id } from './_generated/dataModel';
 import { authComponent } from './auth';
 import { getProfileUser } from './profile.utils';
 import { updateProfileUserSchema } from './schema/profile.schema';
-import { mutation, query, zMutation } from './utils/functions';
+import { mutation, query } from './utils/functions';
 import { userUploadsR2 } from './utils/r2';
 import { verify } from './utils/verify';
 
@@ -28,8 +29,8 @@ export const getList = query({
 	},
 });
 
-export const update = zMutation({
-	args: updateProfileUserSchema,
+export const update = mutation({
+	args: zodToConvex(updateProfileUserSchema),
 	handler: async (ctx, args) => {
 		const { userId } = await verify.auth(ctx, {
 			throw: true,

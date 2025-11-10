@@ -1,6 +1,7 @@
 import { mergedStream, stream } from 'convex-helpers/server/stream';
 import { ConvexError, v } from 'convex/values';
 
+import { zodToConvex } from '@/_modules/zod4';
 import { defaultFeedbackBoards } from '@/config/defaults';
 import {
 	createProjectSchema,
@@ -11,13 +12,13 @@ import {
 import { components } from './_generated/api';
 import { authComponent, createAuth } from './auth';
 import schema from './schema';
-import { query, zAuthedMutation, zMutation, zQuery } from './utils/functions';
+import { authedMutation, mutation, query } from './utils/functions';
 import { getProjectUserDetails } from './utils/queries/getProjectUserDetails';
 import { triggers } from './utils/trigger';
 import { verify } from './utils/verify';
 
-export const create = zMutation({
-	args: createProjectSchema,
+export const create = mutation({
+	args: zodToConvex(createProjectSchema),
 	handler: async (ctx, args) => {
 		await verify.auth(ctx, {
 			throw: true,
@@ -56,8 +57,8 @@ export const create = zMutation({
 	},
 });
 
-export const update = zAuthedMutation({
-	args: updateProjectSchema,
+export const update = authedMutation({
+	args: zodToConvex(updateProjectSchema),
 	handler: async (ctx, args) => {
 		const headers = await authComponent.getHeaders(ctx);
 
@@ -138,11 +139,13 @@ export const getManyByOrg = query({
 	},
 });
 
-export const getDetails = zQuery({
-	args: selectProjectSchema.pick({
-		orgSlug: true,
-		slug: true,
-	}),
+export const getDetails = query({
+	args: zodToConvex(
+		selectProjectSchema.pick({
+			orgSlug: true,
+			slug: true,
+		})
+	),
 	handler: async (ctx, args) => {
 		const projectDetails = await getProjectUserDetails(ctx, {
 			projectSlug: args.slug,
