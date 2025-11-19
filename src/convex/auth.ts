@@ -50,7 +50,8 @@ export const authComponent = createClient<DataModel, typeof authSchema>(componen
 					randomDigits: 3,
 				});
 
-				const auth = createAuth(ctx);
+				const { auth } = await authComponent.getAuth(createAuth, ctx);
+
 				const username = (newUser.username ?? generatedUsername).toLowerCase();
 
 				await auth.api.createOrganization({

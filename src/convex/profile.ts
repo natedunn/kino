@@ -43,7 +43,7 @@ export const update = mutation({
 			});
 		}
 
-		const auth = createAuth(ctx);
+		const { auth } = await authComponent.getAuth(createAuth, ctx);
 
 		const { userId: _userId, ...profileData } = args.profile;
 
@@ -73,9 +73,10 @@ export const getTeamList = query({
 			return null;
 		}
 
-		const auth = createAuth(ctx);
+		const { auth, headers } = await authComponent.getAuth(createAuth, ctx);
+
 		const teams = await auth.api.listOrganizations({
-			headers: await authComponent.getHeaders(ctx),
+			headers,
 		});
 
 		const user = await authComponent.getAuthUser(ctx);

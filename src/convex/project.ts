@@ -78,12 +78,12 @@ export const create = mutation({
 export const update = authedMutation({
 	args: zodToConvex(updateProjectSchema),
 	handler: async (ctx, args) => {
-		const headers = await authComponent.getHeaders(ctx);
+		const { auth, headers } = await authComponent.getAuth(createAuth, ctx);
 
 		let member = null;
 
 		if (headers) {
-			member = await createAuth(ctx).api.getActiveMember({
+			member = await auth.api.getActiveMember({
 				headers,
 			});
 		}
@@ -114,7 +114,7 @@ export const getManyByOrg = query({
 		limit: v.optional(v.number()),
 	},
 	handler: async (ctx, args) => {
-		const auth = createAuth(ctx);
+		const { auth } = await authComponent.getAuth(createAuth, ctx);
 
 		const memberOrgs = await auth.api
 			.listOrganizations({
