@@ -149,7 +149,7 @@ export const createAuth = (ctx: GenericCtx<DataModel>) => {
 						additionalFields: {
 							visibility: {
 								type: 'string',
-								required: false,
+								required: true,
 							},
 						},
 					},
