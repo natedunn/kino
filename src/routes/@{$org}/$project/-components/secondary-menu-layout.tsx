@@ -18,7 +18,7 @@ export const MenuItem = ({ children, icon: Icon, className, ...rest }: MenuItemP
 					<span
 						className={cn(
 							'flex items-center justify-between gap-2 border-b p-4 transition-all duration-200 ease-in-out group-hocus:bg-muted',
-							isActive && 'bg-primary/10 group-hocus:!bg-primary/10',
+							isActive && 'bg-primary/10 group-hocus:bg-primary/10!',
 							className
 						)}
 					>

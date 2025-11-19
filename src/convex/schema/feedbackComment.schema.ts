@@ -1,6 +1,5 @@
+import { zid } from 'convex-helpers/server/zod4';
 import * as z from 'zod';
-
-import { zid } from '@/_modules/zod4';
 
 import { SHARED_SCHEMA } from './_shared';
 
@@ -10,6 +9,7 @@ export const feedbackCommentSchema = z.object({
 	authorProfileId: zid('profile'),
 	replyFeedbackCommentId: z.optional(zid('feedbackComment')),
 	content: z.string().min(1).max(1200),
+	initial: z.boolean().optional(),
 	// emoteCounts: z.record(feedbackCommentEmotes.shape.content, z.number().optional()),
 });
 

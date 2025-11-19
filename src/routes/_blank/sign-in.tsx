@@ -1,6 +1,6 @@
 import { createFileRoute, Link, redirect } from '@tanstack/react-router';
 import { ChevronLeft } from 'lucide-react';
-import z from 'zod';
+import * as z from 'zod';
 
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';

@@ -30,8 +30,6 @@ function RouteComponent() {
 		})
 	);
 
-	console.log(projects);
-
 	const { data: orgDetails } = useSuspenseQuery(convexQuery(api.org.getDetails, { slug: orgSlug }));
 
 	if (!orgDetails.org) return null;

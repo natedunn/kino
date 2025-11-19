@@ -1,30 +1,27 @@
 import { BetterAuthError } from 'better-auth';
+import { zodToConvex } from 'convex-helpers/server/zod4';
 import { ConvexError } from 'convex/values';
-import z from 'zod';
-
-import { zodToConvex } from '@/_modules/zod4';
+import * as z from 'zod';
 
 import { LIMITS } from '../config/limits';
 import { createOrgSchema, updateOrgSchema } from '../convex/schema/org.schema';
 import { components } from './_generated/api';
 import { authComponent, createAuth } from './auth';
-import { getProfileUser } from './profile.utils';
 import { mutation, query } from './utils/functions';
+import { getCurrentProfile } from './utils/queries/getCurrentProfile';
 import { verify } from './utils/verify';
 
 export const create = mutation({
 	args: zodToConvex(createOrgSchema),
-	handler: async (ctx, _args) => {
+	handler: async (ctx, args) => {
 		await verify.auth(ctx, {
 			throw: true,
 		});
 
-		const args = createOrgSchema.parse(_args);
+		const { auth, headers } = await authComponent.getAuth(createAuth, ctx);
 
-		const headers = await authComponent.getHeaders(ctx);
-
-		await createAuth(ctx)
-			.api.createOrganization({
+		await auth.api
+			.createOrganization({
 				body: args,
 				headers,
 			})
@@ -110,9 +107,11 @@ export const getDetails = query({
 });
 
 export const limits = query({
-	args: zodToConvex({
-		slug: z.string(),
-	}),
+	args: zodToConvex(
+		z.object({
+			slug: z.string(),
+		})
+	),
 	handler: async (ctx, args) => {
 		await verify.auth(ctx, {
 			throw: true,
@@ -120,7 +119,7 @@ export const limits = query({
 
 		const createResponse = (permissions: { canAddProjects: boolean }) => permissions;
 
-		const user = await getProfileUser(ctx);
+		const user = await getCurrentProfile(ctx);
 
 		const projects = await ctx.db
 			.query('project')

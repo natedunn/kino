@@ -1,15 +1,15 @@
+import { zodToConvex } from 'convex-helpers/server/zod4';
 import { GenericQueryCtx, paginationOptsValidator } from 'convex/server';
 import { ConvexError, v } from 'convex/values';
 
-import { zodToConvex } from '@/_modules/zod4';
 import { LIMITS } from '@/config/limits';
 import { createAuth } from '@/convex/auth';
 
 import { DataModel, Id } from './_generated/dataModel';
 import { authComponent } from './auth';
-import { getProfileUser } from './profile.utils';
 import { updateProfileUserSchema } from './schema/profile.schema';
 import { mutation, query } from './utils/functions';
+import { getCurrentProfile } from './utils/queries/getCurrentProfile';
 import { userUploadsR2 } from './utils/r2';
 import { verify } from './utils/verify';
 
@@ -96,7 +96,7 @@ export const getTeamList = query({
 export const getCurrentProfileUser = query({
 	args: {},
 	handler: async (ctx) => {
-		const user = await getProfileUser(ctx);
+		const user = await getCurrentProfile(ctx);
 		return user ?? null;
 	},
 });
@@ -118,8 +118,6 @@ export const { generateUploadUrl, syncMetadata } = userUploadsR2.clientApi({
 	},
 	onUpload: async (ctx, _bucket, key) => {
 		const user = await authComponent.getAuthUser(ctx);
-
-		console.log(user);
 
 		const userId = user?.profileId;
 

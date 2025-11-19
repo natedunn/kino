@@ -4,7 +4,7 @@ import { revalidateLogic, useStore } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { Eye, EyeClosed } from 'lucide-react';
-import z from 'zod';
+import * as z from 'zod';
 
 import { api } from '~api';
 import { InlineAlert } from '@/components/inline-alert';

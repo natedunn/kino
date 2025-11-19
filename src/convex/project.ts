@@ -1,7 +1,7 @@
 import { mergedStream, stream } from 'convex-helpers/server/stream';
+import { zodToConvex } from 'convex-helpers/server/zod4';
 import { ConvexError, v } from 'convex/values';
 
-import { zodToConvex } from '@/_modules/zod4';
 import { defaultFeedbackBoards } from '@/config/defaults';
 import {
 	createProjectSchema,
@@ -13,16 +13,22 @@ import { components } from './_generated/api';
 import { authComponent, createAuth } from './auth';
 import schema from './schema';
 import { authedMutation, mutation, query } from './utils/functions';
-import { getProjectUserDetails } from './utils/queries/getProjectUserDetails';
+import { checkProjectAccess } from './utils/queries/checkAccess';
+import { getCurrentProfile } from './utils/queries/getCurrentProfile';
 import { triggers } from './utils/trigger';
 import { verify } from './utils/verify';
 
 export const create = mutation({
 	args: zodToConvex(createProjectSchema),
 	handler: async (ctx, args) => {
-		await verify.auth(ctx, {
-			throw: true,
-		});
+		const profileUser = await getCurrentProfile(ctx);
+
+		if (!profileUser) {
+			throw new ConvexError({
+				message: 'User not found',
+				code: '404',
+			});
+		}
 
 		const validatedArgs = createProjectSchema.parse(args);
 
@@ -44,7 +50,7 @@ export const create = mutation({
 			});
 		}
 
-		await verify.insert({
+		const id = await verify.insert({
 			ctx,
 			tableName: 'project',
 			data: validatedArgs,
@@ -52,6 +58,18 @@ export const create = mutation({
 				throw new ConvexError({
 					message: `A project with the slug of '${uniqueRow?.existingData.slug}' already exists for this organization.`,
 				});
+			},
+		});
+
+		await verify.insert({
+			ctx,
+			tableName: 'projectMember',
+			data: {
+				projectId: id,
+				profileId: profileUser._id,
+				role: 'admin',
+				projectSlug: validatedArgs.slug,
+				projectVisibility: validatedArgs.visibility,
 			},
 		});
 	},
@@ -147,8 +165,8 @@ export const getDetails = query({
 		})
 	),
 	handler: async (ctx, args) => {
-		const projectDetails = await getProjectUserDetails(ctx, {
-			projectSlug: args.slug,
+		const projectDetails = await checkProjectAccess(ctx, {
+			slug: args.slug,
 		});
 
 		if (!projectDetails.project) {
@@ -168,14 +186,48 @@ export const getDetails = query({
 });
 
 triggers.register('project', async (ctx, change) => {
-	if (change.operation === 'insert') {
-		defaultFeedbackBoards.forEach(async (boardName) => {
-			await ctx.db.insert('feedbackBoard', {
-				name: boardName,
-				projectId: change.newDoc._id,
+	// Change visibility
+	if (change.operation === 'update') {
+		const projectMembers = await ctx.db
+			.query('projectMember')
+			.withIndex('by_projectId', (q) => q.eq('projectId', change.oldDoc._id))
+			.collect();
+
+		projectMembers.forEach(async (profile) => {
+			await ctx.db.patch(profile._id, {
+				projectSlug: change.newDoc.slug,
+				projectVisibility: change.newDoc.visibility,
 			});
 		});
 	}
+
+	if (change.operation === 'insert') {
+		// Add default boards
+		defaultFeedbackBoards.forEach(async (boardName) => {
+			const getDefaultIcon = () => {
+				switch (boardName) {
+					case 'Bugs':
+						return 'bug';
+						break;
+					case 'Improvements':
+						return 'chart-up';
+						break;
+					case 'Feature Requests':
+						return 'lightbulb';
+						break;
+					default:
+						return 'box';
+				}
+			};
+
+			await ctx.db.insert('feedbackBoard', {
+				name: boardName,
+				projectId: change.newDoc._id,
+				icon: getDefaultIcon(),
+			});
+		});
+	}
+
 	if (change.operation === 'delete') {
 		const boards = await ctx.db
 			.query('feedbackBoard')

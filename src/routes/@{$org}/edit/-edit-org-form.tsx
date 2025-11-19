@@ -3,7 +3,7 @@ import { convexQuery, useConvexMutation } from '@convex-dev/react-query';
 import { revalidateLogic } from '@tanstack/react-form';
 import { useMutation, useSuspenseQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import z from 'zod';
+import * as z from 'zod';
 
 import { api } from '~api';
 import { Button } from '@/components/ui/button';

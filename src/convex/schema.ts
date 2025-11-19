@@ -1,14 +1,14 @@
+import { zodToConvex } from 'convex-helpers/server/zod4';
 import { defineSchema, defineTable } from 'convex/server';
-
-import { zodToConvex } from '@/_modules/zod4';
 
 import { feedbackSchema } from './schema/feedback.schema';
 import { feedbackBoardSchema } from './schema/feedbackBoard.schema';
 import { feedbackCommentSchema } from './schema/feedbackComment.schema';
 import { feedbackCommentEmoteSchema } from './schema/feedbackCommentEmote.schema';
+import { orgMemberSchema } from './schema/orgMember.schema';
 import { profileSchema } from './schema/profile.schema';
 import { projectSchema } from './schema/project.schema';
-import { projectProfileSchema } from './schema/projectProfile.schema';
+import { projectMemberSchema } from './schema/projectMember.schema';
 
 const schema = defineSchema({
 	profile: defineTable(zodToConvex(profileSchema))
@@ -20,12 +20,16 @@ const schema = defineSchema({
 		.index('by_updatedTime', ['updatedTime'])
 		.index('by_orgSlug_slug', ['orgSlug', 'slug'])
 		.index('by_orgSlug_visibility_updatedAt', ['orgSlug', 'visibility', 'updatedTime']),
-	projectProfile: defineTable(zodToConvex(projectProfileSchema))
+	projectMember: defineTable(zodToConvex(projectMemberSchema))
+		.index('by_projectId', ['projectId'])
 		.index('by_profileId_projectId', ['profileId', 'projectId'])
-		.index('by_profileId_projectId_role', ['profileId', 'projectId', 'role']),
+		.index('by_profileId_projectSlug', ['profileId', 'projectSlug'])
+		.index('by_profileId_projectId_role', ['profileId', 'projectId', 'role'])
+		.index('by_profileId_projectSlug_role', ['profileId', 'projectSlug', 'role']),
+	orgMember: defineTable(zodToConvex(orgMemberSchema)),
 	feedback: defineTable(zodToConvex(feedbackSchema))
 		.index('by_projectId', ['projectId'])
-		.index('by_board', ['board'])
+		.index('by_board', ['boardId'])
 		.index('by_authorProfileId', ['authorProfileId']),
 	feedbackBoard: defineTable(zodToConvex(feedbackBoardSchema))
 		.index('by_projectId', ['projectId'])

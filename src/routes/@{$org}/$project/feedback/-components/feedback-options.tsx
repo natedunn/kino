@@ -12,7 +12,7 @@ export const FeedbackOptions = () => {
 			<Link
 				className={buttonVariants({
 					variant: 'outline',
-					className: 'group !inline-flex w-full items-center !justify-between text-left',
+					className: 'group inline-flex! w-full items-center justify-between! text-left',
 				})}
 				to='/@{$org}/$project/feedback/boards'
 				params={{

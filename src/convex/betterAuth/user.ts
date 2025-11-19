@@ -12,8 +12,6 @@ export const updateUser = mutation({
 		profileId: tables.user.validator.fields.profileId,
 	},
 	handler: async (ctx, args) => {
-		console.log('Updating username.');
-
 		return await ctx.db.patch(args._id as Id<'user'>, {
 			username: args.username,
 			profileId: args.profileId,

@@ -1,7 +1,6 @@
+import { zid } from 'convex-helpers/server/zod4';
 import { GenericDataModel, TableNamesInDataModel } from 'convex/server';
 import * as z from 'zod';
-
-import { zid } from '@/_modules/zod4';
 
 export const SHARED_SCHEMA = <
 	DataModel extends GenericDataModel,

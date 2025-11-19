@@ -8,8 +8,8 @@ export const projectSchema = z.object({
 	name: z.string().min(1).max(30),
 	description: z.string().max(250).optional(),
 	urls: z.object({ url: z.string().url(), text: z.string() }).array().optional(),
-	visibility: z.enum(['private', 'public', 'archived']),
-	logoUrl: z.string().url().optional(),
+	visibility: z.enum(['private', 'public', 'archived', 'isolated', 'gated']),
+	logoUrl: z.url().optional(),
 	slug: z
 		.string()
 		.regex(/^[a-z0-9_]+(?:-[a-z0-9_]+)*$/, {

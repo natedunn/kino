@@ -1,23 +1,31 @@
+import { zid } from 'convex-helpers/server/zod4';
 import * as z from 'zod';
 
-import { zid } from '@/_modules/zod4';
-
 import { SHARED_SCHEMA } from './_shared';
+import { feedbackCommentSchema } from './feedbackComment.schema';
 
 export const feedbackSchema = z.object({
 	...SHARED_SCHEMA('feedback'),
-	content: z.string().min(1).max(500),
+	title: z.string().min(1).max(100),
 	authorProfileId: zid('profile'),
 	projectId: zid('project'),
 	upvotes: z.number().default(0),
-	board: zid('feedbackBoard'),
+	boardId: zid('feedbackBoard'),
+	firstCommentId: z.optional(zid('feedbackComment')),
 });
 
 export const feedbackSelectSchema = feedbackSchema;
-export const feedbackCreateSchema = feedbackSchema.pick({
-	content: true,
-	board: true,
-});
+export const feedbackCreateSchema = feedbackSchema
+	.pick({
+		title: true,
+		boardId: true,
+		projectId: true,
+	})
+	.extend(
+		z.object({
+			firstComment: feedbackCommentSchema.shape.content,
+		}).shape
+	);
 
 export type Feedback = z.infer<typeof feedbackSchema>;
 export type FeedbackSelectSchema = z.infer<typeof feedbackSelectSchema>;

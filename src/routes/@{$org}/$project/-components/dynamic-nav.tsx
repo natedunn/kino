@@ -1,23 +1,10 @@
 'use client';
 
+import type { Icon } from '@/icons/types';
+
 import { useEffect, useRef, useState } from 'react';
 import { Link, LinkProps } from '@tanstack/react-router';
 import { ClassValue } from 'clsx';
-import {
-	BarChart3,
-	// BookOpen,
-	// Briefcase,
-	Calendar,
-	// FileSpreadsheet,
-	FileText,
-	LucideIcon,
-	Map,
-	MessageCircle,
-	MessageSquare,
-	MoreHorizontal,
-	// Rss,
-	Users,
-} from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -26,12 +13,20 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import ArchivePencil from '@/icons/archive-pencil';
+import CalendarDays from '@/icons/calendar-days';
+import Chat from '@/icons/chat';
+import Dots from '@/icons/dots';
+import Folder from '@/icons/folder';
+import Home from '@/icons/home';
+import Interview from '@/icons/interview';
+import Roadmap from '@/icons/roadmap';
 import { cn } from '@/lib/utils';
 
 export interface NavigationItem extends Omit<LinkProps, 'children'> {
 	className?: ClassValue;
 	children: string;
-	icon?: LucideIcon | string;
+	icon?: string | Icon;
 }
 
 interface DynamicNavigationProps {
@@ -50,43 +45,43 @@ export function DynamicNavigation({ orgSlug, projectSlug, onStateChange }: Dynam
 	const items: NavigationItem[] = [
 		{
 			children: 'Overview',
-			icon: BarChart3,
+			icon: Home,
 			to: '/@{$org}/$project',
 			params: (prev) => ({ ...prev, ...params }),
 		},
 		{
 			children: 'Feedback',
-			icon: MessageSquare,
+			icon: ArchivePencil,
 			to: '/@{$org}/$project/feedback',
 			params: (prev) => ({ ...prev, ...params }),
 		},
 		{
 			children: 'Updates',
-			icon: Calendar,
+			icon: CalendarDays,
 			to: '/@{$org}/$project/updates',
 			params: (prev) => ({ ...prev, ...params }),
 		},
 		{
 			children: 'Roadmap',
-			icon: Map,
+			icon: Roadmap,
 			to: '/@{$org}/$project/roadmap',
 			params: (prev) => ({ ...prev, ...params }),
 		},
 		{
 			children: 'Files',
-			icon: FileText,
+			icon: Folder,
 			to: '/@{$org}/$project/files',
 			params: (prev) => ({ ...prev, ...params }),
 		},
 		{
 			children: 'Discussions',
-			icon: Users,
+			icon: Interview,
 			to: '/@{$org}/$project/discussions',
 			params: (prev) => ({ ...prev, ...params }),
 		},
 		{
 			children: 'Chat',
-			icon: MessageCircle,
+			icon: Chat,
 			to: '/@{$org}/$project/chat',
 			params: (prev) => ({ ...prev, ...params }),
 		},
@@ -204,14 +199,34 @@ export function DynamicNavigation({ orgSlug, projectSlug, onStateChange }: Dynam
 								}}
 								variant='ghost'
 								size='sm'
-								className={cn(['flex shrink-0 items-center gap-2 !text-xs md:text-sm', ''])}
+								className={cn(['group flex shrink-0 items-center gap-2 text-xs! md:text-sm', ''])}
 								asChild
 							>
-								<Link to={item.to} params={item.params}>
-									{typeof Icon === 'string'
-										? Icon
-										: Icon && <Icon className='size-4 text-muted-foreground' />}
-									<span>{item.children}</span>
+								<Link
+									activeOptions={{
+										exact: item.to === '/@{$org}/$project',
+									}}
+									to={item.to}
+									params={item.params}
+									className='flex items-center gap-2'
+								>
+									{({ isActive }) => (
+										<>
+											{typeof Icon === 'string' ? (
+												<>{Icon}</>
+											) : (
+												Icon && (
+													<Icon
+														className={cn(
+															'size-4 text-muted-foreground group-active:text-foreground group-hocus:text-foreground',
+															{ 'text-blue-300 group-hocus:text-blue-300': isActive }
+														)}
+													/>
+												)
+											)}
+											<span>{item.children}</span>
+										</>
+									)}
 								</Link>
 							</Button>
 						);
@@ -221,7 +236,7 @@ export function DynamicNavigation({ orgSlug, projectSlug, onStateChange }: Dynam
 						<DropdownMenu>
 							<DropdownMenuTrigger asChild>
 								<Button variant='ghost' size='sm' className='shrink-0'>
-									<MoreHorizontal className='h-4 w-4' />
+									<Dots className='size-4 text-muted-foreground' />
 									<span className='sr-only'>More features</span>
 								</Button>
 							</DropdownMenuTrigger>

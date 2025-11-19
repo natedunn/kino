@@ -1,11 +1,13 @@
 import { convexQuery } from '@convex-dev/react-query';
 import { useSuspenseQuery } from '@tanstack/react-query';
-import { createFileRoute, Link } from '@tanstack/react-router';
-import { CirclePlus, Megaphone } from 'lucide-react';
-import z from 'zod';
+import { createFileRoute, Link, useRouter } from '@tanstack/react-router';
+import * as z from 'zod';
 
 import { api } from '~api';
 import { Button } from '@/components/ui/button';
+import CirclePlusOutline from '@/icons/circle-plus-outline';
+import Megaphone from '@/icons/megaphone';
+import Missing from '@/icons/missing';
 
 import { BoardsNav } from './-components/boards-nav';
 import { FeedbackCard } from './-components/feedback-card';
@@ -29,6 +31,7 @@ export const Route = createFileRoute('/@{$org}/$project/feedback/')({
 });
 
 function RouteComponent() {
+	const router = useRouter();
 	const { org: orgSlug, project: projectSlug } = Route.useParams();
 
 	const { data: projectData } = useSuspenseQuery(
@@ -38,7 +41,7 @@ function RouteComponent() {
 		})
 	);
 
-	const { data: feedback } = useSuspenseQuery(
+	const { data: feedbackData } = useSuspenseQuery(
 		convexQuery(api.features.feedback, {
 			projectSlug,
 		})
@@ -58,7 +61,7 @@ function RouteComponent() {
 										project: projectSlug,
 									}}
 								>
-									<CirclePlus size={16} /> Add feedback
+									<CirclePlusOutline size='16px' /> Add feedback
 								</Link>
 							</Button>
 						</div>
@@ -68,7 +71,7 @@ function RouteComponent() {
 									Boards
 								</span>
 								<div className='mt-2'>
-									{!!feedback?.boards && <BoardsNav boards={feedback.boards} />}
+									{!!feedbackData?.boards && <BoardsNav boards={feedbackData.boards} />}
 								</div>
 							</div>
 							{projectData?.permissions.canEdit && (
@@ -85,7 +88,7 @@ function RouteComponent() {
 					</div>
 				</div>
 				<div className='flex flex-col gap-4 py-8 md:col-span-9'>
-					<div className='overflow-hidden rounded-lg border border-primary/50 bg-gradient-to-tl from-primary/20 to-primary/5 p-8'>
+					<div className='overflow-hidden rounded-lg border border-primary/50 bg-linear-to-tl from-primary/20 to-primary/5 p-8'>
 						<div className='flex items-start gap-4'>
 							<div className='mt-1'>
 								<Megaphone className='size-8 text-primary/75 dark:text-blue-300' />
@@ -101,14 +104,33 @@ function RouteComponent() {
 						</div>
 					</div>
 					<FeedbackToolbar />
-					<FeedbackCard orgSlug={orgSlug} projectSlug={projectSlug} />
-					{/* <FeedbackCard orgSlug={Route.useParams().org} projectSlug={Route.useParams().project} />
-					<FeedbackCard orgSlug={Route.useParams().org} projectSlug={Route.useParams().project} />
-					<FeedbackCard orgSlug={Route.useParams().org} projectSlug={Route.useParams().project} />
-					<FeedbackCard orgSlug={Route.useParams().org} projectSlug={Route.useParams().project} />
-					<FeedbackCard orgSlug={Route.useParams().org} projectSlug={Route.useParams().project} />
-					<FeedbackCard orgSlug={Route.useParams().org} projectSlug={Route.useParams().project} />
-					<FeedbackCard orgSlug={Route.useParams().org} projectSlug={Route.useParams().project} /> */}
+					{!feedbackData?.feedback ? (
+						<div className='text-bold flex items-center justify-center gap-3 rounded-lg border bg-muted p-4 text-xl text-muted-foreground md:p-10'>
+							<div>
+								<Missing size='32' />
+							</div>
+							No feedback has been added yet.
+						</div>
+					) : (
+						feedbackData.feedback?.map((feedback) => {
+							return (
+								<FeedbackCard
+									key={feedback._id}
+									feedback={feedback}
+									onNavigationClick={() =>
+										router.navigate({
+											to: '/@{$org}/$project/feedback/$feedbackId',
+											params: {
+												org: orgSlug,
+												project: projectSlug,
+												feedbackId: feedback._id,
+											},
+										})
+									}
+								/>
+							);
+						})
+					)}
 				</div>
 			</div>
 		</div>

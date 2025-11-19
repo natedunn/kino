@@ -1,12 +1,13 @@
 import { Link, useParams } from '@tanstack/react-router';
-import { Box, ChevronRight } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 
+import { API } from '~api';
 import { buttonVariants } from '@/components/ui/button';
-import { FeedbackBoardSelectSchema } from '@/convex/schema/feedbackBoard.schema';
+import { Icon, IconKey } from '@/icons';
 import { cn } from '@/lib/utils';
 
 type BoardNavProps = {
-	boards: FeedbackBoardSelectSchema[] | null;
+	boards: NonNullable<NonNullable<API['features']['feedback']>['boards']> | null;
 };
 
 export const BoardsNav = ({ boards }: BoardNavProps) => {
@@ -22,6 +23,7 @@ export const BoardsNav = ({ boards }: BoardNavProps) => {
 		{
 			_id: 'all',
 			name: 'All',
+			icon: 'box',
 		},
 		...boards,
 	];
@@ -53,11 +55,12 @@ export const BoardsNav = ({ boards }: BoardNavProps) => {
 											: buttonVariants({
 													variant: 'ghost',
 												}),
-										'group !inline-flex w-full items-center justify-start text-left'
+										'group inline-flex! w-full items-center justify-start text-left'
 									)}
 								>
 									<span className='mr-auto inline-flex items-center gap-3'>
-										<Box className='text-muted-foreground' />
+										{board?.icon ? <Icon name={board?.icon as IconKey} /> : <Icon name='box' />}
+										{/* <Box className='text-muted-foreground' /> */}
 										<span>{board.name}</span>
 									</span>
 									<ChevronRight

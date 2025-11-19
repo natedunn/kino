@@ -1,7 +1,6 @@
+import { convexToZod, zid } from 'convex-helpers/server/zod4';
 import { v } from 'convex/values';
 import * as z from 'zod';
-
-import { convexToZod, zid } from '@/_modules/zod4';
 
 import { SHARED_SCHEMA } from './_shared';
 

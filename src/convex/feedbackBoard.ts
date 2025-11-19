@@ -1,24 +1,23 @@
+import { zid, zodToConvex } from 'convex-helpers/server/zod4';
 import { ConvexError } from 'convex/values';
 import z from 'zod';
-
-import { zid } from '@/_modules/zod4';
 
 import { feedbackSelectSchema } from './schema/feedback.schema';
 import {
 	feedbackBoardCreateSchema,
 	feedbackBoardUpdateSchema,
 } from './schema/feedbackBoard.schema';
-import { zAuthedMutation, zQuery } from './utils/functions';
-import { getProjectUserDetails } from './utils/queries/getProjectUserDetails';
+import { mutation, query } from './utils/functions';
+import { checkProjectAccess } from './utils/queries/checkAccess';
 import { triggers } from './utils/trigger';
 import { verify } from './utils/verify';
 
-export const create = zAuthedMutation({
-	args: feedbackBoardCreateSchema,
+export const create = mutation({
+	args: zodToConvex(feedbackBoardCreateSchema),
 	handler: async (ctx, args) => {
 		// Authorization check
-		const isProjectAdmin = await getProjectUserDetails(ctx, {
-			projectId: args.projectId,
+		const isProjectAdmin = await checkProjectAccess(ctx, {
+			slug: args.projectId,
 		});
 
 		if (!isProjectAdmin) {
@@ -45,23 +44,23 @@ export const create = zAuthedMutation({
 	},
 });
 
-export const update = zAuthedMutation({
-	args: feedbackBoardUpdateSchema.merge(
-		z.object({
-			projectSlug: z.string(),
-			orgSlug: z.string(),
-		})
+export const update = mutation({
+	args: zodToConvex(
+		feedbackBoardUpdateSchema.extend(
+			z.object({
+				projectSlug: z.string(),
+				orgSlug: z.string(),
+			}).shape
+		)
 	),
 	handler: async (ctx, args) => {
 		const { orgSlug, projectSlug, ...data } = args;
 
-		// const {
-		// 	permissions: { canEdit },
-		// } = await getProjectUserData(ctx, {
-		// 	projectSlug: args.projectSlug,
-		// });
-
-		const canEdit = true;
+		const {
+			permissions: { canEdit },
+		} = await checkProjectAccess(ctx, {
+			slug: args.projectSlug,
+		});
 
 		if (!canEdit) {
 			throw new ConvexError({
@@ -86,17 +85,19 @@ export const update = zAuthedMutation({
 	},
 });
 
-export const get = zQuery({
-	args: {
-		_id: zid('feedbackBoard'),
-		projectSlug: z.string(),
-		orgSlug: z.string(),
-	},
+export const get = query({
+	args: zodToConvex(
+		z.object({
+			_id: zid('feedbackBoard'),
+			projectSlug: z.string(),
+			orgSlug: z.string(),
+		})
+	),
 	handler: async (ctx, args) => {
 		const {
 			permissions: { canView },
-		} = await getProjectUserDetails(ctx, {
-			projectSlug: args.projectSlug,
+		} = await checkProjectAccess(ctx, {
+			slug: args.projectSlug,
 		});
 
 		if (!canView) return null;
@@ -109,17 +110,46 @@ export const get = zQuery({
 	},
 });
 
-export const _delete = zAuthedMutation({
-	args: {
-		boardId: zid('feedbackBoard'),
-		projectId: zid('project'),
-	},
+export const getProjectBoards = query({
+	args: zodToConvex(
+		z.object({
+			projectSlug: z.string(),
+		})
+	),
 	handler: async (ctx, args) => {
-		const isProjectAdmin = await getProjectUserDetails(ctx, {
-			projectId: args.projectId,
+		const {
+			permissions: { canView },
+			project,
+		} = await checkProjectAccess(ctx, {
+			slug: args.projectSlug,
 		});
 
-		if (!isProjectAdmin) {
+		if (!canView || !project?._id) return null;
+
+		const boards = await ctx.db
+			.query('feedbackBoard')
+			.withIndex('by_projectId', (q) => q.eq('projectId', project._id))
+			.collect();
+
+		return boards;
+	},
+});
+
+export const _delete = mutation({
+	args: zodToConvex(
+		z.object({
+			boardId: zid('feedbackBoard'),
+			projectId: zid('project'),
+		})
+	),
+	handler: async (ctx, args) => {
+		const {
+			permissions: { canDelete },
+		} = await checkProjectAccess(ctx, {
+			id: args.projectId,
+		});
+
+		if (!canDelete) {
 			throw new ConvexError({
 				message: 'User does not have permission',
 				code: '403',
@@ -135,7 +165,7 @@ triggers.register('feedbackBoard', async (ctx, change) => {
 	if (change.operation === 'delete') {
 		const feedbacks = await ctx.db
 			.query('feedback')
-			.withIndex('by_board', (q) => q.eq('board', change.oldDoc._id))
+			.withIndex('by_board', (q) => q.eq('boardId', change.oldDoc._id))
 			.collect();
 
 		feedbacks.forEach(async (feedback) => {

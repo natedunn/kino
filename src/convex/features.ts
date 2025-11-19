@@ -3,7 +3,7 @@ import { ConvexError, v } from 'convex/values';
 import { feedbackSelectSchema } from './schema/feedback.schema';
 import { feedbackBoardSelectSchema } from './schema/feedbackBoard.schema';
 import { query } from './utils/functions';
-import { getProjectUserDetails } from './utils/queries/getProjectUserDetails';
+import { checkProjectAccess } from './utils/queries/checkAccess';
 
 export const feedback = query({
 	args: {
@@ -21,8 +21,8 @@ export const feedback = query({
 
 		const {
 			permissions: { canView },
-		} = await getProjectUserDetails(ctx, {
-			projectId: project._id,
+		} = await checkProjectAccess(ctx, {
+			id: project._id,
 		});
 
 		if (!canView) {
@@ -35,17 +35,54 @@ export const feedback = query({
 		const boards = await ctx.db
 			.query('feedbackBoard')
 			.withIndex('by_projectId', (q) => q.eq('projectId', project._id))
-			.collect();
+			.collect()
+			.then((res) =>
+				!res || res.length === 0 ? null : feedbackBoardSelectSchema.array().parse(res)
+			);
 
 		const feedback = await ctx.db
 			.query('feedback')
 			.withIndex('by_projectId', (q) => q.eq('projectId', project._id))
-			.collect();
+			.collect()
+			.then(async (res) => {
+				if (!res || res.length === 0) {
+					return null;
+				}
+
+				const parsed = feedbackSelectSchema.array().parse(res);
+
+				const data = await Promise.all(
+					parsed.map(async (single) => {
+						if (!single.firstCommentId) {
+							throw new ConvexError({
+								message: 'First comment not found',
+								code: '404',
+							});
+						}
+						const firstComment = await ctx.db.get(single.firstCommentId);
+
+						const board = boards?.find((board) => board._id === single.boardId);
+
+						return {
+							...single,
+							board: board
+								? {
+										_id: board._id,
+										name: board.name,
+										description: board?.description,
+									}
+								: null,
+							firstComment,
+						};
+					})
+				);
+
+				return data;
+			});
 
 		return {
-			boards: boards && boards.length > 0 ? feedbackBoardSelectSchema.array().parse(boards) : null,
-			feedback:
-				feedback && feedback.length > 0 ? feedbackSelectSchema.array().parse(feedback) : null,
+			boards,
+			feedback,
 		};
 	},
 });

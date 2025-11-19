@@ -1,6 +1,5 @@
 import { customAction, customMutation, customQuery } from 'convex-helpers/server/customFunctions';
-
-import { zCustomAction, zCustomMutation, zCustomQuery } from '@/_modules/zod4';
+import { zCustomAction, zCustomMutation, zCustomQuery } from 'convex-helpers/server/zod4';
 
 import {
 	action as _action,

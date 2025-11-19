@@ -1,18 +1,19 @@
-import { Id } from './_generated/dataModel';
-import { QueryCtx } from './_generated/server';
-import { authComponent } from './auth';
-import { selectProfileSchema } from './schema/profile.schema';
-import { userUploadsR2 } from './utils/r2';
+import type { Id } from '@convex/_generated/dataModel';
 
-export const getProfileUser = async (ctx: QueryCtx) => {
+import { QueryCtx } from '../../_generated/server';
+import { authComponent } from '../../auth';
+import { selectProfileSchema } from '../../schema/profile.schema';
+import { userUploadsR2 } from '../r2';
+
+export const getCurrentProfile = async (ctx: QueryCtx) => {
 	const authUser = await authComponent.safeGetAuthUser(ctx);
 
 	if (!authUser?._id) {
-		return;
+		return null;
 	}
 	const profile = await ctx.db.get(authUser.profileId as Id<'profile'>);
 	if (!profile) {
-		return;
+		return null;
 	}
 
 	// Handle true avatar image

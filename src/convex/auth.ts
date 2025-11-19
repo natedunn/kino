@@ -58,6 +58,7 @@ export const authComponent = createClient<DataModel, typeof authSchema>(componen
 						slug: username,
 						name: newUser.name,
 						userId: newUser._id,
+						visibility: 'public',
 					},
 				});
 
@@ -82,8 +83,6 @@ export const authComponent = createClient<DataModel, typeof authSchema>(componen
 				await ctx.db.delete(profileId);
 			},
 			onUpdate: async (ctx, newUser, oldUser) => {
-				console.log(ctx, newUser, oldUser);
-
 				if (oldUser._id !== newUser._id) {
 					throw new Error('ID MISMATCH!');
 				}
@@ -144,7 +143,18 @@ export const createAuth = (ctx: GenericCtx<DataModel>) => {
 				maxUsernameLength: 39,
 			}),
 			admin(),
-			organization(),
+			organization({
+				schema: {
+					organization: {
+						additionalFields: {
+							visibility: {
+								type: 'string',
+								required: true,
+							},
+						},
+					},
+				},
+			}),
 			convex(),
 		],
 	});

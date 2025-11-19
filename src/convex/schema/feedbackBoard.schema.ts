@@ -1,6 +1,5 @@
+import { zid } from 'convex-helpers/server/zod4';
 import * as z from 'zod';
-
-import { zid } from '@/_modules/zod4';
 
 import { SHARED_SCHEMA } from './_shared';
 
@@ -9,6 +8,7 @@ export const feedbackBoardSchema = z.object({
 	name: z.string().min(1).max(50),
 	projectId: zid('project'),
 	description: z.string().optional(),
+	icon: z.string().optional(),
 });
 
 export const feedbackBoardSelectSchema = feedbackBoardSchema;

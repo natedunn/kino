@@ -4,7 +4,7 @@ import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import { useMutation as convexMutation } from 'convex/react';
 import { ConvexError } from 'convex/values';
-import z from 'zod';
+import * as z from 'zod';
 
 import { API, api } from '~api';
 import { InlineAlert } from '@/components/inline-alert';
@@ -73,8 +73,6 @@ export const UserEditForm = ({ profile }: UserEditFormProps) => {
 			onChange: formSchema,
 		},
 		onSubmit: async ({ value, formApi }) => {
-			console.log(value);
-
 			setFormError(null);
 
 			const { files, ...rest } = value;

@@ -19,13 +19,13 @@ const Status = ({ status }: { status: Status }) => {
 		open: 'bg-green-700/50 text-green-100',
 		planned: 'bg-blue-700/50 text-blue-100',
 		closed: 'bg-red-700/50 text-red-100',
-	}
+	};
 
 	return (
 		<span className={cn(statusClass[status], 'inline-block px-1.5 py-0.5 text-xs capitalize')}>
 			{status}
 		</span>
-	)
+	);
 };
 
 function RouteComponent() {
@@ -37,7 +37,7 @@ function RouteComponent() {
 		assignedTo: 'natedunn',
 		assignedBy: 'davinbuster',
 		filedIn: 'features',
-	}
+	};
 
 	return (
 		<div>
@@ -57,7 +57,7 @@ function RouteComponent() {
 				</div>
 			</header>
 			<div className='relative'>
-				<div className='absolute h-64 w-full bg-gradient-to-t from-background to-muted/50'></div>
+				<div className='absolute h-64 w-full bg-linear-to-t from-background to-muted/50'></div>
 				<div className='relative z-10 container py-10'>
 					<div className='grid gap-10 md:grid-cols-12'>
 						<div className='order-first md:order-last md:col-span-4'>
@@ -123,5 +123,5 @@ function RouteComponent() {
 				</div>
 			</div>
 		</div>
-	)
+	);
 }

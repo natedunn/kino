@@ -24,8 +24,6 @@ function RouteComponent() {
 
 	const { data: orgs } = authClient.useListOrganizations();
 
-	console.log(orgs);
-
 	return (
 		<div>
 			<h1>Hello, {user?.name}</h1>

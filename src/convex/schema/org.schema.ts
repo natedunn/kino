@@ -1,30 +1,26 @@
-import z from 'zod';
+import { tables } from '@convex/betterAuth/generatedSchema';
+import { convexToZod } from 'convex-helpers/server/zod4';
+import * as z from 'zod';
 
-// const betterAuthOrgSchema = convexToZod(
-// 	v.object({
-// 		name: v.string(),
-// 		slug: v.optional(v.union(v.null(), v.string())),
-// 		logo: v.optional(v.union(v.null(), v.string())),
-// 		createdAt: v.number(),
-// 		metadata: v.optional(v.union(v.null(), v.string())),
-// 	})
-// );
+const betterAuthOrgSchema = convexToZod(tables.organization.validator);
 
-export const orgSchema = z.object({
-	_id: z.string(),
-	_creationTime: z.number(),
-	name: z.string(),
-	slug: z
-		.string()
-		.regex(/^[a-z0-9_]+(?:-[a-z0-9_]+)*$/, {
-			message:
-				'Invalid slug format. Slugs can only contain lowercase letters, numbers, underscores, and hyphens. They cannot start or end with a hyphen, or have consecutive hyphens.',
-		})
-		.min(1, 'Slug cannot be empty.')
-		.max(100, 'Slug cannot be longer than 100 characters.'),
-	logo: z.string().optional(),
-	metaData: z.string().optional().nullable(),
-});
+export const orgSchema = betterAuthOrgSchema.extend(
+	z.object({
+		_id: z.string(),
+		_creationTime: z.number(),
+		logo: z.string().optional(),
+		slug: z
+			.string()
+			.regex(/^[a-z0-9_]+(?:-[a-z0-9_]+)*$/, {
+				message:
+					'Invalid slug format. Slugs can only contain lowercase letters, numbers, underscores, and hyphens. They cannot start or end with a hyphen, or have consecutive hyphens.',
+			})
+			.min(1, 'Slug cannot be empty.')
+			.max(100, 'Slug cannot be longer than 100 characters.'),
+		visibility: z.enum(['private', 'public', 'isolated', 'gated']),
+		metadata: z.object().optional(),
+	}).shape
+);
 
 export const selectOrgSchema = orgSchema;
 export const createOrgSchema = orgSchema;

@@ -4,7 +4,7 @@ import { Label } from '@radix-ui/react-dropdown-menu';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import { ConvexError } from 'convex/values';
-import z from 'zod';
+import * as z from 'zod';
 
 import { api } from '~api';
 import { InlineAlert } from '@/components/inline-alert';
