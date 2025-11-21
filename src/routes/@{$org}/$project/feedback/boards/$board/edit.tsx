@@ -1,10 +1,11 @@
 import { convexQuery } from '@convex-dev/react-query';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { createFileRoute, Link, notFound } from '@tanstack/react-router';
-import { Id } from 'convex/_generated/dataModel';
+// import { Id } from 'convex/_generated/dataModel';
 import { ChevronLeft } from 'lucide-react';
 
 import { api } from '~api';
+import { Id } from '@/convex/_generated/dataModel';
 
 import { EditBoardForm } from './-components/edit-board-form';
 

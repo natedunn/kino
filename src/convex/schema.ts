@@ -35,7 +35,7 @@ const schema = defineSchema({
 		.index('by_authorProfileId', ['authorProfileId']),
 	feedbackBoard: defineTable(zodToConvex(feedbackBoardSchema))
 		.index('by_projectId', ['projectId'])
-		.index('by_name_projectId', ['name', 'projectId']),
+		.index('by_slug_projectId', ['slug', 'projectId']),
 	feedbackComment: defineTable(zodToConvex(feedbackCommentSchema))
 		.index('by_feedbackId', ['feedbackId'])
 		.index('by_authorProfileId', ['authorProfileId']),

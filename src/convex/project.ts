@@ -1,6 +1,7 @@
 import { mergedStream, stream } from 'convex-helpers/server/stream';
 import { zodToConvex } from 'convex-helpers/server/zod4';
 import { ConvexError, v } from 'convex/values';
+import { kebabCase } from 'scule';
 
 import { defaultFeedbackBoards } from '@/config/defaults';
 import {
@@ -215,6 +216,7 @@ triggers.register('project', async (ctx, change) => {
 				name: boardName,
 				projectId: change.newDoc._id,
 				icon: getDefaultIcon(),
+				slug: kebabCase(boardName),
 			});
 		});
 	}

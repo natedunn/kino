@@ -24,6 +24,7 @@ export const BoardsNav = ({ boards }: BoardNavProps) => {
 			_id: 'all',
 			name: 'All',
 			icon: 'box',
+			slug: 'all',
 		},
 		...boards,
 	];
@@ -39,7 +40,7 @@ export const BoardsNav = ({ boards }: BoardNavProps) => {
 							project,
 						}}
 						search={{
-							board: board._id,
+							board: board.slug!, // TODO remove this ! once pushed
 						}}
 					>
 						{({ isActive }) => {

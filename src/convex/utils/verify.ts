@@ -15,7 +15,7 @@ export const { verify } = verifyConfig(schema, {
 			identifiers: ['_id'],
 		},
 		feedbackBoard: {
-			by_name_projectId: ['name', 'projectId'],
+			by_slug_projectId: ['slug', 'projectId'],
 			identifiers: ['_id'],
 		},
 	},

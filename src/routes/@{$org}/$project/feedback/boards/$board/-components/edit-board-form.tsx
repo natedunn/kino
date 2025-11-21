@@ -81,12 +81,31 @@ export const EditBoardForm = ({
 					)}
 				</form.AppField>
 
+				<form.AppField name='slug'>
+					{(field) => (
+						<field.Provider>
+							<field.Label>Slug</field.Label>
+							<field.Description>
+								Must be unique to your project. Changing this may break old permalinks.
+							</field.Description>
+							<field.Control>
+								<Input
+									value={field.state.value}
+									onChange={(e) => field.handleChange(e.target.value)}
+								/>
+							</field.Control>
+							<field.Message />
+						</field.Provider>
+					)}
+				</form.AppField>
+
 				<form.AppField name='description'>
 					{(field) => (
 						<field.Provider>
-							<field.Label>Name</field.Label>
+							<field.Label>Description</field.Label>
 							<field.Description>
-								Name of your public board. Must be unique to your project.
+								Describe the purpose for the board so that your users know where to add their
+								feedback.
 							</field.Description>
 							<field.Control>
 								<Textarea

@@ -6,6 +6,7 @@ import { verifyProjectAccess } from './project.lib';
 import { feedbackSelectSchema } from './schema/feedback.schema';
 import {
 	feedbackBoardCreateSchema,
+	feedbackBoardSelectSchema,
 	feedbackBoardUpdateSchema,
 } from './schema/feedbackBoard.schema';
 import { mutation, query } from './utils/functions';
@@ -106,7 +107,7 @@ export const get = query({
 
 		if (!board) return null;
 
-		return feedbackSelectSchema.parse(board);
+		return feedbackBoardSelectSchema.parse(board);
 	},
 });
 

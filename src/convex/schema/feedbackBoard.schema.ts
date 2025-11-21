@@ -9,6 +9,7 @@ export const feedbackBoardSchema = z.object({
 	projectId: zid('project'),
 	description: z.string().optional(),
 	icon: z.string().optional(),
+	slug: z.string().optional(),
 });
 
 export const feedbackBoardSelectSchema = feedbackBoardSchema;
