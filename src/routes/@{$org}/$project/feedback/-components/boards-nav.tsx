@@ -40,7 +40,7 @@ export const BoardsNav = ({ boards }: BoardNavProps) => {
 							project,
 						}}
 						search={{
-							board: board.slug!, // TODO remove this ! once pushed
+							board: board.slug,
 						}}
 					>
 						{({ isActive }) => {

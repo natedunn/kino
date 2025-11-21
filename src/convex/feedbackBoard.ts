@@ -3,7 +3,6 @@ import { ConvexError } from 'convex/values';
 import * as z from 'zod';
 
 import { verifyProjectAccess } from './project.lib';
-import { feedbackSelectSchema } from './schema/feedback.schema';
 import {
 	feedbackBoardCreateSchema,
 	feedbackBoardSelectSchema,

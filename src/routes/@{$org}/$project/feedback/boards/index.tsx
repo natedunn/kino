@@ -72,7 +72,7 @@ function RouteComponent() {
 														project,
 													}}
 													search={{
-														board: board._id,
+														board: board.slug,
 													}}
 													className='link-text text-xl font-bold'
 												>

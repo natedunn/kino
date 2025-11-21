@@ -9,7 +9,7 @@ export const feedbackBoardSchema = z.object({
 	projectId: zid('project'),
 	description: z.string().optional(),
 	icon: z.string().optional(),
-	slug: z.string().optional(),
+	slug: z.string(),
 });
 
 export const feedbackBoardSelectSchema = feedbackBoardSchema;
@@ -17,6 +17,7 @@ export const feedbackBoardCreateSchema = feedbackBoardSchema.pick({
 	name: true,
 	projectId: true,
 	description: true,
+	slug: true,
 });
 export const feedbackBoardUpdateSchema = feedbackBoardSchema.partial().merge(
 	feedbackBoardSchema.pick({
