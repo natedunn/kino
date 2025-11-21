@@ -9,7 +9,7 @@ import { MainNav } from './-components/main-nav';
 export const Route = createFileRoute('/@{$org}')({
 	loader: async ({ context, params }) => {
 		const user = await context.queryClient.ensureQueryData(
-			convexQuery(api.profile.getCurrentProfileUser, {})
+			convexQuery(api.profile.findMyProfile, {})
 		);
 
 		await context.queryClient

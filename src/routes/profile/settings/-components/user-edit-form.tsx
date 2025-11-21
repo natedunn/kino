@@ -12,19 +12,20 @@ import { Label, LabelWrapper } from '@/components/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { updateProfileUserSchema } from '@/convex/schema/profile.schema';
+import { updateProfileSchema } from '@/convex/schema/profile.schema';
+import { updateUserSchema } from '@/convex/schema/user.schema';
 import { cn } from '@/lib/utils';
 
-const formSchema = updateProfileUserSchema.extend(
-	z.object({
-		files: z.instanceof(File).array().optional(),
-	}).shape
-);
+const formSchema = z.object({
+	profile: updateProfileSchema,
+	user: updateUserSchema,
+	files: z.instanceof(File).array().optional(),
+});
 
 type FormSchema = z.infer<typeof formSchema>;
 
 type UserEditFormProps = {
-	profile: NonNullable<API['profile']['getCurrentProfileUser']>;
+	profile: NonNullable<API['profile']['findMyProfile']>;
 };
 
 export const UserEditForm = ({ profile }: UserEditFormProps) => {
@@ -57,10 +58,7 @@ export const UserEditForm = ({ profile }: UserEditFormProps) => {
 	}
 
 	const defaultValues: FormSchema = {
-		profile: {
-			_id: profile._id,
-			userId: profile.userId,
-		},
+		profile: {},
 		user: {
 			username: profile.username,
 			name: profile.name,
@@ -83,6 +81,10 @@ export const UserEditForm = ({ profile }: UserEditFormProps) => {
 			}
 
 			updateUser({
+				identifiers: {
+					userId: profile.userId,
+					_id: profile._id,
+				},
 				profile: rest.profile,
 				user: rest.user,
 			});
@@ -147,7 +149,7 @@ export const UserEditForm = ({ profile }: UserEditFormProps) => {
 									<Label>Username</Label>
 								</LabelWrapper>
 								<Input
-									value={field.state.value}
+									value={String(field.state.value)}
 									onChange={(e) => field.handleChange(e.target.value)}
 								/>
 							</div>

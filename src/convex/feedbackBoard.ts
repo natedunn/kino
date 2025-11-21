@@ -1,14 +1,14 @@
 import { zid, zodToConvex } from 'convex-helpers/server/zod4';
 import { ConvexError } from 'convex/values';
-import z from 'zod';
+import * as z from 'zod';
 
+import { verifyProjectAccess } from './project.lib';
 import { feedbackSelectSchema } from './schema/feedback.schema';
 import {
 	feedbackBoardCreateSchema,
 	feedbackBoardUpdateSchema,
 } from './schema/feedbackBoard.schema';
 import { mutation, query } from './utils/functions';
-import { checkProjectAccess } from './utils/queries/checkAccess';
 import { triggers } from './utils/trigger';
 import { verify } from './utils/verify';
 
@@ -16,7 +16,7 @@ export const create = mutation({
 	args: zodToConvex(feedbackBoardCreateSchema),
 	handler: async (ctx, args) => {
 		// Authorization check
-		const isProjectAdmin = await checkProjectAccess(ctx, {
+		const isProjectAdmin = await verifyProjectAccess(ctx, {
 			slug: args.projectId,
 		});
 
@@ -58,7 +58,7 @@ export const update = mutation({
 
 		const {
 			permissions: { canEdit },
-		} = await checkProjectAccess(ctx, {
+		} = await verifyProjectAccess(ctx, {
 			slug: args.projectSlug,
 		});
 
@@ -96,7 +96,7 @@ export const get = query({
 	handler: async (ctx, args) => {
 		const {
 			permissions: { canView },
-		} = await checkProjectAccess(ctx, {
+		} = await verifyProjectAccess(ctx, {
 			slug: args.projectSlug,
 		});
 
@@ -120,7 +120,7 @@ export const getProjectBoards = query({
 		const {
 			permissions: { canView },
 			project,
-		} = await checkProjectAccess(ctx, {
+		} = await verifyProjectAccess(ctx, {
 			slug: args.projectSlug,
 		});
 
@@ -145,7 +145,7 @@ export const _delete = mutation({
 	handler: async (ctx, args) => {
 		const {
 			permissions: { canDelete },
-		} = await checkProjectAccess(ctx, {
+		} = await verifyProjectAccess(ctx, {
 			id: args.projectId,
 		});
 

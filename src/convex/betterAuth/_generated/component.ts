@@ -1544,10 +1544,10 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
       >;
     };
     org: {
-      get: FunctionReference<
+      findByIdOrSlug: FunctionReference<
         "query",
         "internal",
-        { slug: string },
+        { id?: string; slug?: string },
         {
           _creationTime: number;
           _id: string;
@@ -1557,7 +1557,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           name: string;
           slug: string;
           visibility: string;
-        },
+        } | null,
         Name
       >;
       getDetails: FunctionReference<

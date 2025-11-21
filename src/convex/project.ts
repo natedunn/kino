@@ -9,43 +9,34 @@ import {
 	updateProjectSchema,
 } from '@/convex/schema/project.schema';
 
-import { components } from './_generated/api';
 import { authComponent, createAuth } from './auth';
+import { verifyOrgAccess } from './org.lib';
+import { verifyProjectAccess } from './project.lib';
 import schema from './schema';
 import { authedMutation, mutation, query } from './utils/functions';
-import { checkProjectAccess } from './utils/queries/checkAccess';
-import { getCurrentProfile } from './utils/queries/getCurrentProfile';
 import { triggers } from './utils/trigger';
 import { verify } from './utils/verify';
 
 export const create = mutation({
 	args: zodToConvex(createProjectSchema),
 	handler: async (ctx, args) => {
-		const profileUser = await getCurrentProfile(ctx);
-
-		if (!profileUser) {
-			throw new ConvexError({
-				message: 'User not found',
-				code: '404',
-			});
-		}
-
-		const validatedArgs = createProjectSchema.parse(args);
-
-		const orgDetails = await ctx.runQuery(components.betterAuth.org.getDetails, {
+		const {
+			profile,
+			permissions: { canCreate },
+		} = await verifyOrgAccess(ctx, {
 			slug: args.orgSlug,
 		});
 
-		if (!orgDetails) {
+		if (!profile) {
 			throw new ConvexError({
-				message: 'Organization not found',
-				code: '404',
+				message: 'No user authenticated.',
+				code: '41',
 			});
 		}
 
-		if (!orgDetails.permissions.canEdit) {
+		if (!canCreate) {
 			throw new ConvexError({
-				message: 'User does not have permission',
+				message: 'User does not have permission to create a project',
 				code: '403',
 			});
 		}
@@ -53,7 +44,7 @@ export const create = mutation({
 		const id = await verify.insert({
 			ctx,
 			tableName: 'project',
-			data: validatedArgs,
+			data: args,
 			onFail: ({ uniqueRow }) => {
 				throw new ConvexError({
 					message: `A project with the slug of '${uniqueRow?.existingData.slug}' already exists for this organization.`,
@@ -66,10 +57,10 @@ export const create = mutation({
 			tableName: 'projectMember',
 			data: {
 				projectId: id,
-				profileId: profileUser._id,
+				profileId: profile._id,
 				role: 'admin',
-				projectSlug: validatedArgs.slug,
-				projectVisibility: validatedArgs.visibility,
+				projectSlug: args.slug,
+				projectVisibility: args.visibility,
 			},
 		});
 	},
@@ -165,7 +156,7 @@ export const getDetails = query({
 		})
 	),
 	handler: async (ctx, args) => {
-		const projectDetails = await checkProjectAccess(ctx, {
+		const projectDetails = await verifyProjectAccess(ctx, {
 			slug: args.slug,
 		});
 

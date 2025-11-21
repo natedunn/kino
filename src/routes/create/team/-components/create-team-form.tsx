@@ -11,6 +11,13 @@ import { InlineAlert } from '@/components/inline-alert';
 import { LabelWrapper } from '@/components/label';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@/components/ui/select';
 import { createOrgSchema } from '@/convex/schema/org.schema';
 import { cn } from '@/lib/utils';
 
@@ -45,6 +52,7 @@ export const CreateTeamForm = ({ underLimit }: { underLimit: boolean }) => {
 		name: '',
 		slug: '',
 		logo: '',
+		visibility: 'public',
 	};
 
 	const form = useForm({
@@ -57,6 +65,7 @@ export const CreateTeamForm = ({ underLimit }: { underLimit: boolean }) => {
 			createTeam({
 				name: value.name,
 				slug: value.slug,
+				visibility: value.visibility,
 				...(!!value.logo
 					? {
 							logo: value.logo,
@@ -118,6 +127,32 @@ export const CreateTeamForm = ({ underLimit }: { underLimit: boolean }) => {
 										value={field.state.value}
 										onChange={(e) => field.handleChange(e.target.value)}
 									/>
+								</div>
+							</div>
+						);
+					}}
+				</form.Field>
+
+				<form.Field name='visibility'>
+					{(field) => {
+						return (
+							<div className='flex items-end gap-3'>
+								<div className='flex flex-1 flex-col gap-2'>
+									<LabelWrapper>
+										<Label>Visibility</Label>
+									</LabelWrapper>
+									<Select
+										defaultValue={defaultValues.visibility}
+										onValueChange={(value) => field.handleChange(value as FormSchema['visibility'])}
+									>
+										<SelectTrigger className='w-48'>
+											<SelectValue placeholder='Sort by...' />
+										</SelectTrigger>
+										<SelectContent>
+											<SelectItem value='public'>Public</SelectItem>
+											<SelectItem value='private'>Private</SelectItem>
+										</SelectContent>
+									</Select>
 								</div>
 							</div>
 						);

@@ -1,9 +1,9 @@
 import { ConvexError, v } from 'convex/values';
 
+import { verifyProjectAccess } from './project.lib';
 import { feedbackSelectSchema } from './schema/feedback.schema';
 import { feedbackBoardSelectSchema } from './schema/feedbackBoard.schema';
 import { query } from './utils/functions';
-import { checkProjectAccess } from './utils/queries/checkAccess';
 
 export const feedback = query({
 	args: {
@@ -21,7 +21,7 @@ export const feedback = query({
 
 		const {
 			permissions: { canView },
-		} = await checkProjectAccess(ctx, {
+		} = await verifyProjectAccess(ctx, {
 			id: project._id,
 		});
 

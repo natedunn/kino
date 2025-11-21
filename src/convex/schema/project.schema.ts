@@ -8,7 +8,12 @@ export const projectSchema = z.object({
 	name: z.string().min(1).max(30),
 	description: z.string().max(250).optional(),
 	urls: z.object({ url: z.string().url(), text: z.string() }).array().optional(),
-	visibility: z.enum(['private', 'public', 'archived', 'isolated', 'gated']),
+	visibility: z.enum([
+		'public',
+		'private', // hidden by default, but features available for invited
+		'archived', // hidden from all but data preserved
+		// 'isolated', // subdomain feature
+	]),
 	logoUrl: z.url().optional(),
 	slug: z
 		.string()

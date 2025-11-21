@@ -20,7 +20,17 @@ export const { verify } = verifyConfig(schema, {
 		},
 	},
 	// uneditableColumns: {
-	// 	profile: [],
+	// 	profile: ['userId'],
 	// },
-	// defaultValues: {}
+	// defaultValues: {
+	// 	project: {
+	// 		visibility: 'public'
+	// 	}
+	// }
+	// denormalizedValues: [
+	// 	{
+	// 		project: 'slug'
+	// 		projectMember: 'projectSlug'
+	// 	}
+	// ]
 });

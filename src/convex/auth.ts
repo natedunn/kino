@@ -1,4 +1,5 @@
 import type { AuthFunctions, GenericCtx } from '@convex-dev/better-auth';
+import type { DataModel, Id } from './_generated/dataModel';
 
 import { createClient } from '@convex-dev/better-auth';
 import { convex } from '@convex-dev/better-auth/plugins';
@@ -7,8 +8,9 @@ import { admin, organization, username } from 'better-auth/plugins';
 import { adjectives, nouns, uniqueUsernameGenerator } from 'unique-username-generator';
 
 import { components, internal } from './_generated/api';
-import { DataModel, Id } from './_generated/dataModel';
 import authSchema from './betterAuth/schema';
+import { syncProfileSchema } from './schema/profile.schema';
+import { verify } from './utils/verify';
 
 const authFunctions: AuthFunctions = internal.auth;
 
@@ -63,13 +65,17 @@ export const authComponent = createClient<DataModel, typeof authSchema>(componen
 					},
 				});
 
-				const profileId = await ctx.db.insert('profile', {
-					imageUrl: newUser.image ?? undefined,
-					userId: newUser._id,
-					email: newUser.email,
-					username,
-					role: 'member',
-					name: newUser.name,
+				const profileId = await verify.insert({
+					ctx,
+					tableName: 'profile',
+					data: {
+						imageUrl: newUser.image ?? undefined,
+						userId: newUser._id,
+						email: newUser.email,
+						username,
+						role: process.env.SUPER_ADMIN_EMAIL! ? 'system:admin' : 'user',
+						name: newUser.name,
+					},
 				});
 
 				// Directly updating the column prevents onChange from running below
@@ -93,12 +99,15 @@ export const authComponent = createClient<DataModel, typeof authSchema>(componen
 				if (!profileId) {
 					console.error('Nothing to update: no userId found');
 				} else {
-					await ctx.db.patch(profileId, {
-						imageUrl: newUser?.image ?? undefined,
-						username: newUser.username!,
-						email: newUser.email,
-						role: newUser?.role ?? 'member',
-						name: newUser.name,
+					const parsedProfile = syncProfileSchema.parse(newUser);
+					// await ctx.db.patch(profileId, parsedProfile);
+					await verify.patch({
+						ctx,
+						tableName: 'profile',
+						data: {
+							_id: profileId,
+							...parsedProfile,
+						},
 					});
 				}
 			},

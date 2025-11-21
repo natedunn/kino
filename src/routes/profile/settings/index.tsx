@@ -18,7 +18,7 @@ export const Route = createFileRoute('/profile/settings/')({
 });
 
 function RouteComponent() {
-	const { data: profile } = useSuspenseQuery(convexQuery(api.profile.getCurrentProfileUser, {}));
+	const { data: profile } = useSuspenseQuery(convexQuery(api.profile.findMyProfile, {}));
 
 	if (!profile) return null;
 

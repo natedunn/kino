@@ -8,15 +8,7 @@ export const projectMemberSchema = z.object({
 	...SHARED_SCHEMA('projectMember'),
 	profileId: zid('profile'),
 	projectId: zid('project'),
-	role: z.enum([
-		'admin',
-		'member',
-		'editor',
-		'org:admin',
-		'org:editor',
-		'system:admin',
-		'system:editor', //
-	]),
+	role: z.enum(['admin', 'member', 'editor', 'org:admin', 'org:editor']),
 	projectVisibility: projectSchema.shape.visibility,
 	projectSlug: projectSchema.shape.slug,
 });

@@ -1,28 +1,6 @@
-import { convexToZod, zid } from 'convex-helpers/server/zod4';
-import { v } from 'convex/values';
 import * as z from 'zod';
 
 import { SHARED_SCHEMA } from './_shared';
-
-export const betterAuthUserSchema = convexToZod(
-	v.object({
-		name: v.string(),
-		email: v.string(),
-		emailVerified: v.boolean(),
-		// Note: removed nullable do to type errors
-		image: v.optional(v.string()),
-		createdAt: v.number(),
-		updatedAt: v.number(),
-		// This username does not reflect the better-auth schema, however we are enforcing usernames
-		username: v.string(),
-		displayUsername: v.optional(v.union(v.null(), v.string())),
-		role: v.optional(v.union(v.null(), v.string())),
-		banned: v.optional(v.union(v.null(), v.boolean())),
-		banReason: v.optional(v.union(v.null(), v.string())),
-		banExpires: v.optional(v.union(v.null(), v.number())),
-		userId: v.optional(v.union(v.null(), v.string())),
-	})
-);
 
 export const profileSchema = z.object({
 	...SHARED_SCHEMA('profile'),
@@ -35,7 +13,7 @@ export const profileSchema = z.object({
 	// 👇 Better-Auth mirrors
 	username: z.string(),
 	email: z.email(),
-	role: z.string(),
+	role: z.enum(['system:admin', 'system:editor', 'user']).default('user'),
 	name: z.string(),
 });
 
@@ -55,43 +33,23 @@ export const selectProfileSchema = profileSchema.pick({
 	name: true,
 	userId: true,
 });
-export const updateProfileSchema = profileSchema.partial().pick({
+export const updateProfileSchema = profileSchema
+	.pick({
+		imageKey: true,
+		bio: true,
+		location: true,
+		urls: true,
+	})
+	.partial();
+
+export const syncProfileSchema = profileSchema.pick({
 	username: true,
-	imageKey: true,
+	email: true,
+	imageUrl: true,
 	name: true,
-	bio: true,
-	urls: true,
-	location: true,
+	role: true,
 });
 
-// Merged with User
-export const selectProfileUserSchema = selectProfileSchema.merge(betterAuthUserSchema);
-export const updateProfileUserSchema = z.object({
-	profile: profileSchema
-		.partial()
-		.pick({
-			imageKey: true,
-			bio: true,
-			location: true,
-			urls: true,
-		})
-		.and(
-			z.object({
-				_id: zid('profile'),
-				userId: z.string(),
-			})
-		),
-	user: betterAuthUserSchema
-		.pick({
-			name: true,
-			image: true,
-			username: true,
-			role: true,
-		})
-		.partial(),
-});
-
-export type SelectSafeUserSchema = z.infer<typeof selectProfileUserSchema>;
 export type CreateProfileSchema = z.infer<typeof createProfileSchema>;
 export type SelectProfileSchema = z.infer<typeof selectProfileSchema>;
 export type UpdateProfileSchema = z.infer<typeof updateProfileSchema>;

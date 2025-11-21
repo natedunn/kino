@@ -1,11 +1,13 @@
 import type { Id } from '@convex/_generated/dataModel';
 
-import { QueryCtx } from '../../_generated/server';
-import { authComponent } from '../../auth';
-import { selectProfileSchema } from '../../schema/profile.schema';
-import { userUploadsR2 } from '../r2';
+import { ConvexError } from 'convex/values';
 
-export const getCurrentProfile = async (ctx: QueryCtx) => {
+import { QueryCtx } from './_generated/server';
+import { authComponent } from './auth';
+import { selectProfileSchema } from './schema/profile.schema';
+import { userUploadsR2 } from './utils/r2';
+
+const _findMyProfile = async (ctx: QueryCtx) => {
 	const authUser = await authComponent.safeGetAuthUser(ctx);
 
 	if (!authUser?._id) {
@@ -35,4 +37,17 @@ export const getCurrentProfile = async (ctx: QueryCtx) => {
 	};
 
 	return selectProfileSchema.parse(mergedUser);
+};
+
+export const findMyProfile = async (ctx: QueryCtx) => await _findMyProfile(ctx);
+
+export const getMyProfile = async (ctx: QueryCtx) => {
+	const profile = await _findMyProfile(ctx);
+	if (!profile) {
+		throw new ConvexError({
+			message: 'Profile not found',
+			code: '404',
+		});
+	}
+	return profile;
 };

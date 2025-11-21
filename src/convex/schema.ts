@@ -26,7 +26,9 @@ const schema = defineSchema({
 		.index('by_profileId_projectSlug', ['profileId', 'projectSlug'])
 		.index('by_profileId_projectId_role', ['profileId', 'projectId', 'role'])
 		.index('by_profileId_projectSlug_role', ['profileId', 'projectSlug', 'role']),
-	orgMember: defineTable(zodToConvex(orgMemberSchema)),
+	orgMember: defineTable(zodToConvex(orgMemberSchema))
+		.index('by_profileId_organizationId', ['profileId', 'organizationId'])
+		.index('by_profileId_orgSlug', ['profileId', 'orgSlug']),
 	feedback: defineTable(zodToConvex(feedbackSchema))
 		.index('by_projectId', ['projectId'])
 		.index('by_board', ['boardId'])

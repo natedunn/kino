@@ -1,16 +1,16 @@
 import { zodToConvex } from 'convex-helpers/server/zod4';
 import { ConvexError } from 'convex/values';
 
+import { getMyProfile } from './profile.lib';
 import { feedbackCreateSchema } from './schema/feedback.schema';
 import { mutation } from './utils/functions';
-import { getCurrentProfile } from './utils/queries/getCurrentProfile';
 import { triggers } from './utils/trigger';
 import { verify } from './utils/verify';
 
 export const create = mutation({
 	args: zodToConvex(feedbackCreateSchema),
 	handler: async (ctx, args) => {
-		const profile = await getCurrentProfile(ctx);
+		const profile = await getMyProfile(ctx);
 
 		if (!profile) {
 			throw new ConvexError({

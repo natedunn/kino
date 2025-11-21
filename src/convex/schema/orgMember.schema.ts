@@ -10,4 +10,7 @@ export const orgMemberSchema = z.object({
 	organizationId: z.string(),
 	role: z.enum(['admin', 'editor']),
 	orgVisibility: orgSchema.shape.visibility,
+	orgSlug: orgSchema.shape.slug,
 });
+
+export type OrgMember = z.infer<typeof orgMemberSchema>;

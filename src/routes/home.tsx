@@ -15,12 +15,12 @@ export const Route = createFileRoute('/home')({
 	},
 	component: RouteComponent,
 	loader: async ({ context }) => {
-		await context.queryClient.ensureQueryData(convexQuery(api.profile.getCurrentProfileUser, {}));
+		await context.queryClient.ensureQueryData(convexQuery(api.profile.findMyProfile, {}));
 	},
 });
 
 function RouteComponent() {
-	const { data: user } = useSuspenseQuery(convexQuery(api.profile.getCurrentProfileUser, {}));
+	const { data: user } = useSuspenseQuery(convexQuery(api.profile.findMyProfile, {}));
 
 	const { data: orgs } = authClient.useListOrganizations();
 

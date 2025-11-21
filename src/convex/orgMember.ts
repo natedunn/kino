@@ -11,7 +11,7 @@ triggers.register('orgMember', async (ctx, change) => {
 	) {
 		const doc = change.operation === 'delete' ? change.oldDoc : change.newDoc;
 
-		const org = await ctx.runQuery(components.betterAuth.org.get, {
+		const org = await ctx.runQuery(components.betterAuth.org.findByIdOrSlug, {
 			slug: doc.organizationId,
 		});
 

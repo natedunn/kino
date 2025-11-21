@@ -17,13 +17,19 @@ export const orgSchema = betterAuthOrgSchema.extend(
 			})
 			.min(1, 'Slug cannot be empty.')
 			.max(100, 'Slug cannot be longer than 100 characters.'),
-		visibility: z.enum(['private', 'public', 'isolated', 'gated']),
+		visibility: z.enum(['public', 'private']),
 		metadata: z.object().optional(),
 	}).shape
 );
 
+export type OrgSchema = z.infer<typeof orgSchema>;
+
 export const selectOrgSchema = orgSchema;
-export const createOrgSchema = orgSchema;
+export const createOrgSchema = orgSchema.omit({
+	_id: true,
+	_creationTime: true,
+	createdAt: true,
+});
 
 export const updateOrgSchema = createOrgSchema
 	.pick({

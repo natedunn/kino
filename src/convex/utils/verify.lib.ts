@@ -469,7 +469,16 @@ export const verifyConfig = <
 	}) => {
 		const verifiedData = await verifyAll(args);
 
-		return args.ctx.db.patch(
+		const { _id, ...rest } = verifiedData.data;
+
+		if (!rest || Object.keys(rest).length === 0) {
+			console.warn(`No data to patch. Skipping the patch.`, {
+				table: args.tableName,
+				_id: args.data._id,
+			});
+		}
+
+		await args.ctx.db.patch(
 			args.data._id as string & {
 				__tableName: TN;
 			},

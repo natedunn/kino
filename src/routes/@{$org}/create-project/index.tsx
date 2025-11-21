@@ -21,7 +21,7 @@ export const Route = createFileRoute('/@{$org}/create-project/')({
 		}
 
 		const limits = await context.queryClient.ensureQueryData(
-			convexQuery(api.org.limits, {
+			convexQuery(api.org.getMyPermission, {
 				slug: params.org,
 			})
 		);

@@ -43,7 +43,7 @@ type MainNavProps = {
 		slug: string;
 		name: string;
 	};
-	user: API['profile']['getCurrentProfileUser'];
+	user: API['profile']['findMyProfile'];
 };
 
 export const MainNav = ({ children, user }: MainNavProps) => {
@@ -82,7 +82,7 @@ export const MainNav = ({ children, user }: MainNavProps) => {
 					{/* Top row */}
 					<div className='flex items-center justify-between py-3'>
 						{/* Left: Logo and org/project */}
-						<div className='flex min-w-0 flex-shrink-0 items-center gap-3'>
+						<div className='flex min-w-0 shrink-0 items-center gap-3'>
 							<div className='flex items-center gap-2'>
 								<div className='flex h-8 w-8 items-center justify-center rounded-full bg-primary'>
 									<span className='text-sm font-bold text-primary-foreground'>K</span>
@@ -99,7 +99,7 @@ export const MainNav = ({ children, user }: MainNavProps) => {
 								{!!orgSlug && (
 									<Link
 										to='/@{$org}'
-										className='link-text !no-underline hocus:!underline'
+										className='link-text no-underline! hocus:underline!'
 										params={(prev) => ({ ...prev, org: orgSlug })}
 									>
 										{orgSlug}
@@ -110,7 +110,7 @@ export const MainNav = ({ children, user }: MainNavProps) => {
 										<span className='text-muted-foreground'>/</span>
 										<Link
 											to='/@{$org}/$project'
-											className='link-text !no-underline hocus:!underline'
+											className='link-text no-underline! hocus:underline!'
 											params={(prev) => ({
 												...prev,
 												org: orgSlug,
@@ -124,16 +124,16 @@ export const MainNav = ({ children, user }: MainNavProps) => {
 							</div>
 						</div>
 
-						<div className='flex flex-shrink-0 items-center gap-3'>
+						<div className='flex shrink-0 items-center gap-3'>
 							<div className='hidden md:block'>
 								<Button
 									variant='outline'
-									className='max-w-xs justify-start border-border bg-muted/50 px-3 !py-4 text-muted-foreground hover:bg-muted'
+									className='max-w-xs justify-start border-border bg-muted/50 px-3 py-4! text-muted-foreground hover:bg-muted'
 									onClick={() => setIsCommandOpen(true)}
 								>
-									<Search className='mr-2 h-4 w-4 flex-shrink-0' />
+									<Search className='mr-2 h-4 w-4 shrink-0' />
 									<span className='truncate'>Search or jump to...</span>
-									<div className='ml-auto flex flex-shrink-0 items-center gap-1'>
+									<div className='ml-auto flex shrink-0 items-center gap-1'>
 										<kbd className='pointer-events-none inline-flex h-5 items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground select-none'>
 											<Command className='h-3 w-3' />K
 										</kbd>

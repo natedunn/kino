@@ -16,11 +16,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { authClient } from '@/lib/auth/auth-client';
 
-export function UserDropdown({
-	user,
-}: {
-	user: NonNullable<API['profile']['getCurrentProfileUser']>;
-}) {
+export function UserDropdown({ user }: { user: NonNullable<API['profile']['findMyProfile']> }) {
 	const navigate = useNavigate();
 
 	return (

@@ -22,10 +22,6 @@ import type * as project from "../project.js";
 import type * as schema__shared from "../schema/_shared.js";
 import type * as utils_context from "../utils/context.js";
 import type * as utils_functions from "../utils/functions.js";
-import type * as utils_queries_checkAccess from "../utils/queries/checkAccess.js";
-import type * as utils_queries_getCurrentProfile from "../utils/queries/getCurrentProfile.js";
-import type * as utils_queries_getProject from "../utils/queries/getProject.js";
-import type * as utils_queries_getProjectMember from "../utils/queries/getProjectMember.js";
 import type * as utils_r2 from "../utils/r2.js";
 import type * as utils_table from "../utils/table.js";
 import type * as utils_trigger from "../utils/trigger.js";
@@ -53,10 +49,6 @@ declare const fullApi: ApiFromModules<{
   "schema/_shared": typeof schema__shared;
   "utils/context": typeof utils_context;
   "utils/functions": typeof utils_functions;
-  "utils/queries/checkAccess": typeof utils_queries_checkAccess;
-  "utils/queries/getCurrentProfile": typeof utils_queries_getCurrentProfile;
-  "utils/queries/getProject": typeof utils_queries_getProject;
-  "utils/queries/getProjectMember": typeof utils_queries_getProjectMember;
   "utils/r2": typeof utils_r2;
   "utils/table": typeof utils_table;
   "utils/trigger": typeof utils_trigger;
@@ -1605,10 +1597,10 @@ export declare const components: {
       >;
     };
     org: {
-      get: FunctionReference<
+      findByIdOrSlug: FunctionReference<
         "query",
         "internal",
-        { slug: string },
+        { id?: string; slug?: string },
         {
           _creationTime: number;
           _id: string;
@@ -1618,7 +1610,7 @@ export declare const components: {
           name: string;
           slug: string;
           visibility: string;
-        }
+        } | null
       >;
       getDetails: FunctionReference<
         "query",

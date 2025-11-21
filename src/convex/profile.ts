@@ -1,15 +1,16 @@
-import { zodToConvex } from 'convex-helpers/server/zod4';
+import { zid, zodToConvex } from 'convex-helpers/server/zod4';
 import { GenericQueryCtx, paginationOptsValidator } from 'convex/server';
 import { ConvexError, v } from 'convex/values';
+import z from 'zod';
 
-import { LIMITS } from '@/config/limits';
 import { createAuth } from '@/convex/auth';
 
 import { DataModel, Id } from './_generated/dataModel';
 import { authComponent } from './auth';
-import { updateProfileUserSchema } from './schema/profile.schema';
+import { findMyProfile as _findCurrentProfile } from './profile.lib';
+import { updateProfileSchema } from './schema/profile.schema';
+import { updateUserSchema } from './schema/user.schema';
 import { mutation, query } from './utils/functions';
-import { getCurrentProfile } from './utils/queries/getCurrentProfile';
 import { userUploadsR2 } from './utils/r2';
 import { verify } from './utils/verify';
 
@@ -30,75 +31,54 @@ export const getList = query({
 });
 
 export const update = mutation({
-	args: zodToConvex(updateProfileUserSchema),
+	args: zodToConvex(
+		z.object({
+			identifiers: z.object({
+				userId: z.string(),
+				_id: zid('profile'),
+			}),
+			profile: updateProfileSchema,
+			user: updateUserSchema,
+		})
+	),
 	handler: async (ctx, args) => {
 		const { userId } = await verify.auth(ctx, {
 			throw: true,
 		});
 
-		if (userId !== args.profile.userId) {
+		if (userId !== args.identifiers.userId) {
 			throw new ConvexError({
 				message: 'User does not have permission',
 				code: '403',
 			});
 		}
 
-		const { auth } = await authComponent.getAuth(createAuth, ctx);
-
-		const { userId: _userId, ...profileData } = args.profile;
+		const { auth, headers } = await authComponent.getAuth(createAuth, ctx);
 
 		// 1️⃣ Update profile-only data first...
 		await verify.patch({
 			ctx,
 			tableName: 'profile',
-			data: profileData,
+			data: {
+				_id: args.identifiers._id,
+				...args.profile,
+			},
 		});
 
 		// 2️⃣ ...then update user-only data (Better-Auth user data). This will
 		// then update profile data via Better-Auth's trigger. It more distance
 		// to travel, but it is the correct flow.
 		await auth.api.updateUser({
-			headers: await authComponent.getHeaders(ctx),
+			headers,
 			body: args.user,
 		});
 	},
 });
 
-export const getTeamList = query({
+export const findMyProfile = query({
 	args: {},
 	handler: async (ctx) => {
-		const profileId = (await authComponent.getAuthUser(ctx))?.profileId;
-
-		if (!profileId) {
-			return null;
-		}
-
-		const { auth, headers } = await authComponent.getAuth(createAuth, ctx);
-
-		const teams = await auth.api.listOrganizations({
-			headers,
-		});
-
-		const user = await authComponent.getAuthUser(ctx);
-
-		// TODO reimplement this
-		// let limit = LIMITS.FREE.MAX_ORGS;
-		let limit: number;
-		if (user?.role === 'admin') {
-			limit = LIMITS.ADMIN.MAX_ORGS;
-		} else {
-			limit = LIMITS.FREE.MAX_ORGS;
-		}
-
-		return { teams, underLimit: teams.length < limit };
-	},
-});
-
-export const getCurrentProfileUser = query({
-	args: {},
-	handler: async (ctx) => {
-		const user = await getCurrentProfile(ctx);
-		return user ?? null;
+		return _findCurrentProfile(ctx);
 	},
 });
 

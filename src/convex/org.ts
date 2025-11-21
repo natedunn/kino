@@ -7,8 +7,8 @@ import { LIMITS } from '../config/limits';
 import { createOrgSchema, updateOrgSchema } from '../convex/schema/org.schema';
 import { components } from './_generated/api';
 import { authComponent, createAuth } from './auth';
+import { getMyProfile } from './profile.lib';
 import { mutation, query } from './utils/functions';
-import { getCurrentProfile } from './utils/queries/getCurrentProfile';
 import { verify } from './utils/verify';
 
 export const create = mutation({
@@ -106,7 +106,7 @@ export const getDetails = query({
 	},
 });
 
-export const limits = query({
+export const getMyPermission = query({
 	args: zodToConvex(
 		z.object({
 			slug: z.string(),
@@ -119,7 +119,7 @@ export const limits = query({
 
 		const createResponse = (permissions: { canAddProjects: boolean }) => permissions;
 
-		const user = await getCurrentProfile(ctx);
+		const user = await getMyProfile(ctx);
 
 		const projects = await ctx.db
 			.query('project')
@@ -128,7 +128,7 @@ export const limits = query({
 
 		let limit: number;
 
-		if (user?.role === 'admin') {
+		if (user?.role === 'system:admin') {
 			limit = LIMITS.ADMIN.MAX_PROJECTS;
 		} else {
 			limit = LIMITS.FREE.MAX_PROJECTS;
@@ -139,5 +139,35 @@ export const limits = query({
 		return createResponse({
 			canAddProjects: underLimit,
 		});
+	},
+});
+
+export const findMyOrgs = query({
+	args: {},
+	handler: async (ctx) => {
+		const user = await authComponent.safeGetAuthUser(ctx);
+
+		console.log(user);
+
+		if (!user?.profileId) {
+			return null;
+		}
+
+		const { auth, headers } = await authComponent.getAuth(createAuth, ctx);
+
+		const teams = await auth.api.listOrganizations({
+			headers,
+		});
+
+		// TODO reimplement this
+		// let limit = LIMITS.FREE.MAX_ORGS;
+		let limit: number;
+		if (user?.role === 'admin') {
+			limit = LIMITS.ADMIN.MAX_ORGS;
+		} else {
+			limit = LIMITS.FREE.MAX_ORGS;
+		}
+
+		return { teams, underLimit: teams.length < limit };
 	},
 });

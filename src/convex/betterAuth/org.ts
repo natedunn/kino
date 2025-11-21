@@ -9,26 +9,37 @@ import { getOrgBySlug } from './utils';
 const organization = doc(schema, 'organization');
 const member = doc(schema, 'member');
 
-export const get = query({
+type Organization = typeof organization.type;
+
+export const findByIdOrSlug = query({
 	args: {
-		slug: organization.fields.slug,
+		id: v.optional(v.string()),
+		slug: v.optional(organization.fields.slug),
 	},
 	handler: async (ctx, args) => {
-		const org = await ctx.db
-			.query('organization')
-			.withIndex('slug', (q) => q.eq('slug', args.slug))
-			.unique();
-
-		if (!org) {
+		if (!args.id && !args.slug) {
 			throw new ConvexError({
-				message: 'Organization not found (in component)',
-				code: '404',
+				message: 'No identifiers were passed. Provide an `id` or a `slug`',
+				code: '400',
 			});
 		}
 
+		let org: Organization | null = null;
+
+		if (args.id) {
+			org = await ctx.db.get(args.id as Id<'organization'>);
+		} else if (args.slug) {
+			org = await ctx.db
+				.query('organization')
+				.withIndex('slug', (q) => q.eq('slug', args.slug!))
+				.unique();
+		}
+
+		if (!org) return null;
+
 		return org;
 	},
-	returns: organization,
+	returns: v.union(organization, v.null()),
 });
 
 export const getDetails = query({
