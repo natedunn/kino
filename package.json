@@ -20,6 +20,7 @@
 	"keywords": [],
 	"author": "",
 	"dependencies": {
+		"@base-ui-components/react": "1.0.0-beta.7",
 		"@convex-dev/better-auth": "0.9.7",
 		"@convex-dev/eslint-plugin": "1.0.0",
 		"@convex-dev/r2": "^0.7.3",
@@ -61,6 +62,7 @@
 		"lucide-react": "^0.552.0",
 		"motion": "^12.23.24",
 		"nitropack": "^2.12.9",
+		"perfect-debounce": "^2.0.0",
 		"postcss": "^8.5.6",
 		"prettier-plugin-tailwindcss": "^0.7.1",
 		"react": "^19.2.0",
