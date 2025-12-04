@@ -19,34 +19,13 @@ export const iconRegistry = {
 	chartUp: ChartUp,
 } as const;
 
+export type IconValue = (typeof iconRegistry)[keyof typeof iconRegistry];
+
 export type IconKey = keyof typeof iconRegistry;
-
-// export const lazyIconRegistry = {
-// 	lightbulb: () => import('./lightbulb').then((m) => m.default),
-// 	user: () => import('./bug').then((m) => m.default),
-// } as const;
-
-// export function LazyIcon({ name, ...svgProps }: Props) {
-// 	const importFn = lazyIconRegistry[name];
-
-// 	const Cmp = React.useMemo(
-// 		() =>
-// 			React.lazy(async () => {
-// 				const mod = await importFn();
-// 				return { default: (props: any) => React.createElement(mod, props) };
-// 			}),
-// 		[importFn]
-// 	);
-
-// 	return (
-// 		<React.Suspense fallback={<GridDots />}>
-// 			<Cmp {...svgProps} />
-// 		</React.Suspense>
-// 	);
-// }
 
 export function Icon({ name, ...rest }: Props) {
 	const Cmp = iconRegistry[name];
 	if (!Cmp) return null; // or a fallback icon
+
 	return <Cmp {...rest} />;
 }
