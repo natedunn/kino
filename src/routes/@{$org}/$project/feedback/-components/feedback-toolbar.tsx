@@ -1,73 +1,108 @@
-import { useEffect, useState } from 'react';
-import { format } from 'date-fns';
-import { CalendarIcon, Filter, SortAsc, SortDesc, X } from 'lucide-react';
+import React from 'react';
+import { useParams, useRouter, useSearch } from '@tanstack/react-router';
+// import { format } from 'date-fns';
+import { X } from 'lucide-react';
+import { debounce } from 'perfect-debounce';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
 	Select,
 	SelectContent,
 	SelectItem,
+	SelectPositioner,
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
-import { cn } from '@/lib/utils';
+import Filter from '@/icons/filter';
 
-interface FeedbackToolbarConfig {
-	search: string;
-	statusFilter: string;
-	tagFilter: string;
-	dateAfter?: Date;
-	dateBefore?: Date;
-	sortBy: string;
-	sortDirection: 'asc' | 'desc';
-}
+const FROM_ROUTE = '/@{$org}/$project/feedback/';
+const TO_ROUTE = '/@{$org}/$project/feedback';
+const STATUS_OPTIONS: {
+	label: string;
+	value: typeof status | null;
+}[] = [
+	{
+		label: 'All statuses',
+		value: null,
+	},
+	{
+		label: 'Open',
+		value: 'open',
+	},
+	{
+		label: 'In Progress',
+		value: 'in-progress',
+	},
+	{
+		label: 'Completed',
+		value: 'completed',
+	},
+	{
+		label: 'Closed',
+		value: 'closed',
+	},
+];
 
-interface FeedbackToolbarProps {
-	onChange?: (config: FeedbackToolbarConfig) => void;
-}
+export function FeedbackToolbar() {
+	const { navigate } = useRouter();
 
-export function FeedbackToolbar({ onChange }: FeedbackToolbarProps) {
-	const [search, setSearch] = useState('');
-	const [statusFilter, setStatusFilter] = useState<string>('all');
-	const [tagFilter, setTagFilter] = useState<string>('all');
-	const [dateAfter, setDateAfter] = useState<Date>();
-	const [dateBefore, setDateBefore] = useState<Date>();
-	const [sortBy, setSortBy] = useState<string>('date-created');
-	const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
-	const [showFilters, setShowFilters] = useState(false);
+	const searchParams = useSearch({
+		from: FROM_ROUTE,
+	});
+	const { search, status, board } = searchParams;
 
-	useEffect(() => {
-		if (onChange) {
-			onChange({
-				search,
-				statusFilter,
-				tagFilter,
-				dateAfter,
-				dateBefore,
-				sortBy,
-				sortDirection,
-			});
-		}
-	}, [statusFilter, tagFilter, dateAfter, dateBefore, sortBy, sortDirection, onChange]);
+	const params = useParams({
+		from: FROM_ROUTE,
+	});
+	const { org, project } = params;
+
+	const [showFilters, setShowFilters] = React.useState(false);
+	const [searchTerm, setSearchTerm] = React.useState(!search ? '' : search);
+	const [loading, setLoading] = React.useState<boolean>(false);
+
+	const setSearchParams = (search: Omit<typeof searchParams, 'board'>) => {
+		navigate({
+			to: TO_ROUTE,
+			params: {
+				org,
+				project,
+			},
+			search: (prev) => ({
+				...prev,
+				...search,
+				board: board ?? 'all',
+			}),
+		});
+	};
 
 	const clearFilters = () => {
-		setSearch('');
-		setStatusFilter('all');
-		setTagFilter('all');
-		setDateAfter(undefined);
-		setDateBefore(undefined);
+		setSearchTerm('');
+		setSearchParams({
+			status: undefined,
+		});
 	};
 
-	const toggleSortDirection = () => {
-		setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
-	};
+	const hasActiveFilters = status;
 
-	const hasActiveFilters = statusFilter !== 'all' || tagFilter !== 'all' || dateAfter || dateBefore;
+	React.useEffect(() => {
+		const debounced = debounce(
+			async (value: string) =>
+				setSearchParams({
+					search: value.trim() === '' ? undefined : value,
+				}),
+			250,
+			{ trailing: false }
+		);
+
+		debounced(searchTerm);
+
+		return () => {
+			debounced.cancel();
+		};
+	}, [searchTerm]);
 
 	return (
 		<div className='space-y-4'>
@@ -75,7 +110,7 @@ export function FeedbackToolbar({ onChange }: FeedbackToolbarProps) {
 			<div className='flex items-center justify-between gap-4'>
 				<div className='flex items-center gap-2'>
 					<Button
-						variant={showFilters ? 'default' : 'outline'}
+						variant={showFilters || hasActiveFilters ? 'default' : 'outline'}
 						onClick={() => setShowFilters(!showFilters)}
 					>
 						<Filter className='mr-2 h-4 w-4' />
@@ -83,45 +118,54 @@ export function FeedbackToolbar({ onChange }: FeedbackToolbarProps) {
 						{hasActiveFilters && (
 							<Badge
 								variant='secondary'
-								className='ml-2 flex h-5 w-5 items-center justify-center rounded-full p-0 text-xs'
+								className='ml-2 flex h-5 w-5 items-center justify-center rounded-full p-0 pr-px text-[10px]'
 							>
-								{
-									[statusFilter !== 'all', tagFilter !== 'all', dateAfter, dateBefore].filter(
-										Boolean
-									).length
-								}
+								{[status].filter(Boolean).length}
 							</Badge>
 						)}
 					</Button>
 
 					{hasActiveFilters && (
-						<Button variant='ghost' onClick={clearFilters}>
+						<Button
+							variant='outline'
+							onClick={() => {
+								setShowFilters(false);
+								clearFilters();
+							}}
+						>
 							<X className='mr-2 h-4 w-4' />
-							Clear
+							Clear All
 						</Button>
 					)}
 				</div>
 
-				<div></div>
-
 				<div className='flex items-center gap-2'>
 					<Input
-						onChange={(e) => setSearch(e.target.value)}
-						value={search}
+						value={searchTerm}
+						onChange={(e) => {
+							setSearchTerm(e.target.value);
+						}}
 						placeholder='Search...'
 					/>
-					<Select value={sortBy} onValueChange={setSortBy}>
+					{/* <Select items={statusOptions}>
 						<SelectTrigger className='w-48'>
-							<SelectValue placeholder='Sort by...' />
+							<SelectValue placeholder='Select a status' />
 						</SelectTrigger>
-						<SelectContent>
+						<Select.Portal>
+							<Select.Backdrop />
+							<Select.Positioner>
+								<Select.ScrollUpArrow />
+								<Select.Popup>
+									<S
+								</Select.Popup>
+							</Select.Positioner>
 							<SelectItem value='date-created'>Date Created</SelectItem>
 							<SelectItem value='recently-commented'>Recently Commented</SelectItem>
 							<SelectItem value='most-upvotes'>Most Upvotes</SelectItem>
 							<SelectItem value='trending'>Trending</SelectItem>
-						</SelectContent>
-					</Select>
-					<Button
+						</Select.Portal>
+					</Select> */}
+					{/* <Button
 						variant='ghost'
 						size='icon'
 						onClick={toggleSortDirection}
@@ -133,12 +177,12 @@ export function FeedbackToolbar({ onChange }: FeedbackToolbarProps) {
 						) : (
 							<SortDesc className='h-4 w-4' />
 						)}
-					</Button>
+					</Button> */}
 				</div>
 			</div>
 
 			{/* Filter panel */}
-			{showFilters && (
+			{(showFilters || hasActiveFilters) && (
 				<div className='rounded-lg border bg-muted/50 p-4'>
 					<div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4'>
 						{/* Status Filter */}
@@ -146,22 +190,35 @@ export function FeedbackToolbar({ onChange }: FeedbackToolbarProps) {
 							<Label htmlFor='status-filter' className='text-muted-foreground'>
 								Status
 							</Label>
-							<Select value={statusFilter} onValueChange={setStatusFilter}>
-								<SelectTrigger id='status-filter'>
-									<SelectValue placeholder='All statuses' />
-								</SelectTrigger>
-								<SelectContent>
-									<SelectItem value='all'>All statuses</SelectItem>
-									<SelectItem value='open'>Open</SelectItem>
-									<SelectItem value='in-progress'>In Progress</SelectItem>
-									<SelectItem value='completed'>Completed</SelectItem>
-									<SelectItem value='closed'>Closed</SelectItem>
-								</SelectContent>
-							</Select>
+							<div>
+								<Select
+									items={STATUS_OPTIONS}
+									value={!status ? null : status}
+									onValueChange={(value) => {
+										// setLoading(true);
+										setSearchParams({
+											status: value === null ? undefined : value,
+										});
+									}}
+								>
+									<SelectTrigger id='status-filter'>
+										<SelectValue placeholder='All statuses' />
+									</SelectTrigger>
+									<SelectPositioner alignItemWithTrigger>
+										<SelectContent>
+											{STATUS_OPTIONS.map(({ label, value }) => (
+												<SelectItem key={`value-${value ?? 'undefined'}`} value={value}>
+													{label}
+												</SelectItem>
+											))}
+										</SelectContent>
+									</SelectPositioner>
+								</Select>
+							</div>
 						</div>
 
 						{/* Tag Filter */}
-						<div className='space-y-2'>
+						{/* <div className='space-y-2'>
 							<Label htmlFor='tag-filter' className='text-muted-foreground'>
 								Tag
 							</Label>
@@ -177,10 +234,10 @@ export function FeedbackToolbar({ onChange }: FeedbackToolbarProps) {
 									<SelectItem value='question'>Question</SelectItem>
 								</SelectContent>
 							</Select>
-						</div>
+						</div> */}
 
 						{/* Date After Filter */}
-						<div className='space-y-2'>
+						{/* <div className='space-y-2'>
 							<Label className='text-muted-foreground'>After Date</Label>
 							<Popover>
 								<PopoverTrigger asChild>
@@ -204,10 +261,10 @@ export function FeedbackToolbar({ onChange }: FeedbackToolbarProps) {
 									/>
 								</PopoverContent>
 							</Popover>
-						</div>
+						</div> */}
 
 						{/* Date Before Filter */}
-						<div className='space-y-2'>
+						{/* <div className='space-y-2'>
 							<Label className='text-muted-foreground'>Before Date</Label>
 							<Popover>
 								<PopoverTrigger asChild>
@@ -231,7 +288,7 @@ export function FeedbackToolbar({ onChange }: FeedbackToolbarProps) {
 									/>
 								</PopoverContent>
 							</Popover>
-						</div>
+						</div> */}
 					</div>
 				</div>
 			)}
@@ -239,21 +296,25 @@ export function FeedbackToolbar({ onChange }: FeedbackToolbarProps) {
 			{/* Active filters display */}
 			{hasActiveFilters && (
 				<div className='flex flex-wrap gap-2'>
-					{statusFilter !== 'all' && (
+					{status && (
 						<Badge variant='secondary' className='gap-2 pl-3'>
 							<span className='text-muted-foreground'>Status:</span>
-							{statusFilter}
+							{status}
 							<Button
 								variant='ghost'
 								size='icon'
 								className='h-auto w-auto p-1 text-muted-foreground hover:text-foreground'
-								onClick={() => setStatusFilter('all')}
+								onClick={() => {
+									setSearchParams({
+										status: undefined,
+									});
+								}}
 							>
 								<X className='h-3 w-3' />
 							</Button>
 						</Badge>
 					)}
-					{tagFilter !== 'all' && (
+					{/* {tagFilter !== 'all' && (
 						<Badge variant='secondary' className='gap-2 pl-3'>
 							<span className='text-muted-foreground'>Tag:</span>
 							{tagFilter}
@@ -266,8 +327,8 @@ export function FeedbackToolbar({ onChange }: FeedbackToolbarProps) {
 								<X className='h-3 w-3' />
 							</Button>
 						</Badge>
-					)}
-					{dateAfter && (
+					)} */}
+					{/* {dateAfter && (
 						<Badge variant='secondary' className='gap-2 pl-3'>
 							<span className='text-muted-foreground'>After:</span>
 							{format(dateAfter, 'MMM d, yyyy')}
@@ -280,8 +341,8 @@ export function FeedbackToolbar({ onChange }: FeedbackToolbarProps) {
 								<X className='h-3 w-3' />
 							</Button>
 						</Badge>
-					)}
-					{dateBefore && (
+					)} */}
+					{/* {dateBefore && (
 						<Badge variant='secondary' className='gap-2 pl-3'>
 							<span className='text-muted-foreground'>Before:</span>{' '}
 							{format(dateBefore, 'MMM d, yyyy')}
@@ -294,7 +355,7 @@ export function FeedbackToolbar({ onChange }: FeedbackToolbarProps) {
 								<X className='h-3 w-3' />
 							</Button>
 						</Badge>
-					)}
+					)} */}
 				</div>
 			)}
 		</div>

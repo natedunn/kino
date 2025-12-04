@@ -7,7 +7,7 @@ import * as z from 'zod';
 
 import { api } from '~api';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Input } from '@/components/ui/input-shadcn';
 import { useAppForm, useFormError } from '@/components/ui/tanstack-form';
 import { updateOrgSchema } from '@/convex/schema/org.schema';
 import { cn } from '@/lib/utils';

@@ -12,7 +12,20 @@ export const feedbackSchema = z.object({
 	upvotes: z.number().default(0),
 	boardId: zid('feedbackBoard'),
 	firstCommentId: z.optional(zid('feedbackComment')),
+	status: z.enum(['open', 'in-progress', 'closed', 'completed']).optional(),
+	tags: z.array(z.string()).optional(),
+	searchContent: z.string().optional(),
 });
+
+// projectId
+// boardId
+// status
+// searchContent
+// tags
+// projectId + boardId
+// projectId + boardId + status
+// projectId + boardId + status + searchContent
+// projectId + boardId + status + searchContent + tags
 
 export const feedbackSelectSchema = feedbackSchema;
 export const feedbackCreateSchema = feedbackSchema

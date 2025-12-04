@@ -4,14 +4,14 @@ import { useMutation } from '@tanstack/react-query';
 
 import { api, API } from '~api';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Input } from '@/components/ui/input-shadcn';
 import {
 	Select,
 	SelectContent,
 	SelectItem,
 	SelectTrigger,
 	SelectValue,
-} from '@/components/ui/select';
+} from '@/components/ui/select-shadcn';
 import { useAppForm, useFormError } from '@/components/ui/tanstack-form';
 import { Textarea } from '@/components/ui/textarea';
 import { Id } from '@/convex/_generated/dataModel';

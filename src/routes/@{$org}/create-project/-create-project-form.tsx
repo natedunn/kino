@@ -10,14 +10,14 @@ import { api } from '~api';
 import { InlineAlert } from '@/components/inline-alert';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Input } from '@/components/ui/input-shadcn';
 import {
 	Select,
 	SelectContent,
 	SelectItem,
 	SelectTrigger,
 	SelectValue,
-} from '@/components/ui/select';
+} from '@/components/ui/select-shadcn';
 import { useAppForm, useFormError } from '@/components/ui/tanstack-form';
 import { createProjectSchema } from '@/convex/schema/project.schema';
 import { cn } from '@/lib/utils';

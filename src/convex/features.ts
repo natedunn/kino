@@ -5,6 +5,9 @@ import { feedbackSelectSchema } from './schema/feedback.schema';
 import { feedbackBoardSelectSchema } from './schema/feedbackBoard.schema';
 import { query } from './utils/functions';
 
+/**
+ * Deprecated
+ */
 export const feedback = query({
 	args: {
 		projectSlug: v.string(),

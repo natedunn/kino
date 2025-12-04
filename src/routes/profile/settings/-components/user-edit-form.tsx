@@ -11,7 +11,7 @@ import { InlineAlert } from '@/components/inline-alert';
 import { Label, LabelWrapper } from '@/components/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Input } from '@/components/ui/input-shadcn';
 import { updateProfileSchema } from '@/convex/schema/profile.schema';
 import { updateUserSchema } from '@/convex/schema/user.schema';
 import { cn } from '@/lib/utils';

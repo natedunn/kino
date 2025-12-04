@@ -22,6 +22,7 @@ import type * as project from "../project.js";
 import type * as schema__shared from "../schema/_shared.js";
 import type * as utils_context from "../utils/context.js";
 import type * as utils_functions from "../utils/functions.js";
+import type * as utils_helpers from "../utils/helpers.js";
 import type * as utils_r2 from "../utils/r2.js";
 import type * as utils_table from "../utils/table.js";
 import type * as utils_trigger from "../utils/trigger.js";
@@ -49,6 +50,7 @@ declare const fullApi: ApiFromModules<{
   "schema/_shared": typeof schema__shared;
   "utils/context": typeof utils_context;
   "utils/functions": typeof utils_functions;
+  "utils/helpers": typeof utils_helpers;
   "utils/r2": typeof utils_r2;
   "utils/table": typeof utils_table;
   "utils/trigger": typeof utils_trigger;

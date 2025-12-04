@@ -22,8 +22,8 @@ function RouteComponent() {
 	);
 
 	const { data: feedbackBoards } = useSuspenseQuery(
-		convexQuery(api.feedbackBoard.getProjectBoards, {
-			projectSlug,
+		convexQuery(api.feedbackBoard.listProjectBoards, {
+			slug: projectSlug,
 		})
 	);
 

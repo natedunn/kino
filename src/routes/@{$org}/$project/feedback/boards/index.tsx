@@ -13,13 +13,11 @@ export const Route = createFileRoute('/@{$org}/$project/feedback/boards/')({
 function RouteComponent() {
 	const { org, project } = Route.useParams();
 
-	const { data: feedback } = useSuspenseQuery(
-		convexQuery(api.features.feedback, {
-			projectSlug: Route.useParams().project,
+	const { data: boards } = useSuspenseQuery(
+		convexQuery(api.feedbackBoard.listProjectBoards, {
+			slug: project,
 		})
 	);
-
-	const boards = feedback?.boards;
 
 	return (
 		<div className='flex flex-1 flex-col'>
@@ -73,6 +71,7 @@ function RouteComponent() {
 													}}
 													search={{
 														board: board.slug,
+														search: undefined,
 													}}
 													className='link-text text-xl font-bold'
 												>

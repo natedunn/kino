@@ -1,4 +1,5 @@
 import { zid, zodToConvex } from 'convex-helpers/server/zod4';
+import { paginationOptsValidator } from 'convex/server';
 import { ConvexError } from 'convex/values';
 import * as z from 'zod';
 
@@ -8,6 +9,7 @@ import {
 	feedbackBoardSelectSchema,
 	feedbackBoardUpdateSchema,
 } from './schema/feedbackBoard.schema';
+import { projectSchema } from './schema/project.schema';
 import { mutation, query } from './utils/functions';
 import { triggers } from './utils/trigger';
 import { verify } from './utils/verify';
@@ -110,10 +112,10 @@ export const get = query({
 	},
 });
 
-export const getProjectBoards = query({
+export const listProjectBoards = query({
 	args: zodToConvex(
 		z.object({
-			projectSlug: z.string(),
+			slug: z.string(),
 		})
 	),
 	handler: async (ctx, args) => {
@@ -121,7 +123,7 @@ export const getProjectBoards = query({
 			permissions: { canView },
 			project,
 		} = await verifyProjectAccess(ctx, {
-			slug: args.projectSlug,
+			slug: args.slug,
 		});
 
 		if (!canView || !project?._id) return null;
@@ -165,7 +167,9 @@ triggers.register('feedbackBoard', async (ctx, change) => {
 	if (change.operation === 'delete') {
 		const feedbacks = await ctx.db
 			.query('feedback')
-			.withIndex('by_board', (q) => q.eq('boardId', change.oldDoc._id))
+			.withIndex('by_projectId_boardId', (q) =>
+				q.eq('projectId', change.oldDoc.projectId).eq('boardId', change.oldDoc._id)
+			)
 			.collect();
 
 		feedbacks.forEach(async (feedback) => {

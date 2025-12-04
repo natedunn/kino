@@ -1,4 +1,4 @@
-import { Link, useParams } from '@tanstack/react-router';
+import { Link, useParams, useSearch } from '@tanstack/react-router';
 import { ChevronRight } from 'lucide-react';
 
 import { API } from '~api';
@@ -7,12 +7,17 @@ import { Icon, IconKey } from '@/icons';
 import { cn } from '@/lib/utils';
 
 type BoardNavProps = {
-	boards: NonNullable<NonNullable<API['features']['feedback']>['boards']> | null;
+	boards: NonNullable<API['feedbackBoard']['listProjectBoards']> | null;
 };
 
 export const BoardsNav = ({ boards }: BoardNavProps) => {
+	const routePath = '/@{$org}/$project/feedback/';
 	const { org, project } = useParams({
-		from: '/@{$org}/$project/feedback/',
+		from: routePath,
+	});
+
+	const { board: boardParam } = useSearch({
+		from: routePath,
 	});
 
 	if (!boards) {
@@ -39,15 +44,17 @@ export const BoardsNav = ({ boards }: BoardNavProps) => {
 							org,
 							project,
 						}}
-						search={{
+						search={(prev) => ({
+							...prev,
 							board: board.slug,
-						}}
+						})}
 					>
 						{({ isActive }) => {
+							const active = board.slug === boardParam || isActive;
 							return (
 								<span
 									className={cn(
-										isActive
+										active
 											? buttonVariants({
 													variant: 'outline',
 													// Kinda hacky way to keep the style
@@ -60,13 +67,17 @@ export const BoardsNav = ({ boards }: BoardNavProps) => {
 									)}
 								>
 									<span className='mr-auto inline-flex items-center gap-3'>
-										{board?.icon ? <Icon name={board?.icon as IconKey} /> : <Icon name='box' />}
+										{board?.icon ? (
+											<Icon size='16px' name={board?.icon as IconKey} />
+										) : (
+											<Icon size='16px' name='box' />
+										)}
 										{/* <Box className='text-muted-foreground' /> */}
 										<span>{board.name}</span>
 									</span>
 									<ChevronRight
 										className={cn(
-											isActive
+											active
 												? 'text-foreground'
 												: 'text-transparent group-hocus:text-muted-foreground'
 										)}

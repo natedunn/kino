@@ -1,12 +1,12 @@
-import { Link } from '@tanstack/react-router';
-
 import { API } from '~api';
 import { ClickableContainer } from '@/components/clickable-container';
 import { Button } from '@/components/ui/button';
 import ChevronUp from '@/icons/chevron-up';
 import { ArrayType } from '@/lib/types';
 
-type SingleFeedback = NonNullable<ArrayType<NonNullable<API['features']['feedback']>['feedback']>>;
+type SingleFeedback = NonNullable<
+	ArrayType<NonNullable<API['feedback']['listProjectFeedback']>['page']>
+>;
 
 export const FeedbackCard = ({
 	onNavigationClick,
@@ -18,7 +18,7 @@ export const FeedbackCard = ({
 	const { title, firstComment, upvotes, board } = feedback;
 	return (
 		<li className='flex overflow-hidden rounded-lg border'>
-			<div className='border-r bg-muted px-6 pt-7'>
+			<div className='border-r bg-muted px-4 pt-7'>
 				<Button
 					variant='outline'
 					size='sm'

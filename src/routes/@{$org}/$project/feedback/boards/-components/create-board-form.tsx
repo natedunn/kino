@@ -3,11 +3,12 @@ import type { FeedbackBoardCreateSchema } from '@/convex/schema/feedbackBoard.sc
 
 import React from 'react';
 import { useConvexMutation } from '@convex-dev/react-query';
+import { revalidateLogic } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 
 import { api } from '~api';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Input } from '@/components/ui/input-shadcn';
 import { useAppForm, useFormError } from '@/components/ui/tanstack-form';
 import { Textarea } from '@/components/ui/textarea';
 import { feedbackBoardCreateSchema } from '@/convex/schema/feedbackBoard.schema';
@@ -27,14 +28,18 @@ export const CreateBoardForm = ({ projectId }: { projectId: Id<'project'> }) => 
 
 	const form = useAppForm({
 		defaultValues: {
-			projectId,
+			projectId: projectId,
 			name: '',
 			description: '',
-			fakeThing: '',
+			slug: '',
 		} as FormSchema,
 		validators: {
-			onChange: formSchema,
+			onSubmit: (v) => formSchema.parse(v),
 		},
+		validationLogic: revalidateLogic({
+			mode: 'submit',
+			modeAfterSubmission: 'change',
+		}),
 		onSubmit: (opts) => {
 			formError.errorReset();
 			createBoard(opts.value);
