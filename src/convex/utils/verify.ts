@@ -18,6 +18,10 @@ export const { verify } = verifyConfig(schema, {
 			by_slug_projectId: ['slug', 'projectId'],
 			identifiers: ['_id'],
 		},
+		feedback: {
+			by_projectId_slug: ['projectId', 'slug'],
+			identifiers: ['_id'],
+		},
 	},
 	// uneditableColumns: {
 	// 	profile: ['userId'],

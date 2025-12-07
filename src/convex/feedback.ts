@@ -3,6 +3,8 @@ import { zodToConvex } from 'convex-helpers/server/zod4';
 import { OrderedQuery, paginationOptsValidator, Query, QueryInitializer } from 'convex/server';
 import { ConvexError, v } from 'convex/values';
 
+import { generateRandomSlug } from '@/lib/random';
+
 import { DataModel } from './_generated/dataModel';
 import { query } from './_generated/server';
 import { getMyProfile } from './profile.lib';
@@ -24,10 +26,13 @@ export const create = mutation({
 			});
 		}
 
+		const slug = generateRandomSlug();
+
 		const feedbackId = await verify.insert({
 			ctx,
 			tableName: 'feedback',
 			data: {
+				slug,
 				projectId: args.projectId,
 				boardId: args.boardId,
 				title: args.title,

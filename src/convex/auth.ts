@@ -5,7 +5,8 @@ import { createClient } from '@convex-dev/better-auth';
 import { convex } from '@convex-dev/better-auth/plugins';
 import { betterAuth } from 'better-auth';
 import { admin, organization, username } from 'better-auth/plugins';
-import { adjectives, nouns, uniqueUsernameGenerator } from 'unique-username-generator';
+
+import { generateRandomUsername } from '@/lib/random';
 
 import { components, internal } from './_generated/api';
 import authSchema from './betterAuth/schema';
@@ -44,13 +45,7 @@ export const authComponent = createClient<DataModel, typeof authSchema>(componen
 		},
 		user: {
 			onCreate: async (ctx, newUser) => {
-				const generatedUsername = uniqueUsernameGenerator({
-					length: 30,
-					separator: '',
-					style: 'snakeCase',
-					dictionaries: [adjectives, nouns],
-					randomDigits: 3,
-				});
+				const generatedUsername = generateRandomUsername();
 
 				const { auth } = await authComponent.getAuth(createAuth, ctx);
 
