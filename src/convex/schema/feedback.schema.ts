@@ -15,6 +15,7 @@ export const feedbackSchema = z.object({
 	status: z.enum(['open', 'in-progress', 'closed', 'completed']).optional(),
 	tags: z.array(z.string()).optional(),
 	searchContent: z.string().optional(),
+	slug: z.string().optional(),
 });
 
 // projectId

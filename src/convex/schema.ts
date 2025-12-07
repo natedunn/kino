@@ -30,22 +30,11 @@ const schema = defineSchema({
 		.index('by_profileId_organizationId', ['profileId', 'organizationId'])
 		.index('by_profileId_orgSlug', ['profileId', 'orgSlug']),
 	feedback: defineTable(zodToConvex(feedbackSchema))
+		.index('by_slug', ['slug'])
 		.index('by_projectId', ['projectId'])
 		.index('by_projectId_boardId', ['projectId', 'boardId'])
 		.index('by_projectId_status', ['projectId', 'status'])
-		// .searchIndex('by_projectId_searchContent', {
-		// 	searchField: 'searchContent',
-		// 	filterFields: ['projectId'],
-		// })
 		.index('by_projectId_boardId_status', ['projectId', 'boardId', 'status'])
-		// .searchIndex('by_projectId_boardId_searchContent', {
-		// 	searchField: 'searchContent',
-		// 	filterFields: ['projectId', 'boardId'],
-		// })
-		// .searchIndex('by_projectId_status_searchContent', {
-		// 	searchField: 'searchContent',
-		// 	filterFields: ['projectId', 'status'],
-		// })
 		.searchIndex('by_projectId_boardId_status_searchContent', {
 			searchField: 'searchContent',
 			filterFields: ['projectId', 'boardId', 'status'],
