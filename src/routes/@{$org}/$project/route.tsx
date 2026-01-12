@@ -17,13 +17,7 @@ export const Route = createFileRoute('/@{$org}/$project')({
 			})
 		);
 	},
-	notFoundComponent: () => {
-		return (
-			<div className='container'>
-				<NotFound />
-			</div>
-		);
-	},
+	component: RouteComponent,
 	pendingMs: 5000,
 	pendingComponent: () => {
 		return (
@@ -32,7 +26,13 @@ export const Route = createFileRoute('/@{$org}/$project')({
 			</div>
 		);
 	},
-	component: RouteComponent,
+	notFoundComponent: () => {
+		return (
+			<div className='container'>
+				<NotFound />
+			</div>
+		);
+	},
 });
 
 function RouteComponent() {

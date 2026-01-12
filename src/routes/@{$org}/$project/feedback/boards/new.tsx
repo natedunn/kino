@@ -1,13 +1,19 @@
 import { convexQuery } from '@convex-dev/react-query';
 import { useSuspenseQuery } from '@tanstack/react-query';
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, notFound } from '@tanstack/react-router';
 
 import { api } from '~api';
 
 import { CreateBoardForm } from './-components/create-board-form';
 
 export const Route = createFileRoute('/@{$org}/$project/feedback/boards/new')({
+	loader: async () => {
+		throw notFound();
+	},
 	component: RouteComponent,
+	notFoundComponent: () => {
+		return <div className='container'>Not found: index.tsx</div>;
+	},
 });
 
 function RouteComponent() {

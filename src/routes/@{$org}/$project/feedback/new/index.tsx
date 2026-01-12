@@ -13,6 +13,7 @@ export const Route = createFileRoute('/@{$org}/$project/feedback/new/')({
 function RouteComponent() {
 	const router = useRouter();
 	const { org: orgSlug, project: projectSlug } = Route.useParams();
+	// const { authed } = Route.useLoaderData();
 
 	const { data: projectDetails } = useSuspenseQuery(
 		convexQuery(api.project.getDetails, {

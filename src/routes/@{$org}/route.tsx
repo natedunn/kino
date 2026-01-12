@@ -11,9 +11,8 @@ export const Route = createFileRoute('/@{$org}')({
 		const user = await context.queryClient.ensureQueryData(
 			convexQuery(api.profile.findMyProfile, {})
 		);
-
 		await context.queryClient
-			.ensureQueryData(
+			.fetchQuery(
 				convexQuery(api.org.getDetails, {
 					slug: params.org,
 				})
@@ -27,7 +26,11 @@ export const Route = createFileRoute('/@{$org}')({
 			user,
 		};
 	},
+	component: RouteComponent,
 	notFoundComponent: () => <NotFound isContainer />,
+	errorComponent: () => {
+		return <div>There was an error</div>;
+	},
 	pendingComponent: () => {
 		return (
 			<div className='container'>
@@ -35,7 +38,6 @@ export const Route = createFileRoute('/@{$org}')({
 			</div>
 		);
 	},
-	component: RouteComponent,
 });
 
 function RouteComponent() {

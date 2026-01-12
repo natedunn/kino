@@ -4,7 +4,7 @@ import { createFileRoute } from '@tanstack/react-router';
 
 import { api } from '~api';
 
-export const Route = createFileRoute('/test')({
+export const Route = createFileRoute('/playground')({
 	component: RouteComponent,
 	loader: async ({ context }) => {
 		await context.queryClient.ensureQueryData(convexQuery(api.profile.findMyProfile, {}));
@@ -23,5 +23,5 @@ function RouteComponent() {
 				</pre>
 			</div>
 		</div>
-	);
+	)
 }

@@ -1,10 +1,11 @@
 import { convexQuery } from '@convex-dev/react-query';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { createFileRoute, Link, notFound } from '@tanstack/react-router';
-// import { Id } from 'convex/_generated/dataModel';
+import { zid } from 'convex-helpers/server/zod4';
 import { ChevronLeft } from 'lucide-react';
 
 import { api } from '~api';
+import { NotFound } from '@/components/_not-found';
 import { Id } from '@/convex/_generated/dataModel';
 
 import { EditBoardForm } from './-components/edit-board-form';
@@ -14,16 +15,18 @@ export const Route = createFileRoute('/@{$org}/$project/feedback/boards/$board/e
 	loader: async ({ context, params }) => {
 		const board = await context.queryClient.ensureQueryData(
 			convexQuery(api.feedbackBoard.get, {
-				_id: params.board as Id<'feedbackBoard'>,
+				_id: params.board,
 				projectSlug: params.project,
 				orgSlug: params.org,
 			})
 		);
 
 		if (!board) {
+			// throw new Error();
 			throw notFound();
 		}
 	},
+	notFoundComponent: () => <NotFound isContainer />,
 });
 
 function RouteComponent() {

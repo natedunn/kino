@@ -1,10 +1,10 @@
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router';
 import { Authenticated, AuthLoading } from 'convex/react';
 
-export const Route = createFileRoute('/create/@layout')({
+export const Route = createFileRoute('/create')({
 	component: RouteComponent,
 	loader: async ({ context }) => {
-		if (!context.user) {
+		if (!context.userId) {
 			throw redirect({
 				to: '/sign-in',
 			})
