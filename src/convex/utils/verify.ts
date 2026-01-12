@@ -1,8 +1,10 @@
 import schema from '@convex/schema';
 
-import { verifyConfig } from './verify.lib';
+import { generateRandomSlug } from '@/lib/random';
 
-export const { verify } = verifyConfig(schema, {
+import { verifyConfig } from './verifyInternal';
+
+export const { verify, config } = verifyConfig(schema, {
 	uniqueColumns: {
 		profile: {
 			indexes: ['by_username'],
@@ -10,31 +12,33 @@ export const { verify } = verifyConfig(schema, {
 		},
 	},
 	uniqueRows: {
-		project: {
-			by_orgSlug_slug: ['orgSlug', 'slug'],
-			identifiers: ['_id'],
-		},
+		project: [
+			{
+				index: 'by_orgSlug_slug',
+			},
+		],
+		feedback: [
+			// {
+			// 	index: 'by_projectId_title',
+			// },
+			{
+				index: 'by_projectId_slug',
+			},
+		],
+	},
+	uneditableColumns: {
+		profile: ['userId'],
+	},
+	defaultValues: {
 		feedbackBoard: {
-			by_slug_projectId: ['slug', 'projectId'],
-			identifiers: ['_id'],
+			slug: generateRandomSlug(),
 		},
 		feedback: {
-			by_projectId_slug: ['projectId', 'slug'],
-			identifiers: ['_id'],
+			status: 'open',
+			slug: generateRandomSlug(),
+			blah: true,
+			tags: ['testing'],
+			upvotes: 2,
 		},
 	},
-	// uneditableColumns: {
-	// 	profile: ['userId'],
-	// },
-	// defaultValues: {
-	// 	project: {
-	// 		visibility: 'public'
-	// 	}
-	// }
-	// denormalizedValues: [
-	// 	{
-	// 		project: 'slug'
-	// 		projectMember: 'projectSlug'
-	// 	}
-	// ]
 });

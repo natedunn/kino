@@ -2,10 +2,11 @@ import { filter } from 'convex-helpers/server/filter';
 import { zodToConvex } from 'convex-helpers/server/zod4';
 import { OrderedQuery, paginationOptsValidator, Query, QueryInitializer } from 'convex/server';
 import { ConvexError, v } from 'convex/values';
+import { never } from 'zod';
 
 import { generateRandomSlug } from '@/lib/random';
 
-import { DataModel } from './_generated/dataModel';
+import { DataModel, Id } from './_generated/dataModel';
 import { query } from './_generated/server';
 import { getMyProfile } from './profile.lib';
 import { feedbackCreateSchema, feedbackSchema } from './schema/feedback.schema';
@@ -27,6 +28,26 @@ export const create = mutation({
 		}
 
 		const slug = generateRandomSlug();
+
+		const dv = await verify.defaultValues({
+			ctx,
+			tableName: 'feedback',
+			data: {
+				// slug, status, upvotes, test, tags are OPTIONAL (have defaults)
+				// projectId, title, boardId, authorProfileId are REQUIRED (no defaults)
+				// slug,
+				// upvotes: 1,
+				// status: 'open',
+				// test: true,
+				// status: 'closed',
+				title: args.title,
+				projectId: args.projectId,
+				boardId: args.boardId,
+				authorProfileId: profile._id,
+			},
+		});
+
+		console.log('defaultValues >>>>>', dv);
 
 		const feedbackId = await verify.insert({
 			ctx,
@@ -53,14 +74,9 @@ export const create = mutation({
 			},
 		});
 
-		await verify.patch({
-			ctx,
-			tableName: 'feedback',
-			data: {
-				_id: feedbackId,
-				firstCommentId: feedbackCommentId,
-				searchContent: args.title + ' ' + args.firstComment,
-			},
+		await verify.patch(ctx, 'feedback', feedbackId, {
+			firstCommentId: feedbackCommentId,
+			searchContent: args.title + ' ' + args.firstComment,
 		});
 
 		return {

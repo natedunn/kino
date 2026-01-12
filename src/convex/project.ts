@@ -87,10 +87,7 @@ export const update = authedMutation({
 			});
 		}
 
-		await verify.patch({
-			ctx,
-			tableName: 'project',
-			data: args,
+		await verify.patch(ctx, 'project', args._id, args, {
 			onFail: ({ uniqueRow }) => {
 				throw new ConvexError({
 					message: `A project with the slug of '${uniqueRow?.existingData.slug}' already exists for this organization.`,

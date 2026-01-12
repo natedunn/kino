@@ -56,14 +56,7 @@ export const update = mutation({
 		const { auth, headers } = await authComponent.getAuth(createAuth, ctx);
 
 		// 1️⃣ Update profile-only data first...
-		await verify.patch({
-			ctx,
-			tableName: 'profile',
-			data: {
-				_id: args.identifiers._id,
-				...args.profile,
-			},
-		});
+		await verify.patch(ctx, 'profile', args.identifiers._id, args.profile);
 
 		// 2️⃣ ...then update user-only data (Better-Auth user data). This will
 		// then update profile data via Better-Auth's trigger. It more distance

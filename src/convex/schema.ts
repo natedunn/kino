@@ -32,6 +32,7 @@ const schema = defineSchema({
 	feedback: defineTable(zodToConvex(feedbackSchema))
 		.index('by_slug', ['slug'])
 		.index('by_projectId', ['projectId'])
+		// .index('by_projectId_title', ['projectId', 'title']) // FAKE: remove after testing
 		.index('by_projectId_slug', ['projectId', 'slug'])
 		.index('by_projectId_boardId', ['projectId', 'boardId'])
 		.index('by_projectId_status', ['projectId', 'status'])

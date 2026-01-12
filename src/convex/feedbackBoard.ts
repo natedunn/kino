@@ -3,6 +3,7 @@ import { paginationOptsValidator } from 'convex/server';
 import { ConvexError } from 'convex/values';
 import * as z from 'zod';
 
+import { Id } from './_generated/dataModel';
 import { verifyProjectAccess } from './project.lib';
 import {
 	feedbackBoardCreateSchema,
@@ -28,6 +29,16 @@ export const create = mutation({
 				code: '403',
 			});
 		}
+
+		await verify.defaultValues({
+			ctx,
+			tableName: 'feedbackBoard',
+			data: {
+				name: args.slug,
+				// slug: args.slug,
+				projectId: args.projectId,
+			},
+		});
 
 		// Insert if passed the authorization checks
 		await verify.insert({
@@ -71,12 +82,9 @@ export const update = mutation({
 			});
 		}
 
-		await verify.patch({
-			ctx,
-			tableName: 'feedbackBoard',
-			data,
-			onFail: (args) => {
-				if (args.uniqueRow) {
+		await verify.patch(ctx, 'feedbackBoard', data._id, data, {
+			onFail: ({ uniqueRow }) => {
+				if (uniqueRow) {
 					throw new ConvexError({
 						message: 'Board with this name already exists',
 						code: '409',
@@ -90,7 +98,7 @@ export const update = mutation({
 export const get = query({
 	args: zodToConvex(
 		z.object({
-			_id: zid('feedbackBoard'),
+			_id: zid('feedbackBoard').or(z.string()),
 			projectSlug: z.string(),
 			orgSlug: z.string(),
 		})
@@ -104,7 +112,10 @@ export const get = query({
 
 		if (!canView) return null;
 
-		const board = await ctx.db.get(args._id);
+		const board = await ctx.db
+			.query('feedbackBoard')
+			.withIndex('by_id', (q) => q.eq('_id', args._id as Id<'feedbackBoard'>))
+			.first();
 
 		if (!board) return null;
 

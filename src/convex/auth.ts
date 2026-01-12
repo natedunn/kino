@@ -96,14 +96,7 @@ export const authComponent = createClient<DataModel, typeof authSchema>(componen
 				} else {
 					const parsedProfile = syncProfileSchema.parse(newUser);
 					// await ctx.db.patch(profileId, parsedProfile);
-					await verify.patch({
-						ctx,
-						tableName: 'profile',
-						data: {
-							_id: profileId,
-							...parsedProfile,
-						},
-					});
+					await verify.patch(ctx, 'profile', profileId, parsedProfile);
 				}
 			},
 		},
