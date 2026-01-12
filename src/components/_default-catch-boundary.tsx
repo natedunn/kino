@@ -12,9 +12,11 @@ export function DefaultCatchBoundary({ error }: ErrorComponentProps) {
 	console.error(error);
 
 	return (
-		<div className='flex min-w-0 flex-1 flex-col items-center justify-center gap-6 p-4'>
-			<ErrorComponent error={error} />
-			<div className='flex flex-wrap items-center gap-2'>
+		<div className='mx-auto flex w-full max-w-300 flex-1 flex-col items-center gap-2 p-4'>
+			<div className='w-full text-2xl font-bold'>
+				<ErrorComponent error={error} />
+			</div>
+			<div className='flex w-full flex-wrap items-start gap-2'>
 				<button
 					onClick={() => {
 						router.invalidate();
