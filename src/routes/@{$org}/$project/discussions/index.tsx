@@ -5,5 +5,5 @@ export const Route = createFileRoute('/@{$org}/$project/discussions/')({
 });
 
 function RouteComponent() {
-	return <div>Hello "/_default/@{$org}/$project/discussions/"!</div>;
+	return <div>Discussion</div>;
 }

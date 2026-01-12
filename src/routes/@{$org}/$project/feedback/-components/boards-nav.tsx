@@ -3,7 +3,7 @@ import { ChevronRight } from 'lucide-react';
 
 import { API } from '~api';
 import { buttonVariants } from '@/components/ui/button';
-import { Icon, IconKey } from '@/icons';
+import { Icon, IconName } from '@/icons';
 import { cn } from '@/lib/utils';
 
 type BoardNavProps = {
@@ -67,11 +67,7 @@ export const BoardsNav = ({ boards }: BoardNavProps) => {
 									)}
 								>
 									<span className='mr-auto inline-flex items-center gap-3'>
-										{board?.icon ? (
-											<Icon size='16px' name={board?.icon as IconKey} />
-										) : (
-											<Icon size='16px' name='box' />
-										)}
+										<Icon size='16px' name={board?.icon as IconName} fallback='box' />
 										{/* <Box className='text-muted-foreground' /> */}
 										<span>{board.name}</span>
 									</span>
