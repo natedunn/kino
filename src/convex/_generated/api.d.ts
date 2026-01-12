@@ -28,6 +28,9 @@ import type * as utils_table from "../utils/table.js";
 import type * as utils_trigger from "../utils/trigger.js";
 import type * as utils_types from "../utils/types.js";
 import type * as utils_verify from "../utils/verify.js";
+import type * as utils_verifyInternal_construct from "../utils/verifyInternal/construct.js";
+import type * as utils_verifyInternal_helpers from "../utils/verifyInternal/helpers.js";
+import type * as utils_verifyInternal_index from "../utils/verifyInternal/index.js";
 
 import type {
   ApiFromModules,
@@ -56,6 +59,9 @@ declare const fullApi: ApiFromModules<{
   "utils/trigger": typeof utils_trigger;
   "utils/types": typeof utils_types;
   "utils/verify": typeof utils_verify;
+  "utils/verifyInternal/construct": typeof utils_verifyInternal_construct;
+  "utils/verifyInternal/helpers": typeof utils_verifyInternal_helpers;
+  "utils/verifyInternal/index": typeof utils_verifyInternal_index;
 }>;
 
 /**
