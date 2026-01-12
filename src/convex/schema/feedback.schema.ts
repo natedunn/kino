@@ -13,7 +13,7 @@ export const feedbackSchema = z.object({
 	upvotes: z.number().default(0),
 	boardId: zid('feedbackBoard'),
 	firstCommentId: z.optional(zid('feedbackComment')),
-	status: z.enum(['open', 'in-progress', 'closed', 'completed']).optional(),
+	status: z.enum(['open', 'in-progress', 'closed', 'completed', 'paused']),
 	tags: z.array(z.string()).optional(),
 	searchContent: z.string().optional(),
 });
