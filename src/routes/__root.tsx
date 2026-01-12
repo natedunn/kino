@@ -10,10 +10,10 @@ import {
 	ScriptOnce,
 	Scripts,
 	useRouteContext,
+	useRouter,
 } from '@tanstack/react-router';
 import { createServerFn } from '@tanstack/react-start';
 import { getCookie, getRequest } from '@tanstack/react-start/server';
-import { ConvexReactClient } from 'convex/react';
 
 import { DefaultCatchBoundary } from '@/components/_default-catch-boundary';
 import { NotFound } from '@/components/_not-found';
@@ -21,11 +21,14 @@ import { Toaster } from '@/components/ui/sonner';
 import { authClient } from '@/lib/auth/auth-client';
 
 import appCss from '../styles/app.css?url';
+import { Devtools } from './-components/devtools';
 
-// import { Devtools } from './-components/devtools';
-const Devtools = lazy(() =>
-	import('./-components/devtools').then((module) => ({ default: module.Devtools }))
-);
+// const Devtools = lazy(() =>
+// 	import('./-components/devtools').then((module) => ({ default: module.Devtools }))
+// );
+
+const convexPreconnect =
+	import.meta.env.VITE_CONVEX_URL || import.meta.env.VITE_CONVEX_SITE_URL || undefined;
 
 const fetchAuth = createServerFn({ method: 'GET' }).handler(async () => {
 	const { createAuth } = await import('@/convex/auth');
@@ -40,24 +43,8 @@ const fetchAuth = createServerFn({ method: 'GET' }).handler(async () => {
 
 export const Route = createRootRouteWithContext<{
 	queryClient: QueryClient;
-	convexClient: ConvexReactClient;
 	convexQueryClient: ConvexQueryClient;
 }>()({
-	beforeLoad: async (ctx) => {
-		const auth = await fetchAuth();
-		const { userId, token } = auth;
-
-		// During SSR only (the only time serverHttpClient exists),
-		// set the auth token to make HTTP queries with.
-		if (token) {
-			ctx.context.convexQueryClient.serverHttpClient?.setAuth(token);
-		}
-
-		return {
-			userId,
-			token,
-		};
-	},
 	head: () => ({
 		meta: [
 			{
@@ -89,23 +76,50 @@ export const Route = createRootRouteWithContext<{
 				rel: 'stylesheet',
 				href: 'https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap',
 			},
+			...(convexPreconnect
+				? [{ rel: 'preconnect', href: convexPreconnect, crossOrigin: 'anonymous' as const }]
+				: []),
 		],
 	}),
-	errorComponent: (props) => {
-		return (
-			<RootDocument>
-				<DefaultCatchBoundary {...props} />
-			</RootDocument>
-		);
+	beforeLoad: async (ctx) => {
+		const auth = await fetchAuth();
+		const { userId, token } = auth;
+
+		// During SSR only (the only time serverHttpClient exists),
+		// set the auth token to make HTTP queries with.
+		if (token) {
+			ctx.context.convexQueryClient.serverHttpClient?.setAuth(token);
+		}
+
+		return {
+			userId,
+			token,
+		};
 	},
-	notFoundComponent: () => <NotFound />,
+	errorComponent: DefaultCatchBoundary,
+	notFoundComponent: () => <div>Not found</div>,
 	component: RootComponent,
 });
 
 function RootComponent() {
 	const context = useRouteContext({ from: Route.id });
+
+	const router = useRouter();
+	const isNotFound = router.state.matches.some((match) => match.status === 'notFound');
+
+	if (isNotFound) {
+		return (
+			<RootDocument>
+				<Outlet />
+			</RootDocument>
+		);
+	}
+
 	return (
-		<ConvexBetterAuthProvider client={context.convexClient} authClient={authClient}>
+		<ConvexBetterAuthProvider
+			client={context.convexQueryClient.convexClient}
+			authClient={authClient}
+		>
 			<RootDocument>
 				<Outlet />
 			</RootDocument>
@@ -127,11 +141,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 					)`}
 				</ScriptOnce>
 				{children}
-				{process.env.NODE_ENV === 'development' && (
-					<Suspense fallback={null}>
-						<Devtools />
-					</Suspense>
-				)}
+				{process.env.NODE_ENV === 'development' && <Devtools />}
 				<Toaster position='top-right' closeButton richColors />
 				<Scripts />
 			</body>
