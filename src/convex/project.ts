@@ -157,7 +157,6 @@ export const getDetails = query({
 		console.log('project.getDetails args >>>>', args);
 
 		if (args.orgSlug === 'tanstack-start' || args.slug === 'styles.css') {
-			console.log('❌ NULLING');
 			return null;
 		}
 
