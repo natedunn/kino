@@ -154,6 +154,13 @@ export const getDetails = query({
 		})
 	),
 	handler: async (ctx, args) => {
+		console.log('project.getDetails args >>>>', args);
+
+		if (args.orgSlug === 'tanstack-start' || args.slug === 'styles.css') {
+			console.log('❌ NULLING');
+			return null;
+		}
+
 		const projectDetails = await verifyProjectAccess(ctx, {
 			slug: args.slug,
 		});

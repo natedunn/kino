@@ -8,6 +8,9 @@ import ViteRestart from 'vite-plugin-restart';
 import tsConfigPaths from 'vite-tsconfig-paths';
 
 export default defineConfig({
+	ssr: {
+		noExternal: ['@convex-dev/better-auth'],
+	},
 	plugins: [
 		analyzer({
 			enabled: process.env.ANALYZE === 'true',

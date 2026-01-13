@@ -17,7 +17,7 @@ export const Route = createFileRoute('/@{$org}/')({
 			convexQuery(api.project.getManyByOrg, {
 				orgSlug: params.org,
 			})
-		);
+		)
 	},
 });
 
@@ -28,7 +28,7 @@ function RouteComponent() {
 		convexQuery(api.project.getManyByOrg, {
 			orgSlug,
 		})
-	);
+	)
 
 	const { data: orgDetails } = useSuspenseQuery(convexQuery(api.org.getDetails, { slug: orgSlug }));
 
@@ -147,5 +147,5 @@ function RouteComponent() {
 				</div>
 			</div>
 		</div>
-	);
+	)
 }

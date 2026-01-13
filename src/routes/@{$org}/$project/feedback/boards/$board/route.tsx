@@ -13,7 +13,7 @@ export const Route = createFileRoute('/@{$org}/$project/feedback/boards/$board')
 				projectSlug: params.project,
 				orgSlug: params.org,
 			})
-		);
+		)
 
 		if (!board) {
 			throw notFound();
@@ -33,5 +33,5 @@ function RouteComponent() {
 		<div>
 			<Outlet />
 		</div>
-	);
+	)
 }

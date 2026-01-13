@@ -1,14 +1,16 @@
 import type { AuthFunctions, GenericCtx } from '@convex-dev/better-auth';
+import type { BetterAuthOptions } from 'better-auth/minimal';
 import type { DataModel, Id } from './_generated/dataModel';
 
 import { createClient } from '@convex-dev/better-auth';
 import { convex } from '@convex-dev/better-auth/plugins';
-import { betterAuth } from 'better-auth';
+import { betterAuth } from 'better-auth/minimal';
 import { admin, organization, username } from 'better-auth/plugins';
 
 import { generateRandomUsername } from '@/lib/random';
 
 import { components, internal } from './_generated/api';
+import authConfig from './auth.config';
 import authSchema from './betterAuth/schema';
 import { syncProfileSchema } from './schema/profile.schema';
 import { verify } from './utils/verify';
@@ -105,14 +107,11 @@ export const authComponent = createClient<DataModel, typeof authSchema>(componen
 
 export const { onCreate, onUpdate, onDelete } = authComponent.triggersApi();
 
-export const createAuth = (ctx: GenericCtx<DataModel>) => {
-	return betterAuth({
+export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
+	return {
 		baseURL: process.env.SITE_URL!,
 		trustedOrigins: ['http://localhost:3000', 'https://usekino.com'],
 		database: authComponent.adapter(ctx),
-		logger: {
-			disabled: true,
-		},
 		account: {
 			accountLinking: {
 				enabled: true,
@@ -153,7 +152,14 @@ export const createAuth = (ctx: GenericCtx<DataModel>) => {
 					},
 				},
 			}),
-			convex(),
+			convex({
+				authConfig,
+				jwksRotateOnTokenGenerationError: true,
+			}),
 		],
-	});
+	} satisfies BetterAuthOptions;
+};
+
+export const createAuth = (ctx: GenericCtx<DataModel>) => {
+	return betterAuth(createAuthOptions(ctx));
 };

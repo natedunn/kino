@@ -88,12 +88,12 @@ export const getDetails = query({
 			});
 		}
 
-		if (!orgDetails?.org) {
-			throw new ConvexError({
-				message: 'Organization not found',
-				code: '404',
-			});
-		}
+		// if (!orgDetails?.org) {
+		// 	throw new ConvexError({
+		// 		message: 'Organization not found',
+		// 		code: '404',
+		// 	});
+		// }
 
 		if (!orgDetails?.permissions.canView) {
 			throw new ConvexError({
@@ -146,8 +146,6 @@ export const findMyOrgs = query({
 	args: {},
 	handler: async (ctx) => {
 		const user = await authComponent.safeGetAuthUser(ctx);
-
-		console.log(user);
 
 		if (!user?.profileId) {
 			return null;

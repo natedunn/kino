@@ -24,7 +24,7 @@ function RouteComponent() {
 			orgSlug,
 			slug: projectSlug,
 		})
-	);
+	)
 
 	if (!projectData?.project) throw new Error('No project found');
 
@@ -39,5 +39,5 @@ function RouteComponent() {
 				</div>
 			</div>
 		</div>
-	);
+	)
 }

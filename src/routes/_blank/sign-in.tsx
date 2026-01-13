@@ -14,7 +14,7 @@ export const Route = createFileRoute('/_blank/sign-in')({
 	validateSearch: searchValidator,
 	component: RouteComponent,
 	loader: async ({ context }) => {
-		if (context.userId) {
+		if (context.token) {
 			throw redirect({
 				to: '/',
 			});

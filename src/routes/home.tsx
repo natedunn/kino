@@ -7,7 +7,7 @@ import { authClient } from '@/lib/auth/auth-client';
 
 export const Route = createFileRoute('/home')({
 	beforeLoad: async ({ context }) => {
-		if (!context.userId) {
+		if (!context.token) {
 			throw redirect({
 				to: '/sign-in',
 			});

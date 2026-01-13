@@ -19,13 +19,13 @@ const Status = ({ status }: { status: Status }) => {
 		open: 'bg-green-700/50 text-green-100',
 		planned: 'bg-blue-700/50 text-blue-100',
 		closed: 'bg-red-700/50 text-red-100',
-	};
+	}
 
 	return (
 		<span className={cn(statusClass[status], 'inline-block px-1.5 py-0.5 text-xs capitalize')}>
 			{status}
 		</span>
-	);
+	)
 };
 
 function RouteComponent() {
@@ -37,7 +37,7 @@ function RouteComponent() {
 		assignedTo: 'natedunn',
 		assignedBy: 'davinbuster',
 		filedIn: 'features',
-	};
+	}
 
 	return (
 		<div>
@@ -123,5 +123,5 @@ function RouteComponent() {
 				</div>
 			</div>
 		</div>
-	);
+	)
 }

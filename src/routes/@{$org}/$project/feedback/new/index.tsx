@@ -20,13 +20,13 @@ function RouteComponent() {
 			orgSlug,
 			slug: projectSlug,
 		})
-	);
+	)
 
 	const { data: feedbackBoards } = useSuspenseQuery(
 		convexQuery(api.feedbackBoard.listProjectBoards, {
 			slug: projectSlug,
 		})
-	);
+	)
 
 	if (!projectDetails?.project) {
 		throw new Error('Project not found: 019a6be9');
@@ -55,10 +55,10 @@ function RouteComponent() {
 								project: projectSlug,
 								feedbackId,
 							},
-						});
+						})
 					}}
 				/>
 			</div>
 		</div>
-	);
+	)
 }

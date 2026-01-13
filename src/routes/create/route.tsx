@@ -4,10 +4,10 @@ import { Authenticated, AuthLoading } from 'convex/react';
 export const Route = createFileRoute('/create')({
 	component: RouteComponent,
 	loader: async ({ context }) => {
-		if (!context.userId) {
+		if (!context.token) {
 			throw redirect({
 				to: '/sign-in',
-			})
+			});
 		}
 	},
 });
@@ -44,5 +44,5 @@ function RouteComponent() {
 				<Outlet />
 			</Authenticated>
 		</>
-	)
+	);
 }

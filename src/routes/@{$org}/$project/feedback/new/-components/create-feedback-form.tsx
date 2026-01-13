@@ -19,11 +19,11 @@ import { FeedbackCreateSchema, feedbackCreateSchema } from '@/convex/schema/feed
 import { cn } from '@/lib/utils';
 
 const formSchema = feedbackCreateSchema;
-type FormSchema = FeedbackCreateSchema;
+type FormSchema = Omit<FeedbackCreateSchema, 'projectId'>;
 
 type CreateFeedbackFormProps = {
 	projectId: Id<'project'>;
-	boards: API['feedbackBoard']['getProjectBoards'];
+	boards: API['feedbackBoard']['listProjectBoards'];
 	onSubmit?: (data: { feedbackId: Id<'feedback'> }) => void;
 };
 
@@ -35,15 +35,14 @@ export const CreateFeedbackForm = ({ projectId, boards, onSubmit }: CreateFeedba
 	const defaultValues: FormSchema = {
 		title: '',
 		boardId: '' as Id<'feedbackBoard'>,
-		projectId,
 		firstComment: '',
 	};
 
 	const form = useAppForm({
 		defaultValues,
-		validators: {
-			onSubmit: formSchema,
-		},
+		// validators: {
+		// 	onSubmit: formSchema,
+		// },
 		validationLogic: revalidateLogic({
 			mode: 'submit',
 			modeAfterSubmission: 'change',
@@ -55,7 +54,7 @@ export const CreateFeedbackForm = ({ projectId, boards, onSubmit }: CreateFeedba
 			formError.errorReset();
 			createFeedback({
 				boardId: value.boardId,
-				projectId: value.projectId,
+				projectId: projectId,
 				title: value.title,
 				firstComment: value.firstComment,
 			});

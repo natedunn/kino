@@ -80,6 +80,8 @@ export const verifyProjectAccess = async (
 	const project = await getProject(ctx, { id, slug });
 	const profile = await findMyProfile(ctx);
 
+	// console.log('profile >>>', profile);
+
 	let projectMember: ProjectMember | null = null;
 
 	if (profile) {

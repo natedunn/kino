@@ -9,7 +9,7 @@ import { UserEditForm } from './-components/user-edit-form';
 export const Route = createFileRoute('/profile/settings/')({
 	component: RouteComponent,
 	loader: async ({ context }) => {
-		if (!context.userId) {
+		if (!context.token) {
 			throw redirect({
 				to: '/sign-in',
 			});

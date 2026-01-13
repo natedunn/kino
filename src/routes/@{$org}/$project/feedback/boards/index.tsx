@@ -21,7 +21,7 @@ function RouteComponent() {
 		convexQuery(api.feedbackBoard.listProjectBoards, {
 			slug: project,
 		})
-	);
+	)
 
 	return (
 		<div className='flex flex-1 flex-col'>
@@ -110,11 +110,11 @@ function RouteComponent() {
 										</div>
 									</div>
 								</div>
-							);
+							)
 						})
 					)}
 				</div>
 			</div>
 		</div>
-	);
+	)
 }

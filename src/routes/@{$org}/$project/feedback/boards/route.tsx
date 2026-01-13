@@ -10,7 +10,7 @@ export const Route = createFileRoute('/@{$org}/$project/feedback/boards')({
 			convexQuery(api.features.feedback, {
 				projectSlug: params.project,
 			})
-		);
+		)
 	},
 	component: RouteComponent,
 	errorComponent: () => {
@@ -18,7 +18,7 @@ export const Route = createFileRoute('/@{$org}/$project/feedback/boards')({
 			<div className='container py-6'>
 				<InlineAlert variant='danger'>Unable to load boards</InlineAlert>
 			</div>
-		);
+		)
 	},
 });
 
@@ -27,5 +27,5 @@ function RouteComponent() {
 		<div className='flex flex-1 flex-col'>
 			<Outlet />
 		</div>
-	);
+	)
 }

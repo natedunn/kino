@@ -48,5 +48,5 @@ function RouteComponent() {
 				<Outlet />
 			</SecondaryMenuLayout> */}
 		</div>
-	);
+	)
 }
