@@ -1,5 +1,5 @@
 import { convexQuery } from '@convex-dev/react-query';
-import { createFileRoute, notFound, Outlet, redirect } from '@tanstack/react-router';
+import { createFileRoute, notFound, Outlet } from '@tanstack/react-router';
 
 import { api } from '~api';
 import { NotFound } from '@/components/_not-found';
@@ -10,7 +10,7 @@ export const Route = createFileRoute('/@{$org}')({
 	loader: async ({ context, params }) => {
 		const user = await context.queryClient.ensureQueryData(
 			convexQuery(api.profile.findMyProfile, {})
-		)
+		);
 		await context.queryClient
 			.fetchQuery(
 				convexQuery(api.org.getDetails, {
@@ -20,11 +20,11 @@ export const Route = createFileRoute('/@{$org}')({
 			.catch((error) => {
 				console.error(error);
 				throw notFound();
-			})
+			});
 
 		return {
 			user,
-		}
+		};
 	},
 	component: RouteComponent,
 	notFoundComponent: () => <NotFound isContainer />,
@@ -36,7 +36,7 @@ export const Route = createFileRoute('/@{$org}')({
 			<div className='container'>
 				<div className='text-red-500'>PENDING in ORG LAYOUT</div>
 			</div>
-		)
+		);
 	},
 });
 
@@ -54,5 +54,5 @@ function RouteComponent() {
 				</div>
 			</footer>
 		</div>
-	)
+	);
 }

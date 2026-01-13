@@ -1,7 +1,6 @@
 import { convexQuery } from '@convex-dev/react-query';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { Box } from 'lucide-react';
 
 import { api } from '~api';
 import { buttonVariants } from '@/components/ui/button';
@@ -21,7 +20,7 @@ function RouteComponent() {
 		convexQuery(api.feedbackBoard.listProjectBoards, {
 			slug: project,
 		})
-	)
+	);
 
 	return (
 		<div className='flex flex-1 flex-col'>
@@ -110,11 +109,11 @@ function RouteComponent() {
 										</div>
 									</div>
 								</div>
-							)
+							);
 						})
 					)}
 				</div>
 			</div>
 		</div>
-	)
+	);
 }

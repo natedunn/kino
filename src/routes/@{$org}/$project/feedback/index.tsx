@@ -1,4 +1,4 @@
-import React, { JSX } from 'react';
+import React from 'react';
 import { convexQuery } from '@convex-dev/react-query';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { createFileRoute, Link, useRouter } from '@tanstack/react-router';
@@ -38,13 +38,13 @@ export const Route = createFileRoute('/@{$org}/$project/feedback/')({
 			convexQuery(api.features.feedback, {
 				projectSlug: params.project,
 			})
-		)
+		);
 
 		const boards = await context.queryClient.ensureQueryData(
 			convexQuery(api.feedbackBoard.listProjectBoards, {
 				slug: params.project,
 			})
-		)
+		);
 
 		// This will be rewritten 👇
 		const project = await context.queryClient.ensureQueryData(
@@ -52,7 +52,7 @@ export const Route = createFileRoute('/@{$org}/$project/feedback/')({
 				orgSlug: params.org,
 				slug: params.project,
 			})
-		)
+		);
 
 		const feedback = await context.queryClient.ensureQueryData(
 			convexQuery(api.feedback.listProjectFeedback, {
@@ -65,7 +65,7 @@ export const Route = createFileRoute('/@{$org}/$project/feedback/')({
 					cursor: null,
 				},
 			})
-		)
+		);
 
 		return { feedback: feedback.page };
 	},
@@ -78,7 +78,7 @@ const Notice = ({ icon, children }: { icon: React.JSX.Element; children: React.R
 			<div>{icon}</div>
 			<div>{children}</div>
 		</div>
-	)
+	);
 };
 
 function RouteComponent() {
@@ -97,13 +97,13 @@ function RouteComponent() {
 			orgSlug,
 			slug: projectSlug,
 		})
-	)
+	);
 
 	const { data: boards } = useSuspenseQuery(
 		convexQuery(api.feedbackBoard.listProjectBoards, {
 			slug: projectSlug,
 		})
-	)
+	);
 
 	if (!projectData?.project?._id) {
 		return null;
@@ -120,7 +120,7 @@ function RouteComponent() {
 		{
 			initialNumItems: NUM_OF_ITEMS_PER_PAGE,
 		}
-	)
+	);
 
 	React.useEffect(() => {
 		if (feedbackData.status !== 'LoadingFirstPage' && feedbackData.status !== 'LoadingMore') {
@@ -233,7 +233,7 @@ function RouteComponent() {
 											})
 										}
 									/>
-								)
+								);
 							})}
 						</div>
 					) : null}
@@ -251,5 +251,5 @@ function RouteComponent() {
 				</div>
 			</div>
 		</div>
-	)
+	);
 }

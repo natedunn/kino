@@ -61,7 +61,7 @@ export function FeedbackToolbar() {
 
 	const [showFilters, setShowFilters] = React.useState(false);
 	const [searchTerm, setSearchTerm] = React.useState(!search ? '' : search);
-	const [loading, setLoading] = React.useState<boolean>(false);
+	// const [loading, setLoading] = React.useState<boolean>(false);
 
 	const setSearchParams = (search: Omit<typeof searchParams, 'board'>) => {
 		navigate({

@@ -1,4 +1,4 @@
-import { zodOutputToConvex, zodToConvex } from 'convex-helpers/server/zod4';
+import { zodToConvex } from 'convex-helpers/server/zod4';
 import { defineTable } from 'convex/server';
 import * as z from 'zod';
 

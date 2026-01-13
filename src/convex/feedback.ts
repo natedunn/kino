@@ -2,11 +2,10 @@ import { filter } from 'convex-helpers/server/filter';
 import { zodToConvex } from 'convex-helpers/server/zod4';
 import { OrderedQuery, paginationOptsValidator, Query, QueryInitializer } from 'convex/server';
 import { ConvexError, v } from 'convex/values';
-import { never } from 'zod';
 
 import { generateRandomSlug } from '@/lib/random';
 
-import { DataModel, Id } from './_generated/dataModel';
+import { DataModel } from './_generated/dataModel';
 import { query } from './_generated/server';
 import { getMyProfile } from './profile.lib';
 import { feedbackCreateSchema, feedbackSchema } from './schema/feedback.schema';

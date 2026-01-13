@@ -15,10 +15,13 @@ import {
 import { useAppForm, useFormError } from '@/components/ui/tanstack-form';
 import { Textarea } from '@/components/ui/textarea';
 import { Id } from '@/convex/_generated/dataModel';
-import { FeedbackCreateSchema, feedbackCreateSchema } from '@/convex/schema/feedback.schema';
+import {
+	FeedbackCreateSchema,
+	// feedbackCreateSchema
+} from '@/convex/schema/feedback.schema';
 import { cn } from '@/lib/utils';
 
-const formSchema = feedbackCreateSchema;
+// const formSchema = feedbackCreateSchema;
 type FormSchema = Omit<FeedbackCreateSchema, 'projectId'>;
 
 type CreateFeedbackFormProps = {

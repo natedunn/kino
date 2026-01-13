@@ -2,7 +2,7 @@ import { ConvexQueryClient } from '@convex-dev/react-query';
 import { notifyManager, QueryClient } from '@tanstack/react-query';
 import { createRouter as createTanStackRouter } from '@tanstack/react-router';
 import { setupRouterSsrQueryIntegration } from '@tanstack/react-router-ssr-query';
-import { ConvexProvider, ConvexReactClient } from 'convex/react';
+import { ConvexReactClient } from 'convex/react';
 
 import { DefaultCatchBoundary } from './components/_default-catch-boundary';
 import { NotFound } from './components/_not-found';

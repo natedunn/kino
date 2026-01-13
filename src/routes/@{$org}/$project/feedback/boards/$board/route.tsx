@@ -1,6 +1,5 @@
 import { convexQuery } from '@convex-dev/react-query';
 import { createFileRoute, notFound, Outlet } from '@tanstack/react-router';
-import { zid } from 'convex-helpers/server/zod4';
 
 import { api } from '~api';
 import { NotFound } from '@/components/_not-found';
@@ -13,7 +12,7 @@ export const Route = createFileRoute('/@{$org}/$project/feedback/boards/$board')
 				projectSlug: params.project,
 				orgSlug: params.org,
 			})
-		)
+		);
 
 		if (!board) {
 			throw notFound();
@@ -33,5 +32,5 @@ function RouteComponent() {
 		<div>
 			<Outlet />
 		</div>
-	)
+	);
 }

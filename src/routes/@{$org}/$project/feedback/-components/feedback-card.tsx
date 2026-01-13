@@ -3,7 +3,6 @@ import { ClickableContainer } from '@/components/clickable-container';
 import { Button } from '@/components/ui/button';
 import { StatusIcon } from '@/icons';
 import ChevronUp from '@/icons/chevron-up';
-import CircleDot from '@/icons/circle-dot';
 import { ArrayType } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { truncateToNearestSpace } from '@/lib/utils/truncate';

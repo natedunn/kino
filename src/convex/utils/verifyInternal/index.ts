@@ -16,13 +16,7 @@ import type {
 import { ConvexError, GenericId } from 'convex/values';
 
 import { constructColumnData, constructIndexData } from './construct';
-import {
-	ConfigOptionsArg,
-	DefaultValuesConfig,
-	OnFailArgs,
-	UniqueIndexes,
-	UniqueRowConfig,
-} from './types';
+import { ConfigOptionsArg, OnFailArgs, UniqueIndexes, UniqueRowConfig } from './types';
 
 type DMGeneric = DataModelFromSchemaDefinition<SchemaDefinition<any, boolean>>;
 
@@ -458,21 +452,21 @@ const verifyAuth = async <
 	return { userIdentity, userId: userIdentity.subject } as AuthReturn<T>;
 };
 
-type MakeKeysOptional<T, K extends PropertyKey> = {
-	[P in keyof T]: P extends K ? T[P] | undefined : T[P];
-};
+// type MakeKeysOptional<T, K extends PropertyKey> = {
+// 	[P in keyof T]: P extends K ? T[P] | undefined : T[P];
+// };
 
 /**
  * Helper type to extract literal keys from a defaultValues config
  */
-type ExtractDefaultKeys<DV, TN extends PropertyKey, DocKeys extends PropertyKey> =
-	DV extends Record<PropertyKey, any>
-		? TN extends keyof DV
-			? DV[TN] extends Record<PropertyKey, any>
-				? keyof DV[TN] & DocKeys
-				: never
-			: never
-		: never;
+// type ExtractDefaultKeys<DV, TN extends PropertyKey, DocKeys extends PropertyKey> =
+// 	DV extends Record<PropertyKey, any>
+// 		? TN extends keyof DV
+// 			? DV[TN] extends Record<PropertyKey, any>
+// 				? keyof DV[TN] & DocKeys
+// 				: never
+// 			: never
+// 		: never;
 
 type Prettify<T> = { [K in keyof T]: T[K] } & {};
 
@@ -495,8 +489,6 @@ export const verifyConfig = <
 	// 	}
 	configOptions: CO & ConfigOptionsArg<DataModel>
 ) => {
-	type Test = DocumentByName<DataModel, 'feedback'>;
-
 	const verifyDefaultValues = async <TN extends TableNamesInDataModel<DataModel>>({
 		ctx: _ctx,
 		tableName: _tableName,

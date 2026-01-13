@@ -1,5 +1,5 @@
 import { zid, zodToConvex } from 'convex-helpers/server/zod4';
-import { paginationOptsValidator } from 'convex/server';
+// import { paginationOptsValidator } from 'convex/server';
 import { ConvexError } from 'convex/values';
 import * as z from 'zod';
 
@@ -10,7 +10,7 @@ import {
 	feedbackBoardSelectSchema,
 	feedbackBoardUpdateSchema,
 } from './schema/feedbackBoard.schema';
-import { projectSchema } from './schema/project.schema';
+// import { projectSchema } from './schema/project.schema';
 import { mutation, query } from './utils/functions';
 import { triggers } from './utils/trigger';
 import { verify } from './utils/verify';

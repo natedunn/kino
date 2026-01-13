@@ -1,7 +1,8 @@
-import { ConvexError } from 'convex/values';
+// import { ConvexError } from 'convex/values';
 
 import { triggers } from './utils/trigger';
-import { verify } from './utils/verify';
+
+// import { verify } from './utils/verify';
 
 triggers.register('feedbackComment', async (ctx, change) => {
 	// if (change.operation === 'insert') {
