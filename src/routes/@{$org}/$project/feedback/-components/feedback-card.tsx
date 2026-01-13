@@ -48,7 +48,7 @@ export const FeedbackCard = ({
 						<span className='text-xl font-medium underline-offset-2 group-hover:underline'>
 							{title}
 						</span>
-						<div className='mt-2 h-full max-h-[250px] space-y-4 overflow-hidden text-ellipsis text-muted-foreground'>
+						<div className='mt-2 h-full max-h-62.5 space-y-4 overflow-hidden text-ellipsis text-muted-foreground'>
 							{truncateToNearestSpace(firstComment?.content ?? '', 300)}
 						</div>
 						{board && (
