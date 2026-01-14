@@ -1,6 +1,7 @@
 import { useConvexMutation } from '@convex-dev/react-query';
 import { revalidateLogic } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
+import * as z from 'zod';
 
 import { api, API } from '~api';
 import { Button } from '@/components/ui/button';
@@ -15,14 +16,21 @@ import {
 import { useAppForm, useFormError } from '@/components/ui/tanstack-form';
 import { Textarea } from '@/components/ui/textarea';
 import { Id } from '@/convex/_generated/dataModel';
-import {
-	FeedbackCreateSchema,
-	// feedbackCreateSchema
-} from '@/convex/schema/feedback.schema';
+import { feedbackCreateSchema } from '@/convex/schema/feedback.schema';
 import { cn } from '@/lib/utils';
 
-// const formSchema = feedbackCreateSchema;
-type FormSchema = Omit<FeedbackCreateSchema, 'projectId'>;
+const formSchema = feedbackCreateSchema
+	.omit({
+		projectId: true,
+		boardId: true,
+	})
+	.extend(
+		z.object({
+			projectId: z.string(),
+			boardId: z.string(),
+		}).shape
+	);
+type FormSchema = z.infer<typeof formSchema>;
 
 type CreateFeedbackFormProps = {
 	projectId: Id<'project'>;
@@ -37,15 +45,16 @@ export const CreateFeedbackForm = ({ projectId, boards, onSubmit }: CreateFeedba
 
 	const defaultValues: FormSchema = {
 		title: '',
-		boardId: '' as Id<'feedbackBoard'>,
+		boardId: '',
+		projectId,
 		firstComment: '',
 	};
 
 	const form = useAppForm({
 		defaultValues,
-		// validators: {
-		// 	onSubmit: formSchema,
-		// },
+		validators: {
+			onSubmit: formSchema,
+		},
 		validationLogic: revalidateLogic({
 			mode: 'submit',
 			modeAfterSubmission: 'change',
@@ -56,7 +65,7 @@ export const CreateFeedbackForm = ({ projectId, boards, onSubmit }: CreateFeedba
 		onSubmit: async ({ value }) => {
 			formError.errorReset();
 			createFeedback({
-				boardId: value.boardId,
+				boardId: value.boardId as Id<'feedbackBoard'>,
 				projectId: projectId,
 				title: value.title,
 				firstComment: value.firstComment,
@@ -93,7 +102,7 @@ export const CreateFeedbackForm = ({ projectId, boards, onSubmit }: CreateFeedba
 								<field.Control>
 									<Select
 										defaultValue={defaultValues.boardId}
-										onValueChange={(value) => field.handleChange(value as FormSchema['boardId'])}
+										onValueChange={(value) => field.handleChange(value)}
 										disabled={!enabled}
 									>
 										<SelectTrigger className='w-48'>
