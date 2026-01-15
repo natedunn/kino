@@ -22,10 +22,16 @@ export const constructColumnData = <
 	data: D,
 	{
 		allowNullishValue = false,
+		allOrNothing = true,
 	}: {
 		allowNullishValue?: boolean;
+		allOrNothing?: boolean;
 	}
 ) => {
+	console.log('fields, data >>', fields, data);
+
+	const lengthOfFields = fields.length;
+
 	const columnData = fields
 		.map((_, index) => {
 			const column = fields?.[index];
@@ -42,9 +48,20 @@ export const constructColumnData = <
 		})
 		.filter((e) => !!e);
 
-	console.log(columnData);
+	console.log('columnData >>>> ', columnData);
 
-	return columnData;
+	if (allOrNothing && columnData.length !== lengthOfFields) {
+		console.warn(
+			'⚠️ The index was NOT supplied with the same amount data as there was fields. This warning only appears when setting `allOrNothing` to `true`.',
+			'`fields: `',
+			fields,
+			'`columnData: `',
+			columnData
+		);
+		return null;
+	}
+
+	return columnData.length > 0 ? columnData : null;
 };
 
 /**

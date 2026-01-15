@@ -26,19 +26,10 @@ export const create = mutation({
 			});
 		}
 
-		const slug = generateRandomSlug();
-
 		const dv = await verify.defaultValues({
 			ctx,
 			tableName: 'feedback',
 			data: {
-				// slug, status, upvotes, test, tags are OPTIONAL (have defaults)
-				// projectId, title, boardId, authorProfileId are REQUIRED (no defaults)
-				// slug,
-				// upvotes: 1,
-				// status: 'open',
-				// test: true,
-				// status: 'closed',
 				title: args.title,
 				projectId: args.projectId,
 				boardId: args.boardId,
@@ -48,19 +39,20 @@ export const create = mutation({
 
 		console.log('defaultValues >>>>>', dv);
 
+		if (!dv) {
+			throw new ConvexError({
+				message: 'Default values not found',
+				code: '404',
+			});
+		}
+
 		const feedbackId = await verify.insert({
 			ctx,
 			tableName: 'feedback',
-			data: {
-				slug,
-				projectId: args.projectId,
-				boardId: args.boardId,
-				title: args.title,
-				authorProfileId: profile._id,
-				status: 'open',
-				upvotes: 1,
-			},
+			data: dv,
 		});
+
+		console.log('✨ feedbackId >>>>', feedbackId);
 
 		const feedbackCommentId = await verify.insert({
 			ctx,
@@ -73,10 +65,25 @@ export const create = mutation({
 			},
 		});
 
-		await verify.patch(ctx, 'feedback', feedbackId, {
-			firstCommentId: feedbackCommentId,
-			searchContent: args.title + ' ' + args.firstComment,
-		});
+		console.log('✨ feedbackCommentId >>>>', feedbackCommentId);
+
+		await verify.patch(
+			ctx,
+			'feedback',
+			feedbackId,
+			{
+				firstCommentId: feedbackCommentId,
+				searchContent: args.title + ' ' + args.firstComment,
+			}
+			// {
+			// 	onFail: ({ uniqueRow }) => {
+			// 		throw new ConvexError({
+			// 			code: '500',
+			// 			message: 'Unable to patch feedback',
+			// 		});
+			// 	},
+			// }
+		);
 
 		return {
 			feedbackId,

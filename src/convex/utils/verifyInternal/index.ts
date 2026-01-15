@@ -16,8 +16,15 @@ import type {
 import { ConvexError, GenericId } from 'convex/values';
 
 import { constructColumnData, constructIndexData } from './construct';
-import { ConfigOptionsArg, OnFailArgs, UniqueIndexes, UniqueRowConfig } from './types';
+import {
+	ConfigOptionsArg,
+	OnFailArgs,
+	UniqueIndexes,
+	UniqueRowConfig,
+	UniqueRowConfigOptions,
+} from './types';
 
+type Operation = 'insert' | 'patch' | 'query';
 type DMGeneric = DataModelFromSchemaDefinition<SchemaDefinition<any, boolean>>;
 
 type UneditableColumns<DM extends DMGeneric> = {
@@ -127,7 +134,8 @@ export const verifyRowUniqueness = async <
 	S extends SchemaDefinition<GenericSchema, boolean>,
 	DataModel extends DataModelFromSchemaDefinition<S>,
 	TN extends TableNamesInDataModel<DataModel>,
-	D extends Partial<DocumentByName<DataModel, TN>>,
+	O extends Operation,
+	D extends DocumentByName<DataModel, TN>,
 >({
 	ctx,
 	schema,
@@ -142,8 +150,8 @@ export const verifyRowUniqueness = async <
 	schema: S;
 	indexData: UniqueRowConfig<DataModel> | undefined;
 	tableName: TN;
-	data: D;
-	operation: 'insert' | 'patch' | 'query';
+	data: Operation extends 'patch' ? Partial<D> : D;
+	operation: O;
 	patchId?: string;
 	onFail?: (onFailArgs: OnFailArgs<D>) => void;
 }) => {
@@ -156,7 +164,7 @@ export const verifyRowUniqueness = async <
 
 	const indexesData = constructIndexData(schema, tableName, indexData);
 
-	console.log('indexesData >>>>>', indexesData);
+	console.log('indexesData >>>>>', indexesData, data);
 
 	if (!indexesData && !!indexData) {
 		uniqueRowError(`Index data was not found where there should have been.`);
@@ -167,8 +175,13 @@ export const verifyRowUniqueness = async <
 		return;
 	}
 
+	let count = 0;
 	for (const i of indexesData) {
-		const { name, fields, identifiers, ..._rest } = i;
+		const { name, fields, identifiers, ...rest } = i;
+
+		console.log(`🔍 [${count + 1}] Checking row uniqueness for index ${name}...`);
+
+		const _options = rest as UniqueRowConfigOptions;
 
 		if (!fields[0] && !fields[1]) {
 			uniqueRowError(
@@ -178,45 +191,43 @@ export const verifyRowUniqueness = async <
 
 		// const identifiers = indexesData?.['identifiers'] ?? ['_id'];
 
-		const existingResults = await ctx.db
-			.query(tableName)
-			.withIndex(name, (q) =>
-				constructColumnData(fields, data, {}).reduce(
-					(query: any, { column, value }) => query.eq(column, value),
-					q
-				)
-			)
-			.collect();
+		const columnData = constructColumnData(fields, data, {});
 
-		console.log('existing >>>>', existingResults);
+		const getExisting = async (cd: ReturnType<typeof constructColumnData>) => {
+			let existingByIndex: D[] = [];
 
-		if (existingResults.length > 1) {
-			console.warn(
-				`There was more than one existing result found for index ${name}. Check the following IDs:`,
-				existingResults.map((r) => r._id)
-			);
-		}
-
-		const existing = existingResults[0];
-
-		let idMatchedToExisting: string | null = null;
-
-		if (existing) {
-			console.log(`Found an existing match for index ${name}. Checking identifiers...`);
-
-			for (const identifier of identifiers) {
-				if (existing[identifier] && data[identifier] && existing[identifier] === data[identifier]) {
-					idMatchedToExisting = String(identifier);
-					break;
-				}
+			if (!cd) {
+				existingByIndex = [];
+			} else {
+				existingByIndex = await ctx.db
+					.query(tableName)
+					.withIndex(name, (q) =>
+						cd.reduce((query: any, { column, value }) => query.eq(column, value), q)
+					)
+					.collect();
 			}
-		}
+
+			if (existingByIndex.length > 1) {
+				// TODO: add option to make this throw instead of warn
+				console.warn(
+					`⚠️ There was more than one existing result found for index ${name}. Check the following IDs:`,
+					existingByIndex.map((r) => r._id)
+				);
+				console.warn(
+					`⚠️ It is recommended that you triage the rows listed above since they have data that go against a rule of row uniqueness.`
+				);
+			}
+
+			return existingByIndex.length > 0 ? existingByIndex[0] : null;
+		};
+
+		const existing = await getExisting(columnData);
 
 		/**
 		 * Insert check
 		 */
 		if (operation === 'insert') {
-			console.log('Verifying insert...');
+			console.log('Verifying insert...', data);
 
 			if (!existing) {
 				// All good, verify passes
@@ -245,36 +256,87 @@ export const verifyRowUniqueness = async <
 		}
 
 		if (operation === 'patch' && patchId) {
-			console.log('Verifying patch...');
+			console.log('Verifying patch...', patchId, data);
 
-			const match = await ctx.db.get(patchId as GenericId<TN>);
+			const matchedToExisting = (_existing: D | null, _data: Partial<D>) => {
+				let idMatchedToExisting: string | null = null;
 
-			if (!match) {
-				uniqueRowError(`No existing document was found`);
-			}
+				if (_existing) {
+					console.log(`Found an existing match for index ${name}. Checking identifiers...`);
 
-			if (!existing) return;
+					for (const identifier of identifiers) {
+						if (
+							(_existing[identifier] &&
+								_data[identifier] &&
+								_existing[identifier] === _data[identifier]) ||
+							(identifier === '_id' && _existing[identifier] === patchId)
+						) {
+							idMatchedToExisting = String(identifier);
+							break;
+						}
+					}
+				}
+				return idMatchedToExisting;
+			};
 
-			if (existing && idMatchedToExisting) {
-				console.info(
-					`👍 Identifier of '${idMatchedToExisting}' matched. Skipping check for index '${name}' and fields [${fields.join(`,`)}]`
-				);
-				return;
-			}
+			const checkExisting = (_existing: D | null, _data: Partial<D>) => {
+				const matchedId = matchedToExisting(_existing, _data);
 
-			if (existing && !idMatchedToExisting) {
-				onFail?.({
-					uniqueRow: {
-						existingData: existing,
+				if (!_existing) {
+					console.log('No existing found. It does not conflict.');
+					return;
+				}
+
+				if (matchedId) {
+					console.info(
+						`👍 Identifier of '${matchedId}' matched. Skipping check for index '${name}' and fields [${fields.join(`,`)}]`
+					);
+					return;
+				} else {
+					onFail?.({
+						uniqueRow: {
+							existingData: _existing,
+						},
+					});
+					uniqueRowError(
+						`In '${tableName}' table, there already exists a value match of the two columns: [${fields.join(`,`)}].`
+					);
+				}
+			};
+
+			if (!existing && !columnData) {
+				// This means there were no existing results found BECAUSE there wasn't complete data provided to match the provided index.
+				//
+				// If we want to go the extra mile we can get the match to check what WOULD be the potential data conflict
+				const match = await ctx.db.get(tableName, patchId as GenericId<TN>);
+
+				if (!match) {
+					return uniqueRowError(`No document fount for id ${patchId}`);
+				}
+
+				const extensiveColumnData = constructColumnData(
+					fields,
+					{
+						...match,
+						...data,
 					},
-				});
-				uniqueRowError(
-					`In '${tableName}' table, there already exists a value match of the two columns: [${fields.join(`,`)}].`
+					{}
 				);
+
+				if (extensiveColumnData) {
+					const extensiveExisting = await getExisting(extensiveColumnData);
+
+					console.log(extensiveExisting);
+					checkExisting(extensiveExisting, data);
+				} else {
+					uniqueRowError(`Incomplete data when there should have been enough.`);
+				}
 			}
+
+			checkExisting(existing, data);
 		}
-		if (operation === 'query') {
-		}
+		count++;
+		return;
 	}
 };
 
@@ -515,7 +577,7 @@ export const verifyConfig = <
 		return {
 			...configOptions.defaultValues?.[_tableName],
 			...data,
-		};
+		} as WithoutSystemFields<DocumentByName<DataModel, TN>>;
 	};
 
 	const verifyAll = async <
@@ -606,7 +668,14 @@ export const verifyConfig = <
 
 		const { _id, _creationTime, ...rest } = verifiedData.data;
 
-		return args.ctx.db.insert(args.tableName, rest as WithoutSystemFields<D>);
+		// const dv = await verifyDefaultValues({
+		// 	ctx: args.ctx,
+		// 	tableName: args.tableName,
+		// 	data: rest as WithoutSystemFields<D>,
+		// })
+
+		const id = args.ctx.db.insert(args.tableName, rest as WithoutSystemFields<D>);
+		return id;
 	};
 
 	/**

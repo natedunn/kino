@@ -48,7 +48,7 @@ export const create = mutation({
 			data: args,
 			onFail: ({ uniqueRow }) => {
 				throw new ConvexError({
-					message: `A project with the slug of '${uniqueRow?.existingData.slug}' already exists for this organization.`,
+					message: `A project with the slug of '${uniqueRow?.existingData?.slug}' already exists for this organization.`,
 				});
 			},
 		});
@@ -90,7 +90,7 @@ export const update = authedMutation({
 		await verify.patch(ctx, 'project', args._id, args, {
 			onFail: ({ uniqueRow }) => {
 				throw new ConvexError({
-					message: `A project with the slug of '${uniqueRow?.existingData.slug}' already exists for this organization.`,
+					message: `A project with the slug of '${uniqueRow?.existingData?.slug}' already exists for this organization.`,
 				});
 			},
 		});
@@ -154,7 +154,7 @@ export const getDetails = query({
 		})
 	),
 	handler: async (ctx, args) => {
-		console.log('project.getDetails args >>>>', args);
+		// console.log('project.getDetails args >>>>', args);
 
 		if (args.orgSlug === 'tanstack-start' || args.slug === 'styles.css') {
 			return null;

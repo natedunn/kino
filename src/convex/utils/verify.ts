@@ -36,9 +36,39 @@ export const { verify, config } = verifyConfig(schema, {
 		feedback: {
 			status: 'open',
 			slug: generateRandomSlug(),
-			blah: true,
-			tags: ['testing'],
-			upvotes: 2,
+			upvotes: 1,
 		},
 	},
 });
+
+// const defaultValues = defaultValuesConfig(schema, {
+// 	feedbackBoard: {
+// 		slug: generateRandomSlug(),
+// 	},
+// 	feedback: {
+// 		status: 'open',
+// 		slug: generateRandomSlug(),
+// 		upvotes: 1,
+// 	},
+// });
+
+// const { insert, patch } = verifyConfig(schema, {
+// 	verify: [
+// 		defaultValues,
+// 		uniqueRows(schema, {
+// 			project: [
+// 				{
+// 					index: 'by_orgSlug_slug',
+// 				},
+// 			],
+// 			feedback: [
+// 				// {
+// 				// 	index: 'by_projectId_title',
+// 				// },
+// 				{
+// 					index: 'by_projectId_slug',
+// 				},
+// 			],
+// 		}),
+// 	],
+// });

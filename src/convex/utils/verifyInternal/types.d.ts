@@ -1,7 +1,5 @@
 import type {
 	DataModelFromSchemaDefinition,
-	DocumentByName,
-	GenericSchema,
 	Indexes,
 	NamedTableInfo,
 	SchemaDefinition,
@@ -20,7 +18,7 @@ export type OnFailArgs<D> = {
 		existingData: D;
 	};
 	uniqueRow?: {
-		existingData: D;
+		existingData: D | null;
 	};
 	editableColumn?: {
 		removedColumns: string[];
