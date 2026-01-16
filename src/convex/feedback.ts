@@ -8,11 +8,13 @@ import { generateRandomSlug } from '@/lib/random';
 import { DataModel } from './_generated/dataModel';
 import { query } from './_generated/server';
 import { getMyProfile } from './profile.lib';
+import schema from './schema';
 import { feedbackCreateSchema, feedbackSchema } from './schema/feedback.schema';
 import { mutation } from './utils/functions';
 import { asyncFlatMapFilter, hasOverlap } from './utils/helpers';
 import { triggers } from './utils/trigger';
-import { verify } from './utils/verify';
+import { defaultValues, insert, verify } from './utils/verify';
+import { defaultValuesConfig } from './utils/verifyInternal/v2';
 
 export const create = mutation({
 	args: zodToConvex(feedbackCreateSchema),
@@ -26,30 +28,22 @@ export const create = mutation({
 			});
 		}
 
-		const dv = await verify.defaultValues({
-			ctx,
-			tableName: 'feedback',
-			data: {
-				title: args.title,
-				projectId: args.projectId,
-				boardId: args.boardId,
-				authorProfileId: profile._id,
-			},
-		});
+		// const dv = await verify.defaultValues({
+		// 	ctx,
+		// 	tableName: 'feedback',
+		// 	data: {
+		// 		title: args.title,
+		// 		projectId: args.projectId,
+		// 		boardId: args.boardId,
+		// 		authorProfileId: profile._id,
+		// 	},
+		// });
 
-		console.log('defaultValues >>>>>', dv);
-
-		if (!dv) {
-			throw new ConvexError({
-				message: 'Default values not found',
-				code: '404',
-			});
-		}
-
-		const feedbackId = await verify.insert({
-			ctx,
-			tableName: 'feedback',
-			data: dv,
+		const feedbackId = await insert(ctx, 'feedback', {
+			title: args.title,
+			projectId: args.projectId,
+			boardId: args.boardId,
+			authorProfileId: profile._id,
 		});
 
 		console.log('✨ feedbackId >>>>', feedbackId);

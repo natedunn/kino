@@ -31,6 +31,7 @@ import type * as utils_verify from "../utils/verify.js";
 import type * as utils_verifyInternal_construct from "../utils/verifyInternal/construct.js";
 import type * as utils_verifyInternal_helpers from "../utils/verifyInternal/helpers.js";
 import type * as utils_verifyInternal_index from "../utils/verifyInternal/index.js";
+import type * as utils_verifyInternal_v2 from "../utils/verifyInternal/v2.js";
 
 import type {
   ApiFromModules,
@@ -62,6 +63,7 @@ declare const fullApi: ApiFromModules<{
   "utils/verifyInternal/construct": typeof utils_verifyInternal_construct;
   "utils/verifyInternal/helpers": typeof utils_verifyInternal_helpers;
   "utils/verifyInternal/index": typeof utils_verifyInternal_index;
+  "utils/verifyInternal/v2": typeof utils_verifyInternal_v2;
 }>;
 
 /**

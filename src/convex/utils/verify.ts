@@ -3,6 +3,7 @@ import schema from '@convex/schema';
 import { generateRandomSlug } from '@/lib/random';
 
 import { verifyConfig } from './verifyInternal';
+import { verifyConfig as _verifyConfig, defaultValuesConfig } from './verifyInternal/v2';
 
 export const { verify, config } = verifyConfig(schema, {
 	uniqueColumns: {
@@ -41,34 +42,17 @@ export const { verify, config } = verifyConfig(schema, {
 	},
 });
 
-// const defaultValues = defaultValuesConfig(schema, {
-// 	feedbackBoard: {
-// 		slug: generateRandomSlug(),
-// 	},
-// 	feedback: {
-// 		status: 'open',
-// 		slug: generateRandomSlug(),
-// 		upvotes: 1,
-// 	},
-// });
+export const defaultValues = defaultValuesConfig(schema, {
+	feedbackBoard: {
+		slug: generateRandomSlug(),
+	},
+	feedback: {
+		status: 'open',
+		slug: generateRandomSlug(),
+		upvotes: 1,
+	},
+});
 
-// const { insert, patch } = verifyConfig(schema, {
-// 	verify: [
-// 		defaultValues,
-// 		uniqueRows(schema, {
-// 			project: [
-// 				{
-// 					index: 'by_orgSlug_slug',
-// 				},
-// 			],
-// 			feedback: [
-// 				// {
-// 				// 	index: 'by_projectId_title',
-// 				// },
-// 				{
-// 					index: 'by_projectId_slug',
-// 				},
-// 			],
-// 		}),
-// 	],
-// });
+export const { insert, patch } = _verifyConfig(schema, {
+	defaultValues,
+});
