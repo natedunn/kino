@@ -3,7 +3,11 @@ import schema from '@convex/schema';
 import { generateRandomSlug } from '@/lib/random';
 
 import { verifyConfig } from './verifyInternal';
-import { verifyConfig as _verifyConfig, defaultValuesConfig } from './verifyInternal/v2';
+import {
+	verifyConfig as _verifyConfig,
+	defaultValuesConfig,
+	uniqueRowConfig,
+} from './verifyInternal/v2';
 
 export const { verify, config } = verifyConfig(schema, {
 	uniqueColumns: {
@@ -53,6 +57,31 @@ export const defaultValues = defaultValuesConfig(schema, {
 	},
 });
 
-export const { insert, patch } = _verifyConfig(schema, {
-	defaultValues,
+export const uniqueRow = uniqueRowConfig(schema, {
+	feedback: [
+		{
+			index: 'by_projectId_title',
+		},
+	],
+});
+
+export const { insert, patch, configs } = _verifyConfig(schema, {
+	defaultValues: defaultValuesConfig(schema, {
+		feedbackBoard: {
+			slug: generateRandomSlug(),
+		},
+		feedback: {
+			status: 'open',
+			slug: generateRandomSlug(),
+			upvotes: 1,
+		},
+	}),
+	uniqueRow: uniqueRowConfig(schema, {
+		feedback: [
+			{
+				index: 'by_projectId_title',
+				// identifiers: ['_id'] // optional, defaults to ['_id']
+			},
+		],
+	}),
 });
