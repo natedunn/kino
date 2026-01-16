@@ -45,7 +45,6 @@ export const verifyConfig = <
 		}
 	): Promise<GenericId<TN>> => {
 		let verifiedData = data as WithoutSystemFields<DocumentByName<DataModel, TN>>;
-		const onFail = options?.onFail as OnFailCallback<DocumentByName<DataModel, TN>> | undefined;
 
 		// Step 1: Apply default values (transforms data)
 		if (configs.defaultValues) {
@@ -56,7 +55,7 @@ export const verifyConfig = <
 		if (configs.uniqueRow) {
 			verifiedData = await configs.uniqueRow.verify(ctx, tableName, verifiedData, {
 				operation: 'insert',
-				onFail,
+				onFail: options?.onFail,
 			});
 		}
 
@@ -65,8 +64,7 @@ export const verifyConfig = <
 		// if (configs.uneditableColumns) { ... }
 
 		// Final insert
-		const id = await ctx.db.insert(tableName, verifiedData);
-		return id as GenericId<TN>;
+		return await ctx.db.insert(tableName, verifiedData);
 	};
 
 	/**
@@ -84,20 +82,26 @@ export const verifyConfig = <
 			onFail?: OnFailCallback<D>;
 		}
 	): Promise<void> => {
-		let verifiedData = data as Partial<WithoutSystemFields<DocumentByName<DataModel, TN>>>;
-		const _onFail = options?.onFail;
+		let verifiedData = data;
+		// const onFail = options?.onFail as OnFailCallback<DocumentByName<DataModel, TN>> | undefined;
 
-		// For patch, we might skip defaultValues since we're updating existing data
+		// For patch, we skip defaultValues since we're updating existing data
 		// But uniqueRow checks still apply
 
 		// Check unique rows (validates, may throw)
 		if (configs.uniqueRow) {
-			// Note: For patch, you might want a different verify signature
-			// that accepts partial data and the existing document ID
-			// For now, we'll skip this in patch
+			verifiedData = await configs.uniqueRow.verify(ctx, tableName, verifiedData, {
+				operation: 'patch',
+				patchId: id,
+				onFail: options?.onFail,
+			});
 		}
 
-		// Add more verification steps here
+		console.log(verifiedData);
+
+		// Add more verification steps here as you add more config types
+		// if (configs.uniqueColumn) { ... }
+		// if (configs.uneditableColumns) { ... }
 
 		await ctx.db.patch(id, verifiedData);
 	};

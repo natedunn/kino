@@ -3,18 +3,14 @@ import { zodToConvex } from 'convex-helpers/server/zod4';
 import { OrderedQuery, paginationOptsValidator, Query, QueryInitializer } from 'convex/server';
 import { ConvexError, v } from 'convex/values';
 
-import { generateRandomSlug } from '@/lib/random';
-
 import { DataModel } from './_generated/dataModel';
 import { query } from './_generated/server';
 import { getMyProfile } from './profile.lib';
-import schema from './schema';
 import { feedbackCreateSchema, feedbackSchema } from './schema/feedback.schema';
 import { mutation } from './utils/functions';
 import { asyncFlatMapFilter, hasOverlap } from './utils/helpers';
 import { triggers } from './utils/trigger';
-import { defaultValues, insert, verify } from './utils/verify';
-import { defaultValuesConfig } from './utils/verifyInternal/v2/index';
+import { insert, patch } from './utils/verify';
 
 export const create = mutation({
 	args: zodToConvex(feedbackCreateSchema),
@@ -28,40 +24,13 @@ export const create = mutation({
 			});
 		}
 
-		// const dv = await verify.defaultValues({
-		// 	ctx,
-		// 	tableName: 'feedback',
-		// 	data: {
-		// 		title: args.title,
-		// 		projectId: args.projectId,
-		// 		boardId: args.boardId,
-		// 		authorProfileId: profile._id,
-		// 	},
-		// });
-
-		const feedbackId = await insert(
-			ctx,
-			'feedback',
-			{
-				// slug: '1234567890',
-				title: args.title,
-				projectId: args.projectId,
-				boardId: args.boardId,
-				authorProfileId: profile._id,
-			}
-			// {
-			// 	onFail: ({ uniqueRow }) => {
-			// 		if (uniqueRow) {
-			// 			throw new ConvexError({
-			// 				code: '500',
-			// 				message: `Duplicate feedback found: ${uniqueRow.existingData}`,
-			// 			});
-			// 		}
-			// 	},
-			// }
-		);
-
-		console.log('✨ feedbackId >>>>', feedbackId);
+		const feedbackId = await insert(ctx, 'feedback', {
+			status: 'in-progress',
+			title: args.title,
+			projectId: args.projectId,
+			boardId: args.boardId,
+			authorProfileId: profile._id,
+		});
 
 		const feedbackCommentId = await insert(ctx, 'feedbackComment', {
 			feedbackId: feedbackId,
@@ -70,25 +39,10 @@ export const create = mutation({
 			initial: true,
 		});
 
-		console.log('✨ feedbackCommentId >>>>', feedbackCommentId);
-
-		await verify.patch(
-			ctx,
-			'feedback',
-			feedbackId,
-			{
-				firstCommentId: feedbackCommentId,
-				searchContent: args.title + ' ' + args.firstComment,
-			}
-			// {
-			// 	onFail: ({ uniqueRow }) => {
-			// 		throw new ConvexError({
-			// 			code: '500',
-			// 			message: 'Unable to patch feedback',
-			// 		});
-			// 	},
-			// }
-		);
+		await patch(ctx, 'feedback', feedbackId, {
+			firstCommentId: feedbackCommentId,
+			searchContent: args.title + ' ' + args.firstComment,
+		});
 
 		return {
 			feedbackId,
