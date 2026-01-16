@@ -104,6 +104,10 @@ export type UniqueRowInput = {
 // export type UniqueColumnInput = { ... }
 // export type UneditableColumnsInput = { ... }
 
+// =============================================================================
+// Object-Based Types (for verifyConfig)
+// =============================================================================
+
 export type VerifyConfigInput = {
 	defaultValues?: DefaultValuesInput;
 	uniqueRow?: UniqueRowInput;

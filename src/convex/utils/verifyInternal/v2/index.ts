@@ -10,18 +10,22 @@ export { constructColumnData, constructIndexData, getTableIndexes } from './help
 
 // Types (export for advanced usage)
 export type {
+	// Config data types
 	DefaultValuesConfigData,
 	DefaultValuesInput,
-	ExtractDefaultValuesConfig,
-	ExtractUniqueRowConfig,
-	HasKey,
-	MakeOptional,
-	OnFailArgs,
-	OnFailCallback,
-	OptionalKeysForTable,
-	Prettify,
 	UniqueRowConfigData,
 	UniqueRowConfigOptions,
 	UniqueRowInput,
+	// OnFail types
+	OnFailArgs,
+	OnFailCallback,
+	// Utility types
+	MakeOptional,
+	Prettify,
+	// Object-based config types
+	ExtractDefaultValuesConfig,
+	ExtractUniqueRowConfig,
+	HasKey,
+	OptionalKeysForTable,
 	VerifyConfigInput,
 } from './types';
