@@ -14,7 +14,7 @@ import { mutation } from './utils/functions';
 import { asyncFlatMapFilter, hasOverlap } from './utils/helpers';
 import { triggers } from './utils/trigger';
 import { defaultValues, insert, verify } from './utils/verify';
-import { defaultValuesConfig } from './utils/verifyInternal/v2';
+import { defaultValuesConfig } from './utils/verifyInternal/v2/index';
 
 export const create = mutation({
 	args: zodToConvex(feedbackCreateSchema),

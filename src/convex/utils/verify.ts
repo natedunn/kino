@@ -7,7 +7,7 @@ import {
 	verifyConfig as _verifyConfig,
 	defaultValuesConfig,
 	uniqueRowConfig,
-} from './verifyInternal/v2';
+} from './verifyInternal/v2/index';
 
 export const { verify, config } = verifyConfig(schema, {
 	uniqueColumns: {
