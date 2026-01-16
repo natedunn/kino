@@ -5,6 +5,9 @@ export { uniqueRowConfig } from './uniqueRowConfig';
 // Main verifyConfig
 export { verifyConfig } from './verifyConfig';
 
+// Helpers (export for advanced usage)
+export { constructColumnData, constructIndexData, getTableIndexes } from './helpers';
+
 // Types (export for advanced usage)
 export type {
 	DefaultValuesConfigData,
@@ -13,9 +16,12 @@ export type {
 	ExtractUniqueRowConfig,
 	HasKey,
 	MakeOptional,
+	OnFailArgs,
+	OnFailCallback,
 	OptionalKeysForTable,
 	Prettify,
 	UniqueRowConfigData,
+	UniqueRowConfigOptions,
 	UniqueRowInput,
 	VerifyConfigInput,
 } from './types';

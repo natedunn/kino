@@ -3,6 +3,8 @@ import {
 	DocumentByName,
 	GenericMutationCtx,
 	GenericSchema,
+	Indexes,
+	NamedTableInfo,
 	SchemaDefinition,
 	TableNamesInDataModel,
 	WithoutSystemFields,
@@ -31,6 +33,29 @@ export type BaseConfigReturn = {
 };
 
 // =============================================================================
+// OnFail Types
+// =============================================================================
+
+export type OnFailArgs<D> = {
+	uniqueColumn?: {
+		conflictingColumn: keyof D;
+		existingData: D;
+	};
+	uniqueRow?: {
+		existingData: D | null;
+	};
+	editableColumn?: {
+		removedColumns: string[];
+		filteredData: D;
+	};
+	requiredColumn?: {
+		missingColumn: keyof D;
+	};
+};
+
+export type OnFailCallback<D> = (args: OnFailArgs<D>) => void;
+
+// =============================================================================
 // Config Data Types (what the user provides)
 // =============================================================================
 
@@ -42,11 +67,15 @@ export type DefaultValuesConfigData<DM extends DMGeneric> = {
 	};
 };
 
+export type UniqueRowConfigOptions = {
+	queryExistingWithNullish?: boolean;
+};
+
 export type UniqueRowConfigData<DM extends DMGeneric> = {
-	[K in keyof DM]?: {
-		index: string;
-		// Add other options as needed
-	}[];
+	[K in keyof DM]?: ({
+		index: keyof Indexes<NamedTableInfo<DM, K>>;
+		identifiers?: (keyof NamedTableInfo<DM, K>['document'])[];
+	} & UniqueRowConfigOptions)[];
 };
 
 // =============================================================================
@@ -66,8 +95,9 @@ export type DefaultValuesInput = {
 
 export type UniqueRowInput = {
 	_type: 'uniqueRow';
-	verify: (ctx: any, tableName: any, data: any) => Promise<any>;
+	verify: (ctx: any, tableName: any, data: any, options?: any) => Promise<any>;
 	config: Record<string, any>;
+	schema: any;
 };
 
 // Add more input types here as you create more config functions

@@ -39,24 +39,35 @@ export const create = mutation({
 		// 	},
 		// });
 
-		const feedbackId = await insert(ctx, 'feedback', {
-			title: args.title,
-			projectId: args.projectId,
-			boardId: args.boardId,
-			authorProfileId: profile._id,
-		});
+		const feedbackId = await insert(
+			ctx,
+			'feedback',
+			{
+				// slug: '1234567890',
+				title: args.title,
+				projectId: args.projectId,
+				boardId: args.boardId,
+				authorProfileId: profile._id,
+			}
+			// {
+			// 	onFail: ({ uniqueRow }) => {
+			// 		if (uniqueRow) {
+			// 			throw new ConvexError({
+			// 				code: '500',
+			// 				message: `Duplicate feedback found: ${uniqueRow.existingData}`,
+			// 			});
+			// 		}
+			// 	},
+			// }
+		);
 
 		console.log('✨ feedbackId >>>>', feedbackId);
 
-		const feedbackCommentId = await verify.insert({
-			ctx,
-			tableName: 'feedbackComment',
-			data: {
-				feedbackId: feedbackId,
-				authorProfileId: profile._id,
-				content: args.firstComment,
-				initial: true,
-			},
+		const feedbackCommentId = await insert(ctx, 'feedbackComment', {
+			feedbackId: feedbackId,
+			authorProfileId: profile._id,
+			content: args.firstComment,
+			initial: true,
 		});
 
 		console.log('✨ feedbackCommentId >>>>', feedbackCommentId);

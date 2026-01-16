@@ -60,7 +60,7 @@ export const defaultValues = defaultValuesConfig(schema, {
 export const uniqueRow = uniqueRowConfig(schema, {
 	feedback: [
 		{
-			index: 'by_projectId_title',
+			index: 'by_projectId_slug',
 		},
 	],
 });
@@ -77,10 +77,14 @@ export const { insert, patch, configs } = _verifyConfig(schema, {
 		},
 	}),
 	uniqueRow: uniqueRowConfig(schema, {
+		project: [
+			{
+				index: 'by_orgSlug_slug',
+			},
+		],
 		feedback: [
 			{
-				index: 'by_projectId_title',
-				// identifiers: ['_id'] // optional, defaults to ['_id']
+				index: 'by_projectId_slug',
 			},
 		],
 	}),

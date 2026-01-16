@@ -9,7 +9,13 @@ import {
 } from 'convex/server';
 import { GenericId } from 'convex/values';
 
-import { HasKey, MakeOptional, OptionalKeysForTable, VerifyConfigInput } from './types';
+import {
+	HasKey,
+	MakeOptional,
+	OnFailCallback,
+	OptionalKeysForTable,
+	VerifyConfigInput,
+} from './types';
 
 export const verifyConfig = <
 	S extends SchemaDefinition<GenericSchema, boolean>,
@@ -33,9 +39,13 @@ export const verifyConfig = <
 					WithoutSystemFields<D>,
 					OptionalKeysForTable<VC, TN> & keyof WithoutSystemFields<D>
 				>
-			: WithoutSystemFields<D>
+			: WithoutSystemFields<D>,
+		options?: {
+			onFail?: OnFailCallback<D>;
+		}
 	): Promise<GenericId<TN>> => {
 		let verifiedData = data as WithoutSystemFields<DocumentByName<DataModel, TN>>;
+		const onFail = options?.onFail as OnFailCallback<DocumentByName<DataModel, TN>> | undefined;
 
 		// Step 1: Apply default values (transforms data)
 		if (configs.defaultValues) {
@@ -44,7 +54,10 @@ export const verifyConfig = <
 
 		// Step 2: Check unique rows (validates, may throw)
 		if (configs.uniqueRow) {
-			verifiedData = await configs.uniqueRow.verify(ctx, tableName, verifiedData);
+			verifiedData = await configs.uniqueRow.verify(ctx, tableName, verifiedData, {
+				operation: 'insert',
+				onFail,
+			});
 		}
 
 		// Add more verification steps here as you add more config types
@@ -66,9 +79,13 @@ export const verifyConfig = <
 		ctx: Omit<GenericMutationCtx<DataModel>, never>,
 		tableName: TN,
 		id: GenericId<TN>,
-		data: Partial<WithoutSystemFields<D>>
+		data: Partial<WithoutSystemFields<D>>,
+		options?: {
+			onFail?: OnFailCallback<D>;
+		}
 	): Promise<void> => {
 		let verifiedData = data as Partial<WithoutSystemFields<DocumentByName<DataModel, TN>>>;
+		const _onFail = options?.onFail;
 
 		// For patch, we might skip defaultValues since we're updating existing data
 		// But uniqueRow checks still apply
