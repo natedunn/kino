@@ -5,6 +5,10 @@ export { uniqueRowConfig } from './uniqueRowConfig';
 // Main verifyConfig
 export { verifyConfig } from './verifyConfig';
 
+// Plugin system
+export { createValidatePlugin, isValidatePlugin, runValidatePlugins } from './plugin';
+export type { ValidateContext, ValidatePlugin, ValidatePluginRecord } from './plugin';
+
 // Helpers (export for advanced usage)
 export { constructColumnData, constructIndexData, getTableIndexes } from './helpers';
 

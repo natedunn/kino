@@ -9,6 +9,7 @@ import {
 } from 'convex/server';
 import { GenericId } from 'convex/values';
 
+import { runValidatePlugins, ValidatePlugin } from './plugin';
 import {
 	HasKey,
 	MakeOptional,
@@ -17,16 +18,36 @@ import {
 	VerifyConfigInput,
 } from './types';
 
+/**
+ * Extended config input that includes optional validate plugins
+ */
+type VerifyConfigInputWithPlugins = VerifyConfigInput & {
+	/**
+	 * Additional validate plugins to run after built-in validators.
+	 * These plugins can validate data but don't affect input types.
+	 */
+	plugins?: ValidatePlugin[];
+};
+
 export const verifyConfig = <
 	S extends SchemaDefinition<GenericSchema, boolean>,
 	DataModel extends DataModelFromSchemaDefinition<S>,
-	const VC extends VerifyConfigInput,
+	const VC extends VerifyConfigInputWithPlugins,
 >(
 	_schema: S,
 	configs: VC
 ) => {
+	// Extract validate plugins
+	const validatePlugins = configs.plugins ?? [];
+
 	/**
 	 * Insert a document with all configured verifications applied.
+	 *
+	 * Execution order:
+	 * 1. Transform: defaultValues (makes fields optional, applies defaults)
+	 * 2. Validate: uniqueRow (built-in)
+	 * 3. Validate: custom plugins (in order provided)
+	 * 4. Insert into database
 	 */
 	const insert = async <
 		const TN extends TableNamesInDataModel<DataModel>,
@@ -46,12 +67,16 @@ export const verifyConfig = <
 	): Promise<GenericId<TN>> => {
 		let verifiedData = data as WithoutSystemFields<DocumentByName<DataModel, TN>>;
 
-		// Step 1: Apply default values (transforms data)
+		// === TRANSFORM PHASE ===
+
+		// Apply default values (transforms data)
 		if (configs.defaultValues) {
 			verifiedData = configs.defaultValues.verify(tableName, verifiedData);
 		}
 
-		// Step 2: Check unique rows (validates, may throw)
+		// === VALIDATE PHASE ===
+
+		// Built-in: Check unique rows
 		if (configs.uniqueRow) {
 			verifiedData = await configs.uniqueRow.verify(ctx, tableName, verifiedData, {
 				operation: 'insert',
@@ -59,9 +84,19 @@ export const verifyConfig = <
 			});
 		}
 
-		// Add more verification steps here as you add more config types
-		// if (configs.uniqueColumn) { ... }
-		// if (configs.uneditableColumns) { ... }
+		// Custom validate plugins
+		if (validatePlugins.length > 0) {
+			verifiedData = await runValidatePlugins(
+				validatePlugins,
+				{
+					ctx,
+					tableName: tableName as string,
+					operation: 'insert',
+					onFail: options?.onFail,
+				},
+				verifiedData
+			);
+		}
 
 		// Final insert
 		return await ctx.db.insert(tableName, verifiedData);
@@ -69,6 +104,13 @@ export const verifyConfig = <
 
 	/**
 	 * Patch a document with all configured verifications applied.
+	 *
+	 * Execution order:
+	 * 1. Validate: uniqueRow (built-in)
+	 * 2. Validate: custom plugins (in order provided)
+	 * 3. Patch in database
+	 *
+	 * Note: defaultValues is skipped for patch operations
 	 */
 	const patch = async <
 		const TN extends TableNamesInDataModel<DataModel>,
@@ -83,12 +125,10 @@ export const verifyConfig = <
 		}
 	): Promise<void> => {
 		let verifiedData = data;
-		// const onFail = options?.onFail as OnFailCallback<DocumentByName<DataModel, TN>> | undefined;
 
-		// For patch, we skip defaultValues since we're updating existing data
-		// But uniqueRow checks still apply
+		// === VALIDATE PHASE ===
 
-		// Check unique rows (validates, may throw)
+		// Built-in: Check unique rows
 		if (configs.uniqueRow) {
 			verifiedData = await configs.uniqueRow.verify(ctx, tableName, verifiedData, {
 				operation: 'patch',
@@ -97,11 +137,20 @@ export const verifyConfig = <
 			});
 		}
 
-		console.log(verifiedData);
-
-		// Add more verification steps here as you add more config types
-		// if (configs.uniqueColumn) { ... }
-		// if (configs.uneditableColumns) { ... }
+		// Custom validate plugins
+		if (validatePlugins.length > 0) {
+			verifiedData = await runValidatePlugins(
+				validatePlugins,
+				{
+					ctx,
+					tableName: tableName as string,
+					operation: 'patch',
+					patchId: id,
+					onFail: options?.onFail,
+				},
+				verifiedData
+			);
+		}
 
 		await ctx.db.patch(id, verifiedData);
 	};
