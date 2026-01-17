@@ -1,5 +1,7 @@
 // Config functions
 export { defaultValuesConfig } from './defaultValuesConfig';
+export { protectedColumnsConfig } from './protectedColumnsConfig';
+export type { ProtectedColumnsConfigData } from './protectedColumnsConfig';
 export { uniqueColumnConfig } from './uniqueColumnConfig';
 export { uniqueRowConfig } from './uniqueRowConfig';
 
@@ -18,6 +20,7 @@ export type {
 	// Config data types
 	DefaultValuesConfigData,
 	DefaultValuesInput,
+	ProtectedColumnsInput,
 	// Shared index-based config types (for plugin authors)
 	IndexConfigBaseOptions,
 	IndexConfigEntry,
@@ -38,8 +41,10 @@ export type {
 	Prettify,
 	// Object-based config types
 	ExtractDefaultValuesConfig,
+	ExtractProtectedColumnsConfig,
 	HasKey,
 	OptionalKeysForTable,
+	ProtectedKeysForTable,
 	VerifyConfigInput,
 } from './types';
 

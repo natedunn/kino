@@ -10,7 +10,7 @@ import { feedbackCreateSchema, feedbackSchema } from './schema/feedback.schema';
 import { mutation } from './utils/functions';
 import { asyncFlatMapFilter, hasOverlap } from './utils/helpers';
 import { triggers } from './utils/trigger';
-import { insert, patch } from './utils/verify';
+import { dangerouslyPatch, insert, patch } from './utils/verify';
 
 export const create = mutation({
 	args: zodToConvex(feedbackCreateSchema),
@@ -26,7 +26,7 @@ export const create = mutation({
 
 		const feedbackId = await insert(ctx, 'feedback', {
 			// status: 'in-progress',
-			slug: '1234567890',
+			// slug: '1234567890',
 			title: args.title,
 			projectId: args.projectId,
 			boardId: args.boardId,
@@ -41,6 +41,7 @@ export const create = mutation({
 		});
 
 		await patch(ctx, 'feedback', feedbackId, {
+			// projectId: args.projectId, // This is normally protected
 			firstCommentId: feedbackCommentId,
 			searchContent: args.title + ' ' + args.firstComment,
 		});

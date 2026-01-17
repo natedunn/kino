@@ -35,6 +35,7 @@ import type * as utils_verifyInternal_v2_defaultValuesConfig from "../utils/veri
 import type * as utils_verifyInternal_v2_helpers from "../utils/verifyInternal/v2/helpers.js";
 import type * as utils_verifyInternal_v2_index from "../utils/verifyInternal/v2/index.js";
 import type * as utils_verifyInternal_v2_plugin from "../utils/verifyInternal/v2/plugin.js";
+import type * as utils_verifyInternal_v2_protectedColumnsConfig from "../utils/verifyInternal/v2/protectedColumnsConfig.js";
 import type * as utils_verifyInternal_v2_types from "../utils/verifyInternal/v2/types.js";
 import type * as utils_verifyInternal_v2_uniqueColumnConfig from "../utils/verifyInternal/v2/uniqueColumnConfig.js";
 import type * as utils_verifyInternal_v2_uniqueRowConfig from "../utils/verifyInternal/v2/uniqueRowConfig.js";
@@ -74,6 +75,7 @@ declare const fullApi: ApiFromModules<{
   "utils/verifyInternal/v2/helpers": typeof utils_verifyInternal_v2_helpers;
   "utils/verifyInternal/v2/index": typeof utils_verifyInternal_v2_index;
   "utils/verifyInternal/v2/plugin": typeof utils_verifyInternal_v2_plugin;
+  "utils/verifyInternal/v2/protectedColumnsConfig": typeof utils_verifyInternal_v2_protectedColumnsConfig;
   "utils/verifyInternal/v2/types": typeof utils_verifyInternal_v2_types;
   "utils/verifyInternal/v2/uniqueColumnConfig": typeof utils_verifyInternal_v2_uniqueColumnConfig;
   "utils/verifyInternal/v2/uniqueRowConfig": typeof utils_verifyInternal_v2_uniqueRowConfig;

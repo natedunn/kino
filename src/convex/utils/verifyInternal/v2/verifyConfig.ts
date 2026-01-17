@@ -15,6 +15,7 @@ import {
 	MakeOptional,
 	OnFailCallback,
 	OptionalKeysForTable,
+	ProtectedKeysForTable,
 	VerifyConfigInput,
 } from './types';
 
@@ -70,7 +71,7 @@ export const verifyConfig = <
 
 		// Apply default values (transforms data)
 		if (configs.defaultValues) {
-			verifiedData = configs.defaultValues.verify(tableName, verifiedData);
+			verifiedData = await configs.defaultValues.verify(tableName, verifiedData);
 		}
 
 		// === VALIDATE PHASE ===
@@ -97,6 +98,9 @@ export const verifyConfig = <
 	/**
 	 * Patch a document with all configured verifications applied.
 	 *
+	 * Protected columns (if configured) are removed from the input type.
+	 * Use dangerouslyPatch() to bypass protected column restrictions.
+	 *
 	 * Execution order:
 	 * 1. Validate: plugins (in order provided)
 	 * 2. Patch in database
@@ -110,12 +114,17 @@ export const verifyConfig = <
 		ctx: Omit<GenericMutationCtx<DataModel>, never>,
 		tableName: TN,
 		id: GenericId<TN>,
-		data: Partial<WithoutSystemFields<D>>,
+		data: HasKey<VC, 'protectedColumns'> extends true
+			? Omit<
+					Partial<WithoutSystemFields<D>>,
+					ProtectedKeysForTable<VC, TN> & keyof WithoutSystemFields<D>
+				>
+			: Partial<WithoutSystemFields<D>>,
 		options?: {
 			onFail?: OnFailCallback<D>;
 		}
 	): Promise<void> => {
-		let verifiedData = data;
+		let verifiedData = data as Partial<WithoutSystemFields<DocumentByName<DataModel, TN>>>;
 
 		// === VALIDATE PHASE ===
 
@@ -138,9 +147,53 @@ export const verifyConfig = <
 		await ctx.db.patch(id, verifiedData);
 	};
 
+	/**
+	 * Patch a document bypassing protected column restrictions.
+	 *
+	 * WARNING: This allows patching ANY column, including protected ones.
+	 * Only use this when you explicitly need to update a protected column.
+	 *
+	 * Validation plugins still run - only type restrictions are bypassed.
+	 */
+	const dangerouslyPatch = async <
+		const TN extends TableNamesInDataModel<DataModel>,
+		const D extends DocumentByName<DataModel, TN>,
+	>(
+		ctx: Omit<GenericMutationCtx<DataModel>, never>,
+		tableName: TN,
+		id: GenericId<TN>,
+		data: Partial<WithoutSystemFields<D>>,
+		options?: {
+			onFail?: OnFailCallback<D>;
+		}
+	): Promise<void> => {
+		let verifiedData = data;
+
+		// === VALIDATE PHASE ===
+
+		// Run all validate plugins (protection is bypassed, but validation still runs)
+		if (validatePlugins.length > 0) {
+			verifiedData = await runValidatePlugins(
+				validatePlugins,
+				{
+					ctx,
+					tableName: tableName as string,
+					operation: 'patch',
+					patchId: id,
+					onFail: options?.onFail,
+					schema: _schema,
+				},
+				verifiedData
+			);
+		}
+
+		await ctx.db.patch(id, verifiedData);
+	};
+
 	return {
 		insert,
 		patch,
+		dangerouslyPatch,
 		// Expose configs for debugging/advanced usage
 		configs,
 	};

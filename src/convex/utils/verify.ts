@@ -9,6 +9,7 @@ import {
 	verifyConfig as _verifyConfig,
 	createValidatePlugin,
 	defaultValuesConfig,
+	protectedColumnsConfig,
 	uniqueColumnConfig,
 	uniqueRowConfig,
 } from './verifyInternal/v2/index';
@@ -50,6 +51,7 @@ export const { verify, config } = verifyConfig(schema, {
 	},
 });
 
+// Standalone defaultValuesConfig example (can use static, sync function, or async function)
 export const defaultValues = defaultValuesConfig(schema, {
 	feedbackBoard: {
 		slug: generateRandomSlug(),
@@ -97,8 +99,9 @@ const loggingPlugin = createValidatePlugin(
 // Main verifyConfig with plugins
 // =============================================================================
 
-export const { insert, patch, configs } = _verifyConfig(schema, {
-	defaultValues: defaultValuesConfig(schema, {
+export const { insert, patch, dangerouslyPatch, configs } = _verifyConfig(schema, {
+	// Using async function form for fresh values on each insert
+	defaultValues: defaultValuesConfig(schema, () => ({
 		feedbackBoard: {
 			slug: generateRandomSlug(),
 		},
@@ -107,6 +110,10 @@ export const { insert, patch, configs } = _verifyConfig(schema, {
 			slug: generateRandomSlug(),
 			upvotes: 1,
 		},
+	})),
+	// Protected columns - these cannot be patched (use dangerouslyPatch to bypass)
+	protectedColumns: protectedColumnsConfig(schema, {
+		feedback: ['projectId'],
 	}),
 	// Add custom validate plugins here
 	plugins: [loggingPlugin, uniqueRows, uniqueColumns],

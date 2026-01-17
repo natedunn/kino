@@ -185,8 +185,18 @@ export type UniqueColumnConfigData<DM extends DMGeneric> = {
  */
 export type DefaultValuesInput = {
 	_type: 'defaultValues';
-	verify: (tableName: any, data: any) => any;
-	config: Record<string, Record<string, any>>;
+	verify: (tableName: any, data: any) => Promise<any>;
+	config:
+		| Record<string, Record<string, any>>
+		| (() => Record<string, Record<string, any>> | Promise<Record<string, Record<string, any>>>);
+};
+
+/**
+ * Loose input type for protectedColumnsConfig return value.
+ */
+export type ProtectedColumnsInput = {
+	_type: 'protectedColumns';
+	config: Record<string, string[]>;
 };
 
 // =============================================================================
@@ -197,10 +207,12 @@ export type DefaultValuesInput = {
  * Config input for verifyConfig.
  *
  * - `defaultValues`: Transform plugin that makes fields optional (affects types)
+ * - `protectedColumns`: Columns that cannot be patched (affects patch() types)
  * - `plugins`: Array of validate plugins (use for uniqueRow, uniqueColumn, custom plugins, etc.)
  */
 export type VerifyConfigInput = {
 	defaultValues?: DefaultValuesInput;
+	protectedColumns?: ProtectedColumnsInput;
 };
 
 // =============================================================================
@@ -208,10 +220,15 @@ export type VerifyConfigInput = {
 // =============================================================================
 
 /**
- * Extract the config type from defaultValues.config
+ * Extract the config type from defaultValues.config.
+ * Handles both direct object and function forms.
  */
-export type ExtractDefaultValuesConfig<VC> = VC extends { defaultValues: { config: infer C } }
-	? C
+export type ExtractDefaultValuesConfig<VC> = VC extends {
+	defaultValues: { config: infer C };
+}
+	? C extends () => infer R
+		? Awaited<R>
+		: C
 	: Record<string, never>;
 
 /**
@@ -226,3 +243,26 @@ export type OptionalKeysForTable<VC, TN> = TN extends keyof ExtractDefaultValues
  * Helper to check if a key exists in a type
  */
 export type HasKey<T, K extends PropertyKey> = K extends keyof T ? true : false;
+
+// =============================================================================
+// Protected Columns Type Extraction
+// =============================================================================
+
+/**
+ * Extract the config type from protectedColumns.config
+ */
+export type ExtractProtectedColumnsConfig<VC> = VC extends {
+	protectedColumns: { config: infer C };
+}
+	? C
+	: Record<string, never>;
+
+/**
+ * Get protected column keys for a specific table.
+ * Returns the column names that should be omitted from patch() input.
+ */
+export type ProtectedKeysForTable<VC, TN> = TN extends keyof ExtractProtectedColumnsConfig<VC>
+	? ExtractProtectedColumnsConfig<VC>[TN] extends readonly (infer K)[]
+		? K
+		: never
+	: never;
