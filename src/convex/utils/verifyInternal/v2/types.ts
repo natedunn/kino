@@ -67,15 +67,111 @@ export type DefaultValuesConfigData<DM extends DMGeneric> = {
 	};
 };
 
-export type UniqueRowConfigOptions = {
+// =============================================================================
+// Index-Based Config Types (shared between uniqueRow, uniqueColumn, etc.)
+// =============================================================================
+
+/**
+ * Base options shared by all index-based config entries.
+ * Individual plugins can extend this with their own options.
+ */
+export type IndexConfigBaseOptions = {
+	/** Additional identifiers to check if the existing row is the same document being updated */
+	identifiers?: string[];
+};
+
+/**
+ * A config entry that can be either:
+ * - A string (index name) for shorthand
+ * - An object with `index` and additional options
+ *
+ * @example
+ * ```ts
+ * // These are equivalent:
+ * 'by_username'
+ * { index: 'by_username' }
+ *
+ * // With options:
+ * { index: 'by_username', identifiers: ['_id', 'userId'] }
+ * ```
+ */
+export type IndexConfigEntry<
+	DM extends DMGeneric,
+	K extends keyof DM,
+	Options extends IndexConfigBaseOptions = IndexConfigBaseOptions,
+> =
+	| keyof Indexes<NamedTableInfo<DM, K>>
+	| ({
+			index: keyof Indexes<NamedTableInfo<DM, K>>;
+			identifiers?: (keyof NamedTableInfo<DM, K>['document'])[];
+	  } & Omit<Options, 'identifiers'>);
+
+/**
+ * Normalized form of an index config entry (always an object)
+ */
+export type NormalizedIndexConfig<Options extends IndexConfigBaseOptions = IndexConfigBaseOptions> =
+	{
+		index: string;
+		identifiers: string[];
+	} & Omit<Options, 'identifiers'>;
+
+/**
+ * Normalize a config entry to always have index and identifiers.
+ * Works for both string shorthand and full object configs.
+ */
+export function normalizeIndexConfigEntry<
+	Options extends IndexConfigBaseOptions = IndexConfigBaseOptions,
+>(
+	entry: string | ({ index: string; identifiers?: string[] } & Omit<Options, 'identifiers'>),
+	defaultIdentifiers: string[] = ['_id']
+): NormalizedIndexConfig<Options> {
+	if (typeof entry === 'string') {
+		return {
+			index: entry,
+			identifiers: defaultIdentifiers,
+		} as NormalizedIndexConfig<Options>;
+	}
+
+	const { index, identifiers, ...rest } = entry;
+	return {
+		index: String(index),
+		identifiers: identifiers?.map(String) ?? defaultIdentifiers,
+		...rest,
+	} as NormalizedIndexConfig<Options>;
+}
+
+// =============================================================================
+// UniqueRow Config Types
+// =============================================================================
+
+export type UniqueRowConfigOptions = IndexConfigBaseOptions & {
 	queryExistingWithNullish?: boolean;
 };
 
+export type UniqueRowConfigEntry<DM extends DMGeneric, K extends keyof DM> = IndexConfigEntry<
+	DM,
+	K,
+	UniqueRowConfigOptions
+>;
+
 export type UniqueRowConfigData<DM extends DMGeneric> = {
-	[K in keyof DM]?: ({
-		index: keyof Indexes<NamedTableInfo<DM, K>>;
-		identifiers?: (keyof NamedTableInfo<DM, K>['document'])[];
-	} & UniqueRowConfigOptions)[];
+	[K in keyof DM]?: UniqueRowConfigEntry<DM, K>[];
+};
+
+// =============================================================================
+// UniqueColumn Config Types
+// =============================================================================
+
+export type UniqueColumnConfigOptions = IndexConfigBaseOptions;
+
+export type UniqueColumnConfigEntry<DM extends DMGeneric, K extends keyof DM> = IndexConfigEntry<
+	DM,
+	K,
+	UniqueColumnConfigOptions
+>;
+
+export type UniqueColumnConfigData<DM extends DMGeneric> = {
+	[K in keyof DM]?: UniqueColumnConfigEntry<DM, K>[];
 };
 
 // =============================================================================
@@ -95,9 +191,11 @@ export type DefaultValuesInput = {
 
 export type UniqueRowInput = {
 	_type: 'uniqueRow';
-	verify: (ctx: any, tableName: any, data: any, options?: any) => Promise<any>;
 	config: Record<string, any>;
-	schema: any;
+	verify: {
+		insert?: (context: any, data: any) => Promise<any> | any;
+		patch?: (context: any, data: any) => Promise<any> | any;
+	};
 };
 
 // Add more input types here as you create more config functions

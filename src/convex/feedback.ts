@@ -26,6 +26,7 @@ export const create = mutation({
 
 		const feedbackId = await insert(ctx, 'feedback', {
 			// status: 'in-progress',
+			slug: '1234567890',
 			title: args.title,
 			projectId: args.projectId,
 			boardId: args.boardId,

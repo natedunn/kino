@@ -6,7 +6,12 @@ import {
 	TableNamesInDataModel,
 } from 'convex/server';
 
-import { UniqueRowConfigData } from './types';
+import {
+	IndexConfigBaseOptions,
+	NormalizedIndexConfig,
+	normalizeIndexConfigEntry,
+	UniqueRowConfigData,
+} from './types';
 
 /**
  * Get Table indexes helper
@@ -77,17 +82,21 @@ export const constructColumnData = <
 };
 
 /**
- * Construct index data from schema and config
+ * Construct index data from schema and config.
+ * Handles both string shorthand and full object config entries.
+ *
+ * @returns Array of normalized index configs with resolved field names from schema
  */
 export const constructIndexData = <
 	S extends SchemaDefinition<GenericSchema, boolean>,
 	DataModel extends DataModelFromSchemaDefinition<S>,
 	TN extends TableNamesInDataModel<DataModel>,
+	Options extends IndexConfigBaseOptions = IndexConfigBaseOptions,
 >(
 	schema: S,
 	tableName: TN,
 	indexConfig?: UniqueRowConfigData<DataModel>
-) => {
+): (NormalizedIndexConfig<Options> & { name: string; fields: string[] })[] | undefined => {
 	if (!indexConfig) {
 		return;
 	}
@@ -97,10 +106,10 @@ export const constructIndexData = <
 		return;
 	}
 
-	return tableConfig.map((config) => {
-		const { index: indexName, identifiers, ...rest } = config;
-
-		const index = String(indexName);
+	return tableConfig.map((entry) => {
+		// Normalize the entry (handles both string and object forms)
+		const normalized = normalizeIndexConfigEntry<Options>(entry as any);
+		const { index, identifiers, ...rest } = normalized;
 
 		const fields = getTableIndexes(schema, tableName).find(
 			(i) => i.indexDescriptor == index
@@ -111,10 +120,9 @@ export const constructIndexData = <
 		}
 
 		// Create a unique map in case there is any overlap in identifiers
+		// Always include '_id' as a fallback identifier
 		const identifierMap = new Map<string, string>(
-			[...(identifiers ?? []), '_id']?.map((i) => {
-				return [String(i), String(i)];
-			})
+			[...identifiers, '_id'].map((i) => [String(i), String(i)])
 		);
 
 		return {
@@ -122,6 +130,6 @@ export const constructIndexData = <
 			fields,
 			identifiers: Array.from(identifierMap.values()),
 			...rest,
-		};
+		} as NormalizedIndexConfig<Options> & { name: string; fields: string[] };
 	});
 };

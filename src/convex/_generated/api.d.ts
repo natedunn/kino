@@ -36,6 +36,7 @@ import type * as utils_verifyInternal_v2_helpers from "../utils/verifyInternal/v
 import type * as utils_verifyInternal_v2_index from "../utils/verifyInternal/v2/index.js";
 import type * as utils_verifyInternal_v2_plugin from "../utils/verifyInternal/v2/plugin.js";
 import type * as utils_verifyInternal_v2_types from "../utils/verifyInternal/v2/types.js";
+import type * as utils_verifyInternal_v2_uniqueColumnConfig from "../utils/verifyInternal/v2/uniqueColumnConfig.js";
 import type * as utils_verifyInternal_v2_uniqueRowConfig from "../utils/verifyInternal/v2/uniqueRowConfig.js";
 import type * as utils_verifyInternal_v2_verifyConfig from "../utils/verifyInternal/v2/verifyConfig.js";
 
@@ -74,6 +75,7 @@ declare const fullApi: ApiFromModules<{
   "utils/verifyInternal/v2/index": typeof utils_verifyInternal_v2_index;
   "utils/verifyInternal/v2/plugin": typeof utils_verifyInternal_v2_plugin;
   "utils/verifyInternal/v2/types": typeof utils_verifyInternal_v2_types;
+  "utils/verifyInternal/v2/uniqueColumnConfig": typeof utils_verifyInternal_v2_uniqueColumnConfig;
   "utils/verifyInternal/v2/uniqueRowConfig": typeof utils_verifyInternal_v2_uniqueRowConfig;
   "utils/verifyInternal/v2/verifyConfig": typeof utils_verifyInternal_v2_verifyConfig;
 }>;

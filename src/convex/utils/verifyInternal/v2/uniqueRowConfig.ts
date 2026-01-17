@@ -1,19 +1,41 @@
 import {
 	DataModelFromSchemaDefinition,
 	DocumentByName,
-	GenericMutationCtx,
 	GenericSchema,
 	SchemaDefinition,
 	TableNamesInDataModel,
-	WithoutSystemFields,
 } from 'convex/server';
-import { ConvexError, GenericId } from 'convex/values';
+import { ConvexError } from 'convex/values';
 
 import { constructColumnData, constructIndexData } from './helpers';
-import { OnFailCallback, UniqueRowConfigData, UniqueRowConfigOptions } from './types';
+import { createValidatePlugin, ValidateContext, ValidatePlugin } from './plugin';
+import { UniqueRowConfigData, UniqueRowConfigOptions } from './types';
 
-type Operation = 'insert' | 'patch';
-
+/**
+ * Creates a validate plugin that enforces row uniqueness based on database indexes.
+ *
+ * This plugin checks that the combination of column values defined in your indexes
+ * doesn't already exist in the database before allowing insert/patch operations.
+ *
+ * @example
+ * ```ts
+ * const uniqueRow = uniqueRowConfig(schema, {
+ *   users: {
+ *     by_email: { identifiers: ['_id'] },
+ *     by_username: { identifiers: ['_id'] },
+ *   },
+ *   posts: {
+ *     by_slug_and_author: { identifiers: ['_id', 'authorId'] },
+ *   },
+ * });
+ *
+ * // Use with verifyConfig
+ * const verify = verifyConfig(schema, {
+ *   uniqueRow,
+ *   plugins: [otherPlugin],
+ * });
+ * ```
+ */
 export const uniqueRowConfig = <
 	S extends SchemaDefinition<GenericSchema, boolean>,
 	DataModel extends DataModelFromSchemaDefinition<S>,
@@ -21,34 +43,23 @@ export const uniqueRowConfig = <
 >(
 	schema: S,
 	config: C
-) => {
-	/**
-	 * Verify row uniqueness - throws if not unique
-	 * Returns the data unchanged if unique
-	 */
-	const verify = async <
-		TN extends TableNamesInDataModel<DataModel>,
-		D extends DocumentByName<DataModel, TN>,
-	>(
-		ctx: Omit<GenericMutationCtx<DataModel>, never>,
-		tableName: TN,
-		data: WithoutSystemFields<D> | Partial<WithoutSystemFields<D>>,
-		options?: {
-			operation?: Operation;
-			patchId?: GenericId<TN>;
-			onFail?: OnFailCallback<D>;
-		}
-	): Promise<WithoutSystemFields<D> | Partial<WithoutSystemFields<D>>> => {
-		const operation = options?.operation ?? 'insert';
-		const patchId = options?.patchId;
-		const onFail = options?.onFail;
+): ValidatePlugin<'uniqueRow', C> => {
+	const uniqueRowError = (message: string): never => {
+		throw new ConvexError({
+			message,
+			code: 'UNIQUE_ROW_VERIFICATION_ERROR',
+		});
+	};
 
-		const uniqueRowError = (message: string) => {
-			throw new ConvexError({
-				message,
-				code: 'UNIQUE_ROW_VERIFICATION_ERROR',
-			});
-		};
+	/**
+	 * Core verification logic shared between insert and patch
+	 */
+	const verifyUniqueness = async <TN extends TableNamesInDataModel<DataModel>>(
+		context: ValidateContext<string>,
+		data: Record<string, any>,
+		tableName: TN
+	): Promise<Record<string, any>> => {
+		const { ctx, operation, patchId, onFail } = context;
 
 		const indexesData = constructIndexData(schema, tableName, config);
 
@@ -74,6 +85,7 @@ export const uniqueRowConfig = <
 			const columnData = constructColumnData(fields, data, {});
 
 			const getExisting = async (cd: ReturnType<typeof constructColumnData>) => {
+				type D = DocumentByName<DataModel, TN>;
 				let existingByIndex: D[] = [];
 
 				if (!cd) {
@@ -81,7 +93,7 @@ export const uniqueRowConfig = <
 				} else {
 					existingByIndex = await ctx.db
 						.query(tableName)
-						.withIndex(name, (q) =>
+						.withIndex(name, (q: any) =>
 							cd.reduce((query: any, { column, value }) => query.eq(column, value), q)
 						)
 						.collect();
@@ -130,6 +142,8 @@ export const uniqueRowConfig = <
 					uniqueRowError(`Unable to patch document without an id.`);
 				}
 
+				type D = DocumentByName<DataModel, TN>;
+
 				/**
 				 * Check if the existing document matches one of the identifiers
 				 * (meaning we're updating the same document, not creating a conflict)
@@ -140,10 +154,10 @@ export const uniqueRowConfig = <
 					if (_existing) {
 						for (const identifier of identifiers) {
 							if (
-								(_existing[identifier] &&
-									_data[identifier] &&
-									_existing[identifier] === _data[identifier]) ||
-								(identifier === '_id' && _existing[identifier] === patchId)
+								(_existing[identifier as keyof D] &&
+									_data[identifier as keyof D] &&
+									_existing[identifier as keyof D] === _data[identifier as keyof D]) ||
+								(identifier === '_id' && _existing[identifier as keyof D] === patchId)
 							) {
 								idMatchedToExisting = String(identifier);
 								break;
@@ -199,12 +213,12 @@ export const uniqueRowConfig = <
 
 					if (extensiveColumnData) {
 						const extensiveExisting = await getExisting(extensiveColumnData);
-						checkExisting(extensiveExisting, data as Partial<D>);
+						checkExisting(extensiveExisting as D | null, data as Partial<D>);
 					} else {
 						uniqueRowError(`Incomplete data when there should have been enough.`);
 					}
 				} else {
-					checkExisting(existing, data as Partial<D>);
+					checkExisting(existing as D | null, data as Partial<D>);
 				}
 			}
 		}
@@ -212,10 +226,12 @@ export const uniqueRowConfig = <
 		return data;
 	};
 
-	return {
-		_type: 'uniqueRow' as const,
-		verify,
-		config: config as C,
-		schema,
-	};
+	return createValidatePlugin('uniqueRow', config, {
+		insert: async (context, data) => {
+			return verifyUniqueness(context, data, context.tableName as TableNamesInDataModel<DataModel>);
+		},
+		patch: async (context, data) => {
+			return verifyUniqueness(context, data, context.tableName as TableNamesInDataModel<DataModel>);
+		},
+	});
 };

@@ -37,15 +37,21 @@ export const verifyConfig = <
 	_schema: S,
 	configs: VC
 ) => {
-	// Extract validate plugins
-	const validatePlugins = configs.plugins ?? [];
+	// Build the list of all validate plugins
+	// uniqueRow is now a ValidatePlugin, so we can treat it the same as custom plugins
+	const allValidatePlugins: ValidatePlugin[] = [
+		// Built-in plugins first (if provided)
+		...(configs.uniqueRow ? [configs.uniqueRow as ValidatePlugin] : []),
+		// Then custom plugins
+		...(configs.plugins ?? []),
+	];
 
 	/**
 	 * Insert a document with all configured verifications applied.
 	 *
 	 * Execution order:
 	 * 1. Transform: defaultValues (makes fields optional, applies defaults)
-	 * 2. Validate: uniqueRow (built-in)
+	 * 2. Validate: uniqueRow (built-in plugin)
 	 * 3. Validate: custom plugins (in order provided)
 	 * 4. Insert into database
 	 */
@@ -76,23 +82,16 @@ export const verifyConfig = <
 
 		// === VALIDATE PHASE ===
 
-		// Built-in: Check unique rows
-		if (configs.uniqueRow) {
-			verifiedData = await configs.uniqueRow.verify(ctx, tableName, verifiedData, {
-				operation: 'insert',
-				onFail: options?.onFail,
-			});
-		}
-
-		// Custom validate plugins
-		if (validatePlugins.length > 0) {
+		// Run all validate plugins (built-in + custom)
+		if (allValidatePlugins.length > 0) {
 			verifiedData = await runValidatePlugins(
-				validatePlugins,
+				allValidatePlugins,
 				{
 					ctx,
 					tableName: tableName as string,
 					operation: 'insert',
 					onFail: options?.onFail,
+					schema: _schema,
 				},
 				verifiedData
 			);
@@ -106,7 +105,7 @@ export const verifyConfig = <
 	 * Patch a document with all configured verifications applied.
 	 *
 	 * Execution order:
-	 * 1. Validate: uniqueRow (built-in)
+	 * 1. Validate: uniqueRow (built-in plugin)
 	 * 2. Validate: custom plugins (in order provided)
 	 * 3. Patch in database
 	 *
@@ -128,25 +127,17 @@ export const verifyConfig = <
 
 		// === VALIDATE PHASE ===
 
-		// Built-in: Check unique rows
-		if (configs.uniqueRow) {
-			verifiedData = await configs.uniqueRow.verify(ctx, tableName, verifiedData, {
-				operation: 'patch',
-				patchId: id,
-				onFail: options?.onFail,
-			});
-		}
-
-		// Custom validate plugins
-		if (validatePlugins.length > 0) {
+		// Run all validate plugins (built-in + custom)
+		if (allValidatePlugins.length > 0) {
 			verifiedData = await runValidatePlugins(
-				validatePlugins,
+				allValidatePlugins,
 				{
 					ctx,
 					tableName: tableName as string,
 					operation: 'patch',
 					patchId: id,
 					onFail: options?.onFail,
+					schema: _schema,
 				},
 				verifiedData
 			);

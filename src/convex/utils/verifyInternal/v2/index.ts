@@ -1,5 +1,6 @@
 // Config functions
 export { defaultValuesConfig } from './defaultValuesConfig';
+export { uniqueColumnConfig } from './uniqueColumnConfig';
 export { uniqueRowConfig } from './uniqueRowConfig';
 
 // Main verifyConfig
@@ -17,9 +18,19 @@ export type {
 	// Config data types
 	DefaultValuesConfigData,
 	DefaultValuesInput,
+	// Shared index-based config types
+	IndexConfigBaseOptions,
+	IndexConfigEntry,
+	NormalizedIndexConfig,
+	// UniqueRow types
 	UniqueRowConfigData,
+	UniqueRowConfigEntry,
 	UniqueRowConfigOptions,
 	UniqueRowInput,
+	// UniqueColumn types
+	UniqueColumnConfigData,
+	UniqueColumnConfigEntry,
+	UniqueColumnConfigOptions,
 	// OnFail types
 	OnFailArgs,
 	OnFailCallback,
@@ -33,3 +44,6 @@ export type {
 	OptionalKeysForTable,
 	VerifyConfigInput,
 } from './types';
+
+// Re-export normalize helper for plugin authors
+export { normalizeIndexConfigEntry } from './types';

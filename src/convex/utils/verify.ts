@@ -9,6 +9,7 @@ import {
 	verifyConfig as _verifyConfig,
 	createValidatePlugin,
 	defaultValuesConfig,
+	uniqueColumnConfig,
 	uniqueRowConfig,
 } from './verifyInternal/v2/index';
 
@@ -60,12 +61,13 @@ export const defaultValues = defaultValuesConfig(schema, {
 	},
 });
 
-export const uniqueRow = uniqueRowConfig(schema, {
-	feedback: [
-		{
-			index: 'by_projectId_slug',
-		},
-	],
+export const uniqueRows = uniqueRowConfig(schema, {
+	project: ['by_orgSlug_slug'],
+	feedback: ['by_projectId_slug'],
+});
+
+export const uniqueColumns = uniqueColumnConfig(schema, {
+	profile: ['by_username'],
 });
 
 // =============================================================================
@@ -106,18 +108,6 @@ export const { insert, patch, configs } = _verifyConfig(schema, {
 			upvotes: 1,
 		},
 	}),
-	uniqueRow: uniqueRowConfig(schema, {
-		project: [
-			{
-				index: 'by_orgSlug_slug',
-			},
-		],
-		feedback: [
-			{
-				index: 'by_projectId_slug',
-			},
-		],
-	}),
 	// Add custom validate plugins here
-	plugins: [loggingPlugin],
+	plugins: [loggingPlugin, uniqueRows],
 });
