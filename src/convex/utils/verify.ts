@@ -61,12 +61,12 @@ export const defaultValues = defaultValuesConfig(schema, {
 	},
 });
 
-export const uniqueRows = uniqueRowConfig(schema, {
+const uniqueRows = uniqueRowConfig(schema, {
 	project: ['by_orgSlug_slug'],
 	feedback: ['by_projectId_slug'],
 });
 
-export const uniqueColumns = uniqueColumnConfig(schema, {
+const uniqueColumns = uniqueColumnConfig(schema, {
 	profile: ['by_username'],
 });
 
@@ -109,5 +109,5 @@ export const { insert, patch, configs } = _verifyConfig(schema, {
 		},
 	}),
 	// Add custom validate plugins here
-	plugins: [loggingPlugin, uniqueRows],
+	plugins: [loggingPlugin, uniqueRows, uniqueColumns],
 });
