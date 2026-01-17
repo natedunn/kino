@@ -1,12 +1,8 @@
 import {
 	DataModelFromSchemaDefinition,
-	DocumentByName,
-	GenericMutationCtx,
-	GenericSchema,
 	Indexes,
 	NamedTableInfo,
 	SchemaDefinition,
-	TableNamesInDataModel,
 	WithoutSystemFields,
 } from 'convex/server';
 

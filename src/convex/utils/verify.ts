@@ -1,5 +1,3 @@
-import type { ValidatePlugin } from './verifyInternal/v2/index';
-
 import schema from '@convex/schema';
 
 import { generateRandomSlug } from '@/lib/random';

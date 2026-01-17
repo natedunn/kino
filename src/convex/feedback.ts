@@ -41,7 +41,6 @@ export const create = mutation({
 		});
 
 		await patch(ctx, 'feedback', feedbackId, {
-			// projectId: args.projectId, // This is normally protected
 			firstCommentId: feedbackCommentId,
 			searchContent: args.title + ' ' + args.firstComment,
 		});
