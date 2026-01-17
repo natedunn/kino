@@ -23,7 +23,7 @@ import {
  */
 type VerifyConfigInputWithPlugins = VerifyConfigInput & {
 	/**
-	 * Additional validate plugins to run after built-in validators.
+	 * Validate plugins to run after transforms.
 	 * These plugins can validate data but don't affect input types.
 	 */
 	plugins?: ValidatePlugin[];
@@ -37,23 +37,16 @@ export const verifyConfig = <
 	_schema: S,
 	configs: VC
 ) => {
-	// Build the list of all validate plugins
-	// uniqueRow is now a ValidatePlugin, so we can treat it the same as custom plugins
-	const allValidatePlugins: ValidatePlugin[] = [
-		// Built-in plugins first (if provided)
-		...(configs.uniqueRow ? [configs.uniqueRow as ValidatePlugin] : []),
-		// Then custom plugins
-		...(configs.plugins ?? []),
-	];
+	// Get all validate plugins
+	const validatePlugins = configs.plugins ?? [];
 
 	/**
 	 * Insert a document with all configured verifications applied.
 	 *
 	 * Execution order:
 	 * 1. Transform: defaultValues (makes fields optional, applies defaults)
-	 * 2. Validate: uniqueRow (built-in plugin)
-	 * 3. Validate: custom plugins (in order provided)
-	 * 4. Insert into database
+	 * 2. Validate: plugins (in order provided)
+	 * 3. Insert into database
 	 */
 	const insert = async <
 		const TN extends TableNamesInDataModel<DataModel>,
@@ -82,10 +75,10 @@ export const verifyConfig = <
 
 		// === VALIDATE PHASE ===
 
-		// Run all validate plugins (built-in + custom)
-		if (allValidatePlugins.length > 0) {
+		// Run all validate plugins
+		if (validatePlugins.length > 0) {
 			verifiedData = await runValidatePlugins(
-				allValidatePlugins,
+				validatePlugins,
 				{
 					ctx,
 					tableName: tableName as string,
@@ -105,9 +98,8 @@ export const verifyConfig = <
 	 * Patch a document with all configured verifications applied.
 	 *
 	 * Execution order:
-	 * 1. Validate: uniqueRow (built-in plugin)
-	 * 2. Validate: custom plugins (in order provided)
-	 * 3. Patch in database
+	 * 1. Validate: plugins (in order provided)
+	 * 2. Patch in database
 	 *
 	 * Note: defaultValues is skipped for patch operations
 	 */
@@ -127,10 +119,10 @@ export const verifyConfig = <
 
 		// === VALIDATE PHASE ===
 
-		// Run all validate plugins (built-in + custom)
-		if (allValidatePlugins.length > 0) {
+		// Run all validate plugins
+		if (validatePlugins.length > 0) {
 			verifiedData = await runValidatePlugins(
-				allValidatePlugins,
+				validatePlugins,
 				{
 					ctx,
 					tableName: tableName as string,

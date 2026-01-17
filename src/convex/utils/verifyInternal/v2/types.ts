@@ -189,29 +189,18 @@ export type DefaultValuesInput = {
 	config: Record<string, Record<string, any>>;
 };
 
-export type UniqueRowInput = {
-	_type: 'uniqueRow';
-	config: Record<string, any>;
-	verify: {
-		insert?: (context: any, data: any) => Promise<any> | any;
-		patch?: (context: any, data: any) => Promise<any> | any;
-	};
-};
-
-// Add more input types here as you create more config functions
-// export type UniqueColumnInput = { ... }
-// export type UneditableColumnsInput = { ... }
-
 // =============================================================================
 // Object-Based Types (for verifyConfig)
 // =============================================================================
 
+/**
+ * Config input for verifyConfig.
+ *
+ * - `defaultValues`: Transform plugin that makes fields optional (affects types)
+ * - `plugins`: Array of validate plugins (use for uniqueRow, uniqueColumn, custom plugins, etc.)
+ */
 export type VerifyConfigInput = {
 	defaultValues?: DefaultValuesInput;
-	uniqueRow?: UniqueRowInput;
-	// Add more optional configs here
-	// uniqueColumn?: UniqueColumnInput;
-	// uneditableColumns?: UneditableColumnsInput;
 };
 
 // =============================================================================
@@ -224,15 +213,6 @@ export type VerifyConfigInput = {
 export type ExtractDefaultValuesConfig<VC> = VC extends { defaultValues: { config: infer C } }
 	? C
 	: Record<string, never>;
-
-/**
- * Extract the config type from uniqueRow.config
- */
-export type ExtractUniqueRowConfig<VC> = VC extends { uniqueRow: { config: infer C } }
-	? C
-	: Record<string, never>;
-
-// Add more extractors as needed
 
 /**
  * Compute which keys should be optional for a given table based on all configs.

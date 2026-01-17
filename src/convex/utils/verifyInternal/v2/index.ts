@@ -18,7 +18,7 @@ export type {
 	// Config data types
 	DefaultValuesConfigData,
 	DefaultValuesInput,
-	// Shared index-based config types
+	// Shared index-based config types (for plugin authors)
 	IndexConfigBaseOptions,
 	IndexConfigEntry,
 	NormalizedIndexConfig,
@@ -26,7 +26,6 @@ export type {
 	UniqueRowConfigData,
 	UniqueRowConfigEntry,
 	UniqueRowConfigOptions,
-	UniqueRowInput,
 	// UniqueColumn types
 	UniqueColumnConfigData,
 	UniqueColumnConfigEntry,
@@ -39,7 +38,6 @@ export type {
 	Prettify,
 	// Object-based config types
 	ExtractDefaultValuesConfig,
-	ExtractUniqueRowConfig,
 	HasKey,
 	OptionalKeysForTable,
 	VerifyConfigInput,
