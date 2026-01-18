@@ -10,7 +10,7 @@ import { feedbackCreateSchema, feedbackSchema } from './schema/feedback.schema';
 import { mutation } from './utils/functions';
 import { asyncFlatMapFilter, hasOverlap } from './utils/helpers';
 import { triggers } from './utils/trigger';
-import { dangerouslyPatch, insert, patch } from './utils/verify';
+import { insert, patch } from './utils/verify';
 
 export const create = mutation({
 	args: zodToConvex(feedbackCreateSchema),

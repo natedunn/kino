@@ -11,7 +11,7 @@ import {
 	NormalizedIndexConfig,
 	normalizeIndexConfigEntry,
 	UniqueRowConfigData,
-} from './types';
+} from '../core/types';
 
 /**
  * Get Table indexes helper

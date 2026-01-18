@@ -7,9 +7,9 @@ import {
 } from 'convex/server';
 import { ConvexError } from 'convex/values';
 
-import { constructColumnData, constructIndexData } from './helpers';
-import { createValidatePlugin, ValidateContext, ValidatePlugin } from './plugin';
-import { UniqueRowConfigData, UniqueRowConfigOptions } from './types';
+import { createValidatePlugin, ValidateContext, ValidatePlugin } from '../core/plugin';
+import { UniqueRowConfigData, UniqueRowConfigOptions } from '../core/types';
+import { constructColumnData, constructIndexData } from '../utils/helpers';
 
 /**
  * Creates a validate plugin that enforces row uniqueness based on database indexes.
@@ -17,22 +17,28 @@ import { UniqueRowConfigData, UniqueRowConfigOptions } from './types';
  * This plugin checks that the combination of column values defined in your indexes
  * doesn't already exist in the database before allowing insert/patch operations.
  *
+ * @param schema - Your Convex schema definition
+ * @param config - Object mapping table names to arrays of index configs
+ * @returns A ValidatePlugin for use with verifyConfig
+ *
  * @example
  * ```ts
+ * // Simple shorthand - just index names
  * const uniqueRow = uniqueRowConfig(schema, {
- *   users: {
- *     by_email: { identifiers: ['_id'] },
- *     by_username: { identifiers: ['_id'] },
- *   },
- *   posts: {
- *     by_slug_and_author: { identifiers: ['_id', 'authorId'] },
- *   },
+ *   posts: ['by_slug'],
+ *   users: ['by_email', 'by_username'],
+ * });
+ *
+ * // With options
+ * const uniqueRow = uniqueRowConfig(schema, {
+ *   posts: [
+ *     { index: 'by_author_slug', identifiers: ['_id', 'authorId'] },
+ *   ],
  * });
  *
  * // Use with verifyConfig
- * const verify = verifyConfig(schema, {
- *   uniqueRow,
- *   plugins: [otherPlugin],
+ * const { insert, patch } = verifyConfig(schema, {
+ *   plugins: [uniqueRow],
  * });
  * ```
  */

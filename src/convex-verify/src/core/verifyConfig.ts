@@ -30,6 +30,33 @@ type VerifyConfigInputWithPlugins = VerifyConfigInput & {
 	plugins?: ValidatePlugin[];
 };
 
+/**
+ * Configure type-safe insert and patch functions with validation and transforms.
+ *
+ * @param schema - Your Convex schema definition
+ * @param configs - Configuration object with transforms, configs, and plugins
+ * @returns Object with `insert`, `patch`, and `dangerouslyPatch` functions
+ *
+ * @example
+ * ```ts
+ * import { verifyConfig, defaultValuesConfig, protectedColumnsConfig, uniqueRowConfig } from 'convex-verify';
+ * import schema from './schema';
+ *
+ * export const { insert, patch, dangerouslyPatch } = verifyConfig(schema, {
+ *   defaultValues: defaultValuesConfig(schema, () => ({
+ *     posts: { status: 'draft', views: 0 },
+ *   })),
+ *   protectedColumns: protectedColumnsConfig(schema, {
+ *     posts: ['authorId'],
+ *   }),
+ *   plugins: [
+ *     uniqueRowConfig(schema, {
+ *       posts: ['by_slug'],
+ *     }),
+ *   ],
+ * });
+ * ```
+ */
 export const verifyConfig = <
 	S extends SchemaDefinition<GenericSchema, boolean>,
 	DataModel extends DataModelFromSchemaDefinition<S>,

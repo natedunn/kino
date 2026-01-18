@@ -1,12 +1,12 @@
 import { DataModelFromSchemaDefinition, GenericSchema, SchemaDefinition } from 'convex/server';
 import { ConvexError } from 'convex/values';
 
-import { createValidatePlugin, ValidateContext, ValidatePlugin } from './plugin';
+import { createValidatePlugin, ValidateContext, ValidatePlugin } from '../core/plugin';
 import {
 	normalizeIndexConfigEntry,
 	UniqueColumnConfigData,
 	UniqueColumnConfigOptions,
-} from './types';
+} from '../core/types';
 
 /**
  * Creates a validate plugin that enforces column uniqueness using single-column indexes.
@@ -16,6 +16,10 @@ import {
  *
  * The column name is derived from the index name by removing the 'by_' prefix.
  * For example, 'by_username' checks the 'username' column.
+ *
+ * @param schema - Your Convex schema definition
+ * @param config - Object mapping table names to arrays of index configs
+ * @returns A ValidatePlugin for use with verifyConfig
  *
  * @example
  * ```ts
@@ -42,7 +46,7 @@ import {
  * });
  *
  * // Use with verifyConfig
- * const verify = verifyConfig(schema, {
+ * const { insert, patch } = verifyConfig(schema, {
  *   plugins: [uniqueColumn],
  * });
  * ```

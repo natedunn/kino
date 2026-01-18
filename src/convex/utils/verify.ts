@@ -1,8 +1,6 @@
+import type { ValidateContext } from 'convex-verify';
+
 import schema from '@convex/schema';
-
-import { generateRandomSlug } from '@/lib/random';
-
-import { verifyConfig } from './verifyInternal';
 import {
 	verifyConfig as _verifyConfig,
 	createValidatePlugin,
@@ -10,7 +8,14 @@ import {
 	protectedColumnsConfig,
 	uniqueColumnConfig,
 	uniqueRowConfig,
-} from './verifyInternal/v2/index';
+} from 'convex-verify';
+
+import { generateRandomSlug } from '@/lib/random';
+
+// Old verifyConfig (legacy)
+import { verifyConfig } from './verifyInternal';
+
+// New verifyConfig from convex-verify package
 
 export const { verify, config } = verifyConfig(schema, {
 	uniqueColumns: {
@@ -82,11 +87,11 @@ const loggingPlugin = createValidatePlugin(
 	'logging',
 	{ enabled: true },
 	{
-		insert: (context, data) => {
+		insert: (context: ValidateContext, data: Record<string, unknown>) => {
 			console.log(`[${context.tableName}] INSERT:`, data);
 			return data;
 		},
-		patch: (context, data) => {
+		patch: (context: ValidateContext, data: Record<string, unknown>) => {
 			console.log(`[${context.tableName}] PATCH ${context.patchId}:`, data);
 			return data;
 		},

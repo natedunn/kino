@@ -7,29 +7,33 @@ import {
 	WithoutSystemFields,
 } from 'convex/server';
 
-import { DefaultValuesConfigData, MakeOptional } from './types';
+import { DefaultValuesConfigData, MakeOptional } from '../core/types';
 
 /**
- * Creates a default values transform plugin.
+ * Creates a default values transform.
  *
  * Makes specified fields optional in insert() by providing default values.
  * Supports both static config objects and dynamic functions (sync or async).
+ *
+ * @param schema - Your Convex schema definition
+ * @param config - Default values config (object or function returning object)
+ * @returns Config object for use with verifyConfig
  *
  * @example
  * ```ts
  * // Static config (same values reused)
  * const defaults = defaultValuesConfig(schema, {
- *   feedback: { status: 'open', upvotes: 0 },
+ *   posts: { status: 'draft', views: 0 },
  * });
  *
  * // Dynamic config (fresh values on each insert)
  * const defaults = defaultValuesConfig(schema, () => ({
- *   feedback: { status: 'open', slug: generateRandomSlug() },
+ *   posts: { status: 'draft', slug: generateRandomSlug() },
  * }));
  *
  * // Async config
  * const defaults = defaultValuesConfig(schema, async () => ({
- *   feedback: { defaultCategory: await fetchDefaultCategory() },
+ *   posts: { category: await fetchDefaultCategory() },
  * }));
  * ```
  */

@@ -5,7 +5,7 @@ import {
 	WithoutSystemFields,
 } from 'convex/server';
 
-import { DMGeneric } from './types';
+import { DMGeneric } from '../core/types';
 
 /**
  * Config data type for protected columns.
@@ -22,11 +22,15 @@ export type ProtectedColumnsConfigData<DM extends DMGeneric> = {
  * preventing accidental updates to critical fields like foreign keys.
  * Use dangerouslyPatch() to bypass this protection when needed.
  *
+ * @param schema - Your Convex schema definition
+ * @param config - Object mapping table names to arrays of protected column names
+ * @returns Config object for use with verifyConfig
+ *
  * @example
  * ```ts
  * const protectedColumns = protectedColumnsConfig(schema, {
- *   feedback: ['projectId', 'userId'],
- *   profile: ['userId'],
+ *   posts: ['authorId', 'createdAt'],
+ *   comments: ['postId', 'authorId'],
  * });
  *
  * // In verifyConfig:
@@ -34,15 +38,15 @@ export type ProtectedColumnsConfigData<DM extends DMGeneric> = {
  *   protectedColumns,
  * });
  *
- * // patch() won't allow projectId or userId
- * await patch(ctx, 'feedback', id, {
- *   projectId: '...',  // TS Error - property doesn't exist
- *   title: 'new',      // OK
+ * // patch() won't allow authorId
+ * await patch(ctx, 'posts', id, {
+ *   authorId: '...',  // TS Error - property doesn't exist
+ *   title: 'new',     // OK
  * });
  *
  * // dangerouslyPatch() allows all columns
- * await dangerouslyPatch(ctx, 'feedback', id, {
- *   projectId: '...',  // OK - bypasses protection
+ * await dangerouslyPatch(ctx, 'posts', id, {
+ *   authorId: '...',  // OK - bypasses protection
  * });
  * ```
  */
