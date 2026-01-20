@@ -1,0 +1,151 @@
+import { useConvexMutation } from '@convex-dev/react-query';
+import { convexQuery } from '@convex-dev/react-query';
+import { useMutation, useSuspenseQuery } from '@tanstack/react-query';
+import { Link } from '@tanstack/react-router';
+import { MoreHorizontal, Trash2 } from 'lucide-react';
+
+import { api, API } from '~api';
+import { Button } from '@/components/ui/button';
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Id } from '@/convex/_generated/dataModel';
+import { formatTimestamp } from '@/lib/utils/format-timestamp';
+
+import { EmoteButton, EmoteContent, EmotePicker } from './emote-picker';
+
+type Comment = NonNullable<API['feedbackComment']['listByFeedback']>[number];
+
+type CommentItemProps = {
+	comment: Comment;
+	feedbackId: Id<'feedback'>;
+	currentProfileId?: Id<'profile'>;
+};
+
+function CommentItem({ comment, feedbackId, currentProfileId }: CommentItemProps) {
+	const { author, emoteCounts } = comment;
+
+	// Check if current user owns this comment (client-side check for UI)
+	const isOwner = currentProfileId && author?._id === currentProfileId;
+
+	const { mutate: deleteComment, status: deleteStatus } = useMutation({
+		mutationFn: useConvexMutation(api.feedbackComment.remove),
+	});
+
+	const handleDelete = () => {
+		if (confirm('Are you sure you want to delete this comment?')) {
+			deleteComment({ _id: comment._id });
+		}
+	};
+
+	// Get list of emotes with counts > 0
+	const emoteEntries = Object.entries(emoteCounts) as [
+		EmoteContent,
+		{ count: number; authorProfileIds: string[] },
+	][];
+
+	const isDeleting = deleteStatus === 'pending';
+
+	return (
+		<li className="update-comment relative flex overflow-hidden rounded-lg border">
+			<div className="flex flex-col items-center justify-start border-r bg-muted pt-3 pl-4">
+				<div className="relative z-10 -mr-4 size-8 overflow-hidden rounded-full border bg-gradient-to-tr from-white/50 to-accent shadow-xl shadow-black">
+					{author?.imageUrl ? (
+						<img className="size-8" src={author.imageUrl} alt={author.username} />
+					) : (
+						<div className="flex size-8 items-center justify-center bg-primary text-xs font-bold text-primary-foreground">
+							{author?.name?.charAt(0) ?? '?'}
+						</div>
+					)}
+				</div>
+			</div>
+			<div className="flex w-full flex-col bg-background">
+				<div className="flex w-full justify-between gap-2 border-b px-6 py-4">
+					<span>
+						{author ? (
+							<Link className="hocus:underline" to="/@{$org}" params={{ org: author.username }}>
+								@{author.username}
+							</Link>
+						) : (
+							<span className="text-muted-foreground">Unknown user</span>
+						)}{' '}
+						<span className="text-muted-foreground">commented</span>
+					</span>
+					<div className="flex items-center gap-2">
+						<span className="text-muted-foreground">{formatTimestamp(comment._creationTime)}</span>
+						{/* Only show dropdown if user owns the comment */}
+						{isOwner && (
+							<DropdownMenu>
+								<DropdownMenuTrigger asChild>
+									<Button variant="ghost" size="sm" disabled={isDeleting}>
+										<MoreHorizontal className="h-4 w-4" />
+										<span className="sr-only">More Actions</span>
+									</Button>
+								</DropdownMenuTrigger>
+								<DropdownMenuContent align="end">
+									<DropdownMenuItem
+										onClick={handleDelete}
+										className="text-destructive focus:text-destructive"
+									>
+										<Trash2 size={14} />
+										Delete
+									</DropdownMenuItem>
+								</DropdownMenuContent>
+							</DropdownMenu>
+						)}
+					</div>
+				</div>
+				<div className="flex flex-col gap-4 p-6">
+					<div className="whitespace-pre-wrap">{comment.content}</div>
+					<div className="flex items-center gap-2">
+						<EmotePicker feedbackId={feedbackId} commentId={comment._id} />
+						{emoteEntries.map(([emoteType, data]) => (
+							<EmoteButton
+								key={emoteType}
+								feedbackId={feedbackId}
+								commentId={comment._id}
+								emoteType={emoteType}
+								count={data.count}
+								isActive={currentProfileId ? data.authorProfileIds.includes(currentProfileId) : false}
+							/>
+						))}
+					</div>
+				</div>
+			</div>
+		</li>
+	);
+}
+
+type CommentsListProps = {
+	feedbackId: Id<'feedback'>;
+	currentProfileId?: Id<'profile'>;
+};
+
+export function CommentsList({ feedbackId, currentProfileId }: CommentsListProps) {
+	const { data: comments } = useSuspenseQuery(
+		convexQuery(api.feedbackComment.listByFeedback, { feedbackId })
+	);
+
+	// Filter out the initial comment (shown separately)
+	const additionalComments = comments?.filter((c) => !c.initial) ?? [];
+
+	if (additionalComments.length === 0) {
+		return null;
+	}
+
+	return (
+		<ul className="mt-6 flex flex-col gap-6">
+			{additionalComments.map((comment) => (
+				<CommentItem
+					key={comment._id}
+					comment={comment}
+					feedbackId={feedbackId}
+					currentProfileId={currentProfileId}
+				/>
+			))}
+		</ul>
+	);
+}

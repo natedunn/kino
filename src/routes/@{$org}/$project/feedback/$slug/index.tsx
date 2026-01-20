@@ -1,5 +1,5 @@
 import { convexQuery } from '@convex-dev/react-query';
-import { useSuspenseQuery } from '@tanstack/react-query';
+import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
 import { createFileRoute, Link, notFound } from '@tanstack/react-router';
 import { CircleCheck, CircleDot, CircleDotDashed } from 'lucide-react';
 
@@ -11,6 +11,9 @@ import { cn } from '@/lib/utils';
 import { formatTimestamp } from '@/lib/utils/format-timestamp';
 
 import { AssignedTo } from '../-components/assigned-to';
+import { CommentForm } from '../-components/comment-form';
+import { CommentsList } from '../-components/comments-list';
+import { EmoteButton, EmoteContent, EmotePicker } from '../-components/emote-picker';
 import Updates from '../-components/updates';
 
 // Static test slug for comparing with the original placeholder design
@@ -220,6 +223,16 @@ function RouteComponent() {
 		})
 	);
 
+	// Get current user's profile for highlighting their emotes
+	const { data: currentProfile } = useQuery(convexQuery(api.profile.findMyProfile, {}));
+
+	// Get comments with emotes for the first comment
+	const { data: comments } = useSuspenseQuery(
+		convexQuery(api.feedbackComment.listByFeedback, {
+			feedbackId: feedbackData?.feedback._id!,
+		})
+	);
+
 	const data = feedbackData ?? loaderData;
 
 	if (!data) {
@@ -227,6 +240,9 @@ function RouteComponent() {
 	}
 
 	const { feedback, author, board, firstComment } = data;
+
+	// Find the first comment with emotes from the comments list
+	const firstCommentWithEmotes = comments?.find((c) => c._id === firstComment?._id);
 
 	return (
 		<div>
@@ -374,16 +390,30 @@ function RouteComponent() {
 														</div>
 													</div>
 													*/}
-													{/* TODO: Future feature - Emoji reactions
-													<div className="flex items-center justify-between">
-														<div className="flex gap-2">
-															<Button className="gap-2 rounded-full" variant="ghost" size="sm">
-																<SmilePlus size={16} />
-																<span className="sr-only">Add reaction</span>
-															</Button>
-														</div>
+													{/* Emoji reactions */}
+													<div className="flex items-center gap-2">
+														<EmotePicker feedbackId={feedback._id} commentId={firstComment._id} />
+														{firstCommentWithEmotes &&
+															(
+																Object.entries(firstCommentWithEmotes.emoteCounts) as [
+																	EmoteContent,
+																	{ count: number; authorProfileIds: string[] },
+																][]
+															).map(([emoteType, data]) => (
+																<EmoteButton
+																	key={emoteType}
+																	feedbackId={feedback._id}
+																	commentId={firstComment._id}
+																	emoteType={emoteType}
+																	count={data.count}
+																	isActive={
+																		currentProfile?._id
+																			? data.authorProfileIds.includes(currentProfile._id)
+																			: false
+																	}
+																/>
+															))}
 													</div>
-													*/}
 												</div>
 											</div>
 										</li>
@@ -391,18 +421,11 @@ function RouteComponent() {
 								</div>
 							)}
 
-							{/* TODO: Future feature - Additional comments
-							<Updates />
-							*/}
+							{/* Additional comments */}
+							<CommentsList feedbackId={feedback._id} currentProfileId={currentProfile?._id} />
 
-							{/* TODO: Future feature - Comment form (requires mutation)
-							<div className="mt-6 flex gap-3 rounded-lg border bg-accent/30 p-4">
-								<Textarea rows={1} placeholder="Leave a comment..." />
-								<div>
-									<Button className="gap-2">Comment</Button>
-								</div>
-							</div>
-							*/}
+							{/* Comment form */}
+							<CommentForm feedbackId={feedback._id} />
 						</div>
 					</div>
 				</div>
