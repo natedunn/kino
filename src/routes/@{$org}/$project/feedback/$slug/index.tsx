@@ -10,6 +10,7 @@ import { StatusIcon } from '@/icons';
 import { cn } from '@/lib/utils';
 import { formatTimestamp } from '@/lib/utils/format-timestamp';
 
+import { EditorContentDisplay, EditorRefProvider } from '@/components/editor';
 import { AssignedTo } from '../-components/assigned-to';
 import { BoardSwitcher } from '../-components/board-switcher';
 import { CommentForm } from '../-components/comment-form';
@@ -341,7 +342,7 @@ function RouteComponent() {
 													</div>
 												</div>
 												<div className="flex flex-col gap-4 p-6">
-													<div className="whitespace-pre-wrap">{firstComment.content}</div>
+													<EditorContentDisplay content={firstComment.content} />
 													{/* TODO: Future feature - Comment attachments
 													<div className="flex flex-col gap-2">
 														<span className="text-xs font-bold tracking-wide uppercase opacity-25 select-none">
@@ -388,11 +389,13 @@ function RouteComponent() {
 								</div>
 							)}
 
-							{/* Additional comments */}
-							<CommentsList feedbackId={feedback._id} currentProfileId={currentProfile?._id} />
+							<EditorRefProvider>
+								{/* Additional comments */}
+								<CommentsList feedbackId={feedback._id} currentProfileId={currentProfile?._id} />
 
-							{/* Comment form */}
-							<CommentForm feedbackId={feedback._id} />
+								{/* Comment form */}
+								<CommentForm feedbackId={feedback._id} />
+							</EditorRefProvider>
 						</div>
 					</div>
 				</div>
