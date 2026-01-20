@@ -14,6 +14,7 @@ import { AssignedTo } from '../-components/assigned-to';
 import { CommentForm } from '../-components/comment-form';
 import { CommentsList } from '../-components/comments-list';
 import { EmoteButton, EmoteContent, EmotePicker } from '../-components/emote-picker';
+import { StatusSwitcher } from '../-components/status-switcher';
 import Updates from '../-components/updates';
 
 // Static test slug for comparing with the original placeholder design
@@ -52,32 +53,6 @@ export const Route = createFileRoute('/@{$org}/$project/feedback/$slug/')({
 	},
 	component: RouteComponent,
 });
-
-type FeedbackStatus = 'open' | 'in-progress' | 'closed' | 'completed' | 'paused';
-
-const StatusBadge = ({ status }: { status: FeedbackStatus }) => {
-	const statusClass: Record<FeedbackStatus, string> = {
-		open: 'bg-blue-700/50 text-blue-100',
-		'in-progress': 'bg-purple-700/50 text-purple-100',
-		closed: 'bg-red-700/50 text-red-100',
-		completed: 'bg-green-700/50 text-green-100',
-		paused: 'bg-orange-700/50 text-orange-100',
-	};
-
-	const statusLabel: Record<FeedbackStatus, string> = {
-		open: 'Open',
-		'in-progress': 'In Progress',
-		closed: 'Closed',
-		completed: 'Completed',
-		paused: 'Paused',
-	};
-
-	return (
-		<span className={cn(statusClass[status], 'inline-block px-1.5 py-0.5 text-xs')}>
-			{statusLabel[status]}
-		</span>
-	);
-};
 
 // =============================================================================
 // STATIC PLACEHOLDER VERSION (Original design for reference)
@@ -244,6 +219,10 @@ function RouteComponent() {
 	// Find the first comment with emotes from the comments list
 	const firstCommentWithEmotes = comments?.find((c) => c._id === firstComment?._id);
 
+	// Determine if user can edit status (owner or has project edit permissions)
+	const isOwner = currentProfile?._id === feedback.authorProfileId;
+	const canEditStatus = isOwner || (projectData?.permissions?.canEdit ?? false);
+
 	return (
 		<div>
 			<header>
@@ -280,7 +259,11 @@ function RouteComponent() {
 											<span className="text-xs font-semibold tracking-wide uppercase opacity-50">
 												Status:
 											</span>
-											<StatusBadge status={feedback.status} />
+											<StatusSwitcher
+												feedbackId={feedback._id}
+												currentStatus={feedback.status}
+												canEdit={canEditStatus}
+											/>
 										</li>
 										<li className="flex w-full items-center justify-between gap-2">
 											<span className="text-xs font-semibold tracking-wide uppercase opacity-50">
@@ -325,18 +308,6 @@ function RouteComponent() {
 										</li>
 									</ul>
 								</div>
-								{/* TODO: Future feature - Status update buttons (requires mutation)
-								<div className="flex flex-col gap-2">
-									<Button variant="outline" className="gap-2">
-										<CircleCheck size={16} />
-										Mark as complete
-									</Button>
-									<Button variant="outline" className="gap-2">
-										<CircleDotDashed size={16} />
-										Mark as in progress
-									</Button>
-								</div>
-								*/}
 							</div>
 						</div>
 						<div className="md:col-span-8">
@@ -392,7 +363,7 @@ function RouteComponent() {
 													*/}
 													{/* Emoji reactions */}
 													<div className="flex items-center gap-2">
-														<EmotePicker feedbackId={feedback._id} commentId={firstComment._id} />
+														<EmotePicker feedbackId={feedback._id} commentId={firstComment._id} currentProfileId={currentProfile?._id} />
 														{firstCommentWithEmotes &&
 															(
 																Object.entries(firstCommentWithEmotes.emoteCounts) as [
@@ -411,6 +382,7 @@ function RouteComponent() {
 																			? data.authorProfileIds.includes(currentProfile._id)
 																			: false
 																	}
+																	currentProfileId={currentProfile?._id}
 																/>
 															))}
 													</div>

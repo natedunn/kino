@@ -101,7 +101,7 @@ function CommentItem({ comment, feedbackId, currentProfileId }: CommentItemProps
 				<div className="flex flex-col gap-4 p-6">
 					<div className="whitespace-pre-wrap">{comment.content}</div>
 					<div className="flex items-center gap-2">
-						<EmotePicker feedbackId={feedbackId} commentId={comment._id} />
+						<EmotePicker feedbackId={feedbackId} commentId={comment._id} currentProfileId={currentProfileId} />
 						{emoteEntries.map(([emoteType, data]) => (
 							<EmoteButton
 								key={emoteType}
@@ -110,6 +110,7 @@ function CommentItem({ comment, feedbackId, currentProfileId }: CommentItemProps
 								emoteType={emoteType}
 								count={data.count}
 								isActive={currentProfileId ? data.authorProfileIds.includes(currentProfileId) : false}
+								currentProfileId={currentProfileId}
 							/>
 						))}
 					</div>
