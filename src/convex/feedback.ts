@@ -106,6 +106,65 @@ export const updateStatus = mutation({
 	},
 });
 
+export const updateBoard = mutation({
+	args: zodToConvex(feedbackSchema.pick({ _id: true, boardId: true })),
+	handler: async (ctx, args) => {
+		const profile = await getMyProfile(ctx);
+
+		if (!profile) {
+			throw new ConvexError({
+				message: 'You must be logged in to update feedback board',
+				code: '401',
+			});
+		}
+
+		const feedback = await ctx.db.get(args._id);
+
+		if (!feedback) {
+			throw new ConvexError({
+				message: 'Feedback not found',
+				code: '404',
+			});
+		}
+
+		// Check if user is the owner
+		const isOwner = feedback.authorProfileId === profile._id;
+
+		// Check project permissions
+		const project = await ctx.db.get(feedback.projectId);
+
+		if (!project) {
+			throw new ConvexError({
+				message: 'Project not found',
+				code: '404',
+			});
+		}
+
+		const { permissions } = await verifyProjectAccess(ctx, { slug: project.slug });
+
+		if (!isOwner && !permissions.canEdit) {
+			throw new ConvexError({
+				message: 'You do not have permission to update this feedback board',
+				code: '403',
+			});
+		}
+
+		// Verify the board exists and belongs to the same project
+		const board = await ctx.db.get(args.boardId);
+
+		if (!board || board.projectId !== feedback.projectId) {
+			throw new ConvexError({
+				message: 'Invalid board',
+				code: '400',
+			});
+		}
+
+		await patch(ctx, 'feedback', args._id, { boardId: args.boardId });
+
+		return { success: true };
+	},
+});
+
 export const getBySlug = query({
 	args: zodToConvex(feedbackSchema.pick({ projectId: true, slug: true })),
 	handler: async (ctx, { projectId, slug }) => {

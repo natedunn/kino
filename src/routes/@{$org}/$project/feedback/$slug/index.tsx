@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 import { formatTimestamp } from '@/lib/utils/format-timestamp';
 
 import { AssignedTo } from '../-components/assigned-to';
+import { BoardSwitcher } from '../-components/board-switcher';
 import { CommentForm } from '../-components/comment-form';
 import { CommentsList } from '../-components/comments-list';
 import { EmoteButton, EmoteContent, EmotePicker } from '../-components/emote-picker';
@@ -293,18 +294,12 @@ function RouteComponent() {
 											<span className="text-xs font-semibold tracking-wide uppercase opacity-50">
 												Board:
 											</span>{' '}
-											{board ? (
-												<Link
-													className="text-sm hocus:underline"
-													to="/@{$org}/$project/feedback"
-													params={{ org: params.org, project: params.project }}
-													search={{ board: board.slug }}
-												>
-													{board.name}
-												</Link>
-											) : (
-												<span className="text-sm text-muted-foreground">None</span>
-											)}
+											<BoardSwitcher
+												feedbackId={feedback._id}
+												currentBoard={board}
+												projectSlug={params.project}
+												canEdit={canEditStatus}
+											/>
 										</li>
 									</ul>
 								</div>
