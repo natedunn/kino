@@ -14,7 +14,7 @@ import {
 	SelectValue,
 } from '@/components/ui/select-shadcn';
 import { useAppForm, useFormError } from '@/components/ui/tanstack-form';
-import { Textarea } from '@/components/ui/textarea';
+import { MarkdownEditor } from '@/components/editor';
 import { Id } from '@/convex/_generated/dataModel';
 import { feedbackCreateSchema } from '@/convex/schema/feedback.schema';
 import { cn } from '@/lib/utils';
@@ -144,11 +144,12 @@ export const CreateFeedbackForm = ({ projectId, boards, onSubmit }: CreateFeedba
 							<field.Provider>
 								<field.Label>Content</field.Label>
 								<field.Control>
-									<Textarea
+									<MarkdownEditor
 										value={field.state.value}
-										onChange={(e) => field.handleChange(e.target.value)}
+										onChange={(html) => field.handleChange(html)}
 										disabled={!enabled}
-										autoFocus
+										placeholder="Describe your feedback..."
+										minHeight="120px"
 									/>
 								</field.Control>
 							</field.Provider>
