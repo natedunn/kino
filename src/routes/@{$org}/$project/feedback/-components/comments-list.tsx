@@ -5,6 +5,7 @@ import { Link } from '@tanstack/react-router';
 import { MoreHorizontal, Trash2 } from 'lucide-react';
 
 import { api, API } from '~api';
+import { EditorContentDisplay } from '@/components/editor';
 import { Button } from '@/components/ui/button';
 import {
 	DropdownMenu,
@@ -99,7 +100,7 @@ function CommentItem({ comment, feedbackId, currentProfileId }: CommentItemProps
 					</div>
 				</div>
 				<div className="flex flex-col gap-4 p-6">
-					<div className="whitespace-pre-wrap">{comment.content}</div>
+					<EditorContentDisplay content={comment.content} />
 					<div className="flex items-center gap-2">
 						<EmotePicker feedbackId={feedbackId} commentId={comment._id} currentProfileId={currentProfileId} />
 						{emoteEntries.map(([emoteType, data]) => (
