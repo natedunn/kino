@@ -1,10 +1,12 @@
+import type { MarkdownEditorRef } from '@/components/editor';
+
+import { useRef, useState } from 'react';
 import { useConvexMutation } from '@convex-dev/react-query';
 import { useMutation } from '@tanstack/react-query';
-import { useRef, useState } from 'react';
 
 import { api } from '~api';
+import { MarkdownEditor, sanitizeEditorContent, useEditorRef } from '@/components/editor';
 import { Button } from '@/components/ui/button';
-import { MarkdownEditor, type MarkdownEditorRef, useEditorRef, sanitizeEditorContent } from '@/components/editor';
 import { Id } from '@/convex/_generated/dataModel';
 
 type CommentFormProps = {
@@ -51,18 +53,21 @@ export function CommentForm({ feedbackId }: CommentFormProps) {
 	const isSubmitting = status === 'pending';
 
 	return (
-		<form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-3 rounded-lg border bg-accent/30 p-4">
+		<form
+			onSubmit={handleSubmit}
+			className='mt-6 flex flex-col gap-3 rounded-lg border bg-accent/30'
+		>
 			<MarkdownEditor
 				ref={editorRef}
 				value={content}
 				onChange={setContent}
-				placeholder="Leave a comment..."
+				placeholder='Leave a comment...'
 				disabled={isSubmitting}
-				minHeight="60px"
-				variant="borderless"
+				minHeight='60px'
+				variant='borderless'
 			/>
-			<div className="flex justify-end">
-				<Button type="submit" disabled={isSubmitting || !content.trim()}>
+			<div className='mr-4 mb-4 flex justify-end'>
+				<Button type='submit' disabled={isSubmitting || !content.trim()}>
 					{isSubmitting ? 'Posting...' : 'Comment'}
 				</Button>
 			</div>

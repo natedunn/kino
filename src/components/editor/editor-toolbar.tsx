@@ -13,7 +13,7 @@ import {
   Strikethrough,
   Underline,
 } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -48,7 +48,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const chain = () => editor?.chain().focus() as any;
 
-  const items: ToolbarItem[] = editor
+  const items: ToolbarItem[] = useMemo(() => editor
     ? [
         {
           id: 'bold',
@@ -146,7 +146,9 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
           group: 6,
         },
       ]
-    : [];
+    : [],
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  [editor]);
 
   const calculateOverflow = useCallback(() => {
     if (!toolbarRef.current) return;
