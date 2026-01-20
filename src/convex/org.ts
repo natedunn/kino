@@ -1,4 +1,6 @@
-import { BetterAuthError } from 'better-auth';
+// import type { BetterAuthError } from 'better-auth/react';
+
+import { getOrgAdapter } from 'better-auth/plugins';
 import { zodToConvex } from 'convex-helpers/server/zod4';
 import { ConvexError } from 'convex/values';
 import * as z from 'zod';
@@ -9,14 +11,21 @@ import { components } from './_generated/api';
 import { authComponent, createAuth } from './auth';
 import { getMyProfile } from './profile.lib';
 import { mutation, query } from './utils/functions';
-import { verify } from './utils/verify';
 
 export const create = mutation({
 	args: zodToConvex(createOrgSchema),
 	handler: async (ctx, args) => {
-		await verify.auth(ctx, {
-			throw: true,
-		});
+		// await verify.auth(ctx, {
+		// 	throw: true,
+		// });
+		const userIdentity = await ctx.auth.getUserIdentity();
+
+		if (!userIdentity) {
+			throw new ConvexError({
+				message: 'User not authenticated',
+				code: '401',
+			});
+		}
 
 		const { auth, headers } = await authComponent.getAuth(createAuth, ctx);
 
@@ -25,11 +34,13 @@ export const create = mutation({
 				body: args,
 				headers,
 			})
-			.catch((error: BetterAuthError) => {
-				throw new ConvexError({
-					message: error.message,
-					code: '500',
-				});
+			.catch(() => {
+				throw new Error('Not able to create an organization.');
+				// TODO: Set this properly again once fixe
+				// throw new ConvexError({
+				// 	message: error.message,
+				// 	code: '500',
+				// });
 			});
 	},
 });
@@ -39,9 +50,18 @@ export const update = mutation({
 	handler: async (ctx, args) => {
 		const { auth, headers } = await authComponent.getAuth(createAuth, ctx);
 
-		await verify.auth(ctx, {
-			throw: true,
-		});
+		// await verify.auth(ctx, {
+		// 	throw: true,
+		// });
+
+		const userIdentity = await ctx.auth.getUserIdentity();
+
+		if (!userIdentity) {
+			throw new ConvexError({
+				code: '401',
+				message: 'User not authenticated',
+			});
+		}
 
 		const orgDetails = await ctx.runQuery(components.betterAuth.org.getDetails, {
 			slug: args.currentSlug,
@@ -113,9 +133,13 @@ export const getMyPermission = query({
 		})
 	),
 	handler: async (ctx, args) => {
-		await verify.auth(ctx, {
-			throw: true,
-		});
+		// await verify.auth(ctx, {
+		// 	throw: true,
+		// });
+		const userIdentity = await ctx.auth.getUserIdentity();
+
+		if (!userIdentity) {
+		}
 
 		const createResponse = (permissions: { canAddProjects: boolean }) => permissions;
 
@@ -151,7 +175,9 @@ export const findMyOrgs = query({
 			return null;
 		}
 
-		const { auth, headers } = await authComponent.getAuth(createAuth, ctx);
+		// const { auth, headers } = await authComponent.getAuth(createAuth, ctx);
+		const auth = createAuth(ctx);
+		const headers = await authComponent.getHeaders(ctx);
 
 		const teams = await auth.api.listOrganizations({
 			headers,

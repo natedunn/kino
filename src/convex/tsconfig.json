@@ -14,9 +14,7 @@
 		"paths": {
 			"@/*": ["../*"],
 			"~api": ["../lib/api/index.ts"],
-			"@convex/*": ["./*"],
-			"convex-verify": ["../convex-verify/src/index.ts"],
-			"convex-verify/*": ["../convex-verify/src/*"]
+			"@convex/*": ["./*"]
 		},
 
 		/* These compiler options are required by Convex */

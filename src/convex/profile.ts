@@ -12,7 +12,9 @@ import { updateProfileSchema } from './schema/profile.schema';
 import { updateUserSchema } from './schema/user.schema';
 import { mutation, query } from './utils/functions';
 import { userUploadsR2 } from './utils/r2';
-import { verify } from './utils/verify';
+import { patch } from './utils/verify';
+
+// import { verify } from './utils/verify';
 
 export const getList = query({
 	args: { paginationOpts: paginationOptsValidator },
@@ -42,9 +44,20 @@ export const update = mutation({
 		})
 	),
 	handler: async (ctx, args) => {
-		const { userId } = await verify.auth(ctx, {
-			throw: true,
-		});
+		// const { userId } = await verify.auth(ctx, {
+		// 	throw: true,
+		// });
+
+		const userIdentity = await ctx.auth.getUserIdentity();
+
+		if (!userIdentity) {
+			throw new ConvexError({
+				message: 'User not authenticated',
+				code: '401',
+			});
+		}
+
+		const userId = userIdentity.subject;
 
 		if (userId !== args.identifiers.userId) {
 			throw new ConvexError({
@@ -56,7 +69,7 @@ export const update = mutation({
 		const { auth, headers } = await authComponent.getAuth(createAuth, ctx);
 
 		// 1️⃣ Update profile-only data first...
-		await verify.patch(ctx, 'profile', args.identifiers._id, args.profile);
+		await patch(ctx, 'profile', args.identifiers._id, args.profile);
 
 		// 2️⃣ ...then update user-only data (Better-Auth user data). This will
 		// then update profile data via Better-Auth's trigger. It more distance

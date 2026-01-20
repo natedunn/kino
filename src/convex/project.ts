@@ -16,7 +16,7 @@ import { verifyProjectAccess } from './project.lib';
 import schema from './schema';
 import { authedMutation, mutation, query } from './utils/functions';
 import { triggers } from './utils/trigger';
-import { verify } from './utils/verify';
+import { insert, patch } from './utils/verify';
 
 export const create = mutation({
 	args: zodToConvex(createProjectSchema),
@@ -42,10 +42,7 @@ export const create = mutation({
 			});
 		}
 
-		const id = await verify.insert({
-			ctx,
-			tableName: 'project',
-			data: args,
+		const id = await insert(ctx, 'project', args, {
 			onFail: ({ uniqueRow }) => {
 				throw new ConvexError({
 					message: `A project with the slug of '${uniqueRow?.existingData?.slug}' already exists for this organization.`,
@@ -53,16 +50,12 @@ export const create = mutation({
 			},
 		});
 
-		await verify.insert({
-			ctx,
-			tableName: 'projectMember',
-			data: {
-				projectId: id,
-				profileId: profile._id,
-				role: 'admin',
-				projectSlug: args.slug,
-				projectVisibility: args.visibility,
-			},
+		await insert(ctx, 'projectMember', {
+			projectId: id,
+			profileId: profile._id,
+			role: 'admin',
+			projectSlug: args.slug,
+			projectVisibility: args.visibility,
 		});
 	},
 });
@@ -87,7 +80,7 @@ export const update = authedMutation({
 			});
 		}
 
-		await verify.patch(ctx, 'project', args._id, args, {
+		await patch(ctx, 'project', args._id, args, {
 			onFail: ({ uniqueRow }) => {
 				throw new ConvexError({
 					message: `A project with the slug of '${uniqueRow?.existingData?.slug}' already exists for this organization.`,

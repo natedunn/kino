@@ -13,7 +13,7 @@ import { components, internal } from './_generated/api';
 import authConfig from './auth.config';
 import authSchema from './betterAuth/schema';
 import { syncProfileSchema } from './schema/profile.schema';
-import { verify } from './utils/verify';
+import { insert, patch } from './utils/verify';
 
 const authFunctions: AuthFunctions = internal.auth;
 
@@ -62,17 +62,13 @@ export const authComponent = createClient<DataModel, typeof authSchema>(componen
 					},
 				});
 
-				const profileId = await verify.insert({
-					ctx,
-					tableName: 'profile',
-					data: {
-						imageUrl: newUser.image ?? undefined,
-						userId: newUser._id,
-						email: newUser.email,
-						username,
-						role: process.env.SUPER_ADMIN_EMAIL! ? 'system:admin' : 'user',
-						name: newUser.name,
-					},
+				const profileId = await insert(ctx, 'profile', {
+					imageUrl: newUser.image ?? undefined,
+					userId: newUser._id,
+					email: newUser.email,
+					username,
+					role: process.env.SUPER_ADMIN_EMAIL! ? 'system:admin' : 'user',
+					name: newUser.name,
 				});
 
 				// Directly updating the column prevents onChange from running below
@@ -97,8 +93,7 @@ export const authComponent = createClient<DataModel, typeof authSchema>(componen
 					console.error('Nothing to update: no userId found');
 				} else {
 					const parsedProfile = syncProfileSchema.parse(newUser);
-					// await ctx.db.patch(profileId, parsedProfile);
-					await verify.patch(ctx, 'profile', profileId, parsedProfile);
+					await patch(ctx, 'profile', profileId, parsedProfile);
 				}
 			},
 		},
@@ -106,9 +101,10 @@ export const authComponent = createClient<DataModel, typeof authSchema>(componen
 });
 
 export const { onCreate, onUpdate, onDelete } = authComponent.triggersApi();
+export const { getAuthUser } = authComponent.clientApi();
 
 export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
-	return {
+	const options = {
 		baseURL: process.env.SITE_URL!,
 		trustedOrigins: ['http://localhost:3000', 'https://usekino.com'],
 		database: authComponent.adapter(ctx),
@@ -158,6 +154,8 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
 			}),
 		],
 	} satisfies BetterAuthOptions;
+
+	return options;
 };
 
 export const createAuth = (ctx: GenericCtx<DataModel>) => {

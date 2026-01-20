@@ -13,7 +13,7 @@ import {
 // import { projectSchema } from './schema/project.schema';
 import { mutation, query } from './utils/functions';
 import { triggers } from './utils/trigger';
-import { verify } from './utils/verify';
+import { insert, patch } from './utils/verify';
 
 export const create = mutation({
 	args: zodToConvex(feedbackBoardCreateSchema),
@@ -30,21 +30,8 @@ export const create = mutation({
 			});
 		}
 
-		await verify.defaultValues({
-			ctx,
-			tableName: 'feedbackBoard',
-			data: {
-				name: args.slug,
-				// slug: args.slug,
-				projectId: args.projectId,
-			},
-		});
-
 		// Insert if passed the authorization checks
-		await verify.insert({
-			ctx,
-			tableName: 'feedbackBoard',
-			data: args,
+		await insert(ctx, 'feedbackBoard', args, {
 			onFail: (args) => {
 				if (args.uniqueRow) {
 					throw new ConvexError({
@@ -82,7 +69,7 @@ export const update = mutation({
 			});
 		}
 
-		await verify.patch(ctx, 'feedbackBoard', data._id, data, {
+		await patch(ctx, 'feedbackBoard', data._id, data, {
 			onFail: ({ uniqueRow }) => {
 				if (uniqueRow) {
 					throw new ConvexError({

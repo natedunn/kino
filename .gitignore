@@ -31,3 +31,6 @@ dist
 /playwright/.cache/
 
 app.config.timestamp_*.js
+
+/.yalc
+yalc.lock
