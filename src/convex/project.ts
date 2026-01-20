@@ -157,8 +157,6 @@ export const getDetails = query({
 			slug: args.slug,
 		});
 
-		console.log(projectDetails);
-
 		if (!projectDetails.project) {
 			throw new ConvexError({
 				message: 'Project not found',
