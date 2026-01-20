@@ -196,9 +196,11 @@ export function FeedbackToolbar() {
 									value={!status ? null : status}
 									onValueChange={(value) => {
 										// setLoading(true);
-										setSearchParams({
-											status: value === null ? undefined : value,
-										});
+										if (value) {
+											setSearchParams({
+												status: value as typeof status,
+											});
+										}
 									}}
 								>
 									<SelectTrigger id='status-filter'>

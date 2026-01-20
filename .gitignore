@@ -34,3 +34,5 @@ app.config.timestamp_*.js
 
 /.yalc
 yalc.lock
+
+.mcp.json

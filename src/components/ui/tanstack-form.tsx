@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { Slot } from '@radix-ui/react-slot';
 import {
 	AppFieldExtendedReactFormApi,
 	createFormHook,
@@ -9,6 +8,7 @@ import {
 import { ConvexError } from 'convex/values';
 
 import { Label as LabelComponent } from '@/components/ui/label';
+import { Slot } from '@/components/ui/slot';
 import { cn } from '@/lib/utils';
 
 import { InlineAlert } from '../inline-alert';
