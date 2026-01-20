@@ -14,7 +14,7 @@ import {
 	SelectValue,
 } from '@/components/ui/select-shadcn';
 import { useAppForm, useFormError } from '@/components/ui/tanstack-form';
-import { MarkdownEditor } from '@/components/editor';
+import { MarkdownEditor, sanitizeEditorContent } from '@/components/editor';
 import { Id } from '@/convex/_generated/dataModel';
 import { feedbackCreateSchema } from '@/convex/schema/feedback.schema';
 import { cn } from '@/lib/utils';
@@ -64,11 +64,13 @@ export const CreateFeedbackForm = ({ projectId, boards, onSubmit }: CreateFeedba
 		},
 		onSubmit: async ({ value }) => {
 			formError.errorReset();
+			// Sanitize content to prevent excessive line breaks
+			const sanitizedContent = sanitizeEditorContent(value.firstComment);
 			createFeedback({
 				boardId: value.boardId as Id<'feedbackBoard'>,
 				projectId: projectId,
 				title: value.title,
-				firstComment: value.firstComment,
+				firstComment: sanitizedContent,
 			});
 		},
 	});

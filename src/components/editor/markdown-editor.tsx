@@ -26,6 +26,7 @@ type MarkdownEditorProps = {
   disabled?: boolean;
   className?: string;
   minHeight?: string;
+  variant?: 'default' | 'borderless';
 };
 
 export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>(
@@ -37,6 +38,7 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
       disabled = false,
       className,
       minHeight = '100px',
+      variant = 'default',
     },
     ref
   ) => {
@@ -113,8 +115,11 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
     return (
       <div
         className={cn(
-          'overflow-hidden rounded-md border bg-white dark:bg-input/30',
-          'focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50',
+          'overflow-hidden rounded-md',
+          variant === 'default' && [
+            'border bg-white dark:bg-input/30',
+            'focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50',
+          ],
           disabled && 'cursor-not-allowed opacity-50',
           className
         )}

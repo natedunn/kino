@@ -2,10 +2,11 @@ import { useConvexMutation } from '@convex-dev/react-query';
 import { convexQuery } from '@convex-dev/react-query';
 import { useMutation, useSuspenseQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { MoreHorizontal, Quote, Trash2 } from 'lucide-react';
+import { MoreHorizontal, Pencil, Quote, Trash2 } from 'lucide-react';
+import { useRef, useState } from 'react';
 
 import { api, API } from '~api';
-import { EditorContentDisplay, useEditorRef } from '@/components/editor';
+import { EditorContentDisplay, MarkdownEditor, type MarkdownEditorRef, useEditorRef, sanitizeEditorContent } from '@/components/editor';
 import { Button } from '@/components/ui/button';
 import {
 	DropdownMenu,
@@ -28,6 +29,11 @@ type CommentItemProps = {
 
 function CommentItem({ comment, feedbackId, currentProfileId }: CommentItemProps) {
 	const { author, emoteCounts } = comment;
+
+	// Edit state
+	const [isEditing, setIsEditing] = useState(false);
+	const [editContent, setEditContent] = useState(comment.content);
+	const editEditorRef = useRef<MarkdownEditorRef>(null);
 
 	// Check if current user owns this comment (client-side check for UI)
 	const isOwner = currentProfileId && author?._id === currentProfileId;
@@ -52,10 +58,42 @@ function CommentItem({ comment, feedbackId, currentProfileId }: CommentItemProps
 		mutationFn: useConvexMutation(api.feedbackComment.remove),
 	});
 
+	const { mutate: updateComment, status: updateStatus } = useMutation({
+		mutationFn: useConvexMutation(api.feedbackComment.update),
+		onSuccess: () => {
+			setIsEditing(false);
+		},
+	});
+
 	const handleDelete = () => {
 		if (confirm('Are you sure you want to delete this comment?')) {
 			deleteComment({ _id: comment._id });
 		}
+	};
+
+	const handleEdit = () => {
+		setEditContent(comment.content);
+		setIsEditing(true);
+	};
+
+	const handleCancelEdit = () => {
+		setIsEditing(false);
+		setEditContent(comment.content);
+	};
+
+	const handleSaveEdit = () => {
+		const html = editEditorRef.current?.getHTML() ?? editContent;
+		const text = editEditorRef.current?.getText() ?? '';
+
+		if (!text.trim()) return;
+
+		const sanitizedContent = sanitizeEditorContent(html);
+		if (!sanitizedContent) return;
+
+		updateComment({
+			_id: comment._id,
+			content: sanitizedContent,
+		});
 	};
 
 	// Get list of emotes with counts > 0
@@ -65,6 +103,7 @@ function CommentItem({ comment, feedbackId, currentProfileId }: CommentItemProps
 	][];
 
 	const isDeleting = deleteStatus === 'pending';
+	const isUpdating = updateStatus === 'pending';
 
 	return (
 		<li className="update-comment relative flex overflow-hidden rounded-lg border">
@@ -108,20 +147,58 @@ function CommentItem({ comment, feedbackId, currentProfileId }: CommentItemProps
 								</DropdownMenuItem>
 							)}
 							{isOwner && (
-								<DropdownMenuItem
-									onClick={handleDelete}
-									className="text-destructive focus:text-destructive"
-								>
-									<Trash2 size={14} />
-									Delete
-								</DropdownMenuItem>
+								<>
+									<DropdownMenuItem onClick={handleEdit}>
+										<Pencil size={14} />
+										Edit
+									</DropdownMenuItem>
+									<DropdownMenuItem
+										onClick={handleDelete}
+										className="text-destructive focus:text-destructive"
+									>
+										<Trash2 size={14} />
+										Delete
+									</DropdownMenuItem>
+								</>
 							)}
 						</DropdownMenuContent>
 					</DropdownMenu>
 					</div>
 				</div>
 				<div className="flex flex-col gap-4 p-6">
-					<EditorContentDisplay content={comment.content} />
+					{isEditing ? (
+						<div className="flex flex-col gap-3">
+							<MarkdownEditor
+								ref={editEditorRef}
+								value={editContent}
+								onChange={setEditContent}
+								placeholder="Edit your comment..."
+								disabled={isUpdating}
+								minHeight="80px"
+							/>
+							<div className="flex justify-end gap-2">
+								<Button
+									type="button"
+									variant="ghost"
+									size="sm"
+									onClick={handleCancelEdit}
+									disabled={isUpdating}
+								>
+									Cancel
+								</Button>
+								<Button
+									type="button"
+									size="sm"
+									onClick={handleSaveEdit}
+									disabled={isUpdating}
+								>
+									{isUpdating ? 'Saving...' : 'Save'}
+								</Button>
+							</div>
+						</div>
+					) : (
+						<EditorContentDisplay content={comment.content} />
+					)}
 					<div className="flex items-center gap-2">
 						<EmotePicker feedbackId={feedbackId} commentId={comment._id} currentProfileId={currentProfileId} />
 						{emoteEntries.map(([emoteType, data]) => (

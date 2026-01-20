@@ -4,7 +4,7 @@ import { useRef, useState } from 'react';
 
 import { api } from '~api';
 import { Button } from '@/components/ui/button';
-import { MarkdownEditor, type MarkdownEditorRef, useEditorRef } from '@/components/editor';
+import { MarkdownEditor, type MarkdownEditorRef, useEditorRef, sanitizeEditorContent } from '@/components/editor';
 import { Id } from '@/convex/_generated/dataModel';
 
 type CommentFormProps = {
@@ -38,9 +38,13 @@ export function CommentForm({ feedbackId }: CommentFormProps) {
 
 		if (!text.trim()) return;
 
+		// Sanitize content to prevent excessive line breaks
+		const sanitizedContent = sanitizeEditorContent(html);
+		if (!sanitizedContent) return;
+
 		createComment({
 			feedbackId,
-			content: html,
+			content: sanitizedContent,
 		});
 	};
 
@@ -55,6 +59,7 @@ export function CommentForm({ feedbackId }: CommentFormProps) {
 				placeholder="Leave a comment..."
 				disabled={isSubmitting}
 				minHeight="60px"
+				variant="borderless"
 			/>
 			<div className="flex justify-end">
 				<Button type="submit" disabled={isSubmitting || !content.trim()}>

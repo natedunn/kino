@@ -24,6 +24,36 @@ export const create = mutation({
 	},
 });
 
+export const update = mutation({
+	args: zodToConvex(feedbackCommentSchema.pick({ _id: true, content: true })),
+	handler: async (ctx, args) => {
+		const profile = await getMyProfile(ctx);
+
+		const comment = await ctx.db.get(args._id);
+
+		if (!comment) {
+			throw new ConvexError({
+				message: 'Comment not found',
+				code: '404',
+			});
+		}
+
+		// Only the author can edit their own comments - NOT admins
+		if (comment.authorProfileId !== profile._id) {
+			throw new ConvexError({
+				message: 'You can only edit your own comments',
+				code: '403',
+			});
+		}
+
+		await ctx.db.patch(args._id, {
+			content: args.content,
+		});
+
+		return { updated: true };
+	},
+});
+
 export const remove = mutation({
 	args: zodToConvex(feedbackCommentSchema.pick({ _id: true })),
 	handler: async (ctx, args) => {
