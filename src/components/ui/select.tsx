@@ -1,11 +1,35 @@
 'use client';
 
-import { Select as SelectPrimitive } from '@base-ui-components/react/select';
+import { Select as SelectPrimitive } from '@base-ui/react/select';
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 
-const Select = SelectPrimitive.Root;
+import * as React from 'react';
+
+function Select({
+	onValueChange,
+	...props
+}: Omit<React.ComponentProps<typeof SelectPrimitive.Root>, 'onValueChange'> & {
+	onValueChange?: (value: string) => void;
+}) {
+	const handleValueChange = React.useCallback(
+		(value: unknown) => {
+			if (onValueChange && typeof value === 'string') {
+				onValueChange(value);
+			}
+		},
+		[onValueChange]
+	);
+
+	return (
+		<SelectPrimitive.Root
+			data-slot='select'
+			onValueChange={onValueChange ? handleValueChange : undefined}
+			{...props}
+		/>
+	);
+}
 
 function SelectGroup({ ...props }: SelectPrimitive.Group.Props) {
 	return <SelectPrimitive.Group data-slot='select-group' {...props} />;
@@ -97,9 +121,9 @@ function SelectContent({ className, children, ...props }: SelectPrimitive.Popup.
 	);
 }
 
-function SelectLabel({ className, ...props }: SelectPrimitive.GroupLabel.Props) {
+function SelectLabel({ className, ...props }: React.ComponentProps<'div'>) {
 	return (
-		<SelectPrimitive.GroupLabel
+		<div
 			data-slot='select-label'
 			className={cn('px-2 py-1.5 text-xs text-muted-foreground', className)}
 			{...props}
