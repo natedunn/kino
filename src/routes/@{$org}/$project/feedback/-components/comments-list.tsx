@@ -2,10 +2,10 @@ import { useConvexMutation } from '@convex-dev/react-query';
 import { convexQuery } from '@convex-dev/react-query';
 import { useMutation, useSuspenseQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { MoreHorizontal, Trash2 } from 'lucide-react';
+import { MoreHorizontal, Quote, Trash2 } from 'lucide-react';
 
 import { api, API } from '~api';
-import { EditorContentDisplay } from '@/components/editor';
+import { EditorContentDisplay, useEditorRef } from '@/components/editor';
 import { Button } from '@/components/ui/button';
 import {
 	DropdownMenu,
@@ -31,6 +31,22 @@ function CommentItem({ comment, feedbackId, currentProfileId }: CommentItemProps
 
 	// Check if current user owns this comment (client-side check for UI)
 	const isOwner = currentProfileId && author?._id === currentProfileId;
+
+	// Get editor ref for Quote feature
+	let editorRef: React.RefObject<any> | null = null;
+	try {
+		editorRef = useEditorRef();
+	} catch {
+		// Not within EditorRefProvider - Quote won't be available
+	}
+
+	const handleQuote = () => {
+		if (!editorRef?.current) return;
+		// Strip HTML tags for plain text quote
+		const plainText = comment.content.replace(/<[^>]*>/g, '');
+		editorRef.current.insertBlockquote(plainText);
+		editorRef.current.focus();
+	};
 
 	const { mutate: deleteComment, status: deleteStatus } = useMutation({
 		mutationFn: useConvexMutation(api.feedbackComment.remove),
@@ -77,26 +93,31 @@ function CommentItem({ comment, feedbackId, currentProfileId }: CommentItemProps
 					</span>
 					<div className="flex items-center gap-2">
 						<span className="text-muted-foreground">{formatTimestamp(comment._creationTime)}</span>
-						{/* Only show dropdown if user owns the comment */}
-						{isOwner && (
-							<DropdownMenu>
-								<DropdownMenuTrigger asChild>
-									<Button variant="ghost" size="sm" disabled={isDeleting}>
-										<MoreHorizontal className="h-4 w-4" />
-										<span className="sr-only">More Actions</span>
-									</Button>
-								</DropdownMenuTrigger>
-								<DropdownMenuContent align="end">
-									<DropdownMenuItem
-										onClick={handleDelete}
-										className="text-destructive focus:text-destructive"
-									>
-										<Trash2 size={14} />
-										Delete
-									</DropdownMenuItem>
-								</DropdownMenuContent>
-							</DropdownMenu>
-						)}
+						<DropdownMenu>
+						<DropdownMenuTrigger asChild>
+							<Button variant="ghost" size="sm" disabled={isDeleting}>
+								<MoreHorizontal className="h-4 w-4" />
+								<span className="sr-only">More Actions</span>
+							</Button>
+						</DropdownMenuTrigger>
+						<DropdownMenuContent align="end">
+							{editorRef && (
+								<DropdownMenuItem onClick={handleQuote}>
+									<Quote size={14} />
+									Quote
+								</DropdownMenuItem>
+							)}
+							{isOwner && (
+								<DropdownMenuItem
+									onClick={handleDelete}
+									className="text-destructive focus:text-destructive"
+								>
+									<Trash2 size={14} />
+									Delete
+								</DropdownMenuItem>
+							)}
+						</DropdownMenuContent>
+					</DropdownMenu>
 					</div>
 				</div>
 				<div className="flex flex-col gap-4 p-6">
