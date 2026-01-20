@@ -35,7 +35,7 @@ type FormSchema = z.infer<typeof formSchema>;
 type CreateFeedbackFormProps = {
 	projectId: Id<'project'>;
 	boards: API['feedbackBoard']['listProjectBoards'];
-	onSubmit?: (data: { feedbackId: Id<'feedback'> }) => void;
+	onSubmit?: (data: { feedbackId: Id<'feedback'>; slug: string }) => void;
 };
 
 export const CreateFeedbackForm = ({ projectId, boards, onSubmit }: CreateFeedbackFormProps) => {
@@ -75,7 +75,7 @@ export const CreateFeedbackForm = ({ projectId, boards, onSubmit }: CreateFeedba
 
 	const { mutate: createFeedback, status } = useMutation({
 		mutationFn: useConvexMutation(api.feedback.create),
-		onSuccess: (data: { feedbackId: Id<'feedback'> }) => {
+		onSuccess: (data: { feedbackId: Id<'feedback'>; slug: string }) => {
 			form.reset();
 			onSubmit?.(data);
 		},

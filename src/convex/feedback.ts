@@ -3,6 +3,8 @@ import { zodToConvex } from 'convex-helpers/server/zod4';
 import { OrderedQuery, paginationOptsValidator, Query, QueryInitializer } from 'convex/server';
 import { ConvexError, v } from 'convex/values';
 
+import { generateRandomSlug } from '@/lib/random';
+
 import { DataModel } from './_generated/dataModel';
 import { query } from './_generated/server';
 import { getMyProfile } from './profile.lib';
@@ -24,9 +26,10 @@ export const create = mutation({
 			});
 		}
 
+		const slug = generateRandomSlug();
+
 		const feedbackId = await insert(ctx, 'feedback', {
-			// status: 'in-progress',
-			// slug: '1234567890',
+			slug,
 			title: args.title,
 			projectId: args.projectId,
 			boardId: args.boardId,
@@ -48,6 +51,53 @@ export const create = mutation({
 		return {
 			feedbackId,
 			feedbackCommentId,
+			slug,
+		};
+	},
+});
+
+export const getBySlug = query({
+	args: zodToConvex(feedbackSchema.pick({ projectId: true, slug: true })),
+	handler: async (ctx, { projectId, slug }) => {
+		const feedback = await ctx.db
+			.query('feedback')
+			.withIndex('by_projectId_slug', (q) => q.eq('projectId', projectId).eq('slug', slug))
+			.first();
+
+		if (!feedback) {
+			return null;
+		}
+
+		const author = await ctx.db.get(feedback.authorProfileId);
+		const board = await ctx.db.get(feedback.boardId);
+		const firstComment = feedback.firstCommentId ? await ctx.db.get(feedback.firstCommentId) : null;
+
+		return {
+			feedback,
+			author: author
+				? {
+						_id: author._id,
+						username: author.username,
+						name: author.name,
+						imageUrl: author.imageUrl,
+					}
+				: null,
+			board: board
+				? {
+						_id: board._id,
+						name: board.name,
+						slug: board.slug,
+						icon: board.icon,
+					}
+				: null,
+			firstComment: firstComment
+				? {
+						_id: firstComment._id,
+						_creationTime: firstComment._creationTime,
+						content: firstComment.content,
+						authorProfileId: firstComment.authorProfileId,
+					}
+				: null,
 		};
 	},
 });

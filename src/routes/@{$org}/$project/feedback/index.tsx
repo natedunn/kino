@@ -224,11 +224,11 @@ function RouteComponent() {
 										feedback={f}
 										onNavigationClick={() =>
 											router.navigate({
-												to: '/@{$org}/$project/feedback/$feedbackId',
+												to: '/@{$org}/$project/feedback/$slug',
 												params: {
 													org: orgSlug,
 													project: projectSlug,
-													feedbackId: f._id,
+													slug: f.slug,
 												},
 											})
 										}

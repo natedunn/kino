@@ -47,13 +47,13 @@ function RouteComponent() {
 				<CreateFeedbackForm
 					projectId={projectDetails.project._id}
 					boards={feedbackBoards}
-					onSubmit={({ feedbackId }) => {
+					onSubmit={({ slug }) => {
 						router.navigate({
-							to: '/@{$org}/$project/feedback/$feedbackId',
+							to: '/@{$org}/$project/feedback/$slug',
 							params: {
 								org: orgSlug,
 								project: projectSlug,
-								feedbackId,
+								slug,
 							},
 						})
 					}}
