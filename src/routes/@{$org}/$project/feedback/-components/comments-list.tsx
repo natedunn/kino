@@ -1,12 +1,18 @@
-import { useConvexMutation } from '@convex-dev/react-query';
-import { convexQuery } from '@convex-dev/react-query';
+import type { MarkdownEditorRef } from '@/components/editor';
+
+import { useEffect, useRef, useState } from 'react';
+import { convexQuery, useConvexMutation } from '@convex-dev/react-query';
 import { useMutation, useSuspenseQuery } from '@tanstack/react-query';
-import { Link } from '@tanstack/react-router';
-import { MoreHorizontal, Pencil, Quote, Trash2 } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { Link, useLocation } from '@tanstack/react-router';
+import { Link as LinkIcon, MoreHorizontal, Pencil, Quote, Trash2 } from 'lucide-react';
 
 import { api, API } from '~api';
-import { EditorContentDisplay, MarkdownEditor, type MarkdownEditorRef, useEditorRef, sanitizeEditorContent } from '@/components/editor';
+import {
+	EditorContentDisplay,
+	MarkdownEditor,
+	sanitizeEditorContent,
+	useEditorRef,
+} from '@/components/editor';
 import { Button } from '@/components/ui/button';
 import {
 	DropdownMenu,
@@ -15,9 +21,47 @@ import {
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Id } from '@/convex/_generated/dataModel';
+import { cn } from '@/lib/utils';
 import { formatTimestamp } from '@/lib/utils/format-timestamp';
 
 import { EmoteButton, EmoteContent, EmotePicker } from './emote-picker';
+
+const COLLAPSED_MAX_HEIGHT = 600; // pixels
+
+function CollapsibleContent({ children }: { children: React.ReactNode }) {
+	const contentRef = useRef<HTMLDivElement>(null);
+	const [isOverflowing, setIsOverflowing] = useState(false);
+	const [isExpanded, setIsExpanded] = useState(false);
+
+	useEffect(() => {
+		if (contentRef.current) {
+			setIsOverflowing(contentRef.current.scrollHeight > COLLAPSED_MAX_HEIGHT);
+		}
+	}, [children]);
+
+	return (
+		<div className='relative'>
+			<div
+				ref={contentRef}
+				className={cn('overflow-hidden transition-[max-height] duration-300', {
+					'max-h-[600px]': !isExpanded && isOverflowing,
+				})}
+				style={
+					isExpanded ? undefined : { maxHeight: isOverflowing ? COLLAPSED_MAX_HEIGHT : undefined }
+				}
+			>
+				{children}
+			</div>
+			{isOverflowing && !isExpanded && (
+				<div className='absolute inset-x-0 bottom-0 flex h-20 items-end justify-center bg-gradient-to-t from-background to-transparent'>
+					<Button variant='outline' size='sm' onClick={() => setIsExpanded(true)} className='mb-2'>
+						Show more
+					</Button>
+				</div>
+			)}
+		</div>
+	);
+}
 
 type Comment = NonNullable<API['feedbackComment']['listByFeedback']>[number];
 
@@ -29,14 +73,21 @@ type CommentItemProps = {
 
 function CommentItem({ comment, feedbackId, currentProfileId }: CommentItemProps) {
 	const { author, emoteCounts } = comment;
+	const location = useLocation();
+	const commentRef = useRef<HTMLLIElement>(null);
+	const commentId = `comment-${comment._id}`;
 
 	// Edit state
 	const [isEditing, setIsEditing] = useState(false);
 	const [editContent, setEditContent] = useState(comment.content);
 	const editEditorRef = useRef<MarkdownEditorRef>(null);
 
+	// Highlight state for permalink
+	const [isHighlighted, setIsHighlighted] = useState(false);
+
 	// Check if current user owns this comment (client-side check for UI)
 	const isOwner = currentProfileId && author?._id === currentProfileId;
+	const isAuthenticated = !!currentProfileId;
 
 	// Get editor ref for Quote feature
 	let editorRef: React.RefObject<any> | null = null;
@@ -46,12 +97,32 @@ function CommentItem({ comment, feedbackId, currentProfileId }: CommentItemProps
 		// Not within EditorRefProvider - Quote won't be available
 	}
 
+	// Handle scroll-to and highlight on hash match
+	useEffect(() => {
+		if (typeof window === 'undefined') return;
+
+		const hash = window.location.hash;
+		if (hash === `#${commentId}`) {
+			// Small delay to ensure DOM is ready
+			setTimeout(() => {
+				commentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+				setIsHighlighted(true);
+				// Remove highlight after animation
+				setTimeout(() => setIsHighlighted(false), 2000);
+			}, 100);
+		}
+	}, [commentId]);
+
 	const handleQuote = () => {
 		if (!editorRef?.current) return;
-		// Strip HTML tags for plain text quote
-		const plainText = comment.content.replace(/<[^>]*>/g, '');
-		editorRef.current.insertBlockquote(plainText);
+		// Preserve HTML styles in the quote
+		editorRef.current.insertBlockquote(comment.content, true);
 		editorRef.current.focus();
+	};
+
+	const handlePermalink = async () => {
+		const url = `${window.location.origin}${location.pathname}#${commentId}`;
+		await navigator.clipboard.writeText(url);
 	};
 
 	const { mutate: deleteComment, status: deleteStatus } = useMutation({
@@ -106,112 +177,152 @@ function CommentItem({ comment, feedbackId, currentProfileId }: CommentItemProps
 	const isUpdating = updateStatus === 'pending';
 
 	return (
-		<li className="update-comment relative flex overflow-hidden rounded-lg border">
-			<div className="flex flex-col items-center justify-start border-r bg-muted pt-3 pl-4">
-				<div className="relative z-10 -mr-4 size-8 overflow-hidden rounded-full border bg-gradient-to-tr from-white/50 to-accent shadow-xl shadow-black">
-					{author?.imageUrl ? (
-						<img className="size-8" src={author.imageUrl} alt={author.username} />
-					) : (
-						<div className="flex size-8 items-center justify-center bg-primary text-xs font-bold text-primary-foreground">
-							{author?.name?.charAt(0) ?? '?'}
+		<li
+			id={commentId}
+			ref={commentRef}
+			className={cn(
+				'update-comment relative flex overflow-hidden rounded-lg border transition-all duration-500',
+				{
+					'ring-2 ring-primary ring-offset-2 ring-offset-background': isHighlighted,
+				}
+			)}
+		>
+			{isEditing ? (
+				<div className='relative z-30 flex w-full flex-col p-6'>
+					<div className='ml-6'>
+						<div className='inline-block rounded-t-md bg-primary px-2 py-0.5 text-sm'>
+							Editing comment
 						</div>
-					)}
-				</div>
-			</div>
-			<div className="flex w-full flex-col bg-background">
-				<div className="flex w-full justify-between gap-2 border-b px-6 py-4">
-					<span>
-						{author ? (
-							<Link className="hocus:underline" to="/@{$org}" params={{ org: author.username }}>
-								@{author.username}
-							</Link>
-						) : (
-							<span className="text-muted-foreground">Unknown user</span>
-						)}{' '}
-						<span className="text-muted-foreground">commented</span>
-					</span>
-					<div className="flex items-center gap-2">
-						<span className="text-muted-foreground">{formatTimestamp(comment._creationTime)}</span>
-						<DropdownMenu>
-						<DropdownMenuTrigger asChild>
-							<Button variant="ghost" size="sm" disabled={isDeleting}>
-								<MoreHorizontal className="h-4 w-4" />
-								<span className="sr-only">More Actions</span>
-							</Button>
-						</DropdownMenuTrigger>
-						<DropdownMenuContent align="end">
-							{editorRef && (
-								<DropdownMenuItem onClick={handleQuote}>
-									<Quote size={14} />
-									Quote
-								</DropdownMenuItem>
-							)}
-							{isOwner && (
-								<>
-									<DropdownMenuItem onClick={handleEdit}>
-										<Pencil size={14} />
-										Edit
-									</DropdownMenuItem>
-									<DropdownMenuItem
-										onClick={handleDelete}
-										className="text-destructive focus:text-destructive"
-									>
-										<Trash2 size={14} />
-										Delete
-									</DropdownMenuItem>
-								</>
-							)}
-						</DropdownMenuContent>
-					</DropdownMenu>
+					</div>
+					<MarkdownEditor
+						ref={editEditorRef}
+						value={editContent}
+						onChange={setEditContent}
+						placeholder='Edit your comment...'
+						disabled={isUpdating}
+						minHeight='80px'
+						maxHeight='600px'
+						autoFocus
+						className='rounded-b-none'
+						onSubmitShortcut={handleSaveEdit}
+					/>
+					<div className='flex justify-end gap-2 rounded-b-md border-x border-b bg-muted p-3'>
+						<Button
+							type='button'
+							variant='ghost'
+							size='sm'
+							onClick={handleCancelEdit}
+							disabled={isUpdating}
+						>
+							Cancel
+						</Button>
+						<Button type='button' size='sm' onClick={handleSaveEdit} disabled={isUpdating}>
+							{isUpdating ? 'Saving...' : 'Save'}
+						</Button>
 					</div>
 				</div>
-				<div className="flex flex-col gap-4 p-6">
-					{isEditing ? (
-						<div className="flex flex-col gap-3">
-							<MarkdownEditor
-								ref={editEditorRef}
-								value={editContent}
-								onChange={setEditContent}
-								placeholder="Edit your comment..."
-								disabled={isUpdating}
-								minHeight="80px"
-							/>
-							<div className="flex justify-end gap-2">
-								<Button
-									type="button"
-									variant="ghost"
-									size="sm"
-									onClick={handleCancelEdit}
-									disabled={isUpdating}
-								>
-									Cancel
-								</Button>
-								<Button
-									type="button"
-									size="sm"
-									onClick={handleSaveEdit}
-									disabled={isUpdating}
-								>
-									{isUpdating ? 'Saving...' : 'Save'}
-								</Button>
+			) : null}
+			{isEditing && (
+				<>
+					<div className='absolute inset-0 z-20 bg-background/70 bg-[image:repeating-linear-gradient(45deg,rgba(255,255,255,0.15)_0,rgba(255,255,255,0.15)_1px,transparent_1px,transparent_8px)]'></div>
+					<div className='absolute inset-0 z-10 bg-background/70'></div>
+				</>
+			)}
+			<div
+				className={cn(`flex w-full min-w-0`, {
+					absolute: isEditing,
+				})}
+			>
+				<div className='flex shrink-0 flex-col items-center justify-start border-r bg-muted pt-3 pl-4'>
+					<div className='relative -mr-4 size-8 overflow-hidden rounded-full border bg-linear-to-tr from-white/50 to-accent shadow-xl shadow-black'>
+						{author?.imageUrl ? (
+							<img className='size-8' src={author.imageUrl} alt={author.username} />
+						) : (
+							<div className='flex size-8 items-center justify-center bg-primary text-xs font-bold text-primary-foreground'>
+								{author?.name?.charAt(0) ?? '?'}
 							</div>
+						)}
+					</div>
+				</div>
+				<div className='flex w-full min-w-0 flex-col bg-background'>
+					<div className='flex w-full justify-between gap-2 border-b px-6 py-4'>
+						<span>
+							{author ? (
+								<Link className='hocus:underline' to='/@{$org}' params={{ org: author.username }}>
+									@{author.username}
+								</Link>
+							) : (
+								<span className='text-muted-foreground'>Unknown user</span>
+							)}{' '}
+							<span className='text-muted-foreground'>commented</span>
+						</span>
+						<div className='flex items-center gap-2'>
+							<span className='text-muted-foreground' suppressHydrationWarning>
+								{formatTimestamp(comment._creationTime)}
+							</span>
+							<DropdownMenu>
+								<DropdownMenuTrigger asChild>
+									<Button variant='ghost' size='sm' disabled={isDeleting}>
+										<MoreHorizontal className='h-4 w-4' />
+										<span className='sr-only'>More Actions</span>
+									</Button>
+								</DropdownMenuTrigger>
+								<DropdownMenuContent align='end'>
+									<DropdownMenuItem onClick={handlePermalink}>
+										<LinkIcon size={14} />
+										Permalink
+									</DropdownMenuItem>
+									{isAuthenticated && editorRef && (
+										<DropdownMenuItem onClick={handleQuote}>
+											<Quote size={14} />
+											Quote
+										</DropdownMenuItem>
+									)}
+									{isOwner && (
+										<>
+											<DropdownMenuItem onClick={handleEdit}>
+												<Pencil size={14} />
+												Edit
+											</DropdownMenuItem>
+											<DropdownMenuItem
+												onClick={handleDelete}
+												className='text-destructive focus:text-destructive'
+											>
+												<Trash2 size={14} />
+												Delete
+											</DropdownMenuItem>
+										</>
+									)}
+								</DropdownMenuContent>
+							</DropdownMenu>
 						</div>
-					) : (
-						<EditorContentDisplay content={comment.content} />
-					)}
-					<div className="flex items-center gap-2">
-						<EmotePicker feedbackId={feedbackId} commentId={comment._id} currentProfileId={currentProfileId} />
-						{emoteEntries.map(([emoteType, data]) => (
-							<EmoteButton
-								key={emoteType}
+					</div>
+					{/* EDIT STATE: Content area - add styles to this div using isEditing */}
+					<div className={`flex min-w-0 flex-col gap-4 overflow-hidden p-6 ${isEditing ? '' : ''}`}>
+						{/* EDIT STATE: Add overlay/background elements here */}
+						<CollapsibleContent>
+							<EditorContentDisplay content={comment.content} />
+						</CollapsibleContent>
+						<div className='flex items-center gap-2'>
+							<EmotePicker
 								feedbackId={feedbackId}
 								commentId={comment._id}
-								emoteType={emoteType}
-								count={data.count}
-								isActive={currentProfileId ? data.authorProfileIds.includes(currentProfileId) : false}
 								currentProfileId={currentProfileId}
 							/>
-						))}
+							{emoteEntries.map(([emoteType, data]) => (
+								<EmoteButton
+									key={emoteType}
+									feedbackId={feedbackId}
+									commentId={comment._id}
+									emoteType={emoteType}
+									count={data.count}
+									isActive={
+										currentProfileId ? data.authorProfileIds.includes(currentProfileId) : false
+									}
+									currentProfileId={currentProfileId}
+								/>
+							))}
+						</div>
 					</div>
 				</div>
 			</div>
@@ -237,7 +348,7 @@ export function CommentsList({ feedbackId, currentProfileId }: CommentsListProps
 	}
 
 	return (
-		<ul className="mt-6 flex flex-col gap-6">
+		<ul className='mt-6 flex flex-col gap-6'>
 			{additionalComments.map((comment) => (
 				<CommentItem
 					key={comment._id}

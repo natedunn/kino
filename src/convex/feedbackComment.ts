@@ -150,4 +150,14 @@ triggers.register('feedbackComment', async (ctx, change) => {
 			await ctx.db.delete(emote._id);
 		});
 	}
+
+	// Update feedback searchContent when initial comment is edited
+	if (change.operation === 'update' && change.newDoc.initial) {
+		const feedback = await ctx.db.get(change.newDoc.feedbackId);
+		if (feedback) {
+			await ctx.db.patch(feedback._id, {
+				searchContent: feedback.title + ' ' + change.newDoc.content,
+			});
+		}
+	}
 });

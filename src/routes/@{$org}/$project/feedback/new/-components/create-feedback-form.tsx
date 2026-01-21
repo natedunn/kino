@@ -152,6 +152,7 @@ export const CreateFeedbackForm = ({ projectId, boards, onSubmit }: CreateFeedba
 										disabled={!enabled}
 										placeholder="Describe your feedback..."
 										minHeight="120px"
+										onSubmitShortcut={() => form.handleSubmit()}
 									/>
 								</field.Control>
 							</field.Provider>

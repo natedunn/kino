@@ -122,6 +122,9 @@ importers:
       fuse.js:
         specifier: ^7.1.0
         version: 7.1.0
+      hast-util-to-html:
+        specifier: ^9.0.5
+        version: 9.0.5
       lowlight:
         specifier: ^3.3.0
         version: 3.3.0

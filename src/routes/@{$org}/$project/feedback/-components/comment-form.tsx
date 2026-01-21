@@ -3,6 +3,8 @@ import type { MarkdownEditorRef } from '@/components/editor';
 import { useRef, useState } from 'react';
 import { useConvexMutation } from '@convex-dev/react-query';
 import { useMutation } from '@tanstack/react-query';
+import { Link, useLocation } from '@tanstack/react-router';
+import { MessageCircle } from 'lucide-react';
 
 import { api } from '~api';
 import { MarkdownEditor, sanitizeEditorContent, useEditorRef } from '@/components/editor';
@@ -11,9 +13,45 @@ import { Id } from '@/convex/_generated/dataModel';
 
 type CommentFormProps = {
 	feedbackId: Id<'feedback'>;
+	isAuthenticated?: boolean;
 };
 
-export function CommentForm({ feedbackId }: CommentFormProps) {
+function SignInPrompt() {
+	const location = useLocation();
+
+	return (
+		<div className='mt-6 rounded-lg border border-dashed border-border bg-muted/50 p-8'>
+			<div className='flex flex-col items-center justify-center gap-4 text-center'>
+				<div className='flex size-12 items-center justify-center rounded-full bg-primary/10'>
+					<MessageCircle className='size-6 text-primary' />
+				</div>
+				<div className='flex flex-col gap-1'>
+					<h3 className='font-medium'>Join the conversation</h3>
+					<p className='text-sm text-muted-foreground'>
+						Sign in to share your thoughts and help improve this project.
+					</p>
+				</div>
+				<div className='flex items-center gap-2'>
+					<Button asChild>
+						<Link to='/sign-in' search={{ redirect: location.href }}>
+							Sign in to comment
+						</Link>
+					</Button>
+					<Button asChild variant='outline'>
+						<Link to='/' search={{ redirect: location.href }}>
+							Create an account
+						</Link>
+					</Button>
+				</div>
+			</div>
+		</div>
+	);
+}
+
+export function CommentForm({ feedbackId, isAuthenticated = false }: CommentFormProps) {
+	if (!isAuthenticated) {
+		return <SignInPrompt />;
+	}
 	const [content, setContent] = useState('');
 	const localRef = useRef<MarkdownEditorRef>(null);
 
@@ -33,8 +71,7 @@ export function CommentForm({ feedbackId }: CommentFormProps) {
 		},
 	});
 
-	const handleSubmit = (e: React.FormEvent) => {
-		e.preventDefault();
+	const submitComment = () => {
 		const html = editorRef.current?.getHTML() ?? content;
 		const text = editorRef.current?.getText() ?? '';
 
@@ -50,12 +87,17 @@ export function CommentForm({ feedbackId }: CommentFormProps) {
 		});
 	};
 
+	const handleSubmit = (e: React.FormEvent) => {
+		e.preventDefault();
+		submitComment();
+	};
+
 	const isSubmitting = status === 'pending';
 
 	return (
 		<form
 			onSubmit={handleSubmit}
-			className='mt-6 flex flex-col gap-3 rounded-lg border bg-accent/30'
+			className='relative mt-6 rounded-lg border bg-accent/30 focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50'
 		>
 			<MarkdownEditor
 				ref={editorRef}
@@ -63,11 +105,18 @@ export function CommentForm({ feedbackId }: CommentFormProps) {
 				onChange={setContent}
 				placeholder='Leave a comment...'
 				disabled={isSubmitting}
-				minHeight='60px'
+				minHeight='120px'
+				maxHeight='400px'
 				variant='borderless'
+				contentClassName='[&_.ProseMirror]:pb-16'
+				onSubmitShortcut={submitComment}
 			/>
-			<div className='mr-4 mb-4 flex justify-end'>
-				<Button type='submit' disabled={isSubmitting || !content.trim()}>
+			<div className='pointer-events-none absolute right-4 bottom-4'>
+				<Button
+					type='submit'
+					disabled={isSubmitting || !content.trim()}
+					className='pointer-events-auto'
+				>
 					{isSubmitting ? 'Posting...' : 'Comment'}
 				</Button>
 			</div>

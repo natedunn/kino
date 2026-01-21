@@ -1,8 +1,8 @@
 @import 'tailwindcss' source('../');
 @import 'tw-animate-css';
 
-@plugin "tailwindcss-hocus";
-@plugin "@tailwindcss/typography";
+@plugin 'tailwindcss-hocus';
+@plugin '@tailwindcss/typography';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -218,62 +218,240 @@
 	pointer-events: none;
 }
 
-/* Code block styling */
-.ProseMirror pre {
-	background: var(--muted);
-	border-radius: 0.375rem;
-	padding: 0.75rem 1rem;
-	font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+/* Remove quotation marks from blockquotes */
+.ProseMirror blockquote,
+.prose blockquote {
+	quotes: none;
 }
 
-.ProseMirror pre code {
+.ProseMirror blockquote::before,
+.ProseMirror blockquote::after,
+.prose blockquote::before,
+.prose blockquote::after {
+	content: none !important;
+}
+
+.ProseMirror blockquote p::before,
+.ProseMirror blockquote p::after,
+.prose blockquote p::before,
+.prose blockquote p::after {
+	content: none !important;
+}
+
+/* Code block styling - Editor */
+.ProseMirror .code-block-wrapper {
+	position: relative;
+	margin: 0.75rem 0;
+}
+
+.ProseMirror .code-block-wrapper pre {
+	background: oklch(from var(--muted) l c h / 0.3);
+	border: 1px solid var(--border);
+	border-radius: 0.5rem;
+	padding: 0.5rem 0.75rem;
+	font-family: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+	overflow-x: auto;
+	max-width: 100%;
+	margin: 0;
+}
+
+.ProseMirror .code-block-wrapper pre code,
+.ProseMirror .code-block-wrapper pre div {
 	background: none;
 	padding: 0;
-	font-size: 0.875rem;
+	font-size: 0.8125rem;
+	line-height: 1.6;
+	color: var(--foreground);
+	font-family: inherit;
 }
 
-/* Syntax highlighting - uses lowlight/highlight.js classes */
-.ProseMirror .hljs-comment,
-.ProseMirror .hljs-quote {
-	color: var(--muted-foreground);
+/* Fallback for non-wrapper code blocks */
+.ProseMirror pre:not(.code-block-wrapper pre) {
+	background: oklch(from var(--muted) l c h / 0.3);
+	border: 1px solid var(--border);
+	border-radius: 0.5rem;
+	padding: 0.5rem 0.75rem;
+	font-family: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+	overflow-x: auto;
 }
 
-.ProseMirror .hljs-keyword,
-.ProseMirror .hljs-selector-tag,
-.ProseMirror .hljs-addition {
-	color: #c678dd;
+.ProseMirror pre:not(.code-block-wrapper pre) code {
+	background: none;
+	padding: 0;
+	font-size: 0.8125rem;
+	line-height: 1.6;
+	color: var(--foreground);
 }
 
-.ProseMirror .hljs-string,
-.ProseMirror .hljs-meta .hljs-string,
-.ProseMirror .hljs-regexp,
-.ProseMirror .hljs-attribute {
-	color: #98c379;
+/* Inline code - Editor */
+.ProseMirror code:not(pre code):not(pre div) {
+	background: oklch(from var(--muted) l c h / 0.3);
+	border: 1px solid var(--border);
+	color: var(--foreground);
+	padding: 0.5rem 0.75rem;
+	border-radius: 0.375rem;
+	font-family: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+	font-size: 0.875em;
 }
 
-.ProseMirror .hljs-number,
-.ProseMirror .hljs-literal,
-.ProseMirror .hljs-variable,
-.ProseMirror .hljs-template-variable,
-.ProseMirror .hljs-type,
-.ProseMirror .hljs-deletion {
-	color: #d19a66;
+/* Code block styling - Published content */
+.prose pre {
+	background: var(--muted) !important;
+	border: 1px solid var(--border) !important;
+	border-radius: 0.5rem;
+	padding: 0.5rem 0.75rem;
+	overflow-x: auto;
+	max-width: 100%;
 }
 
-.ProseMirror .hljs-title,
-.ProseMirror .hljs-section,
-.ProseMirror .hljs-name,
-.ProseMirror .hljs-selector-id,
-.ProseMirror .hljs-selector-class {
-	color: #e06c75;
+.prose pre code {
+	background: var(--muted) !important;
+	border: none !important;
+	padding: 0;
+	font-size: 0.8125rem;
+	line-height: 1.6;
+	color: inherit;
 }
 
-.ProseMirror .hljs-function,
-.ProseMirror .hljs-params {
-	color: #61afef;
+/* Inline code - Published content */
+.prose code:not(pre code) {
+	background: var(--muted) !important;
+	border: 1px solid var(--border) !important;
+	color: var(--foreground) !important;
+	padding: 0.5rem 0.75rem;
+	border-radius: 0.375rem;
+	font-size: 0.875em;
 }
 
-.ProseMirror .hljs-built_in,
-.ProseMirror .hljs-tag {
-	color: #56b6c2;
+/* Syntax highlighting - Vesper theme inspired */
+/* https://github.com/raunofreiberg/vesper */
+
+/* Light mode - muted version of Vesper */
+.hljs-comment,
+.hljs-quote {
+	color: #8b8b8b;
+	font-style: italic;
+}
+
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-addition {
+	color: #6b6b6b;
+}
+
+.hljs-string,
+.hljs-meta .hljs-string,
+.hljs-regexp {
+	color: #0d9488;
+}
+
+.hljs-number,
+.hljs-literal,
+.hljs-type {
+	color: #c2410c;
+}
+
+.hljs-title,
+.hljs-section,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-function {
+	color: #c2410c;
+}
+
+.hljs-variable,
+.hljs-template-variable,
+.hljs-params {
+	color: var(--foreground);
+}
+
+.hljs-built_in,
+.hljs-tag {
+	color: #c2410c;
+}
+
+.hljs-attr,
+.hljs-attribute {
+	color: #6b6b6b;
+}
+
+.hljs-symbol,
+.hljs-bullet,
+.hljs-link {
+	color: #0d9488;
+}
+
+.hljs-meta,
+.hljs-deletion {
+	color: #6b6b6b;
+}
+
+.hljs-emphasis {
+	font-style: italic;
+}
+
+.hljs-strong {
+	font-weight: bold;
+}
+
+/* Dark mode - Vesper theme colors */
+.dark .hljs-comment,
+.dark .hljs-quote {
+	color: #8b8b8b;
+	font-style: italic;
+}
+
+.dark .hljs-keyword,
+.dark .hljs-selector-tag,
+.dark .hljs-addition {
+	color: #a0a0a0;
+}
+
+.dark .hljs-string,
+.dark .hljs-meta .hljs-string,
+.dark .hljs-regexp {
+	color: #99ffe4;
+}
+
+.dark .hljs-number,
+.dark .hljs-literal,
+.dark .hljs-type {
+	color: #77b9ff;
+}
+
+.dark .hljs-title,
+.dark .hljs-section,
+.dark .hljs-name,
+.dark .hljs-selector-id,
+.dark .hljs-selector-class,
+.dark .hljs-function {
+	color: #77b9ff;
+}
+
+.dark .hljs-variable,
+.dark .hljs-template-variable,
+.dark .hljs-params {
+	color: #fff;
+}
+
+.dark .hljs-built_in,
+.dark .hljs-tag {
+	color: #77b9ff;
+}
+
+.dark .hljs-attr,
+.dark .hljs-attribute {
+	color: #a0a0a0;
+}
+
+.dark .hljs-symbol,
+.dark .hljs-bullet,
+.dark .hljs-link {
+	color: #99ffe4;
+}
+
+.dark .hljs-meta,
+.dark .hljs-deletion {
+	color: #a0a0a0;
 }
