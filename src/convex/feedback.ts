@@ -1,7 +1,8 @@
 import { filter } from 'convex-helpers/server/filter';
-import { zodToConvex } from 'convex-helpers/server/zod4';
+import { zid, zodToConvex } from 'convex-helpers/server/zod4';
 import { OrderedQuery, paginationOptsValidator, Query, QueryInitializer } from 'convex/server';
 import { ConvexError, v } from 'convex/values';
+import * as z from 'zod';
 
 import { generateRandomSlug } from '@/lib/random';
 
@@ -160,6 +161,84 @@ export const updateBoard = mutation({
 		}
 
 		await patch(ctx, 'feedback', args._id, { boardId: args.boardId });
+
+		return { success: true };
+	},
+});
+
+const setAnswerCommentSchema = z.object({
+	feedbackId: zid('feedback'),
+	commentId: zid('feedbackComment').nullable(),
+});
+
+export const setAnswerComment = mutation({
+	args: zodToConvex(setAnswerCommentSchema),
+	handler: async (ctx, args) => {
+		const profile = await getMyProfile(ctx);
+
+		if (!profile) {
+			throw new ConvexError({
+				message: 'You must be logged in to mark a comment as answer',
+				code: '401',
+			});
+		}
+
+		const feedback = await ctx.db.get(args.feedbackId);
+
+		if (!feedback) {
+			throw new ConvexError({
+				message: 'Feedback not found',
+				code: '404',
+			});
+		}
+
+		// Check if user is the owner
+		const isOwner = feedback.authorProfileId === profile._id;
+
+		// Check project permissions
+		const project = await ctx.db.get(feedback.projectId);
+
+		if (!project) {
+			throw new ConvexError({
+				message: 'Project not found',
+				code: '404',
+			});
+		}
+
+		const { permissions } = await verifyProjectAccess(ctx, { slug: project.slug });
+
+		if (!isOwner && !permissions.canEdit) {
+			throw new ConvexError({
+				message: 'You do not have permission to mark a comment as answer',
+				code: '403',
+			});
+		}
+
+		// If commentId is null, we're unmarking the answer
+		if (args.commentId === null) {
+			await patch(ctx, 'feedback', args.feedbackId, { answerCommentId: undefined });
+			return { success: true };
+		}
+
+		// Validate the comment exists and belongs to this feedback
+		const comment = await ctx.db.get(args.commentId);
+
+		if (!comment || comment.feedbackId !== args.feedbackId) {
+			throw new ConvexError({
+				message: 'Comment not found or does not belong to this feedback',
+				code: '400',
+			});
+		}
+
+		// Cannot mark the initial comment as the answer (it's the question)
+		if (comment.initial) {
+			throw new ConvexError({
+				message: 'Cannot mark the initial comment as the answer',
+				code: '400',
+			});
+		}
+
+		await patch(ctx, 'feedback', args.feedbackId, { answerCommentId: args.commentId });
 
 		return { success: true };
 	},

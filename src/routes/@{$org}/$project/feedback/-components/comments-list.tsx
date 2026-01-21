@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { convexQuery, useConvexMutation } from '@convex-dev/react-query';
 import { useMutation, useSuspenseQuery } from '@tanstack/react-query';
 import { Link, useLocation } from '@tanstack/react-router';
-import { Link as LinkIcon, MoreHorizontal, Pencil, Quote, Trash2 } from 'lucide-react';
+import { Check, Link as LinkIcon, MoreHorizontal, Pencil, Quote, Trash2 } from 'lucide-react';
 
 import { api, API } from '~api';
 import {
@@ -69,9 +69,17 @@ type CommentItemProps = {
 	comment: Comment;
 	feedbackId: Id<'feedback'>;
 	currentProfileId?: Id<'profile'>;
+	isAnswer?: boolean;
+	canMarkAnswer?: boolean;
 };
 
-function CommentItem({ comment, feedbackId, currentProfileId }: CommentItemProps) {
+function CommentItem({
+	comment,
+	feedbackId,
+	currentProfileId,
+	isAnswer,
+	canMarkAnswer,
+}: CommentItemProps) {
 	const { author, emoteCounts } = comment;
 	const location = useLocation();
 	const commentRef = useRef<HTMLLIElement>(null);
@@ -136,6 +144,17 @@ function CommentItem({ comment, feedbackId, currentProfileId }: CommentItemProps
 		},
 	});
 
+	const { mutate: setAnswerComment } = useMutation({
+		mutationFn: useConvexMutation(api.feedback.setAnswerComment),
+	});
+
+	const handleToggleAnswer = () => {
+		setAnswerComment({
+			feedbackId,
+			commentId: isAnswer ? null : comment._id,
+		});
+	};
+
 	const handleDelete = () => {
 		if (confirm('Are you sure you want to delete this comment?')) {
 			deleteComment({ _id: comment._id });
@@ -184,6 +203,7 @@ function CommentItem({ comment, feedbackId, currentProfileId }: CommentItemProps
 				'update-comment relative flex overflow-hidden rounded-lg border transition-all duration-500',
 				{
 					'ring-2 ring-primary ring-offset-2 ring-offset-background': isHighlighted,
+					'border-green-500/50 dark:border-green-800': isAnswer,
 				}
 			)}
 		>
@@ -233,7 +253,14 @@ function CommentItem({ comment, feedbackId, currentProfileId }: CommentItemProps
 					absolute: isEditing,
 				})}
 			>
-				<div className='flex shrink-0 flex-col items-center justify-start border-r bg-muted pt-3 pl-4'>
+				<div
+					className={cn(
+						'flex shrink-0 flex-col items-center justify-start border-r pt-3 pl-4',
+						isAnswer
+							? 'border-r-green-500/30 bg-gradient-to-b from-green-500/20 via-green-500/10 to-transparent'
+							: 'bg-muted'
+					)}
+				>
 					<div className='relative -mr-4 size-8 overflow-hidden rounded-full border bg-linear-to-tr from-white/50 to-accent shadow-xl shadow-black'>
 						{author?.imageUrl ? (
 							<img className='size-8' src={author.imageUrl} alt={author.username} />
@@ -246,15 +273,23 @@ function CommentItem({ comment, feedbackId, currentProfileId }: CommentItemProps
 				</div>
 				<div className='flex w-full min-w-0 flex-col bg-background'>
 					<div className='flex w-full justify-between gap-2 border-b px-6 py-4'>
-						<span>
-							{author ? (
-								<Link className='hocus:underline' to='/@{$org}' params={{ org: author.username }}>
-									@{author.username}
-								</Link>
-							) : (
-								<span className='text-muted-foreground'>Unknown user</span>
-							)}{' '}
-							<span className='text-muted-foreground'>commented</span>
+						<span className='flex items-center gap-2'>
+							<span>
+								{author ? (
+									<Link className='hocus:underline' to='/@{$org}' params={{ org: author.username }}>
+										@{author.username}
+									</Link>
+								) : (
+									<span className='text-muted-foreground'>Unknown user</span>
+								)}{' '}
+								<span className='text-muted-foreground'>commented</span>
+							</span>
+							{isAnswer && (
+								<span className='inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-400'>
+									<Check className='h-3 w-3' />
+									Answer
+								</span>
+							)}
 						</span>
 						<div className='flex items-center gap-2'>
 							<span className='text-muted-foreground' suppressHydrationWarning>
@@ -276,6 +311,12 @@ function CommentItem({ comment, feedbackId, currentProfileId }: CommentItemProps
 										<DropdownMenuItem onClick={handleQuote}>
 											<Quote size={14} />
 											Quote
+										</DropdownMenuItem>
+									)}
+									{canMarkAnswer && (
+										<DropdownMenuItem onClick={handleToggleAnswer}>
+											<Check size={14} />
+											{isAnswer ? 'Unmark as answer' : 'Mark as answer'}
 										</DropdownMenuItem>
 									)}
 									{isOwner && (
@@ -333,9 +374,16 @@ function CommentItem({ comment, feedbackId, currentProfileId }: CommentItemProps
 type CommentsListProps = {
 	feedbackId: Id<'feedback'>;
 	currentProfileId?: Id<'profile'>;
+	answerCommentId?: Id<'feedbackComment'>;
+	canMarkAnswer?: boolean;
 };
 
-export function CommentsList({ feedbackId, currentProfileId }: CommentsListProps) {
+export function CommentsList({
+	feedbackId,
+	currentProfileId,
+	answerCommentId,
+	canMarkAnswer,
+}: CommentsListProps) {
 	const { data: comments } = useSuspenseQuery(
 		convexQuery(api.feedbackComment.listByFeedback, { feedbackId })
 	);
@@ -355,6 +403,8 @@ export function CommentsList({ feedbackId, currentProfileId }: CommentsListProps
 					comment={comment}
 					feedbackId={feedbackId}
 					currentProfileId={currentProfileId}
+					isAnswer={answerCommentId === comment._id}
+					canMarkAnswer={canMarkAnswer}
 				/>
 			))}
 		</ul>

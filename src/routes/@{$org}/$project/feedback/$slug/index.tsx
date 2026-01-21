@@ -430,7 +430,12 @@ function RouteComponent() {
 
 							<EditorRefProvider>
 								{/* Additional comments */}
-								<CommentsList feedbackId={feedback._id} currentProfileId={currentProfile?._id} />
+								<CommentsList
+									feedbackId={feedback._id}
+									currentProfileId={currentProfile?._id}
+									answerCommentId={feedback.answerCommentId}
+									canMarkAnswer={canEditStatus}
+								/>
 
 								{/* Comment form */}
 								<CommentForm feedbackId={feedback._id} isAuthenticated={!!currentProfile} />
