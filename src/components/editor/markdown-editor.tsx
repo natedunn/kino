@@ -94,7 +94,7 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
 			editorProps: {
 				attributes: {
 					class: cn(
-						'prose prose-sm max-w-none px-4 py-3 text-foreground focus:outline-none dark:prose-invert',
+						'prose prose-base max-w-none px-4 py-3 text-foreground focus:outline-none dark:prose-invert',
 						'prose-headings:font-semibold',
 						'prose-h4:text-[1.1rem] prose-h5:text-[1rem] prose-h6:text-[0.95rem]',
 						'prose-a:text-primary prose-a:no-underline hover:prose-a:underline',
@@ -167,7 +167,11 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
 				<EditorContent
 					editor={editor}
 					style={{ minHeight, maxHeight }}
-					className={cn('[&_.ProseMirror]:min-h-[inherit]', maxHeight && 'overflow-y-auto', contentClassName)}
+					className={cn(
+						'[&_.ProseMirror]:min-h-[inherit]',
+						maxHeight && 'overflow-y-auto',
+						contentClassName
+					)}
 				/>
 			</div>
 		);
