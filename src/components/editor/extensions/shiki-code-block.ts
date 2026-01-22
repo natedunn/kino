@@ -9,12 +9,12 @@ const lowlight = createLowlight(common);
 
 // Export factory function to create fresh instances
 export function createShikiCodeBlock() {
-  return CodeBlockLowlight.extend({
-    addNodeView() {
-      return ReactNodeViewRenderer(CodeBlockComponent);
-    },
-  }).configure({
-    lowlight,
-    defaultLanguage: 'plaintext',
-  });
+	return CodeBlockLowlight.extend({
+		addNodeView() {
+			return ReactNodeViewRenderer(CodeBlockComponent);
+		},
+	}).configure({
+		lowlight,
+		defaultLanguage: 'plaintext',
+	});
 }
