@@ -13,6 +13,8 @@ import {
 	MoreHorizontal,
 	Pencil,
 	Plus,
+	Settings2,
+	Tag,
 	Users,
 } from 'lucide-react';
 
@@ -512,7 +514,8 @@ function RouteComponent() {
 								{/* Details Section */}
 								<Collapsible open={sidebarState.details} onOpenChange={(open) => setSidebarSection('details', open)}>
 									<CollapsibleTrigger className='group flex w-full cursor-pointer items-center justify-between border-b pb-2'>
-										<h3 className='text-xs font-semibold tracking-wide text-muted-foreground uppercase transition-colors group-hover:text-foreground'>
+										<h3 className='flex items-center gap-1.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase transition-colors group-hover:text-foreground'>
+											<Settings2 className='size-3.5' />
 											Details
 										</h3>
 										<ChevronDown className='size-4 text-muted-foreground transition-all group-hover:text-foreground group-data-[state=open]:rotate-180' />
@@ -565,7 +568,8 @@ function RouteComponent() {
 								{/* People Section */}
 								<Collapsible open={sidebarState.people} onOpenChange={(open) => setSidebarSection('people', open)}>
 									<CollapsibleTrigger className='group flex w-full cursor-pointer items-center justify-between border-b pb-2'>
-										<h3 className='text-xs font-semibold tracking-wide text-muted-foreground uppercase transition-colors group-hover:text-foreground'>
+										<h3 className='flex items-center gap-1.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase transition-colors group-hover:text-foreground'>
+											<Users className='size-3.5' />
 											People
 										</h3>
 										<ChevronDown className='size-4 text-muted-foreground transition-all group-hover:text-foreground group-data-[state=open]:rotate-180' />
@@ -625,7 +629,8 @@ function RouteComponent() {
 								{/* Labels Section - Placeholder */}
 								<Collapsible open={sidebarState.labels} onOpenChange={(open) => setSidebarSection('labels', open)}>
 									<CollapsibleTrigger className='group flex w-full cursor-pointer items-center justify-between border-b pb-2'>
-										<h3 className='text-xs font-semibold tracking-wide text-muted-foreground uppercase transition-colors group-hover:text-foreground'>
+										<h3 className='flex items-center gap-1.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase transition-colors group-hover:text-foreground'>
+											<Tag className='size-3.5' />
 											Labels
 										</h3>
 										<ChevronDown className='size-4 text-muted-foreground transition-all group-hover:text-foreground group-data-[state=open]:rotate-180' />
@@ -655,7 +660,8 @@ function RouteComponent() {
 								{/* Related Section - Placeholder */}
 								<Collapsible open={sidebarState.related} onOpenChange={(open) => setSidebarSection('related', open)}>
 									<CollapsibleTrigger className='group flex w-full cursor-pointer items-center justify-between border-b pb-2'>
-										<h3 className='text-xs font-semibold tracking-wide text-muted-foreground uppercase transition-colors group-hover:text-foreground'>
+										<h3 className='flex items-center gap-1.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase transition-colors group-hover:text-foreground'>
+											<LinkIcon className='size-3.5' />
 											Related
 										</h3>
 										<ChevronDown className='size-4 text-muted-foreground transition-all group-hover:text-foreground group-data-[state=open]:rotate-180' />
