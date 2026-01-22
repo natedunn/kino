@@ -193,7 +193,19 @@ export const UpdateCard = ({
 				{/* Right Column - Content */}
 				<div className='col-span-12 md:col-span-9'>
 					{/* Title */}
-					<h3 className='text-4xl font-semibold'>{title}</h3>
+					<h3 className='text-3xl font-semibold'>
+						<Link
+							to='/@{$org}/$project/updates/$slug'
+							params={{
+								org: orgSlug,
+								project: projectSlug,
+								slug,
+							}}
+							className='link-text'
+						>
+							{title}
+						</Link>
+					</h3>
 
 					{/* Cover Image */}
 					{coverImageUrl && (

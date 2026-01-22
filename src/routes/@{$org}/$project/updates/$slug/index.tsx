@@ -213,10 +213,10 @@ function RouteComponent() {
 								<img
 									src={coverImageUrl}
 									alt={update.title}
-									className='mb-8 w-full rounded-lg bg-muted object-cover'
+									className='mb-10 w-full rounded-lg bg-muted object-cover'
 								/>
 							) : (
-								<div className='mb-8 flex h-64 w-full items-center justify-center rounded-lg bg-muted text-muted-foreground'>
+								<div className='mb-10 flex h-64 w-full items-center justify-center rounded-lg bg-muted text-muted-foreground'>
 									Cover Image
 								</div>
 							)}
