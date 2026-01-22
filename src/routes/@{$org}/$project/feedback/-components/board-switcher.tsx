@@ -68,10 +68,10 @@ export function BoardSwitcher({
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
 				<Button
-					variant='ghost'
+					variant='outline'
 					size='sm'
 					disabled={isUpdating}
-					className='h-auto gap-1.5 px-1.5 py-0.5 text-sm hover:bg-accent'
+					className='h-auto gap-1.5 px-2 py-1 text-xs'
 				>
 					{isUpdating ? (
 						<>

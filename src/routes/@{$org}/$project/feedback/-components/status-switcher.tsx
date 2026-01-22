@@ -1,6 +1,6 @@
 import { useConvexMutation } from '@convex-dev/react-query';
 import { useMutation } from '@tanstack/react-query';
-import { ChevronDown } from 'lucide-react';
+import { Check, ChevronDown } from 'lucide-react';
 
 import { api } from '~api';
 import { Button } from '@/components/ui/button';
@@ -11,16 +11,17 @@ import {
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Id } from '@/convex/_generated/dataModel';
+import { StatusIcon } from '@/icons';
 import { cn } from '@/lib/utils';
 
 export type FeedbackStatus = 'open' | 'in-progress' | 'closed' | 'completed' | 'paused';
 
-const STATUS_CONFIG: Record<FeedbackStatus, { label: string; className: string }> = {
-	open: { label: 'Open', className: 'bg-blue-700/50 text-blue-100' },
-	'in-progress': { label: 'In Progress', className: 'bg-purple-700/50 text-purple-100' },
-	closed: { label: 'Closed', className: 'bg-red-700/50 text-red-100' },
-	completed: { label: 'Completed', className: 'bg-green-700/50 text-green-100' },
-	paused: { label: 'Paused', className: 'bg-orange-700/50 text-orange-100' },
+const STATUS_CONFIG: Record<FeedbackStatus, { label: string }> = {
+	open: { label: 'Open' },
+	'in-progress': { label: 'In Progress' },
+	closed: { label: 'Closed' },
+	completed: { label: 'Completed' },
+	paused: { label: 'Paused' },
 };
 
 type StatusSwitcherProps = {
@@ -45,7 +46,8 @@ export function StatusSwitcher({ feedbackId, currentStatus, canEdit }: StatusSwi
 
 	if (!canEdit) {
 		return (
-			<span className={cn(config.className, 'inline-block px-1.5 py-0.5 text-xs')}>
+			<span className='flex items-center gap-1.5 text-sm'>
+				<StatusIcon status={currentStatus} size='14' colored />
 				{config.label}
 			</span>
 		);
@@ -55,11 +57,12 @@ export function StatusSwitcher({ feedbackId, currentStatus, canEdit }: StatusSwi
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
 				<Button
-					variant='ghost'
+					variant='outline'
 					size='sm'
 					disabled={isUpdating}
-					className={cn(config.className, 'h-auto gap-1 px-1.5 py-1 text-xs hover:opacity-80')}
+					className='h-auto gap-1.5 px-2 py-1 text-xs'
 				>
+					<StatusIcon status={currentStatus} size='14' colored />
 					{isUpdating ? 'Updating...' : config.label}
 					<ChevronDown size={12} />
 				</Button>
@@ -69,18 +72,11 @@ export function StatusSwitcher({ feedbackId, currentStatus, canEdit }: StatusSwi
 					<DropdownMenuItem
 						key={status}
 						onClick={() => handleStatusChange(status)}
-						className={cn('cursor-pointer', {
-							'font-semibold': status === currentStatus,
-						})}
+						className='cursor-pointer gap-2'
 					>
-						<span
-							className={cn(
-								STATUS_CONFIG[status].className,
-								'mr-2 inline-block rounded px-1.5 py-1 text-xs'
-							)}
-						>
-							{STATUS_CONFIG[status].label}
-						</span>
+						<StatusIcon status={status} size='14' colored />
+						<span className='flex-1'>{STATUS_CONFIG[status].label}</span>
+						{status === currentStatus && <Check size={14} className='text-primary' />}
 					</DropdownMenuItem>
 				))}
 			</DropdownMenuContent>
