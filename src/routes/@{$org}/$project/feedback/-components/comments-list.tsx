@@ -22,13 +22,13 @@ import {
 	useEditorRef,
 } from '@/components/editor';
 import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Id } from '@/convex/_generated/dataModel';
 import { cn } from '@/lib/utils';
 import { formatFullDate, formatRelativeDay } from '@/lib/utils/format-timestamp';
@@ -76,9 +76,7 @@ function CollapsibleContent({ children }: { children: React.ReactNode }) {
 type Comment = NonNullable<API['feedbackComment']['listByFeedback']>[number];
 type FeedbackEvent = NonNullable<API['feedbackEvent']['listByFeedback']>[number];
 
-type TimelineItem =
-	| { type: 'comment'; data: Comment }
-	| { type: 'event'; data: FeedbackEvent };
+type TimelineItem = { type: 'comment'; data: Comment } | { type: 'event'; data: FeedbackEvent };
 
 type CommentItemProps = {
 	comment: Comment;
@@ -221,7 +219,7 @@ function CommentItem({
 				'update-comment relative flex overflow-hidden rounded-lg border transition-all duration-500',
 				{
 					'ring-2 ring-primary ring-offset-2 ring-offset-background': isHighlighted,
-					'border-green-500/50 dark:border-green-800': isAnswer,
+					'border-green-500 dark:border-green-600': isAnswer,
 				}
 			)}
 		>
@@ -241,10 +239,10 @@ function CommentItem({
 						minHeight='80px'
 						maxHeight='600px'
 						autoFocus
-						className='rounded-b-none'
+						className='relative rounded-b-none'
 						onSubmitShortcut={handleSaveEdit}
 					/>
-					<div className='flex justify-end gap-2 rounded-b-md border-x border-b bg-muted p-3'>
+					<div className='flex justify-end gap-2 rounded-b-md border-x border-b bg-background p-3'>
 						<Button
 							type='button'
 							variant='ghost'
@@ -262,7 +260,7 @@ function CommentItem({
 			) : null}
 			{isEditing && (
 				<>
-					<div className='absolute inset-0 z-20 bg-background/70 bg-[image:repeating-linear-gradient(45deg,rgba(255,255,255,0.15)_0,rgba(255,255,255,0.15)_1px,transparent_1px,transparent_8px)]'></div>
+					<div className='absolute inset-0 z-20 bg-background/70 bg-[repeating-linear-gradient(45deg,rgba(255,255,255,0.15)_0,rgba(255,255,255,0.15)_1px,transparent_1px,transparent_8px)]'></div>
 					<div className='absolute inset-0 z-10 bg-background/70'></div>
 				</>
 			)}
@@ -275,7 +273,7 @@ function CommentItem({
 					className={cn(
 						'flex shrink-0 flex-col items-center justify-start border-r pt-3 pl-4',
 						isAnswer
-							? 'border-r-green-500/30 bg-gradient-to-b from-green-500/20 via-green-500/10 to-transparent'
+							? 'border-r-green-700 bg-linear-to-b from-green-400/20 via-green-400/10 to-transparent'
 							: 'bg-muted'
 					)}
 				>
@@ -327,9 +325,7 @@ function CommentItem({
 												</span>
 											</TooltipTrigger>
 											<TooltipContent>
-												<span suppressHydrationWarning>
-													{formatFullDate(comment.updatedTime)}
-												</span>
+												<span suppressHydrationWarning>{formatFullDate(comment.updatedTime)}</span>
 											</TooltipContent>
 										</Tooltip>
 									</>
