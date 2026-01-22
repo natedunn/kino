@@ -73,9 +73,7 @@ function RouteComponent() {
 						</p>
 					</div>
 				</div>
-				<div className='rounded-lg border bg-background p-6'>
-					<CreateUpdateForm projectId={projectData.project._id} onSubmit={handleSubmit} />
-				</div>
+				<CreateUpdateForm projectId={projectData.project._id} onSubmit={handleSubmit} />
 			</div>
 		</div>
 	);

@@ -16,6 +16,7 @@ import { Id } from '@/convex/_generated/dataModel';
 import { updateSchema } from '@/convex/schema/update.schema';
 import { cn } from '@/lib/utils';
 
+import { CoverImageUpload } from '../-components/cover-image-upload';
 import { FeedbackSelector } from '../-components/feedback-selector';
 
 const formSchema = updateSchema.pick({
@@ -223,8 +224,7 @@ function RouteComponent() {
 						</p>
 					</div>
 				</div>
-				<div className='rounded-lg border bg-background p-6'>
-					<form.AppForm>
+				<form.AppForm>
 						<form.Form form={form} className='flex flex-col gap-6'>
 							<form.AppField name='title'>
 								{(field) => (
@@ -240,6 +240,11 @@ function RouteComponent() {
 									</field.Provider>
 								)}
 							</form.AppField>
+
+							<CoverImageUpload
+								updateId={update._id}
+								currentCoverImageId={update.coverImageId}
+							/>
 
 							<form.AppField name='content'>
 								{(field) => (
@@ -357,7 +362,6 @@ function RouteComponent() {
 							</div>
 						</form.Form>
 					</form.AppForm>
-				</div>
 			</div>
 		</div>
 	);
