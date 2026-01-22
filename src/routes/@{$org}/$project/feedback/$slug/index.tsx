@@ -37,6 +37,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Id } from '@/convex/_generated/dataModel';
 import { StatusIcon } from '@/icons';
+import { useSidebarState } from '@/lib/hooks/use-sidebar-state';
 import { cn } from '@/lib/utils';
 import { formatFullDate, formatRelativeDay, formatTimestamp } from '@/lib/utils/format-timestamp';
 
@@ -48,8 +49,7 @@ import { EmoteButton, EmoteContent, EmotePicker } from '../-components/emote-pic
 import { StatusSwitcher } from '../-components/status-switcher';
 import { UpvoteButton } from '../-components/upvote-button';
 
-// Sidebar collapse state management with localStorage persistence
-const SIDEBAR_STORAGE_KEY = 'feedback-sidebar-state';
+const SIDEBAR_STORAGE_KEY = 'feedback-detail-sidebar-state';
 
 type SidebarSections = {
 	details: boolean;
@@ -64,35 +64,6 @@ const DEFAULT_SIDEBAR_STATE: SidebarSections = {
 	labels: true,
 	related: true,
 };
-
-function useSidebarState() {
-	const [state, setState] = useState<SidebarSections>(() => {
-		if (typeof window === 'undefined') return DEFAULT_SIDEBAR_STATE;
-		try {
-			const stored = localStorage.getItem(SIDEBAR_STORAGE_KEY);
-			if (stored) {
-				return { ...DEFAULT_SIDEBAR_STATE, ...JSON.parse(stored) };
-			}
-		} catch {
-			// Ignore parse errors
-		}
-		return DEFAULT_SIDEBAR_STATE;
-	});
-
-	const setSection = (section: keyof SidebarSections, open: boolean) => {
-		setState((prev) => {
-			const next = { ...prev, [section]: open };
-			try {
-				localStorage.setItem(SIDEBAR_STORAGE_KEY, JSON.stringify(next));
-			} catch {
-				// Ignore storage errors
-			}
-			return next;
-		});
-	};
-
-	return { state, setSection };
-}
 
 type FirstCommentItemProps = {
 	comment: NonNullable<API['feedback']['getBySlug']>['firstComment'];
@@ -416,7 +387,10 @@ function RouteComponent() {
 	const { data: currentProfile } = useQuery(convexQuery(api.profile.findMyProfile, {}));
 
 	// Sidebar collapse state with localStorage persistence
-	const { state: sidebarState, setSection: setSidebarSection } = useSidebarState();
+	const { state: sidebarState, setSection: setSidebarSection } = useSidebarState(
+		SIDEBAR_STORAGE_KEY,
+		DEFAULT_SIDEBAR_STATE
+	);
 
 	// Get comments with emotes for the first comment
 	const { data: comments } = useSuspenseQuery(
