@@ -8,9 +8,7 @@ function DropdownMenu({ ...props }: React.ComponentProps<typeof Menu.Root>) {
 	return <Menu.Root data-slot='dropdown-menu' {...props} />;
 }
 
-function DropdownMenuPortal({
-	...props
-}: React.ComponentProps<typeof Menu.Portal>) {
+function DropdownMenuPortal({ ...props }: React.ComponentProps<typeof Menu.Portal>) {
 	return <Menu.Portal data-slot='dropdown-menu-portal' {...props} />;
 }
 
@@ -22,11 +20,13 @@ function DropdownMenuTrigger({
 	asChild?: boolean;
 }) {
 	if (asChild && React.isValidElement(children)) {
-		return (
-			<Menu.Trigger data-slot='dropdown-menu-trigger' render={children} {...props} />
-		);
+		return <Menu.Trigger data-slot='dropdown-menu-trigger' render={children} {...props} />;
 	}
-	return <Menu.Trigger data-slot='dropdown-menu-trigger' {...props}>{children}</Menu.Trigger>;
+	return (
+		<Menu.Trigger data-slot='dropdown-menu-trigger' {...props}>
+			{children}
+		</Menu.Trigger>
+	);
 }
 
 function DropdownMenuContent({
@@ -42,11 +42,11 @@ function DropdownMenuContent({
 }) {
 	return (
 		<Menu.Portal>
-			<Menu.Positioner sideOffset={sideOffset} side={side} align={align} className="z-50">
+			<Menu.Positioner sideOffset={sideOffset} side={side} align={align} className='z-50'>
 				<Menu.Popup
 					data-slot='dropdown-menu-content'
 					className={cn(
-						'z-50 max-h-[var(--available-height)] min-w-[8rem] origin-[var(--transform-origin)] overflow-x-hidden overflow-y-auto rounded-md border bg-popover p-1 text-popover-foreground shadow-md data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-[ending-style]:animate-out data-[ending-style]:fade-out-0 data-[ending-style]:zoom-out-95 data-[starting-style]:animate-in data-[starting-style]:fade-in-0 data-[starting-style]:zoom-in-95',
+						'z-50 max-h-(--available-height) min-w-32 origin-(--transform-origin) overflow-x-hidden overflow-y-auto rounded-md border bg-popover p-1 text-popover-foreground shadow-md data-ending-style:animate-out data-ending-style:fade-out-0 data-ending-style:zoom-out-95 data-starting-style:animate-in data-starting-style:fade-in-0 data-starting-style:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2',
 						className
 					)}
 					{...props}
@@ -73,7 +73,7 @@ function DropdownMenuItem({
 	asChild?: boolean;
 }) {
 	const itemClassName = cn(
-		"relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[inset]:pl-8 data-[variant=destructive]:text-destructive data-[variant=destructive]:data-[highlighted]:bg-destructive/10 data-[variant=destructive]:data-[highlighted]:text-destructive dark:data-[variant=destructive]:data-[highlighted]:bg-destructive/20 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg:not([class*='text-'])]:text-muted-foreground data-[variant=destructive]:*:[svg]:!text-destructive",
+		"relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground data-[inset]:pl-8 data-[variant=destructive]:text-destructive data-[variant=destructive]:data-[highlighted]:bg-destructive/10 data-[variant=destructive]:data-[highlighted]:text-destructive dark:data-[variant=destructive]:data-[highlighted]:bg-destructive/20 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg:not([class*='text-'])]:text-muted-foreground data-[variant=destructive]:*:[svg]:!text-destructive",
 		className
 	);
 
@@ -117,7 +117,7 @@ function DropdownMenuCheckboxItem({
 		<Menu.CheckboxItem
 			data-slot='dropdown-menu-checkbox-item'
 			className={cn(
-				"relative flex cursor-default items-center gap-2 rounded-sm py-1.5 pr-2 pl-8 text-sm outline-hidden select-none data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+				"relative flex cursor-default items-center gap-2 rounded-sm py-1.5 pr-2 pl-8 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
 				className
 			)}
 			checked={checked}
@@ -134,9 +134,7 @@ function DropdownMenuCheckboxItem({
 	);
 }
 
-function DropdownMenuRadioGroup({
-	...props
-}: React.ComponentProps<typeof Menu.RadioGroup>) {
+function DropdownMenuRadioGroup({ ...props }: React.ComponentProps<typeof Menu.RadioGroup>) {
 	return <Menu.RadioGroup data-slot='dropdown-menu-radio-group' {...props} />;
 }
 
@@ -149,7 +147,7 @@ function DropdownMenuRadioItem({
 		<Menu.RadioItem
 			data-slot='dropdown-menu-radio-item'
 			className={cn(
-				"relative flex cursor-default items-center gap-2 rounded-sm py-1.5 pr-2 pl-8 text-sm outline-hidden select-none data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+				"relative flex cursor-default items-center gap-2 rounded-sm py-1.5 pr-2 pl-8 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
 				className
 			)}
 			{...props}
@@ -241,11 +239,11 @@ function DropdownMenuSubContent({
 }) {
 	return (
 		<Menu.Portal>
-			<Menu.Positioner sideOffset={sideOffset} side="right" align="start" className="z-50">
+			<Menu.Positioner sideOffset={sideOffset} side='right' align='start' className='z-50'>
 				<Menu.Popup
 					data-slot='dropdown-menu-sub-content'
 					className={cn(
-						'z-50 min-w-[8rem] origin-[var(--transform-origin)] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-lg data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-[ending-style]:animate-out data-[ending-style]:fade-out-0 data-[ending-style]:zoom-out-95 data-[starting-style]:animate-in data-[starting-style]:fade-in-0 data-[starting-style]:zoom-in-95',
+						'z-50 min-w-[8rem] origin-[var(--transform-origin)] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-lg data-[ending-style]:animate-out data-[ending-style]:fade-out-0 data-[ending-style]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-[starting-style]:animate-in data-[starting-style]:fade-in-0 data-[starting-style]:zoom-in-95',
 						className
 					)}
 					{...props}
