@@ -9,7 +9,7 @@ import { generateRandomSlug } from '@/lib/random';
 import { DataModel } from './_generated/dataModel';
 import { query } from './_generated/server';
 import { createEvent } from './feedbackEvent';
-import { getMyProfile } from './profile.lib';
+import { findMyProfile, getMyProfile } from './profile.lib';
 import { verifyProjectAccess } from './project.lib';
 import { feedbackCreateSchema, feedbackSchema } from './schema/feedback.schema';
 import { mutation } from './utils/functions';
@@ -415,8 +415,22 @@ export const getBySlug = query({
 			? await ctx.db.get(feedback.assignedProfileId)
 			: null;
 
+		// Check if current user has upvoted this feedback
+		const currentProfile = await findMyProfile(ctx);
+		let hasUpvoted = false;
+		if (currentProfile) {
+			const existingUpvote = await ctx.db
+				.query('feedbackUpvote')
+				.withIndex('by_feedbackId_authorProfileId', (q) =>
+					q.eq('feedbackId', feedback._id).eq('authorProfileId', currentProfile._id)
+				)
+				.unique();
+			hasUpvoted = !!existingUpvote;
+		}
+
 		return {
 			feedback,
+			hasUpvoted,
 			author: author
 				? {
 						_id: author._id,
@@ -543,15 +557,31 @@ export const listProjectFeedback = query({
 
 		const result = await orderedQuery.paginate(paginationOpts);
 
+		// Get current user's profile for upvote status
+		const currentProfile = await findMyProfile(ctx);
+
 		const getDetails = async (item: (typeof result.page)[number]) => {
 			const board = await ctx.db.get(item.boardId);
 
 			const firstComment = item.firstCommentId ? await ctx.db.get(item.firstCommentId) : null;
 
+			// Check if current user has upvoted this feedback
+			let hasUpvoted = false;
+			if (currentProfile) {
+				const existingUpvote = await ctx.db
+					.query('feedbackUpvote')
+					.withIndex('by_feedbackId_authorProfileId', (q) =>
+						q.eq('feedbackId', item._id).eq('authorProfileId', currentProfile._id)
+					)
+					.unique();
+				hasUpvoted = !!existingUpvote;
+			}
+
 			return {
 				...item,
 				board,
 				firstComment,
+				hasUpvoted,
 			};
 		};
 
@@ -564,13 +594,24 @@ export const listProjectFeedback = query({
 
 triggers.register('feedback', async (ctx, change) => {
 	if (change.operation === 'delete') {
+		// Delete associated comments
 		const comments = await ctx.db
 			.query('feedbackComment')
 			.withIndex('by_feedbackId', (q) => q.eq('feedbackId', change.oldDoc._id))
 			.collect();
 
-		comments.forEach(async (comment) => {
+		for (const comment of comments) {
 			await ctx.db.delete(comment._id);
-		});
+		}
+
+		// Delete associated upvotes
+		const upvotes = await ctx.db
+			.query('feedbackUpvote')
+			.withIndex('by_feedbackId', (q) => q.eq('feedbackId', change.oldDoc._id))
+			.collect();
+
+		for (const upvote of upvotes) {
+			await ctx.db.delete(upvote._id);
+		}
 	}
 });

@@ -1,11 +1,10 @@
 import { API } from '~api';
 import { ClickableContainer } from '@/components/clickable-container';
-import { Button } from '@/components/ui/button';
 import { StatusIcon } from '@/icons';
-import ChevronUp from '@/icons/chevron-up';
 import { ArrayType } from '@/lib/types';
-import { cn } from '@/lib/utils';
 import { truncateToNearestSpace } from '@/lib/utils/truncate';
+
+import { UpvoteButton } from './upvote-button';
 
 type SingleFeedback = NonNullable<
 	ArrayType<NonNullable<API['feedback']['listProjectFeedback']>['page']>
@@ -14,26 +13,23 @@ type SingleFeedback = NonNullable<
 export const FeedbackCard = ({
 	onNavigationClick,
 	feedback,
+	isAuthenticated,
 }: {
 	onNavigationClick: () => void;
 	feedback: SingleFeedback;
+	isAuthenticated: boolean;
 }) => {
-	const { title, firstComment, upvotes, board, status } = feedback;
+	const { title, firstComment, upvotes, board, status, hasUpvoted } = feedback;
 
 	return (
 		<li className='flex overflow-hidden rounded-lg border'>
 			<div className='border-r bg-muted px-4 pt-4'>
-				<Button
-					variant='outline'
-					size='sm'
-					className={cn(
-						'h-auto w-12 flex-col bg-background! py-2 font-bold select-none hocus:bg-primary! hocus:text-background! dark:hocus:text-foreground!',
-						upvotes > 9999 ? 'text-xs' : upvotes > 999 ? 'text-sm' : 'text-base'
-					)}
-				>
-					<ChevronUp size='20' />
-					{upvotes}
-				</Button>
+				<UpvoteButton
+					feedbackId={feedback._id}
+					initialCount={upvotes}
+					initialHasUpvoted={hasUpvoted}
+					isAuthenticated={isAuthenticated}
+				/>
 			</div>
 			<ClickableContainer
 				onClick={() => onNavigationClick?.()}

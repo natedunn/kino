@@ -6,6 +6,7 @@ import { feedbackBoardSchema } from './schema/feedbackBoard.schema';
 import { feedbackCommentSchema } from './schema/feedbackComment.schema';
 import { feedbackCommentEmoteSchema } from './schema/feedbackCommentEmote.schema';
 import { feedbackEventSchema } from './schema/feedbackEvent.schema';
+import { feedbackUpvoteSchema } from './schema/feedbackUpvote.schema';
 import { orgMemberSchema } from './schema/orgMember.schema';
 import { profileSchema } from './schema/profile.schema';
 import { projectSchema } from './schema/project.schema';
@@ -53,6 +54,9 @@ const schema = defineSchema({
 		.index('by_feedbackId', ['feedbackId'])
 		.index('by_feedbackCommentId', ['feedbackCommentId']),
 	feedbackEvent: defineTable(zodToConvex(feedbackEventSchema)).index('by_feedbackId', ['feedbackId']),
+	feedbackUpvote: defineTable(zodToConvex(feedbackUpvoteSchema))
+		.index('by_feedbackId', ['feedbackId'])
+		.index('by_feedbackId_authorProfileId', ['feedbackId', 'authorProfileId']),
 });
 
 export default schema;

@@ -32,6 +32,7 @@ import { CommentForm } from '../-components/comment-form';
 import { CommentsList } from '../-components/comments-list';
 import { EmoteButton, EmoteContent, EmotePicker } from '../-components/emote-picker';
 import { StatusSwitcher } from '../-components/status-switcher';
+import { UpvoteButton } from '../-components/upvote-button';
 
 type FirstCommentItemProps = {
 	comment: NonNullable<API['feedback']['getBySlug']>['firstComment'];
@@ -374,7 +375,7 @@ function RouteComponent() {
 		return <div className='container py-10'>Feedback not found.</div>;
 	}
 
-	const { feedback, author, board, firstComment, assignedProfile } = data;
+	const { feedback, author, board, firstComment, assignedProfile, hasUpvoted } = data;
 
 	// Find the first comment with emotes from the comments list
 	const firstCommentWithEmotes = comments?.find((c) => c._id === firstComment?._id);
@@ -382,6 +383,7 @@ function RouteComponent() {
 	// Determine if user can edit status (owner or has project edit permissions)
 	const isOwner = currentProfile?._id === feedback.authorProfileId;
 	const canEditStatus = isOwner || (projectData?.permissions?.canEdit ?? false);
+	const isAuthenticated = !!currentProfile;
 
 	return (
 		<div>
@@ -391,7 +393,7 @@ function RouteComponent() {
 						<div className='mt-1'>
 							<StatusIcon status={feedback.status} size='28' colored />
 						</div>
-						<div className='flex flex-col gap-2'>
+						<div className='flex flex-1 flex-col gap-2'>
 							<h1 className='text-3xl'>{feedback.title}</h1>
 							<div className='text-sm text-muted-foreground'>
 								<span suppressHydrationWarning>
@@ -400,6 +402,14 @@ function RouteComponent() {
 									{feedback.upvotes !== 1 ? 's' : ''}
 								</span>
 							</div>
+						</div>
+						<div className='mt-1'>
+							<UpvoteButton
+								feedbackId={feedback._id}
+								initialCount={feedback.upvotes}
+								initialHasUpvoted={hasUpvoted}
+								isAuthenticated={isAuthenticated}
+							/>
 						</div>
 					</div>
 				</div>
@@ -432,9 +442,13 @@ function RouteComponent() {
 											<span className='text-xs font-semibold tracking-wide uppercase opacity-50'>
 												Upvotes:
 											</span>{' '}
-											<span className='rounded bg-accent p-1 text-xs font-semibold tracking-wide uppercase opacity-50'>
-												{feedback.upvotes}
-											</span>
+											<UpvoteButton
+												feedbackId={feedback._id}
+												initialCount={feedback.upvotes}
+												initialHasUpvoted={hasUpvoted}
+												isAuthenticated={isAuthenticated}
+												variant='compact'
+											/>
 										</li>
 										<li className='flex w-full items-center justify-between gap-2'>
 											<span className='text-xs font-semibold tracking-wide uppercase opacity-50'>

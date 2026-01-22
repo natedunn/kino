@@ -1,6 +1,6 @@
 import React from 'react';
 import { convexQuery } from '@convex-dev/react-query';
-import { useSuspenseQuery } from '@tanstack/react-query';
+import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
 import { createFileRoute, Link, useRouter } from '@tanstack/react-router';
 import { usePaginatedQuery } from 'convex/react';
 import * as z from 'zod';
@@ -104,6 +104,10 @@ function RouteComponent() {
 			slug: projectSlug,
 		})
 	);
+
+	// Get current user's profile for authentication status
+	const { data: currentProfile } = useQuery(convexQuery(api.profile.findMyProfile, {}));
+	const isAuthenticated = !!currentProfile;
 
 	if (!projectData?.project?._id) {
 		return null;
@@ -228,6 +232,7 @@ function RouteComponent() {
 										<FeedbackCard
 											key={f._id}
 											feedback={f}
+											isAuthenticated={isAuthenticated}
 											onNavigationClick={() =>
 												router.navigate({
 													to: '/@{$org}/$project/feedback/$slug',
