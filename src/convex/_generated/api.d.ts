@@ -31,6 +31,7 @@ import type * as utils_context from "../utils/context.js";
 import type * as utils_functions from "../utils/functions.js";
 import type * as utils_helpers from "../utils/helpers.js";
 import type * as utils_r2 from "../utils/r2.js";
+import type * as utils_storageTracking from "../utils/storageTracking.js";
 import type * as utils_table from "../utils/table.js";
 import type * as utils_trigger from "../utils/trigger.js";
 import type * as utils_types from "../utils/types.js";
@@ -66,6 +67,7 @@ declare const fullApi: ApiFromModules<{
   "utils/functions": typeof utils_functions;
   "utils/helpers": typeof utils_helpers;
   "utils/r2": typeof utils_r2;
+  "utils/storageTracking": typeof utils_storageTracking;
   "utils/table": typeof utils_table;
   "utils/trigger": typeof utils_trigger;
   "utils/types": typeof utils_types;

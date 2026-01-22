@@ -1,6 +1,6 @@
 import { convexQuery } from '@convex-dev/react-query';
-import { useSuspenseQuery } from '@tanstack/react-query';
-import { createFileRoute, Link, useRouter } from '@tanstack/react-router';
+import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
+import { createFileRoute, Link } from '@tanstack/react-router';
 import { FileText } from 'lucide-react';
 
 import { api } from '~api';
@@ -43,7 +43,6 @@ const Notice = ({ icon, children }: { icon: React.JSX.Element; children: React.R
 };
 
 function RouteComponent() {
-	const router = useRouter();
 	const { org: orgSlug, project: projectSlug } = Route.useParams();
 
 	const { data: projectData } = useSuspenseQuery(
@@ -59,6 +58,9 @@ function RouteComponent() {
 		})
 	);
 
+	// Get current user's profile for like functionality
+	const { data: currentProfile } = useQuery(convexQuery(api.profile.findMyProfile, {}));
+
 	if (!projectData?.project?._id) {
 		return null;
 	}
@@ -68,40 +70,46 @@ function RouteComponent() {
 	const canEdit = Array.isArray(updatesData) ? false : updatesData.canEdit;
 
 	return (
-		<div className='container h-full overflow-visible'>
-			<div className='h-full py-8'>
-				<div className='mb-6 flex items-center justify-between'>
-					<div className='flex items-start gap-4'>
-						<div className='mt-1'>
-							<FileText className='size-8 text-primary dark:text-blue-300' aria-hidden='true' />
+		<div>
+			{/* Header */}
+			<header className='w-full border-b bg-muted/50'>
+				<div className='container pt-16 pb-6'>
+					<div className='mx-auto max-w-240 px-4'>
+					<div className='flex items-start justify-between gap-4'>
+						<div className='flex items-start gap-4'>
+							<div className='mt-1'>
+								<FileText className='size-8 text-primary dark:text-blue-300' aria-hidden='true' />
+							</div>
+							<div>
+								<h1 className='text-2xl font-bold'>Updates</h1>
+								<p className='text-muted-foreground'>
+									Stay up to date with the latest news and releases.
+								</p>
+							</div>
 						</div>
-						<div>
-							<h1 className='text-2xl font-bold'>Updates</h1>
-							<p className='text-muted-foreground'>
-								Stay up to date with the latest news and releases.
-							</p>
-						</div>
+						{canEdit && (
+							<Button asChild>
+								<Link
+									to='/@{$org}/$project/updates/new'
+									params={{
+										org: orgSlug,
+										project: projectSlug,
+									}}
+								>
+									<CirclePlusOutline size='16px' /> New Update
+								</Link>
+							</Button>
+						)}
 					</div>
-					{canEdit && (
-						<Button asChild>
-							<Link
-								to='/@{$org}/$project/updates/new'
-								params={{
-									org: orgSlug,
-									project: projectSlug,
-								}}
-							>
-								<CirclePlusOutline size='16px' /> New Update
-							</Link>
-						</Button>
-					)}
+					</div>
 				</div>
+			</header>
 
-				<div aria-live='polite' aria-busy={isLoading}>
+			{/* Content */}
+			<div className='container py-10'>
+				<div className='mx-auto max-w-240 px-4' aria-live='polite' aria-busy={isLoading}>
 					{updates.length === 0 && !isLoading ? (
-						<Notice icon={<Missing size='32px' aria-hidden='true' />}>
-							No updates yet.
-						</Notice>
+						<Notice icon={<Missing size='32px' aria-hidden='true' />}>No updates yet.</Notice>
 					) : null}
 					{updates.length === 0 && isLoading ? (
 						<Notice
@@ -118,21 +126,15 @@ function RouteComponent() {
 						</Notice>
 					) : null}
 					{updates.length > 0 ? (
-						<ul className='flex flex-col gap-4'>
-							{updates.map((update) => (
+						<ul className='flex flex-col'>
+							{updates.map((update, index) => (
 								<UpdateCard
 									key={update._id}
 									update={update}
-									onNavigationClick={() =>
-										router.navigate({
-											to: '/@{$org}/$project/updates/$slug',
-											params: {
-												org: orgSlug,
-												project: projectSlug,
-												slug: update.slug,
-											},
-										})
-									}
+									orgSlug={orgSlug}
+									projectSlug={projectSlug}
+									currentProfileId={currentProfile?._id}
+									isLast={index === updates.length - 1}
 								/>
 							))}
 						</ul>
