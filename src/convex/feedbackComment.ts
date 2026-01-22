@@ -3,7 +3,10 @@ import { ConvexError } from 'convex/values';
 
 import { query } from './_generated/server';
 import { getMyProfile } from './profile.lib';
-import { feedbackCommentCreateSchema, feedbackCommentSchema } from './schema/feedbackComment.schema';
+import {
+	feedbackCommentCreateSchema,
+	feedbackCommentSchema,
+} from './schema/feedbackComment.schema';
 import { mutation } from './utils/functions';
 import { triggers } from './utils/trigger';
 import { insert } from './utils/verify';
@@ -48,6 +51,7 @@ export const update = mutation({
 
 		await ctx.db.patch(args._id, {
 			content: args.content,
+			updatedTime: Date.now(),
 		});
 
 		return { updated: true };
@@ -90,6 +94,8 @@ export const remove = mutation({
 	},
 });
 
+const TEAM_ROLES = ['admin', 'org:admin', 'org:editor'] as const;
+
 export const listByFeedback = query({
 	args: zodToConvex(feedbackCommentSchema.pick({ feedbackId: true })),
 	handler: async (ctx, { feedbackId }) => {
@@ -99,10 +105,28 @@ export const listByFeedback = query({
 			.order('asc')
 			.collect();
 
+		// Get the feedback to find the projectId
+		const feedback = await ctx.db.get(feedbackId);
+		const projectId = feedback?.projectId;
+
 		// Get author profiles and emotes for each comment
 		const commentsWithDetails = await Promise.all(
 			comments.map(async (comment) => {
 				const author = await ctx.db.get(comment.authorProfileId);
+
+				// Check if author is a team member (org:admin or org:editor)
+				let isTeamMember = false;
+				if (projectId && author) {
+					const projectMember = await ctx.db
+						.query('projectMember')
+						.withIndex('by_profileId_projectId', (q) =>
+							q.eq('profileId', author._id).eq('projectId', projectId)
+						)
+						.first();
+					isTeamMember =
+						projectMember !== null &&
+						TEAM_ROLES.includes(projectMember.role as (typeof TEAM_ROLES)[number]);
+				}
 
 				// Get emotes for this comment
 				const emotes = await ctx.db
@@ -130,6 +154,7 @@ export const listByFeedback = query({
 								imageUrl: author.imageUrl,
 							}
 						: null,
+					isTeamMember,
 					emoteCounts,
 				};
 			})

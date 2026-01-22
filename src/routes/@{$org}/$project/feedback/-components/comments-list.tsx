@@ -4,7 +4,15 @@ import { useEffect, useRef, useState } from 'react';
 import { convexQuery, useConvexMutation } from '@convex-dev/react-query';
 import { useMutation, useSuspenseQuery } from '@tanstack/react-query';
 import { Link, useLocation } from '@tanstack/react-router';
-import { Check, Link as LinkIcon, MoreHorizontal, Pencil, Quote, Trash2 } from 'lucide-react';
+import {
+	Check,
+	Link as LinkIcon,
+	MoreHorizontal,
+	Pencil,
+	Quote,
+	Trash2,
+	Users,
+} from 'lucide-react';
 
 import { api, API } from '~api';
 import {
@@ -14,6 +22,7 @@ import {
 	useEditorRef,
 } from '@/components/editor';
 import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -22,7 +31,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Id } from '@/convex/_generated/dataModel';
 import { cn } from '@/lib/utils';
-import { formatTimestamp } from '@/lib/utils/format-timestamp';
+import { formatFullDate, formatRelativeDay } from '@/lib/utils/format-timestamp';
 
 import { EmoteButton, EmoteContent, EmotePicker } from './emote-picker';
 
@@ -68,6 +77,7 @@ type Comment = NonNullable<API['feedbackComment']['listByFeedback']>[number];
 type CommentItemProps = {
 	comment: Comment;
 	feedbackId: Id<'feedback'>;
+	feedbackAuthorProfileId: Id<'profile'>;
 	currentProfileId?: Id<'profile'>;
 	isAnswer?: boolean;
 	canMarkAnswer?: boolean;
@@ -76,11 +86,13 @@ type CommentItemProps = {
 function CommentItem({
 	comment,
 	feedbackId,
+	feedbackAuthorProfileId,
 	currentProfileId,
 	isAnswer,
 	canMarkAnswer,
 }: CommentItemProps) {
-	const { author, emoteCounts } = comment;
+	const { author, emoteCounts, isTeamMember } = comment;
+	const isFeedbackAuthor = author?._id === feedbackAuthorProfileId;
 	const location = useLocation();
 	const commentRef = useRef<HTMLLIElement>(null);
 	const commentId = `comment-${comment._id}`;
@@ -273,28 +285,99 @@ function CommentItem({
 				</div>
 				<div className='flex w-full min-w-0 flex-col bg-background'>
 					<div className='flex w-full justify-between gap-2 border-b px-6 py-4'>
-						<span className='flex items-center gap-2'>
-							<span>
-								{author ? (
-									<Link className='hocus:underline' to='/@{$org}' params={{ org: author.username }}>
-										@{author.username}
-									</Link>
-								) : (
-									<span className='text-muted-foreground'>Unknown user</span>
-								)}{' '}
-								<span className='text-muted-foreground'>commented</span>
+						<span>
+							{author ? (
+								<Link className='hocus:underline' to='/@{$org}' params={{ org: author.username }}>
+									@{author.username}
+								</Link>
+							) : (
+								<span className='text-muted-foreground'>Unknown user</span>
+							)}{' '}
+							<span className='text-muted-foreground'>
+								commented{' '}
+								<Tooltip>
+									<TooltipTrigger asChild delay={100}>
+										<span
+											className='cursor-pointer border-b border-dotted border-foreground/50 text-foreground/70'
+											suppressHydrationWarning
+										>
+											{formatRelativeDay(comment._creationTime)}
+										</span>
+									</TooltipTrigger>
+									<TooltipContent>
+										<span suppressHydrationWarning>{formatFullDate(comment._creationTime)}</span>
+									</TooltipContent>
+								</Tooltip>
+								{comment.updatedTime && (
+									<>
+										{' • '}
+										<Tooltip>
+											<TooltipTrigger asChild delay={100}>
+												<span
+													className='cursor-pointer border-b border-dotted border-foreground/50 text-foreground/70'
+													suppressHydrationWarning
+												>
+													edited
+												</span>
+											</TooltipTrigger>
+											<TooltipContent>
+												<span suppressHydrationWarning>
+													{formatFullDate(comment.updatedTime)}
+												</span>
+											</TooltipContent>
+										</Tooltip>
+									</>
+								)}
 							</span>
+						</span>
+						<div className='flex items-center gap-2'>
+							{isFeedbackAuthor && (
+								<span className='inline-flex items-center gap-1 rounded-full bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground'>
+									<Pencil className='h-3 w-3' />
+									Author
+								</span>
+							)}
+							{isTeamMember && (
+								<span className='inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'>
+									<Users className='h-3 w-3' />
+									Team
+								</span>
+							)}
 							{isAnswer && (
 								<span className='inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-400'>
 									<Check className='h-3 w-3' />
 									Answer
 								</span>
 							)}
-						</span>
-						<div className='flex items-center gap-2'>
-							<span className='text-muted-foreground' suppressHydrationWarning>
-								{formatTimestamp(comment._creationTime)}
-							</span>
+						</div>
+					</div>
+					{/* EDIT STATE: Content area - add styles to this div using isEditing */}
+					<div className={`flex min-w-0 flex-col gap-4 overflow-hidden p-6 ${isEditing ? '' : ''}`}>
+						{/* EDIT STATE: Add overlay/background elements here */}
+						<CollapsibleContent>
+							<EditorContentDisplay content={comment.content} />
+						</CollapsibleContent>
+						<div className='flex items-center justify-between'>
+							<div className='flex items-center gap-2'>
+								<EmotePicker
+									feedbackId={feedbackId}
+									commentId={comment._id}
+									currentProfileId={currentProfileId}
+								/>
+								{emoteEntries.map(([emoteType, data]) => (
+									<EmoteButton
+										key={emoteType}
+										feedbackId={feedbackId}
+										commentId={comment._id}
+										emoteType={emoteType}
+										count={data.count}
+										isActive={
+											currentProfileId ? data.authorProfileIds.includes(currentProfileId) : false
+										}
+										currentProfileId={currentProfileId}
+									/>
+								))}
+							</div>
 							<DropdownMenu>
 								<DropdownMenuTrigger asChild>
 									<Button variant='ghost' size='sm' disabled={isDeleting}>
@@ -338,33 +421,6 @@ function CommentItem({
 							</DropdownMenu>
 						</div>
 					</div>
-					{/* EDIT STATE: Content area - add styles to this div using isEditing */}
-					<div className={`flex min-w-0 flex-col gap-4 overflow-hidden p-6 ${isEditing ? '' : ''}`}>
-						{/* EDIT STATE: Add overlay/background elements here */}
-						<CollapsibleContent>
-							<EditorContentDisplay content={comment.content} />
-						</CollapsibleContent>
-						<div className='flex items-center gap-2'>
-							<EmotePicker
-								feedbackId={feedbackId}
-								commentId={comment._id}
-								currentProfileId={currentProfileId}
-							/>
-							{emoteEntries.map(([emoteType, data]) => (
-								<EmoteButton
-									key={emoteType}
-									feedbackId={feedbackId}
-									commentId={comment._id}
-									emoteType={emoteType}
-									count={data.count}
-									isActive={
-										currentProfileId ? data.authorProfileIds.includes(currentProfileId) : false
-									}
-									currentProfileId={currentProfileId}
-								/>
-							))}
-						</div>
-					</div>
 				</div>
 			</div>
 		</li>
@@ -373,6 +429,7 @@ function CommentItem({
 
 type CommentsListProps = {
 	feedbackId: Id<'feedback'>;
+	feedbackAuthorProfileId: Id<'profile'>;
 	currentProfileId?: Id<'profile'>;
 	answerCommentId?: Id<'feedbackComment'>;
 	canMarkAnswer?: boolean;
@@ -380,6 +437,7 @@ type CommentsListProps = {
 
 export function CommentsList({
 	feedbackId,
+	feedbackAuthorProfileId,
 	currentProfileId,
 	answerCommentId,
 	canMarkAnswer,
@@ -402,6 +460,7 @@ export function CommentsList({
 					key={comment._id}
 					comment={comment}
 					feedbackId={feedbackId}
+					feedbackAuthorProfileId={feedbackAuthorProfileId}
 					currentProfileId={currentProfileId}
 					isAnswer={answerCommentId === comment._id}
 					canMarkAnswer={canMarkAnswer}

@@ -171,6 +171,13 @@ const setAnswerCommentSchema = z.object({
 	commentId: zid('feedbackComment').nullable(),
 });
 
+const EDIT_ROLES = ['admin', 'org:admin', 'org:editor'] as const;
+
+const updateAssignedSchema = z.object({
+	feedbackId: zid('feedback'),
+	assignedProfileId: zid('profile').nullable(),
+});
+
 export const setAnswerComment = mutation({
 	args: zodToConvex(setAnswerCommentSchema),
 	handler: async (ctx, args) => {
@@ -244,6 +251,78 @@ export const setAnswerComment = mutation({
 	},
 });
 
+export const updateAssigned = mutation({
+	args: zodToConvex(updateAssignedSchema),
+	handler: async (ctx, args) => {
+		const profile = await getMyProfile(ctx);
+
+		if (!profile) {
+			throw new ConvexError({
+				message: 'You must be logged in to assign feedback',
+				code: '401',
+			});
+		}
+
+		const feedback = await ctx.db.get(args.feedbackId);
+
+		if (!feedback) {
+			throw new ConvexError({
+				message: 'Feedback not found',
+				code: '404',
+			});
+		}
+
+		// Check project permissions - ONLY canEdit, not owner
+		const project = await ctx.db.get(feedback.projectId);
+
+		if (!project) {
+			throw new ConvexError({
+				message: 'Project not found',
+				code: '404',
+			});
+		}
+
+		const { permissions } = await verifyProjectAccess(ctx, { slug: project.slug });
+
+		if (!permissions.canEdit) {
+			throw new ConvexError({
+				message: 'You do not have permission to assign feedback',
+				code: '403',
+			});
+		}
+
+		// If assigning (not unassigning), validate the assignee is an editable project member
+		if (args.assignedProfileId !== null) {
+			const assigneeProjectMember = await ctx.db
+				.query('projectMember')
+				.withIndex('by_profileId_projectId', (q) =>
+					q.eq('profileId', args.assignedProfileId!).eq('projectId', feedback.projectId)
+				)
+				.unique();
+
+			if (!assigneeProjectMember) {
+				throw new ConvexError({
+					message: 'Assignee must be a project member',
+					code: '400',
+				});
+			}
+
+			if (!EDIT_ROLES.includes(assigneeProjectMember.role as (typeof EDIT_ROLES)[number])) {
+				throw new ConvexError({
+					message: 'Assignee must have edit permissions',
+					code: '400',
+				});
+			}
+		}
+
+		await patch(ctx, 'feedback', args.feedbackId, {
+			assignedProfileId: args.assignedProfileId ?? undefined,
+		});
+
+		return { success: true };
+	},
+});
+
 export const getBySlug = query({
 	args: zodToConvex(feedbackSchema.pick({ projectId: true, slug: true })),
 	handler: async (ctx, { projectId, slug }) => {
@@ -259,6 +338,9 @@ export const getBySlug = query({
 		const author = await ctx.db.get(feedback.authorProfileId);
 		const board = await ctx.db.get(feedback.boardId);
 		const firstComment = feedback.firstCommentId ? await ctx.db.get(feedback.firstCommentId) : null;
+		const assignedProfile = feedback.assignedProfileId
+			? await ctx.db.get(feedback.assignedProfileId)
+			: null;
 
 		return {
 			feedback,
@@ -282,8 +364,17 @@ export const getBySlug = query({
 				? {
 						_id: firstComment._id,
 						_creationTime: firstComment._creationTime,
+						updatedTime: firstComment.updatedTime,
 						content: firstComment.content,
 						authorProfileId: firstComment.authorProfileId,
+					}
+				: null,
+			assignedProfile: assignedProfile
+				? {
+						_id: assignedProfile._id,
+						username: assignedProfile.username,
+						name: assignedProfile.name,
+						imageUrl: assignedProfile.imageUrl,
 					}
 				: null,
 		};

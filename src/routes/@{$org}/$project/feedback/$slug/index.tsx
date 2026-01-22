@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { convexQuery, useConvexMutation } from '@convex-dev/react-query';
 import { useMutation, useQuery, useSuspenseQuery } from '@tanstack/react-query';
 import { createFileRoute, Link, notFound, useLocation } from '@tanstack/react-router';
-import { Link as LinkIcon, MoreHorizontal, Pencil } from 'lucide-react';
+import { Link as LinkIcon, MoreHorizontal, Pencil, Users } from 'lucide-react';
 
 import { api, API } from '~api';
 import {
@@ -14,6 +14,7 @@ import {
 	sanitizeEditorContent,
 } from '@/components/editor';
 import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -23,8 +24,9 @@ import {
 import { Id } from '@/convex/_generated/dataModel';
 import { StatusIcon } from '@/icons';
 import { cn } from '@/lib/utils';
-import { formatTimestamp } from '@/lib/utils/format-timestamp';
+import { formatFullDate, formatRelativeDay, formatTimestamp } from '@/lib/utils/format-timestamp';
 
+import { AssignedTo } from '../-components/assigned-to';
 import { BoardSwitcher } from '../-components/board-switcher';
 import { CommentForm } from '../-components/comment-form';
 import { CommentsList } from '../-components/comments-list';
@@ -38,6 +40,7 @@ type FirstCommentItemProps = {
 	emoteCounts?: Record<EmoteContent, { count: number; authorProfileIds: string[] }>;
 	currentProfileId?: Id<'profile'>;
 	isOwner: boolean;
+	isTeamMember: boolean;
 };
 
 function FirstCommentItem({
@@ -47,6 +50,7 @@ function FirstCommentItem({
 	emoteCounts,
 	currentProfileId,
 	isOwner,
+	isTeamMember,
 }: FirstCommentItemProps) {
 	const location = useLocation();
 	const commentRef = useRef<HTMLLIElement>(null);
@@ -200,12 +204,79 @@ function FirstCommentItem({
 							<Link className='hocus:underline' to='/@{$org}' params={{ org: author.username }}>
 								@{author.username}
 							</Link>{' '}
-							<span className='text-muted-foreground'>opened this feedback</span>
+							<span className='text-muted-foreground'>
+								opened this feedback{' '}
+								<Tooltip>
+									<TooltipTrigger asChild delay={100}>
+										<span
+											className='cursor-pointer border-b border-dotted border-foreground/50 text-foreground/70'
+											suppressHydrationWarning
+										>
+											{formatRelativeDay(comment._creationTime)}
+										</span>
+									</TooltipTrigger>
+									<TooltipContent>
+										<span suppressHydrationWarning>{formatFullDate(comment._creationTime)}</span>
+									</TooltipContent>
+								</Tooltip>
+								{comment.updatedTime && (
+									<>
+										{' • '}
+										<Tooltip>
+											<TooltipTrigger asChild delay={100}>
+												<span
+													className='cursor-pointer border-b border-dotted border-foreground/50 text-foreground/70'
+													suppressHydrationWarning
+												>
+													edited
+												</span>
+											</TooltipTrigger>
+											<TooltipContent>
+												<span suppressHydrationWarning>
+													{formatFullDate(comment.updatedTime)}
+												</span>
+											</TooltipContent>
+										</Tooltip>
+									</>
+								)}
+							</span>
 						</span>
 						<div className='flex items-center gap-2'>
-							<span className='text-muted-foreground' suppressHydrationWarning>
-								{formatTimestamp(comment._creationTime)}
+							<span className='inline-flex items-center gap-1 rounded-full bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground'>
+								<Pencil className='h-3 w-3' />
+								Author
 							</span>
+							{isTeamMember && (
+								<span className='inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'>
+									<Users className='h-3 w-3' />
+									Team
+								</span>
+							)}
+						</div>
+					</div>
+					<div className='flex min-w-0 flex-col gap-4 overflow-hidden p-6'>
+						<EditorContentDisplay content={comment.content} />
+						<div className='flex items-center justify-between'>
+							<div className='flex items-center gap-2'>
+								<EmotePicker
+									feedbackId={feedbackId}
+									commentId={comment._id}
+									currentProfileId={currentProfileId}
+								/>
+								{emoteEntries.map(([emoteType, data]) => (
+									<EmoteButton
+										key={emoteType}
+										feedbackId={feedbackId}
+										commentId={comment._id}
+										emoteType={emoteType}
+										count={data.count}
+										isActive={
+											currentProfileId ? data.authorProfileIds.includes(currentProfileId) : false
+										}
+										currentProfileId={currentProfileId}
+									/>
+								))}
+							</div>
 							<DropdownMenu>
 								<DropdownMenuTrigger asChild>
 									<Button variant='ghost' size='sm'>
@@ -226,29 +297,6 @@ function FirstCommentItem({
 									)}
 								</DropdownMenuContent>
 							</DropdownMenu>
-						</div>
-					</div>
-					<div className='flex min-w-0 flex-col gap-4 overflow-hidden p-6'>
-						<EditorContentDisplay content={comment.content} />
-						<div className='flex items-center gap-2'>
-							<EmotePicker
-								feedbackId={feedbackId}
-								commentId={comment._id}
-								currentProfileId={currentProfileId}
-							/>
-							{emoteEntries.map(([emoteType, data]) => (
-								<EmoteButton
-									key={emoteType}
-									feedbackId={feedbackId}
-									commentId={comment._id}
-									emoteType={emoteType}
-									count={data.count}
-									isActive={
-										currentProfileId ? data.authorProfileIds.includes(currentProfileId) : false
-									}
-									currentProfileId={currentProfileId}
-								/>
-							))}
 						</div>
 					</div>
 				</div>
@@ -320,7 +368,7 @@ function RouteComponent() {
 		return <div className='container py-10'>Feedback not found.</div>;
 	}
 
-	const { feedback, author, board, firstComment } = data;
+	const { feedback, author, board, firstComment, assignedProfile } = data;
 
 	// Find the first comment with emotes from the comments list
 	const firstCommentWithEmotes = comments?.find((c) => c._id === firstComment?._id);
@@ -356,9 +404,12 @@ function RouteComponent() {
 					<div className='flex flex-col gap-10 md:grid md:grid-cols-12'>
 						<div className='order-first md:order-last md:col-span-4'>
 							<div className='sticky top-4 flex flex-col gap-4'>
-								{/* TODO: Future feature - Assigned to
-								<AssignedTo />
-								*/}
+								<AssignedTo
+									feedbackId={feedback._id}
+									assignedProfile={assignedProfile}
+									projectId={feedback.projectId}
+									canEdit={projectData?.permissions?.canEdit ?? false}
+								/>
 								<div className='rounded-lg border bg-muted p-4'>
 									<ul className='flex w-full flex-col justify-center gap-3'>
 										<li className='flex w-full justify-between gap-2'>
@@ -423,6 +474,7 @@ function RouteComponent() {
 											emoteCounts={firstCommentWithEmotes?.emoteCounts}
 											currentProfileId={currentProfile?._id}
 											isOwner={isOwner}
+											isTeamMember={firstCommentWithEmotes?.isTeamMember ?? false}
 										/>
 									</ul>
 								</div>
@@ -432,6 +484,7 @@ function RouteComponent() {
 								{/* Additional comments */}
 								<CommentsList
 									feedbackId={feedback._id}
+									feedbackAuthorProfileId={feedback.authorProfileId}
 									currentProfileId={currentProfile?._id}
 									answerCommentId={feedback.answerCommentId}
 									canMarkAnswer={canEditStatus}

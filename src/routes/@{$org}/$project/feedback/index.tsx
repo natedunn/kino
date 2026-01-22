@@ -168,16 +168,12 @@ function RouteComponent() {
 						</div>
 						<div className='mt-4'>
 							<div className='border-b pr-8 pb-6'>
-								<span className='mx-2 inline-flex text-sm font-bold text-muted-foreground'>
-									Boards
-								</span>
+								<h2 className='mx-2 text-sm font-bold text-muted-foreground'>Boards</h2>
 								<div className='mt-2'>{!!boards && <BoardsNav boards={boards} />}</div>
 							</div>
 							{projectData?.permissions.canEdit && (
 								<div className='mt-6 pr-8'>
-									<span className='mx-2 inline-flex text-sm font-bold text-muted-foreground'>
-										Options
-									</span>
+									<h2 className='mx-2 text-sm font-bold text-muted-foreground'>Options</h2>
 									<div className='mt-2'>
 										<FeedbackOptions />
 									</div>
@@ -190,53 +186,64 @@ function RouteComponent() {
 					<div className='overflow-hidden rounded-lg border border-primary/50 bg-linear-to-tl from-primary/20 to-primary/5 p-8'>
 						<div className='flex items-start gap-4'>
 							<div className='mt-1'>
-								<Megaphone className='size-8 text-primary/75 dark:text-blue-300' />
+								<Megaphone className='size-8 text-primary dark:text-blue-300' aria-hidden='true' />
 							</div>
 							<div>
 								<h1 className='text-2xl font-bold text-primary dark:text-blue-50'>
 									We want to hear your feedback
 								</h1>
-								<p className='text-primary/75 dark:text-blue-300'>
+								<p className='text-primary dark:text-blue-300'>
 									Make sure to read the feedback rules and guidelines before posting.
 								</p>
 							</div>
 						</div>
 					</div>
 					<FeedbackToolbar />
-					{feedback.length === 0 && !loadingFeedback ? (
-						<Notice icon={<Missing size='32px' />}>No feedback found.</Notice>
-					) : null}
-					{feedback.length === 0 && loadingFeedback ? (
-						<Notice icon={<LoaderQuarter className='animate-spin' size='32px' />}>
-							Loading feedback...
-						</Notice>
-					) : null}
-					{feedback.length > 0 ? (
-						<div
-							className={cn('flex flex-col gap-4', {
-								'pointer-events-none opacity-50': loadingFeedback,
-							})}
-						>
-							{feedback.map((f) => {
-								return (
-									<FeedbackCard
-										key={f._id}
-										feedback={f}
-										onNavigationClick={() =>
-											router.navigate({
-												to: '/@{$org}/$project/feedback/$slug',
-												params: {
-													org: orgSlug,
-													project: projectSlug,
-													slug: f.slug,
-												},
-											})
-										}
+					<div aria-live='polite' aria-busy={loadingFeedback}>
+						{feedback.length === 0 && !loadingFeedback ? (
+							<Notice icon={<Missing size='32px' aria-hidden='true' />}>No feedback found.</Notice>
+						) : null}
+						{feedback.length === 0 && loadingFeedback ? (
+							<Notice
+								icon={
+									<LoaderQuarter
+										className='animate-spin'
+										size='32px'
+										role='status'
+										aria-label='Loading'
 									/>
-								);
-							})}
-						</div>
-					) : null}
+								}
+							>
+								Loading feedback...
+							</Notice>
+						) : null}
+						{feedback.length > 0 ? (
+							<div
+								className={cn('flex flex-col gap-4', {
+									'pointer-events-none opacity-50': loadingFeedback,
+								})}
+							>
+								{feedback.map((f) => {
+									return (
+										<FeedbackCard
+											key={f._id}
+											feedback={f}
+											onNavigationClick={() =>
+												router.navigate({
+													to: '/@{$org}/$project/feedback/$slug',
+													params: {
+														org: orgSlug,
+														project: projectSlug,
+														slug: f.slug,
+													},
+												})
+											}
+										/>
+									);
+								})}
+							</div>
+						) : null}
+					</div>
 
 					{feedbackData.status === 'CanLoadMore' && (
 						<div className='flex items-center gap-3'>

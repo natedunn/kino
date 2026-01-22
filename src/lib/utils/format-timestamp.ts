@@ -1,3 +1,72 @@
+export function formatFullDate(timestamp: number): string {
+	const date = new Date(timestamp);
+	const day = date.getDate();
+	const year = date.getFullYear();
+
+	const months = [
+		'January',
+		'February',
+		'March',
+		'April',
+		'May',
+		'June',
+		'July',
+		'August',
+		'September',
+		'October',
+		'November',
+		'December',
+	];
+
+	const getOrdinalSuffix = (day: number): string => {
+		if (day >= 11 && day <= 13) return 'th';
+		switch (day % 10) {
+			case 1:
+				return 'st';
+			case 2:
+				return 'nd';
+			case 3:
+				return 'rd';
+			default:
+				return 'th';
+		}
+	};
+
+	return `${months[date.getMonth()]} ${day}${getOrdinalSuffix(day)}, ${year}`;
+}
+
+export function formatRelativeDay(timestamp: number): string {
+	const date = new Date(timestamp);
+	const now = new Date();
+
+	// Reset times to midnight for day comparison
+	const dateDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+	const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+	const diffDays = Math.floor((today.getTime() - dateDay.getTime()) / (1000 * 60 * 60 * 24));
+
+	if (diffDays === 0) {
+		return 'today';
+	} else if (diffDays === 1) {
+		return 'yesterday';
+	} else if (diffDays < 7) {
+		return `${diffDays} days ago`;
+	} else if (diffDays < 14) {
+		return '1 week ago';
+	} else if (diffDays < 30) {
+		const weeks = Math.floor(diffDays / 7);
+		return `${weeks} weeks ago`;
+	} else if (diffDays < 60) {
+		return '1 month ago';
+	} else if (diffDays < 365) {
+		const months = Math.floor(diffDays / 30);
+		return `${months} months ago`;
+	} else {
+		const years = Math.floor(diffDays / 365);
+		return years === 1 ? '1 year ago' : `${years} years ago`;
+	}
+}
+
 export function formatTimestamp(
 	timestamp: number,
 	opts: {
