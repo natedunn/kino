@@ -16,6 +16,8 @@ import { Id } from '@/convex/_generated/dataModel';
 import { updateSchema } from '@/convex/schema/update.schema';
 import { cn } from '@/lib/utils';
 
+import { FeedbackSelector } from '../-components/feedback-selector';
+
 const formSchema = updateSchema.pick({
 	title: true,
 	content: true,
@@ -91,6 +93,10 @@ function RouteComponent() {
 
 	const { update } = updateData!;
 
+	const [selectedFeedbackIds, setSelectedFeedbackIds] = useState<Id<'feedback'>[]>(
+		update.relatedFeedbackIds ?? []
+	);
+
 	const defaultValues: FormSchema = {
 		title: update.title,
 		content: update.content,
@@ -119,6 +125,7 @@ function RouteComponent() {
 				content: sanitizedContent,
 				tags: value.tags,
 				coverImageId: value.coverImageId,
+				relatedFeedbackIds: selectedFeedbackIds.length > 0 ? selectedFeedbackIds : undefined,
 			});
 		},
 	});
@@ -289,6 +296,18 @@ function RouteComponent() {
 									</field.Provider>
 								)}
 							</form.AppField>
+
+							<div className='flex flex-col gap-2'>
+								<label className='text-sm font-medium'>Related Feedback</label>
+								<FeedbackSelector
+									projectId={projectData?.project?._id!}
+									selectedIds={selectedFeedbackIds}
+									onChange={setSelectedFeedbackIds}
+								/>
+								<p className='text-xs text-muted-foreground'>
+									Link feedback items that are addressed by this update.
+								</p>
+							</div>
 
 							<formError.Message prefix='Unable to update' />
 

@@ -592,6 +592,104 @@ export const listProjectFeedback = query({
 	},
 });
 
+// Search feedback for linking to updates (async search)
+export const searchForLinking = query({
+	args: {
+		projectId: v.id('project'),
+		search: v.string(),
+	},
+	returns: v.array(
+		v.object({
+			_id: v.id('feedback'),
+			title: v.string(),
+			slug: v.string(),
+			status: zodToConvex(feedbackSchema.shape.status),
+			board: v.union(
+				v.object({
+					_id: v.id('feedbackBoard'),
+					name: v.string(),
+				}),
+				v.null()
+			),
+		})
+	),
+	handler: async (ctx, { projectId, search }) => {
+		let feedback;
+
+		if (search.trim()) {
+			// Use search index for text search
+			feedback = await ctx.db
+				.query('feedback')
+				.withSearchIndex('by_projectId_boardId_status_searchContent', (q) =>
+					q.search('searchContent', search).eq('projectId', projectId)
+				)
+				.take(20);
+		} else {
+			// Return recent items when no search term
+			feedback = await ctx.db
+				.query('feedback')
+				.withIndex('by_projectId', (q) => q.eq('projectId', projectId))
+				.order('desc')
+				.take(20);
+		}
+
+		return Promise.all(
+			feedback.map(async (item) => {
+				const board = await ctx.db.get(item.boardId);
+				return {
+					_id: item._id,
+					title: item.title,
+					slug: item.slug,
+					status: item.status,
+					board: board ? { _id: board._id, name: board.name } : null,
+				};
+			})
+		);
+	},
+});
+
+// Get feedback items by IDs (for displaying selected items)
+export const getByIds = query({
+	args: {
+		ids: v.array(v.id('feedback')),
+	},
+	returns: v.array(
+		v.object({
+			_id: v.id('feedback'),
+			title: v.string(),
+			slug: v.string(),
+			status: zodToConvex(feedbackSchema.shape.status),
+			board: v.union(
+				v.object({
+					_id: v.id('feedbackBoard'),
+					name: v.string(),
+				}),
+				v.null()
+			),
+		})
+	),
+	handler: async (ctx, { ids }) => {
+		if (ids.length === 0) return [];
+
+		const results = await Promise.all(
+			ids.map(async (id) => {
+				const item = await ctx.db.get(id);
+				if (!item) return null;
+				const board = await ctx.db.get(item.boardId);
+				return {
+					_id: item._id,
+					title: item.title,
+					slug: item.slug,
+					status: item.status,
+					board: board ? { _id: board._id, name: board.name } : null,
+				};
+			})
+		);
+
+		return results.filter((item): item is NonNullable<typeof item> => item !== null);
+	},
+});
+
 triggers.register('feedback', async (ctx, change) => {
 	if (change.operation === 'delete') {
 		// Delete associated comments

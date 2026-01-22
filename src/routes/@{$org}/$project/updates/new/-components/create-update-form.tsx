@@ -15,6 +15,8 @@ import { useAppForm, useFormError } from '@/components/ui/tanstack-form';
 import { Id } from '@/convex/_generated/dataModel';
 import { cn } from '@/lib/utils';
 
+import { FeedbackSelector } from '../../-components/feedback-selector';
+
 // Simplified form schema without relatedFeedbackIds (handled separately)
 const formSchema = z.object({
 	title: z.string().min(1).max(200),
@@ -204,6 +206,18 @@ export const CreateUpdateForm = ({ projectId, onSubmit }: CreateUpdateFormProps)
 							</field.Provider>
 						)}
 					</form.AppField>
+
+					<div className='flex flex-col gap-2'>
+						<label className='text-sm font-medium'>Related Feedback</label>
+						<FeedbackSelector
+							projectId={projectId}
+							selectedIds={selectedFeedbackIds}
+							onChange={setSelectedFeedbackIds}
+						/>
+						<p className='text-xs text-muted-foreground'>
+							Link feedback items that are addressed by this update.
+						</p>
+					</div>
 
 					<formError.Message prefix='Unable to create update' />
 
