@@ -209,7 +209,7 @@ export const UpdateCard = ({
 
 					{/* Cover Image */}
 					{coverImageUrl && (
-						<div className='mt-4 w-full overflow-hidden rounded-lg bg-muted'>
+						<div className='mt-4 mb-6 w-full overflow-hidden rounded-lg bg-muted'>
 							<img src={coverImageUrl} alt={title} className='h-full w-full object-cover' />
 						</div>
 					)}
