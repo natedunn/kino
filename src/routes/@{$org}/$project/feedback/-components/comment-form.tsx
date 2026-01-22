@@ -1,6 +1,6 @@
 import type { MarkdownEditorRef } from '@/components/editor';
 
-import { useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useConvexMutation } from '@convex-dev/react-query';
 import { useMutation } from '@tanstack/react-query';
 import { Link, useLocation } from '@tanstack/react-router';
@@ -11,8 +11,49 @@ import { MarkdownEditor, sanitizeEditorContent, useEditorRef } from '@/component
 import { Button } from '@/components/ui/button';
 import { Id } from '@/convex/_generated/dataModel';
 
+const DRAFT_STORAGE_PREFIX = 'feedback-comment-draft';
+
+function getDraftKey(orgSlug: string, projectSlug: string, feedbackSlug: string) {
+	return `${DRAFT_STORAGE_PREFIX}:${orgSlug}:${projectSlug}:${feedbackSlug}`;
+}
+
+function getDraft(orgSlug: string, projectSlug: string, feedbackSlug: string): string {
+	if (typeof window === 'undefined') return '';
+	try {
+		return localStorage.getItem(getDraftKey(orgSlug, projectSlug, feedbackSlug)) ?? '';
+	} catch {
+		return '';
+	}
+}
+
+function saveDraft(orgSlug: string, projectSlug: string, feedbackSlug: string, content: string) {
+	if (typeof window === 'undefined') return;
+	try {
+		const key = getDraftKey(orgSlug, projectSlug, feedbackSlug);
+		if (content.trim()) {
+			localStorage.setItem(key, content);
+		} else {
+			localStorage.removeItem(key);
+		}
+	} catch {
+		// Ignore storage errors
+	}
+}
+
+function clearDraft(orgSlug: string, projectSlug: string, feedbackSlug: string) {
+	if (typeof window === 'undefined') return;
+	try {
+		localStorage.removeItem(getDraftKey(orgSlug, projectSlug, feedbackSlug));
+	} catch {
+		// Ignore storage errors
+	}
+}
+
 type CommentFormProps = {
 	feedbackId: Id<'feedback'>;
+	orgSlug: string;
+	projectSlug: string;
+	feedbackSlug: string;
 	isAuthenticated?: boolean;
 };
 
@@ -48,12 +89,21 @@ function SignInPrompt() {
 	);
 }
 
-export function CommentForm({ feedbackId, isAuthenticated = false }: CommentFormProps) {
+export function CommentForm({
+	feedbackId,
+	orgSlug,
+	projectSlug,
+	feedbackSlug,
+	isAuthenticated = false,
+}: CommentFormProps) {
 	if (!isAuthenticated) {
 		return <SignInPrompt />;
 	}
-	const [content, setContent] = useState('');
+
+	// Initialize content from localStorage draft
+	const [content, setContent] = useState(() => getDraft(orgSlug, projectSlug, feedbackSlug));
 	const localRef = useRef<MarkdownEditorRef>(null);
+	const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
 	// Try to get shared ref from context, fall back to local ref
 	let editorRef: React.RefObject<MarkdownEditorRef | null>;
@@ -63,11 +113,41 @@ export function CommentForm({ feedbackId, isAuthenticated = false }: CommentForm
 		editorRef = localRef;
 	}
 
+	// Save draft to localStorage when content changes (debounced)
+	const handleContentChange = useCallback(
+		(newContent: string) => {
+			setContent(newContent);
+
+			// Debounce localStorage save
+			if (saveTimeoutRef.current) {
+				clearTimeout(saveTimeoutRef.current);
+			}
+			saveTimeoutRef.current = setTimeout(() => {
+				saveDraft(orgSlug, projectSlug, feedbackSlug, newContent);
+			}, 500);
+		},
+		[orgSlug, projectSlug, feedbackSlug]
+	);
+
+	// Cleanup timeout on unmount
+	useEffect(() => {
+		return () => {
+			if (saveTimeoutRef.current) {
+				clearTimeout(saveTimeoutRef.current);
+			}
+		};
+	}, []);
+
 	const { mutate: createComment, status } = useMutation({
 		mutationFn: useConvexMutation(api.feedbackComment.create),
 		onSuccess: () => {
+			// Clear any pending save timeout
+			if (saveTimeoutRef.current) {
+				clearTimeout(saveTimeoutRef.current);
+			}
 			setContent('');
 			editorRef.current?.clear();
+			clearDraft(orgSlug, projectSlug, feedbackSlug);
 		},
 	});
 
@@ -102,7 +182,7 @@ export function CommentForm({ feedbackId, isAuthenticated = false }: CommentForm
 			<MarkdownEditor
 				ref={editorRef}
 				value={content}
-				onChange={setContent}
+				onChange={handleContentChange}
 				placeholder='Leave a comment...'
 				disabled={isSubmitting}
 				minHeight='120px'

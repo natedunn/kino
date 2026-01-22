@@ -722,7 +722,13 @@ function RouteComponent() {
 								/>
 
 								{/* Comment form */}
-								<CommentForm feedbackId={feedback._id} isAuthenticated={!!currentProfile} />
+								<CommentForm
+									feedbackId={feedback._id}
+									orgSlug={params.org}
+									projectSlug={params.project}
+									feedbackSlug={params.slug}
+									isAuthenticated={!!currentProfile}
+								/>
 							</EditorRefProvider>
 						</div>
 					</div>
