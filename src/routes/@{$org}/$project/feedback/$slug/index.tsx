@@ -14,13 +14,13 @@ import {
 	sanitizeEditorContent,
 } from '@/components/editor';
 import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Id } from '@/convex/_generated/dataModel';
 import { StatusIcon } from '@/icons';
 import { cn } from '@/lib/utils';
@@ -136,6 +136,7 @@ function FirstCommentItem({
 			ref={commentRef}
 			className={cn(
 				'update-comment relative flex overflow-hidden rounded-lg border transition-all duration-500',
+				'border-foreground/40 dark:border-foreground/30',
 				{
 					'ring-2 ring-primary ring-offset-2 ring-offset-background': isHighlighted,
 				}
@@ -232,9 +233,7 @@ function FirstCommentItem({
 												</span>
 											</TooltipTrigger>
 											<TooltipContent>
-												<span suppressHydrationWarning>
-													{formatFullDate(comment.updatedTime)}
-												</span>
+												<span suppressHydrationWarning>{formatFullDate(comment.updatedTime)}</span>
 											</TooltipContent>
 										</Tooltip>
 									</>
