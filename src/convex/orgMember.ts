@@ -4,12 +4,8 @@ import { components } from './_generated/api';
 import { triggers } from './utils/trigger';
 
 triggers.register('orgMember', async (ctx, change) => {
-	if (
-		change.operation === 'insert' ||
-		change.operation === 'update' ||
-		change.operation === 'delete'
-	) {
-		const doc = change.operation === 'delete' ? change.oldDoc : change.newDoc;
+	if (change.operation === 'insert' || change.operation === 'update') {
+		const doc = change.newDoc;
 
 		const org = await ctx.runQuery(components.betterAuth.org.findByIdOrSlug, {
 			slug: doc.organizationId,
@@ -37,7 +33,7 @@ triggers.register('orgMember', async (ctx, change) => {
 
 			projectMembers.forEach(async (projectMember) => {
 				await ctx.db.patch(projectMember._id, {
-					role: change.operation === 'delete' ? doc.role : `org:${doc.role}`,
+					role: `org:${doc.role}`,
 				});
 			});
 		});

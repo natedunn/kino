@@ -14,6 +14,7 @@ export const feedbackSchema = z.object({
 	boardId: zid('feedbackBoard'),
 	firstCommentId: z.optional(zid('feedbackComment')),
 	answerCommentId: z.optional(zid('feedbackComment')),
+	assignedProfileId: z.optional(zid('profile')),
 	status: z.enum(['open', 'in-progress', 'closed', 'completed', 'paused']),
 	tags: z.array(z.string()).optional(),
 	searchContent: z.string().optional(),

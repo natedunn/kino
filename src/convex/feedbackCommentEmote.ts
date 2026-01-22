@@ -23,10 +23,7 @@ export const toggle = mutation({
 			.query('feedbackCommentEmote')
 			.withIndex('by_feedbackCommentId', (q) => q.eq('feedbackCommentId', args.feedbackCommentId))
 			.filter((q) =>
-				q.and(
-					q.eq(q.field('authorProfileId'), profile._id),
-					q.eq(q.field('content'), args.content)
-				)
+				q.and(q.eq(q.field('authorProfileId'), profile._id), q.eq(q.field('content'), args.content))
 			)
 			.first();
 
