@@ -23,5 +23,5 @@ function RouteComponent() {
 				</pre>
 			</div>
 		</div>
-	)
+	);
 }

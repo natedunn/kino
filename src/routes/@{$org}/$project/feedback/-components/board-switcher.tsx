@@ -1,5 +1,4 @@
-import { useConvexMutation } from '@convex-dev/react-query';
-import { convexQuery } from '@convex-dev/react-query';
+import { convexQuery, useConvexMutation } from '@convex-dev/react-query';
 import { useMutation, useSuspenseQuery } from '@tanstack/react-query';
 import { ChevronDown } from 'lucide-react';
 
@@ -30,7 +29,12 @@ type BoardSwitcherProps = {
 	canEdit: boolean;
 };
 
-export function BoardSwitcher({ feedbackId, currentBoard, projectSlug, canEdit }: BoardSwitcherProps) {
+export function BoardSwitcher({
+	feedbackId,
+	currentBoard,
+	projectSlug,
+	canEdit,
+}: BoardSwitcherProps) {
 	const { data: boards } = useSuspenseQuery(
 		convexQuery(api.feedbackBoard.listProjectBoards, { slug: projectSlug })
 	);
@@ -48,13 +52,13 @@ export function BoardSwitcher({ feedbackId, currentBoard, projectSlug, canEdit }
 	};
 
 	if (!currentBoard) {
-		return <span className="text-sm text-muted-foreground">None</span>;
+		return <span className='text-sm text-muted-foreground'>None</span>;
 	}
 
 	if (!canEdit) {
 		return (
-			<span className="flex items-center gap-1.5 text-sm">
-				<Icon size="14px" name={currentBoard.icon as IconName} fallback="box" />
+			<span className='flex items-center gap-1.5 text-sm'>
+				<Icon size='14px' name={currentBoard.icon as IconName} fallback='box' />
 				{currentBoard.name}
 			</span>
 		);
@@ -64,26 +68,26 @@ export function BoardSwitcher({ feedbackId, currentBoard, projectSlug, canEdit }
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
 				<Button
-					variant="ghost"
-					size="sm"
+					variant='ghost'
+					size='sm'
 					disabled={isUpdating}
-					className="h-auto gap-1.5 px-1.5 py-0.5 text-sm hover:bg-accent"
+					className='h-auto gap-1.5 px-1.5 py-0.5 text-sm hover:bg-accent'
 				>
 					{isUpdating ? (
 						<>
-							<LoaderQuarter size="14px" className="animate-spin" />
+							<LoaderQuarter size='14px' className='animate-spin' />
 							Updating...
 						</>
 					) : (
 						<>
-							<Icon size="14px" name={currentBoard.icon as IconName} fallback="box" />
+							<Icon size='14px' name={currentBoard.icon as IconName} fallback='box' />
 							{currentBoard.name}
 							<ChevronDown size={12} />
 						</>
 					)}
 				</Button>
 			</DropdownMenuTrigger>
-			<DropdownMenuContent align="end">
+			<DropdownMenuContent align='end'>
 				{boards?.map((board) => (
 					<DropdownMenuItem
 						key={board._id}
@@ -92,7 +96,7 @@ export function BoardSwitcher({ feedbackId, currentBoard, projectSlug, canEdit }
 							'font-semibold': board._id === currentBoard._id,
 						})}
 					>
-						<Icon size="14px" name={board.icon as IconName} fallback="box" />
+						<Icon size='14px' name={board.icon as IconName} fallback='box' />
 						{board.name}
 					</DropdownMenuItem>
 				))}

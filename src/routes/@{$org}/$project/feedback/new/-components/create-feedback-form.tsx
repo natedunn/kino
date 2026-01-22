@@ -4,6 +4,7 @@ import { useMutation } from '@tanstack/react-query';
 import * as z from 'zod';
 
 import { api, API } from '~api';
+import { MarkdownEditor, sanitizeEditorContent } from '@/components/editor';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input-shadcn';
 import {
@@ -14,7 +15,6 @@ import {
 	SelectValue,
 } from '@/components/ui/select-shadcn';
 import { useAppForm, useFormError } from '@/components/ui/tanstack-form';
-import { MarkdownEditor, sanitizeEditorContent } from '@/components/editor';
 import { Id } from '@/convex/_generated/dataModel';
 import { feedbackCreateSchema } from '@/convex/schema/feedback.schema';
 import { cn } from '@/lib/utils';
@@ -150,8 +150,8 @@ export const CreateFeedbackForm = ({ projectId, boards, onSubmit }: CreateFeedba
 										value={field.state.value}
 										onChange={(html) => field.handleChange(html)}
 										disabled={!enabled}
-										placeholder="Describe your feedback..."
-										minHeight="120px"
+										placeholder='Describe your feedback...'
+										minHeight='120px'
 										onSubmitShortcut={() => form.handleSubmit()}
 									/>
 								</field.Control>

@@ -13,7 +13,7 @@ function RouteComponent() {
 		convexQuery(api.features.feedback, {
 			projectSlug: Route.useParams().project,
 		})
-	)
+	);
 
 	if (!feedback?.boards) throw new Error('No boards found');
 
@@ -27,5 +27,5 @@ function RouteComponent() {
 				<code>{JSON.stringify(board, null, 2)}</code>
 			</pre>
 		</div>
-	)
+	);
 }

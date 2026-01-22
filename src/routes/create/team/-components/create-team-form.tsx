@@ -1,8 +1,6 @@
 import React from 'react';
 import { useConvexMutation } from '@convex-dev/react-query';
 import { useForm } from '@tanstack/react-form';
-
-import { Label } from '@/components/ui/label';
 import { useMutation } from '@tanstack/react-query';
 import { ConvexError } from 'convex/values';
 import * as z from 'zod';
@@ -12,6 +10,7 @@ import { InlineAlert } from '@/components/inline-alert';
 import { LabelWrapper } from '@/components/label';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input-shadcn';
+import { Label } from '@/components/ui/label';
 import {
 	Select,
 	SelectContent,

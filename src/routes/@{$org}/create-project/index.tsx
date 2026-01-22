@@ -14,7 +14,7 @@ export const Route = createFileRoute('/@{$org}/create-project/')({
 			convexQuery(api.org.getDetails, {
 				slug: params.org,
 			})
-		)
+		);
 
 		if (!orgDetails.permissions.canEdit) {
 			throw notFound();
@@ -24,7 +24,7 @@ export const Route = createFileRoute('/@{$org}/create-project/')({
 			convexQuery(api.org.getMyPermission, {
 				slug: params.org,
 			})
-		)
+		);
 
 		return { limits };
 	},
@@ -42,7 +42,7 @@ function RouteComponent() {
 		convexQuery(api.org.getDetails, {
 			slug: orgSlug,
 		})
-	)
+	);
 
 	if (!orgDetails.org) return null;
 
@@ -54,5 +54,5 @@ function RouteComponent() {
 				<CreateProjectForm enabled={limits.canAddProjects} orgSlug={org.slug} orgName={org.name} />
 			</div>
 		</div>
-	)
+	);
 }

@@ -1,5 +1,4 @@
-import { useConvexMutation } from '@convex-dev/react-query';
-import { convexQuery } from '@convex-dev/react-query';
+import { convexQuery, useConvexMutation } from '@convex-dev/react-query';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { SmilePlus } from 'lucide-react';
 
@@ -76,7 +75,9 @@ function useOptimisticEmoteToggle(feedbackId: Id<'feedback'>, currentProfileId?:
 						} else {
 							emoteCounts[variables.content] = {
 								count: newCount,
-								authorProfileIds: emoteData.authorProfileIds.filter((id) => id !== currentProfileId),
+								authorProfileIds: emoteData.authorProfileIds.filter(
+									(id) => id !== currentProfileId
+								),
 							};
 						}
 					} else {
@@ -131,17 +132,17 @@ export function EmotePicker({ feedbackId, commentId, currentProfileId }: EmotePi
 	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
-				<Button className="gap-2 rounded-full" variant="ghost" size="sm">
+				<Button className='gap-2 rounded-full' variant='outline' size='sm'>
 					<SmilePlus size={16} />
-					<span className="sr-only">Add reaction</span>
+					<span className='sr-only'>Add reaction</span>
 				</Button>
 			</DropdownMenuTrigger>
-			<DropdownMenuContent align="start" className="grid grid-cols-5 gap-1 p-2">
+			<DropdownMenuContent align='start' className='grid grid-cols-5 gap-1 p-2'>
 				{(Object.keys(EMOTE_EMOJI) as EmoteContent[]).map((emoteType) => (
 					<DropdownMenuItem
 						key={emoteType}
 						onClick={() => handleSelect(emoteType)}
-						className="flex cursor-pointer items-center justify-center p-2 text-lg hover:bg-accent"
+						className='flex cursor-pointer items-center justify-center p-2 text-lg hover:bg-accent'
 					>
 						{EMOTE_EMOJI[emoteType]}
 					</DropdownMenuItem>
@@ -180,11 +181,11 @@ export function EmoteButton({
 
 	return (
 		<Button
-			variant="outline"
-			size="sm"
+			variant='outline'
+			size='sm'
 			onClick={handleClick}
 			className={cn('gap-2 rounded-full', {
-				'bg-primary/10 border-primary/50': isActive,
+				'border-primary/50 bg-primary/10': isActive,
 			})}
 		>
 			<span>{EMOTE_EMOJI[emoteType]}</span>

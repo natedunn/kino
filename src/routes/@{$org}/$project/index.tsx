@@ -9,5 +9,5 @@ function RouteComponent() {
 		<div className='container'>
 			<div>Hello "/_default/@$org/$project/"!</div>
 		</div>
-	)
+	);
 }

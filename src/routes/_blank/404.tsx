@@ -5,7 +5,7 @@ export const Route = createFileRoute('/_blank/404')({
 	loader: async () => {
 		notFound({
 			throw: true,
-		})
+		});
 	},
 });
 
