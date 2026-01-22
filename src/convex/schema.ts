@@ -11,6 +11,10 @@ import { orgMemberSchema } from './schema/orgMember.schema';
 import { profileSchema } from './schema/profile.schema';
 import { projectSchema } from './schema/project.schema';
 import { projectMemberSchema } from './schema/projectMember.schema';
+import { updateSchema } from './schema/update.schema';
+import { updateCommentSchema } from './schema/updateComment.schema';
+import { updateCommentEmoteSchema } from './schema/updateCommentEmote.schema';
+import { updateEmoteSchema } from './schema/updateEmote.schema';
 
 const schema = defineSchema({
 	profile: defineTable(zodToConvex(profileSchema))
@@ -57,6 +61,18 @@ const schema = defineSchema({
 	feedbackUpvote: defineTable(zodToConvex(feedbackUpvoteSchema))
 		.index('by_feedbackId', ['feedbackId'])
 		.index('by_feedbackId_authorProfileId', ['feedbackId', 'authorProfileId']),
+	update: defineTable(zodToConvex(updateSchema))
+		.index('by_projectId_slug', ['projectId', 'slug'])
+		.index('by_projectId_status_publishedAt', ['projectId', 'status', 'publishedAt']),
+	updateComment: defineTable(zodToConvex(updateCommentSchema))
+		.index('by_updateId', ['updateId'])
+		.index('by_authorProfileId', ['authorProfileId']),
+	updateEmote: defineTable(zodToConvex(updateEmoteSchema))
+		.index('by_updateId', ['updateId'])
+		.index('by_updateId_authorProfileId', ['updateId', 'authorProfileId']),
+	updateCommentEmote: defineTable(zodToConvex(updateCommentEmoteSchema))
+		.index('by_updateCommentId', ['updateCommentId'])
+		.index('by_updateId', ['updateId']),
 });
 
 export default schema;

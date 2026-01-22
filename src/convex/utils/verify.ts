@@ -42,6 +42,10 @@ export const { insert, patch, dangerouslyPatch, configs } = verifyConfig(schema,
 			slug: generateRandomSlug(),
 			upvotes: 1,
 		},
+		update: {
+			status: 'draft',
+			slug: generateRandomSlug(),
+		},
 	})),
 	protectedColumns: protectedColumnsConfig(schema, {
 		feedback: ['projectId'],
