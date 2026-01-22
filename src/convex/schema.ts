@@ -8,6 +8,7 @@ import { feedbackCommentEmoteSchema } from './schema/feedbackCommentEmote.schema
 import { feedbackEventSchema } from './schema/feedbackEvent.schema';
 import { feedbackUpvoteSchema } from './schema/feedbackUpvote.schema';
 import { orgMemberSchema } from './schema/orgMember.schema';
+import { orgStorageUsageSchema } from './schema/orgStorageUsage.schema';
 import { profileSchema } from './schema/profile.schema';
 import { projectSchema } from './schema/project.schema';
 import { projectMemberSchema } from './schema/projectMember.schema';
@@ -35,6 +36,7 @@ const schema = defineSchema({
 	orgMember: defineTable(zodToConvex(orgMemberSchema))
 		.index('by_profileId_organizationId', ['profileId', 'organizationId'])
 		.index('by_profileId_orgSlug', ['profileId', 'orgSlug']),
+	orgStorageUsage: defineTable(zodToConvex(orgStorageUsageSchema)).index('by_orgSlug', ['orgSlug']),
 	feedback: defineTable(zodToConvex(feedbackSchema))
 		.index('by_slug', ['slug'])
 		.index('by_projectId', ['projectId'])
