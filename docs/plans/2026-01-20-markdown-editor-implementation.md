@@ -15,6 +15,7 @@
 **Step 1: Install Tiptap packages**
 
 Run:
+
 ```bash
 pnpm add @tiptap/react @tiptap/starter-kit @tiptap/extension-underline @tiptap/extension-link @tiptap/extension-placeholder @tiptap/extension-code-block-lowlight lowlight shiki
 ```
@@ -22,6 +23,7 @@ pnpm add @tiptap/react @tiptap/starter-kit @tiptap/extension-underline @tiptap/e
 **Step 2: Verify installation**
 
 Run:
+
 ```bash
 pnpm list @tiptap/react
 ```
@@ -40,6 +42,7 @@ git commit -m "chore: add Tiptap and Shiki dependencies for markdown editor"
 ## Task 2: Create Shiki Code Block Extension
 
 **Files:**
+
 - Create: `src/components/editor/extensions/shiki-code-block.ts`
 
 **Step 1: Create the extension file**
@@ -52,8 +55,8 @@ import { common, createLowlight } from 'lowlight';
 const lowlight = createLowlight(common);
 
 export const ShikiCodeBlock = CodeBlockLowlight.configure({
-  lowlight,
-  defaultLanguage: 'plaintext',
+	lowlight,
+	defaultLanguage: 'plaintext',
 });
 ```
 
@@ -69,6 +72,7 @@ git commit -m "feat: add Shiki code block extension for Tiptap"
 ## Task 3: Create Editor Toolbar Component
 
 **Files:**
+
 - Create: `src/components/editor/editor-toolbar.tsx`
 
 **Step 1: Create toolbar component**
@@ -447,6 +451,7 @@ git commit -m "feat: add responsive editor toolbar with overflow menu"
 ## Task 4: Create Main Markdown Editor Component
 
 **Files:**
+
 - Create: `src/components/editor/markdown-editor.tsx`
 
 **Step 1: Create the editor component**
@@ -599,6 +604,7 @@ git commit -m "feat: add main MarkdownEditor component with Tiptap"
 ## Task 5: Create Editor Content Display Component
 
 **Files:**
+
 - Create: `src/components/editor/editor-content-display.tsx`
 
 **Step 1: Create the display component**
@@ -656,6 +662,7 @@ git commit -m "feat: add EditorContentDisplay for rendering markdown content"
 ## Task 6: Create Editor Index Export
 
 **Files:**
+
 - Create: `src/components/editor/index.ts`
 
 **Step 1: Create barrel export**
@@ -677,6 +684,7 @@ git commit -m "feat: add editor component exports"
 ## Task 7: Create Editor Ref Context
 
 **Files:**
+
 - Create: `src/components/editor/editor-context.tsx`
 
 **Step 1: Create the context**
@@ -733,11 +741,13 @@ git commit -m "feat: add EditorRefContext for sharing editor ref"
 ## Task 8: Add Editor Placeholder Styles
 
 **Files:**
+
 - Modify: Find and modify the global CSS file (likely `src/app.css` or similar)
 
 **Step 1: Find the global CSS file**
 
 Run:
+
 ```bash
 find src -name "*.css" -type f | head -5
 ```
@@ -749,44 +759,44 @@ Add to the global CSS:
 ```css
 /* Tiptap editor placeholder */
 .ProseMirror p.is-editor-empty:first-child::before {
-  color: hsl(var(--muted-foreground));
-  content: attr(data-placeholder);
-  float: left;
-  height: 0;
-  pointer-events: none;
+	color: hsl(var(--muted-foreground));
+	content: attr(data-placeholder);
+	float: left;
+	height: 0;
+	pointer-events: none;
 }
 
 /* Code block styling */
 .ProseMirror pre {
-  background: hsl(var(--muted));
-  border-radius: 0.375rem;
-  padding: 0.75rem 1rem;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+	background: hsl(var(--muted));
+	border-radius: 0.375rem;
+	padding: 0.75rem 1rem;
+	font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 .ProseMirror pre code {
-  background: none;
-  padding: 0;
-  font-size: 0.875rem;
+	background: none;
+	padding: 0;
+	font-size: 0.875rem;
 }
 
 /* Syntax highlighting - uses lowlight/highlight.js classes */
 .ProseMirror .hljs-comment,
 .ProseMirror .hljs-quote {
-  color: hsl(var(--muted-foreground));
+	color: hsl(var(--muted-foreground));
 }
 
 .ProseMirror .hljs-keyword,
 .ProseMirror .hljs-selector-tag,
 .ProseMirror .hljs-addition {
-  color: #c678dd;
+	color: #c678dd;
 }
 
 .ProseMirror .hljs-string,
 .ProseMirror .hljs-meta .hljs-string,
 .ProseMirror .hljs-regexp,
 .ProseMirror .hljs-attribute {
-  color: #98c379;
+	color: #98c379;
 }
 
 .ProseMirror .hljs-number,
@@ -795,7 +805,7 @@ Add to the global CSS:
 .ProseMirror .hljs-template-variable,
 .ProseMirror .hljs-type,
 .ProseMirror .hljs-deletion {
-  color: #d19a66;
+	color: #d19a66;
 }
 
 .ProseMirror .hljs-title,
@@ -803,17 +813,17 @@ Add to the global CSS:
 .ProseMirror .hljs-name,
 .ProseMirror .hljs-selector-id,
 .ProseMirror .hljs-selector-class {
-  color: #e06c75;
+	color: #e06c75;
 }
 
 .ProseMirror .hljs-function,
 .ProseMirror .hljs-params {
-  color: #61afef;
+	color: #61afef;
 }
 
 .ProseMirror .hljs-built_in,
 .ProseMirror .hljs-tag {
-  color: #56b6c2;
+	color: #56b6c2;
 }
 ```
 
@@ -829,6 +839,7 @@ git commit -m "feat: add Tiptap editor styles and syntax highlighting"
 ## Task 9: Integrate Editor into Comment Form
 
 **Files:**
+
 - Modify: `src/routes/@{$org}/$project/feedback/-components/comment-form.tsx`
 
 **Step 1: Replace Textarea with MarkdownEditor**
@@ -907,6 +918,7 @@ export function CommentForm({ feedbackId }: CommentFormProps) {
 **Step 2: Verify build**
 
 Run:
+
 ```bash
 pnpm run tsc
 ```
@@ -925,6 +937,7 @@ git commit -m "feat: integrate MarkdownEditor into comment form"
 ## Task 10: Integrate Editor into Feedback Creation Form
 
 **Files:**
+
 - Modify: `src/routes/@{$org}/$project/feedback/new/-components/create-feedback-form.tsx`
 
 **Step 1: Import and use MarkdownEditor**
@@ -967,6 +980,7 @@ Find the `form.AppField` for `firstComment` and replace the Textarea with Markdo
 **Step 3: Verify build**
 
 Run:
+
 ```bash
 pnpm run tsc
 ```
@@ -983,6 +997,7 @@ git commit -m "feat: integrate MarkdownEditor into feedback creation form"
 ## Task 11: Update Comments Display to Render HTML
 
 **Files:**
+
 - Modify: `src/routes/@{$org}/$project/feedback/-components/comments-list.tsx`
 
 **Step 1: Import EditorContentDisplay**
@@ -1019,6 +1034,7 @@ git commit -m "feat: render comment content as HTML with EditorContentDisplay"
 ## Task 12: Update Feedback Detail to Render HTML
 
 **Files:**
+
 - Modify: `src/routes/@{$org}/$project/feedback/$slug/index.tsx`
 
 **Step 1: Import EditorContentDisplay and EditorRefProvider**
@@ -1069,6 +1085,7 @@ git commit -m "feat: use EditorContentDisplay for feedback content and add Edito
 ## Task 13: Add Quote Button to Comment Dropdown
 
 **Files:**
+
 - Modify: `src/routes/@{$org}/$project/feedback/-components/comments-list.tsx`
 
 **Step 1: Import useEditorRef and Quote icon**
@@ -1077,6 +1094,7 @@ Add to imports:
 
 ```typescript
 import { MoreHorizontal, Quote, Trash2 } from 'lucide-react';
+
 import { useEditorRef } from '@/components/editor';
 ```
 
@@ -1088,17 +1106,17 @@ Inside the CommentItem function, add after the isOwner check:
 // Get editor ref for Quote feature
 let editorRef: React.RefObject<any> | null = null;
 try {
-  editorRef = useEditorRef();
+	editorRef = useEditorRef();
 } catch {
-  // Not within EditorRefProvider
+	// Not within EditorRefProvider
 }
 
 const handleQuote = () => {
-  if (!editorRef?.current) return;
-  // Strip HTML tags for plain text quote
-  const plainText = comment.content.replace(/<[^>]*>/g, '');
-  editorRef.current.insertBlockquote(plainText);
-  editorRef.current.focus();
+	if (!editorRef?.current) return;
+	// Strip HTML tags for plain text quote
+	const plainText = comment.content.replace(/<[^>]*>/g, '');
+	editorRef.current.insertBlockquote(plainText);
+	editorRef.current.focus();
 };
 ```
 
@@ -1139,6 +1157,7 @@ Move the dropdown outside the `{isOwner && ...}` block and restructure:
 **Step 4: Verify build**
 
 Run:
+
 ```bash
 pnpm run tsc
 ```
@@ -1157,6 +1176,7 @@ git commit -m "feat: add Quote button to comment dropdown"
 **Step 1: Start dev server**
 
 Run:
+
 ```bash
 pnpm run dev
 ```

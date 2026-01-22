@@ -33,6 +33,7 @@ pnpm run shadcn
 **Full-stack app**: TanStack Start (React meta-framework) + Convex (serverless backend) + Cloudflare Workers (deployment)
 
 ### Frontend (`src/`)
+
 - **Routing**: TanStack Router with file-based routing in `src/routes/`
   - `routeTree.gen.ts` is auto-generated - do not edit
   - Route params use `$` prefix (e.g., `@$org` for `/@{org}`)
@@ -41,12 +42,14 @@ pnpm run shadcn
 - **Config**: `src/config/` for plans, limits, defaults
 
 ### Backend (`src/convex/`)
+
 - **Schema**: Defined with Zod in separate `.schema.ts` files, converted to Convex validators via `zodToConvex`
 - **Auth**: Better Auth with Convex adapter (`src/convex/betterAuth/`)
 - **File Storage**: Cloudflare R2 integration via `@convex-dev/r2`
 - **Utilities**: `src/convex/utils/` for helpers, triggers, context
 
 ### Path Aliases
+
 - `@/*` → `src/*`
 - `@convex/*` → `src/convex/*`
 - `~api` → `src/lib/api.ts`
@@ -56,15 +59,18 @@ pnpm run shadcn
 Always use the new function syntax with argument and return validators:
 
 ```typescript
-import { query } from "./_generated/server";
-import { v } from "convex/values";
+import { v } from 'convex/values';
+
+import { query } from './_generated/server';
 
 export const myQuery = query({
-  args: { id: v.id("tableName") },
-  returns: v.object({ /* ... */ }),
-  handler: async (ctx, args) => {
-    // ...
-  },
+	args: { id: v.id('tableName') },
+	returns: v.object({
+		/* ... */
+	}),
+	handler: async (ctx, args) => {
+		// ...
+	},
 });
 ```
 
