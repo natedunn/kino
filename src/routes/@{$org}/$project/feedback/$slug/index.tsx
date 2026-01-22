@@ -362,6 +362,13 @@ function RouteComponent() {
 		})
 	);
 
+	// Get events for the timeline
+	const { data: events } = useSuspenseQuery(
+		convexQuery(api.feedbackEvent.listByFeedback, {
+			feedbackId: feedbackData?.feedback._id!,
+		})
+	);
+
 	const data = feedbackData ?? loaderData;
 
 	if (!data) {
@@ -481,13 +488,14 @@ function RouteComponent() {
 							)}
 
 							<EditorRefProvider>
-								{/* Additional comments */}
+								{/* Additional comments and events timeline */}
 								<CommentsList
 									feedbackId={feedback._id}
 									feedbackAuthorProfileId={feedback.authorProfileId}
 									currentProfileId={currentProfile?._id}
 									answerCommentId={feedback.answerCommentId}
 									canMarkAnswer={canEditStatus}
+									events={events ?? []}
 								/>
 
 								{/* Comment form */}

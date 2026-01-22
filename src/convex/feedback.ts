@@ -8,6 +8,7 @@ import { generateRandomSlug } from '@/lib/random';
 
 import { DataModel } from './_generated/dataModel';
 import { query } from './_generated/server';
+import { createEvent } from './feedbackEvent';
 import { getMyProfile } from './profile.lib';
 import { verifyProjectAccess } from './project.lib';
 import { feedbackCreateSchema, feedbackSchema } from './schema/feedback.schema';
@@ -101,7 +102,22 @@ export const updateStatus = mutation({
 			});
 		}
 
+		const oldStatus = feedback.status;
+
 		await patch(ctx, 'feedback', args._id, { status: args.status });
+
+		// Log the status change event
+		if (oldStatus !== args.status) {
+			await createEvent(ctx, {
+				feedbackId: args._id,
+				actorProfileId: profile._id,
+				eventType: 'status_changed',
+				metadata: {
+					oldValue: oldStatus,
+					newValue: args.status,
+				},
+			});
+		}
 
 		return { success: true };
 	},
@@ -151,16 +167,31 @@ export const updateBoard = mutation({
 		}
 
 		// Verify the board exists and belongs to the same project
-		const board = await ctx.db.get(args.boardId);
+		const newBoard = await ctx.db.get(args.boardId);
 
-		if (!board || board.projectId !== feedback.projectId) {
+		if (!newBoard || newBoard.projectId !== feedback.projectId) {
 			throw new ConvexError({
 				message: 'Invalid board',
 				code: '400',
 			});
 		}
 
+		const oldBoard = await ctx.db.get(feedback.boardId);
+
 		await patch(ctx, 'feedback', args._id, { boardId: args.boardId });
+
+		// Log the board change event
+		if (feedback.boardId !== args.boardId) {
+			await createEvent(ctx, {
+				feedbackId: args._id,
+				actorProfileId: profile._id,
+				eventType: 'board_changed',
+				metadata: {
+					oldValue: oldBoard?.name ?? 'Unknown',
+					newValue: newBoard.name,
+				},
+			});
+		}
 
 		return { success: true };
 	},
@@ -224,6 +255,16 @@ export const setAnswerComment = mutation({
 		// If commentId is null, we're unmarking the answer
 		if (args.commentId === null) {
 			await patch(ctx, 'feedback', args.feedbackId, { answerCommentId: undefined });
+
+			// Log the answer unmarked event
+			if (feedback.answerCommentId) {
+				await createEvent(ctx, {
+					feedbackId: args.feedbackId,
+					actorProfileId: profile._id,
+					eventType: 'answer_unmarked',
+				});
+			}
+
 			return { success: true };
 		}
 
@@ -246,6 +287,13 @@ export const setAnswerComment = mutation({
 		}
 
 		await patch(ctx, 'feedback', args.feedbackId, { answerCommentId: args.commentId });
+
+		// Log the answer marked event
+		await createEvent(ctx, {
+			feedbackId: args.feedbackId,
+			actorProfileId: profile._id,
+			eventType: 'answer_marked',
+		});
 
 		return { success: true };
 	},
@@ -315,9 +363,34 @@ export const updateAssigned = mutation({
 			}
 		}
 
+		const oldAssignedProfileId = feedback.assignedProfileId;
+
 		await patch(ctx, 'feedback', args.feedbackId, {
 			assignedProfileId: args.assignedProfileId ?? undefined,
 		});
+
+		// Log the assignment event
+		if (args.assignedProfileId === null && oldAssignedProfileId) {
+			// Unassigning
+			await createEvent(ctx, {
+				feedbackId: args.feedbackId,
+				actorProfileId: profile._id,
+				eventType: 'unassigned',
+				metadata: {
+					targetProfileId: oldAssignedProfileId,
+				},
+			});
+		} else if (args.assignedProfileId && args.assignedProfileId !== oldAssignedProfileId) {
+			// Assigning (new or changed)
+			await createEvent(ctx, {
+				feedbackId: args.feedbackId,
+				actorProfileId: profile._id,
+				eventType: 'assigned',
+				metadata: {
+					targetProfileId: args.assignedProfileId,
+				},
+			});
+		}
 
 		return { success: true };
 	},

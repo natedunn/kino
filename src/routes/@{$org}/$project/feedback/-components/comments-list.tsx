@@ -34,6 +34,7 @@ import { cn } from '@/lib/utils';
 import { formatFullDate, formatRelativeDay } from '@/lib/utils/format-timestamp';
 
 import { EmoteButton, EmoteContent, EmotePicker } from './emote-picker';
+import { EventsTimeline } from './events-timeline';
 
 const COLLAPSED_MAX_HEIGHT = 600; // pixels
 
@@ -73,6 +74,11 @@ function CollapsibleContent({ children }: { children: React.ReactNode }) {
 }
 
 type Comment = NonNullable<API['feedbackComment']['listByFeedback']>[number];
+type FeedbackEvent = NonNullable<API['feedbackEvent']['listByFeedback']>[number];
+
+type TimelineItem =
+	| { type: 'comment'; data: Comment }
+	| { type: 'event'; data: FeedbackEvent };
 
 type CommentItemProps = {
 	comment: Comment;
@@ -433,6 +439,7 @@ type CommentsListProps = {
 	currentProfileId?: Id<'profile'>;
 	answerCommentId?: Id<'feedbackComment'>;
 	canMarkAnswer?: boolean;
+	events?: FeedbackEvent[];
 };
 
 export function CommentsList({
@@ -441,6 +448,7 @@ export function CommentsList({
 	currentProfileId,
 	answerCommentId,
 	canMarkAnswer,
+	events = [],
 }: CommentsListProps) {
 	const { data: comments } = useSuspenseQuery(
 		convexQuery(api.feedbackComment.listByFeedback, { feedbackId })
@@ -449,23 +457,35 @@ export function CommentsList({
 	// Filter out the initial comment (shown separately)
 	const additionalComments = comments?.filter((c) => !c.initial) ?? [];
 
-	if (additionalComments.length === 0) {
+	// Create unified timeline of comments and events
+	const timelineItems: TimelineItem[] = [
+		...additionalComments.map((comment) => ({ type: 'comment' as const, data: comment })),
+		...events.map((event) => ({ type: 'event' as const, data: event })),
+	].sort((a, b) => a.data._creationTime - b.data._creationTime);
+
+	if (timelineItems.length === 0) {
 		return null;
 	}
 
 	return (
 		<ul className='mt-6 flex flex-col gap-6'>
-			{additionalComments.map((comment) => (
-				<CommentItem
-					key={comment._id}
-					comment={comment}
-					feedbackId={feedbackId}
-					feedbackAuthorProfileId={feedbackAuthorProfileId}
-					currentProfileId={currentProfileId}
-					isAnswer={answerCommentId === comment._id}
-					canMarkAnswer={canMarkAnswer}
-				/>
-			))}
+			{timelineItems.map((item) =>
+				item.type === 'comment' ? (
+					<CommentItem
+						key={item.data._id}
+						comment={item.data}
+						feedbackId={feedbackId}
+						feedbackAuthorProfileId={feedbackAuthorProfileId}
+						currentProfileId={currentProfileId}
+						isAnswer={answerCommentId === item.data._id}
+						canMarkAnswer={canMarkAnswer}
+					/>
+				) : (
+					<li key={item.data._id} className='relative'>
+						<EventsTimeline events={[item.data]} />
+					</li>
+				)
+			)}
 		</ul>
 	);
 }
