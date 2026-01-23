@@ -1,44 +1,16 @@
 import { convexQuery, useConvexMutation } from '@convex-dev/react-query';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { SmilePlus } from 'lucide-react';
 
 import { api, API } from '~api';
-import { Button } from '@/components/ui/button';
 import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+	EmoteButton as SharedEmoteButton,
+	EmotePicker as SharedEmotePicker,
+	type EmoteContent,
+} from '@/components/emote';
 import { Id } from '@/convex/_generated/dataModel';
-import { cn } from '@/lib/utils';
 
-// Emote types matching the schema
-export type EmoteContent =
-	| 'thumbsUp'
-	| 'thumbsDown'
-	| 'laugh'
-	| 'questionMark'
-	| 'sad'
-	| 'tada'
-	| 'eyes'
-	| 'heart'
-	| 'skull'
-	| 'explodingHead';
-
-// Map emote types to emoji characters
-export const EMOTE_EMOJI: Record<EmoteContent, string> = {
-	thumbsUp: '👍',
-	thumbsDown: '👎',
-	laugh: '😄',
-	questionMark: '❓',
-	sad: '🙁',
-	tada: '🎉',
-	eyes: '👀',
-	heart: '❤️',
-	skull: '💀',
-	explodingHead: '🤯',
-};
+// Re-export shared types for backwards compatibility
+export { EMOTE_EMOJI, type EmoteContent } from '@/components/emote';
 
 type Comment = NonNullable<API['feedbackComment']['listByFeedback']>[number];
 
@@ -129,27 +101,7 @@ export function EmotePicker({ feedbackId, commentId, currentProfileId }: EmotePi
 		});
 	};
 
-	return (
-		<DropdownMenu>
-			<DropdownMenuTrigger asChild>
-				<Button className='gap-2 rounded-full' variant='outline' size='sm'>
-					<SmilePlus size={16} />
-					<span className='sr-only'>Add reaction</span>
-				</Button>
-			</DropdownMenuTrigger>
-			<DropdownMenuContent align='start' className='grid grid-cols-5 gap-1 p-2'>
-				{(Object.keys(EMOTE_EMOJI) as EmoteContent[]).map((emoteType) => (
-					<DropdownMenuItem
-						key={emoteType}
-						onClick={() => handleSelect(emoteType)}
-						className='flex cursor-pointer items-center justify-center p-2 text-lg hover:bg-accent'
-					>
-						{EMOTE_EMOJI[emoteType]}
-					</DropdownMenuItem>
-				))}
-			</DropdownMenuContent>
-		</DropdownMenu>
-	);
+	return <SharedEmotePicker onSelect={handleSelect} />;
 }
 
 type EmoteButtonProps = {
@@ -180,16 +132,11 @@ export function EmoteButton({
 	};
 
 	return (
-		<Button
-			variant='outline'
-			size='sm'
+		<SharedEmoteButton
+			emoteType={emoteType}
+			count={count}
+			isActive={isActive}
 			onClick={handleClick}
-			className={cn('gap-2 rounded-full', {
-				'border-primary/50 bg-primary/10': isActive,
-			})}
-		>
-			<span>{EMOTE_EMOJI[emoteType]}</span>
-			<span>{count}</span>
-		</Button>
+		/>
 	);
 }

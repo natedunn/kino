@@ -9,11 +9,11 @@ import {
 	Calendar,
 	ChevronDown,
 	ChevronRight,
+	Info,
 	Link as LinkIcon,
 	MoreHorizontal,
 	Pencil,
 	Plus,
-	Settings2,
 	Tag,
 	Users,
 } from 'lucide-react';
@@ -25,9 +25,10 @@ import {
 	MarkdownEditor,
 	sanitizeEditorContent,
 } from '@/components/editor';
-import { Button } from '@/components/ui/button';
+import { ProfileLinkOrUnknown } from '@/components/profile-link';
+import { SidebarSection } from '@/components/sidebar-section';
 import { Badge } from '@/components/ui/badge';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Button } from '@/components/ui/button';
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -37,6 +38,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Id } from '@/convex/_generated/dataModel';
 import { StatusIcon } from '@/icons';
+import { useSidebarState } from '@/lib/hooks/use-sidebar-state';
 import { cn } from '@/lib/utils';
 import { formatFullDate, formatRelativeDay, formatTimestamp } from '@/lib/utils/format-timestamp';
 
@@ -48,8 +50,7 @@ import { EmoteButton, EmoteContent, EmotePicker } from '../-components/emote-pic
 import { StatusSwitcher } from '../-components/status-switcher';
 import { UpvoteButton } from '../-components/upvote-button';
 
-// Sidebar collapse state management with localStorage persistence
-const SIDEBAR_STORAGE_KEY = 'feedback-sidebar-state';
+const SIDEBAR_STORAGE_KEY = 'feedback-detail-sidebar-state';
 
 type SidebarSections = {
 	details: boolean;
@@ -64,35 +65,6 @@ const DEFAULT_SIDEBAR_STATE: SidebarSections = {
 	labels: true,
 	related: true,
 };
-
-function useSidebarState() {
-	const [state, setState] = useState<SidebarSections>(() => {
-		if (typeof window === 'undefined') return DEFAULT_SIDEBAR_STATE;
-		try {
-			const stored = localStorage.getItem(SIDEBAR_STORAGE_KEY);
-			if (stored) {
-				return { ...DEFAULT_SIDEBAR_STATE, ...JSON.parse(stored) };
-			}
-		} catch {
-			// Ignore parse errors
-		}
-		return DEFAULT_SIDEBAR_STATE;
-	});
-
-	const setSection = (section: keyof SidebarSections, open: boolean) => {
-		setState((prev) => {
-			const next = { ...prev, [section]: open };
-			try {
-				localStorage.setItem(SIDEBAR_STORAGE_KEY, JSON.stringify(next));
-			} catch {
-				// Ignore storage errors
-			}
-			return next;
-		});
-	};
-
-	return { state, setSection };
-}
 
 type FirstCommentItemProps = {
 	comment: NonNullable<API['feedback']['getBySlug']>['firstComment'];
@@ -416,7 +388,10 @@ function RouteComponent() {
 	const { data: currentProfile } = useQuery(convexQuery(api.profile.findMyProfile, {}));
 
 	// Sidebar collapse state with localStorage persistence
-	const { state: sidebarState, setSection: setSidebarSection } = useSidebarState();
+	const { state: sidebarState, setSection: setSidebarSection } = useSidebarState(
+		SIDEBAR_STORAGE_KEY,
+		DEFAULT_SIDEBAR_STATE
+	);
 
 	// Get comments with emotes for the first comment
 	const { data: comments } = useSuspenseQuery(
@@ -512,183 +487,160 @@ function RouteComponent() {
 								</div>
 
 								{/* Details Section */}
-								<Collapsible open={sidebarState.details} onOpenChange={(open) => setSidebarSection('details', open)}>
-									<CollapsibleTrigger className='group flex w-full cursor-pointer items-center justify-between border-b pb-2'>
-										<h3 className='flex items-center gap-1.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase transition-colors group-hover:text-foreground'>
-											<Settings2 className='size-3.5' />
-											Details
-										</h3>
-										<ChevronDown className='size-4 text-muted-foreground transition-all group-hover:text-foreground group-data-[state=open]:rotate-180' />
-									</CollapsibleTrigger>
-									<CollapsibleContent>
-										<div className='flex flex-col pt-1'>
-											{/* Status */}
-											<div className='flex items-center justify-between py-2.5'>
-												<span className='text-sm text-muted-foreground'>Status</span>
-												<StatusSwitcher
-													feedbackId={feedback._id}
-													currentStatus={feedback.status}
-													canEdit={canEditStatus}
-												/>
-											</div>
-
-											{/* Board */}
-											<div className='flex items-center justify-between py-2.5'>
-												<span className='text-sm text-muted-foreground'>Board</span>
-												<BoardSwitcher
-													feedbackId={feedback._id}
-													currentBoard={board}
-													projectSlug={params.project}
-													canEdit={canEditStatus}
-												/>
-											</div>
-
-											{/* Priority - Placeholder */}
-											<div className='flex items-center justify-between py-2.5'>
-												<span className='text-sm text-muted-foreground'>Priority</span>
-												<Button variant='outline' size='sm' className='h-auto gap-1.5 px-2 py-1 text-xs'>
-													<span className='size-2 rounded-full bg-amber-500' />
-													Medium
-													<ChevronDown size={12} />
-												</Button>
-											</div>
-
-											{/* Due Date - Placeholder */}
-											<div className='flex items-center justify-between py-2.5'>
-												<span className='text-sm text-muted-foreground'>Due date</span>
-												<Button variant='ghost' size='sm' className='h-auto px-2 py-1 text-xs text-muted-foreground'>
-													<Calendar className='mr-1.5 size-3' />
-													Set date
-												</Button>
-											</div>
+								<SidebarSection
+									title='Details'
+									icon={<Info className='size-3.5' />}
+									open={sidebarState.details}
+									onOpenChange={(open) => setSidebarSection('details', open)}
+								>
+									<div className='flex flex-col'>
+										{/* Status */}
+										<div className='flex items-center justify-between py-1.5'>
+											<span className='text-sm text-muted-foreground'>Status</span>
+											<StatusSwitcher
+												feedbackId={feedback._id}
+												currentStatus={feedback.status}
+												canEdit={canEditStatus}
+											/>
 										</div>
-									</CollapsibleContent>
-								</Collapsible>
+
+										{/* Board */}
+										<div className='flex items-center justify-between py-1.5'>
+											<span className='text-sm text-muted-foreground'>Board</span>
+											<BoardSwitcher
+												feedbackId={feedback._id}
+												currentBoard={board}
+												projectSlug={params.project}
+												canEdit={canEditStatus}
+											/>
+										</div>
+
+										{/* Priority - Placeholder */}
+										<div className='flex items-center justify-between py-1.5'>
+											<span className='text-sm text-muted-foreground'>Priority</span>
+											<Button
+												variant='outline'
+												size='sm'
+												className='h-auto gap-1.5 px-2 py-1 text-xs'
+											>
+												<span className='size-2 rounded-full bg-amber-500' />
+												Medium
+												<ChevronDown size={12} />
+											</Button>
+										</div>
+
+										{/* Due Date - Placeholder */}
+										<div className='flex items-center justify-between py-1.5'>
+											<span className='text-sm text-muted-foreground'>Due date</span>
+											<Button
+												variant='ghost'
+												size='sm'
+												className='h-auto px-2 py-1 text-xs text-muted-foreground'
+											>
+												<Calendar className='mr-1.5 size-3' />
+												Set date
+											</Button>
+										</div>
+									</div>
+								</SidebarSection>
 
 								{/* People Section */}
-								<Collapsible open={sidebarState.people} onOpenChange={(open) => setSidebarSection('people', open)}>
-									<CollapsibleTrigger className='group flex w-full cursor-pointer items-center justify-between border-b pb-2'>
-										<h3 className='flex items-center gap-1.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase transition-colors group-hover:text-foreground'>
-											<Users className='size-3.5' />
-											People
-										</h3>
-										<ChevronDown className='size-4 text-muted-foreground transition-all group-hover:text-foreground group-data-[state=open]:rotate-180' />
-									</CollapsibleTrigger>
-									<CollapsibleContent>
-										<div className='flex flex-col pt-1'>
-											{/* Assignee */}
-											<div className='flex items-center justify-between py-2.5'>
-												<span className='text-sm text-muted-foreground'>Assignee</span>
-												<AssigneeSwitcher
-													feedbackId={feedback._id}
-													assignedProfile={assignedProfile}
-													projectId={projectData?.project?._id!}
-													canEdit={canEditStatus}
-												/>
-											</div>
+								<SidebarSection
+									title='People'
+									icon={<Users className='size-3.5' />}
+									open={sidebarState.people}
+									onOpenChange={(open) => setSidebarSection('people', open)}
+								>
+									<div className='flex flex-col'>
+										{/* Assignee */}
+										<div className='flex items-center justify-between py-1.5'>
+											<span className='text-sm text-muted-foreground'>Assignee</span>
+											<AssigneeSwitcher
+												feedbackId={feedback._id}
+												assignedProfile={assignedProfile}
+												projectId={projectData?.project?._id!}
+												canEdit={canEditStatus}
+											/>
+										</div>
 
-											{/* Author */}
-											<div className='flex items-center justify-between py-2.5'>
-												<span className='text-sm text-muted-foreground'>Author</span>
-												{author ? (
-													<Link
-														className='flex items-center gap-2 text-sm hover:underline'
-														to='/@{$org}'
-														params={{ org: author.username }}
-													>
-														<div className='size-5 overflow-hidden rounded-full'>
-															{author.imageUrl ? (
-																<img src={author.imageUrl} alt={author.username} className='size-5' />
-															) : (
-																<div className='flex size-5 items-center justify-center bg-primary text-[10px] font-bold text-primary-foreground'>
-																	{author.name?.charAt(0) ?? author.username.charAt(0)}
-																</div>
-															)}
-														</div>
-														<span>{author.name ?? author.username}</span>
-													</Link>
-												) : (
-													<span className='text-sm text-muted-foreground'>Unknown</span>
-												)}
-											</div>
+										{/* Author */}
+										<div className='flex items-center justify-between py-1.5'>
+											<span className='text-sm text-muted-foreground'>Author</span>
+											<ProfileLinkOrUnknown profile={author} display='name' />
+										</div>
 
-											{/* Watchers - Placeholder */}
-											<div className='flex items-center justify-between py-2.5'>
-												<span className='text-sm text-muted-foreground'>Watchers</span>
-												<div className='flex items-center -space-x-1.5'>
-													<div className='size-5 rounded-full border-2 border-background bg-emerald-500' />
-													<div className='size-5 rounded-full border-2 border-background bg-blue-500' />
-													<div className='size-5 rounded-full border-2 border-background bg-purple-500' />
-													<span className='ml-2 text-xs text-muted-foreground'>+12</span>
-												</div>
+										{/* Watchers - Placeholder */}
+										<div className='flex items-center justify-between py-1.5'>
+											<span className='text-sm text-muted-foreground'>Watchers</span>
+											<div className='flex items-center -space-x-1.5'>
+												<div className='size-5 rounded-full border-2 border-background bg-emerald-500' />
+												<div className='size-5 rounded-full border-2 border-background bg-blue-500' />
+												<div className='size-5 rounded-full border-2 border-background bg-purple-500' />
+												<span className='ml-2 text-xs text-muted-foreground'>+12</span>
 											</div>
 										</div>
-									</CollapsibleContent>
-								</Collapsible>
+									</div>
+								</SidebarSection>
 
 								{/* Labels Section - Placeholder */}
-								<Collapsible open={sidebarState.labels} onOpenChange={(open) => setSidebarSection('labels', open)}>
-									<CollapsibleTrigger className='group flex w-full cursor-pointer items-center justify-between border-b pb-2'>
-										<h3 className='flex items-center gap-1.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase transition-colors group-hover:text-foreground'>
-											<Tag className='size-3.5' />
-											Labels
-										</h3>
-										<ChevronDown className='size-4 text-muted-foreground transition-all group-hover:text-foreground group-data-[state=open]:rotate-180' />
-									</CollapsibleTrigger>
-									<CollapsibleContent>
-										<div className='flex flex-wrap items-center gap-1.5 pt-3'>
-											<Badge variant='secondary' className='gap-1 font-normal'>
-												<span className='size-1.5 rounded-full bg-blue-500' />
-												feature-request
-											</Badge>
-											<Badge variant='secondary' className='gap-1 font-normal'>
-												<span className='size-1.5 rounded-full bg-purple-500' />
-												ux
-											</Badge>
-											<Badge variant='secondary' className='gap-1 font-normal'>
-												<span className='size-1.5 rounded-full bg-emerald-500' />
-												enhancement
-											</Badge>
-											<Button variant='ghost' size='sm' className='h-6 gap-1 px-2 text-xs text-muted-foreground'>
-												<Plus className='size-3' />
-												Add
-											</Button>
-										</div>
-									</CollapsibleContent>
-								</Collapsible>
+								<SidebarSection
+									title='Labels'
+									icon={<Tag className='size-3.5' />}
+									open={sidebarState.labels}
+									onOpenChange={(open) => setSidebarSection('labels', open)}
+								>
+									<div className='flex flex-wrap items-center gap-1.5'>
+										<Badge variant='secondary' className='gap-1 font-normal'>
+											<span className='size-1.5 rounded-full bg-blue-500' />
+											feature-request
+										</Badge>
+										<Badge variant='secondary' className='gap-1 font-normal'>
+											<span className='size-1.5 rounded-full bg-purple-500' />
+											ux
+										</Badge>
+										<Badge variant='secondary' className='gap-1 font-normal'>
+											<span className='size-1.5 rounded-full bg-emerald-500' />
+											enhancement
+										</Badge>
+										<Button
+											variant='ghost'
+											size='sm'
+											className='h-6 gap-1 px-2 text-xs text-muted-foreground'
+										>
+											<Plus className='size-3' />
+											Add
+										</Button>
+									</div>
+								</SidebarSection>
 
 								{/* Related Section - Placeholder */}
-								<Collapsible open={sidebarState.related} onOpenChange={(open) => setSidebarSection('related', open)}>
-									<CollapsibleTrigger className='group flex w-full cursor-pointer items-center justify-between border-b pb-2'>
-										<h3 className='flex items-center gap-1.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase transition-colors group-hover:text-foreground'>
-											<LinkIcon className='size-3.5' />
-											Related
-										</h3>
-										<ChevronDown className='size-4 text-muted-foreground transition-all group-hover:text-foreground group-data-[state=open]:rotate-180' />
-									</CollapsibleTrigger>
-									<CollapsibleContent>
-										<div className='flex flex-col pt-1'>
-											<div className='flex cursor-pointer items-center gap-2.5 rounded-md py-2 transition-colors hover:bg-muted/50'>
-												<StatusIcon status='completed' size='14' colored />
-												<span className='flex-1 truncate text-sm'>
-													Add dark mode support
-												</span>
-												<ChevronRight className='size-4 text-muted-foreground' />
-											</div>
-											<div className='flex cursor-pointer items-center gap-2.5 rounded-md py-2 transition-colors hover:bg-muted/50'>
-												<StatusIcon status='in-progress' size='14' colored />
-												<span className='flex-1 truncate text-sm'>
-													Improve mobile responsiveness
-												</span>
-												<ChevronRight className='size-4 text-muted-foreground' />
-											</div>
-											<Button variant='ghost' size='sm' className='mt-1 h-8 w-full justify-start gap-1.5 px-0 text-xs text-muted-foreground'>
-												<Plus className='size-3' />
-												Link related feedback
-											</Button>
+								<SidebarSection
+									title='Related'
+									icon={<LinkIcon className='size-3.5' />}
+									open={sidebarState.related}
+									onOpenChange={(open) => setSidebarSection('related', open)}
+								>
+									<div className='flex flex-col'>
+										<div className='flex cursor-pointer items-center gap-2.5 rounded-md py-2 transition-colors hover:bg-muted/50'>
+											<StatusIcon status='completed' size='14' colored />
+											<span className='flex-1 truncate text-sm'>Add dark mode support</span>
+											<ChevronRight className='size-4 text-muted-foreground' />
 										</div>
-									</CollapsibleContent>
-								</Collapsible>
+										<div className='flex cursor-pointer items-center gap-2.5 rounded-md py-2 transition-colors hover:bg-muted/50'>
+											<StatusIcon status='in-progress' size='14' colored />
+											<span className='flex-1 truncate text-sm'>Improve mobile responsiveness</span>
+											<ChevronRight className='size-4 text-muted-foreground' />
+										</div>
+										<Button
+											variant='ghost'
+											size='sm'
+											className='mt-1 h-8 w-full justify-start gap-1.5 px-0 text-xs text-muted-foreground'
+										>
+											<Plus className='size-3' />
+											Link related feedback
+										</Button>
+									</div>
+								</SidebarSection>
 							</div>
 						</div>
 						<div className='md:col-span-8'>

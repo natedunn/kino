@@ -8,9 +8,14 @@ import { feedbackCommentEmoteSchema } from './schema/feedbackCommentEmote.schema
 import { feedbackEventSchema } from './schema/feedbackEvent.schema';
 import { feedbackUpvoteSchema } from './schema/feedbackUpvote.schema';
 import { orgMemberSchema } from './schema/orgMember.schema';
+import { orgStorageUsageSchema } from './schema/orgStorageUsage.schema';
 import { profileSchema } from './schema/profile.schema';
 import { projectSchema } from './schema/project.schema';
 import { projectMemberSchema } from './schema/projectMember.schema';
+import { updateSchema } from './schema/update.schema';
+import { updateCommentSchema } from './schema/updateComment.schema';
+import { updateCommentEmoteSchema } from './schema/updateCommentEmote.schema';
+import { updateEmoteSchema } from './schema/updateEmote.schema';
 
 const schema = defineSchema({
 	profile: defineTable(zodToConvex(profileSchema))
@@ -31,6 +36,7 @@ const schema = defineSchema({
 	orgMember: defineTable(zodToConvex(orgMemberSchema))
 		.index('by_profileId_organizationId', ['profileId', 'organizationId'])
 		.index('by_profileId_orgSlug', ['profileId', 'orgSlug']),
+	orgStorageUsage: defineTable(zodToConvex(orgStorageUsageSchema)).index('by_orgSlug', ['orgSlug']),
 	feedback: defineTable(zodToConvex(feedbackSchema))
 		.index('by_slug', ['slug'])
 		.index('by_projectId', ['projectId'])
@@ -57,6 +63,18 @@ const schema = defineSchema({
 	feedbackUpvote: defineTable(zodToConvex(feedbackUpvoteSchema))
 		.index('by_feedbackId', ['feedbackId'])
 		.index('by_feedbackId_authorProfileId', ['feedbackId', 'authorProfileId']),
+	update: defineTable(zodToConvex(updateSchema))
+		.index('by_projectId_slug', ['projectId', 'slug'])
+		.index('by_projectId_status_publishedAt', ['projectId', 'status', 'publishedAt']),
+	updateComment: defineTable(zodToConvex(updateCommentSchema))
+		.index('by_updateId', ['updateId'])
+		.index('by_authorProfileId', ['authorProfileId']),
+	updateEmote: defineTable(zodToConvex(updateEmoteSchema))
+		.index('by_updateId', ['updateId'])
+		.index('by_updateId_authorProfileId', ['updateId', 'authorProfileId']),
+	updateCommentEmote: defineTable(zodToConvex(updateCommentEmoteSchema))
+		.index('by_updateCommentId', ['updateCommentId'])
+		.index('by_updateId', ['updateId']),
 });
 
 export default schema;

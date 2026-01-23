@@ -40,10 +40,13 @@ import { Route as AtChar123orgChar125ProjectFeedbackIndexRouteImport } from './r
 import { Route as AtChar123orgChar125ProjectDiscussionsIndexRouteImport } from './routes/@{$org}/$project/discussions/index'
 import { Route as AtChar123orgChar125ProjectChatIndexRouteImport } from './routes/@{$org}/$project/chat/index'
 import { Route as AtChar123orgChar125ProjectFeedbackBoardsRouteRouteImport } from './routes/@{$org}/$project/feedback/boards/route'
+import { Route as AtChar123orgChar125ProjectUpdatesNewIndexRouteImport } from './routes/@{$org}/$project/updates/new/index'
+import { Route as AtChar123orgChar125ProjectUpdatesSlugIndexRouteImport } from './routes/@{$org}/$project/updates/$slug/index'
 import { Route as AtChar123orgChar125ProjectFeedbackNewIndexRouteImport } from './routes/@{$org}/$project/feedback/new/index'
 import { Route as AtChar123orgChar125ProjectFeedbackBoardsIndexRouteImport } from './routes/@{$org}/$project/feedback/boards/index'
 import { Route as AtChar123orgChar125ProjectFeedbackSlugIndexRouteImport } from './routes/@{$org}/$project/feedback/$slug/index'
 import { Route as AtChar123orgChar125ProjectChatChatIdIndexRouteImport } from './routes/@{$org}/$project/chat/$chatId/index'
+import { Route as AtChar123orgChar125ProjectUpdatesSlugEditRouteImport } from './routes/@{$org}/$project/updates/$slug/edit'
 import { Route as AtChar123orgChar125ProjectFeedbackBoardsNewRouteImport } from './routes/@{$org}/$project/feedback/boards/new'
 import { Route as AtChar123orgChar125ProjectFeedbackBoardsBoardRouteRouteImport } from './routes/@{$org}/$project/feedback/boards/$board/route'
 import { Route as AtChar123orgChar125ProjectFeedbackBoardsBoardIndexRouteImport } from './routes/@{$org}/$project/feedback/boards/$board/index'
@@ -219,6 +222,18 @@ const AtChar123orgChar125ProjectFeedbackBoardsRouteRoute =
     path: '/feedback/boards',
     getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
   } as any)
+const AtChar123orgChar125ProjectUpdatesNewIndexRoute =
+  AtChar123orgChar125ProjectUpdatesNewIndexRouteImport.update({
+    id: '/updates/new/',
+    path: '/updates/new/',
+    getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
+  } as any)
+const AtChar123orgChar125ProjectUpdatesSlugIndexRoute =
+  AtChar123orgChar125ProjectUpdatesSlugIndexRouteImport.update({
+    id: '/updates/$slug/',
+    path: '/updates/$slug/',
+    getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
+  } as any)
 const AtChar123orgChar125ProjectFeedbackNewIndexRoute =
   AtChar123orgChar125ProjectFeedbackNewIndexRouteImport.update({
     id: '/feedback/new/',
@@ -242,6 +257,12 @@ const AtChar123orgChar125ProjectChatChatIdIndexRoute =
     id: '/$chatId/',
     path: '/$chatId/',
     getParentRoute: () => AtChar123orgChar125ProjectChatRouteRoute,
+  } as any)
+const AtChar123orgChar125ProjectUpdatesSlugEditRoute =
+  AtChar123orgChar125ProjectUpdatesSlugEditRouteImport.update({
+    id: '/updates/$slug/edit',
+    path: '/updates/$slug/edit',
+    getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
   } as any)
 const AtChar123orgChar125ProjectFeedbackBoardsNewRoute =
   AtChar123orgChar125ProjectFeedbackBoardsNewRouteImport.update({
@@ -304,10 +325,13 @@ export interface FileRoutesByFullPath {
   '/@{$org}/$project/updates/': typeof AtChar123orgChar125ProjectUpdatesIndexRoute
   '/@{$org}/$project/feedback/boards/$board': typeof AtChar123orgChar125ProjectFeedbackBoardsBoardRouteRouteWithChildren
   '/@{$org}/$project/feedback/boards/new': typeof AtChar123orgChar125ProjectFeedbackBoardsNewRoute
+  '/@{$org}/$project/updates/$slug/edit': typeof AtChar123orgChar125ProjectUpdatesSlugEditRoute
   '/@{$org}/$project/chat/$chatId/': typeof AtChar123orgChar125ProjectChatChatIdIndexRoute
   '/@{$org}/$project/feedback/$slug/': typeof AtChar123orgChar125ProjectFeedbackSlugIndexRoute
   '/@{$org}/$project/feedback/boards/': typeof AtChar123orgChar125ProjectFeedbackBoardsIndexRoute
   '/@{$org}/$project/feedback/new/': typeof AtChar123orgChar125ProjectFeedbackNewIndexRoute
+  '/@{$org}/$project/updates/$slug/': typeof AtChar123orgChar125ProjectUpdatesSlugIndexRoute
+  '/@{$org}/$project/updates/new/': typeof AtChar123orgChar125ProjectUpdatesNewIndexRoute
   '/@{$org}/$project/feedback/boards/$board/edit': typeof AtChar123orgChar125ProjectFeedbackBoardsBoardEditRoute
   '/@{$org}/$project/feedback/boards/$board/': typeof AtChar123orgChar125ProjectFeedbackBoardsBoardIndexRoute
 }
@@ -339,10 +363,13 @@ export interface FileRoutesByTo {
   '/@{$org}/$project/roadmap': typeof AtChar123orgChar125ProjectRoadmapIndexRoute
   '/@{$org}/$project/updates': typeof AtChar123orgChar125ProjectUpdatesIndexRoute
   '/@{$org}/$project/feedback/boards/new': typeof AtChar123orgChar125ProjectFeedbackBoardsNewRoute
+  '/@{$org}/$project/updates/$slug/edit': typeof AtChar123orgChar125ProjectUpdatesSlugEditRoute
   '/@{$org}/$project/chat/$chatId': typeof AtChar123orgChar125ProjectChatChatIdIndexRoute
   '/@{$org}/$project/feedback/$slug': typeof AtChar123orgChar125ProjectFeedbackSlugIndexRoute
   '/@{$org}/$project/feedback/boards': typeof AtChar123orgChar125ProjectFeedbackBoardsIndexRoute
   '/@{$org}/$project/feedback/new': typeof AtChar123orgChar125ProjectFeedbackNewIndexRoute
+  '/@{$org}/$project/updates/$slug': typeof AtChar123orgChar125ProjectUpdatesSlugIndexRoute
+  '/@{$org}/$project/updates/new': typeof AtChar123orgChar125ProjectUpdatesNewIndexRoute
   '/@{$org}/$project/feedback/boards/$board/edit': typeof AtChar123orgChar125ProjectFeedbackBoardsBoardEditRoute
   '/@{$org}/$project/feedback/boards/$board': typeof AtChar123orgChar125ProjectFeedbackBoardsBoardIndexRoute
 }
@@ -381,10 +408,13 @@ export interface FileRoutesById {
   '/@{$org}/$project/updates/': typeof AtChar123orgChar125ProjectUpdatesIndexRoute
   '/@{$org}/$project/feedback/boards/$board': typeof AtChar123orgChar125ProjectFeedbackBoardsBoardRouteRouteWithChildren
   '/@{$org}/$project/feedback/boards/new': typeof AtChar123orgChar125ProjectFeedbackBoardsNewRoute
+  '/@{$org}/$project/updates/$slug/edit': typeof AtChar123orgChar125ProjectUpdatesSlugEditRoute
   '/@{$org}/$project/chat/$chatId/': typeof AtChar123orgChar125ProjectChatChatIdIndexRoute
   '/@{$org}/$project/feedback/$slug/': typeof AtChar123orgChar125ProjectFeedbackSlugIndexRoute
   '/@{$org}/$project/feedback/boards/': typeof AtChar123orgChar125ProjectFeedbackBoardsIndexRoute
   '/@{$org}/$project/feedback/new/': typeof AtChar123orgChar125ProjectFeedbackNewIndexRoute
+  '/@{$org}/$project/updates/$slug/': typeof AtChar123orgChar125ProjectUpdatesSlugIndexRoute
+  '/@{$org}/$project/updates/new/': typeof AtChar123orgChar125ProjectUpdatesNewIndexRoute
   '/@{$org}/$project/feedback/boards/$board/edit': typeof AtChar123orgChar125ProjectFeedbackBoardsBoardEditRoute
   '/@{$org}/$project/feedback/boards/$board/': typeof AtChar123orgChar125ProjectFeedbackBoardsBoardIndexRoute
 }
@@ -424,10 +454,13 @@ export interface FileRouteTypes {
     | '/@{$org}/$project/updates/'
     | '/@{$org}/$project/feedback/boards/$board'
     | '/@{$org}/$project/feedback/boards/new'
+    | '/@{$org}/$project/updates/$slug/edit'
     | '/@{$org}/$project/chat/$chatId/'
     | '/@{$org}/$project/feedback/$slug/'
     | '/@{$org}/$project/feedback/boards/'
     | '/@{$org}/$project/feedback/new/'
+    | '/@{$org}/$project/updates/$slug/'
+    | '/@{$org}/$project/updates/new/'
     | '/@{$org}/$project/feedback/boards/$board/edit'
     | '/@{$org}/$project/feedback/boards/$board/'
   fileRoutesByTo: FileRoutesByTo
@@ -459,10 +492,13 @@ export interface FileRouteTypes {
     | '/@{$org}/$project/roadmap'
     | '/@{$org}/$project/updates'
     | '/@{$org}/$project/feedback/boards/new'
+    | '/@{$org}/$project/updates/$slug/edit'
     | '/@{$org}/$project/chat/$chatId'
     | '/@{$org}/$project/feedback/$slug'
     | '/@{$org}/$project/feedback/boards'
     | '/@{$org}/$project/feedback/new'
+    | '/@{$org}/$project/updates/$slug'
+    | '/@{$org}/$project/updates/new'
     | '/@{$org}/$project/feedback/boards/$board/edit'
     | '/@{$org}/$project/feedback/boards/$board'
   id:
@@ -500,10 +536,13 @@ export interface FileRouteTypes {
     | '/@{$org}/$project/updates/'
     | '/@{$org}/$project/feedback/boards/$board'
     | '/@{$org}/$project/feedback/boards/new'
+    | '/@{$org}/$project/updates/$slug/edit'
     | '/@{$org}/$project/chat/$chatId/'
     | '/@{$org}/$project/feedback/$slug/'
     | '/@{$org}/$project/feedback/boards/'
     | '/@{$org}/$project/feedback/new/'
+    | '/@{$org}/$project/updates/$slug/'
+    | '/@{$org}/$project/updates/new/'
     | '/@{$org}/$project/feedback/boards/$board/edit'
     | '/@{$org}/$project/feedback/boards/$board/'
   fileRoutesById: FileRoutesById
@@ -743,6 +782,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AtChar123orgChar125ProjectFeedbackBoardsRouteRouteImport
       parentRoute: typeof AtChar123orgChar125ProjectRouteRoute
     }
+    '/@{$org}/$project/updates/new/': {
+      id: '/@{$org}/$project/updates/new/'
+      path: '/updates/new'
+      fullPath: '/@{$org}/$project/updates/new/'
+      preLoaderRoute: typeof AtChar123orgChar125ProjectUpdatesNewIndexRouteImport
+      parentRoute: typeof AtChar123orgChar125ProjectRouteRoute
+    }
+    '/@{$org}/$project/updates/$slug/': {
+      id: '/@{$org}/$project/updates/$slug/'
+      path: '/updates/$slug'
+      fullPath: '/@{$org}/$project/updates/$slug/'
+      preLoaderRoute: typeof AtChar123orgChar125ProjectUpdatesSlugIndexRouteImport
+      parentRoute: typeof AtChar123orgChar125ProjectRouteRoute
+    }
     '/@{$org}/$project/feedback/new/': {
       id: '/@{$org}/$project/feedback/new/'
       path: '/feedback/new'
@@ -770,6 +823,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/@{$org}/$project/chat/$chatId/'
       preLoaderRoute: typeof AtChar123orgChar125ProjectChatChatIdIndexRouteImport
       parentRoute: typeof AtChar123orgChar125ProjectChatRouteRoute
+    }
+    '/@{$org}/$project/updates/$slug/edit': {
+      id: '/@{$org}/$project/updates/$slug/edit'
+      path: '/updates/$slug/edit'
+      fullPath: '/@{$org}/$project/updates/$slug/edit'
+      preLoaderRoute: typeof AtChar123orgChar125ProjectUpdatesSlugEditRouteImport
+      parentRoute: typeof AtChar123orgChar125ProjectRouteRoute
     }
     '/@{$org}/$project/feedback/boards/new': {
       id: '/@{$org}/$project/feedback/boards/new'
@@ -868,8 +928,11 @@ interface AtChar123orgChar125ProjectRouteRouteChildren {
   AtChar123orgChar125ProjectFilesIndexRoute: typeof AtChar123orgChar125ProjectFilesIndexRoute
   AtChar123orgChar125ProjectRoadmapIndexRoute: typeof AtChar123orgChar125ProjectRoadmapIndexRoute
   AtChar123orgChar125ProjectUpdatesIndexRoute: typeof AtChar123orgChar125ProjectUpdatesIndexRoute
+  AtChar123orgChar125ProjectUpdatesSlugEditRoute: typeof AtChar123orgChar125ProjectUpdatesSlugEditRoute
   AtChar123orgChar125ProjectFeedbackSlugIndexRoute: typeof AtChar123orgChar125ProjectFeedbackSlugIndexRoute
   AtChar123orgChar125ProjectFeedbackNewIndexRoute: typeof AtChar123orgChar125ProjectFeedbackNewIndexRoute
+  AtChar123orgChar125ProjectUpdatesSlugIndexRoute: typeof AtChar123orgChar125ProjectUpdatesSlugIndexRoute
+  AtChar123orgChar125ProjectUpdatesNewIndexRoute: typeof AtChar123orgChar125ProjectUpdatesNewIndexRoute
 }
 
 const AtChar123orgChar125ProjectRouteRouteChildren: AtChar123orgChar125ProjectRouteRouteChildren =
@@ -889,10 +952,16 @@ const AtChar123orgChar125ProjectRouteRouteChildren: AtChar123orgChar125ProjectRo
       AtChar123orgChar125ProjectRoadmapIndexRoute,
     AtChar123orgChar125ProjectUpdatesIndexRoute:
       AtChar123orgChar125ProjectUpdatesIndexRoute,
+    AtChar123orgChar125ProjectUpdatesSlugEditRoute:
+      AtChar123orgChar125ProjectUpdatesSlugEditRoute,
     AtChar123orgChar125ProjectFeedbackSlugIndexRoute:
       AtChar123orgChar125ProjectFeedbackSlugIndexRoute,
     AtChar123orgChar125ProjectFeedbackNewIndexRoute:
       AtChar123orgChar125ProjectFeedbackNewIndexRoute,
+    AtChar123orgChar125ProjectUpdatesSlugIndexRoute:
+      AtChar123orgChar125ProjectUpdatesSlugIndexRoute,
+    AtChar123orgChar125ProjectUpdatesNewIndexRoute:
+      AtChar123orgChar125ProjectUpdatesNewIndexRoute,
   }
 
 const AtChar123orgChar125ProjectRouteRouteWithChildren =
