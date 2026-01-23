@@ -188,7 +188,7 @@ export const UpdateCard = ({
 				{/* Right Column - Content */}
 				<div className='col-span-12 md:col-span-9'>
 					{/* Category */}
-					{category && <CategoryBadge category={category} className='mb-3' />}
+					<CategoryBadge category={category} className='mb-3' />
 
 					{/* Title */}
 					<h3 className='text-3xl font-semibold'>

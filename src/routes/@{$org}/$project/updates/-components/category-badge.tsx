@@ -10,8 +10,7 @@ const CATEGORY_CONFIG: Record<
 > = {
 	changelog: {
 		label: 'Changelog',
-		className:
-			'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
+		className: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
 	},
 	article: {
 		label: 'Article',
@@ -19,8 +18,7 @@ const CATEGORY_CONFIG: Record<
 	},
 	announcement: {
 		label: 'Announcement',
-		className:
-			'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+		className: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
 	},
 };
 

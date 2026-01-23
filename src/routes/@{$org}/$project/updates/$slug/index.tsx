@@ -279,47 +279,13 @@ function RouteComponent() {
 							{/* Update content */}
 							<EditorContentDisplay content={update.content} className='prose-lg' />
 
-							{/* Like & Comment counts */}
-							<div className='mt-8 flex items-center gap-6'>
-								{/* Inject keyframes */}
-								<style>{heartPopKeyframes}</style>
-
-								{/* Like Button */}
-								<button
-									onClick={handleLike}
-									disabled={!currentProfileId}
-									className={cn(
-										'group flex cursor-pointer items-center gap-2 text-base transition-colors duration-200',
-										isLiked ? 'text-red-500 hover:text-red-600' : 'text-muted-foreground hover:text-red-500',
-										!currentProfileId && 'cursor-not-allowed opacity-50'
-									)}
-								>
-									<Heart
-										className={cn(
-											'size-5 transition-transform duration-200',
-											isLiked && 'fill-current',
-											currentProfileId && 'group-hover:scale-110',
-											isAnimating && 'animate-[heart-pop_0.6s_ease-out]'
-										)}
-									/>
-									<span className='font-medium'>
-										{likeCount} {likeCount === 1 ? 'like' : 'likes'}
-									</span>
-								</button>
-
-								{/* Comment Count */}
-								<div className='flex items-center gap-2 text-base text-muted-foreground'>
-									<MessageSquare className='size-5' />
-									<span className='font-medium'>
-										{commentCount} {commentCount === 1 ? 'comment' : 'comments'}
-									</span>
-								</div>
-							</div>
-
 							{/* Comments section */}
-							<div className='mt-10'>
+							<div className='mt-10 border-t pt-10'>
 								<EditorRefProvider>
-									<h3 className='mb-4 text-lg font-semibold'>Comments</h3>
+									<h3 className='mb-4 flex items-center gap-2 text-lg font-semibold'>
+										<MessageSquare className='size-5' />
+										{commentCount} {commentCount === 1 ? 'Comment' : 'Comments'}
+									</h3>
 									<UpdateCommentsList updateId={update._id} currentProfileId={currentProfile?._id} />
 									<UpdateCommentForm
 										updateId={update._id}
@@ -333,8 +299,35 @@ function RouteComponent() {
 						</div>
 
 						{/* Sidebar column */}
-						{hasRelatedFeedback && (
-							<div className='lg:sticky lg:top-6 lg:self-start'>
+						<div className='flex flex-col gap-6 lg:sticky lg:top-6 lg:self-start'>
+							{/* Inject keyframes */}
+							<style>{heartPopKeyframes}</style>
+
+							{/* Like Button */}
+							<button
+								onClick={handleLike}
+								disabled={!currentProfileId}
+								className={cn(
+									'group flex cursor-pointer items-center gap-2 text-base transition-colors duration-200',
+									isLiked ? 'text-red-500 hover:text-red-600' : 'text-muted-foreground hover:text-red-500',
+									!currentProfileId && 'cursor-not-allowed opacity-50'
+								)}
+							>
+								<Heart
+									className={cn(
+										'size-5 transition-transform duration-200',
+										isLiked && 'fill-current',
+										currentProfileId && 'group-hover:scale-110',
+										isAnimating && 'animate-[heart-pop_0.6s_ease-out]'
+									)}
+								/>
+								<span className='font-medium'>
+									{likeCount} {likeCount === 1 ? 'like' : 'likes'}
+								</span>
+							</button>
+
+							{/* Related Feedback */}
+							{hasRelatedFeedback && (
 								<SidebarSection
 									title='Related Feedback'
 									icon={<LinkIcon className='size-3.5' />}
@@ -361,8 +354,8 @@ function RouteComponent() {
 											))}
 									</div>
 								</SidebarSection>
-							</div>
-						)}
+							)}
+						</div>
 					</div>
 				</div>
 			</div>
