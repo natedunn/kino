@@ -2,7 +2,17 @@ import { useEffect, useRef, useState } from 'react';
 import { convexQuery, useConvexMutation } from '@convex-dev/react-query';
 import { useMutation, useQuery, useSuspenseQuery } from '@tanstack/react-query';
 import { createFileRoute, Link, notFound } from '@tanstack/react-router';
-import { Calendar, Check, Edit, Heart, Link as LinkIcon, Link2, MessageSquare, Rss } from 'lucide-react';
+import {
+	Calendar,
+	Check,
+	Edit,
+	Heart,
+	Info,
+	Link2,
+	Link as LinkIcon,
+	MessageSquare,
+	Rss,
+} from 'lucide-react';
 
 import { api } from '~api';
 import { EditorContentDisplay, EditorRefProvider } from '@/components/editor';
@@ -34,10 +44,12 @@ const heartPopKeyframes = `
 const SIDEBAR_STORAGE_KEY = 'update-detail-sidebar-state';
 
 type SidebarSections = {
+	details: boolean;
 	related: boolean;
 };
 
 const DEFAULT_SIDEBAR_STATE: SidebarSections = {
+	details: true,
 	related: true,
 };
 
@@ -309,8 +321,8 @@ function RouteComponent() {
 									className={cn(
 										'group gap-2',
 										isLiked
-											? 'text-red-500 hover:text-red-600 hover:bg-red-500/10'
-											: 'text-muted-foreground hover:text-red-500 hover:bg-red-500/10'
+											? 'text-red-500 hover:bg-red-500/10 hover:text-red-600'
+											: 'text-muted-foreground hover:bg-red-500/10 hover:text-red-500'
 									)}
 								>
 									<Heart
@@ -357,6 +369,68 @@ function RouteComponent() {
 									</Tooltip>
 								</div>
 							</div>
+
+							{/* Details Section */}
+							<SidebarSection
+								title='Details'
+								icon={<Info className='size-3.5' />}
+								open={sidebarState.details}
+								onOpenChange={(open) => setSidebarSection('details', open)}
+							>
+								<div className='flex flex-col'>
+									{/* Status / Published Date */}
+									<div className='flex items-center justify-between py-2.5'>
+										<span className='text-sm text-muted-foreground'>Published</span>
+										<span className='text-sm'>
+											{update.status === 'draft' ? (
+												<span className='text-yellow-600 dark:text-yellow-400'>Draft</span>
+											) : update.publishedAt ? (
+												<Tooltip>
+													<TooltipTrigger asChild delay={100}>
+														<span className='cursor-pointer' suppressHydrationWarning>
+															{formatRelativeDay(update.publishedAt)}
+														</span>
+													</TooltipTrigger>
+													<TooltipContent>
+														<span suppressHydrationWarning>
+															{formatFullDate(update.publishedAt)}
+														</span>
+													</TooltipContent>
+												</Tooltip>
+											) : (
+												'Not published'
+											)}
+										</span>
+									</div>
+
+									{/* Author */}
+									<div className='flex items-center justify-between py-2.5'>
+										<span className='text-sm text-muted-foreground'>Author</span>
+										{author ? (
+											<Link
+												to='/@{$org}'
+												params={{ org: author.username }}
+												className='flex items-center gap-2 text-sm hover:underline'
+											>
+												{author.imageUrl ? (
+													<img
+														className='size-5 rounded-full'
+														src={author.imageUrl}
+														alt={author.username}
+													/>
+												) : (
+													<div className='flex size-5 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground'>
+														{author.name?.charAt(0) ?? '?'}
+													</div>
+												)}
+												<span>@{author.username}</span>
+											</Link>
+										) : (
+											<span className='text-sm text-muted-foreground'>Unknown</span>
+										)}
+									</div>
+								</div>
+							</SidebarSection>
 
 							{/* Related Feedback */}
 							{hasRelatedFeedback && (
