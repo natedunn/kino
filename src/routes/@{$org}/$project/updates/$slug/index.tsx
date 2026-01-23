@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { convexQuery, useConvexMutation } from '@convex-dev/react-query';
 import { useMutation, useQuery, useSuspenseQuery } from '@tanstack/react-query';
 import { createFileRoute, Link, notFound } from '@tanstack/react-router';
-import { Calendar, Edit, Heart, Link as LinkIcon, MessageSquare } from 'lucide-react';
+import { Calendar, Check, Edit, Heart, Link as LinkIcon, Link2, MessageSquare, Rss } from 'lucide-react';
 
 import { api } from '~api';
 import { EditorContentDisplay, EditorRefProvider } from '@/components/editor';
@@ -118,6 +118,7 @@ function RouteComponent() {
 	const [optimisticLiked, setOptimisticLiked] = useState<boolean | null>(null);
 	const [optimisticCount, setOptimisticCount] = useState<number | null>(null);
 	const [isAnimating, setIsAnimating] = useState(false);
+	const [copied, setCopied] = useState(false);
 
 	// Use optimistic values if set, otherwise use server values
 	const isLiked = optimisticLiked ?? serverIsLiked;
@@ -186,6 +187,21 @@ function RouteComponent() {
 			pendingStateRef.current = null;
 		}, 300);
 	};
+
+	const handleCopyLink = async () => {
+		const url = window.location.href;
+		await navigator.clipboard.writeText(url);
+		setCopied(true);
+		setTimeout(() => setCopied(false), 2000);
+	};
+
+	const handleShareTwitter = () => {
+		const url = encodeURIComponent(window.location.href);
+		const text = encodeURIComponent(update.title);
+		window.open(`https://twitter.com/intent/tweet?url=${url}&text=${text}`, '_blank');
+	};
+
+	const rssUrl = `/@${params.org}/${params.project}/updates/rss.xml`;
 
 	return (
 		<div>
@@ -338,6 +354,45 @@ function RouteComponent() {
 									</div>
 								</SidebarSection>
 							)}
+
+							{/* Social / Share */}
+							<div className='flex items-center gap-1'>
+								<Tooltip>
+									<TooltipTrigger asChild>
+										<button
+											onClick={handleCopyLink}
+											className='flex size-8 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
+										>
+											{copied ? <Check className='size-4' /> : <Link2 className='size-4' />}
+										</button>
+									</TooltipTrigger>
+									<TooltipContent>{copied ? 'Copied!' : 'Copy link'}</TooltipContent>
+								</Tooltip>
+								<Tooltip>
+									<TooltipTrigger asChild>
+										<button
+											onClick={handleShareTwitter}
+											className='flex size-8 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
+										>
+											<svg className='size-4' viewBox='0 0 24 24' fill='currentColor'>
+												<path d='M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z' />
+											</svg>
+										</button>
+									</TooltipTrigger>
+									<TooltipContent>Share on X</TooltipContent>
+								</Tooltip>
+								<Tooltip>
+									<TooltipTrigger asChild>
+										<Link
+											to={rssUrl}
+											className='flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
+										>
+											<Rss className='size-4' />
+										</Link>
+									</TooltipTrigger>
+									<TooltipContent>RSS Feed</TooltipContent>
+								</Tooltip>
+							</div>
 						</div>
 					</div>
 				</div>
