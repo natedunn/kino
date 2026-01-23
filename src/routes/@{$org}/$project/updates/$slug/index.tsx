@@ -346,20 +346,22 @@ function RouteComponent() {
 			<div className='border-t'>
 				<div className='container py-10'>
 					<div className='grid grid-cols-1 gap-10 lg:grid-cols-[1fr_280px]'>
-						<EditorRefProvider>
-							<h3 className='mb-4 flex items-center gap-2 text-lg font-semibold'>
-								<MessageSquare className='size-5' />
-								{commentCount} {commentCount === 1 ? 'Comment' : 'Comments'}
-							</h3>
-							<UpdateCommentsList updateId={update._id} currentProfileId={currentProfile?._id} />
-							<UpdateCommentForm
-								updateId={update._id}
-								orgSlug={params.org}
-								projectSlug={params.project}
-								updateSlug={params.slug}
-								isAuthenticated={isAuthenticated}
-							/>
-						</EditorRefProvider>
+						<div>
+							<EditorRefProvider>
+								<h3 className='mb-4 flex items-center gap-2 text-lg font-semibold'>
+									<MessageSquare className='size-5' />
+									{commentCount} {commentCount === 1 ? 'Comment' : 'Comments'}
+								</h3>
+								<UpdateCommentsList updateId={update._id} currentProfileId={currentProfile?._id} />
+								<UpdateCommentForm
+									updateId={update._id}
+									orgSlug={params.org}
+									projectSlug={params.project}
+									updateSlug={params.slug}
+									isAuthenticated={isAuthenticated}
+								/>
+							</EditorRefProvider>
+						</div>
 					</div>
 				</div>
 			</div>
