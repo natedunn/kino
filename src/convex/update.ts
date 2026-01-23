@@ -1,6 +1,7 @@
 import { zodToConvex } from 'convex-helpers/server/zod4';
 import { GenericQueryCtx } from 'convex/server';
-import { ConvexError, v } from 'convex/values';
+import { ConvexError } from 'convex/values';
+import * as z from 'zod';
 
 import { generateRandomSlug } from '@/lib/random';
 
@@ -331,9 +332,7 @@ export const getBySlug = query({
 });
 
 export const listByProject = query({
-	args: {
-		projectId: v.id('project'),
-	},
+	args: zodToConvex(updateSchema.pick({ projectId: true })),
 	handler: async (ctx, { projectId }) => {
 		// Get project to check permissions
 		const project = await ctx.db.get(projectId);
@@ -528,10 +527,8 @@ export const { generateUploadUrl: generateCoverImageUploadUrlInternal, syncMetad
 
 // Generate a signed upload URL for cover images
 export const generateCoverImageUploadUrl = mutation({
-	args: {
-		updateId: v.id('update'),
-	},
-	handler: async (ctx, { updateId }) => {
+	args: zodToConvex(updateSchema.pick({ _id: true })),
+	handler: async (ctx, { _id: updateId }) => {
 		const profile = await getMyProfile(ctx);
 
 		// Verify the update exists and user has permission
@@ -570,9 +567,7 @@ export const generateCoverImageUploadUrl = mutation({
 
 // Get the public URL for a cover image
 export const getCoverImageUrl = query({
-	args: {
-		key: v.string(),
-	},
+	args: zodToConvex(z.object({ key: z.string() })),
 	handler: async (_ctx, { key }) => {
 		if (!key) return null;
 		// URL expires in 24 hours

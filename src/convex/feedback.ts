@@ -594,23 +594,9 @@ export const listProjectFeedback = query({
 
 // Search feedback for linking to updates (async search)
 export const searchForLinking = query({
-	args: {
-		projectId: v.id('project'),
-		search: v.string(),
-	},
-	returns: v.array(
-		v.object({
-			_id: v.id('feedback'),
-			title: v.string(),
-			slug: v.string(),
-			status: zodToConvex(feedbackSchema.shape.status),
-			board: v.union(
-				v.object({
-					_id: v.id('feedbackBoard'),
-					name: v.string(),
-				}),
-				v.null()
-			),
+	args: zodToConvex(
+		feedbackSchema.pick({ projectId: true }).extend({
+			search: z.string(),
 		})
 	),
 	handler: async (ctx, { projectId, search }) => {
@@ -650,22 +636,9 @@ export const searchForLinking = query({
 
 // Get feedback items by IDs (for displaying selected items)
 export const getByIds = query({
-	args: {
-		ids: v.array(v.id('feedback')),
-	},
-	returns: v.array(
-		v.object({
-			_id: v.id('feedback'),
-			title: v.string(),
-			slug: v.string(),
-			status: zodToConvex(feedbackSchema.shape.status),
-			board: v.union(
-				v.object({
-					_id: v.id('feedbackBoard'),
-					name: v.string(),
-				}),
-				v.null()
-			),
+	args: zodToConvex(
+		z.object({
+			ids: z.array(zid('feedback')),
 		})
 	),
 	handler: async (ctx, { ids }) => {

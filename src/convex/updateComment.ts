@@ -117,15 +117,32 @@ export const remove = mutation({
 export const listByUpdate = query({
 	args: zodToConvex(updateCommentSchema.pick({ updateId: true })),
 	handler: async (ctx, { updateId }) => {
+		// Get the update to check permissions
+		const update = await ctx.db.get(updateId);
+		if (!update) {
+			return [];
+		}
+
+		// If update is a draft, verify user can edit
+		if (update.status === 'draft') {
+			const project = await ctx.db.get(update.projectId);
+			if (!project) {
+				return [];
+			}
+
+			const { permissions } = await verifyProjectAccess(ctx, { slug: project.slug });
+			if (!permissions.canEdit) {
+				return [];
+			}
+		}
+
 		const comments = await ctx.db
 			.query('updateComment')
 			.withIndex('by_updateId', (q) => q.eq('updateId', updateId))
 			.order('asc')
 			.collect();
 
-		// Get the update to find the projectId
-		const update = await ctx.db.get(updateId);
-		const projectId = update?.projectId;
+		const projectId = update.projectId;
 
 		// Get author profiles and emotes for each comment
 		const commentsWithDetails = await Promise.all(

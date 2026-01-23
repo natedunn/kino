@@ -57,7 +57,7 @@ export function CoverImageUpload({
 
 		try {
 			// Get signed upload URL
-			const { url, key } = await generateUploadUrl({ updateId });
+			const { url, key } = await generateUploadUrl({ _id: updateId });
 
 			// Upload to R2
 			const response = await fetch(url, {
