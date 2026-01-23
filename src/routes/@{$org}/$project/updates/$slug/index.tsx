@@ -300,30 +300,63 @@ function RouteComponent() {
 							{/* Inject keyframes */}
 							<style>{heartPopKeyframes}</style>
 
-							{/* Like Button */}
-							<button
-								onClick={handleLike}
-								disabled={!currentProfileId}
-								className={cn(
-									'group flex cursor-pointer items-center gap-2 text-base transition-colors duration-200',
-									isLiked
-										? 'text-red-500 hover:text-red-600'
-										: 'text-muted-foreground hover:text-red-500',
-									!currentProfileId && 'cursor-not-allowed opacity-50'
-								)}
-							>
-								<Heart
+							{/* Like Button + Social Share */}
+							<div className='flex items-center justify-between'>
+								<button
+									onClick={handleLike}
+									disabled={!currentProfileId}
 									className={cn(
-										'size-5 transition-transform duration-200',
-										isLiked && 'fill-current',
-										currentProfileId && 'group-hover:scale-110',
-										isAnimating && 'animate-[heart-pop_0.6s_ease-out]'
+										'group flex cursor-pointer items-center gap-2 text-base transition-colors duration-200',
+										isLiked
+											? 'text-red-500 hover:text-red-600'
+											: 'text-muted-foreground hover:text-red-500',
+										!currentProfileId && 'cursor-not-allowed opacity-50'
 									)}
-								/>
-								<span className='font-medium'>
-									{likeCount} {likeCount === 1 ? 'like' : 'likes'}
-								</span>
-							</button>
+								>
+									<Heart
+										className={cn(
+											'size-5 transition-transform duration-200',
+											isLiked && 'fill-current',
+											currentProfileId && 'group-hover:scale-110',
+											isAnimating && 'animate-[heart-pop_0.6s_ease-out]'
+										)}
+									/>
+									<span className='font-medium'>
+										{likeCount} {likeCount === 1 ? 'like' : 'likes'}
+									</span>
+								</button>
+
+								<div className='flex items-center'>
+									<Tooltip>
+										<TooltipTrigger asChild>
+											<Button variant='ghost' size='icon' onClick={handleCopyLink}>
+												{copied ? <Check className='size-4' /> : <Link2 className='size-4' />}
+											</Button>
+										</TooltipTrigger>
+										<TooltipContent>{copied ? 'Copied!' : 'Copy link'}</TooltipContent>
+									</Tooltip>
+									<Tooltip>
+										<TooltipTrigger asChild>
+											<Button variant='ghost' size='icon' onClick={handleShareTwitter}>
+												<svg className='size-4' viewBox='0 0 24 24' fill='currentColor'>
+													<path d='M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z' />
+												</svg>
+											</Button>
+										</TooltipTrigger>
+										<TooltipContent>Share on X</TooltipContent>
+									</Tooltip>
+									<Tooltip>
+										<TooltipTrigger asChild>
+											<Button variant='ghost' size='icon' asChild>
+												<Link to={rssUrl}>
+													<Rss className='size-4' />
+												</Link>
+											</Button>
+										</TooltipTrigger>
+										<TooltipContent>RSS Feed</TooltipContent>
+									</Tooltip>
+								</div>
+							</div>
 
 							{/* Related Feedback */}
 							{hasRelatedFeedback && (
@@ -354,45 +387,6 @@ function RouteComponent() {
 									</div>
 								</SidebarSection>
 							)}
-
-							{/* Social / Share */}
-							<div className='flex items-center gap-1'>
-								<Tooltip>
-									<TooltipTrigger asChild>
-										<button
-											onClick={handleCopyLink}
-											className='flex size-8 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
-										>
-											{copied ? <Check className='size-4' /> : <Link2 className='size-4' />}
-										</button>
-									</TooltipTrigger>
-									<TooltipContent>{copied ? 'Copied!' : 'Copy link'}</TooltipContent>
-								</Tooltip>
-								<Tooltip>
-									<TooltipTrigger asChild>
-										<button
-											onClick={handleShareTwitter}
-											className='flex size-8 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
-										>
-											<svg className='size-4' viewBox='0 0 24 24' fill='currentColor'>
-												<path d='M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z' />
-											</svg>
-										</button>
-									</TooltipTrigger>
-									<TooltipContent>Share on X</TooltipContent>
-								</Tooltip>
-								<Tooltip>
-									<TooltipTrigger asChild>
-										<Link
-											to={rssUrl}
-											className='flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
-										>
-											<Rss className='size-4' />
-										</Link>
-									</TooltipTrigger>
-									<TooltipContent>RSS Feed</TooltipContent>
-								</Tooltip>
-							</div>
 						</div>
 					</div>
 				</div>
