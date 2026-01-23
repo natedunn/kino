@@ -15,6 +15,7 @@ import {
 	Select,
 	SelectContent,
 	SelectItem,
+	SelectPositioner,
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
@@ -264,15 +265,15 @@ function RouteComponent() {
 												<SelectTrigger className='w-48'>
 													<SelectValue />
 												</SelectTrigger>
-												<SelectContent>
-													{UPDATE_CATEGORIES.map((cat) => (
-														<SelectItem key={cat} value={cat}>
-															<div className='flex items-center gap-2'>
+												<SelectPositioner>
+													<SelectContent>
+														{UPDATE_CATEGORIES.map((cat) => (
+															<SelectItem key={cat} value={cat}>
 																<CategoryBadge category={cat} />
-															</div>
-														</SelectItem>
-													))}
-												</SelectContent>
+															</SelectItem>
+														))}
+													</SelectContent>
+												</SelectPositioner>
 											</Select>
 										</field.Control>
 									</field.Provider>
