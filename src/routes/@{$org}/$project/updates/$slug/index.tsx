@@ -302,20 +302,20 @@ function RouteComponent() {
 
 							{/* Like Button + Social Share */}
 							<div className='flex items-center justify-between'>
-								<button
+								<Button
+									variant='ghost'
 									onClick={handleLike}
 									disabled={!currentProfileId}
 									className={cn(
-										'group flex cursor-pointer items-center gap-2 text-base transition-colors duration-200',
+										'group gap-2',
 										isLiked
-											? 'text-red-500 hover:text-red-600'
-											: 'text-muted-foreground hover:text-red-500',
-										!currentProfileId && 'cursor-not-allowed opacity-50'
+											? 'text-red-500 hover:text-red-600 hover:bg-red-500/10'
+											: 'text-muted-foreground hover:text-red-500 hover:bg-red-500/10'
 									)}
 								>
 									<Heart
 										className={cn(
-											'size-5 transition-transform duration-200',
+											'size-4 transition-transform duration-200',
 											isLiked && 'fill-current',
 											currentProfileId && 'group-hover:scale-110',
 											isAnimating && 'animate-[heart-pop_0.6s_ease-out]'
@@ -324,7 +324,7 @@ function RouteComponent() {
 									<span className='font-medium'>
 										{likeCount} {likeCount === 1 ? 'like' : 'likes'}
 									</span>
-								</button>
+								</Button>
 
 								<div className='flex items-center'>
 									<Tooltip>
