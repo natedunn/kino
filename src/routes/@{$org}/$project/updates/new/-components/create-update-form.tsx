@@ -1,20 +1,28 @@
 import { useState } from 'react';
 import { useConvexMutation } from '@convex-dev/react-query';
 import { revalidateLogic } from '@tanstack/react-form';
-import { useMutation, useSuspenseQuery } from '@tanstack/react-query';
-import { convexQuery } from '@convex-dev/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { X } from 'lucide-react';
 import * as z from 'zod';
 
-import { api, API } from '~api';
+import { api } from '~api';
 import { MarkdownEditor, sanitizeEditorContent } from '@/components/editor';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input-shadcn';
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@/components/ui/select';
 import { useAppForm, useFormError } from '@/components/ui/tanstack-form';
 import { Id } from '@/convex/_generated/dataModel';
+import { UPDATE_CATEGORIES, type UpdateCategory } from '@/convex/schema/update.schema';
 import { cn } from '@/lib/utils';
 
+import { CategoryBadge, CATEGORY_CONFIG } from '../../-components/category-badge';
 import { FeedbackSelector } from '../../-components/feedback-selector';
 
 // Simplified form schema without relatedFeedbackIds (handled separately)
@@ -22,6 +30,7 @@ const formSchema = z.object({
 	title: z.string().min(1).max(200),
 	content: z.string().min(1),
 	projectId: z.string(),
+	category: z.enum(UPDATE_CATEGORIES),
 	tags: z.array(z.string()).optional(),
 	coverImageId: z.string().optional(),
 });
@@ -42,6 +51,7 @@ export const CreateUpdateForm = ({ projectId, onSubmit }: CreateUpdateFormProps)
 		title: '',
 		content: '',
 		projectId,
+		category: 'changelog',
 		tags: [],
 		coverImageId: undefined,
 	};
@@ -65,6 +75,7 @@ export const CreateUpdateForm = ({ projectId, onSubmit }: CreateUpdateFormProps)
 				projectId: projectId,
 				title: value.title,
 				content: sanitizedContent,
+				category: value.category,
 				tags: value.tags,
 				relatedFeedbackIds: selectedFeedbackIds.length > 0 ? selectedFeedbackIds : undefined,
 				coverImageId: value.coverImageId,
@@ -112,6 +123,7 @@ export const CreateUpdateForm = ({ projectId, onSubmit }: CreateUpdateFormProps)
 				projectId: projectId,
 				title: value.title,
 				content: sanitizedContent,
+				category: value.category,
 				tags: value.tags,
 				relatedFeedbackIds: selectedFeedbackIds.length > 0 ? selectedFeedbackIds : undefined,
 				coverImageId: value.coverImageId,
@@ -146,6 +158,33 @@ export const CreateUpdateForm = ({ projectId, onSubmit }: CreateUpdateFormProps)
 										onChange={(e) => field.handleChange(e.target.value)}
 										placeholder='Update title...'
 									/>
+								</field.Control>
+							</field.Provider>
+						)}
+					</form.AppField>
+
+					<form.AppField name='category'>
+						{(field) => (
+							<field.Provider>
+								<field.Label>Category</field.Label>
+								<field.Control>
+									<Select
+										value={field.state.value}
+										onValueChange={(value) => field.handleChange(value as UpdateCategory)}
+									>
+										<SelectTrigger className='w-48'>
+											<SelectValue />
+										</SelectTrigger>
+										<SelectContent>
+											{UPDATE_CATEGORIES.map((cat) => (
+												<SelectItem key={cat} value={cat}>
+													<div className='flex items-center gap-2'>
+														<CategoryBadge category={cat} />
+													</div>
+												</SelectItem>
+											))}
+										</SelectContent>
+									</Select>
 								</field.Control>
 							</field.Provider>
 						)}

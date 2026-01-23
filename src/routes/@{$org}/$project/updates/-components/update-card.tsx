@@ -11,6 +11,8 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { formatFullDate } from '@/lib/utils/format-timestamp';
 
+import { CategoryBadge } from './category-badge';
+
 // Heart pop animation styles
 const heartPopKeyframes = `
 @keyframes heart-pop {
@@ -49,7 +51,7 @@ export const UpdateCard = ({
 		content,
 		slug,
 		author,
-		tags,
+		category,
 		status,
 		publishedAt,
 		emoteCounts,
@@ -174,24 +176,20 @@ export const UpdateCard = ({
 							</div>
 						)}
 
-						{/* Tags */}
-						<div className='flex flex-wrap items-center gap-2'>
-							{status === 'draft' && (
-								<Badge variant='outline' className='text-yellow-600 dark:text-yellow-400'>
-									Draft
-								</Badge>
-							)}
-							{tags?.map((tag: string) => (
-								<Badge key={tag} variant='secondary'>
-									{tag}
-								</Badge>
-							))}
-						</div>
+						{/* Draft Status */}
+						{status === 'draft' && (
+							<Badge variant='outline' className='text-yellow-600 dark:text-yellow-400'>
+								Draft
+							</Badge>
+						)}
 					</div>
 				</div>
 
 				{/* Right Column - Content */}
 				<div className='col-span-12 md:col-span-9'>
+					{/* Category */}
+					{category && <CategoryBadge category={category} className='mb-3' />}
+
 					{/* Title */}
 					<h3 className='text-3xl font-semibold'>
 						<Link

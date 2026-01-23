@@ -13,6 +13,7 @@ import { StatusIcon } from '@/icons';
 import { useSidebarState } from '@/lib/hooks/use-sidebar-state';
 import { formatFullDate, formatRelativeDay } from '@/lib/utils/format-timestamp';
 
+import { CategoryBadge } from '../-components/category-badge';
 import { UpdateCommentForm } from '../-components/update-comment-form';
 import { UpdateCommentsList } from '../-components/update-comments-list';
 import { UpdateEmotes } from '../-components/update-emotes';
@@ -104,11 +105,7 @@ function RouteComponent() {
 											Draft
 										</Badge>
 									)}
-									{update.tags?.map((tag) => (
-										<Badge key={tag} variant='secondary'>
-											{tag}
-										</Badge>
-									))}
+									{update.category && <CategoryBadge category={update.category} />}
 								</div>
 								<h1 className='text-3xl font-bold'>{update.title}</h1>
 								<div className='flex items-center gap-3 text-sm text-muted-foreground'>

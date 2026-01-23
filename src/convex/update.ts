@@ -46,6 +46,7 @@ export const create = mutation({
 			content: args.content,
 			projectId: args.projectId,
 			authorProfileId: profile._id,
+			category: args.category ?? 'changelog',
 			tags: args.tags,
 			relatedFeedbackIds: args.relatedFeedbackIds,
 			coverImageId: args.coverImageId,
@@ -64,6 +65,7 @@ export const update = mutation({
 			_id: true,
 			title: true,
 			content: true,
+			category: true,
 			tags: true,
 			relatedFeedbackIds: true,
 			coverImageId: true,
@@ -101,6 +103,7 @@ export const update = mutation({
 		await patch(ctx, 'update', args._id, {
 			title: args.title,
 			content: args.content,
+			category: args.category,
 			tags: args.tags,
 			relatedFeedbackIds: args.relatedFeedbackIds,
 			coverImageId: args.coverImageId,

@@ -11,17 +11,26 @@ import { MarkdownEditor, sanitizeEditorContent } from '@/components/editor';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input-shadcn';
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@/components/ui/select';
 import { useAppForm, useFormError } from '@/components/ui/tanstack-form';
 import { Id } from '@/convex/_generated/dataModel';
-import { updateSchema } from '@/convex/schema/update.schema';
+import { UPDATE_CATEGORIES, updateSchema, type UpdateCategory } from '@/convex/schema/update.schema';
 import { cn } from '@/lib/utils';
 
+import { CategoryBadge, CATEGORY_CONFIG } from '../-components/category-badge';
 import { CoverImageUpload } from '../-components/cover-image-upload';
 import { FeedbackSelector } from '../-components/feedback-selector';
 
 const formSchema = updateSchema.pick({
 	title: true,
 	content: true,
+	category: true,
 	tags: true,
 	coverImageId: true,
 });
@@ -101,6 +110,7 @@ function RouteComponent() {
 	const defaultValues: FormSchema = {
 		title: update.title,
 		content: update.content,
+		category: update.category ?? 'changelog',
 		tags: update.tags ?? [],
 		coverImageId: update.coverImageId,
 	};
@@ -124,6 +134,7 @@ function RouteComponent() {
 				_id: update._id,
 				title: value.title,
 				content: sanitizedContent,
+				category: value.category,
 				tags: value.tags,
 				coverImageId: value.coverImageId,
 				relatedFeedbackIds: selectedFeedbackIds.length > 0 ? selectedFeedbackIds : undefined,
@@ -236,6 +247,33 @@ function RouteComponent() {
 												onChange={(e) => field.handleChange(e.target.value)}
 												placeholder='Update title...'
 											/>
+										</field.Control>
+									</field.Provider>
+								)}
+							</form.AppField>
+
+							<form.AppField name='category'>
+								{(field) => (
+									<field.Provider>
+										<field.Label>Category</field.Label>
+										<field.Control>
+											<Select
+												value={field.state.value}
+												onValueChange={(value) => field.handleChange(value as UpdateCategory)}
+											>
+												<SelectTrigger className='w-48'>
+													<SelectValue />
+												</SelectTrigger>
+												<SelectContent>
+													{UPDATE_CATEGORIES.map((cat) => (
+														<SelectItem key={cat} value={cat}>
+															<div className='flex items-center gap-2'>
+																<CategoryBadge category={cat} />
+															</div>
+														</SelectItem>
+													))}
+												</SelectContent>
+											</Select>
 										</field.Control>
 									</field.Provider>
 								)}
