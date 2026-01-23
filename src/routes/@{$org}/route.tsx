@@ -31,13 +31,13 @@ export const Route = createFileRoute('/@{$org}')({
 	errorComponent: () => {
 		return <div>There was an error</div>;
 	},
-	pendingComponent: () => {
-		return (
-			<div className='container'>
-				<div className='text-red-500'>PENDING in ORG LAYOUT</div>
-			</div>
-		);
-	},
+	// pendingComponent: () => {
+	// 	return (
+	// 		<div className='container'>
+	// 			<div className='text-red-500'>PENDING in ORG LAYOUT</div>
+	// 		</div>
+	// 	);
+	// },
 });
 
 function RouteComponent() {

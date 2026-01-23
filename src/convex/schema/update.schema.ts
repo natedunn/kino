@@ -19,6 +19,7 @@ export const updateSchema = z.object({
 	tags: z.array(z.string()).optional(),
 	relatedFeedbackIds: z.array(zid('feedback')).optional(), // Can link ANY feedback, not just closed
 	coverImageId: z.string().optional(), // R2 storage ID for featured image
+	authorAsOrg: z.boolean().optional(), // Reserved for future use
 });
 
 export const updateSelectSchema = updateSchema;

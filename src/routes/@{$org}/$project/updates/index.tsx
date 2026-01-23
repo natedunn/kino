@@ -75,38 +75,38 @@ function RouteComponent() {
 			<header className='w-full border-b bg-muted/50'>
 				<div className='container pt-16 pb-6'>
 					<div className='mx-auto max-w-240 px-4'>
-					<div className='flex items-start justify-between gap-4'>
-						<div className='flex items-start gap-4'>
-							<div className='mt-1'>
-								<FileText className='size-8 text-primary dark:text-blue-300' aria-hidden='true' />
+						<div className='flex items-start justify-between gap-4'>
+							<div className='flex items-start gap-4'>
+								<div className='mt-1'>
+									<FileText className='size-8 text-primary dark:text-blue-300' aria-hidden='true' />
+								</div>
+								<div>
+									<h1 className='text-2xl font-bold'>Updates</h1>
+									<p className='text-muted-foreground'>
+										Stay up to date with the latest news and releases.
+									</p>
+								</div>
 							</div>
-							<div>
-								<h1 className='text-2xl font-bold'>Updates</h1>
-								<p className='text-muted-foreground'>
-									Stay up to date with the latest news and releases.
-								</p>
-							</div>
+							{canEdit && (
+								<Button asChild>
+									<Link
+										to='/@{$org}/$project/updates/new'
+										params={{
+											org: orgSlug,
+											project: projectSlug,
+										}}
+									>
+										<CirclePlusOutline size='16px' /> New Update
+									</Link>
+								</Button>
+							)}
 						</div>
-						{canEdit && (
-							<Button asChild>
-								<Link
-									to='/@{$org}/$project/updates/new'
-									params={{
-										org: orgSlug,
-										project: projectSlug,
-									}}
-								>
-									<CirclePlusOutline size='16px' /> New Update
-								</Link>
-							</Button>
-						)}
-					</div>
 					</div>
 				</div>
 			</header>
 
 			{/* Content */}
-			<div className='container py-10'>
+			<div className='container py-14'>
 				<div className='mx-auto max-w-240 px-4' aria-live='polite' aria-busy={isLoading}>
 					{updates.length === 0 && !isLoading ? (
 						<Notice icon={<Missing size='32px' aria-hidden='true' />}>No updates yet.</Notice>

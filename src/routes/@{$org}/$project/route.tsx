@@ -19,13 +19,13 @@ export const Route = createFileRoute('/@{$org}/$project')({
 	},
 	component: RouteComponent,
 	pendingMs: 5000,
-	pendingComponent: () => {
-		return (
-			<div className='container'>
-				<div className='text-red-500'>PENDING in PROJECT LAYOUT</div>
-			</div>
-		);
-	},
+	// pendingComponent: () => {
+	// 	return (
+	// 		<div className='container'>
+	// 			<div className='text-red-500'>PENDING in PROJECT LAYOUT</div>
+	// 		</div>
+	// 	);
+	// },
 	notFoundComponent: () => {
 		return (
 			<div className='container'>

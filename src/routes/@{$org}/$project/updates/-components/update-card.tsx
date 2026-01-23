@@ -146,7 +146,7 @@ export const UpdateCard = ({
 
 	return (
 		<li className={cn('flex', className)}>
-			<div className={cn('grid w-full grid-cols-12 gap-8', !isLast && 'mb-24 border-b pb-24')}>
+			<div className={cn('grid w-full grid-cols-12 gap-8', !isLast && 'mb-16 border-b pb-16')}>
 				{/* Left Column - Meta (sticky) */}
 				<div className='col-span-12 md:col-span-3'>
 					<div className='sticky top-8 flex flex-col gap-4'>
@@ -213,10 +213,10 @@ export const UpdateCard = ({
 					)}
 
 					{/* Content */}
-					<div className={cn('mt-4', isTruncated && 'relative max-h-[32rem] overflow-hidden')}>
+					<div className={cn('mt-4', isTruncated && 'relative max-h-128 overflow-hidden')}>
 						<EditorContentDisplay content={content} />
 						{isTruncated && (
-							<div className='absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-background to-transparent' />
+							<div className='absolute inset-x-0 bottom-0 h-24 bg-linear-to-t from-background to-transparent' />
 						)}
 					</div>
 

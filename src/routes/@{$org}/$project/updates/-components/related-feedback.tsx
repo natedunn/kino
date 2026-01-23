@@ -24,7 +24,7 @@ export function RelatedFeedback({ orgSlug, projectSlug, feedback }: RelatedFeedb
 
 	return (
 		<div className='mt-8 rounded-lg border p-6'>
-			<h3 className='mb-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground'>
+			<h3 className='mb-4 text-sm font-semibold tracking-wide text-muted-foreground uppercase'>
 				Related Feedback
 			</h3>
 			<ul className='space-y-3'>
