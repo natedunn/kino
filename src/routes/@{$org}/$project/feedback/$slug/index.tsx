@@ -14,7 +14,6 @@ import {
 	MoreHorizontal,
 	Pencil,
 	Plus,
-	Settings2,
 	Tag,
 	Users,
 } from 'lucide-react';
@@ -26,6 +25,7 @@ import {
 	MarkdownEditor,
 	sanitizeEditorContent,
 } from '@/components/editor';
+import { ProfileLinkOrUnknown } from '@/components/profile-link';
 import { SidebarSection } from '@/components/sidebar-section';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -566,26 +566,7 @@ function RouteComponent() {
 										{/* Author */}
 										<div className='flex items-center justify-between py-1.5'>
 											<span className='text-sm text-muted-foreground'>Author</span>
-											{author ? (
-												<Link
-													className='flex items-center gap-2 text-sm hover:underline'
-													to='/@{$org}'
-													params={{ org: author.username }}
-												>
-													<div className='size-5 overflow-hidden rounded-full'>
-														{author.imageUrl ? (
-															<img src={author.imageUrl} alt={author.username} className='size-5' />
-														) : (
-															<div className='flex size-5 items-center justify-center bg-primary text-[10px] font-bold text-primary-foreground'>
-																{author.name?.charAt(0) ?? author.username.charAt(0)}
-															</div>
-														)}
-													</div>
-													<span>{author.name ?? author.username}</span>
-												</Link>
-											) : (
-												<span className='text-sm text-muted-foreground'>Unknown</span>
-											)}
+											<ProfileLinkOrUnknown profile={author} display='name' />
 										</div>
 
 										{/* Watchers - Placeholder */}

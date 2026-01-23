@@ -17,6 +17,7 @@ import {
 import { api } from '~api';
 import { EditorContentDisplay, EditorRefProvider } from '@/components/editor';
 import { type EmoteContent } from '@/components/emote';
+import { ProfileLinkOrUnknown } from '@/components/profile-link';
 import { SidebarSection } from '@/components/sidebar-section';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -379,7 +380,7 @@ function RouteComponent() {
 							>
 								<div className='flex flex-col'>
 									{/* Status / Published Date */}
-									<div className='flex items-center justify-between py-2.5'>
+									<div className='flex items-center justify-between py-1.5'>
 										<span className='text-sm text-muted-foreground'>Published</span>
 										<span className='text-sm'>
 											{update.status === 'draft' ? (
@@ -404,30 +405,9 @@ function RouteComponent() {
 									</div>
 
 									{/* Author */}
-									<div className='flex items-center justify-between py-2.5'>
+									<div className='flex items-center justify-between py-1.5'>
 										<span className='text-sm text-muted-foreground'>Author</span>
-										{author ? (
-											<Link
-												to='/@{$org}'
-												params={{ org: author.username }}
-												className='flex items-center gap-2 text-sm hover:underline'
-											>
-												{author.imageUrl ? (
-													<img
-														className='size-5 rounded-full'
-														src={author.imageUrl}
-														alt={author.username}
-													/>
-												) : (
-													<div className='flex size-5 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground'>
-														{author.name?.charAt(0) ?? '?'}
-													</div>
-												)}
-												<span>@{author.username}</span>
-											</Link>
-										) : (
-											<span className='text-sm text-muted-foreground'>Unknown</span>
-										)}
+										<ProfileLinkOrUnknown profile={author} showAt />
 									</div>
 								</div>
 							</SidebarSection>
