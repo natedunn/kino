@@ -206,16 +206,12 @@ function RouteComponent() {
 						{/* Main content */}
 						<div className={hasRelatedFeedback ? 'md:col-span-8' : 'md:col-span-12'}>
 							{/* Cover image */}
-							{coverImageUrl ? (
+							{coverImageUrl && (
 								<img
 									src={coverImageUrl}
 									alt={update.title}
 									className='mb-10 w-full rounded-lg bg-muted object-cover'
 								/>
-							) : (
-								<div className='mb-10 flex h-64 w-full items-center justify-center rounded-lg bg-muted text-muted-foreground'>
-									Cover Image
-								</div>
 							)}
 
 							{/* Update content */}
