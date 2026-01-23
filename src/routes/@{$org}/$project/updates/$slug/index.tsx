@@ -272,93 +272,99 @@ function RouteComponent() {
 						/>
 					)}
 
-					{/* Update content */}
-					<EditorContentDisplay content={update.content} className='prose-lg' />
+					{/* Two-column layout: main content + sidebar */}
+					<div className='grid grid-cols-1 gap-10 lg:grid-cols-[1fr_280px]'>
+						{/* Main content column */}
+						<div>
+							{/* Update content */}
+							<EditorContentDisplay content={update.content} className='prose-lg' />
 
-					{/* Like & Comment counts */}
-					<div className='mt-8 flex items-center gap-6'>
-						{/* Inject keyframes */}
-						<style>{heartPopKeyframes}</style>
+							{/* Like & Comment counts */}
+							<div className='mt-8 flex items-center gap-6'>
+								{/* Inject keyframes */}
+								<style>{heartPopKeyframes}</style>
 
-						{/* Like Button */}
-						<button
-							onClick={handleLike}
-							disabled={!currentProfileId}
-							className={cn(
-								'group flex cursor-pointer items-center gap-2 text-base transition-colors duration-200',
-								isLiked ? 'text-red-500 hover:text-red-600' : 'text-muted-foreground hover:text-red-500',
-								!currentProfileId && 'cursor-not-allowed opacity-50'
-							)}
-						>
-							<Heart
-								className={cn(
-									'size-5 transition-transform duration-200',
-									isLiked && 'fill-current',
-									currentProfileId && 'group-hover:scale-110',
-									isAnimating && 'animate-[heart-pop_0.6s_ease-out]'
-								)}
-							/>
-							<span className='font-medium'>
-								{likeCount} {likeCount === 1 ? 'like' : 'likes'}
-							</span>
-						</button>
+								{/* Like Button */}
+								<button
+									onClick={handleLike}
+									disabled={!currentProfileId}
+									className={cn(
+										'group flex cursor-pointer items-center gap-2 text-base transition-colors duration-200',
+										isLiked ? 'text-red-500 hover:text-red-600' : 'text-muted-foreground hover:text-red-500',
+										!currentProfileId && 'cursor-not-allowed opacity-50'
+									)}
+								>
+									<Heart
+										className={cn(
+											'size-5 transition-transform duration-200',
+											isLiked && 'fill-current',
+											currentProfileId && 'group-hover:scale-110',
+											isAnimating && 'animate-[heart-pop_0.6s_ease-out]'
+										)}
+									/>
+									<span className='font-medium'>
+										{likeCount} {likeCount === 1 ? 'like' : 'likes'}
+									</span>
+								</button>
 
-						{/* Comment Count */}
-						<div className='flex items-center gap-2 text-base text-muted-foreground'>
-							<MessageSquare className='size-5' />
-							<span className='font-medium'>
-								{commentCount} {commentCount === 1 ? 'comment' : 'comments'}
-							</span>
-						</div>
-					</div>
-
-					{/* Related Feedback */}
-					{hasRelatedFeedback && (
-						<div className='mt-10'>
-							<SidebarSection
-								title='Related Feedback'
-								icon={<LinkIcon className='size-3.5' />}
-								open={sidebarState.related}
-								onOpenChange={(open) => setSidebarSection('related', open)}
-							>
-								<div className='flex flex-col'>
-									{relatedFeedback
-										?.filter((item): item is NonNullable<typeof item> => item !== null)
-										.map((item) => (
-											<Link
-												key={item._id}
-												to='/@{$org}/$project/feedback/$slug'
-												params={{
-													org: params.org,
-													project: params.project,
-													slug: item.slug,
-												}}
-												className='flex cursor-pointer items-center gap-2.5 rounded-md py-2 transition-colors hover:bg-muted/50'
-											>
-												<StatusIcon status={item.status} size='14' colored />
-												<span className='flex-1 truncate text-sm'>{item.title}</span>
-											</Link>
-										))}
+								{/* Comment Count */}
+								<div className='flex items-center gap-2 text-base text-muted-foreground'>
+									<MessageSquare className='size-5' />
+									<span className='font-medium'>
+										{commentCount} {commentCount === 1 ? 'comment' : 'comments'}
+									</span>
 								</div>
-							</SidebarSection>
-						</div>
-					)}
-				</div>
-			</div>
+							</div>
 
-			{/* Comments section */}
-			<div className='container py-10'>
-				<EditorRefProvider>
-					<h3 className='mb-4 text-lg font-semibold'>Comments</h3>
-					<UpdateCommentsList updateId={update._id} currentProfileId={currentProfile?._id} />
-					<UpdateCommentForm
-						updateId={update._id}
-						orgSlug={params.org}
-						projectSlug={params.project}
-						updateSlug={params.slug}
-						isAuthenticated={isAuthenticated}
-					/>
-				</EditorRefProvider>
+							{/* Comments section */}
+							<div className='mt-10'>
+								<EditorRefProvider>
+									<h3 className='mb-4 text-lg font-semibold'>Comments</h3>
+									<UpdateCommentsList updateId={update._id} currentProfileId={currentProfile?._id} />
+									<UpdateCommentForm
+										updateId={update._id}
+										orgSlug={params.org}
+										projectSlug={params.project}
+										updateSlug={params.slug}
+										isAuthenticated={isAuthenticated}
+									/>
+								</EditorRefProvider>
+							</div>
+						</div>
+
+						{/* Sidebar column */}
+						{hasRelatedFeedback && (
+							<div className='lg:sticky lg:top-6 lg:self-start'>
+								<SidebarSection
+									title='Related Feedback'
+									icon={<LinkIcon className='size-3.5' />}
+									open={sidebarState.related}
+									onOpenChange={(open) => setSidebarSection('related', open)}
+								>
+									<div className='flex flex-col'>
+										{relatedFeedback
+											?.filter((item): item is NonNullable<typeof item> => item !== null)
+											.map((item) => (
+												<Link
+													key={item._id}
+													to='/@{$org}/$project/feedback/$slug'
+													params={{
+														org: params.org,
+														project: params.project,
+														slug: item.slug,
+													}}
+													className='flex cursor-pointer items-center gap-2.5 rounded-md py-2 transition-colors hover:bg-muted/50'
+												>
+													<StatusIcon status={item.status} size='14' colored />
+													<span className='flex-1 truncate text-sm'>{item.title}</span>
+												</Link>
+											))}
+									</div>
+								</SidebarSection>
+							</div>
+						)}
+					</div>
+				</div>
 			</div>
 		</div>
 	);
