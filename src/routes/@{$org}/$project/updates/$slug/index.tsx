@@ -262,20 +262,19 @@ function RouteComponent() {
 			</header>
 			<div className='relative'>
 				<div className='absolute h-64 w-full bg-linear-to-t from-background to-muted/50'></div>
-				<div className='relative z-10 container py-10'>
-					{/* Cover image */}
-					{coverImageUrl && (
-						<img
-							src={coverImageUrl}
-							alt={update.title}
-							className='mb-10 w-full rounded-lg bg-muted object-cover'
-						/>
-					)}
-
+				<div className='relative z-10 container pt-10 pb-14'>
 					{/* Two-column layout: main content + sidebar */}
 					<div className='grid grid-cols-1 gap-10 lg:grid-cols-[1fr_280px]'>
 						{/* Main content column */}
 						<div>
+							{/* Cover image */}
+							{coverImageUrl && (
+								<img
+									src={coverImageUrl}
+									alt={update.title}
+									className='mb-8 w-full rounded-lg bg-muted object-cover'
+								/>
+							)}
 							{/* Update content */}
 							<EditorContentDisplay content={update.content} className='prose-lg' />
 						</div>
@@ -291,7 +290,9 @@ function RouteComponent() {
 								disabled={!currentProfileId}
 								className={cn(
 									'group flex cursor-pointer items-center gap-2 text-base transition-colors duration-200',
-									isLiked ? 'text-red-500 hover:text-red-600' : 'text-muted-foreground hover:text-red-500',
+									isLiked
+										? 'text-red-500 hover:text-red-600'
+										: 'text-muted-foreground hover:text-red-500',
 									!currentProfileId && 'cursor-not-allowed opacity-50'
 								)}
 							>

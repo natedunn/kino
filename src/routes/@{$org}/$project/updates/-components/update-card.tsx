@@ -146,7 +146,7 @@ export const UpdateCard = ({
 
 	return (
 		<li className={cn('flex', className)}>
-			<div className={cn('grid w-full grid-cols-12 gap-8', !isLast && 'mb-12 border-b pb-12')}>
+			<div className={cn('grid w-full grid-cols-12 gap-8', !isLast && 'mb-24 border-b pb-24')}>
 				{/* Left Column - Meta (sticky) */}
 				<div className='col-span-12 md:col-span-3'>
 					<div className='sticky top-8 flex flex-col gap-4'>
@@ -191,7 +191,7 @@ export const UpdateCard = ({
 					<CategoryBadge category={category} className='mb-3' />
 
 					{/* Title */}
-					<h3 className='text-3xl font-semibold'>
+					<h3 className='mb-10 text-3xl font-semibold'>
 						<Link
 							to='/@{$org}/$project/updates/$slug'
 							params={{
@@ -207,7 +207,7 @@ export const UpdateCard = ({
 
 					{/* Cover Image */}
 					{coverImageUrl && (
-						<div className='mt-4 mb-6 w-full overflow-hidden rounded-lg bg-muted'>
+						<div className='mb-10 w-full overflow-hidden rounded-lg bg-muted'>
 							<img src={coverImageUrl} alt={title} className='h-full w-full object-cover' />
 						</div>
 					)}

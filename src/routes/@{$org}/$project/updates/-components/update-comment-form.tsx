@@ -74,11 +74,6 @@ export function UpdateCommentForm({
 
 	return (
 		<div className='mt-6'>
-			<div className='ml-6'>
-				<div className='inline-block rounded-t-md bg-primary px-2 py-0.5 text-sm text-primary-foreground'>
-					Add a comment
-				</div>
-			</div>
 			<MarkdownEditor
 				ref={editorRef}
 				value={content}
