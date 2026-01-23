@@ -206,7 +206,7 @@
 }
 
 @utility text-gradient-primary {
-	@apply inline-block bg-gradient-to-r from-blue-300 to-blue-400 bg-clip-text text-transparent dark:to-primary;
+	@apply inline-block bg-linear-to-r from-blue-300 to-blue-400 bg-clip-text text-transparent dark:to-primary;
 }
 
 /* Tiptap editor placeholder */
