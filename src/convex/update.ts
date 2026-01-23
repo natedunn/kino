@@ -305,6 +305,12 @@ export const getBySlug = query({
 			? await orgUploadsR2.getUrl(update.coverImageId, { expiresIn: 60 * 60 * 24 })
 			: null;
 
+		// Get comment count
+		const comments = await ctx.db
+			.query('updateComment')
+			.withIndex('by_updateId', (q) => q.eq('updateId', update._id))
+			.collect();
+
 		return {
 			update,
 			coverImageUrl,
@@ -318,6 +324,7 @@ export const getBySlug = query({
 				: null,
 			relatedFeedback: relatedFeedback.filter(Boolean),
 			emoteCounts,
+			commentCount: comments.length,
 			canEdit: permissions.canEdit,
 		};
 	},
