@@ -18,6 +18,7 @@ import { api } from '~api';
 import { EditorContentDisplay, EditorRefProvider } from '@/components/editor';
 import { type EmoteContent } from '@/components/emote';
 import { ProfileLinkOrUnknown } from '@/components/profile-link';
+import { RoutePending } from '@/components/route-pending';
 import { SidebarSection } from '@/components/sidebar-section';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -56,20 +57,20 @@ const DEFAULT_SIDEBAR_STATE: SidebarSections = {
 
 export const Route = createFileRoute('/@{$org}/$project/updates/$slug/')({
 	loader: async ({ context, params }) => {
-		const project = await context.queryClient.ensureQueryData(
+		const projectData = await context.queryClient.ensureQueryData(
 			convexQuery(api.project.getDetails, {
 				orgSlug: params.org,
 				slug: params.project,
 			})
 		);
 
-		if (!project?.project?._id) {
+		if (!projectData?.project?._id) {
 			throw notFound();
 		}
 
 		const updateData = await context.queryClient.ensureQueryData(
 			convexQuery(api.update.getBySlug, {
-				projectId: project.project._id,
+				projectId: projectData.project._id,
 				slug: params.slug,
 			})
 		);
@@ -77,15 +78,14 @@ export const Route = createFileRoute('/@{$org}/$project/updates/$slug/')({
 		if (!updateData) {
 			throw notFound();
 		}
-
-		return { updateData };
 	},
+	pendingComponent: () => <RoutePending variant='detail' />,
+	pendingMs: 150,
 	component: RouteComponent,
 });
 
 function RouteComponent() {
 	const params = Route.useParams();
-	const { updateData: loaderData } = Route.useLoaderData();
 	const { state: sidebarState, setSection: setSidebarSection } = useSidebarState(
 		SIDEBAR_STORAGE_KEY,
 		DEFAULT_SIDEBAR_STATE
@@ -98,24 +98,26 @@ function RouteComponent() {
 		})
 	);
 
+	if (!projectData?.project?._id) {
+		throw notFound();
+	}
+
 	const { data: updateData } = useSuspenseQuery(
 		convexQuery(api.update.getBySlug, {
-			projectId: projectData?.project?._id!,
+			projectId: projectData.project._id,
 			slug: params.slug,
 		})
 	);
 
+	if (!updateData) {
+		throw notFound();
+	}
+
 	// Get current user's profile
 	const { data: currentProfile } = useQuery(convexQuery(api.profile.findMyProfile, {}));
 
-	const data = updateData ?? loaderData;
-
-	if (!data) {
-		return <div className='container py-10'>Update not found.</div>;
-	}
-
 	const { update, coverImageUrl, author, relatedFeedback, emoteCounts, commentCount, canEdit } =
-		data;
+		updateData;
 	const isAuthenticated = !!currentProfile;
 	const currentProfileId = currentProfile?._id;
 	const hasRelatedFeedback = relatedFeedback && relatedFeedback.length > 0;

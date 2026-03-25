@@ -2,12 +2,13 @@ import { useState } from 'react';
 import { convexQuery, useConvexMutation } from '@convex-dev/react-query';
 import { revalidateLogic } from '@tanstack/react-form';
 import { useMutation, useSuspenseQuery } from '@tanstack/react-query';
-import { createFileRoute, redirect, useRouter } from '@tanstack/react-router';
+import { createFileRoute, Navigate, notFound, useRouter } from '@tanstack/react-router';
 import { FileText, X } from 'lucide-react';
 import * as z from 'zod';
 
 import { api } from '~api';
 import { MarkdownEditor, sanitizeEditorContent } from '@/components/editor';
+import { RoutePending } from '@/components/route-pending';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input-shadcn';
@@ -38,44 +39,30 @@ const formSchema = updateSchema.pick({
 type FormSchema = z.infer<typeof formSchema>;
 
 export const Route = createFileRoute('/@{$org}/$project/updates/$slug/edit')({
+	pendingComponent: () => <RoutePending variant='form' />,
+	pendingMs: 150,
 	loader: async ({ context, params }) => {
-		const project = await context.queryClient.ensureQueryData(
+		const projectData = await context.queryClient.ensureQueryData(
 			convexQuery(api.project.getDetails, {
 				orgSlug: params.org,
 				slug: params.project,
 			})
 		);
 
-		if (!project?.project?._id) {
-			throw redirect({
-				to: '/@{$org}/$project/updates',
-				params: {
-					org: params.org,
-					project: params.project,
-				},
-			});
+		if (!projectData?.project?._id) {
+			throw notFound();
 		}
 
 		const updateData = await context.queryClient.ensureQueryData(
 			convexQuery(api.update.getBySlug, {
-				projectId: project.project._id,
+				projectId: projectData.project._id,
 				slug: params.slug,
 			})
 		);
 
-		// Check if user can edit
-		if (!updateData?.canEdit) {
-			throw redirect({
-				to: '/@{$org}/$project/updates/$slug',
-				params: {
-					org: params.org,
-					project: params.project,
-					slug: params.slug,
-				},
-			});
+		if (!updateData) {
+			throw notFound();
 		}
-
-		return { updateData };
 	},
 	component: RouteComponent,
 });
@@ -92,17 +79,42 @@ function RouteComponent() {
 		})
 	);
 
+	if (!projectData?.project?._id) {
+		return (
+			<Navigate
+				to='/@{$org}/$project/updates'
+				params={{
+					org: orgSlug,
+					project: projectSlug,
+				}}
+			/>
+		);
+	}
+
 	const { data: updateData } = useSuspenseQuery(
 		convexQuery(api.update.getBySlug, {
-			projectId: projectData?.project?._id!,
+			projectId: projectData.project._id,
 			slug,
 		})
 	);
 
+	if (!updateData?.canEdit) {
+		return (
+			<Navigate
+				to='/@{$org}/$project/updates/$slug'
+				params={{
+					org: orgSlug,
+					project: projectSlug,
+					slug,
+				}}
+			/>
+		);
+	}
+
 	const [tagInput, setTagInput] = useState('');
 	const formError = useFormError();
 
-	const { update } = updateData!;
+	const { update } = updateData;
 
 	const [selectedFeedbackIds, setSelectedFeedbackIds] = useState<Id<'feedback'>[]>(
 		update.relatedFeedbackIds ?? []

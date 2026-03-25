@@ -4,11 +4,14 @@ import { createFileRoute, notFound } from '@tanstack/react-router';
 
 import { api } from '~api';
 import { NotFound } from '@/components/_not-found';
+import { RoutePending } from '@/components/route-pending';
 
 import { CreateProjectForm } from './-create-project-form';
 
 export const Route = createFileRoute('/@{$org}/create-project/')({
 	component: RouteComponent,
+	pendingComponent: () => <RoutePending variant='form' />,
+	pendingMs: 150,
 	loader: async ({ context, params }) => {
 		const orgDetails = await context.queryClient.ensureQueryData(
 			convexQuery(api.org.getDetails, {
@@ -16,17 +19,15 @@ export const Route = createFileRoute('/@{$org}/create-project/')({
 			})
 		);
 
-		if (!orgDetails.permissions.canEdit) {
+		if (!orgDetails?.org || !orgDetails.permissions.canEdit) {
 			throw notFound();
 		}
 
-		const limits = await context.queryClient.ensureQueryData(
+		await context.queryClient.ensureQueryData(
 			convexQuery(api.org.getMyPermission, {
 				slug: params.org,
 			})
 		);
-
-		return { limits };
 	},
 	notFoundComponent: () => <NotFound isContainer />,
 });
@@ -34,15 +35,21 @@ export const Route = createFileRoute('/@{$org}/create-project/')({
 function RouteComponent() {
 	const { org: orgSlug } = Route.useParams();
 
-	const { limits } = Route.useLoaderData();
-
-	if (!limits) return null;
-
 	const { data: orgDetails } = useSuspenseQuery(
 		convexQuery(api.org.getDetails, {
 			slug: orgSlug,
 		})
 	);
+
+	const { data: limits } = useSuspenseQuery(
+		convexQuery(api.org.getMyPermission, {
+			slug: orgSlug,
+		})
+	);
+
+	if (!orgDetails.permissions.canEdit) {
+		throw notFound();
+	}
 
 	if (!orgDetails.org) return null;
 

@@ -1,8 +1,9 @@
 import { convexQuery } from '@convex-dev/react-query';
 import { useSuspenseQuery } from '@tanstack/react-query';
-import { createFileRoute, Link } from '@tanstack/react-router';
+import { createFileRoute, Link, notFound } from '@tanstack/react-router';
 
 import { api } from '~api';
+import { RoutePending } from '@/components/route-pending';
 import { buttonVariants } from '@/components/ui/button';
 import { Icon, IconName } from '@/icons';
 import Eye from '@/icons/eye';
@@ -11,6 +12,26 @@ import VArrowRight from '@/icons/v-arrow-right';
 
 export const Route = createFileRoute('/@{$org}/$project/feedback/boards/')({
 	component: RouteComponent,
+	pendingComponent: () => <RoutePending variant='page' />,
+	pendingMs: 150,
+	loader: async ({ context, params }) => {
+		const projectData = await context.queryClient.ensureQueryData(
+			convexQuery(api.project.getDetails, {
+				orgSlug: params.org,
+				slug: params.project,
+			})
+		);
+
+		if (!projectData?.project?._id) {
+			throw notFound();
+		}
+
+		await context.queryClient.ensureQueryData(
+			convexQuery(api.feedbackBoard.listProjectBoards, {
+				slug: params.project,
+			})
+		);
+	},
 });
 
 function RouteComponent() {

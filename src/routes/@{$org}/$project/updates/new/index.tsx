@@ -1,34 +1,28 @@
 import { convexQuery } from '@convex-dev/react-query';
 import { useSuspenseQuery } from '@tanstack/react-query';
-import { createFileRoute, redirect, useRouter } from '@tanstack/react-router';
+import { createFileRoute, Navigate, notFound, useRouter } from '@tanstack/react-router';
 import { FileText } from 'lucide-react';
 
 import { api } from '~api';
+import { RoutePending } from '@/components/route-pending';
 import { Id } from '@/convex/_generated/dataModel';
 
 import { CreateUpdateForm } from './-components/create-update-form';
 
 export const Route = createFileRoute('/@{$org}/$project/updates/new/')({
+	pendingComponent: () => <RoutePending variant='form' />,
+	pendingMs: 150,
 	loader: async ({ context, params }) => {
-		const project = await context.queryClient.ensureQueryData(
+		const projectData = await context.queryClient.ensureQueryData(
 			convexQuery(api.project.getDetails, {
 				orgSlug: params.org,
 				slug: params.project,
 			})
 		);
 
-		// Check if user can edit the project
-		if (!project?.permissions?.canEdit) {
-			throw redirect({
-				to: '/@{$org}/$project/updates',
-				params: {
-					org: params.org,
-					project: params.project,
-				},
-			});
+		if (!projectData?.project?._id) {
+			throw notFound();
 		}
-
-		return { project };
 	},
 	component: RouteComponent,
 });
@@ -43,6 +37,18 @@ function RouteComponent() {
 			slug: projectSlug,
 		})
 	);
+
+	if (!projectData?.permissions?.canEdit) {
+		return (
+			<Navigate
+				to='/@{$org}/$project/updates'
+				params={{
+					org: orgSlug,
+					project: projectSlug,
+				}}
+			/>
+		);
+	}
 
 	if (!projectData?.project?._id) {
 		return null;

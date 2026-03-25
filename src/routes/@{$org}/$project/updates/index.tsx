@@ -1,9 +1,10 @@
 import { convexQuery } from '@convex-dev/react-query';
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
-import { createFileRoute, Link } from '@tanstack/react-router';
+import { createFileRoute, Link, notFound } from '@tanstack/react-router';
 import { FileText } from 'lucide-react';
 
 import { api } from '~api';
+import { RoutePending } from '@/components/route-pending';
 import { Button } from '@/components/ui/button';
 import CirclePlusOutline from '@/icons/circle-plus-outline';
 import LoaderQuarter from '@/icons/loader-quarter';
@@ -12,25 +13,27 @@ import Missing from '@/icons/missing';
 import { UpdateCard } from './-components/update-card';
 
 export const Route = createFileRoute('/@{$org}/$project/updates/')({
+	component: RouteComponent,
+	pendingComponent: () => <RoutePending variant='page' />,
+	pendingMs: 150,
 	loader: async ({ context, params }) => {
-		const project = await context.queryClient.ensureQueryData(
+		const projectData = await context.queryClient.ensureQueryData(
 			convexQuery(api.project.getDetails, {
 				orgSlug: params.org,
 				slug: params.project,
 			})
 		);
 
-		if (project?.project?._id) {
-			await context.queryClient.ensureQueryData(
-				convexQuery(api.update.listByProject, {
-					projectId: project.project._id,
-				})
-			);
+		if (!projectData?.project?._id) {
+			throw notFound();
 		}
 
-		return { project };
+		await context.queryClient.ensureQueryData(
+			convexQuery(api.update.listByProject, {
+				projectId: projectData.project._id,
+			})
+		);
 	},
-	component: RouteComponent,
 });
 
 const Notice = ({ icon, children }: { icon: React.JSX.Element; children: React.ReactNode }) => {
@@ -58,12 +61,12 @@ function RouteComponent() {
 		})
 	);
 
+	if (!projectData?.project?._id) {
+		throw notFound();
+	}
+
 	// Get current user's profile for like functionality
 	const { data: currentProfile } = useQuery(convexQuery(api.profile.findMyProfile, {}));
-
-	if (!projectData?.project?._id) {
-		return null;
-	}
 
 	// Handle case where updatesData is an empty array (project not found)
 	const updates = Array.isArray(updatesData) ? [] : updatesData.updates;

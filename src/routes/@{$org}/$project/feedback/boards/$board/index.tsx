@@ -1,30 +1,49 @@
 import { convexQuery } from '@convex-dev/react-query';
 import { useSuspenseQuery } from '@tanstack/react-query';
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, notFound } from '@tanstack/react-router';
 
 import { api } from '~api';
+import { RoutePending } from '@/components/route-pending';
+import { Id } from '@/convex/_generated/dataModel';
 
 export const Route = createFileRoute('/@{$org}/$project/feedback/boards/$board/')({
+	pendingComponent: () => <RoutePending variant='detail' />,
+	pendingMs: 150,
+	loader: async ({ context, params }) => {
+		const boardData = await context.queryClient.ensureQueryData(
+			convexQuery(api.feedbackBoard.get, {
+				_id: params.board,
+				projectSlug: params.project,
+				orgSlug: params.org,
+			})
+		);
+
+		if (!boardData) {
+			throw notFound();
+		}
+	},
 	component: RouteComponent,
 });
 
 function RouteComponent() {
-	const { data: feedback } = useSuspenseQuery(
-		convexQuery(api.features.feedback, {
-			projectSlug: Route.useParams().project,
+	const { org, project, board } = Route.useParams();
+
+	const { data: boardData } = useSuspenseQuery(
+		convexQuery(api.feedbackBoard.get, {
+			_id: board as Id<'feedbackBoard'>,
+			projectSlug: project,
+			orgSlug: org,
 		})
 	);
 
-	if (!feedback?.boards) throw new Error('No boards found');
-
-	const board = feedback.boards.find((board) => board._id === Route.useParams().board);
-
-	if (!board) throw new Error('No board found');
+	if (!boardData) {
+		throw notFound();
+	}
 
 	return (
 		<div className='container'>
 			<pre>
-				<code>{JSON.stringify(board, null, 2)}</code>
+				<code>{JSON.stringify(boardData, null, 2)}</code>
 			</pre>
 		</div>
 	);
