@@ -1,5 +1,6 @@
 import { convexQuery } from '@convex-dev/react-query';
-import { createFileRoute, notFound, Outlet } from '@tanstack/react-router';
+import { useQuery } from '@tanstack/react-query';
+import { createFileRoute, Outlet } from '@tanstack/react-router';
 
 import { api } from '~api';
 import { NotFound } from '@/components/_not-found';
@@ -7,25 +8,6 @@ import { NotFound } from '@/components/_not-found';
 import { MainNav } from './-components/main-nav';
 
 export const Route = createFileRoute('/@{$org}')({
-	loader: async ({ context, params }) => {
-		const user = await context.queryClient.ensureQueryData(
-			convexQuery(api.profile.findMyProfile, {})
-		);
-		await context.queryClient
-			.fetchQuery(
-				convexQuery(api.org.getDetails, {
-					slug: params.org,
-				})
-			)
-			.catch((error) => {
-				console.error(error);
-				throw notFound();
-			});
-
-		return {
-			user,
-		};
-	},
 	component: RouteComponent,
 	notFoundComponent: () => <NotFound isContainer />,
 	errorComponent: () => {
@@ -41,7 +23,8 @@ export const Route = createFileRoute('/@{$org}')({
 });
 
 function RouteComponent() {
-	const { user } = Route.useLoaderData();
+	const { data: user } = useQuery(convexQuery(api.profile.findMyProfile, {}));
+
 	return (
 		<div className='flex h-screen w-full flex-col'>
 			<div className='flex w-full flex-1 flex-col'>

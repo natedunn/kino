@@ -6,9 +6,6 @@ import { api } from '~api';
 
 export const Route = createFileRoute('/playground')({
 	component: RouteComponent,
-	loader: async ({ context }) => {
-		await context.queryClient.ensureQueryData(convexQuery(api.profile.findMyProfile, {}));
-	},
 });
 
 function RouteComponent() {

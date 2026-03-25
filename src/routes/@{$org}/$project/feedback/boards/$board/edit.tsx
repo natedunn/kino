@@ -5,14 +5,17 @@ import { ChevronLeft } from 'lucide-react';
 
 import { api } from '~api';
 import { NotFound } from '@/components/_not-found';
+import { RoutePending } from '@/components/route-pending';
 import { Id } from '@/convex/_generated/dataModel';
 
 import { EditBoardForm } from './-components/edit-board-form';
 
 export const Route = createFileRoute('/@{$org}/$project/feedback/boards/$board/edit')({
 	component: RouteComponent,
+	pendingComponent: () => <RoutePending variant='form' />,
+	pendingMs: 150,
 	loader: async ({ context, params }) => {
-		const board = await context.queryClient.ensureQueryData(
+		const boardData = await context.queryClient.ensureQueryData(
 			convexQuery(api.feedbackBoard.get, {
 				_id: params.board,
 				projectSlug: params.project,
@@ -20,8 +23,7 @@ export const Route = createFileRoute('/@{$org}/$project/feedback/boards/$board/e
 			})
 		);
 
-		if (!board) {
-			// throw new Error();
+		if (!boardData) {
 			throw notFound();
 		}
 	},
@@ -39,7 +41,9 @@ function RouteComponent() {
 		})
 	);
 
-	if (!board) throw new Error('No board found.');
+	if (!board) {
+		throw notFound();
+	}
 
 	return (
 		<div className='container'>

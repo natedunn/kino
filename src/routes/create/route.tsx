@@ -1,21 +1,19 @@
-import { createFileRoute, Outlet, redirect } from '@tanstack/react-router';
-import { Authenticated, AuthLoading } from 'convex/react';
+import { createFileRoute, Navigate, Outlet, useRouterState } from '@tanstack/react-router';
+import { useConvexAuth } from 'convex/react';
 
 export const Route = createFileRoute('/create')({
 	component: RouteComponent,
-	loader: async ({ context }) => {
-		if (!context.token) {
-			throw redirect({
-				to: '/sign-in',
-			});
-		}
-	},
 });
 
 function RouteComponent() {
+	const { isAuthenticated, isLoading } = useConvexAuth();
+	const pathname = useRouterState({
+		select: (state) => state.location.pathname,
+	});
+
 	return (
 		<>
-			<AuthLoading>
+			{isLoading ? (
 				<div className='relative flex h-screen w-full items-center justify-center'>
 					<div className='absolute top-0 right-0 left-0 z-0 h-64 w-full bg-gradient-to-t from-background to-muted'></div>
 					<svg
@@ -39,10 +37,13 @@ function RouteComponent() {
 						></path>
 					</svg>
 				</div>
-			</AuthLoading>
-			<Authenticated>
+			) : null}
+			{!isLoading && !isAuthenticated ? (
+				<Navigate to='/sign-in' search={{ redirect: pathname }} />
+			) : null}
+			{isAuthenticated ? (
 				<Outlet />
-			</Authenticated>
+			) : null}
 		</>
 	);
 }

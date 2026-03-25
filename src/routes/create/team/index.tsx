@@ -3,11 +3,14 @@ import { useSuspenseQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 
 import { api } from '~api';
+import { RoutePending } from '@/components/route-pending';
 
 import { CreateTeamForm } from './-components/create-team-form';
 
 export const Route = createFileRoute('/create/team/')({
 	component: RouteComponent,
+	pendingComponent: () => <RoutePending variant='form' />,
+	pendingMs: 150,
 	loader: async ({ context }) => {
 		await context.queryClient.ensureQueryData(convexQuery(api.org.findMyOrgs, {}));
 	},

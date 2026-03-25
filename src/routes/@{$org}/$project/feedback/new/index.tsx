@@ -1,13 +1,34 @@
 import { convexQuery } from '@convex-dev/react-query';
 import { useSuspenseQuery } from '@tanstack/react-query';
-import { createFileRoute, useRouter } from '@tanstack/react-router';
+import { createFileRoute, notFound, useRouter } from '@tanstack/react-router';
 
 import { api } from '~api';
+import { RoutePending } from '@/components/route-pending';
 
 import { CreateFeedbackForm } from './-components/create-feedback-form';
 
 export const Route = createFileRoute('/@{$org}/$project/feedback/new/')({
 	component: RouteComponent,
+	pendingComponent: () => <RoutePending variant='form' />,
+	pendingMs: 150,
+	loader: async ({ context, params }) => {
+		const projectDetails = await context.queryClient.ensureQueryData(
+			convexQuery(api.project.getDetails, {
+				orgSlug: params.org,
+				slug: params.project,
+			})
+		);
+
+		if (!projectDetails?.project?._id) {
+			throw notFound();
+		}
+
+		await context.queryClient.ensureQueryData(
+			convexQuery(api.feedbackBoard.listProjectBoards, {
+				slug: params.project,
+			})
+		);
+	},
 });
 
 function RouteComponent() {
@@ -29,7 +50,7 @@ function RouteComponent() {
 	);
 
 	if (!projectDetails?.project) {
-		throw new Error('Project not found: 019a6be9');
+		throw notFound();
 	}
 
 	return (

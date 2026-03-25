@@ -1,11 +1,12 @@
 import React from 'react';
 import { convexQuery } from '@convex-dev/react-query';
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
-import { createFileRoute, Link, useRouter } from '@tanstack/react-router';
+import { createFileRoute, Link, notFound, useRouter } from '@tanstack/react-router';
 import { usePaginatedQuery } from 'convex/react';
 import * as z from 'zod';
 
 import { api } from '~api';
+import { RoutePending } from '@/components/route-pending';
 import { Button } from '@/components/ui/button';
 import { Id } from '@/convex/_generated/dataModel';
 import { feedbackSelectSchema } from '@/convex/schema/feedback.schema';
@@ -32,44 +33,27 @@ const feedbackSearchParams = z.object({
 
 export const Route = createFileRoute('/@{$org}/$project/feedback/')({
 	validateSearch: feedbackSearchParams,
-	loaderDeps: ({ search }) => ({ search }),
-	loader: async ({ context, params, deps }) => {
-		await context.queryClient.ensureQueryData(
-			convexQuery(api.features.feedback, {
-				projectSlug: params.project,
-			})
-		);
-
-		const boards = await context.queryClient.ensureQueryData(
-			convexQuery(api.feedbackBoard.listProjectBoards, {
-				slug: params.project,
-			})
-		);
-
-		// This will be rewritten 👇
-		const project = await context.queryClient.ensureQueryData(
+	component: RouteComponent,
+	pendingComponent: () => <RoutePending variant='sidebar' />,
+	pendingMs: 150,
+	loader: async ({ context, params }) => {
+		const projectData = await context.queryClient.ensureQueryData(
 			convexQuery(api.project.getDetails, {
 				orgSlug: params.org,
 				slug: params.project,
 			})
 		);
 
-		const feedback = await context.queryClient.ensureQueryData(
-			convexQuery(api.feedback.listProjectFeedback, {
-				projectId: project?.project?._id!,
-				search: deps.search.search,
-				boardId: boards?.find((b) => b.slug === deps.search.board)?._id ?? 'all',
-				status: deps.search.status,
-				paginationOpts: {
-					numItems: NUM_OF_ITEMS_PER_PAGE,
-					cursor: null,
-				},
+		if (!projectData?.project?._id) {
+			throw notFound();
+		}
+
+		await context.queryClient.ensureQueryData(
+			convexQuery(api.feedbackBoard.listProjectBoards, {
+				slug: params.project,
 			})
 		);
-
-		return { feedback: feedback.page };
 	},
-	component: RouteComponent,
 });
 
 const Notice = ({ icon, children }: { icon: React.JSX.Element; children: React.ReactNode }) => {
@@ -86,11 +70,8 @@ function RouteComponent() {
 	const searchParams = Route.useSearch();
 	const { search, status, board } = searchParams;
 	const { org: orgSlug, project: projectSlug } = Route.useParams();
-	const { feedback: serverResults } = Route.useLoaderData();
 
-	const [feedback, setFeedback] = React.useState(serverResults);
 	const [boardId, setBoardId] = React.useState<Id<'feedbackBoard'> | 'all'>('all');
-	const [loadingFeedback, setLoadingFeedback] = React.useState(false);
 
 	const { data: projectData } = useSuspenseQuery(
 		convexQuery(api.project.getDetails, {
@@ -105,12 +86,11 @@ function RouteComponent() {
 		})
 	);
 
-	// Get current user's profile for authentication status
 	const { data: currentProfile } = useQuery(convexQuery(api.profile.findMyProfile, {}));
 	const isAuthenticated = !!currentProfile;
 
 	if (!projectData?.project?._id) {
-		return null;
+		throw notFound();
 	}
 
 	const feedbackData = usePaginatedQuery(
@@ -127,30 +107,14 @@ function RouteComponent() {
 	);
 
 	React.useEffect(() => {
-		if (feedbackData.status !== 'LoadingFirstPage' && feedbackData.status !== 'LoadingMore') {
-			setFeedback(feedbackData.results);
-		}
-	}, [feedbackData]);
-
-	React.useEffect(() => {
-		if (board) {
+		if (boards) {
 			setBoardId(boards?.find((b) => b.slug === board)?._id ?? 'all');
 		}
-	}, [board]);
+	}, [board, boards]);
 
-	React.useEffect(() => {
-		if (
-			feedbackData.status === 'LoadingFirstPage' ||
-			feedbackData.status === 'LoadingMore' ||
-			searchParams
-		) {
-			setLoadingFeedback(true);
-		}
-
-		if (feedbackData.status !== 'LoadingFirstPage' && feedbackData.status !== 'LoadingMore') {
-			setLoadingFeedback(false);
-		}
-	}, [feedbackData.status, searchParams]);
+	const loadingFeedback =
+		feedbackData.status === 'LoadingFirstPage' || feedbackData.status === 'LoadingMore';
+	const feedback = feedbackData.results;
 
 	return (
 		<div className='container h-full overflow-visible'>

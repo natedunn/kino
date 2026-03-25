@@ -1,9 +1,10 @@
 import { convexQuery } from '@convex-dev/react-query';
 import { useSuspenseQuery } from '@tanstack/react-query';
-import { createFileRoute, Link } from '@tanstack/react-router';
+import { createFileRoute, Link, notFound } from '@tanstack/react-router';
 import { ArrowUpRight, CircleCheck, FolderOpen, Settings, User } from 'lucide-react';
 
 import { api } from '~api';
+import { RoutePending } from '@/components/route-pending';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 
@@ -12,7 +13,17 @@ import { OrgProjects } from './-components/org-projects';
 
 export const Route = createFileRoute('/@{$org}/')({
 	component: RouteComponent,
+	pendingComponent: () => <RoutePending variant='page' />,
+	pendingMs: 150,
 	loader: async ({ context, params }) => {
+		const orgDetails = await context.queryClient.ensureQueryData(
+			convexQuery(api.org.getDetails, { slug: params.org })
+		);
+
+		if (!orgDetails?.org) {
+			throw notFound();
+		}
+
 		await context.queryClient.ensureQueryData(
 			convexQuery(api.project.getManyByOrg, {
 				orgSlug: params.org,

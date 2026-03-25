@@ -26,6 +26,7 @@ import {
 	sanitizeEditorContent,
 } from '@/components/editor';
 import { ProfileLinkOrUnknown } from '@/components/profile-link';
+import { RoutePending } from '@/components/route-pending';
 import { SidebarSection } from '@/components/sidebar-section';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -339,20 +340,20 @@ function FirstCommentItem({
 
 export const Route = createFileRoute('/@{$org}/$project/feedback/$slug/')({
 	loader: async ({ context, params }) => {
-		const project = await context.queryClient.ensureQueryData(
+		const projectData = await context.queryClient.ensureQueryData(
 			convexQuery(api.project.getDetails, {
 				orgSlug: params.org,
 				slug: params.project,
 			})
 		);
 
-		if (!project?.project?._id) {
+		if (!projectData?.project?._id) {
 			throw notFound();
 		}
 
 		const feedbackData = await context.queryClient.ensureQueryData(
 			convexQuery(api.feedback.getBySlug, {
-				projectId: project.project._id,
+				projectId: projectData.project._id,
 				slug: params.slug,
 			})
 		);
@@ -360,15 +361,14 @@ export const Route = createFileRoute('/@{$org}/$project/feedback/$slug/')({
 		if (!feedbackData) {
 			throw notFound();
 		}
-
-		return { feedbackData };
 	},
+	pendingComponent: () => <RoutePending variant='detail' />,
+	pendingMs: 150,
 	component: RouteComponent,
 });
 
 function RouteComponent() {
 	const params = Route.useParams();
-	const { feedbackData: loaderData } = Route.useLoaderData();
 
 	const { data: projectData } = useSuspenseQuery(
 		convexQuery(api.project.getDetails, {
@@ -377,12 +377,20 @@ function RouteComponent() {
 		})
 	);
 
+	if (!projectData?.project?._id) {
+		throw notFound();
+	}
+
 	const { data: feedbackData } = useSuspenseQuery(
 		convexQuery(api.feedback.getBySlug, {
-			projectId: projectData?.project?._id!,
+			projectId: projectData.project._id,
 			slug: params.slug,
 		})
 	);
+
+	if (!feedbackData) {
+		throw notFound();
+	}
 
 	// Get current user's profile for highlighting their emotes
 	const { data: currentProfile } = useQuery(convexQuery(api.profile.findMyProfile, {}));
@@ -407,13 +415,7 @@ function RouteComponent() {
 		})
 	);
 
-	const data = feedbackData ?? loaderData;
-
-	if (!data) {
-		return <div className='container py-10'>Feedback not found.</div>;
-	}
-
-	const { feedback, author, board, firstComment, assignedProfile, hasUpvoted } = data;
+	const { feedback, author, board, firstComment, assignedProfile, hasUpvoted } = feedbackData;
 
 	// Find the first comment with emotes from the comments list
 	const firstCommentWithEmotes = comments?.find((c) => c._id === firstComment?._id);

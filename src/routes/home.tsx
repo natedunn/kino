@@ -1,25 +1,29 @@
 import { convexQuery } from '@convex-dev/react-query';
 import { useSuspenseQuery } from '@tanstack/react-query';
-import { createFileRoute, redirect } from '@tanstack/react-router';
+import { createFileRoute, Navigate, useRouterState } from '@tanstack/react-router';
+import { useConvexAuth } from 'convex/react';
 
 import { api } from '~api';
 import { authClient } from '@/lib/auth/auth-client';
 
 export const Route = createFileRoute('/home')({
-	beforeLoad: async ({ context }) => {
-		if (!context.token) {
-			throw redirect({
-				to: '/sign-in',
-			});
-		}
-	},
 	component: RouteComponent,
-	loader: async ({ context }) => {
-		await context.queryClient.ensureQueryData(convexQuery(api.profile.findMyProfile, {}));
-	},
 });
 
 function RouteComponent() {
+	const { isAuthenticated, isLoading } = useConvexAuth();
+	const pathname = useRouterState({
+		select: (state) => state.location.pathname,
+	});
+
+	if (isLoading) {
+		return null;
+	}
+
+	if (!isAuthenticated) {
+		return <Navigate to='/sign-in' search={{ redirect: pathname }} />;
+	}
+
 	const { data: user } = useSuspenseQuery(convexQuery(api.profile.findMyProfile, {}));
 
 	const { data: orgs } = authClient.useListOrganizations();
