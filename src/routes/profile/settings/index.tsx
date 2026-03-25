@@ -1,6 +1,7 @@
 import { convexQuery } from '@convex-dev/react-query';
 import { useSuspenseQuery } from '@tanstack/react-query';
-import { createFileRoute, redirect } from '@tanstack/react-router';
+import { createFileRoute, Navigate, useRouterState } from '@tanstack/react-router';
+import { useConvexAuth } from 'convex/react';
 
 import { api } from '~api';
 
@@ -8,16 +9,22 @@ import { UserEditForm } from './-components/user-edit-form';
 
 export const Route = createFileRoute('/profile/settings/')({
 	component: RouteComponent,
-	loader: async ({ context }) => {
-		if (!context.token) {
-			throw redirect({
-				to: '/sign-in',
-			});
-		}
-	},
 });
 
 function RouteComponent() {
+	const { isAuthenticated, isLoading } = useConvexAuth();
+	const pathname = useRouterState({
+		select: (state) => state.location.pathname,
+	});
+
+	if (isLoading) {
+		return null;
+	}
+
+	if (!isAuthenticated) {
+		return <Navigate to='/sign-in' search={{ redirect: pathname }} />;
+	}
+
 	const { data: profile } = useSuspenseQuery(convexQuery(api.profile.findMyProfile, {}));
 
 	if (!profile) return null;

@@ -1,5 +1,6 @@
-import { createFileRoute, Link, redirect } from '@tanstack/react-router';
+import { createFileRoute, Link, Navigate } from '@tanstack/react-router';
 import { ChevronLeft } from 'lucide-react';
+import { useConvexAuth } from 'convex/react';
 import * as z from 'zod';
 
 import { Button } from '@/components/ui/button';
@@ -13,17 +14,19 @@ const searchValidator = z.object({
 export const Route = createFileRoute('/_blank/sign-in')({
 	validateSearch: searchValidator,
 	component: RouteComponent,
-	loader: async ({ context }) => {
-		if (context.token) {
-			throw redirect({
-				to: '/',
-			});
-		}
-	},
 });
 
 function RouteComponent() {
 	const search = Route.useSearch();
+	const { isAuthenticated, isLoading } = useConvexAuth();
+
+	if (isLoading) {
+		return null;
+	}
+
+	if (isAuthenticated) {
+		return <Navigate to='/' />;
+	}
 
 	return (
 		<div className='flex h-screen flex-col items-center justify-center'>

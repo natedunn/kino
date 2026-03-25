@@ -43,7 +43,7 @@ type MainNavProps = {
 		slug: string;
 		name: string;
 	};
-	user: API['profile']['findMyProfile'];
+	user: API['profile']['findMyProfile'] | null | undefined;
 };
 
 export const MainNav = ({ children, user }: MainNavProps) => {

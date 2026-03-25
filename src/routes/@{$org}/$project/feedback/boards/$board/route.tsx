@@ -1,23 +1,8 @@
-import { convexQuery } from '@convex-dev/react-query';
-import { createFileRoute, notFound, Outlet } from '@tanstack/react-router';
+import { createFileRoute, Outlet } from '@tanstack/react-router';
 
-import { api } from '~api';
 import { NotFound } from '@/components/_not-found';
 
 export const Route = createFileRoute('/@{$org}/$project/feedback/boards/$board')({
-	loader: async ({ context, params }) => {
-		const board = await context.queryClient.ensureQueryData(
-			convexQuery(api.feedbackBoard.get, {
-				_id: params.board,
-				projectSlug: params.project,
-				orgSlug: params.org,
-			})
-		);
-
-		if (!board) {
-			throw notFound();
-		}
-	},
 	component: RouteComponent,
 	errorComponent: ({ error }) => {
 		return <div>There was an error: {error.message}</div>;

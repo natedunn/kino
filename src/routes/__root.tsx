@@ -68,7 +68,7 @@ export const Route = createRootRouteWithContext<{
 		],
 	}),
 	beforeLoad: async (ctx) => {
-		const token = await getAuth();
+		const token = typeof document === 'undefined' ? await getAuth() : undefined;
 
 		// During SSR only (the only time serverHttpClient exists),
 		// set the auth token to make HTTP queries with.
