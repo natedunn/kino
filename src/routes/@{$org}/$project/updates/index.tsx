@@ -1,20 +1,30 @@
 import { convexQuery } from '@convex-dev/react-query';
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
 import { createFileRoute, Link, notFound } from '@tanstack/react-router';
-import { FileText } from 'lucide-react';
+import * as z from 'zod';
 
 import { api } from '~api';
 import { RoutePending } from '@/components/route-pending';
 import { Button } from '@/components/ui/button';
+import { updateSelectSchema } from '@/convex/schema/update.schema';
+import CalendarDays from '@/icons/calendar-days';
 import CirclePlusOutline from '@/icons/circle-plus-outline';
 import LoaderQuarter from '@/icons/loader-quarter';
 import Missing from '@/icons/missing';
 
+import { CategoriesNav } from './-components/categories-nav';
 import { UpdateCard } from './-components/update-card';
 
+const updatesSearchParams = z.object({
+	category: z.optional(
+		updateSelectSchema.shape.category.transform((val) => (val?.trim() === '' ? undefined : val))
+	),
+});
+
 export const Route = createFileRoute('/@{$org}/$project/updates/')({
+	validateSearch: updatesSearchParams,
 	component: RouteComponent,
-	pendingComponent: () => <RoutePending variant='page' />,
+	pendingComponent: () => <RoutePending variant='sidebar' />,
 	pendingMs: 150,
 	loader: async ({ context, params }) => {
 		const projectData = await context.queryClient.ensureQueryData(
@@ -47,6 +57,7 @@ const Notice = ({ icon, children }: { icon: React.JSX.Element; children: React.R
 
 function RouteComponent() {
 	const { org: orgSlug, project: projectSlug } = Route.useParams();
+	const { category: categoryParam } = Route.useSearch();
 
 	const { data: projectData } = useSuspenseQuery(
 		convexQuery(api.project.getDetails, {
@@ -69,29 +80,23 @@ function RouteComponent() {
 	const { data: currentProfile } = useQuery(convexQuery(api.profile.findMyProfile, {}));
 
 	// Handle case where updatesData is an empty array (project not found)
-	const updates = Array.isArray(updatesData) ? [] : updatesData.updates;
+	const allUpdates = Array.isArray(updatesData) ? [] : updatesData.updates;
 	const canEdit = Array.isArray(updatesData) ? false : updatesData.canEdit;
 
+	// Filter by category
+	const updates = categoryParam
+		? allUpdates.filter((u) => u.category === categoryParam)
+		: allUpdates;
+
 	return (
-		<div>
-			{/* Header */}
-			<header className='w-full border-b bg-muted/50'>
-				<div className='container pt-16 pb-6'>
-					<div className='mx-auto max-w-240 px-4'>
-						<div className='flex items-start justify-between gap-4'>
-							<div className='flex items-start gap-4'>
-								<div className='mt-1'>
-									<FileText className='size-8 text-primary dark:text-blue-300' aria-hidden='true' />
-								</div>
-								<div>
-									<h1 className='text-2xl font-bold'>Updates</h1>
-									<p className='text-muted-foreground'>
-										Stay up to date with the latest news and releases.
-									</p>
-								</div>
-							</div>
-							{canEdit && (
-								<Button asChild>
+		<div className='container h-full overflow-visible'>
+			<div className='h-full grid-cols-12 gap-8 md:grid'>
+				{/* Right sidebar */}
+				<div className='order-first border-l border-border/75 py-6 md:order-last md:col-span-3'>
+					<div className='sticky top-6 flex flex-col overflow-hidden'>
+						{canEdit && (
+							<div className='border-b pb-6 pl-6'>
+								<Button size='lg' className='w-full' asChild>
 									<Link
 										to='/@{$org}/$project/updates/new'
 										params={{
@@ -102,15 +107,30 @@ function RouteComponent() {
 										<CirclePlusOutline size='16px' /> New Update
 									</Link>
 								</Button>
-							)}
+							</div>
+						)}
+						<div className={canEdit ? 'mt-4' : ''}>
+							<div className='pb-6 pl-6'>
+								<h2 className='mx-2 text-sm font-bold text-muted-foreground'>Categories</h2>
+								<div className='mt-2'>
+									<CategoriesNav />
+								</div>
+							</div>
 						</div>
 					</div>
 				</div>
-			</header>
 
-			{/* Content */}
-			<div className='container py-14'>
-				<div className='mx-auto max-w-240 px-4' aria-live='polite' aria-busy={isLoading}>
+				{/* Main content */}
+				<div className='flex flex-col gap-4 py-8 md:col-span-9' aria-live='polite' aria-busy={isLoading}>
+					{/* Header */}
+					<div className='flex items-start gap-3 border-b pt-6 pb-6 md:-mr-8.25'>
+						<CalendarDays size='28px' className='mt-1 text-muted-foreground' />
+						<div className='flex flex-col gap-1'>
+							<h1 className='text-3xl font-bold'>Updates</h1>
+							<p className='text-muted-foreground'>The latest news and announcements.</p>
+						</div>
+					</div>
+
 					{updates.length === 0 && !isLoading ? (
 						<Notice icon={<Missing size='32px' aria-hidden='true' />}>No updates yet.</Notice>
 					) : null}
