@@ -7,7 +7,8 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-	--background: oklch(1 0 0);
+	--absolute: oklch(1 0 0);
+	--background: oklch(0.98 0 0);
 	--foreground: oklch(0.1448 0 0);
 	--card: oklch(1 0 0);
 	--card-foreground: oklch(0.1448 0 0);
@@ -56,9 +57,10 @@
 }
 
 .dark {
-	--background: oklch(0 0 0);
+	--absolute: oklch(0 0 0);
+	--background: oklch(0.17 0 0);
 	--foreground: oklch(1 0 0);
-	--card: oklch(0 0 0);
+	--card: oklch(0.1 0 0);
 	--card-foreground: oklch(0.9842 0.0034 247.8575);
 	--popover: oklch(0 0 0);
 	--popover-foreground: oklch(0.9842 0.0034 247.8575);
@@ -66,7 +68,7 @@
 	--primary-foreground: oklch(1 0 0);
 	--secondary: oklch(0.2046 0 0);
 	--secondary-foreground: oklch(0.9842 0.0034 247.8575);
-	--muted: oklch(0.17 0 0);
+	--muted: oklch(0.2 0 0);
 	--muted-foreground: oklch(0.7155 0 0);
 	--accent: oklch(0.3 0 0);
 	--accent-foreground: oklch(0.9842 0.0034 247.8575);
@@ -103,6 +105,7 @@
 }
 
 @theme inline {
+	--color-absolute: var(--absolute);
 	--color-background: var(--background);
 	--color-foreground: var(--foreground);
 	--color-card: var(--card);

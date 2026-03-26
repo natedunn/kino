@@ -33,7 +33,7 @@ export const FeedbackCard = ({
 			</div>
 			<ClickableContainer
 				onClick={() => onNavigationClick?.()}
-				className='group flex w-full flex-col p-5 transition-colors duration-100 ease-in-out hocus:bg-muted/50 hocus:outline-primary'
+				className='group flex w-full flex-col bg-muted p-5 transition-colors duration-100 ease-in-out hocus:bg-foreground/5 hocus:outline-primary'
 			>
 				<div className='flex items-start gap-4'>
 					<div className='mt-1'>

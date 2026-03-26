@@ -54,7 +54,7 @@ function CollapsibleContent({ children }: { children: React.ReactNode }) {
 			<div
 				ref={contentRef}
 				className={cn('overflow-hidden transition-[max-height] duration-300', {
-					'max-h-[600px]': !isExpanded && isOverflowing,
+					'max-h-150': !isExpanded && isOverflowing,
 				})}
 				style={
 					isExpanded ? undefined : { maxHeight: isOverflowing ? COLLAPSED_MAX_HEIGHT : undefined }
@@ -63,7 +63,7 @@ function CollapsibleContent({ children }: { children: React.ReactNode }) {
 				{children}
 			</div>
 			{isOverflowing && !isExpanded && (
-				<div className='absolute inset-x-0 bottom-0 flex h-20 items-end justify-center bg-gradient-to-t from-background to-transparent'>
+				<div className='absolute inset-x-0 bottom-0 flex h-20 items-end justify-center bg-linear-to-t from-background to-transparent'>
 					<Button variant='outline' size='sm' onClick={() => setIsExpanded(true)} className='mb-2'>
 						Show more
 					</Button>
@@ -274,7 +274,7 @@ function CommentItem({
 						'flex shrink-0 flex-col items-center justify-start border-r pt-3 pl-4',
 						isAnswer
 							? 'border-r-green-700 bg-linear-to-b from-green-400/20 via-green-400/10 to-transparent'
-							: 'bg-muted'
+							: 'bg-foreground/5'
 					)}
 				>
 					<div className='relative -mr-4 size-8 overflow-hidden rounded-full border bg-linear-to-tr from-white/50 to-accent shadow-xl shadow-black'>
@@ -287,7 +287,7 @@ function CommentItem({
 						)}
 					</div>
 				</div>
-				<div className='flex w-full min-w-0 flex-col bg-background'>
+				<div className='flex w-full min-w-0 flex-col bg-muted'>
 					<div className='flex w-full justify-between gap-2 border-b px-6 py-4'>
 						<span>
 							{author ? (

@@ -177,7 +177,7 @@ export function CommentForm({
 	return (
 		<form
 			onSubmit={handleSubmit}
-			className='relative mt-6 rounded-lg border bg-accent/30 focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50'
+			className='relative mt-6 rounded-lg border bg-accent/50 focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50'
 		>
 			<MarkdownEditor
 				ref={editorRef}

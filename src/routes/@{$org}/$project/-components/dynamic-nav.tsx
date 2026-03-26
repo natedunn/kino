@@ -186,7 +186,7 @@ export function DynamicNavigation({ orgSlug, projectSlug, onStateChange }: Dynam
 	const hiddenItems = items.slice(visibleItems);
 
 	return (
-		<div ref={containerRef} className='relative overflow-x-hidden border-b bg-muted'>
+		<div ref={containerRef} className='relative overflow-x-hidden'>
 			<div className='container'>
 				<div className={`flex flex-nowrap items-center gap-1 py-2`}>
 					{visibleItemsList.map((item, index) => {

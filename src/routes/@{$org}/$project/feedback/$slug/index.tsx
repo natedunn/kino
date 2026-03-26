@@ -428,8 +428,8 @@ function RouteComponent() {
 	return (
 		<div>
 			<header>
-				<div className='w-full border-b bg-muted/50'>
-					<div className='container flex items-start gap-4 px-8 pt-16 pb-6'>
+				<div className='container'>
+					<div className='flex items-start gap-4 border-b pt-12 pb-6'>
 						<div className='mt-1'>
 							<StatusIcon status={feedback.status} size='28' colored />
 						</div>
@@ -443,19 +443,10 @@ function RouteComponent() {
 								</span>
 							</div>
 						</div>
-						<div className='mt-1'>
-							<UpvoteButton
-								feedbackId={feedback._id}
-								initialCount={feedback.upvotes}
-								initialHasUpvoted={hasUpvoted}
-								isAuthenticated={isAuthenticated}
-							/>
-						</div>
 					</div>
 				</div>
 			</header>
 			<div className='relative'>
-				<div className='absolute h-64 w-full bg-linear-to-t from-background to-muted/50'></div>
 				<div className='relative z-10 container py-10'>
 					<div className='flex flex-col gap-10 md:grid md:grid-cols-12'>
 						<div className='order-first md:order-last md:col-span-4'>
