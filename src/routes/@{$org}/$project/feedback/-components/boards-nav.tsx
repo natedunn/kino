@@ -1,5 +1,4 @@
 import { Link, useParams, useSearch } from '@tanstack/react-router';
-import { ChevronRight } from 'lucide-react';
 
 import { API } from '~api';
 import { buttonVariants } from '@/components/ui/button';
@@ -68,16 +67,8 @@ export const BoardsNav = ({ boards }: BoardNavProps) => {
 								>
 									<span className='mr-auto inline-flex items-center gap-3'>
 										<Icon size='16px' name={board?.icon as IconName} fallback='box' />
-										{/* <Box className='text-muted-foreground' /> */}
 										<span>{board.name}</span>
 									</span>
-									<ChevronRight
-										className={cn(
-											active
-												? 'text-foreground'
-												: 'text-transparent group-hocus:text-muted-foreground'
-										)}
-									/>
 								</span>
 							);
 						}}
