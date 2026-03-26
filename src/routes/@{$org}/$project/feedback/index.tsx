@@ -12,7 +12,7 @@ import { Id } from '@/convex/_generated/dataModel';
 import { feedbackSelectSchema } from '@/convex/schema/feedback.schema';
 import CirclePlusOutline from '@/icons/circle-plus-outline';
 import LoaderQuarter from '@/icons/loader-quarter';
-import Megaphone from '@/icons/megaphone';
+import ArchivePencil from '@/icons/archive-pencil';
 import Missing from '@/icons/missing';
 import { cn } from '@/lib/utils';
 
@@ -151,19 +151,12 @@ function RouteComponent() {
 					</div>
 				</div>
 				<div className='flex flex-col gap-4 py-8 md:col-span-9'>
-					<div className='overflow-hidden rounded-lg border border-primary/50 bg-linear-to-tl from-primary/20 to-primary/5 p-8'>
-						<div className='flex items-start gap-4'>
-							<div className='mt-1'>
-								<Megaphone className='size-8 text-primary dark:text-blue-300' aria-hidden='true' />
-							</div>
-							<div>
-								<h1 className='text-2xl font-bold text-primary dark:text-blue-50'>
-									We want to hear your feedback
-								</h1>
-								<p className='text-primary dark:text-blue-300'>
-									Make sure to read the feedback rules and guidelines before posting.
-								</p>
-							</div>
+					{/* Header */}
+					<div className='flex items-start gap-3 border-b pt-6 pb-6 md:-mr-8.25'>
+						<ArchivePencil size='28px' className='mt-1 text-muted-foreground' />
+						<div className='flex flex-col gap-1'>
+							<h1 className='text-3xl font-bold'>Feedback</h1>
+							<p className='text-muted-foreground'>Share your ideas and help us improve.</p>
 						</div>
 					</div>
 					<FeedbackToolbar />
