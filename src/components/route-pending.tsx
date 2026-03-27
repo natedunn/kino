@@ -7,7 +7,7 @@ export function RoutePending({ variant = 'page' }: RoutePendingProps) {
 		return (
 			<div className='container py-8'>
 				<div className='grid grid-cols-1 gap-8 md:grid-cols-12'>
-					<div className='space-y-4 md:col-span-3'>
+					<div className='order-first space-y-4 md:order-last md:col-span-3'>
 						<div className='h-10 w-full animate-pulse rounded bg-muted' />
 						<div className='h-48 w-full animate-pulse rounded bg-muted' />
 					</div>

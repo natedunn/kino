@@ -146,135 +146,123 @@ export const UpdateCard = ({
 
 	return (
 		<li className={cn('flex', className)}>
-			<div className={cn('grid w-full grid-cols-12 gap-8', !isLast && 'mb-16 border-b pb-16')}>
-				{/* Left Column - Meta (sticky) */}
-				<div className='col-span-12 md:col-span-3'>
-					<div className='sticky top-8 flex flex-col gap-4'>
-						{/* Date */}
-						{publishedAt && (
-							<div className='flex items-center gap-2 text-sm text-muted-foreground'>
-								<Calendar className='size-4' />
-								<span suppressHydrationWarning>{formatFullDate(publishedAt)}</span>
-							</div>
-						)}
-
-						{/* Author */}
-						{author && (
-							<div className='flex items-center gap-2'>
-								{author.imageUrl ? (
-									<img
-										className='size-6 rounded-full'
-										src={author.imageUrl}
-										alt={author.username}
-									/>
-								) : (
-									<div className='flex size-6 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground'>
-										{author.name?.charAt(0) ?? '?'}
-									</div>
-								)}
-								<span className='text-sm'>@{author.username}</span>
-							</div>
-						)}
-
-						{/* Draft Status */}
-						{status === 'draft' && (
-							<Badge variant='outline' className='text-yellow-600 dark:text-yellow-400'>
-								Draft
-							</Badge>
-						)}
-					</div>
+			<div className={cn('w-full', !isLast && 'mb-16 border-b pb-16')}>
+				{/* Meta row: category, date, author, draft badge */}
+				<div className='mb-4 flex flex-wrap items-center gap-3'>
+					<CategoryBadge category={category} />
+					{publishedAt && (
+						<span className='flex items-center gap-1.5 text-sm text-muted-foreground'>
+							<Calendar className='size-3.5' />
+							<span suppressHydrationWarning>{formatFullDate(publishedAt)}</span>
+						</span>
+					)}
+					{author && (
+						<span className='flex items-center gap-1.5 text-sm text-muted-foreground'>
+							{author.imageUrl ? (
+								<img
+									className='size-5 rounded-full'
+									src={author.imageUrl}
+									alt={author.username}
+								/>
+							) : (
+								<span className='flex size-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground'>
+									{author.name?.charAt(0) ?? '?'}
+								</span>
+							)}
+							<span>@{author.username}</span>
+						</span>
+					)}
+					{status === 'draft' && (
+						<Badge variant='outline' className='text-yellow-600 dark:text-yellow-400'>
+							Draft
+						</Badge>
+					)}
 				</div>
 
-				{/* Right Column - Content */}
-				<div className='col-span-12 md:col-span-9'>
-					{/* Category */}
-					<CategoryBadge category={category} className='mb-3' />
+				{/* Title */}
+				<h3 className='mb-6 text-3xl font-semibold'>
+					<Link
+						to='/@{$org}/$project/updates/$slug'
+						params={{
+							org: orgSlug,
+							project: projectSlug,
+							slug,
+						}}
+						className='link-text'
+					>
+						{title}
+					</Link>
+				</h3>
 
-					{/* Title */}
-					<h3 className='mb-10 text-3xl font-semibold'>
-						<Link
-							to='/@{$org}/$project/updates/$slug'
-							params={{
-								org: orgSlug,
-								project: projectSlug,
-								slug,
-							}}
-							className='link-text'
-						>
-							{title}
-						</Link>
-					</h3>
+				{/* Cover Image */}
+				{coverImageUrl && (
+					<div className='mb-6 w-full overflow-hidden rounded-lg bg-muted'>
+						<img src={coverImageUrl} alt={title} className='h-full w-full object-cover' />
+					</div>
+				)}
 
-					{/* Cover Image */}
-					{coverImageUrl && (
-						<div className='mb-10 w-full overflow-hidden rounded-lg bg-muted'>
-							<img src={coverImageUrl} alt={title} className='h-full w-full object-cover' />
-						</div>
+				{/* Content */}
+				<div className={cn('mt-4', isTruncated && 'relative max-h-128 overflow-hidden')}>
+					<EditorContentDisplay content={content} />
+					{isTruncated && (
+						<div className='absolute inset-x-0 bottom-0 h-24 bg-linear-to-t from-background to-transparent' />
 					)}
+				</div>
 
-					{/* Content */}
-					<div className={cn('mt-4', isTruncated && 'relative max-h-128 overflow-hidden')}>
-						<EditorContentDisplay content={content} />
-						{isTruncated && (
-							<div className='absolute inset-x-0 bottom-0 h-24 bg-linear-to-t from-background to-transparent' />
-						)}
-					</div>
+				{/* Bottom Action Bar */}
+				<div className='mt-6 flex items-center justify-between border-t pt-6'>
+					{/* Left side - Like & Comments */}
+					<div className='flex items-center gap-6'>
+						{/* Inject keyframes */}
+						<style>{heartPopKeyframes}</style>
 
-					{/* Bottom Action Bar */}
-					<div className='mt-6 flex items-center justify-between border-t pt-6'>
-						{/* Left side - Like & Comments */}
-						<div className='flex items-center gap-6'>
-							{/* Inject keyframes */}
-							<style>{heartPopKeyframes}</style>
-
-							{/* Like Button */}
-							<button
-								onClick={handleLike}
-								disabled={!currentProfileId}
-								className={cn(
-									'group flex cursor-pointer items-center gap-2 text-base transition-colors duration-200',
-									isLiked
-										? 'text-red-500 hover:text-red-600'
-										: 'text-muted-foreground hover:text-red-500',
-									!currentProfileId && 'cursor-not-allowed opacity-50'
-								)}
-							>
-								<Heart
-									className={cn(
-										'size-5 transition-transform duration-200',
-										isLiked && 'fill-current',
-										currentProfileId && 'group-hover:scale-110',
-										isAnimating && 'animate-[heart-pop_0.6s_ease-out]'
-									)}
-								/>
-								<span className='font-medium'>
-									{likeCount} {likeCount === 1 ? 'like' : 'likes'}
-								</span>
-							</button>
-
-							{/* Comment Count */}
-							<div className='flex items-center gap-2 text-base text-muted-foreground'>
-								<MessageSquare className='size-5' />
-								<span className='font-medium'>
-									{commentCount} {commentCount === 1 ? 'comment' : 'comments'}
-								</span>
-							</div>
-						</div>
-
-						{/* Right side - View Update */}
-						<Link
-							to='/@{$org}/$project/updates/$slug'
-							params={{
-								org: orgSlug,
-								project: projectSlug,
-								slug,
-							}}
-							className='group flex items-center gap-2 text-base font-medium text-primary transition-colors hover:text-primary/80'
+						{/* Like Button */}
+						<button
+							onClick={handleLike}
+							disabled={!currentProfileId}
+							className={cn(
+								'group flex cursor-pointer items-center gap-2 text-base transition-colors duration-200',
+								isLiked
+									? 'text-red-500 hover:text-red-600'
+									: 'text-muted-foreground hover:text-red-500',
+								!currentProfileId && 'cursor-not-allowed opacity-50'
+							)}
 						>
-							<span>View Update</span>
-							<ArrowRight className='size-5 transition-transform group-hover:translate-x-1' />
-						</Link>
+							<Heart
+								className={cn(
+									'size-5 transition-transform duration-200',
+									isLiked && 'fill-current',
+									currentProfileId && 'group-hover:scale-110',
+									isAnimating && 'animate-[heart-pop_0.6s_ease-out]'
+								)}
+							/>
+							<span className='font-medium'>
+								{likeCount} {likeCount === 1 ? 'like' : 'likes'}
+							</span>
+						</button>
+
+						{/* Comment Count */}
+						<div className='flex items-center gap-2 text-base text-muted-foreground'>
+							<MessageSquare className='size-5' />
+							<span className='font-medium'>
+								{commentCount} {commentCount === 1 ? 'comment' : 'comments'}
+							</span>
+						</div>
 					</div>
+
+					{/* Right side - View Update */}
+					<Link
+						to='/@{$org}/$project/updates/$slug'
+						params={{
+							org: orgSlug,
+							project: projectSlug,
+							slug,
+						}}
+						className='group flex items-center gap-2 text-base font-medium text-primary transition-colors hover:text-primary/80'
+					>
+						<span>View Update</span>
+						<ArrowRight className='size-5 transition-transform group-hover:translate-x-1' />
+					</Link>
 				</div>
 			</div>
 		</li>

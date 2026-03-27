@@ -77,15 +77,16 @@ export const MainNav = ({ children, user }: MainNavProps) => {
 
 	return (
 		<>
-			<nav className='border-b bg-muted'>
+			<nav className='bg-absolute'>
 				<div className='container'>
 					{/* Top row */}
 					<div className='flex items-center justify-between py-3'>
 						{/* Left: Logo and org/project */}
 						<div className='flex min-w-0 shrink-0 items-center gap-3'>
 							<div className='flex items-center gap-2'>
-								<div className='flex h-8 w-8 items-center justify-center rounded-full bg-primary'>
-									<span className='text-sm font-bold text-primary-foreground'>K</span>
+								<div className='flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-primary'>
+									<img className='mt-0.4 mr-0.5' src='/kino-blue.webp' alt='Kino logo' />
+									{/* <span className='text-sm font-bold text-primary-foreground'>K</span> */}
 								</div>
 								{!!orgSlug && (
 									<div className='-ml-3 flex h-8 w-8 items-center justify-center rounded-full bg-foreground ring-2 ring-background'>

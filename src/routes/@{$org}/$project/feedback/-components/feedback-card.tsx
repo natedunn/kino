@@ -2,7 +2,7 @@ import { API } from '~api';
 import { ClickableContainer } from '@/components/clickable-container';
 import { StatusIcon } from '@/icons';
 import { ArrayType } from '@/lib/types';
-import { truncateToNearestSpace } from '@/lib/utils/truncate';
+import { stripHtml, truncateToNearestSpace } from '@/lib/utils/truncate';
 
 import { UpvoteButton } from './upvote-button';
 
@@ -33,7 +33,7 @@ export const FeedbackCard = ({
 			</div>
 			<ClickableContainer
 				onClick={() => onNavigationClick?.()}
-				className='group flex w-full flex-col p-5 transition-colors duration-100 ease-in-out hocus:bg-muted/50 hocus:outline-primary'
+				className='group flex w-full flex-col bg-muted p-5 transition-colors duration-100 ease-in-out hocus:bg-foreground/3 hocus:outline-primary'
 			>
 				<div className='flex items-start gap-4'>
 					<div className='mt-1'>
@@ -44,8 +44,8 @@ export const FeedbackCard = ({
 						<span className='text-xl font-medium underline-offset-2 group-hover:underline'>
 							{title}
 						</span>
-						<div className='mt-2 h-full max-h-62.5 space-y-4 overflow-hidden text-ellipsis text-muted-foreground'>
-							{truncateToNearestSpace(firstComment?.content ?? '', 300)}
+						<div className='mt-2 h-full max-h-62.5 space-y-4 overflow-hidden text-sm text-ellipsis text-muted-foreground'>
+							{truncateToNearestSpace(stripHtml(firstComment?.content ?? ''), 300)}
 						</div>
 						{board && (
 							<div className='mt-8 text-sm text-muted-foreground'>

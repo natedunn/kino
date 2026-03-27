@@ -1,4 +1,20 @@
 /**
+ * Strips HTML tags from a string and collapses whitespace.
+ */
+export function stripHtml(html: string): string {
+	return html
+		.replace(/&nbsp;/g, ' ')
+		.replace(/&amp;/g, '&')
+		.replace(/&lt;/g, '<')
+		.replace(/&gt;/g, '>')
+		.replace(/&quot;/g, '"')
+		.replace(/&#39;/g, "'")
+		.replace(/<[^>]*>/g, ' ')
+		.replace(/\s+/g, ' ')
+		.trim();
+}
+
+/**
  * Truncates a string to the nearest space within a given character limit.
  * Appends "..." if truncation occurs.
  *

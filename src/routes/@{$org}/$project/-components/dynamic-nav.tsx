@@ -186,49 +186,51 @@ export function DynamicNavigation({ orgSlug, projectSlug, onStateChange }: Dynam
 	const hiddenItems = items.slice(visibleItems);
 
 	return (
-		<div ref={containerRef} className='relative overflow-x-hidden border-b bg-muted'>
+		<div ref={containerRef} className='relative overflow-x-hidden'>
 			<div className='container'>
-				<div className={`flex flex-nowrap items-center gap-1 py-2`}>
+				<div className='flex flex-nowrap items-end gap-1 pt-2'>
 					{visibleItemsList.map((item, index) => {
 						const Icon = item.icon;
 						return (
-							<Button
+							<Link
 								key={item.children}
 								ref={(el) => {
-									itemButtonRefs.current[index] = el;
+									itemButtonRefs.current[index] = el as HTMLButtonElement | null;
 								}}
-								variant='ghost'
-								size='sm'
-								className={cn(['group flex shrink-0 items-center gap-2 text-xs! md:text-sm', ''])}
-								asChild
+								activeOptions={{
+									exact: item.to === '/@{$org}/$project',
+								}}
+								to={item.to}
+								params={item.params}
+								className='group flex shrink-0 items-center gap-2'
 							>
-								<Link
-									activeOptions={{
-										exact: item.to === '/@{$org}/$project',
-									}}
-									to={item.to}
-									params={item.params}
-									className='flex items-center gap-2'
-								>
-									{({ isActive }) => (
-										<>
-											{typeof Icon === 'string' ? (
-												<>{Icon}</>
-											) : (
-												Icon && (
-													<Icon
-														className={cn(
-															'size-4 text-muted-foreground group-active:text-foreground group-hocus:text-foreground',
-															{ 'text-blue-300 group-hocus:text-blue-300': isActive }
-														)}
-													/>
-												)
-											)}
-											<span>{item.children}</span>
-										</>
-									)}
-								</Link>
-							</Button>
+								{({ isActive }) => (
+									<span
+										className={cn(
+											'inline-flex items-center gap-2 border-b-2 px-3 pb-2 text-xs text-muted-foreground transition-colors md:text-sm',
+											isActive
+												? 'border-blue-500 text-blue-900 dark:border-blue-400 dark:text-blue-100'
+												: 'border-transparent hocus:border-foreground/30 hocus:text-foreground'
+										)}
+									>
+										{typeof Icon === 'string' ? (
+											<>{Icon}</>
+										) : (
+											Icon && (
+												<Icon
+													className={cn(
+														'size-4',
+														isActive
+															? 'text-blue-500 dark:text-blue-400'
+															: 'text-muted-foreground group-hocus:text-foreground'
+													)}
+												/>
+											)
+										)}
+										<span>{item.children}</span>
+									</span>
+								)}
+							</Link>
 						);
 					})}
 

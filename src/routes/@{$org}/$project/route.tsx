@@ -35,11 +35,13 @@ function RouteComponent() {
 				!navCalculated && 'overflow-x-hidden'
 			)}
 		>
-			<DynamicNavigation
-				orgSlug={orgSlug}
-				projectSlug={projectSlug}
-				onStateChange={(state) => setNavCalculated(!state.isCalculating)}
-			/>
+			<div className='border-b bg-absolute'>
+				<DynamicNavigation
+					orgSlug={orgSlug}
+					projectSlug={projectSlug}
+					onStateChange={(state) => setNavCalculated(!state.isCalculating)}
+				/>
+			</div>
 			<Outlet />
 		</div>
 	);
