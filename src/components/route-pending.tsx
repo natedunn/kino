@@ -24,12 +24,18 @@ export function RoutePending({ variant = 'page' }: RoutePendingProps) {
 
 	if (variant === 'detail') {
 		return (
-			<div className='container py-10'>
-				<div className='mx-auto max-w-240 animate-pulse px-4'>
-					<div className='h-8 w-32 rounded bg-muted' />
-					<div className='mt-4 h-12 w-3/4 rounded bg-muted' />
-					<div className='mt-3 h-5 w-1/3 rounded bg-muted' />
-					<div className='mt-10 h-64 rounded-lg bg-muted' />
+			<div className='container py-8'>
+				<div className='grid grid-cols-1 gap-8 md:grid-cols-12'>
+					<div className='order-first space-y-6 border-l border-border/75 py-6 pl-8 md:order-last md:col-span-4'>
+						<div className='h-10 w-full animate-pulse rounded bg-muted' />
+						<div className='h-32 w-full animate-pulse rounded bg-muted' />
+					</div>
+					<div className='animate-pulse space-y-4 md:col-span-8'>
+						<div className='h-8 w-32 rounded bg-muted' />
+						<div className='h-10 w-3/4 rounded bg-muted' />
+						<div className='h-5 w-1/3 rounded bg-muted' />
+						<div className='mt-6 h-64 rounded-lg bg-muted' />
+					</div>
 				</div>
 			</div>
 		);
