@@ -85,7 +85,7 @@ export const MainNav = ({ children, user }: MainNavProps) => {
 						<div className='flex min-w-0 shrink-0 items-center gap-3'>
 							<div className='flex items-center gap-2'>
 								<div className='flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-primary'>
-									<img className='mt-0.4 mr-0.5' src='/kino-blue.webp' />
+									<img className='mt-0.4 mr-0.5' src='/kino-blue.webp' alt='Kino logo' />
 									{/* <span className='text-sm font-bold text-primary-foreground'>K</span> */}
 								</div>
 								{!!orgSlug && (
