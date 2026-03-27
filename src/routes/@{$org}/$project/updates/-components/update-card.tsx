@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useConvexMutation } from '@convex-dev/react-query';
 import { useMutation } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { ArrowRight, Calendar, Heart, MessageSquare } from 'lucide-react';
+import { Calendar, Heart, MessageSquare } from 'lucide-react';
 
 import { api, API } from '~api';
 import { EditorContentDisplay } from '@/components/editor';
@@ -145,8 +145,11 @@ export const UpdateCard = ({
 	const isTruncated = plainText.length > MAX_CONTENT_LENGTH;
 
 	return (
-		<li className={cn('flex', className)}>
-			<div className={cn('w-full', !isLast && 'mb-16 border-b pb-16')}>
+		<li className={cn('relative flex', className)}>
+			{!isLast && (
+				<div className='absolute inset-x-0 bottom-0 border-b md:-mr-8.25' aria-hidden='true' />
+			)}
+			<div className='w-full py-10'>
 				{/* Meta row: category, date, author, draft badge */}
 				<div className='mb-4 flex flex-wrap items-center gap-3'>
 					<CategoryBadge category={category} />
@@ -210,7 +213,7 @@ export const UpdateCard = ({
 				</div>
 
 				{/* Bottom Action Bar */}
-				<div className='mt-6 flex items-center justify-between border-t pt-6'>
+				<div className='mt-6 flex items-center justify-between'>
 					{/* Left side - Like & Comments */}
 					<div className='flex items-center gap-6'>
 						{/* Inject keyframes */}
@@ -221,7 +224,7 @@ export const UpdateCard = ({
 							onClick={handleLike}
 							disabled={!currentProfileId}
 							className={cn(
-								'group flex cursor-pointer items-center gap-2 text-base transition-colors duration-200',
+								'group flex cursor-pointer items-center gap-2 text-sm transition-colors duration-200',
 								isLiked
 									? 'text-red-500 hover:text-red-600'
 									: 'text-muted-foreground hover:text-red-500',
@@ -230,7 +233,7 @@ export const UpdateCard = ({
 						>
 							<Heart
 								className={cn(
-									'size-5 transition-transform duration-200',
+									'size-4 transition-transform duration-200',
 									isLiked && 'fill-current',
 									currentProfileId && 'group-hover:scale-110',
 									isAnimating && 'animate-[heart-pop_0.6s_ease-out]'
@@ -242,8 +245,8 @@ export const UpdateCard = ({
 						</button>
 
 						{/* Comment Count */}
-						<div className='flex items-center gap-2 text-base text-muted-foreground'>
-							<MessageSquare className='size-5' />
+						<div className='flex items-center gap-2 text-sm text-muted-foreground'>
+							<MessageSquare className='size-4' />
 							<span className='font-medium'>
 								{commentCount} {commentCount === 1 ? 'comment' : 'comments'}
 							</span>
@@ -258,10 +261,9 @@ export const UpdateCard = ({
 							project: projectSlug,
 							slug,
 						}}
-						className='group flex items-center gap-2 text-base font-medium text-primary transition-colors hover:text-primary/80'
+						className='link-text text-sm font-medium'
 					>
-						<span>View Update</span>
-						<ArrowRight className='size-5 transition-transform group-hover:translate-x-1' />
+						View More
 					</Link>
 				</div>
 			</div>
