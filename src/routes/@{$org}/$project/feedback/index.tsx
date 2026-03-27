@@ -119,7 +119,7 @@ function RouteComponent() {
 	return (
 		<div className='container h-full overflow-visible'>
 			<div className='h-full grid-cols-12 gap-8 md:grid'>
-				<div className='order-first border-l border-border/75 py-6 md:order-last md:col-span-3'>
+				<div className='order-first border-r border-border/75 py-6 md:col-span-3'>
 					<div className='sticky top-6 flex flex-col overflow-hidden'>
 						<div className='border-b pb-6 pl-6'>
 							<Button size='lg' className='w-full' asChild>
