@@ -7,6 +7,7 @@ import { convex } from '@convex-dev/better-auth/plugins';
 import { betterAuth } from 'better-auth/minimal';
 import { admin, organization, username } from 'better-auth/plugins';
 
+import { getServerBaseUrl, getTrustedOrigins } from '@/lib/auth/runtime-url';
 import { generateRandomUsername } from '@/lib/random';
 
 import { components, internal } from './_generated/api';
@@ -105,8 +106,8 @@ export const { getAuthUser } = authComponent.clientApi();
 
 export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
 	const options = {
-		baseURL: process.env.SITE_URL!,
-		trustedOrigins: ['http://localhost:3000', 'https://usekino.com'],
+		baseURL: getServerBaseUrl(),
+		trustedOrigins: getTrustedOrigins(),
 		database: authComponent.adapter(ctx),
 		account: {
 			accountLinking: {
