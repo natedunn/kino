@@ -1,5 +1,3 @@
-const env = process.env as Record<string, string | undefined>;
-
 const trimTrailingSlash = (url: string) => url.replace(/\/+$/, '');
 
 const readEnvUrl = (value: string | undefined) => {
@@ -10,7 +8,15 @@ const readEnvUrl = (value: string | undefined) => {
 	return trimTrailingSlash(value);
 };
 
+const getEnv = (): Record<string, string | undefined> => {
+	if (typeof process !== 'undefined' && process.env) {
+		return process.env as Record<string, string | undefined>;
+	}
+	return {};
+};
+
 export const getServerBaseUrl = () => {
+	const env = getEnv();
 	return readEnvUrl(env.PORTLESS_URL) ?? readEnvUrl(env.SITE_URL) ?? 'http://localhost:3000';
 };
 
@@ -23,6 +29,7 @@ export const getAuthClientBaseUrl = () => {
 };
 
 export const getTrustedOrigins = () => {
+	const env = getEnv();
 	return Array.from(
 		new Set(
 			[
