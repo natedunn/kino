@@ -8,6 +8,10 @@ import ViteRestart from 'vite-plugin-restart';
 import tsConfigPaths from 'vite-tsconfig-paths';
 
 export default defineConfig({
+	server: {
+		host: process.env.HOST ?? true,
+		port: Number(process.env.PORT ?? 3000),
+	},
 	ssr: {
 		noExternal: ['@convex-dev/better-auth'],
 	},
