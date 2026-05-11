@@ -6,9 +6,9 @@
 	"main": "index.js",
 	"scripts": {
 		"dev": "portless run pnpm dev:local",
-		"dev:local": "npx convex dev --once && npm-run-all --parallel dev:convex dev:web",
-		"dev:localhost": "npx convex dev --once && npm-run-all --parallel dev:convex dev:web:localhost",
-		"dev:convex": "convex dev",
+		"dev:local": "pnpm exec convex dev --once --env-file .env.local && npm-run-all --parallel dev:convex dev:web",
+		"dev:localhost": "pnpm exec convex dev --once --env-file .env.local && npm-run-all --parallel dev:convex dev:web:localhost",
+		"dev:convex": "convex dev --env-file .env.local",
 		"dev:portless": "pnpm dev",
 		"dev:web": "vite dev",
 		"dev:web:localhost": "vite dev --port 3000 --host",
@@ -87,7 +87,6 @@
 		"tailwindcss-hocus": "^1.0.0",
 		"unique-username-generator": "^1.5.1",
 		"vite-plugin-restart": "^2.0.0",
-		"vite-tsconfig-paths": "^6.1.1",
 		"zod": "4.4.3"
 	},
 	"devDependencies": {
