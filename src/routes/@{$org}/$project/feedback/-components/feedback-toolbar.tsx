@@ -259,7 +259,7 @@ export function FeedbackToolbar() {
 										mode='single'
 										selected={dateAfter}
 										onSelect={setDateAfter}
-										initialFocus
+										autoFocus
 									/>
 								</PopoverContent>
 							</Popover>
@@ -286,7 +286,7 @@ export function FeedbackToolbar() {
 										mode='single'
 										selected={dateBefore}
 										onSelect={setDateBefore}
-										initialFocus
+										autoFocus
 									/>
 								</PopoverContent>
 							</Popover>
