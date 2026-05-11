@@ -3,11 +3,26 @@ import { createExtension, verifyConfig } from 'convex-verify';
 
 import { generateRandomSlug } from '@/lib/random';
 
+const shouldLogVerifyPayloads =
+	process.env.CONVEX_VERIFY_LOG_PAYLOADS === 'true' ||
+	process.env.NODE_ENV === 'development';
+
 const loggingExtension = createExtension(schema, (input) => {
 	if (input.operation === 'insert') {
-		console.log(`[${input.tableName}] INSERT:`, input.data);
+		if (shouldLogVerifyPayloads) {
+			console.log(`[${input.tableName}] INSERT:`, input.data);
+		} else {
+			console.log(`[${input.tableName}] INSERT fields:`, Object.keys(input.data));
+		}
 	} else {
-		console.log(`[${input.tableName}] PATCH ${input.patchId}:`, input.data);
+		if (shouldLogVerifyPayloads) {
+			console.log(`[${input.tableName}] PATCH ${input.patchId}:`, input.data);
+		} else {
+			console.log(
+				`[${input.tableName}] PATCH ${input.patchId} fields:`,
+				Object.keys(input.data),
+			);
+		}
 	}
 
 	return input.data;
