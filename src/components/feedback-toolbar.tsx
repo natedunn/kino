@@ -180,12 +180,7 @@ export function FeedbackToolbar({ onChange }: FeedbackToolbarProps) {
 									</Button>
 								</PopoverTrigger>
 								<PopoverContent className='w-auto p-0' align='start'>
-									<Calendar
-										mode='single'
-										selected={dateAfter}
-										onSelect={setDateAfter}
-										initialFocus
-									/>
+									<Calendar mode='single' selected={dateAfter} onSelect={setDateAfter} autoFocus />
 								</PopoverContent>
 							</Popover>
 						</div>
@@ -211,7 +206,7 @@ export function FeedbackToolbar({ onChange }: FeedbackToolbarProps) {
 										mode='single'
 										selected={dateBefore}
 										onSelect={setDateBefore}
-										initialFocus
+										autoFocus
 									/>
 								</PopoverContent>
 							</Popover>

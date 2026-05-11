@@ -11,7 +11,7 @@ export const alphabet = upper + lower + numbers;
 
 export const random: RandomReader = {
 	read(bytes) {
-		crypto.getRandomValues(bytes);
+		crypto.getRandomValues(bytes as Uint8Array<ArrayBuffer>);
 	},
 };
 

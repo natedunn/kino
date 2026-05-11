@@ -5,12 +5,14 @@ import viteReact from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import { analyzer } from 'vite-bundle-analyzer';
 import ViteRestart from 'vite-plugin-restart';
-import tsConfigPaths from 'vite-tsconfig-paths';
 
 export default defineConfig({
 	server: {
 		host: process.env.HOST ?? true,
 		port: Number(process.env.PORT ?? 3000),
+	},
+	resolve: {
+		tsconfigPaths: true,
 	},
 	ssr: {
 		noExternal: ['@convex-dev/better-auth'],
@@ -23,9 +25,6 @@ export default defineConfig({
 		ViteRestart({
 			// Due to hydration issues, we need to restart the server on changes to the following files
 			restart: ['./src/styles/**/*.css'],
-		}),
-		tsConfigPaths({
-			projects: ['./tsconfig.json'],
 		}),
 		cloudflare({ viteEnvironment: { name: 'ssr' } }),
 		tanstackStart({
