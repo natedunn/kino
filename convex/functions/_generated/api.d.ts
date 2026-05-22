@@ -44,14 +44,15 @@ export declare const api: {
       "public",
       {
         boardId: string | "all";
+        cursor?: string | null;
+        limit?: number;
         order?: "asc" | "desc";
-        paginationLimit?: number;
         projectId: string;
         search?: string;
         status?: "open" | "in-progress" | "closed" | "completed" | "paused";
         tags?: Array<string>;
       },
-      any
+      { continueCursor: string | null; isDone: boolean; page: Array<any> }
     >;
     searchForLinking: FunctionReference<
       "query",
@@ -318,6 +319,12 @@ export declare const api: {
     >;
   };
   update: {
+    clearCoverImage: FunctionReference<
+      "mutation",
+      "public",
+      { updateId: string },
+      any
+    >;
     create: FunctionReference<
       "mutation",
       "public",

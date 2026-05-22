@@ -25,6 +25,10 @@ const feedbackStatusSchema = z.enum([
 ])
 const EDIT_ROLES = new Set(["admin", "org:admin", "org:editor"])
 
+function hasOverlap(left: string[], right: string[]) {
+  return left.some((value) => right.includes(value))
+}
+
 export const create = authMutation
   .input(
     z.object({
@@ -397,83 +401,83 @@ export const listProjectFeedback = optionalAuthQuery
     z.object({
       boardId: z.string().or(z.literal("all")),
       order: z.enum(["asc", "desc"]).optional(),
-      paginationLimit: z.number().min(1).max(100).default(50).optional(),
       projectId: z.string(),
       search: z.string().optional(),
       status: feedbackStatusSchema.optional(),
       tags: z.array(z.string()).optional(),
     })
   )
+  .paginated({ limit: 50, item: z.any() })
   .query(async ({ ctx, input }) => {
-    let rows: any[] = []
-    const limit = input.paginationLimit ?? 50
+    let query: any
 
     if (input.search?.trim()) {
-      const q = ctx.db
+      query = ctx.db
         .query("feedback")
         .withSearchIndex(
           "by_projectId_boardId_status_searchContent",
           (builder: any) => {
             let next = builder
               .search("searchContent", input.search)
-              .eq("projectId", input.projectId)
+              .eq("projectId", asId<"project">(input.projectId))
             if (input.boardId !== "all")
-              next = next.eq("boardId", input.boardId)
+              next = next.eq("boardId", asId<"feedbackBoard">(input.boardId))
             if (input.status) next = next.eq("status", input.status)
             return next
           }
         )
-      rows = await q.take(limit)
     } else if (input.boardId !== "all" && input.status) {
-      rows = await ctx.db
+      query = ctx.db
         .query("feedback")
         .withIndex("by_projectId_boardId_status", (q: any) =>
           q
-            .eq("projectId", input.projectId)
-            .eq("boardId", input.boardId)
+            .eq("projectId", asId<"project">(input.projectId))
+            .eq("boardId", asId<"feedbackBoard">(input.boardId))
             .eq("status", input.status)
         )
         .order(input.order ?? "desc")
-        .take(limit)
     } else if (input.boardId !== "all") {
-      rows = await ctx.db
+      query = ctx.db
         .query("feedback")
         .withIndex("by_projectId_boardId", (q: any) =>
-          q.eq("projectId", input.projectId).eq("boardId", input.boardId)
+          q
+            .eq("projectId", asId<"project">(input.projectId))
+            .eq("boardId", asId<"feedbackBoard">(input.boardId))
         )
         .order(input.order ?? "desc")
-        .take(limit)
     } else if (input.status) {
-      rows = await ctx.db
+      query = ctx.db
         .query("feedback")
         .withIndex("by_projectId_status", (q: any) =>
-          q.eq("projectId", input.projectId).eq("status", input.status)
+          q.eq("projectId", asId<"project">(input.projectId)).eq("status", input.status)
         )
         .order(input.order ?? "desc")
-        .take(limit)
     } else {
-      rows = await ctx.db
+      query = ctx.db
         .query("feedback")
         .withIndex("by_projectId", (q: any) =>
-          q.eq("projectId", input.projectId)
+          q.eq("projectId", asId<"project">(input.projectId))
         )
         .order(input.order ?? "desc")
-        .take(limit)
     }
 
-    if (input.tags?.length) {
-      rows = rows.filter((row) =>
-        row.tags?.some((tag: string) => input.tags?.includes(tag))
-      )
-    }
+    const result = await query.paginate({
+      cursor: input.cursor,
+      numItems: input.limit,
+    })
+    const page = input.tags?.length
+      ? result.page.filter((row: any) =>
+          row?.tags ? hasOverlap(row.tags, input.tags ?? []) : false
+        )
+      : result.page
 
     const currentProfile = await getCurrentProfile(ctx, ctx.userId)
 
     return {
-      continueCursor: null,
-      isDone: true,
+      continueCursor: result.continueCursor,
+      isDone: result.isDone,
       page: await Promise.all(
-        rows.map(async (item) => {
+        page.map(async (item: any) => {
           const board = await getDoc<"feedbackBoard">(ctx, item.boardId)
           const firstComment = await getDoc<"feedbackComment">(
             ctx,

@@ -14,6 +14,7 @@ import type { ActionCtx, MutationCtx, QueryCtx } from './server';
 import type { OrmTriggerContext } from 'kitcn/orm';
 
 const procedureRegistry = {
+  "clearCoverImage": ["mutation", typedProcedureResolver(createGeneratedFunctionReference<"mutation", "public", typeof import("../update").clearCoverImage>("update:clearCoverImage"), () => (require("../update") as Record<string, unknown>)["clearCoverImage"])],
   "create": ["mutation", typedProcedureResolver(createGeneratedFunctionReference<"mutation", "public", typeof import("../update").create>("update:create"), () => (require("../update") as Record<string, unknown>)["create"])],
   "generateCoverImageUploadUrl": ["mutation", typedProcedureResolver(createGeneratedFunctionReference<"mutation", "public", typeof import("../update").generateCoverImageUploadUrl>("update:generateCoverImageUploadUrl"), () => (require("../update") as Record<string, unknown>)["generateCoverImageUploadUrl"])],
   "getBySlug": ["query", typedProcedureResolver(createGeneratedFunctionReference<"query", "public", typeof import("../update").getBySlug>("update:getBySlug"), () => (require("../update") as Record<string, unknown>)["getBySlug"])],

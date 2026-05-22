@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react"
-import { useMutation, useQuery } from "@tanstack/react-query"
-import { Link, createFileRoute } from "@tanstack/react-router"
+import { useMutation, useQuery, useSuspenseQuery } from "@tanstack/react-query"
+import { Link, createFileRoute, notFound } from "@tanstack/react-router"
 import {
   Calendar,
   Check,
@@ -16,6 +16,7 @@ import {
 
 import { EditorContentDisplay } from "@/components/editor"
 import { ProfileLinkOrUnknown } from "@/components/profile-link"
+import { RoutePending } from "@/components/route-pending"
 import { SidebarSection } from "@/components/sidebar-section"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -24,12 +25,14 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { authClient } from "@/lib/convex/auth-client"
 import { useCRPC } from "@/lib/convex/crpc"
+import { crpcOptions } from "@/lib/convex/crpc-options"
+import { preloadCRPCQuery } from "@/lib/convex/preload"
 import { useSidebarState } from "@/lib/hooks/use-sidebar-state"
 import { cn } from "@/lib/utils"
 import { formatFullDate, formatRelativeDay } from "@/lib/utils/format-timestamp"
 import { StatusIcon } from "@/icons"
+import { api } from "@convex/api"
 
 import { CategoryBadge } from "../-components/category-badge"
 import {
@@ -56,45 +59,100 @@ const DEFAULT_SIDEBAR_STATE = {
   related: true,
 }
 
+type ProjectDetailsData = {
+  project?: {
+    id: string
+  } | null
+}
+
+type UpdateDetailData = {
+  update?: {
+    id: string
+  } | null
+} | null
+
 export const Route = createFileRoute("/@{$org}/$project/updates/$slug/")({
   component: UpdateDetailRoute,
+  loader: async ({ context, params }) => {
+    const projectArgs = {
+      orgSlug: params.org,
+      slug: params.project,
+    }
+    const projectOptions =
+      crpcOptions.project.getDetails.staticQueryOptions(projectArgs)
+    const projectData = await preloadCRPCQuery<
+      ProjectDetailsData,
+      typeof projectArgs
+    >(context.queryClient, projectOptions, api.project.getDetails, projectArgs)
+
+    if (!projectData?.project?.id) {
+      throw notFound()
+    }
+
+    const updateArgs = {
+      projectId: projectData.project.id,
+      slug: params.slug,
+    }
+    const updateOptions =
+      crpcOptions.update.getBySlug.staticQueryOptions(updateArgs)
+    const updateData = await preloadCRPCQuery<
+      UpdateDetailData,
+      typeof updateArgs
+    >(context.queryClient, updateOptions, api.update.getBySlug, updateArgs)
+
+    if (!updateData?.update?.id) {
+      throw notFound()
+    }
+
+    const commentsArgs = {
+      updateId: updateData.update.id,
+    }
+    await preloadCRPCQuery(
+      context.queryClient,
+      crpcOptions.updateComment.listByUpdate.staticQueryOptions(commentsArgs),
+      api.updateComment.listByUpdate,
+      commentsArgs
+    )
+  },
+  pendingComponent: () => <RoutePending variant="detail" />,
+  pendingMs: 150,
 })
 
 function UpdateDetailRoute() {
   const params = Route.useParams()
   const crpc = useCRPC()
-  const session = authClient.useSession()
   const { state: sidebarState, setSection: setSidebarSection } =
     useSidebarState(SIDEBAR_STORAGE_KEY, DEFAULT_SIDEBAR_STATE)
 
-  const projectQuery = useQuery(
+  const { data: projectData } = useSuspenseQuery(
     crpc.project.getDetails.queryOptions({
       orgSlug: params.org,
       slug: params.project,
     })
   )
+
+  if (!projectData?.project?.id) {
+    throw notFound()
+  }
+
   const profileQuery = useQuery(
-    crpc.profile.findMyProfile.queryOptions(
-      {},
-      { enabled: !!session.data?.user }
-    )
+    crpc.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
   )
-  const updateQuery = useQuery(
-    crpc.update.getBySlug.queryOptions(
-      {
-        projectId: projectQuery.data?.project?.id ?? "",
-        slug: params.slug,
-      },
-      { enabled: !!projectQuery.data?.project }
-    )
+  const { data: updateData } = useSuspenseQuery(
+    crpc.update.getBySlug.queryOptions({
+      projectId: projectData.project.id,
+      slug: params.slug,
+    })
   )
-  const commentsQuery = useQuery(
-    crpc.updateComment.listByUpdate.queryOptions(
-      {
-        updateId: updateQuery.data?.update?.id ?? "",
-      },
-      { enabled: !!updateQuery.data?.update }
-    )
+
+  if (!updateData?.update) {
+    throw notFound()
+  }
+
+  const { data: comments } = useSuspenseQuery(
+    crpc.updateComment.listByUpdate.queryOptions({
+      updateId: updateData.update.id,
+    })
   )
 
   const toggleEmote = useMutation(crpc.updateEmote.toggle.mutationOptions())
@@ -112,9 +170,7 @@ function UpdateDetailRoute() {
   )
 
   const currentProfile = profileQuery.data
-  const updateData = updateQuery.data
-  const update = updateData?.update
-  const comments = commentsQuery.data ?? []
+  const update = updateData.update
 
   const heartData = updateData?.emoteCounts?.heart
   const serverLikeCount = heartData?.count ?? 0
@@ -147,18 +203,6 @@ function UpdateDetailRoute() {
     }
     prevLikedRef.current = isLiked
   }, [isLiked])
-
-  if (projectQuery.isLoading || updateQuery.isLoading) {
-    return null
-  }
-
-  if (!projectQuery.data?.project || !update || !updateData) {
-    return (
-      <div className="container py-12 text-sm text-muted-foreground">
-        Update not found.
-      </div>
-    )
-  }
 
   const hasRelatedFeedback = updateData.relatedFeedback.length > 0
   const isAuthenticated = !!currentProfile
