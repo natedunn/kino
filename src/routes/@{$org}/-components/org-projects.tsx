@@ -1,9 +1,8 @@
 import { Link } from '@tanstack/react-router';
-
-import { API } from '~api';
+import type { ApiOutputs } from '@convex/api';
 
 type OrgProjectsProps = {
-	projects: API['project']['getManyByOrg'];
+	projects: ApiOutputs['project']['getManyByOrg'];
 	orgSlug: string;
 };
 
@@ -13,7 +12,7 @@ export const OrgProjects = ({ projects, orgSlug }: OrgProjectsProps) => {
 			{projects?.map((project) => {
 				return (
 					<Link
-						key={project._id}
+						key={project.id}
 						to='/@{$org}/$project'
 						params={(prev) => ({
 							...prev,

@@ -1,13 +1,10 @@
-import { createFileRoute } from '@tanstack/react-router';
+import { Navigate, createFileRoute } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/@{$org}/$project/')({
-	component: RouteComponent,
+  component: ProjectIndexRoute,
 });
 
-function RouteComponent() {
-	return (
-		<div className='container'>
-			<div>Hello "/_default/@$org/$project/"!</div>
-		</div>
-	);
+function ProjectIndexRoute() {
+  const params = Route.useParams();
+  return <Navigate params={params} to="/@{$org}/$project/feedback" />;
 }

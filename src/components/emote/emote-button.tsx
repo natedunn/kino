@@ -1,29 +1,35 @@
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-import { EMOTE_EMOJI, EmoteContent } from './types';
+import { EMOTE_EMOJI, type EmoteContent } from './types';
 
 type EmoteButtonProps = {
-	emoteType: EmoteContent;
-	count: number;
-	isActive: boolean;
-	onClick: () => void;
-	disabled?: boolean;
+  count: number;
+  disabled?: boolean;
+  emoteType: EmoteContent;
+  isActive: boolean;
+  onClick: () => void;
 };
 
-export function EmoteButton({ emoteType, count, isActive, onClick, disabled }: EmoteButtonProps) {
-	return (
-		<Button
-			variant='outline'
-			size='sm'
-			onClick={onClick}
-			disabled={disabled}
-			className={cn('gap-2 rounded-full', {
-				'border-primary/50 bg-primary/10': isActive,
-			})}
-		>
-			<span>{EMOTE_EMOJI[emoteType]}</span>
-			<span>{count}</span>
-		</Button>
-	);
+export function EmoteButton({
+  count,
+  disabled,
+  emoteType,
+  isActive,
+  onClick,
+}: EmoteButtonProps) {
+  return (
+    <Button
+      className={cn('gap-2 rounded-full', {
+        'border-primary/50 bg-primary/10': isActive,
+      })}
+      disabled={disabled}
+      onClick={onClick}
+      size="sm"
+      variant="outline"
+    >
+      <span>{EMOTE_EMOJI[emoteType]}</span>
+      <span>{count}</span>
+    </Button>
+  );
 }

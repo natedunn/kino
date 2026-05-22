@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useParams, useRouterState } from '@tanstack/react-router';
 import { Bell, Command, Search } from 'lucide-react';
+import type { API } from '@/lib/api';
 
 import { CommandPalette } from '@/components/command-palette';
 import { Badge } from '@/components/ui/badge';
@@ -12,7 +13,6 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { API } from '@/lib/api';
 
 import { UserDropdown } from './user-dropdown';
 
@@ -101,7 +101,7 @@ export const MainNav = ({ children, user }: MainNavProps) => {
 									<Link
 										to='/@{$org}'
 										className='link-text no-underline! hocus:underline!'
-										params={(prev) => ({ ...prev, org: orgSlug })}
+										params={{ org: orgSlug }}
 									>
 										{orgSlug}
 									</Link>
@@ -190,7 +190,7 @@ export const MainNav = ({ children, user }: MainNavProps) => {
 								<UserDropdown user={user} />
 							) : (
 								<Link
-									to='/sign-in'
+									to='/auth'
 									search={{
 										redirect: routerState.location.pathname,
 									}}

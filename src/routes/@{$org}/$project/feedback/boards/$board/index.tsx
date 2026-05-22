@@ -1,50 +1,45 @@
-import { convexQuery } from '@convex-dev/react-query';
-import { useSuspenseQuery } from '@tanstack/react-query';
-import { createFileRoute, notFound } from '@tanstack/react-router';
+import { useQuery } from '@tanstack/react-query';
+import { createFileRoute } from '@tanstack/react-router';
 
-import { api } from '~api';
-import { RoutePending } from '@/components/route-pending';
-import { Id } from '@/convex/_generated/dataModel';
+import { EmptyState } from '@/components/kino/common';
+import { useCRPC } from '@/lib/convex/crpc';
 
 export const Route = createFileRoute('/@{$org}/$project/feedback/boards/$board/')({
-	pendingComponent: () => <RoutePending variant='detail' />,
-	pendingMs: 150,
-	loader: async ({ context, params }) => {
-		const boardData = await context.queryClient.ensureQueryData(
-			convexQuery(api.feedbackBoard.get, {
-				_id: params.board,
-				projectSlug: params.project,
-				orgSlug: params.org,
-			})
-		);
-
-		if (!boardData) {
-			throw notFound();
-		}
-	},
-	component: RouteComponent,
+  component: BoardDetailRoute,
 });
 
-function RouteComponent() {
-	const { org, project, board } = Route.useParams();
+function BoardDetailRoute() {
+  const params = Route.useParams();
+  const crpc = useCRPC();
 
-	const { data: boardData } = useSuspenseQuery(
-		convexQuery(api.feedbackBoard.get, {
-			_id: board as Id<'feedbackBoard'>,
-			projectSlug: project,
-			orgSlug: org,
-		})
-	);
+  const boardQuery = useQuery(
+    crpc.feedbackBoard.get.queryOptions({
+      id: params.board,
+      orgSlug: params.org,
+      projectSlug: params.project,
+    })
+  );
 
-	if (!boardData) {
-		throw notFound();
-	}
+  if (boardQuery.isLoading) {
+    return <div className="h-48 animate-pulse rounded-lg bg-muted/40" />;
+  }
 
-	return (
-		<div className='container'>
-			<pre>
-				<code>{JSON.stringify(boardData, null, 2)}</code>
-			</pre>
-		</div>
-	);
+  if (!boardQuery.data) {
+    return (
+      <EmptyState
+        title="Board not found"
+        description="The requested board could not be loaded for this project."
+      />
+    );
+  }
+
+  const board = boardQuery.data;
+
+  return (
+    <div className="container">
+      <pre>
+        <code>{JSON.stringify(board, null, 2)}</code>
+      </pre>
+    </div>
+  );
 }

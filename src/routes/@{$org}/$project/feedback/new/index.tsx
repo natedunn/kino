@@ -1,85 +1,226 @@
-import { convexQuery } from '@convex-dev/react-query';
-import { useSuspenseQuery } from '@tanstack/react-query';
-import { createFileRoute, notFound, useRouter } from '@tanstack/react-router';
+import { useMutation, useQuery } from "@tanstack/react-query"
+import { useForm } from "@tanstack/react-form"
+import { createFileRoute, useNavigate } from "@tanstack/react-router"
 
-import { api } from '~api';
-import { RoutePending } from '@/components/route-pending';
+import { EmptyState } from "@/components/kino/common"
+import { MarkdownEditor, sanitizeEditorContent } from "@/components/editor"
+import { InlineAlert } from "@/components/inline-alert"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input-shadcn"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+} from "@/components/ui/select-shadcn"
+import { authClient } from "@/lib/convex/auth-client"
+import { useCRPC } from "@/lib/convex/crpc"
+import { cn } from "@/lib/utils"
 
-import { CreateFeedbackForm } from './-components/create-feedback-form';
+export const Route = createFileRoute("/@{$org}/$project/feedback/new/")({
+  component: NewFeedbackRoute,
+})
 
-export const Route = createFileRoute('/@{$org}/$project/feedback/new/')({
-	component: RouteComponent,
-	pendingComponent: () => <RoutePending variant='form' />,
-	pendingMs: 150,
-	loader: async ({ context, params }) => {
-		const projectDetails = await context.queryClient.ensureQueryData(
-			convexQuery(api.project.getDetails, {
-				orgSlug: params.org,
-				slug: params.project,
-			})
-		);
+function NewFeedbackRoute() {
+  const params = Route.useParams()
+  const navigate = useNavigate()
+  const crpc = useCRPC()
+  const session = authClient.useSession()
 
-		if (!projectDetails?.project?._id) {
-			throw notFound();
-		}
+  const projectQuery = useQuery(
+    crpc.project.getDetails.queryOptions({
+      orgSlug: params.org,
+      slug: params.project,
+    })
+  )
+  const boardsQuery = useQuery(
+    crpc.feedbackBoard.listProjectBoards.queryOptions(
+      {
+        projectId: projectQuery.data?.project?.id,
+      },
+      { enabled: !!projectQuery.data?.project?.id }
+    )
+  )
+  const createMutation = useMutation(
+    crpc.feedback.create.mutationOptions({
+      onSuccess: (data) => {
+        navigate({
+          params: { ...params, slug: data.slug },
+          to: "/@{$org}/$project/feedback/$slug",
+        })
+      },
+    })
+  )
 
-		await context.queryClient.ensureQueryData(
-			convexQuery(api.feedbackBoard.listProjectBoards, {
-				slug: params.project,
-			})
-		);
-	},
-});
+  const form = useForm({
+    defaultValues: {
+      boardId: "",
+      firstComment: "",
+      title: "",
+    },
+    onSubmit: async ({ value }) => {
+      const project = projectQuery.data?.project
+      if (!project) return
 
-function RouteComponent() {
-	const router = useRouter();
-	const { org: orgSlug, project: projectSlug } = Route.useParams();
-	// const { authed } = Route.useLoaderData();
+      await createMutation.mutateAsync({
+        boardId: value.boardId,
+        firstComment: sanitizeEditorContent(value.firstComment),
+        projectId: project.id,
+        title: value.title,
+      })
+    },
+  })
 
-	const { data: projectDetails } = useSuspenseQuery(
-		convexQuery(api.project.getDetails, {
-			orgSlug,
-			slug: projectSlug,
-		})
-	);
+  const boards = boardsQuery.data ?? []
 
-	const { data: feedbackBoards } = useSuspenseQuery(
-		convexQuery(api.feedbackBoard.listProjectBoards, {
-			slug: projectSlug,
-		})
-	);
+  if (!session.data?.user) {
+    return (
+      <EmptyState
+        title="Sign in to create feedback"
+        description="This route is wired to an authenticated mutation. Open the auth page first, then come back here to post feedback."
+      />
+    )
+  }
 
-	if (!projectDetails?.project) {
-		throw notFound();
-	}
+  if (!projectQuery.data?.project || !projectQuery.data.permissions.canView) {
+    return (
+      <EmptyState
+        title="Project not available"
+        description="The selected project cannot be loaded for feedback creation."
+      />
+    )
+  }
 
-	return (
-		<div>
-			<div className='border-b bg-muted/50'>
-				<div className='container pt-12 pb-6'>
-					<div className='flex items-center justify-between'>
-						<div className='flex items-center gap-3'>
-							<h1 className='text-2xl font-bold md:text-3xl'>Add Feedback</h1>
-						</div>
-					</div>
-				</div>
-			</div>
-			<div className='container py-6'>
-				<CreateFeedbackForm
-					projectId={projectDetails.project._id}
-					boards={feedbackBoards}
-					onSubmit={({ slug }) => {
-						router.navigate({
-							to: '/@{$org}/$project/feedback/$slug',
-							params: {
-								org: orgSlug,
-								project: projectSlug,
-								slug,
-							},
-						});
-					}}
-				/>
-			</div>
-		</div>
-	);
+  return (
+    <div>
+      <div className="border-b bg-muted/50">
+        <div className="container pt-12 pb-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl font-bold md:text-3xl">Add Feedback</h1>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="container py-6">
+        <form
+          className={cn("flex flex-col gap-6", {
+            "pointer-events-none opacity-50": createMutation.isPending,
+          })}
+          onSubmit={(event) => {
+            event.preventDefault()
+            event.stopPropagation()
+            void form.handleSubmit()
+          }}
+        >
+          <form.Field name="boardId">
+            {(field) => {
+              const selectedBoard = boards.find(
+                (board) => board.id === field.state.value
+              )
+
+              return (
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-medium">Board</label>
+                  <Select
+                    disabled={createMutation.isPending}
+                    onValueChange={(value) => field.handleChange(value)}
+                    value={field.state.value}
+                  >
+                    <SelectTrigger className="w-48">
+                      <span
+                        className={cn(
+                          "line-clamp-1 flex items-center gap-2",
+                          !selectedBoard && "text-muted-foreground"
+                        )}
+                        data-slot="select-value"
+                      >
+                        {selectedBoard?.name ?? "Select Board"}
+                      </span>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {boards.map((board) => (
+                        <SelectItem key={board.id} value={board.id}>
+                          {board.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )
+            }}
+          </form.Field>
+
+          <form.Field name="title">
+            {(field) => (
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-medium">Title</label>
+                <Input
+                  disabled={createMutation.isPending}
+                  onChange={(event) => field.handleChange(event.target.value)}
+                  value={field.state.value}
+                />
+              </div>
+            )}
+          </form.Field>
+
+          <form.Field name="firstComment">
+            {(field) => (
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-medium">Content</label>
+                <MarkdownEditor
+                  disabled={createMutation.isPending}
+                  minHeight="120px"
+                  onChange={(html) => field.handleChange(html)}
+                  onSubmitShortcut={() => form.handleSubmit()}
+                  placeholder="Describe your feedback..."
+                  value={field.state.value}
+                />
+              </div>
+            )}
+          </form.Field>
+
+          {createMutation.error ? (
+            <InlineAlert variant="danger">
+              Unable to create feedback: {createMutation.error.message}
+            </InlineAlert>
+          ) : null}
+
+          <div className="flex items-center gap-3">
+            <form.Subscribe
+              selector={(state) => ({
+                boardId: state.values.boardId,
+                firstComment: state.values.firstComment,
+                isSubmitting: state.isSubmitting,
+                title: state.values.title,
+              })}
+            >
+              {({ boardId, firstComment, isSubmitting, title }) => {
+                const visuallyDisabled =
+                  !boardId ||
+                  !title.trim() ||
+                  !sanitizeEditorContent(firstComment) ||
+                  isSubmitting ||
+                  createMutation.isPending
+
+                return (
+                  <Button
+                    className={cn({
+                      "opacity-50 grayscale select-none": visuallyDisabled,
+                    })}
+                    disabled={createMutation.isPending}
+                    type="submit"
+                  >
+                    {isSubmitting || createMutation.isPending
+                      ? "Creating..."
+                      : "Create"}
+                  </Button>
+                )
+              }}
+            </form.Subscribe>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
 }

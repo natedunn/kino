@@ -1,17 +1,21 @@
-# Kino
+# TanStack Start + shadcn/ui
 
-## Development
+This is a template for a new TanStack Start project with React, TypeScript, and shadcn/ui.
 
-Use Portless by default:
+## Adding components
+
+To add components to your app, run the following command:
 
 ```bash
-pnpm dev
+npx shadcn@latest add button
 ```
 
-That serves the app on a stable `https://*.localhost` URL instead of hard-coding `http://localhost:3000`, which avoids local port collisions across projects and worktrees.
+This will place the ui components in the `components` directory.
 
-If you need the old localhost flow, run:
+## Using components
 
-```bash
-pnpm dev:localhost
+To use the components in your app, import them as follows:
+
+```tsx
+import { Button } from "@/components/ui/button";
 ```

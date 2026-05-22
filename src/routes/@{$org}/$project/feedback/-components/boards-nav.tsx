@@ -1,80 +1,53 @@
 import { Link, useParams, useSearch } from '@tanstack/react-router';
 
-import { API } from '~api';
 import { buttonVariants } from '@/components/ui/button';
-import { Icon, IconName } from '@/icons';
+import { Icon, type IconName } from '@/icons';
 import { cn } from '@/lib/utils';
 
-type BoardNavProps = {
-	boards: NonNullable<API['feedbackBoard']['listProjectBoards']> | null;
-};
+export function BoardsNav({ boards }: { boards: any[] | null }) {
+  const routePath = '/@{$org}/$project/feedback/';
+  const { org, project } = useParams({ from: routePath });
+  const { board: boardParam } = useSearch({ from: routePath });
 
-export const BoardsNav = ({ boards }: BoardNavProps) => {
-	const routePath = '/@{$org}/$project/feedback/';
-	const { org, project } = useParams({
-		from: routePath,
-	});
+  if (!boards) return <div>No boards</div>;
 
-	const { board: boardParam } = useSearch({
-		from: routePath,
-	});
+  const allBoards = [
+    { id: 'all', name: 'All', icon: 'box', slug: 'all' },
+    ...boards,
+  ];
 
-	if (!boards) {
-		return <div>No boards</div>;
-	}
-
-	const allBoards = [
-		{
-			_id: 'all',
-			name: 'All',
-			icon: 'box',
-			slug: 'all',
-		},
-		...boards,
-	];
-	return (
-		<div className='flex flex-col gap-1'>
-			{allBoards.map((board) => {
-				return (
-					<Link
-						key={board._id}
-						to='/@{$org}/$project/feedback'
-						params={{
-							org,
-							project,
-						}}
-						search={(prev) => ({
-							...prev,
-							board: board.slug,
-						})}
-					>
-						{({ isActive }) => {
-							const active = board.slug === boardParam || isActive;
-							return (
-								<span
-									className={cn(
-										active
-											? buttonVariants({
-													variant: 'outline',
-													// Kinda hacky way to keep the style
-													className: 'pointer-events-none',
-												})
-											: buttonVariants({
-													variant: 'ghost',
-												}),
-										'group inline-flex! w-full items-center justify-start text-left'
-									)}
-								>
-									<span className='mr-auto inline-flex items-center gap-3'>
-										<Icon size='16px' name={board?.icon as IconName} fallback='box' />
-										<span>{board.name}</span>
-									</span>
-								</span>
-							);
-						}}
-					</Link>
-				);
-			})}
-		</div>
-	);
-};
+  return (
+    <div className="flex flex-col gap-1">
+      {allBoards.map((board) => (
+        <Link
+          key={board.id}
+          params={{ org, project }}
+          search={(prev) => ({
+            ...prev,
+            board: board.slug,
+          })}
+          to="/@{$org}/$project/feedback"
+        >
+          {({ isActive }) => {
+            const active = board.slug === boardParam || isActive;
+            return (
+              <span
+                className={cn(
+                  active
+                    ? buttonVariants({ variant: 'outline', className: 'pointer-events-none' })
+                    : buttonVariants({ variant: 'ghost' }),
+                  'group inline-flex! w-full items-center justify-start text-left'
+                )}
+              >
+                <span className="mr-auto inline-flex items-center gap-3">
+                  <Icon fallback="box" name={board?.icon as IconName} size="16px" />
+                  <span>{board.name}</span>
+                </span>
+              </span>
+            );
+          }}
+        </Link>
+      ))}
+    </div>
+  );
+}

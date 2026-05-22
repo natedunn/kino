@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 
 function TooltipProvider({
 	children,
-	delayDuration,
+	delayDuration: _delayDuration,
 }: {
 	children: React.ReactNode;
 	delayDuration?: number;
@@ -15,7 +15,7 @@ function TooltipProvider({
 }
 
 function Tooltip({
-	delayDuration,
+	delayDuration: _delayDuration,
 	...props
 }: React.ComponentProps<typeof TooltipPrimitive.Root> & {
 	delayDuration?: number;

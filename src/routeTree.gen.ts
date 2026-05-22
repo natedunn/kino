@@ -9,67 +9,36 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as PlaygroundRouteImport } from './routes/playground'
-import { Route as HomeRouteImport } from './routes/home'
-import { Route as TestRouteRouteImport } from './routes/test/route'
-import { Route as CreateRouteRouteImport } from './routes/create/route'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AtChar123orgChar125RouteRouteImport } from './routes/@{$org}/route'
-import { Route as SettingsIndexRouteImport } from './routes/settings/index'
-import { Route as MarketingIndexRouteImport } from './routes/_marketing/index'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as AtChar123orgChar125IndexRouteImport } from './routes/@{$org}/index'
-import { Route as BlankSignOutRouteImport } from './routes/_blank/sign-out'
-import { Route as BlankSignInRouteImport } from './routes/_blank/sign-in'
-import { Route as Blank404RouteImport } from './routes/_blank/404'
-import { Route as AtChar123orgChar125TestRouteImport } from './routes/@{$org}/test'
-import { Route as AtChar123orgChar125SettingsRouteImport } from './routes/@{$org}/settings'
-import { Route as TestIdRouteRouteImport } from './routes/test/$id/route'
 import { Route as AtChar123orgChar125ProjectRouteRouteImport } from './routes/@{$org}/$project/route'
-import { Route as TestIdIndexRouteImport } from './routes/test/$id/index'
 import { Route as ProfileSettingsIndexRouteImport } from './routes/profile/settings/index'
-import { Route as ProfileUsernameIndexRouteImport } from './routes/profile/$username/index'
 import { Route as CreateTeamIndexRouteImport } from './routes/create/team/index'
 import { Route as AtChar123orgChar125EditIndexRouteImport } from './routes/@{$org}/edit/index'
 import { Route as AtChar123orgChar125CreateProjectIndexRouteImport } from './routes/@{$org}/create-project/index'
 import { Route as AtChar123orgChar125ProjectIndexRouteImport } from './routes/@{$org}/$project/index'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
-import { Route as AtChar123orgChar125ProjectChatRouteRouteImport } from './routes/@{$org}/$project/chat/route'
 import { Route as AtChar123orgChar125ProjectUpdatesIndexRouteImport } from './routes/@{$org}/$project/updates/index'
 import { Route as AtChar123orgChar125ProjectRoadmapIndexRouteImport } from './routes/@{$org}/$project/roadmap/index'
 import { Route as AtChar123orgChar125ProjectFilesIndexRouteImport } from './routes/@{$org}/$project/files/index'
 import { Route as AtChar123orgChar125ProjectFeedbackIndexRouteImport } from './routes/@{$org}/$project/feedback/index'
 import { Route as AtChar123orgChar125ProjectDiscussionsIndexRouteImport } from './routes/@{$org}/$project/discussions/index'
 import { Route as AtChar123orgChar125ProjectChatIndexRouteImport } from './routes/@{$org}/$project/chat/index'
-import { Route as AtChar123orgChar125ProjectFeedbackBoardsRouteRouteImport } from './routes/@{$org}/$project/feedback/boards/route'
 import { Route as AtChar123orgChar125ProjectUpdatesNewIndexRouteImport } from './routes/@{$org}/$project/updates/new/index'
 import { Route as AtChar123orgChar125ProjectUpdatesSlugIndexRouteImport } from './routes/@{$org}/$project/updates/$slug/index'
 import { Route as AtChar123orgChar125ProjectFeedbackNewIndexRouteImport } from './routes/@{$org}/$project/feedback/new/index'
 import { Route as AtChar123orgChar125ProjectFeedbackBoardsIndexRouteImport } from './routes/@{$org}/$project/feedback/boards/index'
 import { Route as AtChar123orgChar125ProjectFeedbackSlugIndexRouteImport } from './routes/@{$org}/$project/feedback/$slug/index'
-import { Route as AtChar123orgChar125ProjectChatChatIdIndexRouteImport } from './routes/@{$org}/$project/chat/$chatId/index'
 import { Route as AtChar123orgChar125ProjectUpdatesSlugEditRouteImport } from './routes/@{$org}/$project/updates/$slug/edit'
 import { Route as AtChar123orgChar125ProjectFeedbackBoardsNewRouteImport } from './routes/@{$org}/$project/feedback/boards/new'
-import { Route as AtChar123orgChar125ProjectFeedbackBoardsBoardRouteRouteImport } from './routes/@{$org}/$project/feedback/boards/$board/route'
 import { Route as AtChar123orgChar125ProjectFeedbackBoardsBoardIndexRouteImport } from './routes/@{$org}/$project/feedback/boards/$board/index'
 import { Route as AtChar123orgChar125ProjectFeedbackBoardsBoardEditRouteImport } from './routes/@{$org}/$project/feedback/boards/$board/edit'
 
-const PlaygroundRoute = PlaygroundRouteImport.update({
-  id: '/playground',
-  path: '/playground',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const HomeRoute = HomeRouteImport.update({
-  id: '/home',
-  path: '/home',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TestRouteRoute = TestRouteRouteImport.update({
-  id: '/test',
-  path: '/test',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CreateRouteRoute = CreateRouteRouteImport.update({
-  id: '/create',
-  path: '/create',
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AtChar123orgChar125RouteRoute =
@@ -78,13 +47,8 @@ const AtChar123orgChar125RouteRoute =
     path: '/@{$org}',
     getParentRoute: () => rootRouteImport,
   } as any)
-const SettingsIndexRoute = SettingsIndexRouteImport.update({
-  id: '/settings/',
-  path: '/settings/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MarketingIndexRoute = MarketingIndexRouteImport.update({
-  id: '/_marketing/',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
@@ -94,62 +58,21 @@ const AtChar123orgChar125IndexRoute =
     path: '/',
     getParentRoute: () => AtChar123orgChar125RouteRoute,
   } as any)
-const BlankSignOutRoute = BlankSignOutRouteImport.update({
-  id: '/_blank/sign-out',
-  path: '/sign-out',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BlankSignInRoute = BlankSignInRouteImport.update({
-  id: '/_blank/sign-in',
-  path: '/sign-in',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const Blank404Route = Blank404RouteImport.update({
-  id: '/_blank/404',
-  path: '/404',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AtChar123orgChar125TestRoute = AtChar123orgChar125TestRouteImport.update({
-  id: '/test',
-  path: '/test',
-  getParentRoute: () => AtChar123orgChar125RouteRoute,
-} as any)
-const AtChar123orgChar125SettingsRoute =
-  AtChar123orgChar125SettingsRouteImport.update({
-    id: '/settings',
-    path: '/settings',
-    getParentRoute: () => AtChar123orgChar125RouteRoute,
-  } as any)
-const TestIdRouteRoute = TestIdRouteRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => TestRouteRoute,
-} as any)
 const AtChar123orgChar125ProjectRouteRoute =
   AtChar123orgChar125ProjectRouteRouteImport.update({
     id: '/$project',
     path: '/$project',
     getParentRoute: () => AtChar123orgChar125RouteRoute,
   } as any)
-const TestIdIndexRoute = TestIdIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => TestIdRouteRoute,
-} as any)
 const ProfileSettingsIndexRoute = ProfileSettingsIndexRouteImport.update({
   id: '/profile/settings/',
   path: '/profile/settings/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ProfileUsernameIndexRoute = ProfileUsernameIndexRouteImport.update({
-  id: '/profile/$username/',
-  path: '/profile/$username/',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const CreateTeamIndexRoute = CreateTeamIndexRouteImport.update({
-  id: '/team/',
-  path: '/team/',
-  getParentRoute: () => CreateRouteRoute,
+  id: '/create/team/',
+  path: '/create/team/',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AtChar123orgChar125EditIndexRoute =
   AtChar123orgChar125EditIndexRouteImport.update({
@@ -174,12 +97,6 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AtChar123orgChar125ProjectChatRouteRoute =
-  AtChar123orgChar125ProjectChatRouteRouteImport.update({
-    id: '/chat',
-    path: '/chat',
-    getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
-  } as any)
 const AtChar123orgChar125ProjectUpdatesIndexRoute =
   AtChar123orgChar125ProjectUpdatesIndexRouteImport.update({
     id: '/updates/',
@@ -212,14 +129,8 @@ const AtChar123orgChar125ProjectDiscussionsIndexRoute =
   } as any)
 const AtChar123orgChar125ProjectChatIndexRoute =
   AtChar123orgChar125ProjectChatIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => AtChar123orgChar125ProjectChatRouteRoute,
-  } as any)
-const AtChar123orgChar125ProjectFeedbackBoardsRouteRoute =
-  AtChar123orgChar125ProjectFeedbackBoardsRouteRouteImport.update({
-    id: '/feedback/boards',
-    path: '/feedback/boards',
+    id: '/chat/',
+    path: '/chat/',
     getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
   } as any)
 const AtChar123orgChar125ProjectUpdatesNewIndexRoute =
@@ -242,21 +153,15 @@ const AtChar123orgChar125ProjectFeedbackNewIndexRoute =
   } as any)
 const AtChar123orgChar125ProjectFeedbackBoardsIndexRoute =
   AtChar123orgChar125ProjectFeedbackBoardsIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => AtChar123orgChar125ProjectFeedbackBoardsRouteRoute,
+    id: '/feedback/boards/',
+    path: '/feedback/boards/',
+    getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
   } as any)
 const AtChar123orgChar125ProjectFeedbackSlugIndexRoute =
   AtChar123orgChar125ProjectFeedbackSlugIndexRouteImport.update({
     id: '/feedback/$slug/',
     path: '/feedback/$slug/',
     getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
-  } as any)
-const AtChar123orgChar125ProjectChatChatIdIndexRoute =
-  AtChar123orgChar125ProjectChatChatIdIndexRouteImport.update({
-    id: '/$chatId/',
-    path: '/$chatId/',
-    getParentRoute: () => AtChar123orgChar125ProjectChatRouteRoute,
   } as any)
 const AtChar123orgChar125ProjectUpdatesSlugEditRoute =
   AtChar123orgChar125ProjectUpdatesSlugEditRouteImport.update({
@@ -266,67 +171,43 @@ const AtChar123orgChar125ProjectUpdatesSlugEditRoute =
   } as any)
 const AtChar123orgChar125ProjectFeedbackBoardsNewRoute =
   AtChar123orgChar125ProjectFeedbackBoardsNewRouteImport.update({
-    id: '/new',
-    path: '/new',
-    getParentRoute: () => AtChar123orgChar125ProjectFeedbackBoardsRouteRoute,
-  } as any)
-const AtChar123orgChar125ProjectFeedbackBoardsBoardRouteRoute =
-  AtChar123orgChar125ProjectFeedbackBoardsBoardRouteRouteImport.update({
-    id: '/$board',
-    path: '/$board',
-    getParentRoute: () => AtChar123orgChar125ProjectFeedbackBoardsRouteRoute,
+    id: '/feedback/boards/new',
+    path: '/feedback/boards/new',
+    getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
   } as any)
 const AtChar123orgChar125ProjectFeedbackBoardsBoardIndexRoute =
   AtChar123orgChar125ProjectFeedbackBoardsBoardIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () =>
-      AtChar123orgChar125ProjectFeedbackBoardsBoardRouteRoute,
+    id: '/feedback/boards/$board/',
+    path: '/feedback/boards/$board/',
+    getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
   } as any)
 const AtChar123orgChar125ProjectFeedbackBoardsBoardEditRoute =
   AtChar123orgChar125ProjectFeedbackBoardsBoardEditRouteImport.update({
-    id: '/edit',
-    path: '/edit',
-    getParentRoute: () =>
-      AtChar123orgChar125ProjectFeedbackBoardsBoardRouteRoute,
+    id: '/feedback/boards/$board/edit',
+    path: '/feedback/boards/$board/edit',
+    getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
+  '/': typeof IndexRoute
   '/@{$org}': typeof AtChar123orgChar125RouteRouteWithChildren
-  '/create': typeof CreateRouteRouteWithChildren
-  '/test': typeof TestRouteRouteWithChildren
-  '/home': typeof HomeRoute
-  '/playground': typeof PlaygroundRoute
+  '/auth': typeof AuthRoute
   '/@{$org}/$project': typeof AtChar123orgChar125ProjectRouteRouteWithChildren
-  '/test/$id': typeof TestIdRouteRouteWithChildren
-  '/@{$org}/settings': typeof AtChar123orgChar125SettingsRoute
-  '/@{$org}/test': typeof AtChar123orgChar125TestRoute
-  '/404': typeof Blank404Route
-  '/sign-in': typeof BlankSignInRoute
-  '/sign-out': typeof BlankSignOutRoute
   '/@{$org}/': typeof AtChar123orgChar125IndexRoute
-  '/': typeof MarketingIndexRoute
-  '/settings/': typeof SettingsIndexRoute
-  '/@{$org}/$project/chat': typeof AtChar123orgChar125ProjectChatRouteRouteWithChildren
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/@{$org}/$project/': typeof AtChar123orgChar125ProjectIndexRoute
   '/@{$org}/create-project/': typeof AtChar123orgChar125CreateProjectIndexRoute
   '/@{$org}/edit/': typeof AtChar123orgChar125EditIndexRoute
   '/create/team/': typeof CreateTeamIndexRoute
-  '/profile/$username/': typeof ProfileUsernameIndexRoute
   '/profile/settings/': typeof ProfileSettingsIndexRoute
-  '/test/$id/': typeof TestIdIndexRoute
-  '/@{$org}/$project/feedback/boards': typeof AtChar123orgChar125ProjectFeedbackBoardsRouteRouteWithChildren
   '/@{$org}/$project/chat/': typeof AtChar123orgChar125ProjectChatIndexRoute
   '/@{$org}/$project/discussions/': typeof AtChar123orgChar125ProjectDiscussionsIndexRoute
   '/@{$org}/$project/feedback/': typeof AtChar123orgChar125ProjectFeedbackIndexRoute
   '/@{$org}/$project/files/': typeof AtChar123orgChar125ProjectFilesIndexRoute
   '/@{$org}/$project/roadmap/': typeof AtChar123orgChar125ProjectRoadmapIndexRoute
   '/@{$org}/$project/updates/': typeof AtChar123orgChar125ProjectUpdatesIndexRoute
-  '/@{$org}/$project/feedback/boards/$board': typeof AtChar123orgChar125ProjectFeedbackBoardsBoardRouteRouteWithChildren
   '/@{$org}/$project/feedback/boards/new': typeof AtChar123orgChar125ProjectFeedbackBoardsNewRoute
   '/@{$org}/$project/updates/$slug/edit': typeof AtChar123orgChar125ProjectUpdatesSlugEditRoute
-  '/@{$org}/$project/chat/$chatId/': typeof AtChar123orgChar125ProjectChatChatIdIndexRoute
   '/@{$org}/$project/feedback/$slug/': typeof AtChar123orgChar125ProjectFeedbackSlugIndexRoute
   '/@{$org}/$project/feedback/boards/': typeof AtChar123orgChar125ProjectFeedbackBoardsIndexRoute
   '/@{$org}/$project/feedback/new/': typeof AtChar123orgChar125ProjectFeedbackNewIndexRoute
@@ -336,26 +217,15 @@ export interface FileRoutesByFullPath {
   '/@{$org}/$project/feedback/boards/$board/': typeof AtChar123orgChar125ProjectFeedbackBoardsBoardIndexRoute
 }
 export interface FileRoutesByTo {
-  '/create': typeof CreateRouteRouteWithChildren
-  '/test': typeof TestRouteRouteWithChildren
-  '/home': typeof HomeRoute
-  '/playground': typeof PlaygroundRoute
-  '/@{$org}/settings': typeof AtChar123orgChar125SettingsRoute
-  '/@{$org}/test': typeof AtChar123orgChar125TestRoute
-  '/404': typeof Blank404Route
-  '/sign-in': typeof BlankSignInRoute
-  '/sign-out': typeof BlankSignOutRoute
+  '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/@{$org}': typeof AtChar123orgChar125IndexRoute
-  '/': typeof MarketingIndexRoute
-  '/settings': typeof SettingsIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/@{$org}/$project': typeof AtChar123orgChar125ProjectIndexRoute
   '/@{$org}/create-project': typeof AtChar123orgChar125CreateProjectIndexRoute
   '/@{$org}/edit': typeof AtChar123orgChar125EditIndexRoute
   '/create/team': typeof CreateTeamIndexRoute
-  '/profile/$username': typeof ProfileUsernameIndexRoute
   '/profile/settings': typeof ProfileSettingsIndexRoute
-  '/test/$id': typeof TestIdIndexRoute
   '/@{$org}/$project/chat': typeof AtChar123orgChar125ProjectChatIndexRoute
   '/@{$org}/$project/discussions': typeof AtChar123orgChar125ProjectDiscussionsIndexRoute
   '/@{$org}/$project/feedback': typeof AtChar123orgChar125ProjectFeedbackIndexRoute
@@ -364,7 +234,6 @@ export interface FileRoutesByTo {
   '/@{$org}/$project/updates': typeof AtChar123orgChar125ProjectUpdatesIndexRoute
   '/@{$org}/$project/feedback/boards/new': typeof AtChar123orgChar125ProjectFeedbackBoardsNewRoute
   '/@{$org}/$project/updates/$slug/edit': typeof AtChar123orgChar125ProjectUpdatesSlugEditRoute
-  '/@{$org}/$project/chat/$chatId': typeof AtChar123orgChar125ProjectChatChatIdIndexRoute
   '/@{$org}/$project/feedback/$slug': typeof AtChar123orgChar125ProjectFeedbackSlugIndexRoute
   '/@{$org}/$project/feedback/boards': typeof AtChar123orgChar125ProjectFeedbackBoardsIndexRoute
   '/@{$org}/$project/feedback/new': typeof AtChar123orgChar125ProjectFeedbackNewIndexRoute
@@ -375,41 +244,25 @@ export interface FileRoutesByTo {
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/': typeof IndexRoute
   '/@{$org}': typeof AtChar123orgChar125RouteRouteWithChildren
-  '/create': typeof CreateRouteRouteWithChildren
-  '/test': typeof TestRouteRouteWithChildren
-  '/home': typeof HomeRoute
-  '/playground': typeof PlaygroundRoute
+  '/auth': typeof AuthRoute
   '/@{$org}/$project': typeof AtChar123orgChar125ProjectRouteRouteWithChildren
-  '/test/$id': typeof TestIdRouteRouteWithChildren
-  '/@{$org}/settings': typeof AtChar123orgChar125SettingsRoute
-  '/@{$org}/test': typeof AtChar123orgChar125TestRoute
-  '/_blank/404': typeof Blank404Route
-  '/_blank/sign-in': typeof BlankSignInRoute
-  '/_blank/sign-out': typeof BlankSignOutRoute
   '/@{$org}/': typeof AtChar123orgChar125IndexRoute
-  '/_marketing/': typeof MarketingIndexRoute
-  '/settings/': typeof SettingsIndexRoute
-  '/@{$org}/$project/chat': typeof AtChar123orgChar125ProjectChatRouteRouteWithChildren
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/@{$org}/$project/': typeof AtChar123orgChar125ProjectIndexRoute
   '/@{$org}/create-project/': typeof AtChar123orgChar125CreateProjectIndexRoute
   '/@{$org}/edit/': typeof AtChar123orgChar125EditIndexRoute
   '/create/team/': typeof CreateTeamIndexRoute
-  '/profile/$username/': typeof ProfileUsernameIndexRoute
   '/profile/settings/': typeof ProfileSettingsIndexRoute
-  '/test/$id/': typeof TestIdIndexRoute
-  '/@{$org}/$project/feedback/boards': typeof AtChar123orgChar125ProjectFeedbackBoardsRouteRouteWithChildren
   '/@{$org}/$project/chat/': typeof AtChar123orgChar125ProjectChatIndexRoute
   '/@{$org}/$project/discussions/': typeof AtChar123orgChar125ProjectDiscussionsIndexRoute
   '/@{$org}/$project/feedback/': typeof AtChar123orgChar125ProjectFeedbackIndexRoute
   '/@{$org}/$project/files/': typeof AtChar123orgChar125ProjectFilesIndexRoute
   '/@{$org}/$project/roadmap/': typeof AtChar123orgChar125ProjectRoadmapIndexRoute
   '/@{$org}/$project/updates/': typeof AtChar123orgChar125ProjectUpdatesIndexRoute
-  '/@{$org}/$project/feedback/boards/$board': typeof AtChar123orgChar125ProjectFeedbackBoardsBoardRouteRouteWithChildren
   '/@{$org}/$project/feedback/boards/new': typeof AtChar123orgChar125ProjectFeedbackBoardsNewRoute
   '/@{$org}/$project/updates/$slug/edit': typeof AtChar123orgChar125ProjectUpdatesSlugEditRoute
-  '/@{$org}/$project/chat/$chatId/': typeof AtChar123orgChar125ProjectChatChatIdIndexRoute
   '/@{$org}/$project/feedback/$slug/': typeof AtChar123orgChar125ProjectFeedbackSlugIndexRoute
   '/@{$org}/$project/feedback/boards/': typeof AtChar123orgChar125ProjectFeedbackBoardsIndexRoute
   '/@{$org}/$project/feedback/new/': typeof AtChar123orgChar125ProjectFeedbackNewIndexRoute
@@ -421,41 +274,25 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/@{$org}'
-    | '/create'
-    | '/test'
-    | '/home'
-    | '/playground'
-    | '/@{$org}/$project'
-    | '/test/$id'
-    | '/@{$org}/settings'
-    | '/@{$org}/test'
-    | '/404'
-    | '/sign-in'
-    | '/sign-out'
-    | '/@{$org}/'
     | '/'
-    | '/settings/'
-    | '/@{$org}/$project/chat'
+    | '/@{$org}'
+    | '/auth'
+    | '/@{$org}/$project'
+    | '/@{$org}/'
     | '/api/auth/$'
     | '/@{$org}/$project/'
     | '/@{$org}/create-project/'
     | '/@{$org}/edit/'
     | '/create/team/'
-    | '/profile/$username/'
     | '/profile/settings/'
-    | '/test/$id/'
-    | '/@{$org}/$project/feedback/boards'
     | '/@{$org}/$project/chat/'
     | '/@{$org}/$project/discussions/'
     | '/@{$org}/$project/feedback/'
     | '/@{$org}/$project/files/'
     | '/@{$org}/$project/roadmap/'
     | '/@{$org}/$project/updates/'
-    | '/@{$org}/$project/feedback/boards/$board'
     | '/@{$org}/$project/feedback/boards/new'
     | '/@{$org}/$project/updates/$slug/edit'
-    | '/@{$org}/$project/chat/$chatId/'
     | '/@{$org}/$project/feedback/$slug/'
     | '/@{$org}/$project/feedback/boards/'
     | '/@{$org}/$project/feedback/new/'
@@ -465,26 +302,15 @@ export interface FileRouteTypes {
     | '/@{$org}/$project/feedback/boards/$board/'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/create'
-    | '/test'
-    | '/home'
-    | '/playground'
-    | '/@{$org}/settings'
-    | '/@{$org}/test'
-    | '/404'
-    | '/sign-in'
-    | '/sign-out'
-    | '/@{$org}'
     | '/'
-    | '/settings'
+    | '/auth'
+    | '/@{$org}'
     | '/api/auth/$'
     | '/@{$org}/$project'
     | '/@{$org}/create-project'
     | '/@{$org}/edit'
     | '/create/team'
-    | '/profile/$username'
     | '/profile/settings'
-    | '/test/$id'
     | '/@{$org}/$project/chat'
     | '/@{$org}/$project/discussions'
     | '/@{$org}/$project/feedback'
@@ -493,7 +319,6 @@ export interface FileRouteTypes {
     | '/@{$org}/$project/updates'
     | '/@{$org}/$project/feedback/boards/new'
     | '/@{$org}/$project/updates/$slug/edit'
-    | '/@{$org}/$project/chat/$chatId'
     | '/@{$org}/$project/feedback/$slug'
     | '/@{$org}/$project/feedback/boards'
     | '/@{$org}/$project/feedback/new'
@@ -503,41 +328,25 @@ export interface FileRouteTypes {
     | '/@{$org}/$project/feedback/boards/$board'
   id:
     | '__root__'
+    | '/'
     | '/@{$org}'
-    | '/create'
-    | '/test'
-    | '/home'
-    | '/playground'
+    | '/auth'
     | '/@{$org}/$project'
-    | '/test/$id'
-    | '/@{$org}/settings'
-    | '/@{$org}/test'
-    | '/_blank/404'
-    | '/_blank/sign-in'
-    | '/_blank/sign-out'
     | '/@{$org}/'
-    | '/_marketing/'
-    | '/settings/'
-    | '/@{$org}/$project/chat'
     | '/api/auth/$'
     | '/@{$org}/$project/'
     | '/@{$org}/create-project/'
     | '/@{$org}/edit/'
     | '/create/team/'
-    | '/profile/$username/'
     | '/profile/settings/'
-    | '/test/$id/'
-    | '/@{$org}/$project/feedback/boards'
     | '/@{$org}/$project/chat/'
     | '/@{$org}/$project/discussions/'
     | '/@{$org}/$project/feedback/'
     | '/@{$org}/$project/files/'
     | '/@{$org}/$project/roadmap/'
     | '/@{$org}/$project/updates/'
-    | '/@{$org}/$project/feedback/boards/$board'
     | '/@{$org}/$project/feedback/boards/new'
     | '/@{$org}/$project/updates/$slug/edit'
-    | '/@{$org}/$project/chat/$chatId/'
     | '/@{$org}/$project/feedback/$slug/'
     | '/@{$org}/$project/feedback/boards/'
     | '/@{$org}/$project/feedback/new/'
@@ -548,49 +357,21 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  IndexRoute: typeof IndexRoute
   AtChar123orgChar125RouteRoute: typeof AtChar123orgChar125RouteRouteWithChildren
-  CreateRouteRoute: typeof CreateRouteRouteWithChildren
-  TestRouteRoute: typeof TestRouteRouteWithChildren
-  HomeRoute: typeof HomeRoute
-  PlaygroundRoute: typeof PlaygroundRoute
-  Blank404Route: typeof Blank404Route
-  BlankSignInRoute: typeof BlankSignInRoute
-  BlankSignOutRoute: typeof BlankSignOutRoute
-  MarketingIndexRoute: typeof MarketingIndexRoute
-  SettingsIndexRoute: typeof SettingsIndexRoute
+  AuthRoute: typeof AuthRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
-  ProfileUsernameIndexRoute: typeof ProfileUsernameIndexRoute
+  CreateTeamIndexRoute: typeof CreateTeamIndexRoute
   ProfileSettingsIndexRoute: typeof ProfileSettingsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/playground': {
-      id: '/playground'
-      path: '/playground'
-      fullPath: '/playground'
-      preLoaderRoute: typeof PlaygroundRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/home': {
-      id: '/home'
-      path: '/home'
-      fullPath: '/home'
-      preLoaderRoute: typeof HomeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/test': {
-      id: '/test'
-      path: '/test'
-      fullPath: '/test'
-      preLoaderRoute: typeof TestRouteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/create': {
-      id: '/create'
-      path: '/create'
-      fullPath: '/create'
-      preLoaderRoute: typeof CreateRouteRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/@{$org}': {
@@ -600,18 +381,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AtChar123orgChar125RouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/settings/': {
-      id: '/settings/'
-      path: '/settings'
-      fullPath: '/settings/'
-      preLoaderRoute: typeof SettingsIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_marketing/': {
-      id: '/_marketing/'
+    '/': {
+      id: '/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof MarketingIndexRouteImport
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/@{$org}/': {
@@ -621,61 +395,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AtChar123orgChar125IndexRouteImport
       parentRoute: typeof AtChar123orgChar125RouteRoute
     }
-    '/_blank/sign-out': {
-      id: '/_blank/sign-out'
-      path: '/sign-out'
-      fullPath: '/sign-out'
-      preLoaderRoute: typeof BlankSignOutRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_blank/sign-in': {
-      id: '/_blank/sign-in'
-      path: '/sign-in'
-      fullPath: '/sign-in'
-      preLoaderRoute: typeof BlankSignInRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_blank/404': {
-      id: '/_blank/404'
-      path: '/404'
-      fullPath: '/404'
-      preLoaderRoute: typeof Blank404RouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/@{$org}/test': {
-      id: '/@{$org}/test'
-      path: '/test'
-      fullPath: '/@{$org}/test'
-      preLoaderRoute: typeof AtChar123orgChar125TestRouteImport
-      parentRoute: typeof AtChar123orgChar125RouteRoute
-    }
-    '/@{$org}/settings': {
-      id: '/@{$org}/settings'
-      path: '/settings'
-      fullPath: '/@{$org}/settings'
-      preLoaderRoute: typeof AtChar123orgChar125SettingsRouteImport
-      parentRoute: typeof AtChar123orgChar125RouteRoute
-    }
-    '/test/$id': {
-      id: '/test/$id'
-      path: '/$id'
-      fullPath: '/test/$id'
-      preLoaderRoute: typeof TestIdRouteRouteImport
-      parentRoute: typeof TestRouteRoute
-    }
     '/@{$org}/$project': {
       id: '/@{$org}/$project'
       path: '/$project'
       fullPath: '/@{$org}/$project'
       preLoaderRoute: typeof AtChar123orgChar125ProjectRouteRouteImport
       parentRoute: typeof AtChar123orgChar125RouteRoute
-    }
-    '/test/$id/': {
-      id: '/test/$id/'
-      path: '/'
-      fullPath: '/test/$id/'
-      preLoaderRoute: typeof TestIdIndexRouteImport
-      parentRoute: typeof TestIdRouteRoute
     }
     '/profile/settings/': {
       id: '/profile/settings/'
@@ -684,19 +409,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileSettingsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/profile/$username/': {
-      id: '/profile/$username/'
-      path: '/profile/$username'
-      fullPath: '/profile/$username/'
-      preLoaderRoute: typeof ProfileUsernameIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/create/team/': {
       id: '/create/team/'
-      path: '/team'
+      path: '/create/team'
       fullPath: '/create/team/'
       preLoaderRoute: typeof CreateTeamIndexRouteImport
-      parentRoute: typeof CreateRouteRoute
+      parentRoute: typeof rootRouteImport
     }
     '/@{$org}/edit/': {
       id: '/@{$org}/edit/'
@@ -725,13 +443,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/auth/$'
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/@{$org}/$project/chat': {
-      id: '/@{$org}/$project/chat'
-      path: '/chat'
-      fullPath: '/@{$org}/$project/chat'
-      preLoaderRoute: typeof AtChar123orgChar125ProjectChatRouteRouteImport
-      parentRoute: typeof AtChar123orgChar125ProjectRouteRoute
     }
     '/@{$org}/$project/updates/': {
       id: '/@{$org}/$project/updates/'
@@ -770,16 +481,9 @@ declare module '@tanstack/react-router' {
     }
     '/@{$org}/$project/chat/': {
       id: '/@{$org}/$project/chat/'
-      path: '/'
+      path: '/chat'
       fullPath: '/@{$org}/$project/chat/'
       preLoaderRoute: typeof AtChar123orgChar125ProjectChatIndexRouteImport
-      parentRoute: typeof AtChar123orgChar125ProjectChatRouteRoute
-    }
-    '/@{$org}/$project/feedback/boards': {
-      id: '/@{$org}/$project/feedback/boards'
-      path: '/feedback/boards'
-      fullPath: '/@{$org}/$project/feedback/boards'
-      preLoaderRoute: typeof AtChar123orgChar125ProjectFeedbackBoardsRouteRouteImport
       parentRoute: typeof AtChar123orgChar125ProjectRouteRoute
     }
     '/@{$org}/$project/updates/new/': {
@@ -805,10 +509,10 @@ declare module '@tanstack/react-router' {
     }
     '/@{$org}/$project/feedback/boards/': {
       id: '/@{$org}/$project/feedback/boards/'
-      path: '/'
+      path: '/feedback/boards'
       fullPath: '/@{$org}/$project/feedback/boards/'
       preLoaderRoute: typeof AtChar123orgChar125ProjectFeedbackBoardsIndexRouteImport
-      parentRoute: typeof AtChar123orgChar125ProjectFeedbackBoardsRouteRoute
+      parentRoute: typeof AtChar123orgChar125ProjectRouteRoute
     }
     '/@{$org}/$project/feedback/$slug/': {
       id: '/@{$org}/$project/feedback/$slug/'
@@ -816,13 +520,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/@{$org}/$project/feedback/$slug/'
       preLoaderRoute: typeof AtChar123orgChar125ProjectFeedbackSlugIndexRouteImport
       parentRoute: typeof AtChar123orgChar125ProjectRouteRoute
-    }
-    '/@{$org}/$project/chat/$chatId/': {
-      id: '/@{$org}/$project/chat/$chatId/'
-      path: '/$chatId'
-      fullPath: '/@{$org}/$project/chat/$chatId/'
-      preLoaderRoute: typeof AtChar123orgChar125ProjectChatChatIdIndexRouteImport
-      parentRoute: typeof AtChar123orgChar125ProjectChatRouteRoute
     }
     '/@{$org}/$project/updates/$slug/edit': {
       id: '/@{$org}/$project/updates/$slug/edit'
@@ -833,115 +530,52 @@ declare module '@tanstack/react-router' {
     }
     '/@{$org}/$project/feedback/boards/new': {
       id: '/@{$org}/$project/feedback/boards/new'
-      path: '/new'
+      path: '/feedback/boards/new'
       fullPath: '/@{$org}/$project/feedback/boards/new'
       preLoaderRoute: typeof AtChar123orgChar125ProjectFeedbackBoardsNewRouteImport
-      parentRoute: typeof AtChar123orgChar125ProjectFeedbackBoardsRouteRoute
-    }
-    '/@{$org}/$project/feedback/boards/$board': {
-      id: '/@{$org}/$project/feedback/boards/$board'
-      path: '/$board'
-      fullPath: '/@{$org}/$project/feedback/boards/$board'
-      preLoaderRoute: typeof AtChar123orgChar125ProjectFeedbackBoardsBoardRouteRouteImport
-      parentRoute: typeof AtChar123orgChar125ProjectFeedbackBoardsRouteRoute
+      parentRoute: typeof AtChar123orgChar125ProjectRouteRoute
     }
     '/@{$org}/$project/feedback/boards/$board/': {
       id: '/@{$org}/$project/feedback/boards/$board/'
-      path: '/'
+      path: '/feedback/boards/$board'
       fullPath: '/@{$org}/$project/feedback/boards/$board/'
       preLoaderRoute: typeof AtChar123orgChar125ProjectFeedbackBoardsBoardIndexRouteImport
-      parentRoute: typeof AtChar123orgChar125ProjectFeedbackBoardsBoardRouteRoute
+      parentRoute: typeof AtChar123orgChar125ProjectRouteRoute
     }
     '/@{$org}/$project/feedback/boards/$board/edit': {
       id: '/@{$org}/$project/feedback/boards/$board/edit'
-      path: '/edit'
+      path: '/feedback/boards/$board/edit'
       fullPath: '/@{$org}/$project/feedback/boards/$board/edit'
       preLoaderRoute: typeof AtChar123orgChar125ProjectFeedbackBoardsBoardEditRouteImport
-      parentRoute: typeof AtChar123orgChar125ProjectFeedbackBoardsBoardRouteRoute
+      parentRoute: typeof AtChar123orgChar125ProjectRouteRoute
     }
   }
 }
 
-interface AtChar123orgChar125ProjectChatRouteRouteChildren {
-  AtChar123orgChar125ProjectChatIndexRoute: typeof AtChar123orgChar125ProjectChatIndexRoute
-  AtChar123orgChar125ProjectChatChatIdIndexRoute: typeof AtChar123orgChar125ProjectChatChatIdIndexRoute
-}
-
-const AtChar123orgChar125ProjectChatRouteRouteChildren: AtChar123orgChar125ProjectChatRouteRouteChildren =
-  {
-    AtChar123orgChar125ProjectChatIndexRoute:
-      AtChar123orgChar125ProjectChatIndexRoute,
-    AtChar123orgChar125ProjectChatChatIdIndexRoute:
-      AtChar123orgChar125ProjectChatChatIdIndexRoute,
-  }
-
-const AtChar123orgChar125ProjectChatRouteRouteWithChildren =
-  AtChar123orgChar125ProjectChatRouteRoute._addFileChildren(
-    AtChar123orgChar125ProjectChatRouteRouteChildren,
-  )
-
-interface AtChar123orgChar125ProjectFeedbackBoardsBoardRouteRouteChildren {
-  AtChar123orgChar125ProjectFeedbackBoardsBoardEditRoute: typeof AtChar123orgChar125ProjectFeedbackBoardsBoardEditRoute
-  AtChar123orgChar125ProjectFeedbackBoardsBoardIndexRoute: typeof AtChar123orgChar125ProjectFeedbackBoardsBoardIndexRoute
-}
-
-const AtChar123orgChar125ProjectFeedbackBoardsBoardRouteRouteChildren: AtChar123orgChar125ProjectFeedbackBoardsBoardRouteRouteChildren =
-  {
-    AtChar123orgChar125ProjectFeedbackBoardsBoardEditRoute:
-      AtChar123orgChar125ProjectFeedbackBoardsBoardEditRoute,
-    AtChar123orgChar125ProjectFeedbackBoardsBoardIndexRoute:
-      AtChar123orgChar125ProjectFeedbackBoardsBoardIndexRoute,
-  }
-
-const AtChar123orgChar125ProjectFeedbackBoardsBoardRouteRouteWithChildren =
-  AtChar123orgChar125ProjectFeedbackBoardsBoardRouteRoute._addFileChildren(
-    AtChar123orgChar125ProjectFeedbackBoardsBoardRouteRouteChildren,
-  )
-
-interface AtChar123orgChar125ProjectFeedbackBoardsRouteRouteChildren {
-  AtChar123orgChar125ProjectFeedbackBoardsBoardRouteRoute: typeof AtChar123orgChar125ProjectFeedbackBoardsBoardRouteRouteWithChildren
-  AtChar123orgChar125ProjectFeedbackBoardsNewRoute: typeof AtChar123orgChar125ProjectFeedbackBoardsNewRoute
-  AtChar123orgChar125ProjectFeedbackBoardsIndexRoute: typeof AtChar123orgChar125ProjectFeedbackBoardsIndexRoute
-}
-
-const AtChar123orgChar125ProjectFeedbackBoardsRouteRouteChildren: AtChar123orgChar125ProjectFeedbackBoardsRouteRouteChildren =
-  {
-    AtChar123orgChar125ProjectFeedbackBoardsBoardRouteRoute:
-      AtChar123orgChar125ProjectFeedbackBoardsBoardRouteRouteWithChildren,
-    AtChar123orgChar125ProjectFeedbackBoardsNewRoute:
-      AtChar123orgChar125ProjectFeedbackBoardsNewRoute,
-    AtChar123orgChar125ProjectFeedbackBoardsIndexRoute:
-      AtChar123orgChar125ProjectFeedbackBoardsIndexRoute,
-  }
-
-const AtChar123orgChar125ProjectFeedbackBoardsRouteRouteWithChildren =
-  AtChar123orgChar125ProjectFeedbackBoardsRouteRoute._addFileChildren(
-    AtChar123orgChar125ProjectFeedbackBoardsRouteRouteChildren,
-  )
-
 interface AtChar123orgChar125ProjectRouteRouteChildren {
-  AtChar123orgChar125ProjectChatRouteRoute: typeof AtChar123orgChar125ProjectChatRouteRouteWithChildren
   AtChar123orgChar125ProjectIndexRoute: typeof AtChar123orgChar125ProjectIndexRoute
-  AtChar123orgChar125ProjectFeedbackBoardsRouteRoute: typeof AtChar123orgChar125ProjectFeedbackBoardsRouteRouteWithChildren
+  AtChar123orgChar125ProjectChatIndexRoute: typeof AtChar123orgChar125ProjectChatIndexRoute
   AtChar123orgChar125ProjectDiscussionsIndexRoute: typeof AtChar123orgChar125ProjectDiscussionsIndexRoute
   AtChar123orgChar125ProjectFeedbackIndexRoute: typeof AtChar123orgChar125ProjectFeedbackIndexRoute
   AtChar123orgChar125ProjectFilesIndexRoute: typeof AtChar123orgChar125ProjectFilesIndexRoute
   AtChar123orgChar125ProjectRoadmapIndexRoute: typeof AtChar123orgChar125ProjectRoadmapIndexRoute
   AtChar123orgChar125ProjectUpdatesIndexRoute: typeof AtChar123orgChar125ProjectUpdatesIndexRoute
+  AtChar123orgChar125ProjectFeedbackBoardsNewRoute: typeof AtChar123orgChar125ProjectFeedbackBoardsNewRoute
   AtChar123orgChar125ProjectUpdatesSlugEditRoute: typeof AtChar123orgChar125ProjectUpdatesSlugEditRoute
   AtChar123orgChar125ProjectFeedbackSlugIndexRoute: typeof AtChar123orgChar125ProjectFeedbackSlugIndexRoute
+  AtChar123orgChar125ProjectFeedbackBoardsIndexRoute: typeof AtChar123orgChar125ProjectFeedbackBoardsIndexRoute
   AtChar123orgChar125ProjectFeedbackNewIndexRoute: typeof AtChar123orgChar125ProjectFeedbackNewIndexRoute
   AtChar123orgChar125ProjectUpdatesSlugIndexRoute: typeof AtChar123orgChar125ProjectUpdatesSlugIndexRoute
   AtChar123orgChar125ProjectUpdatesNewIndexRoute: typeof AtChar123orgChar125ProjectUpdatesNewIndexRoute
+  AtChar123orgChar125ProjectFeedbackBoardsBoardEditRoute: typeof AtChar123orgChar125ProjectFeedbackBoardsBoardEditRoute
+  AtChar123orgChar125ProjectFeedbackBoardsBoardIndexRoute: typeof AtChar123orgChar125ProjectFeedbackBoardsBoardIndexRoute
 }
 
 const AtChar123orgChar125ProjectRouteRouteChildren: AtChar123orgChar125ProjectRouteRouteChildren =
   {
-    AtChar123orgChar125ProjectChatRouteRoute:
-      AtChar123orgChar125ProjectChatRouteRouteWithChildren,
     AtChar123orgChar125ProjectIndexRoute: AtChar123orgChar125ProjectIndexRoute,
-    AtChar123orgChar125ProjectFeedbackBoardsRouteRoute:
-      AtChar123orgChar125ProjectFeedbackBoardsRouteRouteWithChildren,
+    AtChar123orgChar125ProjectChatIndexRoute:
+      AtChar123orgChar125ProjectChatIndexRoute,
     AtChar123orgChar125ProjectDiscussionsIndexRoute:
       AtChar123orgChar125ProjectDiscussionsIndexRoute,
     AtChar123orgChar125ProjectFeedbackIndexRoute:
@@ -952,16 +586,24 @@ const AtChar123orgChar125ProjectRouteRouteChildren: AtChar123orgChar125ProjectRo
       AtChar123orgChar125ProjectRoadmapIndexRoute,
     AtChar123orgChar125ProjectUpdatesIndexRoute:
       AtChar123orgChar125ProjectUpdatesIndexRoute,
+    AtChar123orgChar125ProjectFeedbackBoardsNewRoute:
+      AtChar123orgChar125ProjectFeedbackBoardsNewRoute,
     AtChar123orgChar125ProjectUpdatesSlugEditRoute:
       AtChar123orgChar125ProjectUpdatesSlugEditRoute,
     AtChar123orgChar125ProjectFeedbackSlugIndexRoute:
       AtChar123orgChar125ProjectFeedbackSlugIndexRoute,
+    AtChar123orgChar125ProjectFeedbackBoardsIndexRoute:
+      AtChar123orgChar125ProjectFeedbackBoardsIndexRoute,
     AtChar123orgChar125ProjectFeedbackNewIndexRoute:
       AtChar123orgChar125ProjectFeedbackNewIndexRoute,
     AtChar123orgChar125ProjectUpdatesSlugIndexRoute:
       AtChar123orgChar125ProjectUpdatesSlugIndexRoute,
     AtChar123orgChar125ProjectUpdatesNewIndexRoute:
       AtChar123orgChar125ProjectUpdatesNewIndexRoute,
+    AtChar123orgChar125ProjectFeedbackBoardsBoardEditRoute:
+      AtChar123orgChar125ProjectFeedbackBoardsBoardEditRoute,
+    AtChar123orgChar125ProjectFeedbackBoardsBoardIndexRoute:
+      AtChar123orgChar125ProjectFeedbackBoardsBoardIndexRoute,
   }
 
 const AtChar123orgChar125ProjectRouteRouteWithChildren =
@@ -971,8 +613,6 @@ const AtChar123orgChar125ProjectRouteRouteWithChildren =
 
 interface AtChar123orgChar125RouteRouteChildren {
   AtChar123orgChar125ProjectRouteRoute: typeof AtChar123orgChar125ProjectRouteRouteWithChildren
-  AtChar123orgChar125SettingsRoute: typeof AtChar123orgChar125SettingsRoute
-  AtChar123orgChar125TestRoute: typeof AtChar123orgChar125TestRoute
   AtChar123orgChar125IndexRoute: typeof AtChar123orgChar125IndexRoute
   AtChar123orgChar125CreateProjectIndexRoute: typeof AtChar123orgChar125CreateProjectIndexRoute
   AtChar123orgChar125EditIndexRoute: typeof AtChar123orgChar125EditIndexRoute
@@ -982,8 +622,6 @@ const AtChar123orgChar125RouteRouteChildren: AtChar123orgChar125RouteRouteChildr
   {
     AtChar123orgChar125ProjectRouteRoute:
       AtChar123orgChar125ProjectRouteRouteWithChildren,
-    AtChar123orgChar125SettingsRoute: AtChar123orgChar125SettingsRoute,
-    AtChar123orgChar125TestRoute: AtChar123orgChar125TestRoute,
     AtChar123orgChar125IndexRoute: AtChar123orgChar125IndexRoute,
     AtChar123orgChar125CreateProjectIndexRoute:
       AtChar123orgChar125CreateProjectIndexRoute,
@@ -995,55 +633,12 @@ const AtChar123orgChar125RouteRouteWithChildren =
     AtChar123orgChar125RouteRouteChildren,
   )
 
-interface CreateRouteRouteChildren {
-  CreateTeamIndexRoute: typeof CreateTeamIndexRoute
-}
-
-const CreateRouteRouteChildren: CreateRouteRouteChildren = {
-  CreateTeamIndexRoute: CreateTeamIndexRoute,
-}
-
-const CreateRouteRouteWithChildren = CreateRouteRoute._addFileChildren(
-  CreateRouteRouteChildren,
-)
-
-interface TestIdRouteRouteChildren {
-  TestIdIndexRoute: typeof TestIdIndexRoute
-}
-
-const TestIdRouteRouteChildren: TestIdRouteRouteChildren = {
-  TestIdIndexRoute: TestIdIndexRoute,
-}
-
-const TestIdRouteRouteWithChildren = TestIdRouteRoute._addFileChildren(
-  TestIdRouteRouteChildren,
-)
-
-interface TestRouteRouteChildren {
-  TestIdRouteRoute: typeof TestIdRouteRouteWithChildren
-}
-
-const TestRouteRouteChildren: TestRouteRouteChildren = {
-  TestIdRouteRoute: TestIdRouteRouteWithChildren,
-}
-
-const TestRouteRouteWithChildren = TestRouteRoute._addFileChildren(
-  TestRouteRouteChildren,
-)
-
 const rootRouteChildren: RootRouteChildren = {
+  IndexRoute: IndexRoute,
   AtChar123orgChar125RouteRoute: AtChar123orgChar125RouteRouteWithChildren,
-  CreateRouteRoute: CreateRouteRouteWithChildren,
-  TestRouteRoute: TestRouteRouteWithChildren,
-  HomeRoute: HomeRoute,
-  PlaygroundRoute: PlaygroundRoute,
-  Blank404Route: Blank404Route,
-  BlankSignInRoute: BlankSignInRoute,
-  BlankSignOutRoute: BlankSignOutRoute,
-  MarketingIndexRoute: MarketingIndexRoute,
-  SettingsIndexRoute: SettingsIndexRoute,
+  AuthRoute: AuthRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
-  ProfileUsernameIndexRoute: ProfileUsernameIndexRoute,
+  CreateTeamIndexRoute: CreateTeamIndexRoute,
   ProfileSettingsIndexRoute: ProfileSettingsIndexRoute,
 }
 export const routeTree = rootRouteImport

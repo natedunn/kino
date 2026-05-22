@@ -1,7 +1,7 @@
 import { useNavigate } from '@tanstack/react-router';
 import { ChevronDown, Moon, Sun, User } from 'lucide-react';
+import type { API } from '@/lib/api';
 
-import { API } from '~api';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -77,7 +77,7 @@ export function UserDropdown({ user }: { user: NonNullable<API['profile']['findM
 					onClick={() => {
 						authClient.signOut();
 						navigate({
-							to: '/sign-in',
+							to: '/auth',
 						});
 					}}
 				>

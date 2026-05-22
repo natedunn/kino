@@ -1,0 +1,380 @@
+import { CRPCError } from 'kitcn/server';
+import type { Doc, Id, TableNames } from '../functions/_generated/dataModel';
+import { memberTable, organizationTable } from '../functions/schema';
+
+export const DEFAULT_FEEDBACK_BOARDS = ['Bugs', 'Feature Requests', 'Improvements'] as const;
+
+export const LIMITS = {
+  ADMIN: { MAX_ORGS: 100, MAX_PROJECTS: 100 },
+  FREE: { MAX_ORGS: 1, MAX_PROJECTS: 1 },
+} as const;
+
+export const urlItemSchemaShape = {
+  text: true,
+  url: true,
+} as const;
+
+type OrmCtx = {
+  db?: any;
+  orm: any;
+};
+
+type OrmMutationCtx = OrmCtx;
+
+type LegacyAliases = {
+  _creationTime: number;
+  _id: string;
+};
+
+function toCreationTime(value: unknown) {
+  if (typeof value === 'number') return value;
+  if (value instanceof Date) return value.getTime();
+  return 0;
+}
+
+function withLegacyAliases<T extends { createdAt?: unknown; id: string }>(
+  row: T | null | undefined
+): (T & LegacyAliases) | null {
+  if (!row) return null;
+  return {
+    ...row,
+    _creationTime: toCreationTime(row.createdAt),
+    _id: row.id,
+  };
+}
+
+export function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9_ -]+/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+export function generateRandomSuffix() {
+  return crypto.randomUUID().slice(0, 8);
+}
+
+export function generateRandomSlug() {
+  return crypto.randomUUID().replace(/-/g, '').slice(0, 15);
+}
+
+export function asId<TableName extends TableNames>(value: string) {
+  return value as Id<TableName>;
+}
+
+export async function getDoc<TableName extends TableNames>(
+  ctx: Pick<OrmCtx, 'db'>,
+  id: Id<TableName> | string | null | undefined
+) {
+  if (!id) return null;
+  return (await ctx.db?.get(id as Id<TableName>)) as Doc<TableName> | null;
+}
+
+export async function getDocOrThrow<TableName extends TableNames>(
+  ctx: Pick<OrmCtx, 'db'>,
+  id: Id<TableName> | string | null | undefined,
+  message: string
+) {
+  const doc = await getDoc<TableName>(ctx, id);
+  if (!doc) {
+    throw new CRPCError({ code: 'NOT_FOUND', message });
+  }
+  return doc;
+}
+
+export function toPublicDoc(doc: any): any {
+  if (!doc) return null;
+
+  const { _id, _creationTime, ...rest } = doc;
+  return {
+    ...rest,
+    createdAt: rest.createdAt ?? _creationTime ?? 0,
+    id: rest.id ?? _id,
+  };
+}
+
+export async function ensureUniqueUsername(ctx: OrmCtx, preferred: string) {
+  const base = slugify(preferred).replace(/-/g, '_').slice(0, 30) || `user_${generateRandomSuffix()}`;
+  let candidate = base;
+  let attempt = 0;
+  while (attempt < 10) {
+    const existing = await ctx.orm.query.profile.findFirst({
+      where: { username: candidate },
+    });
+    if (!existing) return candidate;
+    candidate = `${base.slice(0, 21)}_${generateRandomSuffix()}`.slice(0, 30);
+    attempt++;
+  }
+  throw new CRPCError({
+    code: 'INTERNAL_SERVER_ERROR',
+    message: 'Unable to generate a unique username',
+  });
+}
+
+export async function ensureUniqueOrgSlug(ctx: OrmCtx, preferred: string) {
+  const base = slugify(preferred).slice(0, 100) || `org-${generateRandomSuffix()}`;
+  let candidate = base;
+  let attempt = 0;
+  while (attempt < 10) {
+    const existing = await ctx.orm.query.organization.findFirst({
+      where: { slug: candidate },
+    });
+    if (!existing) return candidate;
+    candidate = `${base.slice(0, 91)}-${generateRandomSuffix()}`.slice(0, 100);
+    attempt++;
+  }
+  throw new CRPCError({
+    code: 'BAD_REQUEST',
+    message: 'Could not generate unique slug',
+  });
+}
+
+export async function getCurrentProfile(ctx: OrmCtx, userId: string | null | undefined) {
+  if (!userId) return null;
+  const profiles = await ctx.orm.query.profile.findMany({
+    where: { userId },
+    limit: 1,
+  });
+  return withLegacyAliases(profiles[0] as any);
+}
+
+export async function getCurrentProfileOrThrow(ctx: OrmCtx, userId: string | null | undefined) {
+  const profile = await getCurrentProfile(ctx, userId);
+  if (!profile) {
+    throw new CRPCError({ code: 'NOT_FOUND', message: 'Profile not found' });
+  }
+  return profile;
+}
+
+export async function getUserOrThrow(ctx: OrmCtx, userId: string) {
+  const user = await ctx.orm.query.user.findFirst({
+    where: { id: userId },
+  });
+  if (!user) {
+    throw new CRPCError({ code: 'NOT_FOUND', message: 'User not found' });
+  }
+  return user;
+}
+
+export async function findOrganization(ctx: OrmCtx, args: { id?: string; slug?: string }) {
+  if (args.id) {
+    const organizations = await ctx.orm.query.organization.findMany({
+      where: { id: args.id },
+      limit: 1,
+    });
+    return withLegacyAliases(organizations[0] as any);
+  }
+  if (args.slug) {
+    const organizations = await ctx.orm.query.organization.findMany({
+      where: { slug: args.slug },
+      limit: 1,
+    });
+    return withLegacyAliases(organizations[0] as any);
+  }
+  return null;
+}
+
+export async function getOrganizationOrThrow(ctx: OrmCtx, args: { id?: string; slug?: string }) {
+  const organization = await findOrganization(ctx, args);
+  if (!organization) {
+    throw new CRPCError({ code: 'NOT_FOUND', message: 'Organization not found' });
+  }
+  return organization;
+}
+
+export async function findMember(ctx: OrmCtx, args: { organizationId: string; userId: string }) {
+  const members = await ctx.orm.query.member.findMany({
+    where: {
+      organizationId: args.organizationId,
+      userId: args.userId,
+    },
+    limit: 1,
+  });
+  return withLegacyAliases(members[0] as any);
+}
+
+export async function findProject(ctx: OrmCtx, args: { id?: string; slug?: string }) {
+  if (args.id) {
+    const projects = await ctx.orm.query.project.findMany({
+      where: { id: args.id },
+      limit: 1,
+    });
+    return withLegacyAliases(projects[0] as any);
+  }
+  if (args.slug) {
+    const projects = await ctx.orm.query.project.findMany({
+      where: { slug: args.slug },
+      limit: 1,
+    });
+    return withLegacyAliases(projects[0] as any);
+  }
+  return null;
+}
+
+export async function getProjectOrThrow(ctx: OrmCtx, args: { id?: string; slug?: string }) {
+  const project = await findProject(ctx, args);
+  if (!project) {
+    throw new CRPCError({ code: 'NOT_FOUND', message: 'Project not found' });
+  }
+  return project;
+}
+
+export async function findProjectMember(
+  ctx: OrmCtx,
+  args: { projectId?: string; projectSlug?: string; profileId: string }
+) {
+  if (args.projectId) {
+    const members = await ctx.orm.query.projectMember.findMany({
+      where: {
+        profileId: args.profileId,
+        projectId: args.projectId,
+      },
+      limit: 1,
+    });
+    return withLegacyAliases(members[0] as any);
+  }
+  if (args.projectSlug) {
+    const members = await ctx.orm.query.projectMember.findMany({
+      where: {
+        profileId: args.profileId,
+        projectSlug: args.projectSlug,
+      },
+      limit: 1,
+    });
+    return withLegacyAliases(members[0] as any);
+  }
+  return null;
+}
+
+export async function verifyOrgAccess(
+  ctx: OrmCtx,
+  args: { id?: string; slug?: string; userId?: string | null }
+) {
+  const organization = await getOrganizationOrThrow(ctx, args);
+  const profile = await getCurrentProfile(ctx, args.userId);
+  const member = args.userId
+    ? await findMember(ctx, { organizationId: organization.id, userId: args.userId })
+    : null;
+
+  if (profile?.role === 'system:admin') {
+    return {
+      member,
+      organization,
+      profile,
+      permissions: { canCreate: true, canDelete: true, canEdit: true, canView: true },
+    };
+  }
+
+  if (profile?.role === 'system:editor') {
+    return {
+      member,
+      organization,
+      profile,
+      permissions: { canCreate: false, canDelete: false, canEdit: true, canView: true },
+    };
+  }
+
+  const role = member?.role ?? null;
+  const canView = organization.visibility === 'public' || !!role;
+  const canEdit = role === 'admin' || role === 'owner' || role === 'editor';
+  const canDelete = role === 'admin' || role === 'owner';
+  const canCreate = canEdit;
+
+  return {
+    member,
+    organization: canView ? organization : null,
+    profile,
+    permissions: { canCreate, canDelete, canEdit, canView },
+  };
+}
+
+export async function verifyProjectAccess(
+  ctx: OrmCtx,
+  args: { id?: string; slug?: string; userId?: string | null }
+) {
+  const project = await getProjectOrThrow(ctx, args);
+  const profile = await getCurrentProfile(ctx, args.userId);
+  const projectMember = profile
+    ? await findProjectMember(ctx, {
+        profileId: profile.id,
+        projectId: args.id,
+        projectSlug: args.slug,
+      })
+    : null;
+
+  if (profile?.role === 'system:admin') {
+    return {
+      profile,
+      project,
+      projectMember,
+      permissions: { canDelete: true, canEdit: true, canView: true },
+    };
+  }
+
+  if (profile?.role === 'system:editor') {
+    return {
+      profile,
+      project,
+      projectMember,
+      permissions: { canDelete: false, canEdit: true, canView: true },
+    };
+  }
+
+  const role = projectMember?.role ?? null;
+  const canView =
+    project.visibility === 'public' ||
+    role === 'admin' ||
+    role === 'member' ||
+    role === 'org:admin' ||
+    role === 'org:editor';
+  const canEdit = role === 'admin' || role === 'org:admin' || role === 'org:editor';
+  const canDelete = role === 'org:admin';
+
+  return {
+    profile,
+    project: canView ? project : null,
+    projectMember,
+    permissions: { canDelete, canEdit, canView },
+  };
+}
+
+export async function setUserProfileId(ctx: OrmMutationCtx, userId: string, profileId: string) {
+  await ctx.db.patch(userId as any, { profileId });
+}
+
+export async function createDefaultPersonalOrganization(ctx: OrmMutationCtx, user: { id: string; name: string; username: string }) {
+  const slug = await ensureUniqueOrgSlug(ctx, user.username);
+  if ((ctx as any).auth?.api?.createOrganization) {
+    return await (ctx as any).auth.api.createOrganization({
+      body: {
+        name: user.name || user.username,
+        slug,
+        userId: user.id,
+        visibility: 'public',
+      },
+    });
+  }
+
+  const [organization] = await ctx.orm
+    .insert(organizationTable)
+    .values({
+      createdAt: new Date(),
+      metadata: null,
+      name: user.name || user.username,
+      slug,
+      visibility: 'public',
+    })
+    .returning();
+
+  await ctx.orm.insert(memberTable).values({
+    createdAt: new Date(),
+    organizationId: organization.id,
+    role: 'admin',
+    userId: user.id,
+  });
+
+  return organization;
+}
