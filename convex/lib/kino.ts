@@ -281,7 +281,7 @@ export async function verifyOrgAccess(
   const canView = organization.visibility === 'public' || !!role;
   const canEdit = role === 'admin' || role === 'owner' || role === 'editor';
   const canDelete = role === 'admin' || role === 'owner';
-  const canCreate = canEdit;
+  const canCreate = role === 'admin' || role === 'owner';
 
   return {
     member,
@@ -323,21 +323,49 @@ export async function verifyProjectAccess(
     };
   }
 
-  const role = projectMember?.role ?? null;
-  const canView =
-    project.visibility === 'public' ||
-    role === 'admin' ||
-    role === 'member' ||
-    role === 'org:admin' ||
-    role === 'org:editor';
-  const canEdit = role === 'admin' || role === 'org:admin' || role === 'org:editor';
-  const canDelete = role === 'org:admin';
+  const role = projectMember?.role ?? '_none';
+  const editorRoles = ['admin', 'org:admin', 'org:editor'];
+  const memberRoles = [...editorRoles, 'member'];
+
+  if (project.visibility === 'public') {
+    const canEdit = editorRoles.includes(role);
+
+    return {
+      profile,
+      project,
+      projectMember,
+      permissions: { canDelete: role === 'org:admin', canEdit, canView: true },
+    };
+  }
+
+  if (project.visibility === 'private') {
+    const canView = memberRoles.includes(role);
+    const canEdit = editorRoles.includes(role);
+
+    return {
+      profile,
+      project: canView ? project : null,
+      projectMember,
+      permissions: { canDelete: role === 'org:admin', canEdit, canView },
+    };
+  }
+
+  if (project.visibility === 'archived') {
+    const canView = editorRoles.includes(role);
+
+    return {
+      profile,
+      project: canView ? project : null,
+      projectMember,
+      permissions: { canDelete: role === 'org:admin', canEdit: false, canView },
+    };
+  }
 
   return {
     profile,
-    project: canView ? project : null,
+    project: null,
     projectMember,
-    permissions: { canDelete, canEdit, canView },
+    permissions: { canDelete: false, canEdit: false, canView: false },
   };
 }
 

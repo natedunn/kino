@@ -125,7 +125,7 @@ export const getMyPermission = authQuery
   .input(z.object({ slug: z.string() }))
   .query(async ({ ctx, input }) => {
     const access = await verifyOrgAccess(ctx, { slug: input.slug, userId: ctx.userId });
-    if (!access.organization || !access.permissions.canEdit) {
+    if (!access.organization || !access.permissions.canCreate) {
       return { canAddProjects: false };
     }
 

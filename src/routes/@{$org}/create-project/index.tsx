@@ -35,7 +35,7 @@ function CreateProjectRoute() {
   const limitsQuery = useQuery(
     crpc.org.getMyPermission.queryOptions(
       { slug: params.org },
-      { enabled: !!orgQuery.data?.permissions.canEdit }
+      { enabled: !!orgQuery.data?.permissions.canCreate }
     )
   );
 
@@ -72,12 +72,12 @@ function CreateProjectRoute() {
     return <div className="container py-10"><div className="h-56 animate-pulse rounded-lg bg-muted/40" /></div>;
   }
 
-  if (!orgQuery.data?.org || !orgQuery.data.permissions.canEdit) {
+  if (!orgQuery.data?.org || !orgQuery.data.permissions.canCreate) {
     return (
       <div className="container py-10">
         <EmptyState
           title="Project creation unavailable"
-          description="Only organization editors can create projects here."
+          description="Only organization admins can create projects here."
         />
       </div>
     );

@@ -158,23 +158,6 @@ export const update = authMutation
       }
     }
 
-    const nextProfile = Object.fromEntries(
-      Object.entries(input.profile).filter(([, value]) => value !== undefined)
-    );
-    const syncedProfileFields = Object.fromEntries(
-      Object.entries({
-        name: input.user.name,
-        username: input.user.username,
-      }).filter(([, value]) => value !== undefined)
-    );
-    const nextProfileUpdate = {
-      ...nextProfile,
-      ...syncedProfileFields,
-    };
-    if (Object.keys(nextProfileUpdate).length > 0) {
-      await ctx.db.patch(profile._id as any, nextProfileUpdate);
-    }
-
     const nextUser = Object.fromEntries(
       Object.entries(input.user).filter(([, value]) => value !== undefined)
     );
@@ -185,9 +168,16 @@ export const update = authMutation
       });
     }
 
-    const updatedProfile = {
+    const nextProfile = Object.fromEntries(
+      Object.entries(input.profile).filter(([, value]) => value !== undefined)
+    );
+    if (Object.keys(nextProfile).length > 0) {
+      await ctx.db.patch(profile._id as any, nextProfile);
+    }
+
+    const updatedProfile = (await getCurrentProfile(ctx, ctx.userId)) ?? {
       ...profile,
-      ...nextProfileUpdate,
+      ...nextProfile,
     };
 
     return {

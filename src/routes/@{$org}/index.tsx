@@ -30,7 +30,7 @@ function OrganizationRoute() {
   const limitsQuery = useQuery(
     crpc.org.getMyPermission.queryOptions(
       { slug: params.org },
-      { enabled: !!orgQuery.data?.permissions.canEdit }
+      { enabled: !!orgQuery.data?.permissions.canCreate }
     )
   );
 
@@ -84,7 +84,7 @@ function OrganizationRoute() {
         <div className="mt-6 flex items-center gap-4">
           {projects.length === 0 ? (
             <NoPublicProjects
-              canEdit={orgData.permissions.canEdit}
+              canCreate={orgData.permissions.canCreate}
               orgName={orgData.org.name}
               orgSlug={params.org}
             />
@@ -123,7 +123,7 @@ function OrganizationRoute() {
                 <div className="col-span-1 md:col-span-8">
                   <div className="flex items-center justify-between">
                     <h3 className="text-2xl font-bold">Projects</h3>
-                    {orgData.permissions.canEdit && limitsQuery.data?.canAddProjects ? (
+                    {orgData.permissions.canCreate && limitsQuery.data?.canAddProjects ? (
                       <Link
                         className="link-text"
                         params={{ org: params.org }}
