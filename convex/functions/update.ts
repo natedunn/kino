@@ -271,6 +271,40 @@ export const syncMetadata = authMutation
     return null;
   });
 
+export const clearCoverImage = authMutation
+  .input(
+    z.object({
+      updateId: z.string(),
+    })
+  )
+  .mutation(async ({ ctx, input }) => {
+    const existingUpdate = await getDocOrThrow(ctx, asId<'update'>(input.updateId), 'Update not found');
+    const project = await getDocOrThrow(ctx, existingUpdate.projectId, 'Project not found');
+    const access = await verifyProjectAccess(ctx, { slug: project.slug, userId: ctx.userId });
+
+    if (!access.permissions.canEdit) {
+      throw new CRPCError({
+        code: 'FORBIDDEN',
+        message: 'You do not have permission to clear this update cover image',
+      });
+    }
+
+    await deleteCoverImageAttachment(ctx, {
+      coverImageId: existingUpdate.coverImageId ?? null,
+      orgSlug: project.orgSlug,
+    });
+
+    await ctx.orm
+      .update(updateTable)
+      .set({
+        coverImageId: null,
+        updatedTime: Date.now(),
+      })
+      .where(eq(updateTable.id, existingUpdate._id as any));
+
+    return { success: true };
+  });
+
 export const onCoverImageMetadataSynced = internalMutation({
   args: {
     bucket: v.string(),

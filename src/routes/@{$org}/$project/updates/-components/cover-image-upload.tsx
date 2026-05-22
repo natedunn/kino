@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { ImagePlus, Loader2 } from 'lucide-react';
+import { ImagePlus, Loader2, Trash2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { useCRPC } from '@/lib/convex/crpc';
@@ -23,6 +23,7 @@ export function CoverImageUpload({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const uploadUrlMutation = useMutation(crpc.update.generateCoverImageUploadUrl.mutationOptions());
   const syncMetadataMutation = useMutation(crpc.update.syncMetadata.mutationOptions());
+  const clearCoverImageMutation = useMutation(crpc.update.clearCoverImage.mutationOptions());
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -68,6 +69,25 @@ export function CoverImageUpload({
   };
 
   const displayUrl = previewUrl ?? currentCoverImageUrl;
+  const isBusy = isUploading || clearCoverImageMutation.isPending;
+
+  const handleClear = async () => {
+    setIsUploading(true);
+    onError?.('');
+
+    try {
+      await clearCoverImageMutation.mutateAsync({ updateId });
+      setPreviewUrl(null);
+      onChange(null);
+    } catch (error) {
+      onError?.(error instanceof Error ? error.message : 'Failed to clear image');
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
 
   return (
     <div className="flex flex-col gap-2">
@@ -76,7 +96,7 @@ export function CoverImageUpload({
       {displayUrl ? (
         <div className="relative">
           <img alt="Cover image" className="w-full bg-muted object-cover" src={displayUrl} />
-          {isUploading ? (
+          {isBusy ? (
             <div className="absolute inset-0 flex items-center justify-center bg-black/50">
               <Loader2 className="h-8 w-8 animate-spin text-white" />
             </div>
@@ -85,6 +105,10 @@ export function CoverImageUpload({
               <Button onClick={() => fileInputRef.current?.click()} size="sm" type="button" variant="secondary">
                 Change
               </Button>
+              <Button onClick={handleClear} size="sm" type="button" variant="secondary">
+                <Trash2 className="size-3.5" />
+                Clear
+              </Button>
             </div>
           )}
         </div>
@@ -92,13 +116,13 @@ export function CoverImageUpload({
         <button
           className={cn(
             'flex h-48 w-full flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed text-muted-foreground transition-colors hover:border-primary hover:text-primary',
-            isUploading && 'cursor-not-allowed opacity-50'
+            isBusy && 'cursor-not-allowed opacity-50'
           )}
-          disabled={isUploading}
+          disabled={isBusy}
           onClick={() => fileInputRef.current?.click()}
           type="button"
         >
-          {isUploading ? (
+          {isBusy ? (
             <>
               <Loader2 className="h-8 w-8 animate-spin" />
               <span>Uploading...</span>

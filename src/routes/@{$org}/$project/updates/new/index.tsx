@@ -15,7 +15,6 @@ import {
   SelectItem,
   SelectPositioner,
   SelectTrigger,
-  SelectValue,
 } from '@/components/ui/select';
 import { authClient } from '@/lib/convex/auth-client';
 import { useCRPC } from '@/lib/convex/crpc';
@@ -198,7 +197,7 @@ function NewUpdateRoute() {
                   value={field.state.value}
                 >
                   <SelectTrigger className="w-48">
-                    <SelectValue />
+                    <CategoryBadge category={field.state.value} />
                   </SelectTrigger>
                   <SelectPositioner>
                     <SelectContent>

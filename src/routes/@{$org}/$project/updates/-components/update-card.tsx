@@ -158,7 +158,7 @@ export function UpdateCard({
           </div>
         ) : null}
 
-        <div className={cn('mt-4', isTruncated && 'relative max-h-128 overflow-hidden')}>
+        <div className={cn('mt-4', isTruncated && 'relative max-h-[64rem] overflow-hidden')}>
           <EditorContentDisplay content={content} />
           {isTruncated ? <div className="absolute inset-x-0 bottom-0 h-24 bg-linear-to-t from-background to-transparent" /> : null}
         </div>

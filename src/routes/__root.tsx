@@ -59,6 +59,8 @@ export const Route = createRootRouteWithContext<{
 });
 
 function RootDocument({ children }: { children: ReactNode }) {
+  const showDevtools = import.meta.env.DEV;
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -70,17 +72,19 @@ function RootDocument({ children }: { children: ReactNode }) {
         </ScriptOnce>
         {children}
         <Toaster position="top-right" closeButton richColors />
-        <TanStackDevtools
-          config={{
-            position: 'bottom-right',
-          }}
-          plugins={[
-            {
-              name: 'Tanstack Router',
-              render: <TanStackRouterDevtoolsPanel />,
-            },
-          ]}
-        />
+        {showDevtools ? (
+          <TanStackDevtools
+            config={{
+              position: 'bottom-right',
+            }}
+            plugins={[
+              {
+                name: 'Tanstack Router',
+                render: <TanStackRouterDevtoolsPanel />,
+              },
+            ]}
+          />
+        ) : null}
         <Scripts />
       </body>
     </html>
