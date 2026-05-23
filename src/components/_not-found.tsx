@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { ClassValue } from 'clsx';
+import type { ClassValue } from 'clsx';
 
 // import { ChevronLeft, Home } from 'lucide-react';
 import ChevronLeft from '@/icons/chevron-left';

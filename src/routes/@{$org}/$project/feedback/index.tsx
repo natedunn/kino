@@ -1,224 +1,241 @@
-import React from 'react';
-import { convexQuery } from '@convex-dev/react-query';
+import type { ReactNode } from 'react';
+
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
 import { createFileRoute, Link, notFound, useRouter } from '@tanstack/react-router';
-import { usePaginatedQuery } from 'convex/react';
-import * as z from 'zod';
+import { useInfiniteQuery } from 'kitcn/react';
+import { z } from 'zod';
 
-import { api } from '~api';
 import { RoutePending } from '@/components/route-pending';
 import { Button } from '@/components/ui/button';
-import { Id } from '@/convex/_generated/dataModel';
-import { feedbackSelectSchema } from '@/convex/schema/feedback.schema';
-import CirclePlusOutline from '@/icons/circle-plus-outline';
-import LoaderQuarter from '@/icons/loader-quarter';
 import ArchivePencil from '@/icons/archive-pencil';
+import CirclePlusOutline from '@/icons/circle-plus-outline';
 import Missing from '@/icons/missing';
+import { useCRPC } from '@/lib/convex/crpc';
+import { crpcOptions } from '@/lib/convex/crpc-options';
+import { preloadCRPCQuery } from '@/lib/convex/preload';
 import { cn } from '@/lib/utils';
+import { api } from '@convex/api';
 
 import { BoardsNav } from './-components/boards-nav';
 import { FeedbackCard } from './-components/feedback-card';
 import { FeedbackOptions } from './-components/feedback-options';
 import { FeedbackToolbar } from './-components/feedback-toolbar';
 
-const NUM_OF_ITEMS_PER_PAGE = 10;
+const NUM_OF_ITEMS_PER_PAGE = 50;
+
+type BoardSummary = {
+  id: string;
+  slug: string;
+};
+
+type ProjectDetailsData = {
+  project?: {
+    id: string;
+  } | null;
+};
 
 const feedbackSearchParams = z.object({
-	board: z.optional(z.string()).default('all'),
-	search: z.optional(z.string().transform((val) => (val?.trim() === '' ? undefined : val))),
-	status: z.optional(
-		feedbackSelectSchema.shape.status.transform((val) => (val?.trim() === '' ? undefined : val))
-	),
+  board: z.optional(z.string()).default('all'),
+  search: z.optional(z.string().transform((value) => (value?.trim() === '' ? undefined : value))),
+  status: z.optional(
+    z
+      .enum(['open', 'in-progress', 'closed', 'completed', 'paused'])
+      .transform((value) => (value?.trim() === '' ? undefined : value))
+  ),
 });
 
 export const Route = createFileRoute('/@{$org}/$project/feedback/')({
-	validateSearch: feedbackSearchParams,
-	component: RouteComponent,
-	pendingComponent: () => <RoutePending variant='sidebar' />,
-	pendingMs: 150,
-	loader: async ({ context, params }) => {
-		const projectData = await context.queryClient.ensureQueryData(
-			convexQuery(api.project.getDetails, {
-				orgSlug: params.org,
-				slug: params.project,
-			})
-		);
+  component: FeedbackListRoute,
+  loader: async ({ context, params }) => {
+    const projectArgs = {
+      orgSlug: params.org,
+      slug: params.project,
+    };
+    const projectOptions = crpcOptions.project.getDetails.staticQueryOptions(projectArgs);
+    const projectData = await preloadCRPCQuery<ProjectDetailsData, typeof projectArgs>(
+      context.queryClient,
+      projectOptions,
+      api.project.getDetails,
+      projectArgs
+    );
 
-		if (!projectData?.project?._id) {
-			throw notFound();
-		}
+    if (!projectData?.project?.id) {
+      throw notFound();
+    }
 
-		await context.queryClient.ensureQueryData(
-			convexQuery(api.feedbackBoard.listProjectBoards, {
-				slug: params.project,
-			})
-		);
-	},
+    const boardsArgs = {
+      projectId: projectData.project.id,
+    };
+    const boardsOptions = crpcOptions.feedbackBoard.listProjectBoards.staticQueryOptions(boardsArgs);
+    await preloadCRPCQuery<BoardSummary[] | null, typeof boardsArgs>(
+      context.queryClient,
+      boardsOptions,
+      api.feedbackBoard.listProjectBoards,
+      boardsArgs
+    );
+  },
+  pendingComponent: () => <RoutePending variant="sidebar" />,
+  pendingMs: 150,
+  validateSearch: feedbackSearchParams,
 });
 
-const Notice = ({ icon, children }: { icon: React.JSX.Element; children: React.ReactNode }) => {
-	return (
-		<div className='text-bold flex items-center justify-center gap-3 rounded-lg border bg-muted p-4 text-xl text-muted-foreground md:p-10'>
-			<div>{icon}</div>
-			<div>{children}</div>
-		</div>
-	);
-};
+function getBoardId(boards: BoardSummary[] | null | undefined, boardSlug: string | undefined) {
+  return boards?.find((item) => item.slug === boardSlug)?.id ?? 'all';
+}
 
-function RouteComponent() {
-	const router = useRouter();
-	const searchParams = Route.useSearch();
-	const { search, status, board } = searchParams;
-	const { org: orgSlug, project: projectSlug } = Route.useParams();
+function Notice({ icon, children }: { icon: ReactNode; children: ReactNode }) {
+  return (
+    <div className="text-bold flex items-center justify-center gap-3 rounded-lg border bg-muted p-4 text-xl text-muted-foreground md:p-10">
+      <div>{icon}</div>
+      <div>{children}</div>
+    </div>
+  );
+}
 
-	const [boardId, setBoardId] = React.useState<Id<'feedbackBoard'> | 'all'>('all');
+function FeedbackListRoute() {
+  const router = useRouter();
+  const searchParams = Route.useSearch();
+  const { search, status, board } = searchParams;
+  const { org: orgSlug, project: projectSlug } = Route.useParams();
+  const crpc = useCRPC();
 
-	const { data: projectData } = useSuspenseQuery(
-		convexQuery(api.project.getDetails, {
-			orgSlug,
-			slug: projectSlug,
-		})
-	);
+  const { data: projectData } = useSuspenseQuery(
+    crpc.project.getDetails.queryOptions(
+      {
+        orgSlug,
+        slug: projectSlug,
+      }
+    )
+  );
 
-	const { data: boards } = useSuspenseQuery(
-		convexQuery(api.feedbackBoard.listProjectBoards, {
-			slug: projectSlug,
-		})
-	);
+  if (!projectData?.project) {
+    throw notFound();
+  }
 
-	const { data: currentProfile } = useQuery(convexQuery(api.profile.findMyProfile, {}));
-	const isAuthenticated = !!currentProfile;
+  const { data: boards } = useSuspenseQuery(
+    crpc.feedbackBoard.listProjectBoards.queryOptions(
+      {
+        projectId: projectData.project.id,
+      }
+    )
+  );
+  const profileQuery = useQuery(
+    crpc.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
+  );
+  const boardId = getBoardId(boards, board);
+  const feedbackQuery = useInfiniteQuery(
+    crpc.feedback.listProjectFeedback.infiniteQueryOptions(
+      {
+        boardId,
+        projectId: projectData.project.id,
+        search,
+        status,
+      },
+      {
+        limit: NUM_OF_ITEMS_PER_PAGE,
+      }
+    )
+  );
 
-	if (!projectData?.project?._id) {
-		throw notFound();
-	}
+  const loadingFeedback = feedbackQuery.isFetching;
+  const loadingMoreFeedback = feedbackQuery.status === 'LoadingMore';
+  const feedback = feedbackQuery.data ?? [];
+  const initialFeedbackLoading = feedbackQuery.status === 'LoadingFirstPage' && feedback.length === 0;
 
-	const feedbackData = usePaginatedQuery(
-		api.feedback.listProjectFeedback,
-		{
-			projectId: projectData?.project?._id,
-			search,
-			boardId,
-			status,
-		},
-		{
-			initialNumItems: NUM_OF_ITEMS_PER_PAGE,
-		}
-	);
+  return (
+    <div className="container h-full overflow-visible">
+      <div className="h-full grid-cols-12 gap-8 md:grid">
+        <div className="order-first border-l border-border/75 py-6 md:order-last md:col-span-3">
+          <div className="sticky top-6 flex flex-col overflow-hidden">
+            <div className="border-b pb-6 pl-6">
+              <Button asChild className="w-full" size="lg">
+                <Link params={{ org: orgSlug, project: projectSlug }} to="/@{$org}/$project/feedback/new">
+                  <CirclePlusOutline size="16px" /> Add feedback
+                </Link>
+              </Button>
+            </div>
+            <div className="mt-4">
+              <div className="border-b pb-6 pl-6">
+                <h2 className="mx-2 text-sm font-bold text-muted-foreground">Boards</h2>
+                <div className="mt-2">
+                  <BoardsNav boards={boards} />
+                </div>
+              </div>
+              {projectData.permissions.canEdit ? (
+                <div className="mt-6 pb-6 pl-6">
+                  <h2 className="mx-2 text-sm font-bold text-muted-foreground">Options</h2>
+                  <div className="mt-2">
+                    <FeedbackOptions />
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          </div>
+        </div>
+        <div className="flex flex-col gap-4 py-8 md:col-span-9">
+          <div className="flex items-start gap-3 border-b pt-6 pb-6 md:-mr-8.25">
+            <ArchivePencil className="mt-1 text-muted-foreground" size="28px" />
+            <div className="flex flex-col gap-1">
+              <h1 className="text-3xl font-bold">Feedback</h1>
+              <p className="text-muted-foreground">Share your ideas and help us improve.</p>
+            </div>
+          </div>
+          <FeedbackToolbar />
+          <div aria-busy={loadingFeedback} aria-live="polite">
+            {initialFeedbackLoading ? <FeedbackListSkeleton /> : null}
+            {!initialFeedbackLoading && feedback.length === 0 ? (
+              <Notice icon={<Missing aria-hidden="true" size="32px" />}>No feedback found.</Notice>
+            ) : null}
+            {!initialFeedbackLoading && feedback.length > 0 ? (
+              <ul className={cn('flex flex-col gap-4', loadingFeedback && 'pointer-events-none opacity-50')}>
+                {feedback.map((item) => (
+                  <FeedbackCard
+                    key={item.id}
+                    feedback={item}
+                    isAuthenticated={!!profileQuery.data}
+                    onNavigationClick={() =>
+                      router.navigate({
+                        params: { org: orgSlug, project: projectSlug, slug: item.slug },
+                        to: '/@{$org}/$project/feedback/$slug',
+                      })
+                    }
+                  />
+                ))}
+              </ul>
+            ) : null}
+          </div>
+          {feedbackQuery.status === 'CanLoadMore' ? (
+            <div className="flex items-center gap-3">
+              <Button
+                disabled={loadingMoreFeedback}
+                onClick={() => feedbackQuery.fetchNextPage(NUM_OF_ITEMS_PER_PAGE)}
+                variant="outline"
+              >
+                {loadingMoreFeedback ? 'Loading feedback...' : 'Load more feedback'}
+              </Button>
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
+}
 
-	React.useEffect(() => {
-		if (boards) {
-			setBoardId(boards?.find((b) => b.slug === board)?._id ?? 'all');
-		}
-	}, [board, boards]);
-
-	const loadingFeedback =
-		feedbackData.status === 'LoadingFirstPage' || feedbackData.status === 'LoadingMore';
-	const feedback = feedbackData.results;
-
-	return (
-		<div className='container h-full overflow-visible'>
-			<div className='h-full grid-cols-12 gap-8 md:grid'>
-				<div className='order-first border-l border-border/75 py-6 md:order-last md:col-span-3'>
-					<div className='sticky top-6 flex flex-col overflow-hidden'>
-						<div className='border-b pb-6 pl-6'>
-							<Button size='lg' className='w-full' asChild>
-								<Link
-									to='/@{$org}/$project/feedback/new'
-									params={{
-										org: orgSlug,
-										project: projectSlug,
-									}}
-								>
-									<CirclePlusOutline size='16px' /> Add feedback
-								</Link>
-							</Button>
-						</div>
-						<div className='mt-4'>
-							<div className='border-b pb-6 pl-6'>
-								<h2 className='mx-2 text-sm font-bold text-muted-foreground'>Boards</h2>
-								<div className='mt-2'>{!!boards && <BoardsNav boards={boards} />}</div>
-							</div>
-							{projectData?.permissions.canEdit && (
-								<div className='mt-6 pb-6 pl-6'>
-									<h2 className='mx-2 text-sm font-bold text-muted-foreground'>Options</h2>
-									<div className='mt-2'>
-										<FeedbackOptions />
-									</div>
-								</div>
-							)}
-						</div>
-					</div>
-				</div>
-				<div className='flex flex-col gap-4 py-8 md:col-span-9'>
-					{/* Header */}
-					<div className='flex items-start gap-3 border-b pt-6 pb-6 md:-mr-8.25'>
-						<ArchivePencil size='28px' className='mt-1 text-muted-foreground' />
-						<div className='flex flex-col gap-1'>
-							<h1 className='text-3xl font-bold'>Feedback</h1>
-							<p className='text-muted-foreground'>Share your ideas and help us improve.</p>
-						</div>
-					</div>
-					<FeedbackToolbar />
-					<div aria-live='polite' aria-busy={loadingFeedback}>
-						{feedback.length === 0 && !loadingFeedback ? (
-							<Notice icon={<Missing size='32px' aria-hidden='true' />}>No feedback found.</Notice>
-						) : null}
-						{feedback.length === 0 && loadingFeedback ? (
-							<Notice
-								icon={
-									<LoaderQuarter
-										className='animate-spin'
-										size='32px'
-										role='status'
-										aria-label='Loading'
-									/>
-								}
-							>
-								Loading feedback...
-							</Notice>
-						) : null}
-						{feedback.length > 0 ? (
-							<div
-								className={cn('flex flex-col gap-4', {
-									'pointer-events-none opacity-50': loadingFeedback,
-								})}
-							>
-								{feedback.map((f) => {
-									return (
-										<FeedbackCard
-											key={f._id}
-											feedback={f}
-											isAuthenticated={isAuthenticated}
-											onNavigationClick={() =>
-												router.navigate({
-													to: '/@{$org}/$project/feedback/$slug',
-													params: {
-														org: orgSlug,
-														project: projectSlug,
-														slug: f.slug,
-													},
-												})
-											}
-										/>
-									);
-								})}
-							</div>
-						) : null}
-					</div>
-
-					{feedbackData.status === 'CanLoadMore' && (
-						<div className='flex items-center gap-3'>
-							<Button
-								variant='outline'
-								onClick={() => feedbackData.loadMore(NUM_OF_ITEMS_PER_PAGE)}
-							>
-								Load more feedback
-							</Button>
-						</div>
-					)}
-				</div>
-			</div>
-		</div>
-	);
+function FeedbackListSkeleton() {
+  return (
+    <div className="flex flex-col gap-4">
+      {Array.from({ length: 5 }).map((_, index) => (
+        <div className="rounded-xl border bg-card p-4" key={index}>
+          <div className="flex gap-4">
+            <div className="h-10 w-10 animate-pulse rounded-lg bg-muted" />
+            <div className="flex flex-1 flex-col gap-3">
+              <div className="h-5 w-2/3 animate-pulse rounded bg-muted" />
+              <div className="h-4 w-full animate-pulse rounded bg-muted" />
+              <div className="h-4 w-1/2 animate-pulse rounded bg-muted" />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 }

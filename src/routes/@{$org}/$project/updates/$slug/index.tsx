@@ -1,38 +1,47 @@
-import { useEffect, useRef, useState } from 'react';
-import { convexQuery, useConvexMutation } from '@convex-dev/react-query';
-import { useMutation, useQuery, useSuspenseQuery } from '@tanstack/react-query';
-import { createFileRoute, Link, notFound } from '@tanstack/react-router';
+import { useEffect, useRef, useState } from "react"
+import { useMutation, useQuery, useSuspenseQuery } from "@tanstack/react-query"
+import { Link, createFileRoute, notFound } from "@tanstack/react-router"
 import {
-	Calendar,
-	Check,
-	Edit,
-	Heart,
-	Info,
-	Link2,
-	Link as LinkIcon,
-	MessageSquare,
-	Rss,
-} from 'lucide-react';
+  Calendar,
+  Check,
+  Edit,
+  Heart,
+  Info,
+  Link as LinkIcon,
+  Link2,
+  MessageSquare,
+  Rss,
+  Users,
+} from "lucide-react"
 
-import { api } from '~api';
-import { EditorContentDisplay, EditorRefProvider } from '@/components/editor';
-import { type EmoteContent } from '@/components/emote';
-import { ProfileLinkOrUnknown } from '@/components/profile-link';
-import { RoutePending } from '@/components/route-pending';
-import { SidebarSection } from '@/components/sidebar-section';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { StatusIcon } from '@/icons';
-import { useSidebarState } from '@/lib/hooks/use-sidebar-state';
-import { cn } from '@/lib/utils';
-import { formatFullDate, formatRelativeDay } from '@/lib/utils/format-timestamp';
+import { EditorContentDisplay } from "@/components/editor"
+import { ProfileLinkOrUnknown } from "@/components/profile-link"
+import { RoutePending } from "@/components/route-pending"
+import { SidebarSection } from "@/components/sidebar-section"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+import { useCRPC } from "@/lib/convex/crpc"
+import { crpcOptions } from "@/lib/convex/crpc-options"
+import { preloadCRPCQuery } from "@/lib/convex/preload"
+import { useSidebarState } from "@/lib/hooks/use-sidebar-state"
+import { cn } from "@/lib/utils"
+import { formatFullDate, formatRelativeDay } from "@/lib/utils/format-timestamp"
+import { StatusIcon } from "@/icons"
+import { api } from "@convex/api"
 
-import { CategoryBadge } from '../-components/category-badge';
-import { UpdateCommentForm } from '../-components/update-comment-form';
-import { UpdateCommentsList } from '../-components/update-comments-list';
+import { CategoryBadge } from "../-components/category-badge"
+import {
+  CommentEditorProvider,
+  CommentForm,
+  CommentList,
+  type ThreadComment,
+} from "../../-components/comment-thread"
 
-// Heart pop animation styles
 const heartPopKeyframes = `
 @keyframes heart-pop {
   0% { transform: scale(1); }
@@ -41,421 +50,481 @@ const heartPopKeyframes = `
   45% { transform: scale(1.15); }
   60% { transform: scale(1); }
 }
-`;
+`
 
-const SIDEBAR_STORAGE_KEY = 'update-detail-sidebar-state';
+const SIDEBAR_STORAGE_KEY = "update-detail-sidebar-state"
 
-type SidebarSections = {
-	details: boolean;
-	related: boolean;
-};
+const DEFAULT_SIDEBAR_STATE = {
+  details: true,
+  related: true,
+}
 
-const DEFAULT_SIDEBAR_STATE: SidebarSections = {
-	details: true,
-	related: true,
-};
+type ProjectDetailsData = {
+  project?: {
+    id: string
+  } | null
+}
 
-export const Route = createFileRoute('/@{$org}/$project/updates/$slug/')({
-	loader: async ({ context, params }) => {
-		const projectData = await context.queryClient.ensureQueryData(
-			convexQuery(api.project.getDetails, {
-				orgSlug: params.org,
-				slug: params.project,
-			})
-		);
+type UpdateDetailData = {
+  update?: {
+    id: string
+  } | null
+} | null
 
-		if (!projectData?.project?._id) {
-			throw notFound();
-		}
+export const Route = createFileRoute("/@{$org}/$project/updates/$slug/")({
+  component: UpdateDetailRoute,
+  loader: async ({ context, params }) => {
+    const projectArgs = {
+      orgSlug: params.org,
+      slug: params.project,
+    }
+    const projectOptions =
+      crpcOptions.project.getDetails.staticQueryOptions(projectArgs)
+    const projectData = await preloadCRPCQuery<
+      ProjectDetailsData,
+      typeof projectArgs
+    >(context.queryClient, projectOptions, api.project.getDetails, projectArgs)
 
-		const updateData = await context.queryClient.ensureQueryData(
-			convexQuery(api.update.getBySlug, {
-				projectId: projectData.project._id,
-				slug: params.slug,
-			})
-		);
+    if (!projectData?.project?.id) {
+      throw notFound()
+    }
 
-		if (!updateData) {
-			throw notFound();
-		}
-	},
-	pendingComponent: () => <RoutePending variant='detail' />,
-	pendingMs: 150,
-	component: RouteComponent,
-});
+    const updateArgs = {
+      projectId: projectData.project.id,
+      slug: params.slug,
+    }
+    const updateOptions =
+      crpcOptions.update.getBySlug.staticQueryOptions(updateArgs)
+    const updateData = await preloadCRPCQuery<
+      UpdateDetailData,
+      typeof updateArgs
+    >(context.queryClient, updateOptions, api.update.getBySlug, updateArgs)
 
-function RouteComponent() {
-	const params = Route.useParams();
-	const { state: sidebarState, setSection: setSidebarSection } = useSidebarState(
-		SIDEBAR_STORAGE_KEY,
-		DEFAULT_SIDEBAR_STATE
-	);
+    if (!updateData?.update?.id) {
+      throw notFound()
+    }
 
-	const { data: projectData } = useSuspenseQuery(
-		convexQuery(api.project.getDetails, {
-			orgSlug: params.org,
-			slug: params.project,
-		})
-	);
+    const commentsArgs = {
+      updateId: updateData.update.id,
+    }
+    await preloadCRPCQuery(
+      context.queryClient,
+      crpcOptions.updateComment.listByUpdate.staticQueryOptions(commentsArgs),
+      api.updateComment.listByUpdate,
+      commentsArgs
+    )
+  },
+  pendingComponent: () => <RoutePending variant="detail" />,
+  pendingMs: 150,
+})
 
-	if (!projectData?.project?._id) {
-		throw notFound();
-	}
+function UpdateDetailRoute() {
+  const params = Route.useParams()
+  const crpc = useCRPC()
+  const { state: sidebarState, setSection: setSidebarSection } =
+    useSidebarState(SIDEBAR_STORAGE_KEY, DEFAULT_SIDEBAR_STATE)
 
-	const { data: updateData } = useSuspenseQuery(
-		convexQuery(api.update.getBySlug, {
-			projectId: projectData.project._id,
-			slug: params.slug,
-		})
-	);
+  const { data: projectData } = useSuspenseQuery(
+    crpc.project.getDetails.queryOptions({
+      orgSlug: params.org,
+      slug: params.project,
+    })
+  )
 
-	if (!updateData) {
-		throw notFound();
-	}
+  if (!projectData?.project?.id) {
+    throw notFound()
+  }
 
-	// Get current user's profile
-	const { data: currentProfile } = useQuery(convexQuery(api.profile.findMyProfile, {}));
+  const profileQuery = useQuery(
+    crpc.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
+  )
+  const { data: updateData } = useSuspenseQuery(
+    crpc.update.getBySlug.queryOptions({
+      projectId: projectData.project.id,
+      slug: params.slug,
+    })
+  )
 
-	const { update, coverImageUrl, author, relatedFeedback, emoteCounts, commentCount, canEdit } =
-		updateData;
-	const isAuthenticated = !!currentProfile;
-	const currentProfileId = currentProfile?._id;
-	const hasRelatedFeedback = relatedFeedback && relatedFeedback.length > 0;
+  if (!updateData?.update) {
+    throw notFound()
+  }
 
-	// Get heart emote data with optimistic state
-	const heartData = emoteCounts?.heart;
-	const serverLikeCount = heartData?.count ?? 0;
-	const serverIsLiked = currentProfileId
-		? heartData?.authorProfileIds?.includes(currentProfileId)
-		: false;
+  const { data: comments } = useSuspenseQuery(
+    crpc.updateComment.listByUpdate.queryOptions({
+      updateId: updateData.update.id,
+    })
+  )
 
-	// Optimistic state for likes
-	const [optimisticLiked, setOptimisticLiked] = useState<boolean | null>(null);
-	const [optimisticCount, setOptimisticCount] = useState<number | null>(null);
-	const [isAnimating, setIsAnimating] = useState(false);
-	const [copied, setCopied] = useState(false);
+  const toggleEmote = useMutation(crpc.updateEmote.toggle.mutationOptions())
+  const commentMutation = useMutation(
+    crpc.updateComment.create.mutationOptions()
+  )
+  const commentUpdateMutation = useMutation(
+    crpc.updateComment.update.mutationOptions()
+  )
+  const commentDeleteMutation = useMutation(
+    crpc.updateComment.remove.mutationOptions()
+  )
+  const commentEmoteMutation = useMutation(
+    crpc.updateCommentEmote.toggle.mutationOptions()
+  )
 
-	// Use optimistic values if set, otherwise use server values
-	const isLiked = optimisticLiked ?? serverIsLiked;
-	const likeCount = optimisticCount ?? serverLikeCount;
+  const currentProfile = profileQuery.data
+  const update = updateData.update
 
-	// Track previous liked state to detect changes for animation
-	const prevLikedRef = useRef(isLiked);
+  const heartData = updateData?.emoteCounts?.heart
+  const serverLikeCount = heartData?.count ?? 0
+  const serverIsLiked = currentProfile
+    ? heartData?.authorProfileIds?.includes(currentProfile.id)
+    : false
+  const [optimisticLiked, setOptimisticLiked] = useState<boolean | null>(null)
+  const [optimisticCount, setOptimisticCount] = useState<number | null>(null)
+  const [isAnimating, setIsAnimating] = useState(false)
+  const [copied, setCopied] = useState(false)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pendingStateRef = useRef<boolean | null>(null)
+  const prevLikedRef = useRef(serverIsLiked)
 
-	// Clear optimistic state when server catches up
-	useEffect(() => {
-		if (optimisticLiked !== null && serverIsLiked === optimisticLiked) {
-			setOptimisticLiked(null);
-			setOptimisticCount(null);
-		}
-	}, [serverIsLiked, serverLikeCount, optimisticLiked]);
+  const isLiked = optimisticLiked ?? serverIsLiked
+  const likeCount = optimisticCount ?? serverLikeCount
 
-	// Trigger animation when transitioning to liked state
-	useEffect(() => {
-		if (isLiked && !prevLikedRef.current) {
-			setIsAnimating(true);
-			const timer = setTimeout(() => setIsAnimating(false), 600);
-			return () => clearTimeout(timer);
-		}
-		prevLikedRef.current = isLiked;
-	}, [isLiked]);
+  useEffect(() => {
+    if (optimisticLiked !== null && serverIsLiked === optimisticLiked) {
+      setOptimisticLiked(null)
+      setOptimisticCount(null)
+    }
+  }, [optimisticLiked, serverIsLiked])
 
-	// Like mutation - debounced to handle rapid clicks
-	const { mutate: toggleEmote } = useMutation({
-		mutationFn: useConvexMutation(api.updateEmote.toggle),
-	});
+  useEffect(() => {
+    if (isLiked && !prevLikedRef.current) {
+      setIsAnimating(true)
+      const timer = setTimeout(() => setIsAnimating(false), 600)
+      return () => clearTimeout(timer)
+    }
+    prevLikedRef.current = isLiked
+  }, [isLiked])
 
-	// Debounce ref to track pending mutation
-	const debounceRef = useRef<NodeJS.Timeout | null>(null);
-	const pendingStateRef = useRef<boolean | null>(null);
+  const hasRelatedFeedback = updateData.relatedFeedback.length > 0
+  const isAuthenticated = !!currentProfile
+  const rssUrl = `/@${params.org}/${params.project}/updates/rss.xml`
 
-	const handleLike = () => {
-		if (!currentProfileId) return;
+  function handleLike() {
+    if (!currentProfile || !update) return
 
-		const newIsLiked = !isLiked;
-		const newCount = newIsLiked ? likeCount + 1 : Math.max(0, likeCount - 1);
-		setOptimisticLiked(newIsLiked);
-		setOptimisticCount(newCount);
+    const newIsLiked = !isLiked
+    const newCount = newIsLiked ? likeCount + 1 : Math.max(0, likeCount - 1)
+    setOptimisticLiked(newIsLiked)
+    setOptimisticCount(newCount)
+    pendingStateRef.current = newIsLiked
 
-		pendingStateRef.current = newIsLiked;
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => {
+      if (pendingStateRef.current !== serverIsLiked) {
+        toggleEmote.mutate({ content: "heart", updateId: update.id })
+      } else {
+        setOptimisticLiked(null)
+        setOptimisticCount(null)
+      }
+      pendingStateRef.current = null
+    }, 300)
+  }
 
-		if (debounceRef.current) {
-			clearTimeout(debounceRef.current);
-		}
+  async function handleCopyLink() {
+    await navigator.clipboard.writeText(window.location.href)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
 
-		debounceRef.current = setTimeout(() => {
-			if (pendingStateRef.current !== serverIsLiked) {
-				toggleEmote({
-					updateId: update._id,
-					content: 'heart' as EmoteContent,
-				});
-			} else {
-				setOptimisticLiked(null);
-				setOptimisticCount(null);
-			}
-			pendingStateRef.current = null;
-		}, 300);
-	};
+  function handleShareTwitter() {
+    const url = encodeURIComponent(window.location.href)
+    const text = encodeURIComponent(update.title)
+    window.open(
+      `https://twitter.com/intent/tweet?url=${url}&text=${text}`,
+      "_blank"
+    )
+  }
 
-	const handleCopyLink = async () => {
-		const url = window.location.href;
-		await navigator.clipboard.writeText(url);
-		setCopied(true);
-		setTimeout(() => setCopied(false), 2000);
-	};
+  return (
+    <div className="container h-full grid-cols-12 gap-8 md:grid">
+      <div className="order-first border-l border-border/75 py-6 md:order-last md:col-span-4">
+        <div className="sticky top-4 flex flex-col gap-6 pl-8">
+          <style>{heartPopKeyframes}</style>
 
-	const handleShareTwitter = () => {
-		const url = encodeURIComponent(window.location.href);
-		const text = encodeURIComponent(update.title);
-		window.open(`https://twitter.com/intent/tweet?url=${url}&text=${text}`, '_blank');
-	};
+          <div className="flex items-center justify-between">
+            <Button
+              className={cn(
+                "group gap-2",
+                isLiked
+                  ? "text-red-500 hover:bg-red-500/10 hover:text-red-600"
+                  : "text-muted-foreground hover:bg-red-500/10 hover:text-red-500"
+              )}
+              disabled={!currentProfile}
+              onClick={handleLike}
+              variant="ghost"
+            >
+              <Heart
+                className={cn(
+                  "size-4 transition-transform duration-200",
+                  isLiked && "fill-current",
+                  currentProfile && "group-hover:scale-110",
+                  isAnimating && "animate-[heart-pop_0.6s_ease-out]"
+                )}
+              />
+              <span className="font-medium">
+                {likeCount} {likeCount === 1 ? "like" : "likes"}
+              </span>
+            </Button>
 
-	const rssUrl = `/@${params.org}/${params.project}/updates/rss.xml`;
+            <div className="flex items-center">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button onClick={handleCopyLink} size="icon" variant="ghost">
+                    {copied ? (
+                      <Check className="size-4" />
+                    ) : (
+                      <Link2 className="size-4" />
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {copied ? "Copied!" : "Copy link"}
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={handleShareTwitter}
+                    size="icon"
+                    variant="ghost"
+                  >
+                    <svg
+                      className="size-4"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                    </svg>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Share on X</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button asChild size="icon" variant="ghost">
+                    <a href={rssUrl}>
+                      <Rss className="size-4" />
+                    </a>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>RSS Feed</TooltipContent>
+              </Tooltip>
+            </div>
+          </div>
 
-	return (
-		<div className='container h-full grid-cols-12 gap-8 md:grid'>
-			{/* Right sidebar */}
-			<div className='order-first border-l border-border/75 py-6 md:order-last md:col-span-4'>
-				<div className='sticky top-4 flex flex-col gap-6 pl-8'>
-					{/* Inject keyframes */}
-					<style>{heartPopKeyframes}</style>
+          <SidebarSection
+            icon={<Info className="size-3.5" />}
+            onOpenChange={(open) => setSidebarSection("details", open)}
+            open={sidebarState.details}
+            title="Details"
+          >
+            <div className="flex flex-col">
+              <div className="flex items-center justify-between py-1.5">
+                <span className="text-sm text-muted-foreground">Published</span>
+                <span className="text-sm">
+                  {update.status === "draft" ? (
+                    <span className="text-yellow-600 dark:text-yellow-400">
+                      Draft
+                    </span>
+                  ) : update.publishedAt ? (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span
+                          className="cursor-pointer"
+                          suppressHydrationWarning
+                        >
+                          {formatRelativeDay(Number(update.publishedAt))}
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <span suppressHydrationWarning>
+                          {formatFullDate(Number(update.publishedAt))}
+                        </span>
+                      </TooltipContent>
+                    </Tooltip>
+                  ) : (
+                    "Not published"
+                  )}
+                </span>
+              </div>
+              <div className="flex items-center justify-between py-1.5">
+                <span className="text-sm text-muted-foreground">Author</span>
+                <ProfileLinkOrUnknown profile={updateData.author} showAt />
+              </div>
+              <div className="flex items-center justify-between py-1.5">
+                <span className="text-sm text-muted-foreground">Category</span>
+                <CategoryBadge category={update.category} />
+              </div>
+            </div>
+          </SidebarSection>
 
-					{/* Like Button + Social Share */}
-					<div className='flex items-center justify-between'>
-						<Button
-							variant='ghost'
-							onClick={handleLike}
-							disabled={!currentProfileId}
-							className={cn(
-								'group gap-2',
-								isLiked
-									? 'text-red-500 hover:bg-red-500/10 hover:text-red-600'
-									: 'text-muted-foreground hover:bg-red-500/10 hover:text-red-500'
-							)}
-						>
-							<Heart
-								className={cn(
-									'size-4 transition-transform duration-200',
-									isLiked && 'fill-current',
-									currentProfileId && 'group-hover:scale-110',
-									isAnimating && 'animate-[heart-pop_0.6s_ease-out]'
-								)}
-							/>
-							<span className='font-medium'>
-								{likeCount} {likeCount === 1 ? 'like' : 'likes'}
-							</span>
-						</Button>
+          {hasRelatedFeedback ? (
+            <SidebarSection
+              icon={<LinkIcon className="size-3.5" />}
+              onOpenChange={(open) => setSidebarSection("related", open)}
+              open={sidebarState.related}
+              title="Related Feedback"
+            >
+              <div className="flex flex-col">
+                {updateData.relatedFeedback.map((item) => (
+                  <Link
+                    className="flex cursor-pointer items-center gap-2.5 rounded-md py-2 transition-colors hover:bg-muted/50"
+                    key={item.id}
+                    params={{
+                      org: params.org,
+                      project: params.project,
+                      slug: item.slug,
+                    }}
+                    to="/@{$org}/$project/feedback/$slug"
+                  >
+                    <StatusIcon colored size="14" status={item.status} />
+                    <span className="flex-1 truncate text-sm">
+                      {item.title}
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            </SidebarSection>
+          ) : null}
 
-						<div className='flex items-center'>
-							<Tooltip>
-								<TooltipTrigger asChild>
-									<Button variant='ghost' size='icon' onClick={handleCopyLink}>
-										{copied ? <Check className='size-4' /> : <Link2 className='size-4' />}
-									</Button>
-								</TooltipTrigger>
-								<TooltipContent>{copied ? 'Copied!' : 'Copy link'}</TooltipContent>
-							</Tooltip>
-							<Tooltip>
-								<TooltipTrigger asChild>
-									<Button variant='ghost' size='icon' onClick={handleShareTwitter}>
-										<svg className='size-4' viewBox='0 0 24 24' fill='currentColor'>
-											<path d='M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z' />
-										</svg>
-									</Button>
-								</TooltipTrigger>
-								<TooltipContent>Share on X</TooltipContent>
-							</Tooltip>
-							<Tooltip>
-								<TooltipTrigger asChild>
-									<Button variant='ghost' size='icon' asChild>
-										<Link to={rssUrl}>
-											<Rss className='size-4' />
-										</Link>
-									</Button>
-								</TooltipTrigger>
-								<TooltipContent>RSS Feed</TooltipContent>
-							</Tooltip>
-						</div>
-					</div>
+          {updateData.canEdit ? (
+            <Button asChild variant="outline">
+              <Link params={params} to="/@{$org}/$project/updates/$slug/edit">
+                <Edit className="h-4 w-4" />
+                Edit Update
+              </Link>
+            </Button>
+          ) : null}
+        </div>
+      </div>
 
-					{/* Details Section */}
-					<SidebarSection
-						title='Details'
-						icon={<Info className='size-3.5' />}
-						open={sidebarState.details}
-						onOpenChange={(open) => setSidebarSection('details', open)}
-					>
-						<div className='flex flex-col'>
-							{/* Status / Published Date */}
-							<div className='flex items-center justify-between py-1.5'>
-								<span className='text-sm text-muted-foreground'>Published</span>
-								<span className='text-sm'>
-									{update.status === 'draft' ? (
-										<span className='text-yellow-600 dark:text-yellow-400'>Draft</span>
-									) : update.publishedAt ? (
-										<Tooltip>
-											<TooltipTrigger asChild delay={100}>
-												<span className='cursor-pointer' suppressHydrationWarning>
-													{formatRelativeDay(update.publishedAt)}
-												</span>
-											</TooltipTrigger>
-											<TooltipContent>
-												<span suppressHydrationWarning>
-													{formatFullDate(update.publishedAt)}
-												</span>
-											</TooltipContent>
-										</Tooltip>
-									) : (
-										'Not published'
-									)}
-								</span>
-							</div>
+      <div className="flex flex-col gap-4 py-8 md:col-span-8">
+        <div className="flex flex-col gap-2 border-b pt-6 pb-6">
+          <div className="flex items-center gap-2">
+            {update.status === "draft" ? (
+              <Badge
+                className="text-yellow-600 dark:text-yellow-400"
+                variant="outline"
+              >
+                Draft
+              </Badge>
+            ) : null}
+            {update.category ? (
+              <CategoryBadge category={update.category} />
+            ) : null}
+          </div>
+          <h1 className="text-3xl font-bold">{update.title}</h1>
+          <div className="flex items-center gap-3 text-sm text-muted-foreground">
+            {updateData.author ? (
+              <Link
+                className="flex items-center gap-2 hover:underline"
+                params={{ org: updateData.author.username }}
+                to="/@{$org}"
+              >
+                {updateData.author.imageUrl ? (
+                  <img
+                    alt={updateData.author.username}
+                    className="h-5 w-5 rounded-full"
+                    src={updateData.author.imageUrl}
+                  />
+                ) : (
+                  <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                    {updateData.author.name?.charAt(0) ?? "?"}
+                  </div>
+                )}
+                <span>@{updateData.author.username}</span>
+              </Link>
+            ) : null}
+            {update.publishedAt ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="flex cursor-pointer items-center gap-1">
+                    <Calendar className="h-4 w-4" />
+                    <span suppressHydrationWarning>
+                      {formatRelativeDay(Number(update.publishedAt))}
+                    </span>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <span suppressHydrationWarning>
+                    {formatFullDate(Number(update.publishedAt))}
+                  </span>
+                </TooltipContent>
+              </Tooltip>
+            ) : null}
+          </div>
+        </div>
 
-							{/* Author */}
-							<div className='flex items-center justify-between py-1.5'>
-								<span className='text-sm text-muted-foreground'>Author</span>
-								<ProfileLinkOrUnknown profile={author} showAt />
-							</div>
+        {updateData.coverImageUrl ? (
+          <img
+            alt={update.title}
+            className="w-full rounded-lg bg-muted object-cover"
+            src={updateData.coverImageUrl}
+          />
+        ) : null}
 
-							{/* Category */}
-							<div className='flex items-center justify-between py-1.5'>
-								<span className='text-sm text-muted-foreground'>Category</span>
-								<CategoryBadge category={update.category} />
-							</div>
-						</div>
-					</SidebarSection>
+        <div className="prose-lg">
+          <EditorContentDisplay content={update.content} />
+        </div>
 
-					{/* Related Feedback */}
-					{hasRelatedFeedback && (
-						<SidebarSection
-							title='Related Feedback'
-							icon={<LinkIcon className='size-3.5' />}
-							open={sidebarState.related}
-							onOpenChange={(open) => setSidebarSection('related', open)}
-						>
-							<div className='flex flex-col'>
-								{relatedFeedback
-									?.filter((item): item is NonNullable<typeof item> => item !== null)
-									.map((item) => (
-										<Link
-											key={item._id}
-											to='/@{$org}/$project/feedback/$slug'
-											params={{
-												org: params.org,
-												project: params.project,
-												slug: item.slug,
-											}}
-											className='flex cursor-pointer items-center gap-2.5 rounded-md py-2 transition-colors hover:bg-muted/50'
-										>
-											<StatusIcon status={item.status} size='14' colored />
-											<span className='flex-1 truncate text-sm'>{item.title}</span>
-										</Link>
-									))}
-							</div>
-						</SidebarSection>
-					)}
-
-					{/* Edit button */}
-					{canEdit && (
-						<Button variant='outline' asChild>
-							<Link
-								to='/@{$org}/$project/updates/$slug/edit'
-								params={{
-									org: params.org,
-									project: params.project,
-									slug: params.slug,
-								}}
-							>
-								<Edit className='h-4 w-4' />
-								Edit Update
-							</Link>
-						</Button>
-					)}
-				</div>
-			</div>
-
-			{/* Main content */}
-			<div className='flex flex-col gap-4 py-8 md:col-span-8'>
-				{/* Title header */}
-				<div className='flex flex-col gap-2 border-b pt-6 pb-6 md:-mr-8.25'>
-					<div className='flex items-center gap-2'>
-						{update.status === 'draft' && (
-							<Badge variant='outline' className='text-yellow-600 dark:text-yellow-400'>
-								Draft
-							</Badge>
-						)}
-						{update.category && <CategoryBadge category={update.category} />}
-					</div>
-					<h1 className='text-3xl font-bold'>{update.title}</h1>
-					<div className='flex items-center gap-3 text-sm text-muted-foreground'>
-						{author && (
-							<Link
-								to='/@{$org}'
-								params={{ org: author.username }}
-								className='flex items-center gap-2 hover:underline'
-							>
-								{author.imageUrl ? (
-									<img
-										className='h-5 w-5 rounded-full'
-										src={author.imageUrl}
-										alt={author.username}
-									/>
-								) : (
-									<div className='flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground'>
-										{author.name?.charAt(0) ?? '?'}
-									</div>
-								)}
-								<span>@{author.username}</span>
-							</Link>
-						)}
-						{update.publishedAt && (
-							<Tooltip>
-								<TooltipTrigger asChild delay={100}>
-									<span className='flex cursor-pointer items-center gap-1'>
-										<Calendar className='h-4 w-4' />
-										<span suppressHydrationWarning>
-											{formatRelativeDay(update.publishedAt)}
-										</span>
-									</span>
-								</TooltipTrigger>
-								<TooltipContent>
-									<span suppressHydrationWarning>{formatFullDate(update.publishedAt)}</span>
-								</TooltipContent>
-							</Tooltip>
-						)}
-					</div>
-				</div>
-
-				{/* Cover image */}
-				{coverImageUrl && (
-					<img
-						src={coverImageUrl}
-						alt={update.title}
-						className='w-full rounded-lg bg-muted object-cover'
-					/>
-				)}
-
-				{/* Update content */}
-				<EditorContentDisplay content={update.content} className='prose-lg' />
-
-				{/* Comments section */}
-				<div className='mt-8 border-t pt-8 md:-mr-8.25'>
-					<EditorRefProvider>
-						<h3 className='mb-4 flex items-center gap-2 text-lg font-semibold'>
-							<MessageSquare className='size-5' />
-							{commentCount} {commentCount === 1 ? 'Comment' : 'Comments'}
-						</h3>
-						<UpdateCommentsList updateId={update._id} currentProfileId={currentProfile?._id} />
-						<UpdateCommentForm
-							updateId={update._id}
-							orgSlug={params.org}
-							projectSlug={params.project}
-							updateSlug={params.slug}
-							isAuthenticated={isAuthenticated}
-						/>
-					</EditorRefProvider>
-				</div>
-			</div>
-		</div>
-	);
+        <div className="mt-8 border-t pt-8">
+          <CommentEditorProvider>
+            <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold">
+              <MessageSquare className="size-5" />
+              {updateData.commentCount}{" "}
+              {updateData.commentCount === 1 ? "Comment" : "Comments"}
+            </h3>
+            <CommentList
+              comments={comments as ThreadComment[]}
+              currentProfileId={currentProfile?.id}
+              getBadges={(comment) =>
+                (comment as ThreadComment & { isTeamMember?: boolean })
+                  .isTeamMember ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                    <Users className="h-3 w-3" />
+                    Team
+                  </span>
+                ) : null
+              }
+              isDeleting={commentDeleteMutation.isPending}
+              isUpdating={commentUpdateMutation.isPending}
+              onDelete={(commentId) =>
+                commentDeleteMutation.mutate({ _id: commentId })
+              }
+              onToggleEmote={(commentId, content) =>
+                commentEmoteMutation.mutate({
+                  content,
+                  updateCommentId: commentId,
+                  updateId: update.id,
+                })
+              }
+              onUpdate={(commentId, content) =>
+                commentUpdateMutation.mutate({ _id: commentId, content })
+              }
+            />
+            <CommentForm
+              isAuthenticated={isAuthenticated}
+              isSubmitting={commentMutation.isPending}
+              onSubmit={async (content) => {
+                await commentMutation.mutateAsync({
+                  content,
+                  updateId: update.id,
+                })
+              }}
+              redirectTo={`/@${params.org}/${params.project}/updates/${params.slug}`}
+            />
+          </CommentEditorProvider>
+        </div>
+      </div>
+    </div>
+  )
 }

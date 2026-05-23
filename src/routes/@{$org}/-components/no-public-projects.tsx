@@ -3,9 +3,9 @@ import { FolderOpen } from 'lucide-react';
 
 import { buttonVariants } from '@/components/ui/button';
 
-type NoPublicProjectsProps = { orgName: string; orgSlug: string; canEdit: boolean };
+type NoPublicProjectsProps = { orgName: string; orgSlug: string; canCreate: boolean };
 
-export const NoPublicProjects = ({ orgName, orgSlug, canEdit }: NoPublicProjectsProps) => {
+export const NoPublicProjects = ({ orgName, orgSlug, canCreate }: NoPublicProjectsProps) => {
 	return (
 		<div className='flex w-full flex-col items-center justify-center rounded-xl border bg-muted/50 px-6 py-16 text-center'>
 			<div className='relative mb-6'>
@@ -15,10 +15,10 @@ export const NoPublicProjects = ({ orgName, orgSlug, canEdit }: NoPublicProjects
 			</div>
 
 			<h3 className='mb-2 text-xl font-semibold text-foreground'>
-				No {!canEdit && 'Public'} Projects Yet
+				No {!canCreate && 'Public'} Projects Yet
 			</h3>
 
-			{canEdit ? (
+			{canCreate ? (
 				<div>
 					<p className='mb-4 max-w-md leading-relaxed text-muted-foreground'>
 						Your team hasn't created any projects yet. Get started by creating your first project.
@@ -42,7 +42,7 @@ export const NoPublicProjects = ({ orgName, orgSlug, canEdit }: NoPublicProjects
 				</p>
 			)}
 
-			{!canEdit && (
+			{!canCreate && (
 				<div className='flex items-center gap-2 text-sm text-muted-foreground'>
 					<div className='h-2 w-2 animate-pulse rounded-full bg-muted-foreground/30' />
 					<span>Projects will appear here when made public</span>

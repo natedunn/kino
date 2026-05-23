@@ -1,10 +1,11 @@
 'use client';
 
 import type { Icon } from '@/icons/types';
+import type { ClassValue } from 'clsx';
+import type { LinkProps } from '@tanstack/react-router';
 
 import { useEffect, useRef, useState } from 'react';
-import { Link, LinkProps } from '@tanstack/react-router';
-import { ClassValue } from 'clsx';
+import { Link } from '@tanstack/react-router';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -38,7 +39,7 @@ interface DynamicNavigationProps {
 
 export function DynamicNavigation({ orgSlug, projectSlug, onStateChange }: DynamicNavigationProps) {
 	const params = {
-		team: orgSlug,
+		org: orgSlug,
 		project: projectSlug,
 	};
 
@@ -154,7 +155,7 @@ export function DynamicNavigation({ orgSlug, projectSlug, onStateChange }: Dynam
 		const initialTimeout = setTimeout(calculateVisibleItems, 50);
 
 		// Debounced resize handler to prevent excessive calculations
-		let resizeTimeout: NodeJS.Timeout;
+		let resizeTimeout: ReturnType<typeof setTimeout>;
 		const handleResize = () => {
 			setIsCalculating(true);
 			clearTimeout(resizeTimeout);
