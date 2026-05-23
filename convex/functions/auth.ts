@@ -1,6 +1,10 @@
 import { convex } from 'kitcn/auth';
 import { admin, organization, username } from 'better-auth/plugins';
-import { getEnv } from '../lib/get-env';
+import {
+  getBetterAuthAllowedHosts,
+  getEnv,
+  getTrustedOrigins,
+} from '../lib/get-env';
 import authConfig from './auth.config';
 import { defineAuth } from './generated/auth';
 import { profileTable } from './schema';
@@ -18,16 +22,25 @@ function isSuperAdminEmail(email: string) {
 
 export default defineAuth(() => {
   const env = getEnv();
+  const trustedOrigins = getTrustedOrigins();
+  const baseURLProtocol: 'auto' | 'https' = env.SITE_URL.startsWith('http://') ? 'auto' : 'https';
   const baseOptions = {
     account: {
       accountLinking: {
         enabled: true,
       },
     },
+    advanced: {
+      trustedProxyHeaders: true,
+    },
     emailAndPassword: {
       enabled: true,
     },
-    baseURL: env.SITE_URL,
+    baseURL: {
+      allowedHosts: getBetterAuthAllowedHosts(),
+      fallback: env.SITE_URL,
+      protocol: baseURLProtocol,
+    },
     plugins: [
       username({
         minUsernameLength: 3,
@@ -56,7 +69,7 @@ export default defineAuth(() => {
       updateAge: 60 * 60 * 24 * 15,
     },
     telemetry: { enabled: false },
-    trustedOrigins: [env.SITE_URL],
+    trustedOrigins,
     user: {
       additionalFields: {
         profileId: {
