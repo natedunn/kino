@@ -8,7 +8,7 @@
     "dev:convex": "kitcn dev",
     "build": "vite build",
     "build:cloudflare": "sh scripts/cloudflare-build.sh",
-    "deploy": "wrangler deploy",
+    "deploy": "wrangler deploy --config dist/server/wrangler.json --keep-vars",
     "deploy:preview": "sh scripts/cloudflare-preview-upload.sh",
     "cf-typegen": "wrangler types",
     "preview": "vite preview",

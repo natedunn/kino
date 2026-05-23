@@ -13,4 +13,4 @@ alias_name="$(printf '%s' "$branch" \
   | cut -c 1-40)"
 alias_name="${alias_name:-preview}"
 
-wrangler versions upload --preview-alias "$alias_name"
+wrangler versions upload --config dist/server/wrangler.json --keep-vars --preview-alias "$alias_name"
