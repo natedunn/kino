@@ -22,8 +22,6 @@ if [ "$branch" = "$production_branch" ]; then
   fi
 
   export CONVEX_DEPLOY_KEY="$CONVEX_PROD_DEPLOY_KEY"
-  export DEPLOY_ENV="${DEPLOY_ENV:-production}"
-
   npx convex deploy \
     --cmd "pnpm run build" \
     --cmd-url-env-var-name VITE_CONVEX_URL
@@ -34,8 +32,6 @@ else
   fi
 
   export CONVEX_DEPLOY_KEY="$CONVEX_PREVIEW_DEPLOY_KEY"
-  export DEPLOY_ENV="${DEPLOY_ENV:-preview}"
-
   npx convex deploy \
     --preview-name "$preview_name" \
     --cmd "pnpm run build" \
