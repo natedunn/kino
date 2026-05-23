@@ -61,8 +61,10 @@ function AuthPage() {
         <div className="flex flex-col gap-4">
           <Button
             onClick={async () => {
+              const callbackURL = new URL(search.redirect ?? '/', window.location.origin).toString();
+
               await authClient.signIn.social({
-                callbackURL: search.redirect,
+                callbackURL,
                 provider: 'github',
               });
             }}
