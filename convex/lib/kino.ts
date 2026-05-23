@@ -1,6 +1,6 @@
 import { CRPCError } from 'kitcn/server';
 import type { Doc, Id, TableNames } from '../functions/_generated/dataModel';
-import { memberTable, organizationTable } from '../functions/schema';
+import { memberTable, organizationTable, profileTable } from '../functions/schema';
 
 export const DEFAULT_FEEDBACK_BOARDS = ['Bugs', 'Feature Requests', 'Improvements'] as const;
 
@@ -20,6 +20,17 @@ type OrmCtx = {
 };
 
 type OrmMutationCtx = OrmCtx;
+
+type AuthUserBootstrapDoc = {
+  _id?: string;
+  email: string;
+  id: string;
+  image?: string | null;
+  name?: string | null;
+  profileId?: string | null;
+  role?: string | null;
+  username?: string | null;
+};
 
 type LegacyAliases = {
   _creationTime: number;
@@ -405,4 +416,84 @@ export async function createDefaultPersonalOrganization(ctx: OrmMutationCtx, use
   });
 
   return organization;
+}
+
+function getWritableId(doc: any) {
+  return doc?._id ?? doc?.id;
+}
+
+export async function ensureUserBootstrap(ctx: OrmMutationCtx, user: AuthUserBootstrapDoc) {
+  const publicUserId = user.id;
+  const legacyUserId = user._id && user._id !== publicUserId ? user._id : null;
+  const username =
+    user.username ?? user.email.split('@')[0] ?? user.name ?? `user_${crypto.randomUUID().slice(0, 8)}`;
+
+  let profile = await ctx.orm.query.profile.findFirst({
+    where: { userId: publicUserId },
+  });
+
+  if (!profile && legacyUserId) {
+    profile = await ctx.orm.query.profile.findFirst({
+      where: { userId: legacyUserId },
+    });
+
+    const profileId = getWritableId(profile);
+    if (profileId) {
+      await ctx.db.patch(profileId as any, { userId: publicUserId });
+    }
+  }
+
+  if (!profile) {
+    const resolvedUsername = await ensureUniqueUsername({ db: ctx.db, orm: ctx.orm }, username);
+    const [createdProfile] = await ctx.orm
+      .insert(profileTable)
+      .values({
+        email: user.email,
+        imageKey: null,
+        imageUrl: user.image,
+        name: user.name ?? user.email,
+        role:
+          user.role === 'system:admin' || user.role === 'system:editor' || user.role === 'user'
+            ? user.role
+            : 'user',
+        userId: publicUserId,
+        username: resolvedUsername,
+      })
+      .returning();
+    profile = createdProfile;
+  }
+
+  const profileId = getWritableId(profile);
+  if (profileId && user._id && user.profileId !== profileId) {
+    await setUserProfileId(ctx, user._id, profileId);
+  }
+
+  if (legacyUserId) {
+    const legacyMemberships = await ctx.orm.query.member.findMany({
+      where: { userId: legacyUserId },
+      limit: 1000,
+    });
+
+    await Promise.all(
+      legacyMemberships.flatMap((membership: any) => {
+        const membershipId = getWritableId(membership);
+        return membershipId ? [ctx.db.patch(membershipId as any, { userId: publicUserId })] : [];
+      })
+    );
+  }
+
+  const memberships = await ctx.orm.query.member.findMany({
+    where: { userId: publicUserId },
+    limit: 1,
+  });
+
+  if (memberships.length === 0) {
+    await createDefaultPersonalOrganization(ctx, {
+      id: publicUserId,
+      name: user.name ?? username,
+      username,
+    });
+  }
+
+  return profile;
 }

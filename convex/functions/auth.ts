@@ -10,11 +10,9 @@ import {
 } from '../lib/get-env';
 import authConfig from './auth.config';
 import { defineAuth } from './generated/auth';
-import { profileTable } from './schema';
 import {
-  createDefaultPersonalOrganization,
+  ensureUserBootstrap,
   ensureUniqueUsername,
-  setUserProfileId,
 } from '../lib/kino';
 
 function isSuperAdminEmail(email: string) {
@@ -122,29 +120,7 @@ export default defineAuth(() => {
           };
         },
         after: async (user: any, ctx: any) => {
-          const orm = (ctx as any).orm;
-          const [profile] = await orm
-            .insert(profileTable)
-            .values({
-              email: user.email,
-              imageKey: null,
-              imageUrl: user.image,
-              name: user.name,
-              role:
-                user.role === 'system:admin' || user.role === 'system:editor' || user.role === 'user'
-                  ? user.role
-                  : 'user',
-              userId: user._id,
-              username: user.username ?? user.email.split('@')[0] ?? `user_${crypto.randomUUID().slice(0, 8)}`,
-            })
-            .returning();
-
-          await setUserProfileId(ctx as any, user._id, profile.id);
-          await createDefaultPersonalOrganization({ orm }, {
-            id: user._id,
-            name: user.name,
-            username: user.username ?? profile.username,
-          });
+          await ensureUserBootstrap(ctx as any, user);
         },
       },
       change: async (change: any, ctx: any) => {
@@ -178,6 +154,18 @@ export default defineAuth(() => {
           role,
           username: change.newDoc.username ?? undefined,
         });
+      },
+    },
+    session: {
+      create: {
+        after: async (session: any, ctx: any) => {
+          const user = await (ctx as any).orm.query.user.findFirst({
+            where: { id: session.userId },
+          });
+          if (!user) return;
+
+          await ensureUserBootstrap(ctx as any, user);
+        },
       },
     },
     },
