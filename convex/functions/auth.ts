@@ -1,10 +1,11 @@
 import { convex } from 'kitcn/auth';
-import { admin, organization, username } from 'better-auth/plugins';
+import { admin, oAuthProxy, organization, username } from 'better-auth/plugins';
 import {
   getBetterAuthAllowedHosts,
   getEnv,
   getGitHubOAuthEnv,
   getJwksEnv,
+  getOAuthProxySecretEnv,
   getTrustedOrigins,
 } from '../lib/get-env';
 import authConfig from './auth.config';
@@ -26,6 +27,7 @@ export default defineAuth(() => {
   const env = getEnv();
   const githubOAuth = getGitHubOAuthEnv();
   const jwks = getJwksEnv();
+  const oauthProxySecret = getOAuthProxySecretEnv();
   const trustedOrigins = getTrustedOrigins();
   const baseURLProtocol: 'auto' | 'https' = env.SITE_URL.startsWith('http://') ? 'auto' : 'https';
   const baseOptions = {
@@ -62,6 +64,10 @@ export default defineAuth(() => {
             },
           },
         },
+      }),
+      oAuthProxy({
+        productionURL: env.SITE_URL,
+        secret: oauthProxySecret,
       }),
       convex({
         authConfig,

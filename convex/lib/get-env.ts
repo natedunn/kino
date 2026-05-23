@@ -34,6 +34,10 @@ export function getJwksEnv() {
   return getRuntimeEnvValue(['JWKS']);
 }
 
+export function getOAuthProxySecretEnv() {
+  return getRuntimeEnvValue(['OAUTH', 'PROXY', 'SECRET']);
+}
+
 function parseList(value: string | undefined) {
   return (value ?? '')
     .split(',')
