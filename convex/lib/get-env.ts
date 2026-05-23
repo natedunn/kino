@@ -5,9 +5,6 @@ const envSchema = z.object({
   SITE_URL: z.string().default('http://localhost:3000'),
   BETTER_AUTH_SECRET: z.string().optional(),
   JWKS: z.string().optional(),
-  CONVEX_SITE_URL: z.string().optional(),
-  GITHUB_CLIENT_ID: z.string().optional(),
-  GITHUB_CLIENT_SECRET: z.string().optional(),
   TRUSTED_ORIGINS: z.string().optional(),
 });
 
@@ -17,15 +14,23 @@ export const getEnv = createEnv({
   schema: envSchema,
   runtimeEnv: {
     BETTER_AUTH_SECRET: runtimeEnv.BETTER_AUTH_SECRET,
-    CONVEX_SITE_URL: runtimeEnv.CONVEX_SITE_URL,
-    GITHUB_CLIENT_ID: runtimeEnv.GITHUB_CLIENT_ID,
-    GITHUB_CLIENT_SECRET: runtimeEnv.GITHUB_CLIENT_SECRET,
     JWKS: runtimeEnv.JWKS,
     SITE_URL: runtimeEnv.SITE_URL,
     TRUSTED_ORIGINS: runtimeEnv.TRUSTED_ORIGINS,
   },
   cache: false,
 });
+
+function getRuntimeEnvValue(parts: string[]) {
+  return runtimeEnv[parts.join('_')];
+}
+
+export function getGitHubOAuthEnv() {
+  return {
+    clientId: getRuntimeEnvValue(['GITHUB', 'CLIENT', 'ID']),
+    clientSecret: getRuntimeEnvValue(['GITHUB', 'CLIENT', 'SECRET']),
+  };
+}
 
 function parseList(value: string | undefined) {
   return (value ?? '')

@@ -3,6 +3,7 @@ import { admin, organization, username } from 'better-auth/plugins';
 import {
   getBetterAuthAllowedHosts,
   getEnv,
+  getGitHubOAuthEnv,
   getTrustedOrigins,
 } from '../lib/get-env';
 import authConfig from './auth.config';
@@ -22,6 +23,7 @@ function isSuperAdminEmail(email: string) {
 
 export default defineAuth(() => {
   const env = getEnv();
+  const githubOAuth = getGitHubOAuthEnv();
   const trustedOrigins = getTrustedOrigins();
   const baseURLProtocol: 'auto' | 'https' = env.SITE_URL.startsWith('http://') ? 'auto' : 'https';
   const baseOptions = {
@@ -173,13 +175,13 @@ export default defineAuth(() => {
     },
   };
 
-  if (env.GITHUB_CLIENT_ID && env.GITHUB_CLIENT_SECRET) {
+  if (githubOAuth.clientId && githubOAuth.clientSecret) {
     return {
       ...baseOptions,
       socialProviders: {
         github: {
-          clientId: env.GITHUB_CLIENT_ID,
-          clientSecret: env.GITHUB_CLIENT_SECRET,
+          clientId: githubOAuth.clientId,
+          clientSecret: githubOAuth.clientSecret,
         },
       },
     };
