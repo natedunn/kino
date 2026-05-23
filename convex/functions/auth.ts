@@ -4,6 +4,7 @@ import {
   getBetterAuthAllowedHosts,
   getEnv,
   getGitHubOAuthEnv,
+  getJwksEnv,
   getTrustedOrigins,
 } from '../lib/get-env';
 import authConfig from './auth.config';
@@ -24,6 +25,7 @@ function isSuperAdminEmail(email: string) {
 export default defineAuth(() => {
   const env = getEnv();
   const githubOAuth = getGitHubOAuthEnv();
+  const jwks = getJwksEnv();
   const trustedOrigins = getTrustedOrigins();
   const baseURLProtocol: 'auto' | 'https' = env.SITE_URL.startsWith('http://') ? 'auto' : 'https';
   const baseOptions = {
@@ -63,7 +65,7 @@ export default defineAuth(() => {
       }),
       convex({
         authConfig,
-        jwks: env.JWKS,
+        jwks,
       }),
     ],
     session: {

@@ -4,7 +4,6 @@ import { z } from 'zod';
 const envSchema = z.object({
   SITE_URL: z.string().default('http://localhost:3000'),
   BETTER_AUTH_SECRET: z.string().optional(),
-  JWKS: z.string().optional(),
   TRUSTED_ORIGINS: z.string().optional(),
 });
 
@@ -14,7 +13,6 @@ export const getEnv = createEnv({
   schema: envSchema,
   runtimeEnv: {
     BETTER_AUTH_SECRET: runtimeEnv.BETTER_AUTH_SECRET,
-    JWKS: runtimeEnv.JWKS,
     SITE_URL: runtimeEnv.SITE_URL,
     TRUSTED_ORIGINS: runtimeEnv.TRUSTED_ORIGINS,
   },
@@ -30,6 +28,10 @@ export function getGitHubOAuthEnv() {
     clientId: getRuntimeEnvValue(['GITHUB', 'CLIENT', 'ID']),
     clientSecret: getRuntimeEnvValue(['GITHUB', 'CLIENT', 'SECRET']),
   };
+}
+
+export function getJwksEnv() {
+  return getRuntimeEnvValue(['JWKS']);
 }
 
 function parseList(value: string | undefined) {
