@@ -5,11 +5,13 @@ dist-ssr
 *.local
 count.txt
 .env
+.env.local
 .nitro
 .tanstack
 .wrangler
 .output
 .vinxi
+.vercel
 __unconfig*
 todos.json
 .convex/
@@ -17,3 +19,6 @@ todos.json
 .tmp/
 .cta.json
 convex/.env
+/.yalc
+yalc.lock
+.claude/settings.local.json
