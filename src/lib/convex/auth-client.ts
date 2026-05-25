@@ -8,10 +8,7 @@ import { convexClient } from 'kitcn/auth/client';
 import { createAuthMutations } from 'kitcn/react';
 
 export const authClient = createAuthClient({
-  baseURL:
-    typeof window === 'undefined'
-      ? (import.meta.env.VITE_SITE_URL as string | undefined)
-      : window.location.origin,
+  baseURL: typeof window === 'undefined' ? undefined : window.location.origin,
   sessionOptions: {
     refetchOnWindowFocus: false,
   },

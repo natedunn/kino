@@ -5,22 +5,37 @@ const envSchema = z.object({
   SITE_URL: z.string().default('http://localhost:3000'),
   BETTER_AUTH_SECRET: z.string().optional(),
   TRUSTED_ORIGINS: z.string().optional(),
+  TRUSTED_HOSTS: z.string().optional(),
+  CLOUDFLARE_WORKER_NAME: z.string().optional(),
 });
 
-const runtimeEnv = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env ?? {};
+function getRuntimeEnv() {
+  return (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env ?? {};
+}
 
-export const getEnv = createEnv({
-  schema: envSchema,
-  runtimeEnv: {
-    BETTER_AUTH_SECRET: runtimeEnv.BETTER_AUTH_SECRET,
-    SITE_URL: runtimeEnv.SITE_URL,
-    TRUSTED_ORIGINS: runtimeEnv.TRUSTED_ORIGINS,
-  },
-  cache: false,
-});
+const DEFAULT_CLOUDFLARE_WORKER_NAME = 'kino';
+
+export function getEnv() {
+  const runtimeEnv = getRuntimeEnv();
+  return createEnv({
+    schema: envSchema,
+    runtimeEnv: {
+      BETTER_AUTH_SECRET: runtimeEnv.BETTER_AUTH_SECRET,
+      SITE_URL: runtimeEnv.SITE_URL,
+      TRUSTED_HOSTS: runtimeEnv.TRUSTED_HOSTS,
+      TRUSTED_ORIGINS: runtimeEnv.TRUSTED_ORIGINS,
+      CLOUDFLARE_WORKER_NAME:
+        runtimeEnv.CLOUDFLARE_WORKER_NAME ??
+        runtimeEnv.WORKER_NAME ??
+        runtimeEnv.CF_WORKER_NAME ??
+        DEFAULT_CLOUDFLARE_WORKER_NAME,
+    },
+    cache: false,
+  })();
+}
 
 function getRuntimeEnvValue(parts: string[]) {
-  return runtimeEnv[parts.join('_')];
+  return getRuntimeEnv()[parts.join('_')];
 }
 
 export function getGitHubOAuthEnv() {
@@ -49,23 +64,72 @@ function normalizeOrigin(origin: string) {
   return origin.endsWith('/') ? origin.slice(0, -1) : origin;
 }
 
+function normalizeHostPattern(host: string) {
+  return host
+    .trim()
+    .replace(/^https?:\/\//, '')
+    .replace(/\/.*$/, '');
+}
+
 function hostnameFromOriginPattern(origin: string) {
   try {
     return new URL(origin).host;
   } catch {
-    return origin.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+    return normalizeHostPattern(origin);
   }
+}
+
+function getCloudflarePreviewOrigins(workerName: string | undefined) {
+  if (!workerName) return [];
+
+  const normalizedWorkerName = workerName.trim().toLowerCase();
+  if (!normalizedWorkerName) return [];
+
+  return [
+    `https://${normalizedWorkerName}.*.workers.dev`,
+    `https://*-${normalizedWorkerName}.*.workers.dev`,
+  ];
+}
+
+function getAdditionalDeploymentOrigins() {
+  const runtimeEnv = getRuntimeEnv();
+  const deploymentOrigins = [
+    runtimeEnv.CF_PAGES_URL,
+    runtimeEnv.URL,
+    runtimeEnv.DEPLOY_PRIME_URL,
+    runtimeEnv.RENDER_EXTERNAL_URL,
+    runtimeEnv.VERCEL_URL
+      ? `https://${runtimeEnv.VERCEL_URL.replace(/^https?:\/\//, '')}`
+      : undefined,
+  ];
+
+  return deploymentOrigins
+    .filter((origin): origin is string => typeof origin === 'string' && origin.length > 0)
+    .map(normalizeOrigin);
 }
 
 export function getTrustedOrigins() {
   const env = getEnv();
   return Array.from(
-    new Set([env.SITE_URL, ...parseList(env.TRUSTED_ORIGINS)].map(normalizeOrigin))
+    new Set(
+      [
+        env.SITE_URL,
+        ...parseList(env.TRUSTED_ORIGINS),
+        ...getAdditionalDeploymentOrigins(),
+        ...getCloudflarePreviewOrigins(env.CLOUDFLARE_WORKER_NAME),
+      ].map(normalizeOrigin)
+    )
   );
 }
 
 export function getBetterAuthAllowedHosts() {
-  return getTrustedOrigins().map(hostnameFromOriginPattern);
+  const env = getEnv();
+  return Array.from(
+    new Set([
+      ...getTrustedOrigins().map(hostnameFromOriginPattern),
+      ...parseList(env.TRUSTED_HOSTS).map(normalizeHostPattern),
+    ])
+  );
 }
 
 function patternToRegex(pattern: string) {
