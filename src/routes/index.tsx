@@ -1,54 +1,53 @@
-import { useSuspenseQuery } from '@tanstack/react-query';
-import { Navigate, createFileRoute, useRouterState } from '@tanstack/react-router';
+import { useSuspenseQuery } from "@tanstack/react-query"
+import {
+  Navigate,
+  createFileRoute,
+  useRouterState,
+} from "@tanstack/react-router"
 
-import { useCRPC } from '@/lib/convex/crpc';
-import { crpcOptions } from '@/lib/convex/crpc-options';
-import { fetchConvexLoaderQuery } from '@/lib/convex/server';
+import { useCRPC } from "@/lib/convex/crpc"
+import { crpcServer } from "@/lib/convex/crpc-server"
 
-export const Route = createFileRoute('/')({
+export const Route = createFileRoute("/")({
   loader: async ({ context }) => {
     if (!context.loaderToken) {
-      return;
+      return
     }
 
     await Promise.all([
-      fetchConvexLoaderQuery(
-        context.queryClient,
-        crpcOptions.profile.findMyProfile.staticQueryOptions({}),
-        context.loaderToken
+      context.queryClient.ensureQueryData(
+        crpcServer.profile.findMyProfile.queryOptions({})
       ),
-      fetchConvexLoaderQuery(
-        context.queryClient,
-        crpcOptions.org.findMyOrgs.staticQueryOptions({}),
-        context.loaderToken
+      context.queryClient.ensureQueryData(
+        crpcServer.org.findMyOrgs.queryOptions({})
       ),
-    ]);
+    ])
   },
   component: IndexPage,
-});
+})
 
 function IndexPage() {
-  const { loaderToken } = Route.useRouteContext();
+  const { loaderToken } = Route.useRouteContext()
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
-  });
+  })
 
   if (!loaderToken) {
-    return <Navigate search={{ redirect: pathname }} to="/auth" />;
+    return <Navigate search={{ redirect: pathname }} to="/auth" />
   }
 
-  return <AuthenticatedIndexPage />;
+  return <AuthenticatedIndexPage />
 }
 
 function AuthenticatedIndexPage() {
-  const crpc = useCRPC();
+  const crpc = useCRPC()
   const { data: user } = useSuspenseQuery(
     crpc.profile.findMyProfile.queryOptions({})
-  );
+  )
   const { data: orgsData } = useSuspenseQuery(
     crpc.org.findMyOrgs.queryOptions({})
-  );
-  const orgs = orgsData?.teams;
+  )
+  const orgs = orgsData?.teams
 
   return (
     <div>
@@ -62,9 +61,9 @@ function AuthenticatedIndexPage() {
             <div key={org.id}>
               <span>{org.name}</span>
             </div>
-          );
+          )
         })
       )}
     </div>
-  );
+  )
 }

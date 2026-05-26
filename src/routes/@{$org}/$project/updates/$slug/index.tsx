@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react"
-import { useMutation, useQuery, useSuspenseQuery } from "@tanstack/react-query"
+import { useMutation, useSuspenseQuery } from "@tanstack/react-query"
 import { Link, createFileRoute, notFound } from "@tanstack/react-router"
 import {
   Calendar,
@@ -26,11 +26,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { useCRPC } from "@/lib/convex/crpc"
-import { crpcOptions } from "@/lib/convex/crpc-options"
-import {
-  fetchConvexLoaderQuery,
-  prefetchConvexLoaderQuery,
-} from "@/lib/convex/server"
+import { crpcServer } from "@/lib/convex/crpc-server"
 import { useSidebarState } from "@/lib/hooks/use-sidebar-state"
 import { cn } from "@/lib/utils"
 import { formatFullDate, formatRelativeDay } from "@/lib/utils/format-timestamp"
@@ -61,41 +57,25 @@ const DEFAULT_SIDEBAR_STATE = {
   related: true,
 }
 
-type ProjectDetailsData = {
-  project?: {
-    id: string
-  } | null
-}
-
-type UpdateDetailData = {
-  update?: {
-    id: string
-  } | null
-} | null
-
 export const Route = createFileRoute("/@{$org}/$project/updates/$slug/")({
   component: UpdateDetailRoute,
   loader: async ({ context, params }) => {
-    const projectData = await fetchConvexLoaderQuery<ProjectDetailsData | null>(
-      context.queryClient,
-      crpcOptions.project.getDetails.staticQueryOptions({
+    const projectData = await context.queryClient.ensureQueryData(
+      crpcServer.project.getDetails.queryOptions({
         orgSlug: params.org,
         slug: params.project,
-      }),
-      context.loaderToken
+      })
     )
 
     if (!projectData?.project?.id) {
       throw notFound()
     }
 
-    const updateData = await fetchConvexLoaderQuery<UpdateDetailData>(
-      context.queryClient,
-      crpcOptions.update.getBySlug.staticQueryOptions({
+    const updateData = await context.queryClient.ensureQueryData(
+      crpcServer.update.getBySlug.queryOptions({
         projectId: projectData.project.id,
         slug: params.slug,
-      }),
-      context.loaderToken
+      })
     )
 
     if (!updateData?.update) {
@@ -103,20 +83,13 @@ export const Route = createFileRoute("/@{$org}/$project/updates/$slug/")({
     }
 
     await Promise.all([
-      prefetchConvexLoaderQuery(
-        context.queryClient,
-        crpcOptions.updateComment.listByUpdate.staticQueryOptions({
+      context.queryClient.ensureQueryData(
+        crpcServer.updateComment.listByUpdate.queryOptions({
           updateId: updateData.update.id,
-        }),
-        context.loaderToken
+        })
       ),
-      prefetchConvexLoaderQuery(
-        context.queryClient,
-        crpcOptions.profile.findMyProfile.staticQueryOptions(
-          {},
-          { skipUnauth: true }
-        ),
-        context.loaderToken
+      context.queryClient.ensureQueryData(
+        crpcServer.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
       ),
     ])
   },
@@ -141,7 +114,7 @@ function UpdateDetailRoute() {
     throw notFound()
   }
 
-  const profileQuery = useQuery(
+  const profileQuery = useSuspenseQuery(
     crpc.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
   )
   const { data: updateData } = useSuspenseQuery(

@@ -1,10 +1,6 @@
 import { useState, type ReactNode } from "react"
 
-import {
-  useQuery,
-  useQueryClient,
-  useSuspenseQuery,
-} from "@tanstack/react-query"
+import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query"
 import {
   createFileRoute,
   Link,
@@ -19,11 +15,7 @@ import ArchivePencil from "@/icons/archive-pencil"
 import CirclePlusOutline from "@/icons/circle-plus-outline"
 import Missing from "@/icons/missing"
 import { useCRPC } from "@/lib/convex/crpc"
-import { crpcOptions } from "@/lib/convex/crpc-options"
-import {
-  fetchConvexLoaderQuery,
-  prefetchConvexLoaderQuery,
-} from "@/lib/convex/server"
+import { crpcServer } from "@/lib/convex/crpc-server"
 
 import { BoardsNav } from "./-components/boards-nav"
 import { FeedbackCard } from "./-components/feedback-card"
@@ -35,12 +27,6 @@ const NUM_OF_ITEMS_PER_PAGE = 50
 type BoardSummary = {
   id: string
   slug: string
-}
-
-type ProjectDetailsData = {
-  project?: {
-    id: string
-  } | null
 }
 
 type FeedbackListArgs = {
@@ -68,32 +54,27 @@ export const Route = createFileRoute("/@{$org}/$project/feedback/")({
   component: FeedbackListRoute,
   loaderDeps: ({ search }) => search,
   loader: async ({ context, deps, params }) => {
-    const projectData = await fetchConvexLoaderQuery<ProjectDetailsData | null>(
-      context.queryClient,
-      crpcOptions.project.getDetails.staticQueryOptions({
+    const projectData = await context.queryClient.ensureQueryData(
+      crpcServer.project.getDetails.queryOptions({
         orgSlug: params.org,
         slug: params.project,
-      }),
-      context.loaderToken
+      })
     )
 
     if (!projectData?.project) {
       throw notFound()
     }
 
-    const boards = await fetchConvexLoaderQuery<BoardSummary[] | null>(
-      context.queryClient,
-      crpcOptions.feedbackBoard.listProjectBoards.staticQueryOptions({
+    const boards = await context.queryClient.ensureQueryData(
+      crpcServer.feedbackBoard.listProjectBoards.queryOptions({
         projectId: projectData.project.id,
-      }),
-      context.loaderToken
+      })
     )
     const boardId = getBoardId(boards, deps.board)
 
     await Promise.all([
-      fetchConvexLoaderQuery(
-        context.queryClient,
-        crpcOptions.feedback.listProjectFeedback.staticQueryOptions(
+      context.queryClient.ensureQueryData(
+        crpcServer.feedback.listProjectFeedback.queryOptions(
           getFeedbackListArgs({
             boardId,
             cursor: null,
@@ -101,16 +82,10 @@ export const Route = createFileRoute("/@{$org}/$project/feedback/")({
             search: deps.search,
             status: deps.status,
           })
-        ),
-        context.loaderToken
+        )
       ),
-      prefetchConvexLoaderQuery(
-        context.queryClient,
-        crpcOptions.profile.findMyProfile.staticQueryOptions(
-          {},
-          { skipUnauth: true }
-        ),
-        context.loaderToken
+      context.queryClient.ensureQueryData(
+        crpcServer.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
       ),
     ])
   },
@@ -177,7 +152,7 @@ function FeedbackListRoute() {
       projectId,
     })
   )
-  const profileQuery = useQuery(
+  const profileQuery = useSuspenseQuery(
     crpc.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
   )
   const boardId = getBoardId(boards, board)

@@ -1,6 +1,6 @@
 import type { ReactNode } from "react"
 
-import { useQuery, useSuspenseQuery } from "@tanstack/react-query"
+import { useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute, Link, notFound } from "@tanstack/react-router"
 import { z } from "zod"
 
@@ -10,20 +10,10 @@ import CalendarDays from "@/icons/calendar-days"
 import CirclePlusOutline from "@/icons/circle-plus-outline"
 import Missing from "@/icons/missing"
 import { useCRPC } from "@/lib/convex/crpc"
-import { crpcOptions } from "@/lib/convex/crpc-options"
-import {
-  fetchConvexLoaderQuery,
-  prefetchConvexLoaderQuery,
-} from "@/lib/convex/server"
+import { crpcServer } from "@/lib/convex/crpc-server"
 
 import { CategoriesNav } from "./-components/categories-nav"
 import { UpdateCard } from "./-components/update-card"
-
-type ProjectDetailsData = {
-  project?: {
-    id: string
-  } | null
-}
 
 const updatesSearchParams = z.object({
   category: z.optional(
@@ -36,13 +26,11 @@ const updatesSearchParams = z.object({
 export const Route = createFileRoute("/@{$org}/$project/updates/")({
   component: UpdatesListRoute,
   loader: async ({ context, params }) => {
-    const projectData = await fetchConvexLoaderQuery<ProjectDetailsData | null>(
-      context.queryClient,
-      crpcOptions.project.getDetails.staticQueryOptions({
+    const projectData = await context.queryClient.ensureQueryData(
+      crpcServer.project.getDetails.queryOptions({
         orgSlug: params.org,
         slug: params.project,
-      }),
-      context.loaderToken
+      })
     )
 
     if (!projectData?.project) {
@@ -50,20 +38,13 @@ export const Route = createFileRoute("/@{$org}/$project/updates/")({
     }
 
     await Promise.all([
-      prefetchConvexLoaderQuery(
-        context.queryClient,
-        crpcOptions.update.listByProject.staticQueryOptions({
+      context.queryClient.ensureQueryData(
+        crpcServer.update.listByProject.queryOptions({
           projectId: projectData.project.id,
-        }),
-        context.loaderToken
+        })
       ),
-      prefetchConvexLoaderQuery(
-        context.queryClient,
-        crpcOptions.profile.findMyProfile.staticQueryOptions(
-          {},
-          { skipUnauth: true }
-        ),
-        context.loaderToken
+      context.queryClient.ensureQueryData(
+        crpcServer.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
       ),
     ])
   },
@@ -102,7 +83,7 @@ function UpdatesListRoute() {
       projectId: projectData.project.id,
     })
   )
-  const currentProfileQuery = useQuery(
+  const currentProfileQuery = useSuspenseQuery(
     crpc.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
   )
 

@@ -1,92 +1,89 @@
-import { useState } from 'react';
-import { useForm } from '@tanstack/react-form';
-import { useMutation, useSuspenseQuery } from '@tanstack/react-query';
+import { useState } from "react"
+import { useForm } from "@tanstack/react-form"
+import { useMutation, useSuspenseQuery } from "@tanstack/react-query"
 import {
   Navigate,
   createFileRoute,
   useNavigate,
   useRouterState,
-} from '@tanstack/react-router';
+} from "@tanstack/react-router"
 
-import { InlineAlert } from '@/components/inline-alert';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input-shadcn';
+import { InlineAlert } from "@/components/inline-alert"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input-shadcn"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select-shadcn';
-import { useCRPC } from '@/lib/convex/crpc';
-import { crpcOptions } from '@/lib/convex/crpc-options';
-import { fetchConvexLoaderQuery } from '@/lib/convex/server';
-import { cn } from '@/lib/utils';
+} from "@/components/ui/select-shadcn"
+import { useCRPC } from "@/lib/convex/crpc"
+import { crpcServer } from "@/lib/convex/crpc-server"
+import { cn } from "@/lib/utils"
 
-export const Route = createFileRoute('/create/team/')({
+export const Route = createFileRoute("/create/team/")({
   loader: async ({ context }) => {
     if (!context.loaderToken) {
-      return;
+      return
     }
 
-    await fetchConvexLoaderQuery(
-      context.queryClient,
-      crpcOptions.org.findMyOrgs.staticQueryOptions({}),
-      context.loaderToken
-    );
+    await context.queryClient.ensureQueryData(
+      crpcServer.org.findMyOrgs.queryOptions({})
+    )
   },
   component: CreateTeamRoute,
-});
+})
 
 function CreateTeamRoute() {
-  const { loaderToken } = Route.useRouteContext();
+  const { loaderToken } = Route.useRouteContext()
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
-  });
+  })
 
   if (!loaderToken) {
-    return <Navigate search={{ redirect: pathname }} to="/auth" />;
+    return <Navigate search={{ redirect: pathname }} to="/auth" />
   }
 
-  return <AuthenticatedCreateTeamRoute />;
+  return <AuthenticatedCreateTeamRoute />
 }
 
 function AuthenticatedCreateTeamRoute() {
-  const navigate = useNavigate();
-  const crpc = useCRPC();
-  const [formError, setFormError] = useState<string>();
+  const navigate = useNavigate()
+  const crpc = useCRPC()
+  const [formError, setFormError] = useState<string>()
   const { data: orgsData } = useSuspenseQuery(
     crpc.org.findMyOrgs.queryOptions({})
-  );
+  )
   const createMutation = useMutation(
     crpc.org.create.mutationOptions({
       onError: (error) => setFormError(error.message),
       onSuccess: (org) => {
-        form.reset();
-        navigate({ params: { org: org.slug }, to: '/@{$org}' });
+        form.reset()
+        navigate({ params: { org: org.slug }, to: "/@{$org}" })
       },
     })
-  );
+  )
 
   const form = useForm({
     defaultValues: {
-      logo: '',
-      name: '',
-      slug: '',
-      visibility: 'public' as 'public' | 'private',
+      logo: "",
+      name: "",
+      slug: "",
+      visibility: "public" as "public" | "private",
     },
     onSubmit: async ({ value }) => {
-      setFormError(undefined);
+      setFormError(undefined)
       await createMutation.mutateAsync({
         ...(value.logo ? { logo: value.logo } : {}),
         name: value.name,
         slug: value.slug,
         visibility: value.visibility,
-      });
+      })
     },
-  });
+  })
 
-  const underLimit = orgsData?.underLimit ?? true;
+  const underLimit = orgsData?.underLimit ?? true
 
   return (
     <div className="relative w-full">
@@ -96,17 +93,21 @@ function AuthenticatedCreateTeamRoute() {
           <h1 className="text-3xl font-bold">Create a team</h1>
           {!underLimit ? (
             <InlineAlert className="mt-6" variant="warning">
-              Maximum teams created. Please <a className="link-text" href="#">change your plan</a> or contact support.
+              Maximum teams created. Please{" "}
+              <a className="link-text" href="#">
+                change your plan
+              </a>{" "}
+              or contact support.
             </InlineAlert>
           ) : null}
           <form
-            className={cn('mt-6 flex flex-col gap-6', {
-              'pointer-events-none opacity-50': !underLimit,
+            className={cn("mt-6 flex flex-col gap-6", {
+              "pointer-events-none opacity-50": !underLimit,
             })}
             onSubmit={(event) => {
-              event.preventDefault();
-              event.stopPropagation();
-              void form.handleSubmit();
+              event.preventDefault()
+              event.stopPropagation()
+              void form.handleSubmit()
             }}
           >
             <form.Field name="name">
@@ -115,7 +116,9 @@ function AuthenticatedCreateTeamRoute() {
                   <div className="flex flex-1 flex-col gap-2">
                     <label className="text-sm font-medium">Team name</label>
                     <Input
-                      onChange={(event) => field.handleChange(event.target.value)}
+                      onChange={(event) =>
+                        field.handleChange(event.target.value)
+                      }
                       value={field.state.value}
                     />
                   </div>
@@ -129,7 +132,9 @@ function AuthenticatedCreateTeamRoute() {
                   <div className="flex flex-1 flex-col gap-2">
                     <label className="text-sm font-medium">Slug</label>
                     <Input
-                      onChange={(event) => field.handleChange(event.target.value)}
+                      onChange={(event) =>
+                        field.handleChange(event.target.value)
+                      }
                       value={field.state.value}
                     />
                   </div>
@@ -144,7 +149,9 @@ function AuthenticatedCreateTeamRoute() {
                     <label className="text-sm font-medium">Visibility</label>
                     <Select
                       defaultValue="public"
-                      onValueChange={(value) => field.handleChange(value as 'public' | 'private')}
+                      onValueChange={(value) =>
+                        field.handleChange(value as "public" | "private")
+                      }
                     >
                       <SelectTrigger className="w-48">
                         <SelectValue placeholder="Sort by..." />
@@ -159,17 +166,25 @@ function AuthenticatedCreateTeamRoute() {
               )}
             </form.Field>
 
-            {formError ? <InlineAlert variant="danger">{formError}</InlineAlert> : null}
+            {formError ? (
+              <InlineAlert variant="danger">{formError}</InlineAlert>
+            ) : null}
 
             <div className="flex items-center gap-2">
-              <form.Subscribe selector={(state) => [state.canSubmit, state.isSubmitting]}>
+              <form.Subscribe
+                selector={(state) => [state.canSubmit, state.isSubmitting]}
+              >
                 {([canSubmit, isSubmitting]) => (
                   <Button
-                    className={cn({ 'opacity-50 grayscale select-none': !canSubmit })}
+                    className={cn({
+                      "opacity-50 grayscale select-none": !canSubmit,
+                    })}
                     disabled={!underLimit || createMutation.isPending}
                     type="submit"
                   >
-                    {isSubmitting || createMutation.isPending ? 'Creating...' : 'Create Team'}
+                    {isSubmitting || createMutation.isPending
+                      ? "Creating..."
+                      : "Create Team"}
                   </Button>
                 )}
               </form.Subscribe>
@@ -178,5 +193,5 @@ function AuthenticatedCreateTeamRoute() {
         </div>
       </div>
     </div>
-  );
+  )
 }

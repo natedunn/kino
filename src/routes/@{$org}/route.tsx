@@ -1,39 +1,33 @@
-import { useQuery } from '@tanstack/react-query';
-import { Outlet, createFileRoute } from '@tanstack/react-router';
+import { useSuspenseQuery } from "@tanstack/react-query"
+import { Outlet, createFileRoute } from "@tanstack/react-router"
 
-import { DefaultCatchBoundary } from '@/components/_default-catch-boundary';
-import { NotFound } from '@/components/_not-found';
-import { RoutePending } from '@/components/route-pending';
-import { useCRPC } from '@/lib/convex/crpc';
-import { crpcOptions } from '@/lib/convex/crpc-options';
-import { fetchConvexLoaderQuery } from '@/lib/convex/server';
+import { DefaultCatchBoundary } from "@/components/_default-catch-boundary"
+import { NotFound } from "@/components/_not-found"
+import { RoutePending } from "@/components/route-pending"
+import { useCRPC } from "@/lib/convex/crpc"
+import { crpcServer } from "@/lib/convex/crpc-server"
 
-import { MainNav } from './-components/main-nav';
+import { MainNav } from "./-components/main-nav"
 
-export const Route = createFileRoute('/@{$org}')({
+export const Route = createFileRoute("/@{$org}")({
   loader: async ({ context }) => {
-    await fetchConvexLoaderQuery(
-      context.queryClient,
-      crpcOptions.profile.findMyProfile.staticQueryOptions(
-        {},
-        { skipUnauth: true }
-      ),
-      context.loaderToken
-    );
+    await context.queryClient.ensureQueryData(
+      crpcServer.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
+    )
   },
   component: OrganizationShell,
   notFoundComponent: () => <NotFound isContainer />,
   pendingComponent: () => <RoutePending variant="page" />,
   errorComponent: DefaultCatchBoundary,
-});
+})
 
 function OrganizationShell() {
-  const crpc = useCRPC();
-  const { loaderToken } = Route.useRouteContext();
-  const profileQuery = useQuery(
+  const crpc = useCRPC()
+  const { loaderToken } = Route.useRouteContext()
+  const profileQuery = useSuspenseQuery(
     crpc.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
-  );
-  const isUserPending = !!loaderToken && profileQuery.data === undefined;
+  )
+  const isUserPending = !!loaderToken && profileQuery.data === undefined
 
   return (
     <div className="flex min-h-screen w-full flex-col">
@@ -47,5 +41,5 @@ function OrganizationShell() {
         </div>
       </footer>
     </div>
-  );
+  )
 }
