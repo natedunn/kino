@@ -1,10 +1,19 @@
 import { convexBetterAuthReactStart } from 'kitcn/auth/start';
 
-function getAuth() {
+function createAuth() {
   return convexBetterAuthReactStart({
     convexUrl: import.meta.env.VITE_CONVEX_URL!,
     convexSiteUrl: import.meta.env.VITE_CONVEX_SITE_URL!,
   });
+}
+
+type AuthHelpers = ReturnType<typeof createAuth>;
+
+let authSingleton: AuthHelpers | undefined;
+
+function getAuth() {
+  authSingleton ??= createAuth();
+  return authSingleton;
 }
 
 export function rewriteAuthRedirectLocation({
@@ -94,15 +103,16 @@ export async function handler(request: Request) {
   });
 }
 
-type AuthHelpers = ReturnType<typeof getAuth>;
+export const getToken: AuthHelpers['getToken'] = () => getAuth().getToken();
 
-export const getToken: AuthHelpers['getToken'] = (() => getAuth().getToken()) as AuthHelpers['getToken'];
+export const fetchAuthQuery: AuthHelpers['fetchAuthQuery'] = (...args) => {
+  return getAuth().fetchAuthQuery(...args);
+};
 
-export const fetchAuthQuery: AuthHelpers['fetchAuthQuery'] = ((...args: any[]) =>
-  (getAuth().fetchAuthQuery as any).apply(getAuth(), args)) as AuthHelpers['fetchAuthQuery'];
+export const fetchAuthMutation: AuthHelpers['fetchAuthMutation'] = (...args) => {
+  return getAuth().fetchAuthMutation(...args);
+};
 
-export const fetchAuthMutation: AuthHelpers['fetchAuthMutation'] = ((...args: any[]) =>
-  (getAuth().fetchAuthMutation as any).apply(getAuth(), args)) as AuthHelpers['fetchAuthMutation'];
-
-export const fetchAuthAction: AuthHelpers['fetchAuthAction'] = ((...args: any[]) =>
-  (getAuth().fetchAuthAction as any).apply(getAuth(), args)) as AuthHelpers['fetchAuthAction'];
+export const fetchAuthAction: AuthHelpers['fetchAuthAction'] = (...args) => {
+  return getAuth().fetchAuthAction(...args);
+};

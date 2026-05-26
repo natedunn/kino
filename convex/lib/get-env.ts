@@ -100,10 +100,15 @@ function getLoopbackOrigins(siteUrl: string) {
 }
 
 function getLoopbackHosts(siteUrl: string) {
-  return getLoopbackOrigins(siteUrl).map(hostnameFromOriginPattern);
+  if (getLoopbackOrigins(siteUrl).length === 0) return [];
+  return ['localhost:*', '127.0.0.1:*', '[::1]:*'];
 }
 
 function hostnameFromOriginPattern(origin: string) {
+  if (origin.includes('*')) {
+    return normalizeHostPattern(origin);
+  }
+
   try {
     return new URL(origin).host;
   } catch {

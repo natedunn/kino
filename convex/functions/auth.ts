@@ -10,6 +10,7 @@ import {
   getOAuthProxyProductionUrlEnv,
   getOAuthProxySecretEnv,
   getTrustedOrigins,
+  isTrustedOrigin,
 } from '../lib/get-env';
 import authConfig from './auth.config';
 import { defineAuth } from './generated/auth';
@@ -27,10 +28,8 @@ function isSuperAdminEmail(email: string) {
 function forwardedAuthRequestUrl(request: Request | undefined) {
   if (!request) return null;
 
-  const forwardedHost =
-    request.headers.get('x-better-auth-forwarded-host') ?? request.headers.get('x-forwarded-host');
-  const forwardedProto =
-    request.headers.get('x-better-auth-forwarded-proto') ?? request.headers.get('x-forwarded-proto');
+  const forwardedHost = request.headers.get('x-better-auth-forwarded-host');
+  const forwardedProto = request.headers.get('x-better-auth-forwarded-proto');
 
   if (!forwardedHost || !forwardedProto) return null;
 
@@ -40,6 +39,7 @@ function forwardedAuthRequestUrl(request: Request | undefined) {
   try {
     const url = new URL(request.url);
     const host = forwardedHost.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+    if (!isTrustedOrigin(`${protocol}://${host}`)) return null;
     return `${protocol}://${host}${url.pathname}${url.search}`;
   } catch {
     return null;
