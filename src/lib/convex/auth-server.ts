@@ -16,6 +16,83 @@ function getAuth() {
   return authSingleton;
 }
 
+type HeadersWithSetCookieList = Headers & {
+  getSetCookie?: () => string[];
+};
+
+function getSetCookieValues(source: Headers) {
+  const getSetCookie = (source as HeadersWithSetCookieList).getSetCookie;
+  if (typeof getSetCookie === 'function') {
+    return getSetCookie.call(source);
+  }
+
+  const setCookie = source.get('set-cookie');
+  return setCookie ? [setCookie] : [];
+}
+
+function getSetCookieNames(source: Headers) {
+  return getSetCookieValues(source)
+    .map((value) => value.split('=', 1)[0]?.trim())
+    .filter((value): value is string => !!value);
+}
+
+function shouldLogAuthDebug() {
+  return true;
+}
+
+function sanitizeAuthUrl(url: string) {
+  try {
+    const parsed = new URL(url);
+    const safe = new URL(`${parsed.origin}${parsed.pathname}`);
+
+    const callbackURL = parsed.searchParams.get('callbackURL');
+    if (callbackURL) {
+      safe.searchParams.set('callbackURL', callbackURL);
+    }
+
+    const error = parsed.searchParams.get('error');
+    if (error) {
+      safe.searchParams.set('error', error);
+    }
+
+    return safe.toString();
+  } catch {
+    return url;
+  }
+}
+
+function isAuthDebugRequest(request: Request) {
+  try {
+    const { pathname } = new URL(request.url);
+    return (
+      pathname.startsWith('/api/auth/sign-in/social') ||
+      pathname.startsWith('/api/auth/callback/') ||
+      pathname.startsWith('/api/auth/oauth-proxy-callback') ||
+      pathname.startsWith('/api/auth/get-session')
+    );
+  } catch {
+    return false;
+  }
+}
+
+function logAuthDebug(request: Request, response: Response, rewrittenLocation?: string) {
+  if (!shouldLogAuthDebug() || !isAuthDebugRequest(request)) return;
+
+  const location = rewrittenLocation ?? response.headers.get('location');
+  const cookieNames = getSetCookieNames(response.headers);
+
+  console.log(
+    '[auth-debug]',
+    JSON.stringify({
+      cookieNames,
+      location: location ? sanitizeAuthUrl(location) : null,
+      method: request.method,
+      requestUrl: sanitizeAuthUrl(request.url),
+      status: response.status,
+    })
+  );
+}
+
 export function rewriteAuthRedirectLocation({
   convexSiteUrl,
   location,
@@ -47,10 +124,6 @@ export function rewriteAuthRedirectLocation({
   }
 }
 
-type HeadersWithSetCookieList = Headers & {
-  getSetCookie?: () => string[];
-};
-
 export function cloneHeadersPreservingSetCookie(source: Headers) {
   const headers = new Headers();
 
@@ -80,6 +153,7 @@ export async function handler(request: Request) {
   const location = response.headers.get('location');
 
   if (!location) {
+    logAuthDebug(request, response);
     return response;
   }
 
@@ -90,17 +164,22 @@ export async function handler(request: Request) {
   });
 
   if (rewrittenLocation === location) {
+    logAuthDebug(request, response);
     return response;
   }
 
   const headers = cloneHeadersPreservingSetCookie(response.headers);
   headers.set('location', rewrittenLocation);
 
-  return new Response(response.body, {
+  const rewrittenResponse = new Response(response.body, {
     headers,
     status: response.status,
     statusText: response.statusText,
   });
+
+  logAuthDebug(request, rewrittenResponse, rewrittenLocation);
+
+  return rewrittenResponse;
 }
 
 export const getToken: AuthHelpers['getToken'] = () => getAuth().getToken();
