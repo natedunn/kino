@@ -5,7 +5,6 @@ import { authMutation, optionalAuthQuery } from "../lib/crpc"
 import { projectTable } from "./schema"
 import {
   LIMITS,
-  normalizeOrgSlug,
   toPublicDoc,
   verifyOrgAccess,
   verifyProjectAccess,
@@ -30,8 +29,7 @@ export const create = authMutation
     })
   )
   .mutation(async ({ ctx, input }) => {
-    const orgSlug = normalizeOrgSlug(input.orgSlug)
-    const access = await verifyOrgAccess(ctx, { slug: orgSlug, userId: ctx.userId })
+    const access = await verifyOrgAccess(ctx, { slug: input.orgSlug, userId: ctx.userId })
     if (!access.organization) {
       throw new CRPCError({
         code: "NOT_FOUND",
@@ -47,7 +45,7 @@ export const create = authMutation
     }
 
     const projects = await ctx.orm.query.project.findMany({
-      where: { orgSlug },
+      where: { orgSlug: input.orgSlug },
       limit: LIMITS.ADMIN.MAX_PROJECTS + 1,
     })
     const maxProjects =
@@ -64,7 +62,7 @@ export const create = authMutation
     const existing = await ctx.db
       .query("project")
       .withIndex("by_orgSlug_slug", (q: any) =>
-        q.eq("orgSlug", orgSlug).eq("slug", input.slug)
+        q.eq("orgSlug", input.orgSlug).eq("slug", input.slug)
       )
       .unique()
     if (existing) {
@@ -80,7 +78,7 @@ export const create = authMutation
         description: input.description ?? null,
         logoUrl: null,
         name: input.name,
-        orgSlug,
+        orgSlug: input.orgSlug,
         slug: input.slug,
         urls: input.urls ?? null,
         visibility: input.visibility,
@@ -103,7 +101,6 @@ export const update = authMutation
     })
   )
   .mutation(async ({ ctx, input }) => {
-    const normalizedOrgSlug = input.orgSlug ? normalizeOrgSlug(input.orgSlug) : undefined
     const access = await verifyProjectAccess(ctx, {
       id: input.id,
       userId: ctx.userId,
@@ -123,7 +120,7 @@ export const update = authMutation
         .query("project")
         .withIndex("by_orgSlug_slug", (q: any) =>
           q
-            .eq("orgSlug", normalizedOrgSlug ?? access.project.orgSlug)
+            .eq("orgSlug", input.orgSlug ?? access.project.orgSlug)
             .eq("slug", input.slug)
         )
         .unique()
@@ -139,7 +136,7 @@ export const update = authMutation
       Object.entries({
         description: input.description,
         name: input.name,
-        orgSlug: normalizedOrgSlug,
+        orgSlug: input.orgSlug,
         slug: input.slug,
         urls: input.urls,
         visibility: input.visibility,
@@ -164,16 +161,15 @@ export const getManyByOrg = optionalAuthQuery
     })
   )
   .query(async ({ ctx, input }) => {
-    const orgSlug = normalizeOrgSlug(input.orgSlug)
     const limit = input.limit ?? 10
     const publicProjects = await ctx.orm.query.project.findMany({
-      where: { orgSlug, visibility: "public" },
+      where: { orgSlug: input.orgSlug, visibility: "public" },
       limit,
       orderBy: { updatedTime: "desc" },
     })
 
     const access = ctx.userId
-      ? await verifyOrgAccess(ctx, { slug: orgSlug, userId: ctx.userId })
+      ? await verifyOrgAccess(ctx, { slug: input.orgSlug, userId: ctx.userId })
       : null
 
     if (!access?.permissions.canView) {
@@ -182,12 +178,12 @@ export const getManyByOrg = optionalAuthQuery
 
     const [privateProjects, archivedProjects] = await Promise.all([
       ctx.orm.query.project.findMany({
-        where: { orgSlug, visibility: "private" },
+        where: { orgSlug: input.orgSlug, visibility: "private" },
         limit,
         orderBy: { updatedTime: "desc" },
       }),
       ctx.orm.query.project.findMany({
-        where: { orgSlug, visibility: "archived" },
+        where: { orgSlug: input.orgSlug, visibility: "archived" },
         limit,
         orderBy: { updatedTime: "desc" },
       }),
@@ -208,11 +204,10 @@ export const getDetails = optionalAuthQuery
     })
   )
   .query(async ({ ctx, input }) => {
-    const orgSlug = normalizeOrgSlug(input.orgSlug)
     const project = await ctx.db
       .query("project")
       .withIndex("by_orgSlug_slug", (q: any) =>
-        q.eq("orgSlug", orgSlug).eq("slug", input.slug)
+        q.eq("orgSlug", input.orgSlug).eq("slug", input.slug)
       )
       .unique()
     if (!project) return null

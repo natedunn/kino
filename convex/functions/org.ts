@@ -5,7 +5,6 @@ import {
   LIMITS,
   ensureUniqueOrgSlug,
   getCurrentProfile,
-  normalizeOrgSlug,
   verifyOrgAccess,
 } from '../lib/kino';
 
@@ -125,14 +124,13 @@ export const getDetails = optionalAuthQuery
 export const getMyPermission = authQuery
   .input(z.object({ slug: z.string() }))
   .query(async ({ ctx, input }) => {
-    const orgSlug = normalizeOrgSlug(input.slug);
     const access = await verifyOrgAccess(ctx, { slug: input.slug, userId: ctx.userId });
     if (!access.organization || !access.permissions.canCreate) {
       return { canAddProjects: false };
     }
 
     const projects = await ctx.orm.query.project.findMany({
-      where: { orgSlug },
+      where: { orgSlug: input.slug },
       limit: LIMITS.ADMIN.MAX_PROJECTS + 1,
     });
 
