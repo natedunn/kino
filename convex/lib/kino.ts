@@ -64,6 +64,10 @@ export function slugify(value: string) {
     .replace(/^-|-$/g, '');
 }
 
+export function normalizeOrgSlug(value: string) {
+  return value.replace(/^@+/, '');
+}
+
 export function generateRandomSuffix() {
   return crypto.randomUUID().slice(0, 8);
 }
@@ -179,8 +183,9 @@ export async function findOrganization(ctx: OrmCtx, args: { id?: string; slug?: 
     return withLegacyAliases(organizations[0] as any);
   }
   if (args.slug) {
+    const normalizedSlug = normalizeOrgSlug(args.slug);
     const organizations = await ctx.orm.query.organization.findMany({
-      where: { slug: args.slug },
+      where: { slug: normalizedSlug },
       limit: 1,
     });
     return withLegacyAliases(organizations[0] as any);
