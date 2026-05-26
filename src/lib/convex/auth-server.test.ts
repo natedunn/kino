@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import {
   cloneHeadersPreservingSetCookie,
+  getSetCookieValues,
   rewriteAuthRedirectLocation,
   syncSignInSocialLocationHeader,
 } from "./auth-server"
@@ -73,6 +74,22 @@ describe("cloneHeadersPreservingSetCookie", () => {
         "__Secure-better-auth.session_token=abc"
       )
     }
+  })
+
+  it("splits collapsed set-cookie headers before forwarding them", () => {
+    const source = new Headers({
+      "set-cookie":
+        "__Secure-better-auth.state=; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Lax, __Secure-better-auth.session_token=abc; Max-Age=2592000; Path=/; HttpOnly; Secure; SameSite=Lax",
+    })
+
+    expect(getSetCookieValues(source)).toEqual([
+      "__Secure-better-auth.state=; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Lax",
+      "__Secure-better-auth.session_token=abc; Max-Age=2592000; Path=/; HttpOnly; Secure; SameSite=Lax",
+    ])
+
+    expect(cloneHeadersPreservingSetCookie(source).get("set-cookie")).toContain(
+      "__Secure-better-auth.session_token=abc"
+    )
   })
 })
 

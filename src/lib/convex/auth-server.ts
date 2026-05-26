@@ -1,4 +1,5 @@
 import { convexBetterAuthReactStart } from "kitcn/auth/start"
+import { splitSetCookieHeader } from "better-auth/cookies"
 
 function createAuth() {
   return convexBetterAuthReactStart({
@@ -20,14 +21,14 @@ type HeadersWithSetCookieList = Headers & {
   getSetCookie?: () => string[]
 }
 
-function getSetCookieValues(source: Headers) {
+export function getSetCookieValues(source: Headers) {
   const getSetCookie = (source as HeadersWithSetCookieList).getSetCookie
   if (typeof getSetCookie === "function") {
-    return getSetCookie.call(source)
+    return getSetCookie.call(source).flatMap((value) => splitSetCookieHeader(value))
   }
 
   const setCookie = source.get("set-cookie")
-  return setCookie ? [setCookie] : []
+  return setCookie ? splitSetCookieHeader(setCookie) : []
 }
 
 function getSetCookieNames(source: Headers) {
@@ -188,12 +189,19 @@ export function cloneHeadersPreservingSetCookie(source: Headers) {
     return headers
   }
 
-  const setCookie = source.get("set-cookie")
-  if (setCookie) {
-    headers.append("set-cookie", setCookie)
+  for (const value of getSetCookieValues(source)) {
+    headers.append("set-cookie", value)
   }
 
   return headers
+}
+
+function cloneAuthResponse(response: Response) {
+  return new Response(response.body, {
+    headers: cloneHeadersPreservingSetCookie(response.headers),
+    status: response.status,
+    statusText: response.statusText,
+  })
 }
 
 export async function handler(request: Request) {
@@ -204,8 +212,9 @@ export async function handler(request: Request) {
   const location = response.headers.get("location")
 
   if (!location) {
-    logAuthDebug(request, response)
-    return response
+    const clonedResponse = cloneAuthResponse(response)
+    logAuthDebug(request, clonedResponse)
+    return clonedResponse
   }
 
   const rewrittenLocation = rewriteAuthRedirectLocation({
@@ -215,8 +224,9 @@ export async function handler(request: Request) {
   })
 
   if (rewrittenLocation === location) {
-    logAuthDebug(request, response)
-    return response
+    const clonedResponse = cloneAuthResponse(response)
+    logAuthDebug(request, clonedResponse)
+    return clonedResponse
   }
 
   const headers = cloneHeadersPreservingSetCookie(response.headers)
