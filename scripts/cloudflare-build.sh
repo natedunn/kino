@@ -8,6 +8,7 @@ fi
 branch="${branch:-local}"
 
 production_branch="${PRODUCTION_BRANCH:-main}"
+build_cmd='VITE_CONVEX_SITE_URL="$(printf "%s" "$VITE_CONVEX_URL" | sed "s/\.convex\.cloud$/.convex.site/")" pnpm run build'
 
 preview_name="$(printf '%s' "$branch" \
   | tr '[:upper:]' '[:lower:]' \
@@ -23,7 +24,7 @@ if [ "$branch" = "$production_branch" ]; then
 
   export CONVEX_DEPLOY_KEY="$CONVEX_PROD_DEPLOY_KEY"
   npx convex deploy \
-    --cmd "pnpm run build" \
+    --cmd "$build_cmd" \
     --cmd-url-env-var-name VITE_CONVEX_URL
 else
   if [ -z "${CONVEX_PREVIEW_DEPLOY_KEY:-}" ]; then
@@ -34,6 +35,6 @@ else
   export CONVEX_DEPLOY_KEY="$CONVEX_PREVIEW_DEPLOY_KEY"
   npx convex deploy \
     --preview-create "$preview_name" \
-    --cmd "pnpm run build" \
+    --cmd "$build_cmd" \
     --cmd-url-env-var-name VITE_CONVEX_URL
 fi
