@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react';
-import type { QueryClient } from '@tanstack/react-query';
+import type { ReactNode } from "react"
+import type { QueryClient } from "@tanstack/react-query"
 
 import {
   HeadContent,
@@ -7,48 +7,49 @@ import {
   ScriptOnce,
   Scripts,
   createRootRouteWithContext,
-} from '@tanstack/react-router';
-import { TanStackDevtools } from '@tanstack/react-devtools';
-import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools';
+} from "@tanstack/react-router"
+import { TanStackDevtools } from "@tanstack/react-devtools"
+import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools"
 
-import { DefaultCatchBoundary } from '@/components/_default-catch-boundary';
-import { Providers } from '@/components/providers';
-import { Toaster } from '@/components/ui/sonner';
-import appCss from '../styles.css?url';
+import { DefaultCatchBoundary } from "@/components/_default-catch-boundary"
+import { Providers } from "@/components/providers"
+import { Toaster } from "@/components/ui/sonner"
+import appCss from "../styles.css?url"
 
 export const Route = createRootRouteWithContext<{
-  queryClient: QueryClient;
+  loaderToken?: string | null
+  queryClient: QueryClient
 }>()({
   head: () => ({
     meta: [
       {
-        charSet: 'utf-8',
+        charSet: "utf-8",
       },
       {
-        name: 'viewport',
-        content: 'width=device-width, initial-scale=1',
+        name: "viewport",
+        content: "width=device-width, initial-scale=1",
       },
       {
-        title: 'Kino',
+        title: "Kino",
       },
     ],
     links: [
       {
-        rel: 'stylesheet',
+        rel: "stylesheet",
         href: appCss,
       },
       {
-        rel: 'preconnect',
-        href: 'https://fonts.googleapis.com',
+        rel: "preconnect",
+        href: "https://fonts.googleapis.com",
       },
       {
-        rel: 'preconnect',
-        href: 'https://fonts.gstatic.com',
-        crossOrigin: '',
+        rel: "preconnect",
+        href: "https://fonts.gstatic.com",
+        crossOrigin: "",
       },
       {
-        rel: 'stylesheet',
-        href: 'https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap',
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap",
       },
     ],
   }),
@@ -56,10 +57,10 @@ export const Route = createRootRouteWithContext<{
   errorComponent: DefaultCatchBoundary,
   notFoundComponent: () => <div>Not found</div>,
   shellComponent: RootDocument,
-});
+})
 
 function RootDocument({ children }: { children: ReactNode }) {
-  const showDevtools = import.meta.env.DEV;
+  const showDevtools = import.meta.env.DEV
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -75,11 +76,11 @@ function RootDocument({ children }: { children: ReactNode }) {
         {showDevtools ? (
           <TanStackDevtools
             config={{
-              position: 'bottom-right',
+              position: "bottom-right",
             }}
             plugins={[
               {
-                name: 'Tanstack Router',
+                name: "Tanstack Router",
                 render: <TanStackRouterDevtoolsPanel />,
               },
             ]}
@@ -88,7 +89,7 @@ function RootDocument({ children }: { children: ReactNode }) {
         <Scripts />
       </body>
     </html>
-  );
+  )
 }
 
 function RootComponent() {
@@ -96,5 +97,5 @@ function RootComponent() {
     <Providers>
       <Outlet />
     </Providers>
-  );
+  )
 }

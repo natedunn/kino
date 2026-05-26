@@ -2,6 +2,8 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import {
   getBetterAuthAllowedHosts,
+  getOAuthProxyCurrentUrlEnv,
+  getOAuthProxyProductionUrlEnv,
   getTrustedOrigins,
   isTrustedOrigin,
 } from './get-env';
@@ -61,5 +63,41 @@ describe('trusted auth origins', () => {
 
     expect(isTrustedOrigin('https://feature-kino.team-subdomain.workers.dev')).toBe(true);
     expect(isTrustedOrigin('https://other-app.team-subdomain.workers.dev')).toBe(false);
+  });
+
+  it('allows loopback origins on any port when the site url is local development', () => {
+    resetEnv({
+      SITE_URL: 'http://localhost:3000',
+    });
+
+    expect(getTrustedOrigins()).toEqual([
+      'http://localhost:3000',
+      'http://localhost:*',
+      'http://127.0.0.1:*',
+      'http://[::1]:*',
+      'https://kino.*.workers.dev',
+      'https://*-kino.*.workers.dev',
+    ]);
+    expect(getBetterAuthAllowedHosts()).toEqual([
+      'localhost:3000',
+      'localhost:*',
+      '127.0.0.1:*',
+      '[::1]:*',
+      'kino.*.workers.dev',
+      '*-kino.*.workers.dev',
+    ]);
+    expect(isTrustedOrigin('http://localhost:3001/auth')).toBe(true);
+    expect(isTrustedOrigin('http://127.0.0.1:5173/auth')).toBe(true);
+  });
+
+  it('keeps OAuth proxy current and production URLs independently configurable', () => {
+    resetEnv({
+      OAUTH_PROXY_CURRENT_URL: 'https://feature-kino.hello-fc8.workers.dev',
+      OAUTH_PROXY_PRODUCTION_URL: 'https://usekino.com',
+      SITE_URL: 'https://usekino.com',
+    });
+
+    expect(getOAuthProxyCurrentUrlEnv()).toBe('https://feature-kino.hello-fc8.workers.dev');
+    expect(getOAuthProxyProductionUrlEnv()).toBe('https://usekino.com');
   });
 });

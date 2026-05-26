@@ -6,8 +6,8 @@ import { handler } from '@/lib/convex/auth-server';
 export const Route = createFileRoute('/api/auth/$')({
   server: {
     handlers: {
-      GET: ({ request }) => handler(request),
-      POST: ({ request }) => handler(request),
+      GET: async ({ request }) => handler(request),
+      POST: async ({ request }) => handler(request),
     },
   },
 });

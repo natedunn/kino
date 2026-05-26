@@ -1,10 +1,13 @@
 import { convex } from 'kitcn/auth';
+import { createAuthMiddleware } from 'better-auth/api';
 import { admin, oAuthProxy, organization, username } from 'better-auth/plugins';
 import {
   getBetterAuthAllowedHosts,
   getEnv,
   getGitHubOAuthEnv,
   getJwksEnv,
+  getOAuthProxyCurrentUrlEnv,
+  getOAuthProxyProductionUrlEnv,
   getOAuthProxySecretEnv,
   getTrustedOrigins,
 } from '../lib/get-env';
@@ -21,12 +24,64 @@ function isSuperAdminEmail(email: string) {
   return !!configured && configured.toLowerCase() === email.toLowerCase();
 }
 
+function forwardedAuthRequestUrl(request: Request | undefined) {
+  if (!request) return null;
+
+  const forwardedHost =
+    request.headers.get('x-better-auth-forwarded-host') ?? request.headers.get('x-forwarded-host');
+  const forwardedProto =
+    request.headers.get('x-better-auth-forwarded-proto') ?? request.headers.get('x-forwarded-proto');
+
+  if (!forwardedHost || !forwardedProto) return null;
+
+  const protocol = forwardedProto.replace(/:$/, '');
+  if (protocol !== 'http' && protocol !== 'https') return null;
+
+  try {
+    const url = new URL(request.url);
+    const host = forwardedHost.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+    return `${protocol}://${host}${url.pathname}${url.search}`;
+  } catch {
+    return null;
+  }
+}
+
+function forwardedAuthRequestPlugin() {
+  return {
+    id: 'forwarded-auth-request',
+    hooks: {
+      before: [
+        {
+          matcher(context: { path?: string }) {
+            return !!(
+              context.path?.startsWith('/sign-in/social') ||
+              context.path?.startsWith('/sign-in/oauth2')
+            );
+          },
+          handler: createAuthMiddleware(async (ctx: any) => {
+            const forwardedUrl = forwardedAuthRequestUrl(ctx.request);
+            if (!forwardedUrl) return;
+
+            ctx.request = new Request(forwardedUrl, {
+              headers: ctx.request.headers,
+              method: ctx.request.method,
+            });
+          }),
+        },
+      ],
+    },
+  };
+}
+
 export default defineAuth(() => {
   const env = getEnv();
   const githubOAuth = getGitHubOAuthEnv();
   const jwks = getJwksEnv();
+  const oauthProxyCurrentUrl = getOAuthProxyCurrentUrlEnv();
+  const oauthProxyProductionUrl = getOAuthProxyProductionUrlEnv() ?? env.SITE_URL;
   const oauthProxySecret = getOAuthProxySecretEnv();
   const trustedOrigins = getTrustedOrigins();
+  const isLocalHttp = env.SITE_URL.startsWith('http://');
   const baseURLProtocol: 'auto' | 'https' = env.SITE_URL.startsWith('http://') ? 'auto' : 'https';
   const baseOptions = {
     account: {
@@ -36,6 +91,7 @@ export default defineAuth(() => {
     },
     advanced: {
       trustedProxyHeaders: true,
+      useSecureCookies: !isLocalHttp,
     },
     emailAndPassword: {
       enabled: true,
@@ -63,8 +119,10 @@ export default defineAuth(() => {
           },
         },
       }),
+      forwardedAuthRequestPlugin(),
       oAuthProxy({
-        productionURL: env.SITE_URL,
+        ...(oauthProxyCurrentUrl ? { currentURL: oauthProxyCurrentUrl } : {}),
+        productionURL: oauthProxyProductionUrl,
         secret: oauthProxySecret,
       }),
       convex({

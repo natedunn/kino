@@ -1,7 +1,17 @@
-import type { ReactNode } from 'react';
+import type { ReactNode } from "react"
 
-import { AppConvexProvider } from '@/lib/convex/convex-provider';
+import { AppConvexProvider } from "@/lib/convex/convex-provider"
 
-export function Providers({ children }: { children: ReactNode }) {
-  return <AppConvexProvider>{children}</AppConvexProvider>;
+export function Providers({
+  children,
+  initialToken,
+}: {
+  children: ReactNode
+  initialToken?: string | null
+}) {
+  return (
+    <AppConvexProvider initialToken={initialToken}>
+      {children}
+    </AppConvexProvider>
+  )
 }

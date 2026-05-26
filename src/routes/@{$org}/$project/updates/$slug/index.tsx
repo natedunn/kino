@@ -27,12 +27,14 @@ import {
 } from "@/components/ui/tooltip"
 import { useCRPC } from "@/lib/convex/crpc"
 import { crpcOptions } from "@/lib/convex/crpc-options"
-import { preloadCRPCQuery } from "@/lib/convex/preload"
+import {
+  fetchConvexLoaderQuery,
+  prefetchConvexLoaderQuery,
+} from "@/lib/convex/server"
 import { useSidebarState } from "@/lib/hooks/use-sidebar-state"
 import { cn } from "@/lib/utils"
 import { formatFullDate, formatRelativeDay } from "@/lib/utils/format-timestamp"
 import { StatusIcon } from "@/icons"
-import { api } from "@convex/api"
 
 import { CategoryBadge } from "../-components/category-badge"
 import {
@@ -74,45 +76,49 @@ type UpdateDetailData = {
 export const Route = createFileRoute("/@{$org}/$project/updates/$slug/")({
   component: UpdateDetailRoute,
   loader: async ({ context, params }) => {
-    const projectArgs = {
-      orgSlug: params.org,
-      slug: params.project,
-    }
-    const projectOptions =
-      crpcOptions.project.getDetails.staticQueryOptions(projectArgs)
-    const projectData = await preloadCRPCQuery<
-      ProjectDetailsData,
-      typeof projectArgs
-    >(context.queryClient, projectOptions, api.project.getDetails, projectArgs)
+    const projectData = await fetchConvexLoaderQuery<ProjectDetailsData | null>(
+      context.queryClient,
+      crpcOptions.project.getDetails.staticQueryOptions({
+        orgSlug: params.org,
+        slug: params.project,
+      }),
+      context.loaderToken
+    )
 
     if (!projectData?.project?.id) {
       throw notFound()
     }
 
-    const updateArgs = {
-      projectId: projectData.project.id,
-      slug: params.slug,
-    }
-    const updateOptions =
-      crpcOptions.update.getBySlug.staticQueryOptions(updateArgs)
-    const updateData = await preloadCRPCQuery<
-      UpdateDetailData,
-      typeof updateArgs
-    >(context.queryClient, updateOptions, api.update.getBySlug, updateArgs)
+    const updateData = await fetchConvexLoaderQuery<UpdateDetailData>(
+      context.queryClient,
+      crpcOptions.update.getBySlug.staticQueryOptions({
+        projectId: projectData.project.id,
+        slug: params.slug,
+      }),
+      context.loaderToken
+    )
 
-    if (!updateData?.update?.id) {
+    if (!updateData?.update) {
       throw notFound()
     }
 
-    const commentsArgs = {
-      updateId: updateData.update.id,
-    }
-    await preloadCRPCQuery(
-      context.queryClient,
-      crpcOptions.updateComment.listByUpdate.staticQueryOptions(commentsArgs),
-      api.updateComment.listByUpdate,
-      commentsArgs
-    )
+    await Promise.all([
+      prefetchConvexLoaderQuery(
+        context.queryClient,
+        crpcOptions.updateComment.listByUpdate.staticQueryOptions({
+          updateId: updateData.update.id,
+        }),
+        context.loaderToken
+      ),
+      prefetchConvexLoaderQuery(
+        context.queryClient,
+        crpcOptions.profile.findMyProfile.staticQueryOptions(
+          {},
+          { skipUnauth: true }
+        ),
+        context.loaderToken
+      ),
+    ])
   },
   pendingComponent: () => <RoutePending variant="detail" />,
   pendingMs: 150,

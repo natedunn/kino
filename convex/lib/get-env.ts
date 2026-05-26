@@ -7,6 +7,8 @@ const envSchema = z.object({
   TRUSTED_ORIGINS: z.string().optional(),
   TRUSTED_HOSTS: z.string().optional(),
   CLOUDFLARE_WORKER_NAME: z.string().optional(),
+  OAUTH_PROXY_CURRENT_URL: z.string().optional(),
+  OAUTH_PROXY_PRODUCTION_URL: z.string().optional(),
 });
 
 function getRuntimeEnv() {
@@ -24,6 +26,8 @@ export function getEnv() {
       SITE_URL: runtimeEnv.SITE_URL,
       TRUSTED_HOSTS: runtimeEnv.TRUSTED_HOSTS,
       TRUSTED_ORIGINS: runtimeEnv.TRUSTED_ORIGINS,
+      OAUTH_PROXY_CURRENT_URL: runtimeEnv.OAUTH_PROXY_CURRENT_URL,
+      OAUTH_PROXY_PRODUCTION_URL: runtimeEnv.OAUTH_PROXY_PRODUCTION_URL,
       CLOUDFLARE_WORKER_NAME:
         runtimeEnv.CLOUDFLARE_WORKER_NAME ??
         runtimeEnv.WORKER_NAME ??
@@ -53,6 +57,14 @@ export function getOAuthProxySecretEnv() {
   return getRuntimeEnvValue(['OAUTH', 'PROXY', 'SECRET']);
 }
 
+export function getOAuthProxyCurrentUrlEnv() {
+  return getRuntimeEnvValue(['OAUTH', 'PROXY', 'CURRENT', 'URL']);
+}
+
+export function getOAuthProxyProductionUrlEnv() {
+  return getRuntimeEnvValue(['OAUTH', 'PROXY', 'PRODUCTION', 'URL']);
+}
+
 function parseList(value: string | undefined) {
   return (value ?? '')
     .split(',')
@@ -69,6 +81,26 @@ function normalizeHostPattern(host: string) {
     .trim()
     .replace(/^https?:\/\//, '')
     .replace(/\/.*$/, '');
+}
+
+function isLoopbackHostname(hostname: string) {
+  const normalized = hostname.trim().toLowerCase().replace(/^\[|\]$/g, '');
+  return normalized === 'localhost' || normalized === '127.0.0.1' || normalized === '::1';
+}
+
+function getLoopbackOrigins(siteUrl: string) {
+  try {
+    const { hostname } = new URL(siteUrl);
+    if (!isLoopbackHostname(hostname)) return [];
+  } catch {
+    return [];
+  }
+
+  return ['http://localhost:*', 'http://127.0.0.1:*', 'http://[::1]:*'];
+}
+
+function getLoopbackHosts(siteUrl: string) {
+  return getLoopbackOrigins(siteUrl).map(hostnameFromOriginPattern);
 }
 
 function hostnameFromOriginPattern(origin: string) {
@@ -114,6 +146,7 @@ export function getTrustedOrigins() {
     new Set(
       [
         env.SITE_URL,
+        ...getLoopbackOrigins(env.SITE_URL),
         ...parseList(env.TRUSTED_ORIGINS),
         ...getAdditionalDeploymentOrigins(),
         ...getCloudflarePreviewOrigins(env.CLOUDFLARE_WORKER_NAME),
@@ -127,6 +160,7 @@ export function getBetterAuthAllowedHosts() {
   return Array.from(
     new Set([
       ...getTrustedOrigins().map(hostnameFromOriginPattern),
+      ...getLoopbackHosts(env.SITE_URL),
       ...parseList(env.TRUSTED_HOSTS).map(normalizeHostPattern),
     ])
   );
