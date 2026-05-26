@@ -1,88 +1,136 @@
-import { convexBetterAuthReactStart } from 'kitcn/auth/start';
+import { convexBetterAuthReactStart } from "kitcn/auth/start"
 
 function createAuth() {
   return convexBetterAuthReactStart({
     convexUrl: import.meta.env.VITE_CONVEX_URL!,
     convexSiteUrl: import.meta.env.VITE_CONVEX_SITE_URL!,
-  });
+  })
 }
 
-type AuthHelpers = ReturnType<typeof createAuth>;
+type AuthHelpers = ReturnType<typeof createAuth>
 
-let authSingleton: AuthHelpers | undefined;
+let authSingleton: AuthHelpers | undefined
 
 function getAuth() {
-  authSingleton ??= createAuth();
-  return authSingleton;
+  authSingleton ??= createAuth()
+  return authSingleton
 }
 
 type HeadersWithSetCookieList = Headers & {
-  getSetCookie?: () => string[];
-};
+  getSetCookie?: () => string[]
+}
 
 function getSetCookieValues(source: Headers) {
-  const getSetCookie = (source as HeadersWithSetCookieList).getSetCookie;
-  if (typeof getSetCookie === 'function') {
-    return getSetCookie.call(source);
+  const getSetCookie = (source as HeadersWithSetCookieList).getSetCookie
+  if (typeof getSetCookie === "function") {
+    return getSetCookie.call(source)
   }
 
-  const setCookie = source.get('set-cookie');
-  return setCookie ? [setCookie] : [];
+  const setCookie = source.get("set-cookie")
+  return setCookie ? [setCookie] : []
 }
 
 function getSetCookieNames(source: Headers) {
   return getSetCookieValues(source)
-    .map((value) => value.split('=', 1)[0]?.trim())
-    .filter((value): value is string => !!value);
+    .map((value) => value.split("=", 1)[0]?.trim())
+    .filter((value): value is string => !!value)
 }
 
 function shouldLogAuthDebug() {
-  return true;
+  return true
 }
 
 function sanitizeAuthUrl(url: string) {
   try {
-    const parsed = new URL(url);
-    const safe = new URL(`${parsed.origin}${parsed.pathname}`);
+    const parsed = new URL(url)
+    const safe = new URL(`${parsed.origin}${parsed.pathname}`)
 
-    const callbackURL = parsed.searchParams.get('callbackURL');
+    const callbackURL = parsed.searchParams.get("callbackURL")
     if (callbackURL) {
-      safe.searchParams.set('callbackURL', callbackURL);
+      safe.searchParams.set("callbackURL", callbackURL)
     }
 
-    const error = parsed.searchParams.get('error');
+    const error = parsed.searchParams.get("error")
     if (error) {
-      safe.searchParams.set('error', error);
+      safe.searchParams.set("error", error)
     }
 
-    return safe.toString();
+    return safe.toString()
   } catch {
-    return url;
+    return url
   }
 }
 
 function isAuthDebugRequest(request: Request) {
   try {
-    const { pathname } = new URL(request.url);
+    const { pathname } = new URL(request.url)
     return (
-      pathname.startsWith('/api/auth/sign-in/social') ||
-      pathname.startsWith('/api/auth/callback/') ||
-      pathname.startsWith('/api/auth/oauth-proxy-callback') ||
-      pathname.startsWith('/api/auth/get-session')
-    );
+      pathname.startsWith("/api/auth/sign-in/social") ||
+      pathname.startsWith("/api/auth/callback/") ||
+      pathname.startsWith("/api/auth/oauth-proxy-callback") ||
+      pathname.startsWith("/api/auth/get-session")
+    )
   } catch {
-    return false;
+    return false
   }
 }
 
-function logAuthDebug(request: Request, response: Response, rewrittenLocation?: string) {
-  if (!shouldLogAuthDebug() || !isAuthDebugRequest(request)) return;
+function isSignInSocialRequest(request: Request) {
+  try {
+    const { pathname } = new URL(request.url)
+    return pathname.startsWith("/api/auth/sign-in/social")
+  } catch {
+    return false
+  }
+}
 
-  const location = rewrittenLocation ?? response.headers.get('location');
-  const cookieNames = getSetCookieNames(response.headers);
+function getJsonRedirectUrl(body: string) {
+  try {
+    const parsed = JSON.parse(body) as { url?: unknown }
+    return typeof parsed.url === "string" ? parsed.url : null
+  } catch {
+    return null
+  }
+}
+
+export async function syncSignInSocialLocationHeader(
+  request: Request,
+  response: Response
+) {
+  const location = response.headers.get("location")
+  if (!location || !isSignInSocialRequest(request)) return response
+
+  const body = await response
+    .clone()
+    .text()
+    .catch(() => null)
+  if (!body) return response
+
+  const redirectUrl = getJsonRedirectUrl(body)
+  if (!redirectUrl || redirectUrl === location) return response
+
+  const headers = cloneHeadersPreservingSetCookie(response.headers)
+  headers.set("location", redirectUrl)
+
+  return new Response(body, {
+    headers,
+    status: response.status,
+    statusText: response.statusText,
+  })
+}
+
+function logAuthDebug(
+  request: Request,
+  response: Response,
+  rewrittenLocation?: string
+) {
+  if (!shouldLogAuthDebug() || !isAuthDebugRequest(request)) return
+
+  const location = rewrittenLocation ?? response.headers.get("location")
+  const cookieNames = getSetCookieNames(response.headers)
 
   console.log(
-    '[auth-debug]',
+    "[auth-debug]",
     JSON.stringify({
       cookieNames,
       location: location ? sanitizeAuthUrl(location) : null,
@@ -90,7 +138,7 @@ function logAuthDebug(request: Request, response: Response, rewrittenLocation?: 
       requestUrl: sanitizeAuthUrl(request.url),
       status: response.status,
     })
-  );
+  )
 }
 
 export function rewriteAuthRedirectLocation({
@@ -98,100 +146,105 @@ export function rewriteAuthRedirectLocation({
   location,
   requestUrl,
 }: {
-  convexSiteUrl: string;
-  location: string;
-  requestUrl: string;
+  convexSiteUrl: string
+  location: string
+  requestUrl: string
 }) {
   try {
-    const request = new URL(requestUrl);
-    const target = new URL(location, request);
-    const convexSite = new URL(convexSiteUrl);
+    const request = new URL(requestUrl)
+    const target = new URL(location, request)
+    const convexSite = new URL(convexSiteUrl)
 
     if (target.origin !== convexSite.origin) {
-      return location;
+      return location
     }
 
-    if (!target.pathname.startsWith('/api/auth/')) {
-      return location;
+    if (!target.pathname.startsWith("/api/auth/")) {
+      return location
     }
 
-    target.protocol = request.protocol;
-    target.host = request.host;
+    target.protocol = request.protocol
+    target.host = request.host
 
-    return target.toString();
+    return target.toString()
   } catch {
-    return location;
+    return location
   }
 }
 
 export function cloneHeadersPreservingSetCookie(source: Headers) {
-  const headers = new Headers();
+  const headers = new Headers()
 
   for (const [key, value] of source.entries()) {
-    if (key.toLowerCase() === 'set-cookie') continue;
-    headers.append(key, value);
+    if (key.toLowerCase() === "set-cookie") continue
+    headers.append(key, value)
   }
 
-  const getSetCookie = (source as HeadersWithSetCookieList).getSetCookie;
-  if (typeof getSetCookie === 'function') {
+  const getSetCookie = (source as HeadersWithSetCookieList).getSetCookie
+  if (typeof getSetCookie === "function") {
     for (const value of getSetCookie.call(source)) {
-      headers.append('set-cookie', value);
+      headers.append("set-cookie", value)
     }
-    return headers;
+    return headers
   }
 
-  const setCookie = source.get('set-cookie');
+  const setCookie = source.get("set-cookie")
   if (setCookie) {
-    headers.append('set-cookie', setCookie);
+    headers.append("set-cookie", setCookie)
   }
 
-  return headers;
+  return headers
 }
 
 export async function handler(request: Request) {
-  const response = await getAuth().handler(request);
-  const location = response.headers.get('location');
+  const response = await syncSignInSocialLocationHeader(
+    request,
+    await getAuth().handler(request)
+  )
+  const location = response.headers.get("location")
 
   if (!location) {
-    logAuthDebug(request, response);
-    return response;
+    logAuthDebug(request, response)
+    return response
   }
 
   const rewrittenLocation = rewriteAuthRedirectLocation({
     convexSiteUrl: import.meta.env.VITE_CONVEX_SITE_URL!,
     location,
     requestUrl: request.url,
-  });
+  })
 
   if (rewrittenLocation === location) {
-    logAuthDebug(request, response);
-    return response;
+    logAuthDebug(request, response)
+    return response
   }
 
-  const headers = cloneHeadersPreservingSetCookie(response.headers);
-  headers.set('location', rewrittenLocation);
+  const headers = cloneHeadersPreservingSetCookie(response.headers)
+  headers.set("location", rewrittenLocation)
 
   const rewrittenResponse = new Response(response.body, {
     headers,
     status: response.status,
     statusText: response.statusText,
-  });
+  })
 
-  logAuthDebug(request, rewrittenResponse, rewrittenLocation);
+  logAuthDebug(request, rewrittenResponse, rewrittenLocation)
 
-  return rewrittenResponse;
+  return rewrittenResponse
 }
 
-export const getToken: AuthHelpers['getToken'] = () => getAuth().getToken();
+export const getToken: AuthHelpers["getToken"] = () => getAuth().getToken()
 
-export const fetchAuthQuery: AuthHelpers['fetchAuthQuery'] = (...args) => {
-  return getAuth().fetchAuthQuery(...args);
-};
+export const fetchAuthQuery: AuthHelpers["fetchAuthQuery"] = (...args) => {
+  return getAuth().fetchAuthQuery(...args)
+}
 
-export const fetchAuthMutation: AuthHelpers['fetchAuthMutation'] = (...args) => {
-  return getAuth().fetchAuthMutation(...args);
-};
+export const fetchAuthMutation: AuthHelpers["fetchAuthMutation"] = (
+  ...args
+) => {
+  return getAuth().fetchAuthMutation(...args)
+}
 
-export const fetchAuthAction: AuthHelpers['fetchAuthAction'] = (...args) => {
-  return getAuth().fetchAuthAction(...args);
-};
+export const fetchAuthAction: AuthHelpers["fetchAuthAction"] = (...args) => {
+  return getAuth().fetchAuthAction(...args)
+}
