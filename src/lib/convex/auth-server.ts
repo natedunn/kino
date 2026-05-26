@@ -38,6 +38,34 @@ export function rewriteAuthRedirectLocation({
   }
 }
 
+type HeadersWithSetCookieList = Headers & {
+  getSetCookie?: () => string[];
+};
+
+export function cloneHeadersPreservingSetCookie(source: Headers) {
+  const headers = new Headers();
+
+  for (const [key, value] of source.entries()) {
+    if (key.toLowerCase() === 'set-cookie') continue;
+    headers.append(key, value);
+  }
+
+  const getSetCookie = (source as HeadersWithSetCookieList).getSetCookie;
+  if (typeof getSetCookie === 'function') {
+    for (const value of getSetCookie.call(source)) {
+      headers.append('set-cookie', value);
+    }
+    return headers;
+  }
+
+  const setCookie = source.get('set-cookie');
+  if (setCookie) {
+    headers.append('set-cookie', setCookie);
+  }
+
+  return headers;
+}
+
 export async function handler(request: Request) {
   const response = await getAuth().handler(request);
   const location = response.headers.get('location');
@@ -56,7 +84,7 @@ export async function handler(request: Request) {
     return response;
   }
 
-  const headers = new Headers(response.headers);
+  const headers = cloneHeadersPreservingSetCookie(response.headers);
   headers.set('location', rewrittenLocation);
 
   return new Response(response.body, {

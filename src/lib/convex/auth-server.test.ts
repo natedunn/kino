@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { rewriteAuthRedirectLocation } from './auth-server';
+import {
+  cloneHeadersPreservingSetCookie,
+  rewriteAuthRedirectLocation,
+} from './auth-server';
 
 describe('rewriteAuthRedirectLocation', () => {
   it('rewrites convex auth redirects onto the current app origin', () => {
@@ -34,5 +37,37 @@ describe('rewriteAuthRedirectLocation', () => {
         requestUrl: 'http://localhost:3000/api/auth/callback/github',
       })
     ).toBe('https://scrupulous-lemming-700.convex.site/somewhere-else');
+  });
+});
+
+describe('cloneHeadersPreservingSetCookie', () => {
+  it('preserves each set-cookie header when the runtime exposes getSetCookie', () => {
+    const source = new Headers({
+      location: 'https://scrupulous-lemming-700.convex.site/api/auth/oauth-proxy-callback',
+      vary: 'Origin',
+    }) as Headers & { getSetCookie: () => string[] };
+
+    source.getSetCookie = () => [
+      '__Secure-better-auth.state=; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Lax',
+      '__Secure-better-auth.session_token=abc; Path=/; HttpOnly; Secure; SameSite=Lax',
+    ];
+
+    const cloned = cloneHeadersPreservingSetCookie(source) as Headers & {
+      getSetCookie?: () => string[];
+    };
+
+    expect(cloned.get('location')).toBe(
+      'https://scrupulous-lemming-700.convex.site/api/auth/oauth-proxy-callback'
+    );
+    expect(cloned.get('vary')).toBe('Origin');
+
+    if (typeof cloned.getSetCookie === 'function') {
+      expect(cloned.getSetCookie()).toEqual([
+        '__Secure-better-auth.state=; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Lax',
+        '__Secure-better-auth.session_token=abc; Path=/; HttpOnly; Secure; SameSite=Lax',
+      ]);
+    } else {
+      expect(cloned.get('set-cookie')).toContain('__Secure-better-auth.session_token=abc');
+    }
   });
 });
