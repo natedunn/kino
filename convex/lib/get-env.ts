@@ -71,6 +71,26 @@ function normalizeHostPattern(host: string) {
     .replace(/\/.*$/, '');
 }
 
+function isLoopbackHostname(hostname: string) {
+  const normalized = hostname.trim().toLowerCase().replace(/^\[|\]$/g, '');
+  return normalized === 'localhost' || normalized === '127.0.0.1' || normalized === '::1';
+}
+
+function getLoopbackOrigins(siteUrl: string) {
+  try {
+    const { hostname } = new URL(siteUrl);
+    if (!isLoopbackHostname(hostname)) return [];
+  } catch {
+    return [];
+  }
+
+  return ['http://localhost:*', 'http://127.0.0.1:*', 'http://[::1]:*'];
+}
+
+function getLoopbackHosts(siteUrl: string) {
+  return getLoopbackOrigins(siteUrl).map(hostnameFromOriginPattern);
+}
+
 function hostnameFromOriginPattern(origin: string) {
   try {
     return new URL(origin).host;
@@ -114,6 +134,7 @@ export function getTrustedOrigins() {
     new Set(
       [
         env.SITE_URL,
+        ...getLoopbackOrigins(env.SITE_URL),
         ...parseList(env.TRUSTED_ORIGINS),
         ...getAdditionalDeploymentOrigins(),
         ...getCloudflarePreviewOrigins(env.CLOUDFLARE_WORKER_NAME),
@@ -127,6 +148,7 @@ export function getBetterAuthAllowedHosts() {
   return Array.from(
     new Set([
       ...getTrustedOrigins().map(hostnameFromOriginPattern),
+      ...getLoopbackHosts(env.SITE_URL),
       ...parseList(env.TRUSTED_HOSTS).map(normalizeHostPattern),
     ])
   );

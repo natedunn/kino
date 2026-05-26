@@ -34,7 +34,10 @@ import {
 import { StatusIcon } from "@/icons"
 import { useCRPC } from "@/lib/convex/crpc"
 import { crpcOptions } from "@/lib/convex/crpc-options"
-import { preloadCRPCQuery } from "@/lib/convex/preload"
+import {
+  fetchConvexLoaderQuery,
+  prefetchConvexLoaderQuery,
+} from "@/lib/convex/server"
 import { useSidebarState } from "@/lib/hooks/use-sidebar-state"
 import { cn } from "@/lib/utils"
 import {
@@ -42,7 +45,6 @@ import {
   formatRelativeDay,
   formatTimestamp,
 } from "@/lib/utils/format-timestamp"
-import { api } from "@convex/api"
 
 import { UpvoteButton } from "../-components/upvote-button"
 import {
@@ -59,40 +61,6 @@ const DEFAULT_SIDEBAR_STATE = {
   labels: true,
   people: true,
   related: true,
-}
-
-type ProjectDetailsData = {
-  permissions: {
-    canEdit: boolean
-  }
-  project?: {
-    id: string
-  } | null
-  projectMember?: {
-    role?: string | null
-  } | null
-}
-
-type FeedbackDetailData = {
-  author: ProfileSummary | null
-  assignedProfile?: ProfileSummary | null
-  board?: {
-    id: string
-    name: string
-  } | null
-  feedback: {
-    answerCommentId?: string | null
-    assignedProfileId?: string | null
-    authorProfileId: string
-    boardId: string
-    createdAt: number | string | Date
-    id: string
-    status: "open" | "in-progress" | "closed" | "completed" | "paused"
-    title: string
-    upvotes: number
-  }
-  firstComment?: FeedbackCommentData | null
-  hasUpvoted: boolean
 }
 
 type ProfileSummary = {
@@ -133,61 +101,91 @@ type FeedbackEventData = {
   targetProfile?: ProfileSummary | null
 }
 
+type ProjectDetailsData = {
+  permissions: {
+    canEdit: boolean
+  }
+  project?: {
+    id: string
+  } | null
+}
+
+type FeedbackDetailData = {
+  feedback?: {
+    id: string
+  } | null
+} | null
+
 export const Route = createFileRoute("/@{$org}/$project/feedback/$slug/")({
   component: FeedbackDetailRoute,
   loader: async ({ context, params }) => {
-    const projectArgs = {
-      orgSlug: params.org,
-      slug: params.project,
-    }
-    const projectOptions =
-      crpcOptions.project.getDetails.staticQueryOptions(projectArgs)
-    const projectData = await preloadCRPCQuery<
-      ProjectDetailsData,
-      typeof projectArgs
-    >(context.queryClient, projectOptions, api.project.getDetails, projectArgs)
+    const projectData = await fetchConvexLoaderQuery<ProjectDetailsData | null>(
+      context.queryClient,
+      crpcOptions.project.getDetails.staticQueryOptions({
+        orgSlug: params.org,
+        slug: params.project,
+      }),
+      context.loaderToken
+    )
 
     if (!projectData?.project?.id) {
       throw notFound()
     }
 
-    const feedbackArgs = {
-      projectId: projectData.project.id,
-      slug: params.slug,
-    }
-    const feedbackOptions =
-      crpcOptions.feedback.getBySlug.staticQueryOptions(feedbackArgs)
-    const feedbackData = await preloadCRPCQuery<
-      FeedbackDetailData | null,
-      typeof feedbackArgs
-    >(
+    const feedbackData = await fetchConvexLoaderQuery<FeedbackDetailData>(
       context.queryClient,
-      feedbackOptions,
-      api.feedback.getBySlug,
-      feedbackArgs
+      crpcOptions.feedback.getBySlug.staticQueryOptions({
+        projectId: projectData.project.id,
+        slug: params.slug,
+      }),
+      context.loaderToken
     )
 
-    if (!feedbackData?.feedback?.id) {
+    if (!feedbackData?.feedback) {
       throw notFound()
     }
 
-    const childArgs = {
-      feedbackId: feedbackData.feedback.id,
-    }
     await Promise.all([
-      preloadCRPCQuery(
+      prefetchConvexLoaderQuery(
         context.queryClient,
-        crpcOptions.feedbackComment.listByFeedback.staticQueryOptions(
-          childArgs
-        ),
-        api.feedbackComment.listByFeedback,
-        childArgs
+        crpcOptions.feedbackComment.listByFeedback.staticQueryOptions({
+          feedbackId: feedbackData.feedback.id,
+        }),
+        context.loaderToken
       ),
-      preloadCRPCQuery(
+      prefetchConvexLoaderQuery(
         context.queryClient,
-        crpcOptions.feedbackEvent.listByFeedback.staticQueryOptions(childArgs),
-        api.feedbackEvent.listByFeedback,
-        childArgs
+        crpcOptions.feedbackEvent.listByFeedback.staticQueryOptions({
+          feedbackId: feedbackData.feedback.id,
+        }),
+        context.loaderToken
+      ),
+      prefetchConvexLoaderQuery(
+        context.queryClient,
+        crpcOptions.profile.findMyProfile.staticQueryOptions(
+          {},
+          { skipUnauth: true }
+        ),
+        context.loaderToken
+      ),
+      prefetchConvexLoaderQuery(
+        context.queryClient,
+        crpcOptions.feedbackBoard.listProjectBoards.staticQueryOptions({
+          projectId: projectData.project.id,
+        }),
+        context.loaderToken
+      ),
+      prefetchConvexLoaderQuery(
+        context.queryClient,
+        {
+          ...crpcOptions.projectMember.listAssignableMembers.staticQueryOptions(
+            {
+              projectId: projectData.project.id,
+            }
+          ),
+          enabled: !!projectData.permissions.canEdit,
+        },
+        context.loaderToken
       ),
     ])
   },
@@ -270,7 +268,7 @@ function FeedbackDetailRoute() {
           (board: { id: string }) => board.id !== feedbackData.board?.id
         ),
       ]
-    : boardsQuery.data ?? []
+    : (boardsQuery.data ?? [])
   const assigneeOptions = feedbackData.assignedProfile
     ? [
         {
@@ -282,7 +280,7 @@ function FeedbackDetailRoute() {
             member.profileId !== feedbackData.assignedProfile?.id
         ),
       ]
-    : assignableQuery.data ?? []
+    : (assignableQuery.data ?? [])
 
   const statusMutation = useMutation(
     crpc.feedback.updateStatus.mutationOptions()
@@ -406,13 +404,11 @@ function FeedbackDetailRoute() {
                       })
                     }
                   >
-                    {boardOptions.map(
-                      (board: { id: string; name: string }) => (
-                        <option key={board.id} value={board.id}>
-                          {board.name}
-                        </option>
-                      )
-                    )}
+                    {boardOptions.map((board: { id: string; name: string }) => (
+                      <option key={board.id} value={board.id}>
+                        {board.name}
+                      </option>
+                    ))}
                   </select>
                 ) : (
                   <span className="text-sm">

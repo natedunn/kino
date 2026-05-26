@@ -27,6 +27,7 @@ export default defineAuth(() => {
   const jwks = getJwksEnv();
   const oauthProxySecret = getOAuthProxySecretEnv();
   const trustedOrigins = getTrustedOrigins();
+  const isLocalHttp = env.SITE_URL.startsWith('http://');
   const baseURLProtocol: 'auto' | 'https' = env.SITE_URL.startsWith('http://') ? 'auto' : 'https';
   const baseOptions = {
     account: {
@@ -36,6 +37,7 @@ export default defineAuth(() => {
     },
     advanced: {
       trustedProxyHeaders: true,
+      useSecureCookies: !isLocalHttp,
     },
     emailAndPassword: {
       enabled: true,
