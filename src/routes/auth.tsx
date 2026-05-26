@@ -2,7 +2,7 @@
 
 import { ChevronLeft } from 'lucide-react';
 import { useMutation } from '@tanstack/react-query';
-import { createFileRoute, Link, Navigate } from '@tanstack/react-router';
+import { createFileRoute, Link } from '@tanstack/react-router';
 import { useAuth } from 'kitcn/react';
 
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,19 @@ import { authClient, useSignOutMutationOptions } from '@/lib/convex/auth-client'
 export const Route = createFileRoute('/auth')({
   component: AuthPage,
 });
+
+export function getSafeRedirectTarget(redirect: string | undefined) {
+  if (!redirect) {
+    return '/';
+  }
+
+  try {
+    const resolved = new URL(redirect, 'https://usekino.com');
+    return resolved.pathname === '/auth' ? '/' : `${resolved.pathname}${resolved.search}${resolved.hash}`;
+  } catch {
+    return '/';
+  }
+}
 
 function AuthPage() {
   const search = Route.useSearch() as { redirect?: string };
@@ -52,7 +65,7 @@ function AuthPage() {
   }
 
   if (hasSession) {
-    return <Navigate to="/" />;
+    return null;
   }
 
   return (
@@ -62,7 +75,7 @@ function AuthPage() {
           <Button
             onClick={async () => {
               const callbackURL = new URL(
-                search.redirect ?? '/',
+                getSafeRedirectTarget(search.redirect),
                 window.location.origin,
               ).toString();
 

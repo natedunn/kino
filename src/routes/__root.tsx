@@ -1,7 +1,6 @@
 import type { ReactNode } from "react"
 import type { QueryClient } from "@tanstack/react-query"
 
-import { createServerFn } from "@tanstack/react-start"
 import {
   HeadContent,
   Outlet,
@@ -17,24 +16,10 @@ import { Providers } from "@/components/providers"
 import { Toaster } from "@/components/ui/sonner"
 import appCss from "../styles.css?url"
 
-const getLoaderToken = createServerFn({ method: "GET" }).handler(async () => {
-  const { getToken } = await import("@/lib/convex/auth-server")
-  return await getToken()
-})
-
 export const Route = createRootRouteWithContext<{
   loaderToken?: string | null
   queryClient: QueryClient
 }>()({
-  beforeLoad: async () => {
-    if (typeof document !== "undefined") {
-      return {}
-    }
-
-    return {
-      loaderToken: await getLoaderToken(),
-    }
-  },
   head: () => ({
     meta: [
       {
@@ -108,12 +93,8 @@ function RootDocument({ children }: { children: ReactNode }) {
 }
 
 function RootComponent() {
-  const loaderToken = Route.useRouteContext({
-    select: (context) => context.loaderToken ?? null,
-  })
-
   return (
-    <Providers initialToken={loaderToken}>
+    <Providers>
       <Outlet />
     </Providers>
   )
