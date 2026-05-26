@@ -2,48 +2,52 @@
 
 import { useQueryClient } from "@tanstack/react-query"
 import { ConvexAuthProvider } from "kitcn/auth/client"
-import {
-  ConvexReactClient,
-  getConvexQueryClientSingleton,
-  useAuthStore,
-} from "kitcn/react"
+import { type ConvexQueryClient, useAuthStore } from "kitcn/react"
 import { useEffect } from "react"
 import type { ReactNode } from "react"
 
 import { authClient } from "@/lib/convex/auth-client"
 import { CRPCProvider } from "@/lib/convex/crpc"
 
-const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL!)
-
 export function AppConvexProvider({
   children,
+  convexQueryClient,
   initialToken,
 }: {
   children: ReactNode
+  convexQueryClient: ConvexQueryClient
   initialToken?: string | null
 }) {
   return (
     <ConvexAuthProvider
       authClient={authClient}
-      client={convex}
+      client={convexQueryClient.convexClient}
       initialToken={initialToken ?? undefined}
     >
-      <QueryProvider>{children}</QueryProvider>
+      <QueryProvider convexQueryClient={convexQueryClient}>
+        {children}
+      </QueryProvider>
     </ConvexAuthProvider>
   )
 }
 
-function QueryProvider({ children }: { children: ReactNode }) {
+function QueryProvider({
+  children,
+  convexQueryClient,
+}: {
+  children: ReactNode
+  convexQueryClient: ConvexQueryClient
+}) {
   const authStore = useAuthStore()
   const queryClient = useQueryClient()
-  const convexQueryClient = getConvexQueryClientSingleton({
-    authStore,
-    convex,
-    queryClient,
-  })
+  convexQueryClient.updateAuthStore(authStore)
+  convexQueryClient.connect(queryClient)
 
   return (
-    <CRPCProvider convexClient={convex} convexQueryClient={convexQueryClient}>
+    <CRPCProvider
+      convexClient={convexQueryClient.convexClient}
+      convexQueryClient={convexQueryClient}
+    >
       <ConvexTokenBootstrap />
       {children}
     </CRPCProvider>

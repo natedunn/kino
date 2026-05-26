@@ -6,9 +6,16 @@ import {
   QueryClient,
 } from '@tanstack/react-query';
 import { isCRPCClientError, isCRPCError } from 'kitcn/crpc';
-import { getQueryClientSingleton } from 'kitcn/react';
+import {
+  ConvexReactClient,
+  getConvexQueryClientSingleton,
+  getQueryClientSingleton,
+  type AuthStore,
+} from 'kitcn/react';
 import { type Value, convexToJson } from 'convex/values';
 import SuperJSON from 'superjson';
+
+export const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL!);
 
 export const hydrationConfig: Pick<DefaultOptions, 'dehydrate' | 'hydrate'> = {
   dehydrate: {
@@ -55,4 +62,15 @@ export function createQueryClient() {
 
 export function getAppQueryClient() {
   return getQueryClientSingleton(createQueryClient);
+}
+
+export function getAppConvexQueryClient(
+  queryClient: QueryClient,
+  authStore?: AuthStore
+) {
+  return getConvexQueryClientSingleton({
+    authStore,
+    convex,
+    queryClient,
+  });
 }
