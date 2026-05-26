@@ -29,10 +29,30 @@ export const hydrationConfig: Pick<DefaultOptions, 'dehydrate' | 'hydrate'> = {
   },
 };
 
-function convexQueryKeyHashFn(queryKey: readonly unknown[]) {
+function stableStringify(value: unknown): string {
+  return JSON.stringify(sortObjectKeys(value));
+}
+
+function sortObjectKeys(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map(sortObjectKeys);
+  }
+
+  if (!value || typeof value !== 'object') {
+    return value;
+  }
+
+  return Object.fromEntries(
+    Object.entries(value)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([key, entry]) => [key, sortObjectKeys(entry)])
+  );
+}
+
+export function convexQueryKeyHashFn(queryKey: readonly unknown[]) {
   if (queryKey[0] === 'convexQuery' || queryKey[0] === 'convexAction') {
     const [, functionName, args] = queryKey;
-    return `${queryKey[0]}|${String(functionName)}|${JSON.stringify(convexToJson(args as Value))}`;
+    return `${queryKey[0]}|${String(functionName)}|${stableStringify(convexToJson(args as Value))}`;
   }
 
   return hashKey(queryKey);
@@ -68,9 +88,20 @@ export function getAppConvexQueryClient(
   queryClient: QueryClient,
   authStore?: AuthStore
 ) {
-  return getConvexQueryClientSingleton({
+  const convexQueryClient = getConvexQueryClientSingleton({
     authStore,
     convex,
     queryClient,
   });
+
+  const options = queryClient.getDefaultOptions();
+  queryClient.setDefaultOptions({
+    ...options,
+    queries: {
+      ...options.queries,
+      queryKeyHashFn: convexQueryKeyHashFn,
+    },
+  });
+
+  return convexQueryClient;
 }
