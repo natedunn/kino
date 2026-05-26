@@ -39,9 +39,8 @@ function forwardedAuthRequestUrl(request: Request | undefined) {
 
   try {
     const url = new URL(request.url);
-    url.protocol = `${protocol}:`;
-    url.host = forwardedHost.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
-    return url.toString();
+    const host = forwardedHost.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+    return `${protocol}://${host}${url.pathname}${url.search}`;
   } catch {
     return null;
   }
