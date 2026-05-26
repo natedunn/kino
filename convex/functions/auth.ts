@@ -1,4 +1,5 @@
 import { convex } from 'kitcn/auth';
+import { createAuthMiddleware } from 'better-auth/api';
 import { admin, oAuthProxy, organization, username } from 'better-auth/plugins';
 import {
   getBetterAuthAllowedHosts,
@@ -23,11 +24,61 @@ function isSuperAdminEmail(email: string) {
   return !!configured && configured.toLowerCase() === email.toLowerCase();
 }
 
+function forwardedAuthRequestUrl(request: Request | undefined) {
+  if (!request) return null;
+
+  const forwardedHost =
+    request.headers.get('x-better-auth-forwarded-host') ?? request.headers.get('x-forwarded-host');
+  const forwardedProto =
+    request.headers.get('x-better-auth-forwarded-proto') ?? request.headers.get('x-forwarded-proto');
+
+  if (!forwardedHost || !forwardedProto) return null;
+
+  const protocol = forwardedProto.replace(/:$/, '');
+  if (protocol !== 'http' && protocol !== 'https') return null;
+
+  try {
+    const url = new URL(request.url);
+    url.protocol = `${protocol}:`;
+    url.host = forwardedHost.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+    return url.toString();
+  } catch {
+    return null;
+  }
+}
+
+function forwardedAuthRequestPlugin() {
+  return {
+    id: 'forwarded-auth-request',
+    hooks: {
+      before: [
+        {
+          matcher(context: { path?: string }) {
+            return !!(
+              context.path?.startsWith('/sign-in/social') ||
+              context.path?.startsWith('/sign-in/oauth2')
+            );
+          },
+          handler: createAuthMiddleware(async (ctx: any) => {
+            const forwardedUrl = forwardedAuthRequestUrl(ctx.request);
+            if (!forwardedUrl) return;
+
+            ctx.request = new Request(forwardedUrl, {
+              headers: ctx.request.headers,
+              method: ctx.request.method,
+            });
+          }),
+        },
+      ],
+    },
+  };
+}
+
 export default defineAuth(() => {
   const env = getEnv();
   const githubOAuth = getGitHubOAuthEnv();
   const jwks = getJwksEnv();
-  const oauthProxyCurrentUrl = getOAuthProxyCurrentUrlEnv() ?? env.SITE_URL;
+  const oauthProxyCurrentUrl = getOAuthProxyCurrentUrlEnv();
   const oauthProxyProductionUrl = getOAuthProxyProductionUrlEnv() ?? env.SITE_URL;
   const oauthProxySecret = getOAuthProxySecretEnv();
   const trustedOrigins = getTrustedOrigins();
@@ -69,8 +120,9 @@ export default defineAuth(() => {
           },
         },
       }),
+      forwardedAuthRequestPlugin(),
       oAuthProxy({
-        currentURL: oauthProxyCurrentUrl,
+        ...(oauthProxyCurrentUrl ? { currentURL: oauthProxyCurrentUrl } : {}),
         productionURL: oauthProxyProductionUrl,
         secret: oauthProxySecret,
       }),
