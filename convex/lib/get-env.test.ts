@@ -2,6 +2,8 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import {
   getBetterAuthAllowedHosts,
+  getOAuthProxyCurrentUrlEnv,
+  getOAuthProxyProductionUrlEnv,
   getTrustedOrigins,
   isTrustedOrigin,
 } from './get-env';
@@ -86,5 +88,16 @@ describe('trusted auth origins', () => {
     ]);
     expect(isTrustedOrigin('http://localhost:3001/auth')).toBe(true);
     expect(isTrustedOrigin('http://127.0.0.1:5173/auth')).toBe(true);
+  });
+
+  it('keeps OAuth proxy current and production URLs independently configurable', () => {
+    resetEnv({
+      OAUTH_PROXY_CURRENT_URL: 'https://feature-kino.hello-fc8.workers.dev',
+      OAUTH_PROXY_PRODUCTION_URL: 'https://usekino.com',
+      SITE_URL: 'https://usekino.com',
+    });
+
+    expect(getOAuthProxyCurrentUrlEnv()).toBe('https://feature-kino.hello-fc8.workers.dev');
+    expect(getOAuthProxyProductionUrlEnv()).toBe('https://usekino.com');
   });
 });

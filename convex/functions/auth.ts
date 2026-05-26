@@ -5,6 +5,8 @@ import {
   getEnv,
   getGitHubOAuthEnv,
   getJwksEnv,
+  getOAuthProxyCurrentUrlEnv,
+  getOAuthProxyProductionUrlEnv,
   getOAuthProxySecretEnv,
   getTrustedOrigins,
 } from '../lib/get-env';
@@ -25,6 +27,8 @@ export default defineAuth(() => {
   const env = getEnv();
   const githubOAuth = getGitHubOAuthEnv();
   const jwks = getJwksEnv();
+  const oauthProxyCurrentUrl = getOAuthProxyCurrentUrlEnv() ?? env.SITE_URL;
+  const oauthProxyProductionUrl = getOAuthProxyProductionUrlEnv() ?? env.SITE_URL;
   const oauthProxySecret = getOAuthProxySecretEnv();
   const trustedOrigins = getTrustedOrigins();
   const isLocalHttp = env.SITE_URL.startsWith('http://');
@@ -66,7 +70,8 @@ export default defineAuth(() => {
         },
       }),
       oAuthProxy({
-        productionURL: env.SITE_URL,
+        currentURL: oauthProxyCurrentUrl,
+        productionURL: oauthProxyProductionUrl,
         secret: oauthProxySecret,
       }),
       convex({
