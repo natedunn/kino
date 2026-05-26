@@ -1,13 +1,16 @@
-import type { ReactNode } from "react"
+import { useState, type ReactNode } from "react"
 
-import { useQuery, useSuspenseQuery } from "@tanstack/react-query"
+import {
+  useQuery,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query"
 import {
   createFileRoute,
   Link,
   notFound,
   useRouter,
 } from "@tanstack/react-router"
-import { useInfiniteQuery } from "kitcn/react"
 import { z } from "zod"
 
 import { RoutePending } from "@/components/route-pending"
@@ -21,7 +24,6 @@ import {
   fetchConvexLoaderQuery,
   prefetchConvexLoaderQuery,
 } from "@/lib/convex/server"
-import { cn } from "@/lib/utils"
 
 import { BoardsNav } from "./-components/boards-nav"
 import { FeedbackCard } from "./-components/feedback-card"
@@ -39,6 +41,15 @@ type ProjectDetailsData = {
   project?: {
     id: string
   } | null
+}
+
+type FeedbackListArgs = {
+  boardId: string
+  cursor: string | null
+  limit: number
+  projectId: string
+  search?: string
+  status?: "open" | "in-progress" | "closed" | "completed" | "paused"
 }
 
 const feedbackSearchParams = z.object({
@@ -80,16 +91,17 @@ export const Route = createFileRoute("/@{$org}/$project/feedback/")({
     const boardId = getBoardId(boards, deps.board)
 
     await Promise.all([
-      prefetchConvexLoaderQuery(
+      fetchConvexLoaderQuery(
         context.queryClient,
-        crpcOptions.feedback.listProjectFeedback.staticQueryOptions({
-          boardId,
-          cursor: null,
-          limit: NUM_OF_ITEMS_PER_PAGE,
-          projectId: projectData.project.id,
-          search: deps.search,
-          status: deps.status,
-        }),
+        crpcOptions.feedback.listProjectFeedback.staticQueryOptions(
+          getFeedbackListArgs({
+            boardId,
+            cursor: null,
+            projectId: projectData.project.id,
+            search: deps.search,
+            status: deps.status,
+          })
+        ),
         context.loaderToken
       ),
       prefetchConvexLoaderQuery(
@@ -114,6 +126,23 @@ function getBoardId(
   return boards?.find((item) => item.slug === boardSlug)?.id ?? "all"
 }
 
+function getFeedbackListArgs({
+  boardId,
+  cursor,
+  projectId,
+  search,
+  status,
+}: Omit<FeedbackListArgs, "limit">): FeedbackListArgs {
+  return {
+    boardId,
+    cursor,
+    limit: NUM_OF_ITEMS_PER_PAGE,
+    projectId,
+    search,
+    status,
+  }
+}
+
 function Notice({ icon, children }: { icon: ReactNode; children: ReactNode }) {
   return (
     <div className="text-bold flex items-center justify-center gap-3 rounded-lg border bg-muted p-4 text-xl text-muted-foreground md:p-10">
@@ -125,6 +154,7 @@ function Notice({ icon, children }: { icon: ReactNode; children: ReactNode }) {
 
 function FeedbackListRoute() {
   const router = useRouter()
+  const queryClient = useQueryClient()
   const searchParams = Route.useSearch()
   const { search, status, board } = searchParams
   const { org: orgSlug, project: projectSlug } = Route.useParams()
@@ -140,35 +170,100 @@ function FeedbackListRoute() {
   if (!projectData?.project) {
     throw notFound()
   }
+  const projectId = projectData.project.id
 
   const { data: boards } = useSuspenseQuery(
     crpc.feedbackBoard.listProjectBoards.queryOptions({
-      projectId: projectData.project.id,
+      projectId,
     })
   )
   const profileQuery = useQuery(
     crpc.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
   )
   const boardId = getBoardId(boards, board)
-  const feedbackQuery = useInfiniteQuery(
-    crpc.feedback.listProjectFeedback.infiniteQueryOptions(
-      {
-        boardId,
-        projectId: projectData.project.id,
-        search,
-        status,
-      },
-      {
-        limit: NUM_OF_ITEMS_PER_PAGE,
-      }
+  const firstFeedbackPageArgs = getFeedbackListArgs({
+    boardId,
+    cursor: null,
+    projectId,
+    search,
+    status,
+  })
+  const firstFeedbackPageKey = JSON.stringify(firstFeedbackPageArgs)
+  const { data: firstFeedbackPage, isFetching: refreshingFeedback } =
+    useSuspenseQuery(
+      crpc.feedback.listProjectFeedback.queryOptions(firstFeedbackPageArgs)
     )
-  )
+  const [additionalFeedbackState, setAdditionalFeedbackState] = useState<{
+    key: string
+    pages: Array<typeof firstFeedbackPage>
+  }>({
+    key: firstFeedbackPageKey,
+    pages: [],
+  })
+  const [loadingMoreFeedback, setLoadingMoreFeedback] = useState(false)
+  const [loadMoreErrorState, setLoadMoreErrorState] = useState<{
+    error: Error | null
+    key: string
+  }>({
+    error: null,
+    key: firstFeedbackPageKey,
+  })
 
-  const loadingFeedback = feedbackQuery.isFetching
-  const loadingMoreFeedback = feedbackQuery.status === "LoadingMore"
-  const feedback = feedbackQuery.data ?? []
-  const initialFeedbackLoading =
-    feedbackQuery.status === "LoadingFirstPage" && feedback.length === 0
+  const additionalFeedbackPages =
+    additionalFeedbackState.key === firstFeedbackPageKey
+      ? additionalFeedbackState.pages
+      : []
+  const loadMoreError =
+    loadMoreErrorState.key === firstFeedbackPageKey
+      ? loadMoreErrorState.error
+      : null
+  const feedbackPages = [firstFeedbackPage, ...additionalFeedbackPages]
+  const lastFeedbackPage = additionalFeedbackPages.at(-1) ?? firstFeedbackPage
+  const feedback = feedbackPages
+    .flatMap((page) => page.page)
+    .filter((item, index, items) => {
+      return items.findIndex((candidate) => candidate.id === item.id) === index
+    })
+  const canLoadMoreFeedback =
+    !lastFeedbackPage.isDone && !!lastFeedbackPage.continueCursor
+
+  async function loadMoreFeedback() {
+    if (!canLoadMoreFeedback || loadingMoreFeedback) return
+
+    setLoadingMoreFeedback(true)
+    setLoadMoreErrorState({ error: null, key: firstFeedbackPageKey })
+
+    try {
+      const nextPage = await queryClient.fetchQuery(
+        crpc.feedback.listProjectFeedback.staticQueryOptions(
+          getFeedbackListArgs({
+            boardId,
+            cursor: lastFeedbackPage.continueCursor,
+            projectId,
+            search,
+            status,
+          })
+        )
+      )
+      setAdditionalFeedbackState((state) => ({
+        key: firstFeedbackPageKey,
+        pages:
+          state.key === firstFeedbackPageKey
+            ? [...state.pages, nextPage]
+            : [nextPage],
+      }))
+    } catch (error) {
+      setLoadMoreErrorState({
+        error:
+          error instanceof Error
+            ? error
+            : new Error("Failed to load more feedback"),
+        key: firstFeedbackPageKey,
+      })
+    } finally {
+      setLoadingMoreFeedback(false)
+    }
+  }
 
   return (
     <div className="container h-full overflow-visible">
@@ -218,20 +313,17 @@ function FeedbackListRoute() {
             </div>
           </div>
           <FeedbackToolbar />
-          <div aria-busy={loadingFeedback} aria-live="polite">
-            {initialFeedbackLoading ? <FeedbackListSkeleton /> : null}
-            {!initialFeedbackLoading && feedback.length === 0 ? (
+          <div
+            aria-busy={refreshingFeedback || loadingMoreFeedback}
+            aria-live="polite"
+          >
+            {feedback.length === 0 ? (
               <Notice icon={<Missing aria-hidden="true" size="32px" />}>
                 No feedback found.
               </Notice>
             ) : null}
-            {!initialFeedbackLoading && feedback.length > 0 ? (
-              <ul
-                className={cn(
-                  "flex flex-col gap-4",
-                  loadingFeedback && "pointer-events-none opacity-50"
-                )}
-              >
+            {feedback.length > 0 ? (
+              <ul className="flex flex-col gap-4">
                 {feedback.map((item) => (
                   <FeedbackCard
                     key={item.id}
@@ -252,13 +344,14 @@ function FeedbackListRoute() {
               </ul>
             ) : null}
           </div>
-          {feedbackQuery.status === "CanLoadMore" ? (
+          {loadMoreError ? (
+            <p className="text-sm text-destructive">{loadMoreError.message}</p>
+          ) : null}
+          {canLoadMoreFeedback ? (
             <div className="flex items-center gap-3">
               <Button
                 disabled={loadingMoreFeedback}
-                onClick={() =>
-                  feedbackQuery.fetchNextPage(NUM_OF_ITEMS_PER_PAGE)
-                }
+                onClick={() => void loadMoreFeedback()}
                 variant="outline"
               >
                 {loadingMoreFeedback
@@ -269,25 +362,6 @@ function FeedbackListRoute() {
           ) : null}
         </div>
       </div>
-    </div>
-  )
-}
-
-function FeedbackListSkeleton() {
-  return (
-    <div className="flex flex-col gap-4">
-      {Array.from({ length: 5 }).map((_, index) => (
-        <div className="rounded-xl border bg-card p-4" key={index}>
-          <div className="flex gap-4">
-            <div className="h-10 w-10 animate-pulse rounded-lg bg-muted" />
-            <div className="flex flex-1 flex-col gap-3">
-              <div className="h-5 w-2/3 animate-pulse rounded bg-muted" />
-              <div className="h-4 w-full animate-pulse rounded bg-muted" />
-              <div className="h-4 w-1/2 animate-pulse rounded bg-muted" />
-            </div>
-          </div>
-        </div>
-      ))}
     </div>
   )
 }
