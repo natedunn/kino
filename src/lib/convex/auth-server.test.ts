@@ -91,6 +91,33 @@ describe("cloneHeadersPreservingSetCookie", () => {
       "__Secure-better-auth.session_token=abc"
     )
   })
+
+  it("splits collapsed getSetCookie values before forwarding them", () => {
+    const source = new Headers() as Headers & { getSetCookie: () => string[] }
+    source.getSetCookie = () => [
+      "__Secure-better-auth.state=; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Lax, __Secure-better-auth.session_token=abc; Max-Age=2592000; Path=/; HttpOnly; Secure; SameSite=Lax",
+    ]
+
+    expect(getSetCookieValues(source)).toEqual([
+      "__Secure-better-auth.state=; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Lax",
+      "__Secure-better-auth.session_token=abc; Max-Age=2592000; Path=/; HttpOnly; Secure; SameSite=Lax",
+    ])
+
+    const cloned = cloneHeadersPreservingSetCookie(source) as Headers & {
+      getSetCookie?: () => string[]
+    }
+
+    if (typeof cloned.getSetCookie === "function") {
+      expect(cloned.getSetCookie()).toEqual([
+        "__Secure-better-auth.state=; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Lax",
+        "__Secure-better-auth.session_token=abc; Max-Age=2592000; Path=/; HttpOnly; Secure; SameSite=Lax",
+      ])
+    } else {
+      expect(cloned.get("set-cookie")).toContain(
+        "__Secure-better-auth.session_token=abc"
+      )
+    }
+  })
 })
 
 describe("syncSignInSocialLocationHeader", () => {

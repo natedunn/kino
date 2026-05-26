@@ -183,7 +183,7 @@ export function cloneHeadersPreservingSetCookie(source: Headers) {
 
   const getSetCookie = (source as HeadersWithSetCookieList).getSetCookie
   if (typeof getSetCookie === "function") {
-    for (const value of getSetCookie.call(source)) {
+    for (const value of getSetCookieValues(source)) {
       headers.append("set-cookie", value)
     }
     return headers
