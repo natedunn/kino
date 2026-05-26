@@ -121,7 +121,7 @@ export const Route = createFileRoute("/@{$org}/$project/updates/$slug/")({
     ])
   },
   pendingComponent: () => <RoutePending variant="detail" />,
-  pendingMs: 150,
+  pendingMs: 600,
 })
 
 function UpdateDetailRoute() {

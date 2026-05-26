@@ -190,7 +190,7 @@ export const Route = createFileRoute("/@{$org}/$project/feedback/$slug/")({
     ])
   },
   pendingComponent: () => <RoutePending variant="detail" />,
-  pendingMs: 150,
+  pendingMs: 600,
 })
 
 function FeedbackDetailRoute() {

@@ -29,14 +29,16 @@ export const Route = createFileRoute('/@{$org}')({
 
 function OrganizationShell() {
   const crpc = useCRPC();
+  const { loaderToken } = Route.useRouteContext();
   const profileQuery = useQuery(
     crpc.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
   );
+  const isUserPending = !!loaderToken && profileQuery.data === undefined;
 
   return (
     <div className="flex min-h-screen w-full flex-col">
       <div className="flex w-full flex-1 flex-col">
-        <MainNav user={profileQuery.data} />
+        <MainNav isUserPending={isUserPending} user={profileQuery.data} />
         <Outlet />
       </div>
       <footer className="mt-auto w-full border-t border-border py-4 text-center text-sm text-muted-foreground">

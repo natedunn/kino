@@ -103,7 +103,7 @@ export const Route = createFileRoute("/@{$org}/$project/feedback/")({
     ])
   },
   pendingComponent: () => <RoutePending variant="sidebar" />,
-  pendingMs: 150,
+  pendingMs: 600,
   validateSearch: feedbackSearchParams,
 })
 

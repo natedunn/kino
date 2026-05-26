@@ -68,7 +68,7 @@ export const Route = createFileRoute("/@{$org}/$project/updates/")({
     ])
   },
   pendingComponent: () => <RoutePending variant="page" />,
-  pendingMs: 150,
+  pendingMs: 600,
   validateSearch: updatesSearchParams,
 })
 
