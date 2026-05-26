@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Outlet, createFileRoute } from '@tanstack/react-router';
 
+import { DefaultCatchBoundary } from '@/components/_default-catch-boundary';
 import { NotFound } from '@/components/_not-found';
 import { RoutePending } from '@/components/route-pending';
 import { useCRPC } from '@/lib/convex/crpc';
@@ -11,7 +12,7 @@ export const Route = createFileRoute('/@{$org}')({
   component: OrganizationShell,
   notFoundComponent: () => <NotFound isContainer />,
   pendingComponent: () => <RoutePending variant="page" />,
-  errorComponent: () => <div>There was an error</div>,
+  errorComponent: DefaultCatchBoundary,
 });
 
 function OrganizationShell() {
