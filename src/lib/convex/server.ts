@@ -14,6 +14,14 @@ type ConvexLoaderQueryOptions = {
   [key: string]: unknown
 }
 
+type ServerConvexClient = {
+  query: (name: string, args: Record<string, unknown>) => Promise<unknown>
+  setAuth: (token: string) => void
+  setFetchOptions: (options: { cache: "no-store" }) => void
+}
+
+const serverClientCache = new WeakMap<QueryClient, Map<string, ServerConvexClient>>()
+
 function getConvexQueryParts(queryKey: readonly unknown[]) {
   const [kind, functionName, args] = queryKey
 
@@ -40,7 +48,35 @@ function shouldSkipForMissingAuth(
   )
 }
 
+function getServerConvexClient(
+  queryClient: QueryClient,
+  convexUrl: string,
+  token: LoaderToken
+) {
+  const cacheKey = `${convexUrl}\0${token ?? ""}`
+  let queryClientCache = serverClientCache.get(queryClient)
+
+  if (!queryClientCache) {
+    queryClientCache = new Map()
+    serverClientCache.set(queryClient, queryClientCache)
+  }
+
+  const cached = queryClientCache.get(cacheKey)
+  if (cached) return cached
+
+  const client = new ConvexHttpClient(convexUrl) as unknown as ServerConvexClient
+  client.setFetchOptions({ cache: "no-store" })
+
+  if (token) {
+    client.setAuth(token)
+  }
+
+  queryClientCache.set(cacheKey, client)
+  return client
+}
+
 async function runServerQuery<TData>(
+  queryClient: QueryClient,
   options: ConvexLoaderQueryOptions,
   token: LoaderToken
 ) {
@@ -54,20 +90,9 @@ async function runServerQuery<TData>(
   }
 
   const { args, functionName } = getConvexQueryParts(options.queryKey)
-  const client = new ConvexHttpClient(convexUrl)
-  const serverClient = client as unknown as {
-    query: (name: string, args: Record<string, unknown>) => Promise<TData>
-    setAuth: (token: string) => void
-    setFetchOptions: (options: { cache: "no-store" }) => void
-  }
+  const serverClient = getServerConvexClient(queryClient, convexUrl, token)
 
-  serverClient.setFetchOptions({ cache: "no-store" })
-
-  if (token) {
-    serverClient.setAuth(token)
-  }
-
-  return serverClient.query(functionName, args as Record<string, unknown>)
+  return serverClient.query(functionName, args as Record<string, unknown>) as Promise<TData>
 }
 
 export async function fetchConvexLoaderQuery<TData>(
@@ -80,12 +105,13 @@ export async function fetchConvexLoaderQuery<TData>(
   }
 
   if (typeof window !== "undefined") {
+    // Kitcn installs ConvexQueryClient.queryFn() as the default client queryFn.
     return queryClient.ensureQueryData(options as never) as Promise<TData>
   }
 
   return queryClient.fetchQuery({
     ...options,
-    queryFn: () => runServerQuery(options, token),
+    queryFn: () => runServerQuery(queryClient, options, token),
   } as never) as Promise<TData>
 }
 
