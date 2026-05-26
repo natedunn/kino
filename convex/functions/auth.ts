@@ -25,7 +25,7 @@ function isSuperAdminEmail(email: string) {
   return !!configured && configured.toLowerCase() === email.toLowerCase();
 }
 
-function forwardedAuthRequestUrl(request: Request | undefined) {
+export function forwardedAuthRequestUrl(request: Request | undefined) {
   if (!request) return null;
 
   const forwardedHost = request.headers.get('x-better-auth-forwarded-host');
