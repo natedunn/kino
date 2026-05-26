@@ -1,7 +1,12 @@
 import { useState } from 'react';
 import { useForm } from '@tanstack/react-form';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { useMutation, useSuspenseQuery } from '@tanstack/react-query';
+import {
+  Navigate,
+  createFileRoute,
+  useNavigate,
+  useRouterState,
+} from '@tanstack/react-router';
 
 import { InlineAlert } from '@/components/inline-alert';
 import { Button } from '@/components/ui/button';
@@ -13,22 +18,45 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select-shadcn';
-import { authClient } from '@/lib/convex/auth-client';
 import { useCRPC } from '@/lib/convex/crpc';
+import { crpcOptions } from '@/lib/convex/crpc-options';
+import { fetchConvexLoaderQuery } from '@/lib/convex/server';
 import { cn } from '@/lib/utils';
 
 export const Route = createFileRoute('/create/team/')({
+  loader: async ({ context }) => {
+    if (!context.loaderToken) {
+      return;
+    }
+
+    await fetchConvexLoaderQuery(
+      context.queryClient,
+      crpcOptions.org.findMyOrgs.staticQueryOptions({}),
+      context.loaderToken
+    );
+  },
   component: CreateTeamRoute,
 });
 
 function CreateTeamRoute() {
+  const { loaderToken } = Route.useRouteContext();
+  const pathname = useRouterState({
+    select: (state) => state.location.pathname,
+  });
+
+  if (!loaderToken) {
+    return <Navigate search={{ redirect: pathname }} to="/auth" />;
+  }
+
+  return <AuthenticatedCreateTeamRoute />;
+}
+
+function AuthenticatedCreateTeamRoute() {
   const navigate = useNavigate();
   const crpc = useCRPC();
-  const session = authClient.useSession();
   const [formError, setFormError] = useState<string>();
-
-  const orgsQuery = useQuery(
-    crpc.org.findMyOrgs.queryOptions({}, { enabled: !!session.data?.user })
+  const { data: orgsData } = useSuspenseQuery(
+    crpc.org.findMyOrgs.queryOptions({})
   );
   const createMutation = useMutation(
     crpc.org.create.mutationOptions({
@@ -58,7 +86,7 @@ function CreateTeamRoute() {
     },
   });
 
-  const underLimit = orgsQuery.data?.underLimit ?? true;
+  const underLimit = orgsData?.underLimit ?? true;
 
   return (
     <div className="relative w-full">

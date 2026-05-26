@@ -1,27 +1,59 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
 import { Link, createFileRoute } from '@tanstack/react-router';
 import { ArrowUpRight, CircleCheck, FolderOpen, Settings, User } from 'lucide-react';
 
-import { EmptyState, Panel } from '@/components/kino/common';
+import { EmptyState } from '@/components/kino/common';
 import { NoPublicProjects } from './-components/no-public-projects';
 import { OrgProjects } from './-components/org-projects';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import type { API } from '@/lib/api';
 import { useCRPC } from '@/lib/convex/crpc';
+import { crpcOptions } from '@/lib/convex/crpc-options';
+import {
+  fetchConvexLoaderQuery,
+  prefetchConvexLoaderQuery,
+} from '@/lib/convex/server';
 
 export const Route = createFileRoute('/@{$org}/')({
+  loader: async ({ context, params }) => {
+    const orgData = await fetchConvexLoaderQuery<API['org']['getDetails']>(
+      context.queryClient,
+      crpcOptions.org.getDetails.staticQueryOptions({
+        slug: params.org,
+      }),
+      context.loaderToken
+    );
+
+    await prefetchConvexLoaderQuery(
+      context.queryClient,
+      crpcOptions.project.getManyByOrg.staticQueryOptions({
+        limit: 24,
+        orgSlug: params.org,
+      }),
+      context.loaderToken
+    );
+
+    if (orgData?.permissions.canCreate) {
+      await prefetchConvexLoaderQuery(
+        context.queryClient,
+        crpcOptions.org.getMyPermission.staticQueryOptions({ slug: params.org }),
+        context.loaderToken
+      );
+    }
+  },
   component: OrganizationRoute,
 });
 
 function OrganizationRoute() {
   const params = Route.useParams();
   const crpc = useCRPC();
-  const orgQuery = useQuery(
+  const { data: orgData } = useSuspenseQuery(
     crpc.org.getDetails.queryOptions({
       slug: params.org,
     })
   );
-  const projectsQuery = useQuery(
+  const { data: projectsData } = useSuspenseQuery(
     crpc.project.getManyByOrg.queryOptions({
       limit: 24,
       orgSlug: params.org,
@@ -30,20 +62,10 @@ function OrganizationRoute() {
   const limitsQuery = useQuery(
     crpc.org.getMyPermission.queryOptions(
       { slug: params.org },
-      { enabled: !!orgQuery.data?.permissions.canCreate }
+      { enabled: !!orgData?.permissions.canCreate }
     )
   );
-
-  if (orgQuery.isLoading) {
-    return (
-      <div className="container py-10">
-        <Panel className="h-56 animate-pulse bg-muted/40" />
-      </div>
-    );
-  }
-
-  const orgData = orgQuery.data;
-  const projects = projectsQuery.data ?? [];
+  const projects = projectsData ?? [];
 
   if (!orgData?.org) {
     return (

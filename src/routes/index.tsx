@@ -1,36 +1,54 @@
-import { useQuery } from '@tanstack/react-query';
+import { useSuspenseQuery } from '@tanstack/react-query';
 import { Navigate, createFileRoute, useRouterState } from '@tanstack/react-router';
 
-import { authClient } from '@/lib/convex/auth-client';
 import { useCRPC } from '@/lib/convex/crpc';
+import { crpcOptions } from '@/lib/convex/crpc-options';
+import { fetchConvexLoaderQuery } from '@/lib/convex/server';
 
 export const Route = createFileRoute('/')({
+  loader: async ({ context }) => {
+    if (!context.loaderToken) {
+      return;
+    }
+
+    await Promise.all([
+      fetchConvexLoaderQuery(
+        context.queryClient,
+        crpcOptions.profile.findMyProfile.staticQueryOptions({}),
+        context.loaderToken
+      ),
+      fetchConvexLoaderQuery(
+        context.queryClient,
+        crpcOptions.org.findMyOrgs.staticQueryOptions({}),
+        context.loaderToken
+      ),
+    ]);
+  },
   component: IndexPage,
 });
 
 function IndexPage() {
-  const crpc = useCRPC();
-  const session = authClient.useSession();
+  const { loaderToken } = Route.useRouteContext();
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
   });
-  const profileQuery = useQuery(
-    crpc.profile.findMyProfile.queryOptions({}, { enabled: !!session.data?.user })
-  );
-  const orgsQuery = useQuery(
-    crpc.org.findMyOrgs.queryOptions({}, { enabled: !!session.data?.user })
-  );
 
-  if (session.isPending) {
-    return null;
-  }
-
-  if (!session.data?.user) {
+  if (!loaderToken) {
     return <Navigate search={{ redirect: pathname }} to="/auth" />;
   }
 
-  const user = profileQuery.data;
-  const orgs = orgsQuery.data?.teams;
+  return <AuthenticatedIndexPage />;
+}
+
+function AuthenticatedIndexPage() {
+  const crpc = useCRPC();
+  const { data: user } = useSuspenseQuery(
+    crpc.profile.findMyProfile.queryOptions({})
+  );
+  const { data: orgsData } = useSuspenseQuery(
+    crpc.org.findMyOrgs.queryOptions({})
+  );
+  const orgs = orgsData?.teams;
 
   return (
     <div>
