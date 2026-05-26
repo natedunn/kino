@@ -8,29 +8,18 @@ import {
   Scripts,
   createRootRouteWithContext,
 } from "@tanstack/react-router"
-import { createServerFn } from "@tanstack/react-start"
 import { TanStackDevtools } from "@tanstack/react-devtools"
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools"
 
 import { DefaultCatchBoundary } from "@/components/_default-catch-boundary"
 import { Providers } from "@/components/providers"
 import { Toaster } from "@/components/ui/sonner"
-import { getToken } from "@/lib/convex/auth-server"
 import appCss from "../styles.css?url"
-
-const getLoaderToken = createServerFn({ method: "GET" }).handler(async () => {
-  return await getToken()
-})
 
 export const Route = createRootRouteWithContext<{
   loaderToken?: string | null
   queryClient: QueryClient
 }>()({
-  beforeLoad: async () => {
-    return {
-      loaderToken: await getLoaderToken(),
-    }
-  },
   head: () => ({
     meta: [
       {
@@ -104,10 +93,8 @@ function RootDocument({ children }: { children: ReactNode }) {
 }
 
 function RootComponent() {
-  const { loaderToken } = Route.useRouteContext()
-
   return (
-    <Providers initialToken={loaderToken}>
+    <Providers>
       <Outlet />
     </Providers>
   )

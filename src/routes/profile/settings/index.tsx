@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useMutation, useSuspenseQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { useForm } from '@tanstack/react-form';
 import { Navigate, createFileRoute, useRouterState } from '@tanstack/react-router';
 
@@ -8,48 +8,28 @@ import { Label, LabelWrapper } from '@/components/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input-shadcn';
+import { authClient } from '@/lib/convex/auth-client';
 import { useCRPC } from '@/lib/convex/crpc';
-import { crpcOptions } from '@/lib/convex/crpc-options';
-import { fetchConvexLoaderQuery } from '@/lib/convex/server';
 import { cn } from '@/lib/utils';
 
 export const Route = createFileRoute('/profile/settings/')({
-  loader: async ({ context }) => {
-    if (!context.loaderToken) {
-      return;
-    }
-
-    await fetchConvexLoaderQuery(
-      context.queryClient,
-      crpcOptions.profile.findMyProfile.staticQueryOptions({}),
-      context.loaderToken
-    );
-  },
   component: ProfileSettingsRoute,
 });
 
 function ProfileSettingsRoute() {
-  const { loaderToken } = Route.useRouteContext();
+  const crpc = useCRPC();
+  const session = authClient.useSession();
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
   });
-
-  if (!loaderToken) {
-    return <Navigate search={{ redirect: pathname }} to="/auth" />;
-  }
-
-  return <AuthenticatedProfileSettingsRoute />;
-}
-
-function AuthenticatedProfileSettingsRoute() {
-  const crpc = useCRPC();
   const uploadUrlMutation = useMutation(crpc.profile.generateAvatarUploadUrl.mutationOptions());
   const syncMetadataMutation = useMutation(crpc.profile.syncMetadata.mutationOptions());
   const updateMutation = useMutation(crpc.profile.update.mutationOptions());
   const [formError, setFormError] = useState<string | null>(null);
-  const { data: profile } = useSuspenseQuery(
-    crpc.profile.findMyProfile.queryOptions({})
+  const profileQuery = useQuery(
+    crpc.profile.findMyProfile.queryOptions({}, { enabled: !!session.data?.user })
   );
+  const profile = profileQuery.data;
 
   const form = useForm({
     defaultValues: {
@@ -94,6 +74,7 @@ function AuthenticatedProfileSettingsRoute() {
           name: updatedProfile.name ?? value.name,
           username: updatedProfile.username ?? value.username,
         });
+        await profileQuery.refetch();
       } catch (error) {
         setFormError(error instanceof Error ? error.message : 'Unable to update profile');
       }
@@ -108,6 +89,14 @@ function AuthenticatedProfileSettingsRoute() {
       username: profile.username ?? '',
     });
   }, [form, profile?.id, profile?.name, profile?.username]);
+
+  if (session.isPending) {
+    return null;
+  }
+
+  if (!session.data?.user) {
+    return <Navigate search={{ redirect: pathname }} to="/auth" />;
+  }
 
   if (!profile) {
     return null;
@@ -203,7 +192,7 @@ function AuthenticatedProfileSettingsRoute() {
                 <LabelWrapper>
                   <Label>Email</Label>
                 </LabelWrapper>
-                <Input disabled value={profile.email ?? ''} />
+                <Input disabled value={profile.email ?? session.data.user.email ?? ''} />
               </div>
             </div>
 
