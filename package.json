@@ -10,6 +10,8 @@
     "build:cloudflare": "sh scripts/cloudflare-build.sh",
     "deploy": "wrangler deploy --config dist/server/wrangler.json --keep-vars",
     "deploy:preview": "sh scripts/cloudflare-preview-upload.sh",
+    "preview:name": "sh scripts/preview-name.sh",
+    "preview:cleanup:cloudflare": "node scripts/cleanup-cloudflare-preview.mjs",
     "cf-typegen": "wrangler types",
     "preview": "vite preview",
     "test": "vitest run",

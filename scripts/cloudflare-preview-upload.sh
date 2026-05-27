@@ -7,10 +7,6 @@ if [ -z "$branch" ] && command -v git >/dev/null 2>&1; then
 fi
 branch="${branch:-preview}"
 
-alias_name="$(printf '%s' "$branch" \
-  | tr '[:upper:]' '[:lower:]' \
-  | sed 's/[^a-z0-9-]/-/g; s/--*/-/g; s/^-//; s/-$//' \
-  | cut -c 1-40)"
-alias_name="${alias_name:-preview}"
+alias_name="$(sh scripts/preview-name.sh "$branch" 40)"
 
 wrangler versions upload --config dist/server/wrangler.json --keep-vars --preview-alias "$alias_name"

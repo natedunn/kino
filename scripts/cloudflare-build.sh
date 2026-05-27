@@ -10,11 +10,7 @@ branch="${branch:-local}"
 production_branch="${PRODUCTION_BRANCH:-main}"
 build_cmd='VITE_CONVEX_SITE_URL="$(printf "%s" "$VITE_CONVEX_URL" | sed "s/\.convex\.cloud$/.convex.site/")" pnpm run build'
 
-preview_name="$(printf '%s' "$branch" \
-  | tr '[:upper:]' '[:lower:]' \
-  | sed 's/[^a-z0-9-]/-/g; s/--*/-/g; s/^-//; s/-$//' \
-  | cut -c 1-48)"
-preview_name="${preview_name:-preview}"
+preview_name="$(sh scripts/preview-name.sh "$branch" 48)"
 
 if [ "$branch" = "$production_branch" ]; then
   if [ -z "${CONVEX_PROD_DEPLOY_KEY:-}" ]; then
