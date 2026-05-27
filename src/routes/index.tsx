@@ -1,5 +1,6 @@
 import { useSuspenseQuery } from "@tanstack/react-query"
 import {
+  Link,
   Navigate,
   createFileRoute,
   useRouterState,
@@ -58,9 +59,14 @@ function AuthenticatedIndexPage() {
       ) : (
         orgs.map((org) => {
           return (
-            <div key={org.id}>
-              <span>{org.name}</span>
-            </div>
+            <Link
+              key={org.id}
+              className="link-text block"
+              params={{ org: org.slug }}
+              to="/@{$org}"
+            >
+              {org.name}
+            </Link>
           )
         })
       )}
