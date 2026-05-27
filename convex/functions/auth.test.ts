@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { forwardedAuthRequestUrl } from './auth';
+import { forwardedAuthRequestContext, forwardedAuthRequestUrl } from './auth';
 
 const ORIGINAL_ENV = { ...process.env };
 
@@ -66,5 +66,29 @@ describe('forwardedAuthRequestUrl', () => {
     });
 
     expect(forwardedAuthRequestUrl(request)).toBeNull();
+  });
+});
+
+describe('forwardedAuthRequestContext', () => {
+  it('returns a Better Auth hook context patch with the forwarded request', () => {
+    resetEnv({
+      CLOUDFLARE_WORKER_NAME: 'kino',
+      SITE_URL: 'https://usekino.com',
+    });
+
+    const request = new Request('https://scrupulous-lemming-700.convex.site/api/auth/sign-in/social', {
+      headers: {
+        'x-better-auth-forwarded-host': 'preview-auth-oauth-debug-kino.hello-fc8.workers.dev',
+        'x-better-auth-forwarded-proto': 'https',
+      },
+      method: 'POST',
+    });
+
+    const context = forwardedAuthRequestContext(request);
+
+    expect(context?.request.url).toBe(
+      'https://preview-auth-oauth-debug-kino.hello-fc8.workers.dev/api/auth/sign-in/social'
+    );
+    expect(context?.request.method).toBe('POST');
   });
 });
