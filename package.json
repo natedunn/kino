@@ -11,6 +11,7 @@
     "deploy": "wrangler deploy --config dist/server/wrangler.json --keep-vars",
     "deploy:preview": "sh scripts/cloudflare-preview-upload.sh",
     "preview:name": "sh scripts/preview-name.sh",
+    "preview:cleanup": "node scripts/cleanup-stale-previews.mjs",
     "preview:cleanup:cloudflare": "node scripts/cleanup-cloudflare-preview.mjs",
     "preview:cleanup:stale-cloudflare": "node scripts/cleanup-stale-cloudflare-previews.mjs",
     "preview:cleanup:convex": "node scripts/cleanup-convex-preview.mjs",
