@@ -22,3 +22,4 @@ convex/.env
 /.yalc
 yalc.lock
 .claude/settings.local.json
+.agent-contexts/
