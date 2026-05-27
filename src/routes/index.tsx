@@ -59,7 +59,12 @@ function AuthenticatedIndexPage() {
       ) : (
         orgs.map((org) => {
           return (
-            <Link key={org.id} params={{ org: org.slug }} to="/@{$org}">
+            <Link
+              key={org.id}
+              className="link-text block"
+              params={{ org: org.slug }}
+              to="/@{$org}"
+            >
               {org.name}
             </Link>
           )
