@@ -15,6 +15,9 @@ jobs:
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_WORKER_NAME: kino
+      CONVEX_MANAGEMENT_TOKEN: ${{ secrets.CONVEX_MANAGEMENT_TOKEN }}
+      CONVEX_TEAM_SLUG: ${{ vars.CONVEX_TEAM_SLUG || 'nate-dunn' }}
+      CONVEX_PROJECT_SLUG: ${{ vars.CONVEX_PROJECT_SLUG || 'kino' }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -44,8 +47,5 @@ jobs:
       - name: Delete Cloudflare preview Worker versions
         run: node scripts/cleanup-cloudflare-preview.mjs "${{ steps.preview.outputs.cloudflare_alias }}"
 
-      - name: Convex preview cleanup note
-        run: |
-          echo "Convex preview deployment name: ${{ steps.preview.outputs.convex_preview }}"
-          echo "Convex CLI currently has create/select/token commands but no deployment delete command in this repo's installed version."
-          echo "Delete this Convex preview deployment from the Convex dashboard if it should be removed immediately."
+      - name: Delete Convex preview deployment
+        run: node scripts/cleanup-convex-preview.mjs "${{ steps.preview.outputs.convex_preview }}"
