@@ -1,36 +1,53 @@
-import { useQuery } from '@tanstack/react-query';
-import { Navigate, createFileRoute, useRouterState } from '@tanstack/react-router';
+import { useSuspenseQuery } from "@tanstack/react-query"
+import {
+  Navigate,
+  createFileRoute,
+  useRouterState,
+} from "@tanstack/react-router"
 
-import { authClient } from '@/lib/convex/auth-client';
-import { useCRPC } from '@/lib/convex/crpc';
+import { useCRPC } from "@/lib/convex/crpc"
+import { crpcServer } from "@/lib/convex/crpc-server"
 
-export const Route = createFileRoute('/')({
+export const Route = createFileRoute("/")({
+  loader: async ({ context }) => {
+    if (!context.loaderToken) {
+      return
+    }
+
+    await Promise.all([
+      context.queryClient.ensureQueryData(
+        crpcServer.profile.findMyProfile.queryOptions({})
+      ),
+      context.queryClient.ensureQueryData(
+        crpcServer.org.findMyOrgs.queryOptions({})
+      ),
+    ])
+  },
   component: IndexPage,
-});
+})
 
 function IndexPage() {
-  const crpc = useCRPC();
-  const session = authClient.useSession();
+  const { loaderToken } = Route.useRouteContext()
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
-  });
-  const profileQuery = useQuery(
-    crpc.profile.findMyProfile.queryOptions({}, { enabled: !!session.data?.user })
-  );
-  const orgsQuery = useQuery(
-    crpc.org.findMyOrgs.queryOptions({}, { enabled: !!session.data?.user })
-  );
+  })
 
-  if (session.isPending) {
-    return null;
+  if (!loaderToken) {
+    return <Navigate search={{ redirect: pathname }} to="/auth" />
   }
 
-  if (!session.data?.user) {
-    return <Navigate search={{ redirect: pathname }} to="/auth" />;
-  }
+  return <AuthenticatedIndexPage />
+}
 
-  const user = profileQuery.data;
-  const orgs = orgsQuery.data?.teams;
+function AuthenticatedIndexPage() {
+  const crpc = useCRPC()
+  const { data: user } = useSuspenseQuery(
+    crpc.profile.findMyProfile.queryOptions({})
+  )
+  const { data: orgsData } = useSuspenseQuery(
+    crpc.org.findMyOrgs.queryOptions({})
+  )
+  const orgs = orgsData?.teams
 
   return (
     <div>
@@ -44,9 +61,9 @@ function IndexPage() {
             <div key={org.id}>
               <span>{org.name}</span>
             </div>
-          );
+          )
         })
       )}
     </div>
-  );
+  )
 }

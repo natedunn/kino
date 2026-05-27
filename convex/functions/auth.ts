@@ -25,7 +25,7 @@ function isSuperAdminEmail(email: string) {
   return !!configured && configured.toLowerCase() === email.toLowerCase();
 }
 
-function forwardedAuthRequestUrl(request: Request | undefined) {
+export function forwardedAuthRequestUrl(request: Request | undefined) {
   if (!request) return null;
 
   const forwardedHost = request.headers.get('x-better-auth-forwarded-host');
@@ -46,6 +46,18 @@ function forwardedAuthRequestUrl(request: Request | undefined) {
   }
 }
 
+export function forwardedAuthRequestContext(request: Request | undefined) {
+  const forwardedUrl = forwardedAuthRequestUrl(request);
+  if (!forwardedUrl || !request) return null;
+
+  return {
+    request: new Request(forwardedUrl, {
+      headers: request.headers,
+      method: request.method,
+    }),
+  };
+}
+
 function forwardedAuthRequestPlugin() {
   return {
     id: 'forwarded-auth-request',
@@ -59,13 +71,10 @@ function forwardedAuthRequestPlugin() {
             );
           },
           handler: createAuthMiddleware(async (ctx: any) => {
-            const forwardedUrl = forwardedAuthRequestUrl(ctx.request);
-            if (!forwardedUrl) return;
+            const context = forwardedAuthRequestContext(ctx.request);
+            if (!context) return;
 
-            ctx.request = new Request(forwardedUrl, {
-              headers: ctx.request.headers,
-              method: ctx.request.method,
-            });
+            return { context };
           }),
         },
       ],

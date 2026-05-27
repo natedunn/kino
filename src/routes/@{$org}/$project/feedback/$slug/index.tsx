@@ -33,11 +33,7 @@ import {
 } from "@/components/ui/tooltip"
 import { StatusIcon } from "@/icons"
 import { useCRPC } from "@/lib/convex/crpc"
-import { crpcOptions } from "@/lib/convex/crpc-options"
-import {
-  fetchConvexLoaderQuery,
-  prefetchConvexLoaderQuery,
-} from "@/lib/convex/server"
+import { crpcServer } from "@/lib/convex/crpc-server"
 import { useSidebarState } from "@/lib/hooks/use-sidebar-state"
 import { cn } from "@/lib/utils"
 import {
@@ -101,44 +97,25 @@ type FeedbackEventData = {
   targetProfile?: ProfileSummary | null
 }
 
-type ProjectDetailsData = {
-  permissions: {
-    canEdit: boolean
-  }
-  project?: {
-    id: string
-  } | null
-}
-
-type FeedbackDetailData = {
-  feedback?: {
-    id: string
-  } | null
-} | null
-
 export const Route = createFileRoute("/@{$org}/$project/feedback/$slug/")({
   component: FeedbackDetailRoute,
   loader: async ({ context, params }) => {
-    const projectData = await fetchConvexLoaderQuery<ProjectDetailsData | null>(
-      context.queryClient,
-      crpcOptions.project.getDetails.staticQueryOptions({
+    const projectData = await context.queryClient.ensureQueryData(
+      crpcServer.project.getDetails.queryOptions({
         orgSlug: params.org,
         slug: params.project,
-      }),
-      context.loaderToken
+      })
     )
 
     if (!projectData?.project?.id) {
       throw notFound()
     }
 
-    const feedbackData = await fetchConvexLoaderQuery<FeedbackDetailData>(
-      context.queryClient,
-      crpcOptions.feedback.getBySlug.staticQueryOptions({
+    const feedbackData = await context.queryClient.ensureQueryData(
+      crpcServer.feedback.getBySlug.queryOptions({
         projectId: projectData.project.id,
         slug: params.slug,
-      }),
-      context.loaderToken
+      })
     )
 
     if (!feedbackData?.feedback) {
@@ -146,51 +123,35 @@ export const Route = createFileRoute("/@{$org}/$project/feedback/$slug/")({
     }
 
     await Promise.all([
-      prefetchConvexLoaderQuery(
-        context.queryClient,
-        crpcOptions.feedbackComment.listByFeedback.staticQueryOptions({
+      context.queryClient.ensureQueryData(
+        crpcServer.feedbackComment.listByFeedback.queryOptions({
           feedbackId: feedbackData.feedback.id,
-        }),
-        context.loaderToken
+        })
       ),
-      prefetchConvexLoaderQuery(
-        context.queryClient,
-        crpcOptions.feedbackEvent.listByFeedback.staticQueryOptions({
+      context.queryClient.ensureQueryData(
+        crpcServer.feedbackEvent.listByFeedback.queryOptions({
           feedbackId: feedbackData.feedback.id,
-        }),
-        context.loaderToken
+        })
       ),
-      prefetchConvexLoaderQuery(
-        context.queryClient,
-        crpcOptions.profile.findMyProfile.staticQueryOptions(
-          {},
-          { skipUnauth: true }
-        ),
-        context.loaderToken
+      context.queryClient.ensureQueryData(
+        crpcServer.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
       ),
-      prefetchConvexLoaderQuery(
-        context.queryClient,
-        crpcOptions.feedbackBoard.listProjectBoards.staticQueryOptions({
+      context.queryClient.ensureQueryData(
+        crpcServer.feedbackBoard.listProjectBoards.queryOptions({
           projectId: projectData.project.id,
-        }),
-        context.loaderToken
+        })
       ),
-      prefetchConvexLoaderQuery(
-        context.queryClient,
-        {
-          ...crpcOptions.projectMember.listAssignableMembers.staticQueryOptions(
-            {
+      projectData.permissions.canEdit
+        ? context.queryClient.ensureQueryData(
+            crpcServer.projectMember.listAssignableMembers.queryOptions({
               projectId: projectData.project.id,
-            }
-          ),
-          enabled: !!projectData.permissions.canEdit,
-        },
-        context.loaderToken
-      ),
+            })
+          )
+        : Promise.resolve(null),
     ])
   },
   pendingComponent: () => <RoutePending variant="detail" />,
-  pendingMs: 150,
+  pendingMs: 600,
 })
 
 function FeedbackDetailRoute() {
@@ -232,7 +193,7 @@ function FeedbackDetailRoute() {
       feedbackId: feedback.id,
     })
   )
-  const profileQuery = useQuery(
+  const profileQuery = useSuspenseQuery(
     crpc.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
   )
   const boardsQuery = useQuery(

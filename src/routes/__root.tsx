@@ -1,5 +1,6 @@
 import type { ReactNode } from "react"
 import type { QueryClient } from "@tanstack/react-query"
+import type { ConvexQueryClient } from "kitcn/react"
 
 import {
   HeadContent,
@@ -8,6 +9,7 @@ import {
   Scripts,
   createRootRouteWithContext,
 } from "@tanstack/react-router"
+import { createServerFn } from "@tanstack/react-start"
 import { TanStackDevtools } from "@tanstack/react-devtools"
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools"
 
@@ -16,10 +18,27 @@ import { Providers } from "@/components/providers"
 import { Toaster } from "@/components/ui/sonner"
 import appCss from "../styles.css?url"
 
+const getLoaderToken = createServerFn({ method: "GET" }).handler(async () => {
+  const { getServerAuthToken } = await import("@/lib/convex/auth-start-token")
+  return await getServerAuthToken()
+})
+
 export const Route = createRootRouteWithContext<{
   loaderToken?: string | null
+  convexQueryClient: ConvexQueryClient
   queryClient: QueryClient
 }>()({
+  beforeLoad: async ({ context }) => {
+    const loaderToken = await getLoaderToken()
+
+    if (loaderToken) {
+      context.convexQueryClient.serverHttpClient?.setAuth(loaderToken)
+    }
+
+    return {
+      loaderToken,
+    }
+  },
   head: () => ({
     meta: [
       {
@@ -93,8 +112,13 @@ function RootDocument({ children }: { children: ReactNode }) {
 }
 
 function RootComponent() {
+  const { convexQueryClient, loaderToken } = Route.useRouteContext()
+
   return (
-    <Providers>
+    <Providers
+      convexQueryClient={convexQueryClient}
+      initialToken={loaderToken}
+    >
       <Outlet />
     </Providers>
   )

@@ -8,12 +8,9 @@ fi
 branch="${branch:-local}"
 
 production_branch="${PRODUCTION_BRANCH:-main}"
+build_cmd='VITE_CONVEX_SITE_URL="$(printf "%s" "$VITE_CONVEX_URL" | sed "s/\.convex\.cloud$/.convex.site/")" pnpm run build'
 
-preview_name="$(printf '%s' "$branch" \
-  | tr '[:upper:]' '[:lower:]' \
-  | sed 's/[^a-z0-9-]/-/g; s/--*/-/g; s/^-//; s/-$//' \
-  | cut -c 1-48)"
-preview_name="${preview_name:-preview}"
+preview_name="$(sh scripts/preview-name.sh "$branch" 48)"
 
 if [ "$branch" = "$production_branch" ]; then
   if [ -z "${CONVEX_PROD_DEPLOY_KEY:-}" ]; then
@@ -23,7 +20,7 @@ if [ "$branch" = "$production_branch" ]; then
 
   export CONVEX_DEPLOY_KEY="$CONVEX_PROD_DEPLOY_KEY"
   npx convex deploy \
-    --cmd "pnpm run build" \
+    --cmd "$build_cmd" \
     --cmd-url-env-var-name VITE_CONVEX_URL
 else
   if [ -z "${CONVEX_PREVIEW_DEPLOY_KEY:-}" ]; then
@@ -33,7 +30,11 @@ else
 
   export CONVEX_DEPLOY_KEY="$CONVEX_PREVIEW_DEPLOY_KEY"
   npx convex deploy \
-    --preview-create "$preview_name" \
-    --cmd "pnpm run build" \
+    --preview-name "$preview_name" \
+    --cmd "$build_cmd" \
     --cmd-url-env-var-name VITE_CONVEX_URL
+
+  if [ "${CONVEX_PREVIEW_AUTO_JWKS:-1}" != "0" ]; then
+    node scripts/refresh-convex-preview-jwks.mjs "$preview_name"
+  fi
 fi

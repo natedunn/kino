@@ -39,6 +39,7 @@ const notifications = [
 
 type MainNavProps = {
 	children?: React.ReactNode;
+	isUserPending?: boolean;
 	org?: {
 		slug: string;
 		name: string;
@@ -46,7 +47,7 @@ type MainNavProps = {
 	user: API['profile']['findMyProfile'] | null | undefined;
 };
 
-export const MainNav = ({ children, user }: MainNavProps) => {
+export const MainNav = ({ children, isUserPending = false, user }: MainNavProps) => {
 	const [isCommandOpen, setIsCommandOpen] = React.useState(false);
 	const routerState = useRouterState();
 
@@ -188,6 +189,11 @@ export const MainNav = ({ children, user }: MainNavProps) => {
 
 							{user ? (
 								<UserDropdown user={user} />
+							) : isUserPending ? (
+								<div className='flex h-9 w-28 animate-pulse items-center gap-2 rounded-md px-3'>
+									<div className='size-6 rounded-full bg-muted' />
+									<div className='hidden h-4 w-12 rounded bg-muted sm:block' />
+								</div>
 							) : (
 								<Link
 									to='/auth'

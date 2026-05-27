@@ -2,48 +2,88 @@
 
 import { useQueryClient } from "@tanstack/react-query"
 import { ConvexAuthProvider } from "kitcn/auth/client"
-import {
-  ConvexReactClient,
-  getConvexQueryClientSingleton,
-  useAuthStore,
-} from "kitcn/react"
-import { useEffect } from "react"
+import { type ConvexQueryClient, useAuthStore, useAuthValue } from "kitcn/react"
+import { useEffect, useRef } from "react"
 import type { ReactNode } from "react"
 
 import { authClient } from "@/lib/convex/auth-client"
 import { CRPCProvider } from "@/lib/convex/crpc"
 
-const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL!)
-
 export function AppConvexProvider({
+  children,
+  convexQueryClient,
+  initialToken,
+}: {
+  children: ReactNode
+  convexQueryClient: ConvexQueryClient
+  initialToken?: string | null
+}) {
+  return (
+    <ConvexAuthProvider
+      authClient={authClient}
+      client={convexQueryClient.convexClient}
+      initialToken={initialToken ?? undefined}
+    >
+      <InitialAuthStoreBootstrap initialToken={initialToken}>
+        <QueryProvider convexQueryClient={convexQueryClient}>
+          {children}
+        </QueryProvider>
+      </InitialAuthStoreBootstrap>
+    </ConvexAuthProvider>
+  )
+}
+
+function InitialAuthStoreBootstrap({
   children,
   initialToken,
 }: {
   children: ReactNode
   initialToken?: string | null
 }) {
-  return (
-    <ConvexAuthProvider
-      authClient={authClient}
-      client={convex}
-      initialToken={initialToken ?? undefined}
-    >
-      <QueryProvider>{children}</QueryProvider>
-    </ConvexAuthProvider>
-  )
+  const authStore = useAuthStore()
+  const didBootstrapRef = useRef(false)
+  const token = useAuthValue("token")
+  const isAuthenticated = useAuthValue("isAuthenticated")
+  const isLoading = useAuthValue("isLoading")
+
+  if (!didBootstrapRef.current) {
+    didBootstrapRef.current = true
+
+    if (initialToken) {
+      authStore.set("token", initialToken)
+      authStore.set("expiresAt", decodeJwtExp(initialToken))
+      authStore.set("isAuthenticated", true)
+      authStore.set("isLoading", false)
+      authStore.set("sessionSyncGraceUntil", null)
+    }
+  }
+
+  if (initialToken && token && isLoading && !isAuthenticated) {
+    // Keep SSR-hydrated auth-bound queries stable while Better Auth session
+    // state catches up to the server-provided Convex token.
+    authStore.set("isAuthenticated", true)
+  }
+
+  return children
 }
 
-function QueryProvider({ children }: { children: ReactNode }) {
+function QueryProvider({
+  children,
+  convexQueryClient,
+}: {
+  children: ReactNode
+  convexQueryClient: ConvexQueryClient
+}) {
   const authStore = useAuthStore()
   const queryClient = useQueryClient()
-  const convexQueryClient = getConvexQueryClientSingleton({
-    authStore,
-    convex,
-    queryClient,
-  })
+  convexQueryClient.updateAuthStore(authStore)
+  convexQueryClient.connect(queryClient)
 
   return (
-    <CRPCProvider convexClient={convex} convexQueryClient={convexQueryClient}>
+    <CRPCProvider
+      convexClient={convexQueryClient.convexClient}
+      convexQueryClient={convexQueryClient}
+    >
       <ConvexTokenBootstrap />
       {children}
     </CRPCProvider>

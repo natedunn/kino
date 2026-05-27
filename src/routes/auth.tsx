@@ -1,8 +1,9 @@
 'use client';
 
+import { useEffect } from 'react';
 import { ChevronLeft } from 'lucide-react';
 import { useMutation } from '@tanstack/react-query';
-import { createFileRoute, Link, Navigate } from '@tanstack/react-router';
+import { createFileRoute, Link } from '@tanstack/react-router';
 import { useAuth } from 'kitcn/react';
 
 import { Button } from '@/components/ui/button';
@@ -12,17 +13,37 @@ export const Route = createFileRoute('/auth')({
   component: AuthPage,
 });
 
+export function getSafeRedirectTarget(redirect: string | undefined) {
+  if (!redirect) {
+    return '/';
+  }
+
+  try {
+    const resolved = new URL(redirect, 'https://usekino.com');
+    return resolved.pathname === '/auth' ? '/' : `${resolved.pathname}${resolved.search}${resolved.hash}`;
+  } catch {
+    return '/';
+  }
+}
+
 function AuthPage() {
   const search = Route.useSearch() as { redirect?: string };
   const { hasSession, isLoading } = useAuth();
   const session = authClient.useSession();
   const signOut = useMutation(useSignOutMutationOptions());
+  const redirectTarget = getSafeRedirectTarget(search.redirect);
+
+  useEffect(() => {
+    if (!session.data?.user) return;
+
+    window.location.replace(redirectTarget);
+  }, [redirectTarget, session.data?.user]);
 
   if (isLoading) {
     return null;
   }
 
-  if (hasSession && session.data?.user) {
+  if (session.data?.user) {
     return (
       <main className="mx-auto flex min-h-[60vh] max-w-md flex-col justify-center gap-6 px-6 py-16">
         <div className="space-y-2">
@@ -30,7 +51,7 @@ function AuthPage() {
           <h1 className="text-3xl font-semibold tracking-tight">
             {session.data.user.name || session.data.user.email}
           </h1>
-          <p className="text-sm text-muted-foreground">{session.data.user.email}</p>
+          <p className="text-sm text-muted-foreground">Redirecting…</p>
         </div>
         <div className="flex flex-wrap gap-3">
           <Button
@@ -52,7 +73,7 @@ function AuthPage() {
   }
 
   if (hasSession) {
-    return <Navigate to="/" />;
+    return null;
   }
 
   return (
@@ -62,7 +83,7 @@ function AuthPage() {
           <Button
             onClick={async () => {
               const callbackURL = new URL(
-                search.redirect ?? '/',
+                getSafeRedirectTarget(search.redirect),
                 window.location.origin,
               ).toString();
 

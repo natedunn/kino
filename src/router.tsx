@@ -1,12 +1,18 @@
 import { setupRouterSsrQueryIntegration } from '@tanstack/react-router-ssr-query';
 import { createRouter } from '@tanstack/react-router';
-import { getAppQueryClient, hydrationConfig } from './lib/convex/query-client';
+import {
+  getAppConvexQueryClient,
+  getAppQueryClient,
+  hydrationConfig,
+} from './lib/convex/query-client';
 import { routeTree } from './routeTree.gen';
 
 export function getRouter() {
   const queryClient = getAppQueryClient();
+  const convexQueryClient = getAppConvexQueryClient(queryClient);
   const router = createRouter({
     context: {
+      convexQueryClient,
       queryClient,
     },
     routeTree,
