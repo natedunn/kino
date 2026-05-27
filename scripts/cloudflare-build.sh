@@ -34,7 +34,7 @@ else
 
   export CONVEX_DEPLOY_KEY="$CONVEX_PREVIEW_DEPLOY_KEY"
   npx convex deploy \
-    --preview-create "$preview_name" \
+    --preview-name "$preview_name" \
     --cmd "$build_cmd" \
     --cmd-url-env-var-name VITE_CONVEX_URL
 fi
