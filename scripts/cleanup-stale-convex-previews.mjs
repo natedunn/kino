@@ -1,10 +1,14 @@
 #!/usr/bin/env node
 
+import { execFileSync } from "node:child_process"
 import { existsSync, readFileSync } from "node:fs"
 
 loadEnvFiles()
 
-const previewIdentifier = process.argv[2]
+const args = process.argv.slice(2)
+const shouldDelete = args.includes("--delete")
+const remote =
+  getArgValue("--remote") ?? process.env.PREVIEW_CLEANUP_REMOTE ?? "origin"
 const token =
   process.env.CONVEX_MANAGEMENT_TOKEN ??
   process.env.CONVEX_API_TOKEN ??
@@ -16,19 +20,12 @@ const teamSlug =
 const projectSlug = process.env.CONVEX_PROJECT_SLUG ?? "kino"
 const projectIdFromEnv = process.env.CONVEX_PROJECT_ID
 
-if (!previewIdentifier) {
-  console.error("Usage: cleanup-convex-preview.mjs <preview-identifier>")
-  process.exit(1)
-}
-
 if (!token) {
   console.log(
-    "Skipping Convex preview cleanup: missing CONVEX_MANAGEMENT_TOKEN."
+    "Skipping stale Convex preview cleanup: missing CONVEX_MANAGEMENT_TOKEN."
   )
   process.exit(0)
 }
-
-const baseUrl = "https://api.convex.dev/v1"
 
 function loadEnvFiles() {
   for (const path of [".env.local", ".env"]) {
@@ -46,6 +43,36 @@ function loadEnvFiles() {
     }
   }
 }
+
+function getArgValue(name) {
+  const index = args.indexOf(name)
+  if (index === -1) return null
+  return args[index + 1] ?? null
+}
+
+function previewName(branch, maxLength) {
+  const normalized = branch
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, maxLength)
+
+  return normalized || "preview"
+}
+
+function listRemoteBranches() {
+  const output = execFileSync("git", ["ls-remote", "--heads", remote], {
+    encoding: "utf8",
+  })
+
+  return output
+    .split("\n")
+    .map((line) => line.trim().match(/refs\/heads\/(.+)$/)?.[1])
+    .filter(Boolean)
+}
+
+const baseUrl = "https://api.convex.dev/v1"
 
 async function convexFetch(path, init = {}) {
   const response = await fetch(`${baseUrl}${path}`, {
@@ -71,6 +98,14 @@ async function convexFetch(path, init = {}) {
   return body
 }
 
+function safeJson(text) {
+  try {
+    return JSON.parse(text)
+  } catch {
+    return { message: text }
+  }
+}
+
 function formatConvexAuthError(message) {
   if (
     !message.toLowerCase().includes("unauthorized") &&
@@ -85,14 +120,6 @@ function formatConvexAuthError(message) {
     "Use a valid CONVEX_MANAGEMENT_TOKEN with access to this team/project.",
     `Original error: ${message}`,
   ].join(" ")
-}
-
-function safeJson(text) {
-  try {
-    return JSON.parse(text)
-  } catch {
-    return { message: text }
-  }
 }
 
 async function getProjectId() {
@@ -114,6 +141,9 @@ async function getProjectId() {
 }
 
 async function main() {
+  const activePreviewIdentifiers = new Set(
+    listRemoteBranches().map((branch) => previewName(branch, 48))
+  )
   const projectId = await getProjectId()
   const deployments = await convexFetch(
     `/projects/${encodeURIComponent(
@@ -121,34 +151,44 @@ async function main() {
     )}/list_deployments?deploymentType=preview&isDefault=false`
   )
 
-  const deployment = deployments.find(
-    (item) =>
-      item?.kind === "cloud" &&
-      item?.deploymentType === "preview" &&
-      item?.previewIdentifier === previewIdentifier
+  const staleDeployments = deployments.filter(
+    (deployment) =>
+      deployment?.kind === "cloud" &&
+      deployment?.deploymentType === "preview" &&
+      deployment?.previewIdentifier &&
+      !activePreviewIdentifiers.has(deployment.previewIdentifier)
   )
 
-  if (!deployment) {
+  if (staleDeployments.length === 0) {
     console.log(
-      `No Convex preview deployment found for preview identifier '${previewIdentifier}'.`
+      `No stale Convex preview deployments found for project '${teamSlug}/${projectSlug}'.`
     )
     return
   }
 
-  if (!deployment.name) {
-    throw new Error(
-      `Convex preview deployment '${previewIdentifier}' is missing a deployment name.`
+  const mode = shouldDelete ? "Deleting" : "Dry run: would delete"
+  console.log(
+    `${mode} ${staleDeployments.length} stale Convex preview deployment(s) for project '${teamSlug}/${projectSlug}'.`
+  )
+
+  for (const deployment of staleDeployments) {
+    const label = `${deployment.name} preview='${deployment.previewIdentifier}'`
+
+    if (!shouldDelete) {
+      console.log(`- ${label}`)
+      continue
+    }
+
+    await convexFetch(
+      `/deployments/${encodeURIComponent(deployment.name)}/delete`,
+      { method: "POST" }
     )
+    console.log(`Deleted ${label}.`)
   }
 
-  await convexFetch(
-    `/deployments/${encodeURIComponent(deployment.name)}/delete`,
-    { method: "POST" }
-  )
-
-  console.log(
-    `Deleted Convex preview deployment ${deployment.name} for preview identifier '${previewIdentifier}'.`
-  )
+  if (!shouldDelete) {
+    console.log("Run again with --delete to delete these deployments.")
+  }
 }
 
 try {

@@ -14,6 +14,7 @@
     "preview:cleanup:cloudflare": "node scripts/cleanup-cloudflare-preview.mjs",
     "preview:cleanup:stale-cloudflare": "node scripts/cleanup-stale-cloudflare-previews.mjs",
     "preview:cleanup:convex": "node scripts/cleanup-convex-preview.mjs",
+    "preview:cleanup:stale-convex": "node scripts/cleanup-stale-convex-previews.mjs",
     "cf-typegen": "wrangler types",
     "preview": "vite preview",
     "test": "vitest run",

@@ -1,5 +1,9 @@
 #!/usr/bin/env node
 
+import { existsSync, readFileSync } from "node:fs"
+
+loadEnvFiles()
+
 const alias = process.argv[2]
 const accountId = process.env.CLOUDFLARE_ACCOUNT_ID ?? process.env.CF_ACCOUNT_ID
 const apiToken = process.env.CLOUDFLARE_API_TOKEN ?? process.env.CF_API_TOKEN
@@ -30,6 +34,23 @@ const maxAttempts = Number.parseInt(
   10
 )
 
+function loadEnvFiles() {
+  for (const path of [".env.local", ".env"]) {
+    if (!existsSync(path)) continue
+
+    const lines = readFileSync(path, "utf8").split(/\r?\n/)
+    for (const line of lines) {
+      const trimmed = line.trim()
+      if (!trimmed || trimmed.startsWith("#")) continue
+
+      const match = trimmed.match(/^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/)
+      if (!match || process.env[match[1]] !== undefined) continue
+
+      process.env[match[1]] = match[2].replace(/^['"]|['"]$/g, "")
+    }
+  }
+}
+
 async function cloudflareFetch(url, init = {}, { throwOnError = true } = {}) {
   const response = await fetch(url, {
     ...init,
@@ -52,6 +73,23 @@ async function cloudflareFetch(url, init = {}, { throwOnError = true } = {}) {
   }
 
   return { ok: true, body }
+}
+
+function formatCloudflareAuthError(message) {
+  if (
+    !message.toLowerCase().includes("authentication failed") &&
+    !message.toLowerCase().includes("authentication scheme")
+  ) {
+    return message
+  }
+
+  return [
+    `Cloudflare API auth failed for account '${accountId}'.`,
+    "Use a Cloudflare API Token, not a Global API Key.",
+    "The token needs permission to read/delete Worker versions for this account.",
+    "If the GitHub cleanup action works but this local command fails, your local .env token does not match the GitHub secret.",
+    `Original error: ${message}`,
+  ].join(" ")
 }
 
 async function listVersions() {
@@ -123,28 +161,38 @@ async function deleteMatchingVersions() {
   return { blockedByLatest, deleted, found: matchingVersions.length }
 }
 
-for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-  const result = await deleteMatchingVersions()
+async function main() {
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    const result = await deleteMatchingVersions()
 
-  if (result.found === 0) {
-    console.log(
-      `No Cloudflare Worker versions found for preview alias '${alias}' on worker '${workerName}'.`
-    )
-    process.exit(0)
+    if (result.found === 0) {
+      console.log(
+        `No Cloudflare Worker versions found for preview alias '${alias}' on worker '${workerName}'.`
+      )
+      return
+    }
+
+    if (!result.blockedByLatest) {
+      return
+    }
+
+    if (attempt < maxAttempts) {
+      console.log(
+        `Cloudflare still marks a preview version as latest. Retrying cleanup in ${retryDelayMs}ms (${attempt}/${maxAttempts})...`
+      )
+      await sleep(retryDelayMs)
+    }
   }
 
-  if (!result.blockedByLatest) {
-    process.exit(0)
-  }
-
-  if (attempt < maxAttempts) {
-    console.log(
-      `Cloudflare still marks a preview version as latest. Retrying cleanup in ${retryDelayMs}ms (${attempt}/${maxAttempts})...`
-    )
-    await sleep(retryDelayMs)
-  }
+  console.warn(
+    `A Cloudflare Worker version for preview alias '${alias}' is still the latest version and cannot be deleted yet. Rerun cleanup after a newer deployment becomes latest.`
+  )
 }
 
-console.warn(
-  `A Cloudflare Worker version for preview alias '${alias}' is still the latest version and cannot be deleted yet. Rerun cleanup after a newer deployment becomes latest.`
-)
+try {
+  await main()
+} catch (error) {
+  const message = error instanceof Error ? error.message : String(error)
+  console.error(formatCloudflareAuthError(message))
+  process.exit(1)
+}
