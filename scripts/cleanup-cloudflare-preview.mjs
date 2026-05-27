@@ -18,9 +18,11 @@ if (!accountId || !apiToken) {
   process.exit(0)
 }
 
-const baseUrl = `https://api.cloudflare.com/client/v4/accounts/${accountId}/workers/scripts/${workerName}/versions`
+const encodedWorkerName = encodeURIComponent(workerName)
+const scriptsVersionsUrl = `https://api.cloudflare.com/client/v4/accounts/${accountId}/workers/scripts/${encodedWorkerName}/versions`
+const workerVersionsUrl = `https://api.cloudflare.com/client/v4/accounts/${accountId}/workers/workers/${encodedWorkerName}/versions`
 
-async function cloudflareFetch(url, init = {}) {
+async function cloudflareFetch(url, init = {}, { throwOnError = true } = {}) {
   const response = await fetch(url, {
     ...init,
     headers: {
@@ -35,10 +37,13 @@ async function cloudflareFetch(url, init = {}) {
     const message =
       body?.errors?.map((error) => error.message).join("; ") ??
       `${response.status} ${response.statusText}`
+    if (!throwOnError) {
+      return { ok: false, message, status: response.status }
+    }
     throw new Error(message)
   }
 
-  return body
+  return { ok: true, body }
 }
 
 async function listVersions() {
@@ -46,10 +51,10 @@ async function listVersions() {
   let cursor
 
   do {
-    const url = new URL(baseUrl)
+    const url = new URL(scriptsVersionsUrl)
     if (cursor) url.searchParams.set("cursor", cursor)
 
-    const body = await cloudflareFetch(url)
+    const { body } = await cloudflareFetch(url)
     const result = body.result
     const items = Array.isArray(result?.items)
       ? result.items
@@ -79,8 +84,20 @@ if (matchingVersions.length === 0) {
 for (const version of matchingVersions) {
   if (!version.id) continue
 
-  await cloudflareFetch(`${baseUrl}/${version.id}`, { method: "DELETE" })
-  console.log(
-    `Deleted Cloudflare Worker version ${version.id} for preview alias '${alias}'.`
+  const result = await cloudflareFetch(
+    `${workerVersionsUrl}/${encodeURIComponent(version.id)}`,
+    { method: "DELETE" },
+    { throwOnError: false }
+  )
+
+  if (result.ok) {
+    console.log(
+      `Deleted Cloudflare Worker version ${version.id} for preview alias '${alias}'.`
+    )
+    continue
+  }
+
+  console.warn(
+    `Could not delete Cloudflare Worker version ${version.id} for preview alias '${alias}': ${result.message}`
   )
 }
