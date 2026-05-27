@@ -142,6 +142,26 @@ function logAuthDebug(
   )
 }
 
+function isTrustedAuthRedirectOrigin(origin: URL) {
+  const hostname = origin.hostname.toLowerCase()
+
+  return (
+    hostname === "usekino.com" ||
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    hostname === "::1" ||
+    hostname.endsWith("-kino.hello-fc8.workers.dev") ||
+    hostname === "kino.hello-fc8.workers.dev"
+  )
+}
+
+function isConvexSiteAuthCallback(url: URL) {
+  return (
+    url.hostname.endsWith(".convex.site") &&
+    url.pathname.startsWith("/api/auth/oauth-proxy-callback")
+  )
+}
+
 export function rewriteAuthRedirectLocation({
   convexSiteUrl,
   location,
@@ -155,6 +175,19 @@ export function rewriteAuthRedirectLocation({
     const request = new URL(requestUrl)
     const target = new URL(location, request)
     const convexSite = new URL(convexSiteUrl)
+
+    if (isConvexSiteAuthCallback(target)) {
+      const callbackURL = target.searchParams.get("callbackURL")
+      if (!callbackURL) return location
+
+      const callbackTarget = new URL(callbackURL)
+      if (!isTrustedAuthRedirectOrigin(callbackTarget)) return location
+
+      target.protocol = callbackTarget.protocol
+      target.host = callbackTarget.host
+
+      return target.toString()
+    }
 
     if (target.origin !== convexSite.origin) {
       return location

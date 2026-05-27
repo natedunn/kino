@@ -40,6 +40,32 @@ describe("rewriteAuthRedirectLocation", () => {
       })
     ).toBe("https://scrupulous-lemming-700.convex.site/somewhere-else")
   })
+
+  it("rewrites cross-deployment OAuth proxy callbacks onto the callback origin", () => {
+    expect(
+      rewriteAuthRedirectLocation({
+        convexSiteUrl: "https://brainy-boar-871.convex.site",
+        location:
+          "https://gregarious-gerbil-969.convex.site/api/auth/oauth-proxy-callback?callbackURL=https%3A%2F%2Fpreview-auth-oauth-debug-kino.hello-fc8.workers.dev%2Fauth&profile=encrypted-profile",
+        requestUrl: "https://usekino.com/api/auth/callback/github?code=abc",
+      })
+    ).toBe(
+      "https://preview-auth-oauth-debug-kino.hello-fc8.workers.dev/api/auth/oauth-proxy-callback?callbackURL=https%3A%2F%2Fpreview-auth-oauth-debug-kino.hello-fc8.workers.dev%2Fauth&profile=encrypted-profile"
+    )
+  })
+
+  it("does not rewrite OAuth proxy callbacks to untrusted callback origins", () => {
+    const location =
+      "https://gregarious-gerbil-969.convex.site/api/auth/oauth-proxy-callback?callbackURL=https%3A%2F%2Fevil.example.com%2Fauth&profile=encrypted-profile"
+
+    expect(
+      rewriteAuthRedirectLocation({
+        convexSiteUrl: "https://brainy-boar-871.convex.site",
+        location,
+        requestUrl: "https://usekino.com/api/auth/callback/github?code=abc",
+      })
+    ).toBe(location)
+  })
 })
 
 describe("cloneHeadersPreservingSetCookie", () => {
