@@ -22,11 +22,11 @@ const encodedWorkerName = encodeURIComponent(workerName)
 const scriptsVersionsUrl = `https://api.cloudflare.com/client/v4/accounts/${accountId}/workers/scripts/${encodedWorkerName}/versions`
 const workerVersionsUrl = `https://api.cloudflare.com/client/v4/accounts/${accountId}/workers/workers/${encodedWorkerName}/versions`
 const retryDelayMs = Number.parseInt(
-  process.env.CLOUDFLARE_CLEANUP_RETRY_DELAY_MS ?? "10000",
+  process.env.CLOUDFLARE_CLEANUP_RETRY_DELAY_MS ?? "5000",
   10
 )
 const maxAttempts = Number.parseInt(
-  process.env.CLOUDFLARE_CLEANUP_MAX_ATTEMPTS ?? "12",
+  process.env.CLOUDFLARE_CLEANUP_MAX_ATTEMPTS ?? "6",
   10
 )
 
