@@ -24,15 +24,15 @@ The observed broken behavior was:
 
 The single production GitHub `redirect_uri` is correct. We do not want one GitHub OAuth app per preview.
 
-The critical production dependency is that `usekino.com` is part of the preview auth flow. Because GitHub redirects to production first, production must run compatible OAuth proxy code. If production skips the OAuth proxy callback handling, it will authenticate production instead of forwarding the encrypted profile payload back to the preview.
+The critical production dependency is that `usekino.com` is part of the preview auth flow. Because GitHub redirects to production first, production must run compatible OAuth proxy callback code. Production may skip the proxy only for its own first-party `/api/auth/sign-in/social` request; production callbacks must still process preview proxy state and forward the encrypted profile payload back to the preview.
 
-`origin/main` still had this production-only bypass in `src/lib/convex/auth-server.ts`:
+`origin/main` still had this broad production-only bypass in `src/lib/convex/auth-server.ts`:
 
 ```ts
 headers.set('x-skip-oauth-proxy', 'true');
 ```
 
-That bypass is incompatible with preview OAuth proxy auth. It makes production treat the GitHub callback as a normal production sign-in instead of the proxy leg for a preview.
+That bypass is incompatible with preview OAuth proxy auth when applied to callbacks. It makes production treat the GitHub callback as a normal production sign-in instead of the proxy leg for a preview. Keep any production bypass narrowly scoped to the first-party production social sign-in request.
 
 ## Changes In PR #14
 
@@ -42,7 +42,7 @@ The PR currently contains several auth and SSR fixes.
 
 Auth-related changes:
 
-- Removed the production-origin `x-skip-oauth-proxy` bypass.
+- Removed the broad production-origin `x-skip-oauth-proxy` bypass.
 - Added redirect rewriting for Convex-site auth redirects so `/api/auth/*` redirects stay on the current app origin.
 - Preserved multiple `Set-Cookie` headers when rewriting redirect responses.
 - Added Better Auth forwarded-host handling before `oAuthProxy`, using Kitcn's forwarded headers so Convex can infer the original Worker host instead of only seeing the Convex site URL.

@@ -37,4 +37,8 @@ else
     --preview-name "$preview_name" \
     --cmd "$build_cmd" \
     --cmd-url-env-var-name VITE_CONVEX_URL
+
+  if [ "${CONVEX_PREVIEW_AUTO_JWKS:-1}" != "0" ]; then
+    node scripts/refresh-convex-preview-jwks.mjs "$preview_name"
+  fi
 fi

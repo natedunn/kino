@@ -85,6 +85,24 @@ function isSignInSocialRequest(request: Request) {
   }
 }
 
+export function shouldSkipOAuthProxyForFirstPartySignIn(request: Request) {
+  try {
+    const { hostname } = new URL(request.url)
+    return hostname === "usekino.com" && isSignInSocialRequest(request)
+  } catch {
+    return false
+  }
+}
+
+function withFirstPartyOAuthProxyBypass(request: Request) {
+  if (!shouldSkipOAuthProxyForFirstPartySignIn(request)) return request
+
+  const headers = new Headers(request.headers)
+  headers.set("x-skip-oauth-proxy", "true")
+
+  return new Request(request, { headers })
+}
+
 function getJsonRedirectUrl(body: string) {
   try {
     const parsed = JSON.parse(body) as { url?: unknown }
@@ -238,9 +256,10 @@ function cloneAuthResponse(response: Response) {
 }
 
 export async function handler(request: Request) {
+  const authRequest = withFirstPartyOAuthProxyBypass(request)
   const response = await syncSignInSocialLocationHeader(
     request,
-    await getAuth().handler(request)
+    await getAuth().handler(authRequest)
   )
   const location = response.headers.get("location")
 
