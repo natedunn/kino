@@ -129,11 +129,15 @@ export default defineAuth(() => {
         },
       }),
       forwardedAuthRequestPlugin(),
-      oAuthProxy({
-        ...(oauthProxyCurrentUrl ? { currentURL: oauthProxyCurrentUrl } : {}),
-        productionURL: oauthProxyProductionUrl,
-        secret: oauthProxySecret,
-      }),
+      ...(oauthProxySecret
+        ? [
+            oAuthProxy({
+              ...(oauthProxyCurrentUrl ? { currentURL: oauthProxyCurrentUrl } : {}),
+              productionURL: oauthProxyProductionUrl,
+              secret: oauthProxySecret,
+            }),
+          ]
+        : []),
       convex({
         authConfig,
         jwks,
