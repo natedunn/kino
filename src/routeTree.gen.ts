@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AtChar123orgChar125RouteRouteImport } from './routes/@{$org}/route'
 import { Route as IndexRouteImport } from './routes/index'
@@ -36,6 +37,11 @@ import { Route as AtChar123orgChar125ProjectFeedbackBoardsNewRouteImport } from 
 import { Route as AtChar123orgChar125ProjectFeedbackBoardsBoardIndexRouteImport } from './routes/@{$org}/$project/feedback/boards/$board/index'
 import { Route as AtChar123orgChar125ProjectFeedbackBoardsBoardEditRouteImport } from './routes/@{$org}/$project/feedback/boards/$board/edit'
 
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -192,6 +198,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/@{$org}': typeof AtChar123orgChar125RouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/dashboard': typeof DashboardRoute
   '/@{$org}/$project': typeof AtChar123orgChar125ProjectRouteRouteWithChildren
   '/@{$org}/': typeof AtChar123orgChar125IndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -219,6 +226,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/dashboard': typeof DashboardRoute
   '/@{$org}': typeof AtChar123orgChar125IndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/@{$org}/$project': typeof AtChar123orgChar125ProjectIndexRoute
@@ -247,6 +255,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/@{$org}': typeof AtChar123orgChar125RouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/dashboard': typeof DashboardRoute
   '/@{$org}/$project': typeof AtChar123orgChar125ProjectRouteRouteWithChildren
   '/@{$org}/': typeof AtChar123orgChar125IndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -277,6 +286,7 @@ export interface FileRouteTypes {
     | '/'
     | '/@{$org}'
     | '/auth'
+    | '/dashboard'
     | '/@{$org}/$project'
     | '/@{$org}/'
     | '/api/auth/$'
@@ -304,6 +314,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/dashboard'
     | '/@{$org}'
     | '/api/auth/$'
     | '/@{$org}/$project'
@@ -331,6 +342,7 @@ export interface FileRouteTypes {
     | '/'
     | '/@{$org}'
     | '/auth'
+    | '/dashboard'
     | '/@{$org}/$project'
     | '/@{$org}/'
     | '/api/auth/$'
@@ -360,6 +372,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AtChar123orgChar125RouteRoute: typeof AtChar123orgChar125RouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  DashboardRoute: typeof DashboardRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   CreateTeamIndexRoute: typeof CreateTeamIndexRoute
   ProfileSettingsIndexRoute: typeof ProfileSettingsIndexRoute
@@ -367,6 +380,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -637,6 +657,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AtChar123orgChar125RouteRoute: AtChar123orgChar125RouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  DashboardRoute: DashboardRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   CreateTeamIndexRoute: CreateTeamIndexRoute,
   ProfileSettingsIndexRoute: ProfileSettingsIndexRoute,

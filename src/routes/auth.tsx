@@ -15,14 +15,17 @@ export const Route = createFileRoute('/auth')({
 
 export function getSafeRedirectTarget(redirect: string | undefined) {
   if (!redirect) {
-    return '/';
+    return '/dashboard';
   }
 
   try {
     const resolved = new URL(redirect, 'https://usekino.com');
-    return resolved.pathname === '/auth' ? '/' : `${resolved.pathname}${resolved.search}${resolved.hash}`;
+    if (resolved.pathname === '/auth' || resolved.pathname === '/') {
+      return '/dashboard';
+    }
+    return `${resolved.pathname}${resolved.search}${resolved.hash}`;
   } catch {
-    return '/';
+    return '/dashboard';
   }
 }
 
