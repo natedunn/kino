@@ -1,4 +1,4 @@
-import { Suspense } from "react"
+import { Suspense, useState } from "react"
 import { useSuspenseQuery } from "@tanstack/react-query"
 import {
   Link,
@@ -8,6 +8,7 @@ import {
 } from "@tanstack/react-router"
 import {
   ArrowRight,
+  ChevronDown,
   FolderOpen,
   Lock,
   Plus,
@@ -62,13 +63,15 @@ function AuthenticatedDashboard() {
   const orgs = orgsData?.teams ?? []
 
   return (
-    <div className="min-h-svh flex flex-col">
+    <div className="flex min-h-svh flex-col">
       {/* Minimal top bar */}
       <header className="border-b border-border/50 bg-absolute">
         <div className="container flex items-center justify-between py-3">
           <Link to="/dashboard" className="flex items-center gap-2.5">
             <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary">
-              <span className="text-xs font-bold text-primary-foreground">K</span>
+              <span className="text-xs font-bold text-primary-foreground">
+                K
+              </span>
             </div>
             <span className="text-sm font-semibold tracking-tight">Kino</span>
           </Link>
@@ -82,7 +85,7 @@ function AuthenticatedDashboard() {
             {user ? (
               <Link
                 to="/profile/settings"
-                className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted transition-colors"
+                className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-muted"
               >
                 <Avatar className="size-6 border">
                   <AvatarImage src={user.imageUrl} />
@@ -90,7 +93,7 @@ function AuthenticatedDashboard() {
                     {(user.name ?? user.username ?? "U")[0]?.toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
-                <span className="hidden sm:inline text-sm text-muted-foreground">
+                <span className="hidden text-sm text-muted-foreground sm:inline">
                   {user.username ?? user.name}
                 </span>
               </Link>
@@ -104,9 +107,7 @@ function AuthenticatedDashboard() {
           {/* Page header */}
           <div className="flex items-end justify-between">
             <div>
-              <h1 className="text-2xl font-bold tracking-tight">
-                Your teams
-              </h1>
+              <h1 className="text-2xl font-bold tracking-tight">Your teams</h1>
               <p className="mt-1 text-sm text-muted-foreground">
                 {orgs.length === 0
                   ? "You're not part of any teams yet."
@@ -161,6 +162,9 @@ function OrgSection({
 }: {
   org: { id: string; name: string; slug: string; logo?: string | null }
 }) {
+  const [isExpanded, setIsExpanded] = useState(false)
+  const projectsId = `org-projects-${org.slug}`
+
   return (
     <section>
       {/* Org header */}
@@ -176,12 +180,27 @@ function OrgSection({
               {org.name[0]?.toUpperCase()}
             </AvatarFallback>
           </Avatar>
-          <span className="font-semibold group-hover:underline decoration-2 underline-offset-2">
+          <span className="font-semibold decoration-2 underline-offset-2 group-hover:underline">
             {org.name}
           </span>
-          <ArrowRight className="size-3.5 text-muted-foreground opacity-0 -translate-x-1 transition-all group-hover:opacity-100 group-hover:translate-x-0" />
+          <ArrowRight className="size-3.5 -translate-x-1 text-muted-foreground opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
         </Link>
         <div className="flex items-center gap-1">
+          <Button
+            aria-controls={projectsId}
+            aria-expanded={isExpanded}
+            onClick={() => setIsExpanded((value) => !value)}
+            type="button"
+            variant="ghost"
+            size="sm"
+          >
+            Projects
+            <ChevronDown
+              className={`size-3.5 transition-transform ${
+                isExpanded ? "rotate-180" : ""
+              }`}
+            />
+          </Button>
           <Button asChild variant="ghost" size="sm">
             <Link to="/@{$org}/edit" params={{ org: org.slug }}>
               <Settings className="size-3.5" />
@@ -192,11 +211,13 @@ function OrgSection({
       </div>
 
       {/* Projects */}
-      <div className="mt-4">
-        <Suspense fallback={<ProjectsSkeleton />}>
-          <OrgProjectsList orgSlug={org.slug} />
-        </Suspense>
-      </div>
+      {isExpanded ? (
+        <div id={projectsId} className="mt-4">
+          <Suspense fallback={<ProjectsSkeleton />}>
+            <OrgProjectsList orgSlug={org.slug} />
+          </Suspense>
+        </div>
+      ) : null}
     </section>
   )
 }
@@ -234,15 +255,15 @@ function OrgProjectsList({ orgSlug }: { orgSlug: string }) {
           className="group rounded-lg border border-border bg-card p-4 transition-colors hover:border-foreground/20 hover:bg-accent/30"
         >
           <div className="flex items-start justify-between">
-            <h4 className="text-sm font-medium group-hover:underline decoration-1 underline-offset-2">
+            <h4 className="text-sm font-medium decoration-1 underline-offset-2 group-hover:underline">
               {project.name}
             </h4>
             {project.visibility === "private" ? (
-              <Lock className="size-3 text-muted-foreground mt-0.5 shrink-0" />
+              <Lock className="mt-0.5 size-3 shrink-0 text-muted-foreground" />
             ) : null}
           </div>
           {project.description ? (
-            <p className="mt-1.5 text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+            <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
               {project.description}
             </p>
           ) : (
