@@ -194,6 +194,13 @@ function AuthenticatedProfileSettingsRoute() {
                       }
                       value={field.state.value}
                     />
+                    <p className="text-sm text-muted-foreground">
+                      Changes your public profile URL at{" "}
+                      <span className="font-medium text-foreground">
+                        /u/{field.state.value || "username"}
+                      </span>
+                      . Your workspace URL stays separate.
+                    </p>
                   </div>
                 </div>
               )}

@@ -34,7 +34,16 @@ export function UserDropdown({ user }: { user: NonNullable<API['profile']['findM
 				</Button>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align='end'>
-				<DropdownMenuItem>Your profile</DropdownMenuItem>
+				<DropdownMenuItem
+					onClick={() => {
+						navigate({
+							params: { username: user.username },
+							to: '/u/$username',
+						});
+					}}
+				>
+					Your profile
+				</DropdownMenuItem>
 				<DropdownMenuItem>Your organizations</DropdownMenuItem>
 				<DropdownMenuItem>Your projects</DropdownMenuItem>
 				<DropdownMenuSeparator />

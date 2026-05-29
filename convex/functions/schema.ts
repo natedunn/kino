@@ -370,6 +370,7 @@ export const profileTable = convexTable(
     imageUrl: text(),
     bio: text(),
     location: text(),
+    personalOrganizationId: text().references(() => organizationTable.id),
     urls: urlField,
     userId: text().notNull().references(() => userTable.id),
     username: text().notNull(),
@@ -734,6 +735,10 @@ export default defineSchema(tables)
       user: r.one.user({
         from: r.profile.userId,
         to: r.user.id,
+      }),
+      personalOrganization: r.one.organization({
+        from: r.profile.personalOrganizationId,
+        to: r.organization.id,
       }),
       projectMemberships: r.many.projectMember({
         from: r.profile.id,
