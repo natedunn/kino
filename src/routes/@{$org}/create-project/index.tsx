@@ -89,7 +89,7 @@ function CreateProjectRoute() {
   return (
     <div className="flex flex-auto flex-col">
       <div className="container flex flex-auto flex-col">
-        <div className="grid h-full grid-cols-12">
+        <div className="grid flex-1 grid-cols-12">
           <div className="col-span-3 border-r">
             <form.Subscribe selector={(state) => state.values}>
               {(values) => (

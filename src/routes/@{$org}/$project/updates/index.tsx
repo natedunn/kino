@@ -94,8 +94,8 @@ function UpdatesListRoute() {
     : allUpdates
 
   return (
-    <div className="container h-full overflow-visible">
-      <div className="h-full grid-cols-12 gap-8 md:grid">
+    <div className="container flex flex-1 flex-col overflow-visible">
+      <div className="flex-1 grid-cols-12 gap-8 md:grid">
         <div className="order-first border-l border-border/75 py-6 md:order-last md:col-span-3">
           <div className="sticky top-6 flex flex-col overflow-hidden">
             {canEdit ? (

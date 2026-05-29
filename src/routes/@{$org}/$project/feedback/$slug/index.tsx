@@ -286,7 +286,7 @@ function FeedbackDetailRoute() {
   )
 
   return (
-    <div className="container h-full grid-cols-12 gap-8 md:grid">
+    <div className="container flex-1 grid-cols-12 gap-8 md:grid">
       <div className="order-first border-l border-border/75 py-6 md:order-last md:col-span-4">
         <div className="sticky top-4 flex flex-col gap-6 pl-8">
           <div>
