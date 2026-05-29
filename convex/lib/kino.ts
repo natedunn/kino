@@ -37,6 +37,12 @@ type LegacyAliases = {
   _id: string;
 };
 
+type PersonalOrganizationMembershipCandidate = {
+  organizationId: string;
+  role: string | null | undefined;
+  slug?: string | null;
+};
+
 function toCreationTime(value: unknown) {
   if (typeof value === 'number') return value;
   if (value instanceof Date) return value.getTime();
@@ -105,6 +111,30 @@ export function toPublicDoc(doc: any): any {
     createdAt: rest.createdAt ?? _creationTime ?? 0,
     id: rest.id ?? _id,
   };
+}
+
+export function pickPersonalOrganizationId(args: {
+  memberships: PersonalOrganizationMembershipCandidate[];
+  profileUsername: string | null | undefined;
+}) {
+  const adminMemberships = args.memberships.filter(
+    (membership) => membership.role === 'admin' || membership.role === 'owner'
+  );
+
+  if (args.profileUsername) {
+    const matchingSlugMembership = adminMemberships.find(
+      (membership) => membership.slug === args.profileUsername
+    );
+    if (matchingSlugMembership) {
+      return matchingSlugMembership.organizationId;
+    }
+  }
+
+  if (adminMemberships.length === 1) {
+    return adminMemberships[0].organizationId;
+  }
+
+  return null;
 }
 
 export async function ensureUniqueUsername(ctx: OrmCtx, preferred: string) {
@@ -422,6 +452,51 @@ function getWritableId(doc: any) {
   return doc?._id ?? doc?.id;
 }
 
+async function setProfilePersonalOrganizationId(
+  ctx: OrmMutationCtx,
+  profileId: string | null | undefined,
+  organizationId: string | null | undefined
+) {
+  if (!profileId || !organizationId) return;
+  await ctx.db.patch(profileId as any, { personalOrganizationId: organizationId });
+}
+
+async function inferPersonalOrganizationId(
+  ctx: OrmMutationCtx,
+  args: {
+    profileUsername: string | null | undefined;
+    userId: string;
+  }
+) {
+  const memberships = await ctx.orm.query.member.findMany({
+    where: { userId: args.userId },
+    limit: 25,
+  });
+
+  if (memberships.length === 0) {
+    return null;
+  }
+
+  const membershipCandidates = await Promise.all(
+    memberships.map(async (membership: any) => {
+      const organization = await findOrganization(ctx, {
+        id: membership.organizationId,
+      });
+
+      return {
+        organizationId: membership.organizationId,
+        role: membership.role,
+        slug: organization?.slug ?? null,
+      };
+    })
+  );
+
+  return pickPersonalOrganizationId({
+    memberships: membershipCandidates,
+    profileUsername: args.profileUsername,
+  });
+}
+
 export async function ensureUserBootstrap(ctx: OrmMutationCtx, user: AuthUserBootstrapDoc) {
   const publicUserId = user.id;
   const legacyUserId = user._id && user._id !== publicUserId ? user._id : null;
@@ -452,6 +527,7 @@ export async function ensureUserBootstrap(ctx: OrmMutationCtx, user: AuthUserBoo
         imageKey: null,
         imageUrl: user.image,
         name: user.name ?? user.email,
+        personalOrganizationId: null,
         role:
           user.role === 'system:admin' || user.role === 'system:editor' || user.role === 'user'
             ? user.role
@@ -488,11 +564,28 @@ export async function ensureUserBootstrap(ctx: OrmMutationCtx, user: AuthUserBoo
   });
 
   if (memberships.length === 0) {
-    await createDefaultPersonalOrganization(ctx, {
+    const organization = await createDefaultPersonalOrganization(ctx, {
       id: publicUserId,
       name: user.name ?? username,
       username,
     });
+
+    await setProfilePersonalOrganizationId(
+      ctx,
+      profileId,
+      getWritableId(organization)
+    );
+  } else if (!profile?.personalOrganizationId) {
+    const inferredPersonalOrganizationId = await inferPersonalOrganizationId(ctx, {
+      profileUsername: profile?.username ?? username,
+      userId: publicUserId,
+    });
+
+    await setProfilePersonalOrganizationId(
+      ctx,
+      profileId,
+      inferredPersonalOrganizationId
+    );
   }
 
   return profile;

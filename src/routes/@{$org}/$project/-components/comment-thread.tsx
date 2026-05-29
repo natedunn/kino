@@ -306,8 +306,8 @@ export function CommentCard({
               {comment.author?.username ? (
                 <Link
                   className="hocus:underline"
-                  params={{ org: comment.author.username }}
-                  to="/@{$org}"
+                  params={{ username: comment.author.username }}
+                  to="/u/$username"
                 >
                   @{comment.author.username}
                 </Link>

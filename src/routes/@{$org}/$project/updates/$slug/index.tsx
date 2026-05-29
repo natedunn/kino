@@ -406,8 +406,8 @@ function UpdateDetailRoute() {
             {updateData.author ? (
               <Link
                 className="flex items-center gap-2 hover:underline"
-                params={{ org: updateData.author.username }}
-                to="/@{$org}"
+                params={{ username: updateData.author.username }}
+                to="/u/$username"
               >
                 {updateData.author.imageUrl ? (
                   <img

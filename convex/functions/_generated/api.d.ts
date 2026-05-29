@@ -248,6 +248,12 @@ export declare const api: {
   profile: {
     findMyProfile: FunctionReference<"query", "public", {}, any>;
     generateAvatarUploadUrl: FunctionReference<"mutation", "public", {}, any>;
+    getByUsername: FunctionReference<
+      "query",
+      "public",
+      { username: string },
+      any
+    >;
     getList: FunctionReference<"query", "public", { limit?: number }, any>;
     syncMetadata: FunctionReference<"mutation", "public", { key: string }, any>;
     update: FunctionReference<

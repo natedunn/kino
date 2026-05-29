@@ -15,6 +15,7 @@ import { Route as AtChar123orgChar125RouteRouteImport } from './routes/@{$org}/r
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AtChar123orgChar125IndexRouteImport } from './routes/@{$org}/index'
 import { Route as AtChar123orgChar125ProjectRouteRouteImport } from './routes/@{$org}/$project/route'
+import { Route as UUsernameIndexRouteImport } from './routes/u/$username/index'
 import { Route as ProfileSettingsIndexRouteImport } from './routes/profile/settings/index'
 import { Route as CreateTeamIndexRouteImport } from './routes/create/team/index'
 import { Route as AtChar123orgChar125EditIndexRouteImport } from './routes/@{$org}/edit/index'
@@ -70,6 +71,11 @@ const AtChar123orgChar125ProjectRouteRoute =
     path: '/$project',
     getParentRoute: () => AtChar123orgChar125RouteRoute,
   } as any)
+const UUsernameIndexRoute = UUsernameIndexRouteImport.update({
+  id: '/u/$username/',
+  path: '/u/$username/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProfileSettingsIndexRoute = ProfileSettingsIndexRouteImport.update({
   id: '/profile/settings/',
   path: '/profile/settings/',
@@ -207,6 +213,7 @@ export interface FileRoutesByFullPath {
   '/@{$org}/edit/': typeof AtChar123orgChar125EditIndexRoute
   '/create/team/': typeof CreateTeamIndexRoute
   '/profile/settings/': typeof ProfileSettingsIndexRoute
+  '/u/$username/': typeof UUsernameIndexRoute
   '/@{$org}/$project/chat/': typeof AtChar123orgChar125ProjectChatIndexRoute
   '/@{$org}/$project/discussions/': typeof AtChar123orgChar125ProjectDiscussionsIndexRoute
   '/@{$org}/$project/feedback/': typeof AtChar123orgChar125ProjectFeedbackIndexRoute
@@ -234,6 +241,7 @@ export interface FileRoutesByTo {
   '/@{$org}/edit': typeof AtChar123orgChar125EditIndexRoute
   '/create/team': typeof CreateTeamIndexRoute
   '/profile/settings': typeof ProfileSettingsIndexRoute
+  '/u/$username': typeof UUsernameIndexRoute
   '/@{$org}/$project/chat': typeof AtChar123orgChar125ProjectChatIndexRoute
   '/@{$org}/$project/discussions': typeof AtChar123orgChar125ProjectDiscussionsIndexRoute
   '/@{$org}/$project/feedback': typeof AtChar123orgChar125ProjectFeedbackIndexRoute
@@ -264,6 +272,7 @@ export interface FileRoutesById {
   '/@{$org}/edit/': typeof AtChar123orgChar125EditIndexRoute
   '/create/team/': typeof CreateTeamIndexRoute
   '/profile/settings/': typeof ProfileSettingsIndexRoute
+  '/u/$username/': typeof UUsernameIndexRoute
   '/@{$org}/$project/chat/': typeof AtChar123orgChar125ProjectChatIndexRoute
   '/@{$org}/$project/discussions/': typeof AtChar123orgChar125ProjectDiscussionsIndexRoute
   '/@{$org}/$project/feedback/': typeof AtChar123orgChar125ProjectFeedbackIndexRoute
@@ -295,6 +304,7 @@ export interface FileRouteTypes {
     | '/@{$org}/edit/'
     | '/create/team/'
     | '/profile/settings/'
+    | '/u/$username/'
     | '/@{$org}/$project/chat/'
     | '/@{$org}/$project/discussions/'
     | '/@{$org}/$project/feedback/'
@@ -322,6 +332,7 @@ export interface FileRouteTypes {
     | '/@{$org}/edit'
     | '/create/team'
     | '/profile/settings'
+    | '/u/$username'
     | '/@{$org}/$project/chat'
     | '/@{$org}/$project/discussions'
     | '/@{$org}/$project/feedback'
@@ -351,6 +362,7 @@ export interface FileRouteTypes {
     | '/@{$org}/edit/'
     | '/create/team/'
     | '/profile/settings/'
+    | '/u/$username/'
     | '/@{$org}/$project/chat/'
     | '/@{$org}/$project/discussions/'
     | '/@{$org}/$project/feedback/'
@@ -376,6 +388,7 @@ export interface RootRouteChildren {
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   CreateTeamIndexRoute: typeof CreateTeamIndexRoute
   ProfileSettingsIndexRoute: typeof ProfileSettingsIndexRoute
+  UUsernameIndexRoute: typeof UUsernameIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -421,6 +434,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/@{$org}/$project'
       preLoaderRoute: typeof AtChar123orgChar125ProjectRouteRouteImport
       parentRoute: typeof AtChar123orgChar125RouteRoute
+    }
+    '/u/$username/': {
+      id: '/u/$username/'
+      path: '/u/$username'
+      fullPath: '/u/$username/'
+      preLoaderRoute: typeof UUsernameIndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/profile/settings/': {
       id: '/profile/settings/'
@@ -661,6 +681,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   CreateTeamIndexRoute: CreateTeamIndexRoute,
   ProfileSettingsIndexRoute: ProfileSettingsIndexRoute,
+  UUsernameIndexRoute: UUsernameIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

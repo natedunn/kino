@@ -728,8 +728,8 @@ function FeedbackEventItem({ event }: { event: FeedbackEventData }) {
         {event.actor ? (
           <Link
             className="font-medium text-foreground hocus:underline"
-            params={{ org: event.actor.username }}
-            to="/@{$org}"
+            params={{ username: event.actor.username }}
+            to="/u/$username"
           >
             @{event.actor.username}
           </Link>
@@ -801,8 +801,8 @@ function getEventDescription(event: FeedbackEventData) {
           {targetProfile ? (
             <Link
               className="font-medium hocus:underline"
-              params={{ org: targetProfile.username }}
-              to="/@{$org}"
+              params={{ username: targetProfile.username }}
+              to="/u/$username"
             >
               @{targetProfile.username}
             </Link>
@@ -818,8 +818,8 @@ function getEventDescription(event: FeedbackEventData) {
           {targetProfile ? (
             <Link
               className="font-medium hocus:underline"
-              params={{ org: targetProfile.username }}
-              to="/@{$org}"
+              params={{ username: targetProfile.username }}
+              to="/u/$username"
             >
               @{targetProfile.username}
             </Link>

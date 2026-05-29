@@ -758,6 +758,7 @@ export type DataModel = {
       imageUrl?: null | string;
       location?: null | string;
       name: string;
+      personalOrganizationId?: null | string;
       role: "system:admin" | "system:editor" | "user";
       updatedTime?: null | number;
       urls?: null | Array<{ text: string; url: string }>;
@@ -776,6 +777,7 @@ export type DataModel = {
       | "imageUrl"
       | "location"
       | "name"
+      | "personalOrganizationId"
       | "role"
       | "updatedTime"
       | "urls"

@@ -32,8 +32,8 @@ export function ProfileLink({
 
 	return (
 		<Link
-			to='/@{$org}'
-			params={{ org: profile.username }}
+			to='/u/$username'
+			params={{ username: profile.username }}
 			className={cn('flex items-center gap-2 text-sm hover:underline', className)}
 		>
 			<div className='size-5 overflow-hidden rounded-full'>
