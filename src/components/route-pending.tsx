@@ -5,8 +5,8 @@ type RoutePendingProps = {
 export function RoutePending({ variant = 'page' }: RoutePendingProps) {
 	if (variant === 'sidebar') {
 		return (
-			<div className='container py-8'>
-				<div className='grid grid-cols-1 gap-8 md:grid-cols-12'>
+			<div className='container flex flex-1 flex-col py-8'>
+				<div className='grid flex-1 grid-cols-1 gap-8 md:grid-cols-12'>
 					<div className='order-first space-y-4 md:order-last md:col-span-3'>
 						<div className='h-10 w-full animate-pulse rounded bg-muted' />
 						<div className='h-48 w-full animate-pulse rounded bg-muted' />
@@ -24,8 +24,8 @@ export function RoutePending({ variant = 'page' }: RoutePendingProps) {
 
 	if (variant === 'detail') {
 		return (
-			<div className='container py-8'>
-				<div className='grid grid-cols-1 gap-8 md:grid-cols-12'>
+			<div className='container flex flex-1 flex-col py-8'>
+				<div className='grid flex-1 grid-cols-1 gap-8 md:grid-cols-12'>
 					<div className='order-first space-y-6 border-l border-border/75 py-6 pl-8 md:order-last md:col-span-4'>
 						<div className='h-10 w-full animate-pulse rounded bg-muted' />
 						<div className='h-32 w-full animate-pulse rounded bg-muted' />
