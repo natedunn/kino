@@ -17,6 +17,65 @@ function getAuth() {
   return authSingleton
 }
 
+function getRuntimeEnv() {
+  return (
+    (globalThis as { process?: { env?: Record<string, string | undefined> } })
+      .process?.env ?? {}
+  )
+}
+
+function getPortlessUrlEnv() {
+  return (
+    getRuntimeEnv().PORTLESS_URL ??
+    (import.meta.env as Record<string, string | undefined>).VITE_PORTLESS_URL
+  )
+}
+
+function isLocalDevHostname(hostname: string) {
+  const normalized = hostname.toLowerCase()
+  return (
+    normalized === "localhost" ||
+    normalized === "127.0.0.1" ||
+    normalized === "::1" ||
+    normalized.endsWith(".localhost")
+  )
+}
+
+export function publicAuthRequestUrl(requestUrl: string) {
+  const portlessUrl = getPortlessUrlEnv()
+  if (!portlessUrl) return requestUrl
+
+  try {
+    const request = new URL(requestUrl)
+    if (!isLocalDevHostname(request.hostname)) return requestUrl
+
+    const publicUrl = new URL(portlessUrl)
+    publicUrl.pathname = request.pathname
+    publicUrl.search = request.search
+    publicUrl.hash = request.hash
+    return publicUrl.toString()
+  } catch {
+    return requestUrl
+  }
+}
+
+function withPublicAuthRequestUrl(request: Request) {
+  const publicUrl = publicAuthRequestUrl(request.url)
+  if (publicUrl === request.url) return request
+
+  const init: RequestInit & { duplex?: "half" } = {
+    body:
+      request.method === "GET" || request.method === "HEAD"
+        ? undefined
+        : request.body,
+    duplex: "half",
+    headers: request.headers,
+    method: request.method,
+  }
+
+  return new Request(publicUrl, init)
+}
+
 type HeadersWithSetCookieList = Headers & {
   getSetCookie?: () => string[]
 }
@@ -24,7 +83,9 @@ type HeadersWithSetCookieList = Headers & {
 export function getSetCookieValues(source: Headers) {
   const getSetCookie = (source as HeadersWithSetCookieList).getSetCookie
   if (typeof getSetCookie === "function") {
-    return getSetCookie.call(source).flatMap((value) => splitSetCookieHeader(value))
+    return getSetCookie
+      .call(source)
+      .flatMap((value) => splitSetCookieHeader(value))
   }
 
   const setCookie = source.get("set-cookie")
@@ -160,14 +221,13 @@ function logAuthDebug(
   )
 }
 
-function isTrustedAuthRedirectOrigin(origin: URL) {
+function isTrustedAuthRedirectOrigin(origin: URL, request: URL) {
   const hostname = origin.hostname.toLowerCase()
 
   return (
     hostname === "usekino.com" ||
-    hostname === "localhost" ||
-    hostname === "127.0.0.1" ||
-    hostname === "::1" ||
+    (isLocalDevHostname(request.hostname) && isLocalDevHostname(hostname)) ||
+    isLocalDevHostname(hostname) ||
     hostname.endsWith("-kino.hello-fc8.workers.dev") ||
     hostname === "kino.hello-fc8.workers.dev"
   )
@@ -199,7 +259,7 @@ export function rewriteAuthRedirectLocation({
       if (!callbackURL) return location
 
       const callbackTarget = new URL(callbackURL)
-      if (!isTrustedAuthRedirectOrigin(callbackTarget)) return location
+      if (!isTrustedAuthRedirectOrigin(callbackTarget, request)) return location
 
       target.protocol = callbackTarget.protocol
       target.host = callbackTarget.host
@@ -256,28 +316,29 @@ function cloneAuthResponse(response: Response) {
 }
 
 export async function handler(request: Request) {
-  const authRequest = withFirstPartyOAuthProxyBypass(request)
+  const publicRequest = withPublicAuthRequestUrl(request)
+  const authRequest = withFirstPartyOAuthProxyBypass(publicRequest)
   const response = await syncSignInSocialLocationHeader(
-    request,
+    publicRequest,
     await getAuth().handler(authRequest)
   )
   const location = response.headers.get("location")
 
   if (!location) {
     const clonedResponse = cloneAuthResponse(response)
-    logAuthDebug(request, clonedResponse)
+    logAuthDebug(publicRequest, clonedResponse)
     return clonedResponse
   }
 
   const rewrittenLocation = rewriteAuthRedirectLocation({
     convexSiteUrl: import.meta.env.VITE_CONVEX_SITE_URL!,
     location,
-    requestUrl: request.url,
+    requestUrl: publicRequest.url,
   })
 
   if (rewrittenLocation === location) {
     const clonedResponse = cloneAuthResponse(response)
-    logAuthDebug(request, clonedResponse)
+    logAuthDebug(publicRequest, clonedResponse)
     return clonedResponse
   }
 
@@ -290,7 +351,7 @@ export async function handler(request: Request) {
     statusText: response.statusText,
   })
 
-  logAuthDebug(request, rewrittenResponse, rewrittenLocation)
+  logAuthDebug(publicRequest, rewrittenResponse, rewrittenLocation)
 
   return rewrittenResponse
 }

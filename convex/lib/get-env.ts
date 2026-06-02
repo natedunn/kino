@@ -1,24 +1,27 @@
-import { createEnv } from 'kitcn/server';
-import { z } from 'zod';
+import { createEnv } from "kitcn/server"
+import { z } from "zod"
 
 const envSchema = z.object({
-  SITE_URL: z.string().default('http://localhost:3000'),
+  SITE_URL: z.string().default("http://localhost:3000"),
   BETTER_AUTH_SECRET: z.string().optional(),
   TRUSTED_ORIGINS: z.string().optional(),
   TRUSTED_HOSTS: z.string().optional(),
   CLOUDFLARE_WORKER_NAME: z.string().optional(),
   OAUTH_PROXY_CURRENT_URL: z.string().optional(),
   OAUTH_PROXY_PRODUCTION_URL: z.string().optional(),
-});
+})
 
 function getRuntimeEnv() {
-  return (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env ?? {};
+  return (
+    (globalThis as { process?: { env?: Record<string, string | undefined> } })
+      .process?.env ?? {}
+  )
 }
 
-const DEFAULT_CLOUDFLARE_WORKER_NAME = 'kino';
+const DEFAULT_CLOUDFLARE_WORKER_NAME = "kino"
 
 export function getEnv() {
-  const runtimeEnv = getRuntimeEnv();
+  const runtimeEnv = getRuntimeEnv()
   return createEnv({
     schema: envSchema,
     runtimeEnv: {
@@ -35,154 +38,198 @@ export function getEnv() {
         DEFAULT_CLOUDFLARE_WORKER_NAME,
     },
     cache: false,
-  })();
+  })()
 }
 
 function getRuntimeEnvValue(parts: string[]) {
-  return getRuntimeEnv()[parts.join('_')];
+  return getRuntimeEnv()[parts.join("_")]
 }
 
 export function getGitHubOAuthEnv() {
   return {
-    clientId: getRuntimeEnvValue(['GITHUB', 'CLIENT', 'ID']),
-    clientSecret: getRuntimeEnvValue(['GITHUB', 'CLIENT', 'SECRET']),
-  };
+    clientId: getRuntimeEnvValue(["GITHUB", "CLIENT", "ID"]),
+    clientSecret: getRuntimeEnvValue(["GITHUB", "CLIENT", "SECRET"]),
+  }
 }
 
 export function getJwksEnv() {
-  return getRuntimeEnvValue(['JWKS']);
+  return getRuntimeEnvValue(["JWKS"])
 }
 
 export function getOAuthProxySecretEnv() {
-  return getRuntimeEnvValue(['OAUTH', 'PROXY', 'SECRET']);
+  return getRuntimeEnvValue(["OAUTH", "PROXY", "SECRET"])
 }
 
 export function getOAuthProxyCurrentUrlEnv() {
-  return getRuntimeEnvValue(['OAUTH', 'PROXY', 'CURRENT', 'URL']);
+  return getRuntimeEnvValue(["OAUTH", "PROXY", "CURRENT", "URL"])
 }
 
 export function getOAuthProxyProductionUrlEnv() {
-  return getRuntimeEnvValue(['OAUTH', 'PROXY', 'PRODUCTION', 'URL']);
+  return getRuntimeEnvValue(["OAUTH", "PROXY", "PRODUCTION", "URL"])
 }
 
 function parseList(value: string | undefined) {
-  return (value ?? '')
-    .split(',')
+  return (value ?? "")
+    .split(",")
     .map((item) => item.trim())
-    .filter(Boolean);
+    .filter(Boolean)
 }
 
 function normalizeOrigin(origin: string) {
-  return origin.endsWith('/') ? origin.slice(0, -1) : origin;
+  return origin.endsWith("/") ? origin.slice(0, -1) : origin
 }
 
 function normalizeHostPattern(host: string) {
   return host
     .trim()
-    .replace(/^https?:\/\//, '')
-    .replace(/\/.*$/, '');
+    .replace(/^https?:\/\//, "")
+    .replace(/\/.*$/, "")
 }
 
 function isLoopbackHostname(hostname: string) {
-  const normalized = hostname.trim().toLowerCase().replace(/^\[|\]$/g, '');
-  return normalized === 'localhost' || normalized === '127.0.0.1' || normalized === '::1';
+  const normalized = hostname
+    .trim()
+    .toLowerCase()
+    .replace(/^\[|\]$/g, "")
+  return (
+    normalized === "localhost" ||
+    normalized === "127.0.0.1" ||
+    normalized === "::1"
+  )
 }
 
 function getLoopbackOrigins(siteUrl: string) {
   try {
-    const { hostname } = new URL(siteUrl);
-    if (!isLoopbackHostname(hostname)) return [];
+    const { hostname } = new URL(siteUrl)
+    if (!isLoopbackHostname(hostname)) return []
   } catch {
-    return [];
+    return []
   }
 
-  return ['http://localhost:*', 'http://127.0.0.1:*', 'http://[::1]:*'];
+  return ["http://localhost:*", "http://127.0.0.1:*", "http://[::1]:*"]
 }
 
 function getLoopbackHosts(siteUrl: string) {
-  if (getLoopbackOrigins(siteUrl).length === 0) return [];
-  return ['localhost:*', '127.0.0.1:*', '[::1]:*'];
+  if (getLoopbackOrigins(siteUrl).length === 0) return []
+  return ["localhost:*", "127.0.0.1:*", "[::1]:*"]
+}
+
+function getPortlessOrigins(siteUrl: string) {
+  if (getLoopbackOrigins(siteUrl).length === 0) return []
+  return [
+    "https://*.localhost",
+    "https://*.localhost:*",
+    "http://*.localhost",
+    "http://*.localhost:*",
+  ]
+}
+
+function getPortlessHosts(siteUrl: string) {
+  if (getLoopbackOrigins(siteUrl).length === 0) return []
+  return ["*.localhost", "*.localhost:*"]
 }
 
 function hostnameFromOriginPattern(origin: string) {
-  if (origin.includes('*')) {
-    return normalizeHostPattern(origin);
+  if (origin.includes("*")) {
+    return normalizeHostPattern(origin)
   }
 
   try {
-    return new URL(origin).host;
+    return new URL(origin).host
   } catch {
-    return normalizeHostPattern(origin);
+    return normalizeHostPattern(origin)
   }
 }
 
 function getCloudflarePreviewOrigins(workerName: string | undefined) {
-  if (!workerName) return [];
+  if (!workerName) return []
 
-  const normalizedWorkerName = workerName.trim().toLowerCase();
-  if (!normalizedWorkerName) return [];
+  const normalizedWorkerName = workerName.trim().toLowerCase()
+  if (!normalizedWorkerName) return []
 
   return [
     `https://${normalizedWorkerName}.*.workers.dev`,
     `https://*-${normalizedWorkerName}.*.workers.dev`,
-  ];
+  ]
 }
 
 function getAdditionalDeploymentOrigins() {
-  const runtimeEnv = getRuntimeEnv();
+  const runtimeEnv = getRuntimeEnv()
   const deploymentOrigins = [
     runtimeEnv.CF_PAGES_URL,
     runtimeEnv.URL,
     runtimeEnv.DEPLOY_PRIME_URL,
     runtimeEnv.RENDER_EXTERNAL_URL,
     runtimeEnv.VERCEL_URL
-      ? `https://${runtimeEnv.VERCEL_URL.replace(/^https?:\/\//, '')}`
+      ? `https://${runtimeEnv.VERCEL_URL.replace(/^https?:\/\//, "")}`
       : undefined,
-  ];
+  ]
 
   return deploymentOrigins
-    .filter((origin): origin is string => typeof origin === 'string' && origin.length > 0)
-    .map(normalizeOrigin);
+    .filter(
+      (origin): origin is string =>
+        typeof origin === "string" && origin.length > 0
+    )
+    .map(normalizeOrigin)
 }
 
 export function getTrustedOrigins() {
-  const env = getEnv();
+  const env = getEnv()
   return Array.from(
     new Set(
       [
         env.SITE_URL,
         ...getLoopbackOrigins(env.SITE_URL),
+        ...getPortlessOrigins(env.SITE_URL),
         ...parseList(env.TRUSTED_ORIGINS),
         ...getAdditionalDeploymentOrigins(),
         ...getCloudflarePreviewOrigins(env.CLOUDFLARE_WORKER_NAME),
       ].map(normalizeOrigin)
     )
-  );
+  )
 }
 
 export function getBetterAuthAllowedHosts() {
-  const env = getEnv();
+  const env = getEnv()
   return Array.from(
     new Set([
       ...getTrustedOrigins().map(hostnameFromOriginPattern),
       ...getLoopbackHosts(env.SITE_URL),
+      ...getPortlessHosts(env.SITE_URL),
       ...parseList(env.TRUSTED_HOSTS).map(normalizeHostPattern),
     ])
-  );
+  )
 }
 
 function patternToRegex(pattern: string) {
-  const escaped = pattern.replace(/[.+?^${}()|[\]\\]/g, '\\$&');
-  return new RegExp(`^${escaped.replace(/\*/g, '.*')}$`);
+  const escaped = pattern.replace(/[.+?^${}()|[\]\\]/g, "\\$&")
+  return new RegExp(`^${escaped.replace(/\*/g, ".*")}$`)
 }
 
 export function isTrustedOrigin(origin: string | undefined) {
-  if (!origin) return false;
-  const normalizedOrigin = normalizeOrigin(origin);
+  if (!origin) return false
+  const normalizedOrigin = normalizeOrigin(origin)
   return getTrustedOrigins().some((trustedOrigin) => {
-    const normalizedTrustedOrigin = normalizeOrigin(trustedOrigin);
-    return normalizedTrustedOrigin.includes('*')
+    const normalizedTrustedOrigin = normalizeOrigin(trustedOrigin)
+    return normalizedTrustedOrigin.includes("*")
       ? patternToRegex(normalizedTrustedOrigin).test(normalizedOrigin)
-      : normalizedTrustedOrigin === normalizedOrigin;
-  });
+      : normalizedTrustedOrigin === normalizedOrigin
+  })
+}
+
+export function getTrustedForwardedAuthOrigin(request: Request | undefined) {
+  if (!request) return null
+
+  const forwardedHost = request.headers.get("x-better-auth-forwarded-host")
+  const forwardedProto = request.headers.get("x-better-auth-forwarded-proto")
+
+  if (!forwardedHost || !forwardedProto) return null
+
+  const protocol = forwardedProto.replace(/:$/, "")
+  if (protocol !== "http" && protocol !== "https") return null
+
+  const host = forwardedHost.replace(/^https?:\/\//, "").replace(/\/.*$/, "")
+  if (!isTrustedOrigin(`${protocol}://${host}`)) return null
+
+  return { host, protocol }
 }

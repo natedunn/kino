@@ -1,12 +1,51 @@
-import { describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it } from "vitest"
 
 import {
   cloneHeadersPreservingSetCookie,
   getSetCookieValues,
+  publicAuthRequestUrl,
   rewriteAuthRedirectLocation,
   shouldSkipOAuthProxyForFirstPartySignIn,
   syncSignInSocialLocationHeader,
 } from "./auth-server"
+
+const ORIGINAL_ENV = { ...process.env }
+
+function resetEnv(overrides: Record<string, string | undefined>) {
+  for (const key of Object.keys(process.env)) {
+    delete process.env[key]
+  }
+
+  Object.assign(process.env, ORIGINAL_ENV, overrides)
+}
+
+afterEach(() => {
+  resetEnv({})
+})
+
+describe("publicAuthRequestUrl", () => {
+  it("uses the Portless URL as the public auth origin for local proxied requests", () => {
+    resetEnv({
+      PORTLESS_URL: "https://local-dev-portless-worktrees.kino.localhost:1355",
+    })
+
+    expect(
+      publicAuthRequestUrl("https://127.0.0.1:4468/api/auth/sign-in/social?x=1")
+    ).toBe(
+      "https://local-dev-portless-worktrees.kino.localhost:1355/api/auth/sign-in/social?x=1"
+    )
+  })
+
+  it("leaves non-local request origins unchanged", () => {
+    resetEnv({
+      PORTLESS_URL: "https://local-dev-portless-worktrees.kino.localhost:1355",
+    })
+
+    expect(
+      publicAuthRequestUrl("https://usekino.com/api/auth/get-session")
+    ).toBe("https://usekino.com/api/auth/get-session")
+  })
+})
 
 describe("rewriteAuthRedirectLocation", () => {
   it("rewrites convex auth redirects onto the current app origin", () => {
@@ -19,6 +58,20 @@ describe("rewriteAuthRedirectLocation", () => {
       })
     ).toBe(
       "http://localhost:3000/api/auth/oauth-proxy-callback?callbackURL=http%3A%2F%2Flocalhost%3A3000%2F"
+    )
+  })
+
+  it("rewrites local Portless OAuth callbacks onto the Portless app origin", () => {
+    expect(
+      rewriteAuthRedirectLocation({
+        convexSiteUrl: "https://scrupulous-lemming-700.convex.site",
+        location:
+          "https://scrupulous-lemming-700.convex.site/api/auth/oauth-proxy-callback?callbackURL=https%3A%2F%2Frasalhague.kino.localhost%2Fauth",
+        requestUrl:
+          "https://rasalhague.kino.localhost/api/auth/callback/github?code=abc",
+      })
+    ).toBe(
+      "https://rasalhague.kino.localhost/api/auth/oauth-proxy-callback?callbackURL=https%3A%2F%2Frasalhague.kino.localhost%2Fauth"
     )
   })
 
@@ -52,6 +105,19 @@ describe("rewriteAuthRedirectLocation", () => {
       })
     ).toBe(
       "https://preview-auth-oauth-debug-kino.hello-fc8.workers.dev/api/auth/oauth-proxy-callback?callbackURL=https%3A%2F%2Fpreview-auth-oauth-debug-kino.hello-fc8.workers.dev%2Fauth&profile=encrypted-profile"
+    )
+  })
+
+  it("rewrites production OAuth proxy callbacks back to local Portless origins", () => {
+    expect(
+      rewriteAuthRedirectLocation({
+        convexSiteUrl: "https://brainy-boar-871.convex.site",
+        location:
+          "https://scrupulous-lemming-700.convex.site/api/auth/oauth-proxy-callback?callbackURL=https%3A%2F%2Flocal-dev-portless-worktrees.kino.localhost%3A1355%2Fauth&profile=encrypted-profile",
+        requestUrl: "https://usekino.com/api/auth/callback/github?code=abc",
+      })
+    ).toBe(
+      "https://local-dev-portless-worktrees.kino.localhost:1355/api/auth/oauth-proxy-callback?callbackURL=https%3A%2F%2Flocal-dev-portless-worktrees.kino.localhost%3A1355%2Fauth&profile=encrypted-profile"
     )
   })
 

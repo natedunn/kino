@@ -73,6 +73,40 @@ Optional but useful:
 - Set `OAUTH_PROXY_PRODUCTION_URL=https://usekino.com` explicitly in all deployments.
 - Use `OAUTH_PROXY_CURRENT_URL` only as an escape hatch if forwarded-host inference fails.
 
+## Local Portless Dev
+
+Portless worktree URLs should use the same OAuth proxy path as previews. Do not add one GitHub callback URL per worktree.
+
+Add this to local development env, using the same proxy secret configured on `usekino.com` and preview deployments:
+
+```sh
+OAUTH_PROXY_SECRET=<shared-usekino-oauth-proxy-secret>
+```
+
+The auth handler runs on the Convex site deployment, so the same values must also be set on the Convex dev deployment. Local `.env`/`.env.local` alone is not enough:
+
+```sh
+npx convex env set OAUTH_PROXY_SECRET '<shared-usekino-oauth-proxy-secret>'
+npx convex env set OAUTH_PROXY_PRODUCTION_URL https://usekino.com
+```
+
+`OAUTH_PROXY_PRODUCTION_URL` defaults to `https://usekino.com` when `SITE_URL` is loopback, so local Portless dev does not need to set it. It can still be set explicitly if needed:
+
+```sh
+OAUTH_PROXY_PRODUCTION_URL=https://usekino.com
+```
+
+Do not set `OAUTH_PROXY_CURRENT_URL` for normal Portless dev. The current URL is inferred from the trusted forwarded request host, which lets multiple worktrees use different `*.kino.localhost:1355` hosts at the same time.
+
+Expected local Portless shape:
+
+1. The app starts sign-in from `https://<worktree>.kino.localhost:1355`.
+2. GitHub receives `redirect_uri=https://usekino.com/api/auth/callback/github`.
+3. `usekino.com` handles the provider callback and redirects back to `https://<worktree>.kino.localhost:1355/api/auth/oauth-proxy-callback`.
+4. The local Portless origin sets its own Better Auth session cookies and returns to `/auth` or the requested callback URL.
+
+Because GitHub calls back to `usekino.com`, production must be deployed with the redirect rewrite that permits trusted local `.localhost` OAuth proxy callback origins. Without that production code, GitHub will succeed but the browser can remain on `usekino.com` or a Convex site URL instead of completing auth in the local worktree.
+
 ## Verification Plan
 
 After merging/deploying to production:
