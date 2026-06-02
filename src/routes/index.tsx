@@ -120,7 +120,7 @@ function LandingPage() {
               Ready to get started?
             </h2>
             <p className="mt-3 text-muted-foreground">
-              Free for small teams. Set up in under a minute.
+              Free for small teams. Set up in under a minute and start collecting feedback fast.
             </p>
             <div className="mt-6">
               <Button asChild>
