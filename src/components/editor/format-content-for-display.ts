@@ -1,11 +1,12 @@
 import { common, createLowlight } from "lowlight"
 
+import { formatInlineCode } from "./format-inline-code"
+
 const lowlight = createLowlight(common)
 
 const CODE_BLOCK_REGEX =
   /<pre([^>]*)>\s*<code([^>]*)>([\s\S]*?)<\/code>\s*<\/pre>/gi
 const CLASS_ATTRIBUTE_REGEX = /\bclass=(["'])(.*?)\1/i
-const INLINE_CODE_REGEX = /(^|[^`])`([^`\n]+)`(?!`)/g
 const LANGUAGE_CLASS_PREFIX = "language-"
 
 type HighlightNode = {
@@ -120,35 +121,6 @@ function serializeHighlightedNodes(nodes: HighlightNode[]): string {
       return `<${node.tagName}${attributes}>${serializeHighlightedNodes(
         node.children ?? []
       )}</${node.tagName}>`
-    })
-    .join("")
-}
-
-function formatInlineCode(html: string) {
-  let insideCode = false
-  let insidePre = false
-
-  return html
-    .split(/(<\/?[^>]+>)/g)
-    .filter(Boolean)
-    .map((part) => {
-      if (part.startsWith("<")) {
-        if (/^<pre\b/i.test(part)) insidePre = true
-        if (/^<\/pre/i.test(part)) insidePre = false
-        if (/^<code\b/i.test(part)) insideCode = true
-        if (/^<\/code/i.test(part)) insideCode = false
-        return part
-      }
-
-      if (insideCode || insidePre) {
-        return part
-      }
-
-      return part.replace(
-        INLINE_CODE_REGEX,
-        (_match, prefix: string, code: string) =>
-          `${prefix}<code>${code}</code>`
-      )
     })
     .join("")
 }

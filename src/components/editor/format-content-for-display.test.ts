@@ -22,6 +22,14 @@ describe("formatContentForDisplay", () => {
     )
   })
 
+  it("keeps inline code content escaped", () => {
+    const html = "<p>Use `&lt;img src=x onerror=alert(1)&gt;` here.</p>"
+
+    expect(formatContentForDisplay(html)).toBe(
+      "<p>Use <code>&lt;img src=x onerror=alert(1)&gt;</code> here.</p>"
+    )
+  })
+
   it("leaves non-code content unchanged", () => {
     const html = "<p>Just text.</p>"
 

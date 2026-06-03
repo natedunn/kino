@@ -2,6 +2,7 @@ import { startTransition, useEffect, useMemo, useState } from "react"
 
 import { cn } from "@/lib/utils"
 
+import { formatInlineCode } from "./format-inline-code"
 import { sanitizeEditorContent } from "./sanitize-content"
 
 type EditorContentDisplayProps = {
@@ -18,7 +19,15 @@ export function EditorContentDisplay({
     () => (isHTML ? sanitizeEditorContent(content) : content),
     [content, isHTML]
   )
-  const [processedContent, setProcessedContent] = useState(baseContent)
+  const hasCodeBlock =
+    baseContent.includes("<pre") && baseContent.includes("<code")
+  const hasInlineBackticks = baseContent.includes("`")
+  const immediateContent = useMemo(() => {
+    if (!isHTML) return content
+    if (hasCodeBlock) return baseContent
+    return hasInlineBackticks ? formatInlineCode(baseContent) : baseContent
+  }, [baseContent, content, hasCodeBlock, hasInlineBackticks, isHTML])
+  const [processedContent, setProcessedContent] = useState(immediateContent)
 
   useEffect(() => {
     let isCancelled = false
@@ -30,9 +39,9 @@ export function EditorContentDisplay({
       }
     }
 
-    setProcessedContent(baseContent)
+    setProcessedContent(immediateContent)
 
-    if (!baseContent.includes("<pre") || !baseContent.includes("<code")) {
+    if (!hasCodeBlock) {
       return () => {
         isCancelled = true
       }
@@ -51,7 +60,7 @@ export function EditorContentDisplay({
     return () => {
       isCancelled = true
     }
-  }, [baseContent, content, isHTML])
+  }, [baseContent, hasCodeBlock, immediateContent, isHTML])
 
   if (!isHTML) {
     return <div className={cn("whitespace-pre-wrap", className)}>{content}</div>
