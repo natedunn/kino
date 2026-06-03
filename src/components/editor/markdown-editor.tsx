@@ -14,7 +14,7 @@ function createExtensions(placeholder: string) {
   return [
     StarterKit.configure({
       codeBlock: false,
-      heading: { levels: [4, 5, 6] },
+      heading: { levels: [1, 2, 3, 4, 5, 6] },
       link: false,
       underline: false,
     }),
@@ -89,16 +89,7 @@ export const MarkdownEditor = forwardRef<
       editable: !disabled,
       editorProps: {
         attributes: {
-          class: cn(
-            "prose prose-base max-w-none px-4 py-3 text-foreground focus:outline-none dark:prose-invert",
-            "prose-headings:font-semibold",
-            "prose-h4:text-[1.1rem] prose-h5:text-[1rem] prose-h6:text-[0.95rem]",
-            "prose-a:text-primary prose-a:no-underline hover:prose-a:underline",
-            "prose-code:before:content-none prose-code:after:content-none",
-            "prose-blockquote:border-l-2 prose-blockquote:border-border prose-blockquote:pl-4 prose-blockquote:text-muted-foreground prose-blockquote:not-italic prose-blockquote:before:content-none prose-blockquote:after:content-none",
-            "[&>blockquote:first-child>*:first-child]:mt-0",
-            "prose-ol:my-1.5 prose-ul:my-1.5 prose-li:my-0 prose-li:leading-snug"
-          ),
+          class: cn("markdown-prose px-4 py-3 focus:outline-none"),
         },
         handleKeyDown: (_view, event) => {
           if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
