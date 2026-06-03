@@ -1,36 +1,66 @@
-import { useMemo } from 'react';
+import { startTransition, useEffect, useMemo, useState } from "react"
 
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils"
 
-import { sanitizeEditorContent } from './sanitize-content';
+import { sanitizeEditorContent } from "./sanitize-content"
 
 type EditorContentDisplayProps = {
-  className?: string;
-  content: string;
-};
+  className?: string
+  content: string
+}
 
-export function EditorContentDisplay({ className, content }: EditorContentDisplayProps) {
-  const isHTML = content.startsWith('<') && content.includes('</');
-  const processedContent = useMemo(() => (isHTML ? sanitizeEditorContent(content) : content), [content, isHTML]);
+export function EditorContentDisplay({
+  className,
+  content,
+}: EditorContentDisplayProps) {
+  const isHTML = content.startsWith("<") && content.includes("</")
+  const baseContent = useMemo(
+    () => (isHTML ? sanitizeEditorContent(content) : content),
+    [content, isHTML]
+  )
+  const [processedContent, setProcessedContent] = useState(baseContent)
+
+  useEffect(() => {
+    let isCancelled = false
+
+    if (!isHTML) {
+      setProcessedContent(content)
+      return () => {
+        isCancelled = true
+      }
+    }
+
+    setProcessedContent(baseContent)
+
+    if (!baseContent.includes("<pre") || !baseContent.includes("<code")) {
+      return () => {
+        isCancelled = true
+      }
+    }
+
+    void import("./format-content-for-display").then(
+      ({ formatContentForDisplay }) => {
+        if (isCancelled) return
+
+        startTransition(() => {
+          setProcessedContent(formatContentForDisplay(baseContent))
+        })
+      }
+    )
+
+    return () => {
+      isCancelled = true
+    }
+  }, [baseContent, content, isHTML])
 
   if (!isHTML) {
-    return <div className={cn('whitespace-pre-wrap', className)}>{content}</div>;
+    return <div className={cn("whitespace-pre-wrap", className)}>{content}</div>
   }
 
   return (
     <div
-      className={cn(
-        'prose max-w-none pb-1 text-foreground dark:prose-invert',
-        'prose-headings:font-semibold',
-        'prose-h4:text-[1.1rem] prose-h5:text-[1rem] prose-h6:text-[0.95rem]',
-        'prose-a:text-primary prose-a:no-underline hover:prose-a:underline',
-        'prose-code:before:content-none prose-code:after:content-none',
-        'prose-blockquote:border-l-2 prose-blockquote:border-border prose-blockquote:pl-4 prose-blockquote:text-muted-foreground prose-blockquote:not-italic prose-blockquote:before:content-none prose-blockquote:after:content-none',
-        '[&>blockquote:first-child>*:first-child]:mt-0',
-        'prose-ol:my-1.5 prose-ul:my-1.5 prose-li:my-0 prose-li:leading-snug',
-        className
-      )}
+      className={cn("markdown-prose pb-1", className)}
       dangerouslySetInnerHTML={{ __html: processedContent }}
     />
-  );
+  )
 }
