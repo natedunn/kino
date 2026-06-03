@@ -35,7 +35,7 @@ function CreateProjectRoute() {
   const limitsQuery = useQuery(
     crpc.org.getMyPermission.queryOptions(
       { slug: params.org },
-      { enabled: !!orgQuery.data?.permissions.canCreate }
+      { enabled: !!orgQuery.data?.permissions.canCreate, skipUnauth: true }
     )
   );
 

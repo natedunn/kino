@@ -29,7 +29,7 @@ export const Route = createFileRoute("/create/team/")({
     }
 
     await context.queryClient.ensureQueryData(
-      crpcServer.org.findMyOrgs.queryOptions({})
+      crpcServer.org.findMyOrgs.queryOptions({}, { skipUnauth: true })
     )
   },
   component: CreateTeamRoute,
@@ -53,7 +53,7 @@ function AuthenticatedCreateTeamRoute() {
   const crpc = useCRPC()
   const [formError, setFormError] = useState<string>()
   const { data: orgsData } = useSuspenseQuery(
-    crpc.org.findMyOrgs.queryOptions({})
+    crpc.org.findMyOrgs.queryOptions({}, { skipUnauth: true })
   )
   const createMutation = useMutation(
     crpc.org.create.mutationOptions({
