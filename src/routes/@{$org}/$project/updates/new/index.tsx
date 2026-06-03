@@ -188,7 +188,7 @@ function NewUpdateRoute() {
               to="/@{$org}/$project/updates"
             >
               <ArrowLeft className="size-3.5" />
-              <span className="sr-only sm:not-sr-only">Updates</span>
+              <span className="sr-only sm:not-sr-only">Back to Updates</span>
             </Link>
             <Separator className="h-4" orientation="vertical" />
             <span className="text-sm font-medium text-muted-foreground">New Update</span>
