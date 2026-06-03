@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { revalidateLogic, useForm } from '@tanstack/react-form';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router';
@@ -28,6 +28,14 @@ import { CoverImageUpload } from '../-components/cover-image-upload';
 import { FeedbackSelector } from '../-components/feedback-selector';
 
 const UPDATE_CATEGORIES = ['changelog', 'article', 'announcement'] as const;
+type UpdateFormValues = {
+  category: UpdateCategory;
+  content: string;
+  coverImageId: string | null;
+  relatedFeedbackIds: string[];
+  tags: string[];
+  title: string;
+};
 
 const SIDEBAR_STORAGE_KEY = 'update-editor-sidebar-state';
 
@@ -111,16 +119,20 @@ function EditUpdateRoute() {
 
   const updateData = updateQuery.data;
   const update = updateData?.update;
+  const formDefaultValues = useMemo<UpdateFormValues>(
+    () => ({
+      category: (update?.category ?? 'changelog') as UpdateCategory,
+      content: update?.content ?? '',
+      coverImageId: update?.coverImageId ?? null,
+      relatedFeedbackIds: (update?.relatedFeedbackIds ?? []).map(String),
+      tags: (update?.tags ?? []).map(String),
+      title: update?.title ?? '',
+    }),
+    [update]
+  );
 
   const form = useForm({
-    defaultValues: {
-      category: 'changelog' as UpdateCategory,
-      content: '',
-      coverImageId: null as string | null,
-      relatedFeedbackIds: [] as string[],
-      tags: [] as string[],
-      title: '',
-    },
+    defaultValues: formDefaultValues,
     onSubmit: async ({ value }) => {
       if (!update) return;
       setFormError('');
@@ -139,18 +151,6 @@ function EditUpdateRoute() {
       modeAfterSubmission: 'change',
     }),
   });
-
-  useEffect(() => {
-    if (!update) return;
-    form.reset({
-      category: update.category,
-      content: update.content,
-      coverImageId: update.coverImageId ?? null,
-      relatedFeedbackIds: (update.relatedFeedbackIds ?? []).map(String),
-      tags: update.tags ?? [],
-      title: update.title,
-    });
-  }, [form, update?.id]);
 
   if (!session.data?.user) {
     return <InlineAlert variant="warning">Sign in to edit updates.</InlineAlert>;

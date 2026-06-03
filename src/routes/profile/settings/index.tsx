@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useMemo, useState } from "react"
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query"
 import { useForm } from "@tanstack/react-form"
 import {
@@ -15,6 +15,12 @@ import { Input } from "@/components/ui/input-shadcn"
 import { useCRPC } from "@/lib/convex/crpc"
 import { crpcServer } from "@/lib/convex/crpc-server"
 import { cn } from "@/lib/utils"
+
+type ProfileSettingsFormValues = {
+  avatarFile: File | null
+  name: string
+  username: string
+}
 
 export const Route = createFileRoute("/profile/settings/")({
   loader: async ({ context }) => {
@@ -56,13 +62,17 @@ function AuthenticatedProfileSettingsRoute() {
     crpc.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
   )
   const profile = profileQuery.data
+  const formDefaultValues = useMemo<ProfileSettingsFormValues>(
+    () => ({
+      avatarFile: null,
+      name: profile?.name ?? "",
+      username: profile?.username ?? "",
+    }),
+    [profile]
+  )
 
   const form = useForm({
-    defaultValues: {
-      avatarFile: null as File | null,
-      name: "",
-      username: "",
-    },
+    defaultValues: formDefaultValues,
     onSubmit: async ({ value, formApi }) => {
       if (!profile) return
       setFormError(null)
@@ -94,13 +104,14 @@ function AuthenticatedProfileSettingsRoute() {
             username: value.username,
           },
         })
+        const refreshedProfile = (await profileQuery.refetch()).data
 
         formApi.reset({
           avatarFile: null,
-          name: updatedProfile.name ?? value.name,
-          username: updatedProfile.username ?? value.username,
+          name: refreshedProfile?.name ?? updatedProfile.name ?? value.name,
+          username:
+            refreshedProfile?.username ?? updatedProfile.username ?? value.username,
         })
-        await profileQuery.refetch()
       } catch (error) {
         setFormError(
           error instanceof Error ? error.message : "Unable to update profile"
@@ -108,15 +119,6 @@ function AuthenticatedProfileSettingsRoute() {
       }
     },
   })
-
-  useEffect(() => {
-    if (!profile) return
-    form.reset({
-      avatarFile: null,
-      name: profile.name ?? "",
-      username: profile.username ?? "",
-    })
-  }, [form, profile?.id, profile?.name, profile?.username])
 
   if (!profile) {
     return null

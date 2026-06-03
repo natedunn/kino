@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useMemo } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useForm } from '@tanstack/react-form';
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router';
@@ -56,12 +56,17 @@ function EditBoardRoute() {
     })
   );
 
+  const formDefaultValues = useMemo(
+    () => ({
+      description: boardQuery.data?.description ?? '',
+      name: boardQuery.data?.name ?? '',
+      slug: boardQuery.data?.slug ?? '',
+    }),
+    [boardQuery.data]
+  );
+
   const form = useForm({
-    defaultValues: {
-      description: '',
-      name: '',
-      slug: '',
-    },
+    defaultValues: formDefaultValues,
     onSubmit: async ({ value }) => {
       if (!boardQuery.data) return;
 
@@ -75,15 +80,6 @@ function EditBoardRoute() {
       });
     },
   });
-
-  useEffect(() => {
-    if (!boardQuery.data) return;
-    form.reset({
-      description: boardQuery.data.description ?? '',
-      name: boardQuery.data.name,
-      slug: boardQuery.data.slug,
-    });
-  }, [boardQuery.data, form]);
 
   if (!projectQuery.data?.permissions.canEdit) {
     return (

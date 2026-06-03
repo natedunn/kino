@@ -18,6 +18,7 @@
     "preview:cleanup:stale-cloudflare": "node scripts/cleanup-stale-cloudflare-previews.mjs",
     "preview:cleanup:convex": "node scripts/cleanup-convex-preview.mjs",
     "preview:cleanup:stale-convex": "node scripts/cleanup-stale-convex-previews.mjs",
+    "dev:chrome-cdp": "scripts/dev-chrome-cdp.sh",
     "cf-typegen": "wrangler types",
     "preview": "vite preview",
     "test": "vitest run",
