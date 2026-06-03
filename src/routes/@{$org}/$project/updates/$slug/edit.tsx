@@ -196,7 +196,7 @@ function EditUpdateRoute() {
               to="/@{$org}/$project/updates/$slug"
             >
               <ArrowLeft className="size-3.5" />
-              <span className="hidden sm:inline">Back</span>
+              <span className="sr-only sm:not-sr-only">Back</span>
             </Link>
             <Separator className="h-4" orientation="vertical" />
             <span className="text-sm font-medium text-muted-foreground">Edit Update</span>
@@ -252,7 +252,7 @@ function EditUpdateRoute() {
                     className={cn({
                       'select-none opacity-50 grayscale': visuallyDisabled,
                     })}
-                    disabled={saveMutation.isPending}
+                    disabled={visuallyDisabled}
                     size="sm"
                     type="submit"
                   >
@@ -341,6 +341,7 @@ function EditUpdateRoute() {
                           <Badge className="gap-1 pr-1" key={tag} variant="secondary">
                             {tag}
                             <button
+                              aria-label={`Remove tag ${tag}`}
                               className="ml-0.5 rounded-sm p-0.5 hover:bg-muted hover:text-destructive"
                               onClick={() =>
                                 field.handleChange((field.state.value || []).filter((value) => value !== tag))

@@ -188,7 +188,7 @@ function NewUpdateRoute() {
               to="/@{$org}/$project/updates"
             >
               <ArrowLeft className="size-3.5" />
-              <span className="hidden sm:inline">Updates</span>
+              <span className="sr-only sm:not-sr-only">Updates</span>
             </Link>
             <Separator className="h-4" orientation="vertical" />
             <span className="text-sm font-medium text-muted-foreground">New Update</span>
@@ -220,7 +220,7 @@ function NewUpdateRoute() {
                       className={cn({
                         'select-none opacity-50 grayscale': savingDisabled,
                       })}
-                      disabled={createMutation.isPending}
+                      disabled={savingDisabled}
                       size="sm"
                       type="submit"
                       variant="outline"
@@ -231,7 +231,7 @@ function NewUpdateRoute() {
                       className={cn({
                         'select-none opacity-50 grayscale': publishingDisabled,
                       })}
-                      disabled={createMutation.isPending || publishMutation.isPending}
+                      disabled={publishingDisabled}
                       onClick={() => void publishFromDraft()}
                       size="sm"
                       type="button"
@@ -304,6 +304,7 @@ function NewUpdateRoute() {
                           <Badge className="gap-1 pr-1" key={tag} variant="secondary">
                             {tag}
                             <button
+                              aria-label={`Remove tag ${tag}`}
                               className="ml-0.5 rounded-sm p-0.5 hover:bg-muted hover:text-destructive"
                               onClick={() =>
                                 field.handleChange((field.state.value || []).filter((value) => value !== tag))
