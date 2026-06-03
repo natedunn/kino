@@ -183,12 +183,15 @@ function NewUpdateRoute() {
         <div className="container flex items-center justify-between gap-4 py-3">
           <div className="flex items-center gap-3">
             <Link
+              aria-label="Back to Updates"
               className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
               params={{ org: params.org, project: params.project }}
               to="/@{$org}/$project/updates"
             >
               <ArrowLeft className="size-3.5" />
-              <span className="sr-only sm:not-sr-only">Back to Updates</span>
+              <span aria-hidden="true" className="hidden sm:inline">
+                Updates
+              </span>
             </Link>
             <Separator className="h-4" orientation="vertical" />
             <span className="text-sm font-medium text-muted-foreground">New Update</span>

@@ -191,12 +191,15 @@ function EditUpdateRoute() {
         <div className="container flex items-center justify-between gap-4 py-3">
           <div className="flex items-center gap-3">
             <Link
+              aria-label="Back to Update"
               className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
               params={params}
               to="/@{$org}/$project/updates/$slug"
             >
               <ArrowLeft className="size-3.5" />
-              <span className="sr-only sm:not-sr-only">Back</span>
+              <span aria-hidden="true" className="hidden sm:inline">
+                Back
+              </span>
             </Link>
             <Separator className="h-4" orientation="vertical" />
             <span className="text-sm font-medium text-muted-foreground">Edit Update</span>
