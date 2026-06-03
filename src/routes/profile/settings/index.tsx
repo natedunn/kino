@@ -23,7 +23,7 @@ export const Route = createFileRoute("/profile/settings/")({
     }
 
     await context.queryClient.ensureQueryData(
-      crpcServer.profile.findMyProfile.queryOptions({})
+      crpcServer.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
     )
   },
   component: ProfileSettingsRoute,
@@ -53,7 +53,7 @@ function AuthenticatedProfileSettingsRoute() {
   const updateMutation = useMutation(crpc.profile.update.mutationOptions())
   const [formError, setFormError] = useState<string | null>(null)
   const profileQuery = useSuspenseQuery(
-    crpc.profile.findMyProfile.queryOptions({})
+    crpc.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
   )
   const profile = profileQuery.data
 

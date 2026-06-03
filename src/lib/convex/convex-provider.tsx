@@ -2,8 +2,8 @@
 
 import { useQueryClient } from "@tanstack/react-query"
 import { ConvexAuthProvider } from "kitcn/auth/client"
-import { type ConvexQueryClient, useAuthStore, useAuthValue } from "kitcn/react"
-import { useEffect, useRef } from "react"
+import { type ConvexQueryClient, useAuthStore } from "kitcn/react"
+import { useEffect } from "react"
 import type { ReactNode } from "react"
 
 import { authClient } from "@/lib/convex/auth-client"
@@ -24,47 +24,11 @@ export function AppConvexProvider({
       client={convexQueryClient.convexClient}
       initialToken={initialToken ?? undefined}
     >
-      <InitialAuthStoreBootstrap initialToken={initialToken}>
-        <QueryProvider convexQueryClient={convexQueryClient}>
-          {children}
-        </QueryProvider>
-      </InitialAuthStoreBootstrap>
+      <QueryProvider convexQueryClient={convexQueryClient}>
+        {children}
+      </QueryProvider>
     </ConvexAuthProvider>
   )
-}
-
-function InitialAuthStoreBootstrap({
-  children,
-  initialToken,
-}: {
-  children: ReactNode
-  initialToken?: string | null
-}) {
-  const authStore = useAuthStore()
-  const didBootstrapRef = useRef(false)
-  const token = useAuthValue("token")
-  const isAuthenticated = useAuthValue("isAuthenticated")
-  const isLoading = useAuthValue("isLoading")
-
-  if (!didBootstrapRef.current) {
-    didBootstrapRef.current = true
-
-    if (initialToken) {
-      authStore.set("token", initialToken)
-      authStore.set("expiresAt", decodeJwtExp(initialToken))
-      authStore.set("isAuthenticated", true)
-      authStore.set("isLoading", false)
-      authStore.set("sessionSyncGraceUntil", null)
-    }
-  }
-
-  if (initialToken && token && isLoading && !isAuthenticated) {
-    // Keep SSR-hydrated auth-bound queries stable while Better Auth session
-    // state catches up to the server-provided Convex token.
-    authStore.set("isAuthenticated", true)
-  }
-
-  return children
 }
 
 function QueryProvider({

@@ -143,9 +143,12 @@ export const Route = createFileRoute("/@{$org}/$project/feedback/$slug/")({
       ),
       projectData.permissions.canEdit
         ? context.queryClient.ensureQueryData(
-            crpcServer.projectMember.listAssignableMembers.queryOptions({
-              projectId: projectData.project.id,
-            })
+            crpcServer.projectMember.listAssignableMembers.queryOptions(
+              {
+                projectId: projectData.project.id,
+              },
+              { skipUnauth: true }
+            )
           )
         : Promise.resolve(null),
     ])
@@ -206,7 +209,7 @@ function FeedbackDetailRoute() {
       {
         projectId: projectData.project.id,
       },
-      { enabled: !!projectData.permissions.canEdit }
+      { enabled: !!projectData.permissions.canEdit, skipUnauth: true }
     )
   )
 

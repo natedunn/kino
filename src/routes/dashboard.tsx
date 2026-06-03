@@ -29,10 +29,10 @@ export const Route = createFileRoute("/dashboard")({
 
     await Promise.all([
       context.queryClient.ensureQueryData(
-        crpcServer.profile.findMyProfile.queryOptions({})
+        crpcServer.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
       ),
       context.queryClient.ensureQueryData(
-        crpcServer.org.findMyOrgs.queryOptions({})
+        crpcServer.org.findMyOrgs.queryOptions({}, { skipUnauth: true })
       ),
     ])
   },
@@ -55,10 +55,10 @@ function DashboardPage() {
 function AuthenticatedDashboard() {
   const crpc = useCRPC()
   const { data: user } = useSuspenseQuery(
-    crpc.profile.findMyProfile.queryOptions({})
+    crpc.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
   )
   const { data: orgsData } = useSuspenseQuery(
-    crpc.org.findMyOrgs.queryOptions({})
+    crpc.org.findMyOrgs.queryOptions({}, { skipUnauth: true })
   )
   const orgs = orgsData?.teams ?? []
 

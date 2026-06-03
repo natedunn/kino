@@ -33,7 +33,10 @@ export const Route = createFileRoute("/@{$org}/")({
 
     if (orgData?.permissions.canCreate) {
       await context.queryClient.ensureQueryData(
-        crpcServer.org.getMyPermission.queryOptions({ slug: params.org })
+        crpcServer.org.getMyPermission.queryOptions(
+          { slug: params.org },
+          { skipUnauth: true }
+        )
       )
     }
   },
@@ -57,7 +60,7 @@ function OrganizationRoute() {
   const limitsQuery = useQuery(
     crpc.org.getMyPermission.queryOptions(
       { slug: params.org },
-      { enabled: !!orgData?.permissions.canCreate }
+      { enabled: !!orgData?.permissions.canCreate, skipUnauth: true }
     )
   )
   const projects = projectsData ?? []
