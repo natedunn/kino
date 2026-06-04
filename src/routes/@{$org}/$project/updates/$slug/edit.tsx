@@ -119,6 +119,14 @@ function EditUpdateRoute() {
 
   const updateData = updateQuery.data;
   const update = updateData?.update;
+  const relatedFeedbackIdsKey = useMemo(
+    () => JSON.stringify((update?.relatedFeedbackIds ?? []).map(String)),
+    [update?.relatedFeedbackIds]
+  );
+  const tagsKey = useMemo(
+    () => JSON.stringify((update?.tags ?? []).map(String)),
+    [update?.tags]
+  );
   const formDefaultValues = useMemo<UpdateFormValues>(
     () => ({
       category: (update?.category ?? 'changelog') as UpdateCategory,
@@ -128,7 +136,15 @@ function EditUpdateRoute() {
       tags: (update?.tags ?? []).map(String),
       title: update?.title ?? '',
     }),
-    [update]
+    [
+      relatedFeedbackIdsKey,
+      tagsKey,
+      update?.category,
+      update?.content,
+      update?.coverImageId,
+      update?.id,
+      update?.title,
+    ]
   );
 
   const form = useForm({

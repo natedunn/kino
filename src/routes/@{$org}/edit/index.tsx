@@ -42,7 +42,7 @@ function EditOrganizationRoute() {
       name: org?.name ?? '',
       slug: org?.slug ?? '',
     }),
-    [org]
+    [org?.name, org?.slug]
   );
 
   const form = useForm({

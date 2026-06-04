@@ -68,7 +68,7 @@ function AuthenticatedProfileSettingsRoute() {
       name: profile?.name ?? "",
       username: profile?.username ?? "",
     }),
-    [profile]
+    [profile?.name, profile?.username]
   )
 
   const form = useForm({
