@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useMemo } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useForm } from '@tanstack/react-form';
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router';
@@ -36,11 +36,17 @@ function EditOrganizationRoute() {
     })
   );
 
+  const org = orgQuery.data?.org;
+  const formDefaultValues = useMemo(
+    () => ({
+      name: org?.name ?? '',
+      slug: org?.slug ?? '',
+    }),
+    [org?.name, org?.slug]
+  );
+
   const form = useForm({
-    defaultValues: {
-      name: '',
-      slug: '',
-    },
+    defaultValues: formDefaultValues,
     onSubmit: async ({ value }) => {
       const org = orgQuery.data?.org;
       if (!org) return;
@@ -52,16 +58,6 @@ function EditOrganizationRoute() {
       });
     },
   });
-
-  const org = orgQuery.data?.org;
-
-  useEffect(() => {
-    if (!org) return;
-    form.reset({
-      name: org.name,
-      slug: org.slug,
-    });
-  }, [form, org?._id]);
 
   if (orgQuery.isLoading) {
     return null;
