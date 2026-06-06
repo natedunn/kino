@@ -1,9 +1,9 @@
-import { z } from 'zod';
-import { createFunctionHandle } from 'convex/server';
-import { ConvexError, v } from 'convex/values';
-import { eq } from 'kitcn/orm';
-import { CRPCError } from 'kitcn/server';
-import { authMutation, optionalAuthQuery } from '../lib/crpc';
+import { z } from "zod"
+import { createFunctionHandle } from "convex/server"
+import { ConvexError, v } from "convex/values"
+import { eq } from "kitcn/orm"
+import { CRPCError } from "kitcn/server"
+import { authMutation, authQuery, optionalAuthQuery } from "../lib/crpc"
 import {
   asId,
   generateRandomSlug,
@@ -12,7 +12,7 @@ import {
   getDocOrThrow,
   toPublicDoc,
   verifyProjectAccess,
-} from '../lib/kino';
+} from "../lib/kino"
 import {
   deleteCoverImageAttachment,
   getCoverImageR2Metadata,
@@ -20,14 +20,15 @@ import {
   resolveProfileImageUrl,
   updateOrgStorageUsage,
   validateCoverImageMetadata,
-} from '../lib/storage';
-import { orgUploadsR2 } from '../lib/r2';
-import { updateTable } from './schema';
-import { internal } from './_generated/api';
-import type { Id } from './_generated/dataModel';
-import { internalMutation } from './generated/server';
+} from "../lib/storage"
+import { orgUploadsR2 } from "../lib/r2"
+import { updateTable } from "./schema"
+import { internal } from "./_generated/api"
+import type { Id } from "./_generated/dataModel"
+import { internalMutation } from "./generated/server"
 
-const updateCategorySchema = z.enum(['changelog', 'article', 'announcement']);
+const updateCategorySchema = z.enum(["changelog", "article", "announcement"])
+const updateIdListSchema = z.array(z.string()).min(1).max(100)
 
 export const create = authMutation
   .input(
@@ -42,35 +43,45 @@ export const create = authMutation
     })
   )
   .mutation(async ({ ctx, input }) => {
-    const profile = await getCurrentProfileOrThrow(ctx, ctx.userId);
-    const project = await getDocOrThrow(ctx, asId<'project'>(input.projectId), 'Project not found');
-    const access = await verifyProjectAccess(ctx, { slug: project.slug, userId: ctx.userId });
+    const profile = await getCurrentProfileOrThrow(ctx, ctx.userId)
+    const project = await getDocOrThrow(
+      ctx,
+      asId<"project">(input.projectId),
+      "Project not found"
+    )
+    const access = await verifyProjectAccess(ctx, {
+      slug: project.slug,
+      userId: ctx.userId,
+    })
 
     if (!access.permissions.canEdit) {
       throw new CRPCError({
-        code: 'FORBIDDEN',
-        message: 'You do not have permission to create updates for this project',
-      });
+        code: "FORBIDDEN",
+        message:
+          "You do not have permission to create updates for this project",
+      })
     }
 
     const [updateRow] = await ctx.orm
       .insert(updateTable)
       .values({
         authorProfileId: profile._id as any,
-        category: input.category ?? 'changelog',
+        category: input.category ?? "changelog",
         content: input.content,
         coverImageId: input.coverImageId ?? null,
         projectId: project._id as any,
-        relatedFeedbackIds: input.relatedFeedbackIds?.map((id) => asId<'feedback'>(id)) ?? [],
+        relatedFeedbackIds:
+          input.relatedFeedbackIds?.map((id) => asId<"feedback">(id)) ?? [],
         slug: generateRandomSlug(),
-        status: 'draft',
+        status: "draft",
         tags: input.tags ?? [],
         title: input.title,
+        updatedTime: Date.now(),
       })
-      .returning();
+      .returning()
 
-    return { slug: updateRow.slug, updateId: updateRow.id };
-  });
+    return { slug: updateRow.slug, updateId: updateRow.id }
+  })
 
 export const update = authMutation
   .input(
@@ -85,32 +96,54 @@ export const update = authMutation
     })
   )
   .mutation(async ({ ctx, input }) => {
-    const existingUpdate = await getDocOrThrow(ctx, asId<'update'>(input.id), 'Update not found');
-    const project = await getDocOrThrow(ctx, existingUpdate.projectId, 'Project not found');
-    const access = await verifyProjectAccess(ctx, { slug: project.slug, userId: ctx.userId });
+    const existingUpdate = await getDocOrThrow(
+      ctx,
+      asId<"update">(input.id),
+      "Update not found"
+    )
+    const project = await getDocOrThrow(
+      ctx,
+      existingUpdate.projectId,
+      "Project not found"
+    )
+    const access = await verifyProjectAccess(ctx, {
+      slug: project.slug,
+      userId: ctx.userId,
+    })
 
     if (!access.permissions.canEdit) {
-      throw new CRPCError({ code: 'FORBIDDEN', message: 'You do not have permission to edit this update' });
+      throw new CRPCError({
+        code: "FORBIDDEN",
+        message: "You do not have permission to edit this update",
+      })
     }
 
     const nextCoverImageId =
-      input.coverImageId === undefined ? existingUpdate.coverImageId ?? null : input.coverImageId;
+      input.coverImageId === undefined
+        ? (existingUpdate.coverImageId ?? null)
+        : input.coverImageId
 
     const patch = Object.fromEntries(
       Object.entries({
         category: input.category,
         content: input.content,
-        coverImageId: input.coverImageId === undefined ? undefined : nextCoverImageId,
-        relatedFeedbackIds: input.relatedFeedbackIds?.map((id) => asId<'feedback'>(id)),
+        coverImageId:
+          input.coverImageId === undefined ? undefined : nextCoverImageId,
+        relatedFeedbackIds: input.relatedFeedbackIds?.map((id) =>
+          asId<"feedback">(id)
+        ),
         tags: input.tags,
         title: input.title,
         updatedTime: Date.now(),
       }).filter(([, value]) => value !== undefined)
-    );
+    )
 
-    await ctx.orm.update(updateTable).set(patch).where(eq(updateTable.id, existingUpdate._id as any));
-    return { success: true };
-  });
+    await ctx.orm
+      .update(updateTable)
+      .set(patch)
+      .where(eq(updateTable.id, existingUpdate._id as any))
+    return { success: true }
+  })
 
 export const publish = authMutation
   .input(
@@ -119,27 +152,38 @@ export const publish = authMutation
     })
   )
   .mutation(async ({ ctx, input }) => {
-    const existingUpdate = await getDocOrThrow(ctx, asId<'update'>(input.id), 'Update not found');
-    const project = await getDocOrThrow(ctx, existingUpdate.projectId, 'Project not found');
-    const access = await verifyProjectAccess(ctx, { slug: project.slug, userId: ctx.userId });
+    const existingUpdate = await getDocOrThrow(
+      ctx,
+      asId<"update">(input.id),
+      "Update not found"
+    )
+    const project = await getDocOrThrow(
+      ctx,
+      existingUpdate.projectId,
+      "Project not found"
+    )
+    const access = await verifyProjectAccess(ctx, {
+      slug: project.slug,
+      userId: ctx.userId,
+    })
 
     if (!access.permissions.canEdit) {
       throw new CRPCError({
-        code: 'FORBIDDEN',
-        message: 'You do not have permission to publish this update',
-      });
+        code: "FORBIDDEN",
+        message: "You do not have permission to publish this update",
+      })
     }
 
     await ctx.orm
       .update(updateTable)
       .set({
         publishedAt: Date.now(),
-        status: 'published',
+        status: "published",
         updatedTime: Date.now(),
       })
-      .where(eq(updateTable.id, existingUpdate._id as any));
-    return { success: true };
-  });
+      .where(eq(updateTable.id, existingUpdate._id as any))
+    return { success: true }
+  })
 
 export const unpublish = authMutation
   .input(
@@ -148,26 +192,37 @@ export const unpublish = authMutation
     })
   )
   .mutation(async ({ ctx, input }) => {
-    const existingUpdate = await getDocOrThrow(ctx, asId<'update'>(input.id), 'Update not found');
-    const project = await getDocOrThrow(ctx, existingUpdate.projectId, 'Project not found');
-    const access = await verifyProjectAccess(ctx, { slug: project.slug, userId: ctx.userId });
+    const existingUpdate = await getDocOrThrow(
+      ctx,
+      asId<"update">(input.id),
+      "Update not found"
+    )
+    const project = await getDocOrThrow(
+      ctx,
+      existingUpdate.projectId,
+      "Project not found"
+    )
+    const access = await verifyProjectAccess(ctx, {
+      slug: project.slug,
+      userId: ctx.userId,
+    })
 
     if (!access.permissions.canEdit) {
       throw new CRPCError({
-        code: 'FORBIDDEN',
-        message: 'You do not have permission to unpublish this update',
-      });
+        code: "FORBIDDEN",
+        message: "You do not have permission to unpublish this update",
+      })
     }
 
     await ctx.orm
       .update(updateTable)
       .set({
-        status: 'draft',
+        status: "draft",
         updatedTime: Date.now(),
       })
-      .where(eq(updateTable.id, existingUpdate._id as any));
-    return { success: true };
-  });
+      .where(eq(updateTable.id, existingUpdate._id as any))
+    return { success: true }
+  })
 
 export const remove = authMutation
   .input(
@@ -176,25 +231,196 @@ export const remove = authMutation
     })
   )
   .mutation(async ({ ctx, input }) => {
-    const existingUpdate = await getDocOrThrow(ctx, asId<'update'>(input.id), 'Update not found');
-    const project = await getDocOrThrow(ctx, existingUpdate.projectId, 'Project not found');
-    const access = await verifyProjectAccess(ctx, { slug: project.slug, userId: ctx.userId });
+    const existingUpdate = await getDocOrThrow(
+      ctx,
+      asId<"update">(input.id),
+      "Update not found"
+    )
+    const project = await getDocOrThrow(
+      ctx,
+      existingUpdate.projectId,
+      "Project not found"
+    )
+    const access = await verifyProjectAccess(ctx, {
+      slug: project.slug,
+      userId: ctx.userId,
+    })
 
-    if (!access.permissions.canEdit) {
+    if (!access.permissions.canDelete) {
       throw new CRPCError({
-        code: 'FORBIDDEN',
-        message: 'You do not have permission to delete this update',
-      });
+        code: "FORBIDDEN",
+        message: "You do not have permission to delete this update",
+      })
     }
 
     await deleteCoverImageAttachment(ctx, {
       coverImageId: existingUpdate.coverImageId ?? null,
       orgSlug: project.orgSlug,
-    });
+    })
 
-    await ctx.orm.delete(updateTable).where(eq(updateTable.id, existingUpdate._id as any));
-    return { success: true };
-  });
+    await ctx.orm
+      .delete(updateTable)
+      .where(eq(updateTable.id, existingUpdate._id as any))
+    return { success: true }
+  })
+
+export const bulkPublish = authMutation
+  .input(
+    z.object({
+      ids: updateIdListSchema,
+      projectId: z.string(),
+    })
+  )
+  .mutation(async ({ ctx, input }) => {
+    const projectId = asId<"project">(input.projectId)
+
+    for (const id of input.ids) {
+      const existingUpdate = await getDocOrThrow(
+        ctx,
+        asId<"update">(id),
+        "Update not found"
+      )
+      if (existingUpdate.projectId !== projectId) {
+        throw new CRPCError({
+          code: "BAD_REQUEST",
+          message: "Update does not belong to this project",
+        })
+      }
+
+      const project = await getDocOrThrow(
+        ctx,
+        existingUpdate.projectId,
+        "Project not found"
+      )
+      const access = await verifyProjectAccess(ctx, {
+        slug: project.slug,
+        userId: ctx.userId,
+      })
+
+      if (!access.permissions.canEdit) {
+        throw new CRPCError({
+          code: "FORBIDDEN",
+          message: "You do not have permission to publish these updates",
+        })
+      }
+
+      await ctx.orm
+        .update(updateTable)
+        .set({
+          publishedAt: Date.now(),
+          status: "published",
+          updatedTime: Date.now(),
+        })
+        .where(eq(updateTable.id, existingUpdate._id as any))
+    }
+
+    return { success: true }
+  })
+
+export const bulkUnpublish = authMutation
+  .input(
+    z.object({
+      ids: updateIdListSchema,
+      projectId: z.string(),
+    })
+  )
+  .mutation(async ({ ctx, input }) => {
+    const projectId = asId<"project">(input.projectId)
+
+    for (const id of input.ids) {
+      const existingUpdate = await getDocOrThrow(
+        ctx,
+        asId<"update">(id),
+        "Update not found"
+      )
+      if (existingUpdate.projectId !== projectId) {
+        throw new CRPCError({
+          code: "BAD_REQUEST",
+          message: "Update does not belong to this project",
+        })
+      }
+
+      const project = await getDocOrThrow(
+        ctx,
+        existingUpdate.projectId,
+        "Project not found"
+      )
+      const access = await verifyProjectAccess(ctx, {
+        slug: project.slug,
+        userId: ctx.userId,
+      })
+
+      if (!access.permissions.canEdit) {
+        throw new CRPCError({
+          code: "FORBIDDEN",
+          message: "You do not have permission to unpublish these updates",
+        })
+      }
+
+      await ctx.orm
+        .update(updateTable)
+        .set({
+          status: "draft",
+          updatedTime: Date.now(),
+        })
+        .where(eq(updateTable.id, existingUpdate._id as any))
+    }
+
+    return { success: true }
+  })
+
+export const bulkRemove = authMutation
+  .input(
+    z.object({
+      ids: updateIdListSchema,
+      projectId: z.string(),
+    })
+  )
+  .mutation(async ({ ctx, input }) => {
+    const projectId = asId<"project">(input.projectId)
+
+    for (const id of input.ids) {
+      const existingUpdate = await getDocOrThrow(
+        ctx,
+        asId<"update">(id),
+        "Update not found"
+      )
+      if (existingUpdate.projectId !== projectId) {
+        throw new CRPCError({
+          code: "BAD_REQUEST",
+          message: "Update does not belong to this project",
+        })
+      }
+
+      const project = await getDocOrThrow(
+        ctx,
+        existingUpdate.projectId,
+        "Project not found"
+      )
+      const access = await verifyProjectAccess(ctx, {
+        slug: project.slug,
+        userId: ctx.userId,
+      })
+
+      if (!access.permissions.canDelete) {
+        throw new CRPCError({
+          code: "FORBIDDEN",
+          message: "You do not have permission to delete these updates",
+        })
+      }
+
+      await deleteCoverImageAttachment(ctx, {
+        coverImageId: existingUpdate.coverImageId ?? null,
+        orgSlug: project.orgSlug,
+      })
+
+      await ctx.orm
+        .delete(updateTable)
+        .where(eq(updateTable.id, existingUpdate._id as any))
+    }
+
+    return { success: true }
+  })
 
 export const generateCoverImageUploadUrl = authMutation
   .input(
@@ -203,19 +429,33 @@ export const generateCoverImageUploadUrl = authMutation
     })
   )
   .mutation(async ({ ctx, input }) => {
-    const existingUpdate = await getDocOrThrow(ctx, asId<'update'>(input.updateId), 'Update not found');
-    const project = await getDocOrThrow(ctx, existingUpdate.projectId, 'Project not found');
-    const access = await verifyProjectAccess(ctx, { slug: project.slug, userId: ctx.userId });
+    const existingUpdate = await getDocOrThrow(
+      ctx,
+      asId<"update">(input.updateId),
+      "Update not found"
+    )
+    const project = await getDocOrThrow(
+      ctx,
+      existingUpdate.projectId,
+      "Project not found"
+    )
+    const access = await verifyProjectAccess(ctx, {
+      slug: project.slug,
+      userId: ctx.userId,
+    })
 
     if (!access.permissions.canEdit) {
       throw new CRPCError({
-        code: 'FORBIDDEN',
-        message: 'You do not have permission to upload cover images for this update',
-      });
+        code: "FORBIDDEN",
+        message:
+          "You do not have permission to upload cover images for this update",
+      })
     }
 
-    return await orgUploadsR2.generateUploadUrl(`UPDATE_COVER_PHOTO.${input.updateId}`);
-  });
+    return await orgUploadsR2.generateUploadUrl(
+      `UPDATE_COVER_PHOTO.${input.updateId}`
+    )
+  })
 
 export const syncMetadata = authMutation
   .input(
@@ -224,52 +464,58 @@ export const syncMetadata = authMutation
     })
   )
   .mutation(async ({ ctx, input }) => {
-    const parts = input.key.split('.');
-    if (parts[0] !== 'UPDATE_COVER_PHOTO' || !parts[1]) {
+    const parts = input.key.split(".")
+    if (parts[0] !== "UPDATE_COVER_PHOTO" || !parts[1]) {
       throw new ConvexError({
-        code: '400',
-        message: 'Invalid key format for cover image upload',
-      });
+        code: "400",
+        message: "Invalid key format for cover image upload",
+      })
     }
 
-    const updateId = parts[1] as Id<'update'>;
-    const existingUpdate = await ctx.db.get(updateId);
+    const updateId = parts[1] as Id<"update">
+    const existingUpdate = await ctx.db.get(updateId)
     if (!existingUpdate) {
       throw new ConvexError({
-        code: '404',
-        message: 'Update not found',
-      });
+        code: "404",
+        message: "Update not found",
+      })
     }
 
-    const project = await ctx.db.get(existingUpdate.projectId);
+    const project = await ctx.db.get(existingUpdate.projectId)
     if (!project) {
       throw new ConvexError({
-        code: '404',
-        message: 'Project not found',
-      });
+        code: "404",
+        message: "Project not found",
+      })
     }
 
-    const access = await verifyProjectAccess(ctx, { slug: project.slug, userId: ctx.userId });
+    const access = await verifyProjectAccess(ctx, {
+      slug: project.slug,
+      userId: ctx.userId,
+    })
     if (!access.permissions.canEdit) {
       throw new CRPCError({
-        code: 'FORBIDDEN',
-        message: 'You do not have permission to upload cover images for this update',
-      });
+        code: "FORBIDDEN",
+        message:
+          "You do not have permission to upload cover images for this update",
+      })
     }
 
     await ctx.db.patch(updateId, {
       coverImageId: input.key,
       updatedTime: Date.now(),
-    });
+    })
 
     await ctx.scheduler.runAfter(0, orgUploadsR2.component.lib.syncMetadata, {
       ...orgUploadsR2.config,
       key: input.key,
-      onComplete: await createFunctionHandle(internal.update.onCoverImageMetadataSynced),
-    });
+      onComplete: await createFunctionHandle(
+        internal.update.onCoverImageMetadataSynced
+      ),
+    })
 
-    return null;
-  });
+    return null
+  })
 
 export const clearCoverImage = authMutation
   .input(
@@ -278,21 +524,32 @@ export const clearCoverImage = authMutation
     })
   )
   .mutation(async ({ ctx, input }) => {
-    const existingUpdate = await getDocOrThrow(ctx, asId<'update'>(input.updateId), 'Update not found');
-    const project = await getDocOrThrow(ctx, existingUpdate.projectId, 'Project not found');
-    const access = await verifyProjectAccess(ctx, { slug: project.slug, userId: ctx.userId });
+    const existingUpdate = await getDocOrThrow(
+      ctx,
+      asId<"update">(input.updateId),
+      "Update not found"
+    )
+    const project = await getDocOrThrow(
+      ctx,
+      existingUpdate.projectId,
+      "Project not found"
+    )
+    const access = await verifyProjectAccess(ctx, {
+      slug: project.slug,
+      userId: ctx.userId,
+    })
 
     if (!access.permissions.canEdit) {
       throw new CRPCError({
-        code: 'FORBIDDEN',
-        message: 'You do not have permission to clear this update cover image',
-      });
+        code: "FORBIDDEN",
+        message: "You do not have permission to clear this update cover image",
+      })
     }
 
     await deleteCoverImageAttachment(ctx, {
       coverImageId: existingUpdate.coverImageId ?? null,
       orgSlug: project.orgSlug,
-    });
+    })
 
     await ctx.orm
       .update(updateTable)
@@ -300,10 +557,10 @@ export const clearCoverImage = authMutation
         coverImageId: null,
         updatedTime: Date.now(),
       })
-      .where(eq(updateTable.id, existingUpdate._id as any));
+      .where(eq(updateTable.id, existingUpdate._id as any))
 
-    return { success: true };
-  });
+    return { success: true }
+  })
 
 export const onCoverImageMetadataSynced = internalMutation({
   args: {
@@ -312,28 +569,33 @@ export const onCoverImageMetadataSynced = internalMutation({
     key: v.string(),
   },
   handler: async (ctx, args) => {
-    const parts = args.key.split('.');
-    if (parts[0] !== 'UPDATE_COVER_PHOTO' || !parts[1]) {
+    const parts = args.key.split(".")
+    if (parts[0] !== "UPDATE_COVER_PHOTO" || !parts[1]) {
       throw new ConvexError({
-        code: '400',
-        message: 'Invalid key format for cover image upload',
-      });
+        code: "400",
+        message: "Invalid key format for cover image upload",
+      })
     }
 
-    const updateId = parts[1] as Id<'update'>;
-    const existingUpdate = await ctx.db.get(updateId);
-    if (!existingUpdate) return;
+    const updateId = parts[1] as Id<"update">
+    const existingUpdate = await ctx.db.get(updateId)
+    if (!existingUpdate) return
 
-    const project = await ctx.db.get(existingUpdate.projectId);
-    if (!project) return;
+    const project = await ctx.db.get(existingUpdate.projectId)
+    if (!project) return
 
-    const metadata = await getCoverImageR2Metadata(ctx as any, args.key);
-    if (!metadata) return;
+    const metadata = await getCoverImageR2Metadata(ctx as any, args.key)
+    if (!metadata) return
 
-    validateCoverImageMetadata(metadata);
-    await updateOrgStorageUsage(ctx as any, project.orgSlug, metadata.size ?? 0, args.isNew ? 1 : 0);
+    validateCoverImageMetadata(metadata)
+    await updateOrgStorageUsage(
+      ctx as any,
+      project.orgSlug,
+      metadata.size ?? 0,
+      args.isNew ? 1 : 0
+    )
   },
-});
+})
 
 export const getCoverImageUrl = optionalAuthQuery
   .input(
@@ -342,8 +604,8 @@ export const getCoverImageUrl = optionalAuthQuery
     })
   )
   .query(async ({ input }) => {
-    return await resolveCoverImageUrl(input.key);
-  });
+    return await resolveCoverImageUrl(input.key)
+  })
 
 export const getBySlug = optionalAuthQuery
   .input(
@@ -354,27 +616,32 @@ export const getBySlug = optionalAuthQuery
   )
   .query(async ({ ctx, input }) => {
     const item = await ctx.db
-      .query('update')
-      .withIndex('by_projectId_slug', (q: any) =>
-        q.eq('projectId', asId<'project'>(input.projectId)).eq('slug', input.slug)
+      .query("update")
+      .withIndex("by_projectId_slug", (q: any) =>
+        q
+          .eq("projectId", asId<"project">(input.projectId))
+          .eq("slug", input.slug)
       )
-      .first();
-    if (!item) return null;
+      .first()
+    if (!item) return null
 
-    const project = await getDoc(ctx, asId<'project'>(input.projectId));
-    if (!project) return null;
+    const project = await getDoc(ctx, asId<"project">(input.projectId))
+    if (!project) return null
 
-    const access = await verifyProjectAccess(ctx, { slug: project.slug, userId: ctx.userId });
-    if (item.status === 'draft' && !access.permissions.canEdit) {
-      return null;
+    const access = await verifyProjectAccess(ctx, {
+      slug: project.slug,
+      userId: ctx.userId,
+    })
+    if (item.status === "draft" && !access.permissions.canEdit) {
+      return null
     }
 
-    const author = await getDoc<'profile'>(ctx, item.authorProfileId);
+    const author = await getDoc<"profile">(ctx, item.authorProfileId)
     const relatedFeedback = await Promise.all(
       (item.relatedFeedbackIds ?? []).map(async (feedbackId) => {
-        const feedback = await getDoc<'feedback'>(ctx, feedbackId);
-        if (!feedback) return null;
-        const board = await getDoc<'feedbackBoard'>(ctx, feedback.boardId);
+        const feedback = await getDoc<"feedback">(ctx, feedbackId)
+        if (!feedback) return null
+        const board = await getDoc<"feedbackBoard">(ctx, feedback.boardId)
         return {
           id: feedback._id,
           board: board
@@ -388,27 +655,30 @@ export const getBySlug = optionalAuthQuery
           slug: feedback.slug,
           status: feedback.status,
           title: feedback.title,
-        };
+        }
       })
-    );
+    )
 
     const emotes = await ctx.db
-      .query('updateEmote')
-      .withIndex('by_updateId', (q: any) => q.eq('updateId', item._id))
-      .collect();
-    const emoteCounts: Record<string, { authorProfileIds: string[]; count: number }> = {};
+      .query("updateEmote")
+      .withIndex("by_updateId", (q: any) => q.eq("updateId", item._id))
+      .collect()
+    const emoteCounts: Record<
+      string,
+      { authorProfileIds: string[]; count: number }
+    > = {}
     for (const emote of emotes) {
       if (!emoteCounts[emote.content]) {
-        emoteCounts[emote.content] = { authorProfileIds: [], count: 0 };
+        emoteCounts[emote.content] = { authorProfileIds: [], count: 0 }
       }
-      emoteCounts[emote.content].count++;
-      emoteCounts[emote.content].authorProfileIds.push(emote.authorProfileId);
+      emoteCounts[emote.content].count++
+      emoteCounts[emote.content].authorProfileIds.push(emote.authorProfileId)
     }
 
     const comments = await ctx.db
-      .query('updateComment')
-      .withIndex('by_updateId', (q: any) => q.eq('updateId', item._id))
-      .collect();
+      .query("updateComment")
+      .withIndex("by_updateId", (q: any) => q.eq("updateId", item._id))
+      .collect()
 
     return {
       author: author
@@ -423,10 +693,12 @@ export const getBySlug = optionalAuthQuery
       commentCount: comments.length,
       coverImageUrl: await resolveCoverImageUrl(item.coverImageId ?? null),
       emoteCounts,
-      relatedFeedback: relatedFeedback.filter((value): value is NonNullable<typeof value> => value !== null),
+      relatedFeedback: relatedFeedback.filter(
+        (value): value is NonNullable<typeof value> => value !== null
+      ),
       update: toPublicDoc(item),
-    };
-  });
+    }
+  })
 
 export const listByProject = optionalAuthQuery
   .input(
@@ -435,44 +707,52 @@ export const listByProject = optionalAuthQuery
     })
   )
   .query(async ({ ctx, input }) => {
-    const project = await getDoc(ctx, asId<'project'>(input.projectId));
+    const project = await getDoc(ctx, asId<"project">(input.projectId))
     if (!project) {
-      return { canEdit: false, updates: [] };
+      return { canEdit: false, updates: [] }
     }
 
-    const access = await verifyProjectAccess(ctx, { slug: project.slug, userId: ctx.userId });
+    const access = await verifyProjectAccess(ctx, {
+      slug: project.slug,
+      userId: ctx.userId,
+    })
     const query = ctx.db
-      .query('update')
-      .withIndex('by_projectId_status_publishedAt', (q: any) =>
+      .query("update")
+      .withIndex("by_projectId_status_publishedAt", (q: any) =>
         access.permissions.canEdit
-          ? q.eq('projectId', project._id)
-          : q.eq('projectId', project._id).eq('status', 'published')
+          ? q.eq("projectId", project._id)
+          : q.eq("projectId", project._id).eq("status", "published")
       )
-      .order('desc');
+      .order("desc")
 
-    const updates = await query.collect();
+    const updates = await query.collect()
 
     return {
       canEdit: access.permissions.canEdit,
       updates: await Promise.all(
         updates.map(async (item) => {
-          const author = await getDoc<'profile'>(ctx, item.authorProfileId);
+          const author = await getDoc<"profile">(ctx, item.authorProfileId)
           const emotes = await ctx.db
-            .query('updateEmote')
-            .withIndex('by_updateId', (q: any) => q.eq('updateId', item._id))
-            .collect();
-          const emoteCounts: Record<string, { authorProfileIds: string[]; count: number }> = {};
+            .query("updateEmote")
+            .withIndex("by_updateId", (q: any) => q.eq("updateId", item._id))
+            .collect()
+          const emoteCounts: Record<
+            string,
+            { authorProfileIds: string[]; count: number }
+          > = {}
           for (const emote of emotes) {
             if (!emoteCounts[emote.content]) {
-              emoteCounts[emote.content] = { authorProfileIds: [], count: 0 };
+              emoteCounts[emote.content] = { authorProfileIds: [], count: 0 }
             }
-            emoteCounts[emote.content].count++;
-            emoteCounts[emote.content].authorProfileIds.push(emote.authorProfileId);
+            emoteCounts[emote.content].count++
+            emoteCounts[emote.content].authorProfileIds.push(
+              emote.authorProfileId
+            )
           }
           const comments = await ctx.db
-            .query('updateComment')
-            .withIndex('by_updateId', (q: any) => q.eq('updateId', item._id))
-            .collect();
+            .query("updateComment")
+            .withIndex("by_updateId", (q: any) => q.eq("updateId", item._id))
+            .collect()
 
           return {
             ...toPublicDoc(item),
@@ -485,10 +765,71 @@ export const listByProject = optionalAuthQuery
                 }
               : null,
             commentCount: comments.length,
-            coverImageUrl: await resolveCoverImageUrl(item.coverImageId ?? null),
+            coverImageUrl: await resolveCoverImageUrl(
+              item.coverImageId ?? null
+            ),
             emoteCounts,
-          };
+          }
         })
       ),
-    };
-  });
+    }
+  })
+
+export const listProjectDashboard = authQuery
+  .input(
+    z.object({
+      projectId: z.string(),
+    })
+  )
+  .paginated({ limit: 50, item: z.any() })
+  .query(async ({ ctx, input }) => {
+    const project = await getDoc(ctx, asId<"project">(input.projectId))
+    if (!project) {
+      throw new CRPCError({ code: "NOT_FOUND", message: "Project not found" })
+    }
+
+    const access = await verifyProjectAccess(ctx, {
+      slug: project.slug,
+      userId: ctx.userId,
+    })
+    if (!access.permissions.canEdit) {
+      throw new CRPCError({
+        code: "FORBIDDEN",
+        message:
+          "You do not have permission to manage updates for this project",
+      })
+    }
+
+    const result = await ctx.db
+      .query("update")
+      .withIndex("by_projectId_updatedTime", (q: any) =>
+        q.eq("projectId", project._id)
+      )
+      .order("desc")
+      .paginate({
+        cursor: input.cursor,
+        numItems: input.limit,
+      })
+
+    return {
+      continueCursor: result.continueCursor,
+      isDone: result.isDone,
+      page: await Promise.all(
+        result.page.map(async (item) => {
+          const author = await getDoc<"profile">(ctx, item.authorProfileId)
+
+          return {
+            ...toPublicDoc(item),
+            author: author
+              ? {
+                  id: author._id,
+                  imageUrl: await resolveProfileImageUrl(author),
+                  name: author.name,
+                  username: author.username,
+                }
+              : null,
+          }
+        })
+      ),
+    }
+  })

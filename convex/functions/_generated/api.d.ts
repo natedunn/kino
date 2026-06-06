@@ -325,6 +325,24 @@ export declare const api: {
     >;
   };
   update: {
+    bulkPublish: FunctionReference<
+      "mutation",
+      "public",
+      { ids: Array<string>; projectId: string },
+      any
+    >;
+    bulkRemove: FunctionReference<
+      "mutation",
+      "public",
+      { ids: Array<string>; projectId: string },
+      any
+    >;
+    bulkUnpublish: FunctionReference<
+      "mutation",
+      "public",
+      { ids: Array<string>; projectId: string },
+      any
+    >;
     clearCoverImage: FunctionReference<
       "mutation",
       "public",
@@ -368,6 +386,12 @@ export declare const api: {
       "public",
       { projectId: string },
       any
+    >;
+    listProjectDashboard: FunctionReference<
+      "query",
+      "public",
+      { cursor?: string | null; limit?: number; projectId: string },
+      { continueCursor: string | null; isDone: boolean; page: Array<any> }
     >;
     publish: FunctionReference<"mutation", "public", { id: string }, any>;
     remove: FunctionReference<"mutation", "public", { id: string }, any>;

@@ -12,114 +12,133 @@ import {
   text,
   textEnum,
   timestamp,
-} from 'kitcn/orm';
+} from "kitcn/orm"
 
-const PROFILE_ROLES = ['system:admin', 'system:editor', 'user'] as const;
-const PROJECT_VISIBILITIES = ['public', 'private', 'archived'] as const;
-const PROJECT_MEMBER_ROLES = ['admin', 'member', 'editor', 'org:admin', 'org:editor'] as const;
-const FEEDBACK_STATUSES = ['open', 'in-progress', 'closed', 'completed', 'paused'] as const;
+const PROFILE_ROLES = ["system:admin", "system:editor", "user"] as const
+const PROJECT_VISIBILITIES = ["public", "private", "archived"] as const
+const PROJECT_MEMBER_ROLES = [
+  "admin",
+  "member",
+  "editor",
+  "org:admin",
+  "org:editor",
+] as const
+const FEEDBACK_STATUSES = [
+  "open",
+  "in-progress",
+  "closed",
+  "completed",
+  "paused",
+] as const
 const FEEDBACK_EVENT_TYPES = [
-  'status_changed',
-  'board_changed',
-  'assigned',
-  'unassigned',
-  'title_changed',
-  'answer_marked',
-  'answer_unmarked',
-] as const;
-const UPDATE_STATUSES = ['draft', 'published'] as const;
-const UPDATE_CATEGORIES = ['changelog', 'article', 'announcement'] as const;
+  "status_changed",
+  "board_changed",
+  "assigned",
+  "unassigned",
+  "title_changed",
+  "answer_marked",
+  "answer_unmarked",
+] as const
+const UPDATE_STATUSES = ["draft", "published"] as const
+const UPDATE_CATEGORIES = ["changelog", "article", "announcement"] as const
 const EMOTE_CONTENTS = [
-  'thumbsUp',
-  'thumbsDown',
-  'laugh',
-  'questionMark',
-  'sad',
-  'tada',
-  'eyes',
-  'heart',
-  'skull',
-  'explodingHead',
-] as const;
+  "thumbsUp",
+  "thumbsDown",
+  "laugh",
+  "questionMark",
+  "sad",
+  "tada",
+  "eyes",
+  "heart",
+  "skull",
+  "explodingHead",
+] as const
 const urlField = arrayOf(
   objectOf({
     url: text().notNull(),
     text: text().notNull(),
   })
-);
+)
 
 const ORG_ROLE_TO_PROJECT_ROLE = {
-  owner: 'org:admin',
-  admin: 'org:admin',
-  editor: 'org:editor',
-  member: 'member',
-} as const;
+  owner: "org:admin",
+  admin: "org:admin",
+  editor: "org:editor",
+  member: "member",
+} as const
 
-type SupportedOrgRole = keyof typeof ORG_ROLE_TO_PROJECT_ROLE;
+type SupportedOrgRole = keyof typeof ORG_ROLE_TO_PROJECT_ROLE
 
-function isSupportedOrgRole(role: string | null | undefined): role is SupportedOrgRole {
-  return role === 'owner' || role === 'admin' || role === 'editor' || role === 'member';
+function isSupportedOrgRole(
+  role: string | null | undefined
+): role is SupportedOrgRole {
+  return (
+    role === "owner" ||
+    role === "admin" ||
+    role === "editor" ||
+    role === "member"
+  )
 }
 
 async function syncProjectMembershipsForOrgMember(
   ctx: any,
   args: {
-    organizationId: string;
-    role: string | null | undefined;
-    userId: string;
+    organizationId: string
+    role: string | null | undefined
+    userId: string
   }
 ) {
   const [organization, profile] = await Promise.all([
     ctx.db.get(args.organizationId),
     ctx.db
-      .query('profile')
-      .withIndex('by_userId', (q: any) => q.eq('userId', args.userId))
+      .query("profile")
+      .withIndex("by_userId", (q: any) => q.eq("userId", args.userId))
       .unique(),
-  ]);
+  ])
 
   if (!organization || !profile) {
-    return;
+    return
   }
 
   if (!isSupportedOrgRole(args.role)) {
     const orgProjects = await ctx.db
-      .query('project')
-      .withIndex('by_orgSlug', (q: any) => q.eq('orgSlug', organization.slug))
-      .collect();
+      .query("project")
+      .withIndex("by_orgSlug", (q: any) => q.eq("orgSlug", organization.slug))
+      .collect()
 
     const projectMemberships = await Promise.all(
       orgProjects.map((project: any) =>
         ctx.db
-          .query('projectMember')
-          .withIndex('by_profileId_projectId', (q: any) =>
-            q.eq('profileId', profile._id).eq('projectId', project._id)
+          .query("projectMember")
+          .withIndex("by_profileId_projectId", (q: any) =>
+            q.eq("profileId", profile._id).eq("projectId", project._id)
           )
           .collect()
       )
-    );
+    )
 
     await Promise.all(
       projectMemberships
         .flat()
         .map((membership: any) => ctx.db.delete(membership._id))
-    );
-    return;
+    )
+    return
   }
 
-  const projectRole = ORG_ROLE_TO_PROJECT_ROLE[args.role];
+  const projectRole = ORG_ROLE_TO_PROJECT_ROLE[args.role]
   const projects = await ctx.db
-    .query('project')
-    .withIndex('by_orgSlug', (q: any) => q.eq('orgSlug', organization.slug))
-    .collect();
+    .query("project")
+    .withIndex("by_orgSlug", (q: any) => q.eq("orgSlug", organization.slug))
+    .collect()
 
   await Promise.all(
     projects.map(async (project: any) => {
       const memberships = await ctx.db
-        .query('projectMember')
-        .withIndex('by_profileId_projectId', (q: any) =>
-          q.eq('profileId', profile._id).eq('projectId', project._id)
+        .query("projectMember")
+        .withIndex("by_profileId_projectId", (q: any) =>
+          q.eq("profileId", profile._id).eq("projectId", project._id)
         )
-        .collect();
+        .collect()
 
       if (memberships.length > 0) {
         await ctx.db.patch(memberships[0]._id, {
@@ -127,11 +146,13 @@ async function syncProjectMembershipsForOrgMember(
           projectVisibility: project.visibility,
           role: projectRole,
           updatedTime: Date.now(),
-        });
+        })
         await Promise.all(
-          memberships.slice(1).map((membership: any) => ctx.db.delete(membership._id))
-        );
-        return;
+          memberships
+            .slice(1)
+            .map((membership: any) => ctx.db.delete(membership._id))
+        )
+        return
       }
 
       await ctx.orm.insert(projectMemberTable).values({
@@ -140,57 +161,59 @@ async function syncProjectMembershipsForOrgMember(
         projectSlug: project.slug,
         projectVisibility: project.visibility,
         role: projectRole,
-      });
+      })
     })
-  );
+  )
 }
 
 async function syncProjectMembershipsForProject(
   ctx: any,
   project: {
-    _id: string;
-    orgSlug: string;
-    slug: string;
-    visibility: (typeof PROJECT_VISIBILITIES)[number];
+    _id: string
+    orgSlug: string
+    slug: string
+    visibility: (typeof PROJECT_VISIBILITIES)[number]
   }
 ) {
   const organization = await ctx.db
-    .query('organization')
-    .withIndex('slug', (q: any) => q.eq('slug', project.orgSlug))
-    .unique();
+    .query("organization")
+    .withIndex("slug", (q: any) => q.eq("slug", project.orgSlug))
+    .unique()
 
   if (!organization) {
-    return;
+    return
   }
 
   const members = await ctx.db
-    .query('member')
-    .withIndex('organizationId', (q: any) => q.eq('organizationId', organization._id))
-    .collect();
+    .query("member")
+    .withIndex("organizationId", (q: any) =>
+      q.eq("organizationId", organization._id)
+    )
+    .collect()
 
   await Promise.all(
     members.map(async (member: any) => {
       if (!isSupportedOrgRole(member.role)) {
-        return;
+        return
       }
 
       const profile = await ctx.db
-        .query('profile')
-        .withIndex('by_userId', (q: any) => q.eq('userId', member.userId))
-        .unique();
+        .query("profile")
+        .withIndex("by_userId", (q: any) => q.eq("userId", member.userId))
+        .unique()
 
       if (!profile) {
-        return;
+        return
       }
 
       const existingMemberships = await ctx.db
-        .query('projectMember')
-        .withIndex('by_profileId_projectId', (q: any) =>
-          q.eq('profileId', profile._id).eq('projectId', project._id)
+        .query("projectMember")
+        .withIndex("by_profileId_projectId", (q: any) =>
+          q.eq("profileId", profile._id).eq("projectId", project._id)
         )
-        .collect();
+        .collect()
 
-      const role = ORG_ROLE_TO_PROJECT_ROLE[member.role as SupportedOrgRole];
+      const role = ORG_ROLE_TO_PROJECT_ROLE[member.role as SupportedOrgRole]
 
       if (existingMemberships.length > 0) {
         await ctx.db.patch(existingMemberships[0]._id, {
@@ -198,11 +221,13 @@ async function syncProjectMembershipsForProject(
           projectVisibility: project.visibility,
           role,
           updatedTime: Date.now(),
-        });
+        })
         await Promise.all(
-          existingMemberships.slice(1).map((membership: any) => ctx.db.delete(membership._id))
-        );
-        return;
+          existingMemberships
+            .slice(1)
+            .map((membership: any) => ctx.db.delete(membership._id))
+        )
+        return
       }
 
       await ctx.orm.insert(projectMemberTable).values({
@@ -211,13 +236,13 @@ async function syncProjectMembershipsForProject(
         projectSlug: project.slug,
         projectVisibility: project.visibility,
         role,
-      });
+      })
     })
-  );
+  )
 }
 
 export const userTable = convexTable(
-  'user',
+  "user",
   {
     name: text().notNull(),
     email: text().notNull().unique(),
@@ -235,16 +260,16 @@ export const userTable = convexTable(
     profileId: text(),
   },
   (userTable) => [
-    index('email_name').on(userTable.email, userTable.name),
-    index('name').on(userTable.name),
-    index('userId').on(userTable.userId),
-    index('username').on(userTable.username),
-    index('profileId').on(userTable.profileId),
+    index("email_name").on(userTable.email, userTable.name),
+    index("name").on(userTable.name),
+    index("userId").on(userTable.userId),
+    index("username").on(userTable.username),
+    index("profileId").on(userTable.profileId),
   ]
-);
+)
 
 export const sessionTable = convexTable(
-  'session',
+  "session",
   {
     expiresAt: timestamp().notNull(),
     token: text().notNull().unique(),
@@ -252,23 +277,27 @@ export const sessionTable = convexTable(
     updatedAt: timestamp().notNull(),
     ipAddress: text(),
     userAgent: text(),
-    userId: text().notNull().references(() => userTable.id),
+    userId: text()
+      .notNull()
+      .references(() => userTable.id),
     impersonatedBy: text(),
     activeOrganizationId: text(),
   },
   (sessionTable) => [
-    index('expiresAt').on(sessionTable.expiresAt),
-    index('expiresAt_userId').on(sessionTable.expiresAt, sessionTable.userId),
-    index('userId').on(sessionTable.userId),
+    index("expiresAt").on(sessionTable.expiresAt),
+    index("expiresAt_userId").on(sessionTable.expiresAt, sessionTable.userId),
+    index("userId").on(sessionTable.userId),
   ]
-);
+)
 
 export const accountTable = convexTable(
-  'account',
+  "account",
   {
     accountId: text().notNull(),
     providerId: text().notNull(),
-    userId: text().notNull().references(() => userTable.id),
+    userId: text()
+      .notNull()
+      .references(() => userTable.id),
     accessToken: text(),
     refreshToken: text(),
     idToken: text(),
@@ -280,15 +309,18 @@ export const accountTable = convexTable(
     updatedAt: timestamp().notNull(),
   },
   (accountTable) => [
-    index('accountId').on(accountTable.accountId),
-    index('accountId_providerId').on(accountTable.accountId, accountTable.providerId),
-    index('providerId_userId').on(accountTable.providerId, accountTable.userId),
-    index('userId').on(accountTable.userId),
+    index("accountId").on(accountTable.accountId),
+    index("accountId_providerId").on(
+      accountTable.accountId,
+      accountTable.providerId
+    ),
+    index("providerId_userId").on(accountTable.providerId, accountTable.userId),
+    index("userId").on(accountTable.userId),
   ]
-);
+)
 
 export const verificationTable = convexTable(
-  'verification',
+  "verification",
   {
     identifier: text().notNull(),
     value: text().notNull(),
@@ -297,13 +329,13 @@ export const verificationTable = convexTable(
     updatedAt: timestamp().notNull(),
   },
   (verificationTable) => [
-    index('expiresAt').on(verificationTable.expiresAt),
-    index('identifier').on(verificationTable.identifier),
+    index("expiresAt").on(verificationTable.expiresAt),
+    index("identifier").on(verificationTable.identifier),
   ]
-);
+)
 
 export const organizationTable = convexTable(
-  'organization',
+  "organization",
   {
     name: text().notNull(),
     slug: text().notNull(),
@@ -313,56 +345,67 @@ export const organizationTable = convexTable(
     visibility: text().notNull(),
   },
   (organizationTable) => [
-    index('name').on(organizationTable.name),
-    index('slug').on(organizationTable.slug),
+    index("name").on(organizationTable.name),
+    index("slug").on(organizationTable.slug),
   ]
-);
+)
 
 export const memberTable = convexTable(
-  'member',
+  "member",
   {
-    organizationId: text().notNull().references(() => organizationTable.id),
-    userId: text().notNull().references(() => userTable.id),
+    organizationId: text()
+      .notNull()
+      .references(() => organizationTable.id),
+    userId: text()
+      .notNull()
+      .references(() => userTable.id),
     role: text().notNull(),
     createdAt: timestamp().notNull(),
   },
   (memberTable) => [
-    index('organizationId').on(memberTable.organizationId),
-    index('userId').on(memberTable.userId),
-    index('role').on(memberTable.role),
-    index('userId_organizationId').on(memberTable.userId, memberTable.organizationId),
+    index("organizationId").on(memberTable.organizationId),
+    index("userId").on(memberTable.userId),
+    index("role").on(memberTable.role),
+    index("userId_organizationId").on(
+      memberTable.userId,
+      memberTable.organizationId
+    ),
   ]
-);
+)
 
 export const invitationTable = convexTable(
-  'invitation',
+  "invitation",
   {
-    organizationId: text().notNull().references(() => organizationTable.id),
+    organizationId: text()
+      .notNull()
+      .references(() => organizationTable.id),
     email: text().notNull(),
     role: text(),
     status: text().notNull(),
     expiresAt: timestamp().notNull(),
     createdAt: timestamp().notNull(),
-    inviterId: text().notNull().references(() => userTable.id),
+    inviterId: text()
+      .notNull()
+      .references(() => userTable.id),
   },
   (invitationTable) => [
-    index('organizationId').on(invitationTable.organizationId),
-    index('email').on(invitationTable.email),
-    index('role').on(invitationTable.role),
-    index('status').on(invitationTable.status),
-    index('inviterId').on(invitationTable.inviterId),
+    index("organizationId").on(invitationTable.organizationId),
+    index("email").on(invitationTable.email),
+    index("role").on(invitationTable.role),
+    index("status").on(invitationTable.status),
+    index("inviterId").on(invitationTable.inviterId),
   ]
-);
+)
 
-export const jwksTable = convexTable('jwks', {
+export const jwksTable = convexTable("jwks", {
   publicKey: text().notNull(),
   privateKey: text().notNull(),
   createdAt: timestamp().notNull(),
   expiresAt: timestamp(),
-});
+})
 
 export const profileTable = convexTable(
-  'profile',
+  "profile",
   {
     deletedTime: integer(),
     updatedTime: integer(),
@@ -372,20 +415,22 @@ export const profileTable = convexTable(
     location: text(),
     personalOrganizationId: text().references(() => organizationTable.id),
     urls: urlField,
-    userId: text().notNull().references(() => userTable.id),
+    userId: text()
+      .notNull()
+      .references(() => userTable.id),
     username: text().notNull(),
     email: text().notNull(),
     role: textEnum(PROFILE_ROLES).notNull(),
     name: text().notNull(),
   },
   (profileTable) => [
-    index('by_username').on(profileTable.username),
-    index('by_userId').on(profileTable.userId),
+    index("by_username").on(profileTable.username),
+    index("by_userId").on(profileTable.userId),
   ]
-);
+)
 
 export const projectTable = convexTable(
-  'project',
+  "project",
   {
     deletedTime: integer(),
     updatedTime: integer(),
@@ -398,48 +443,58 @@ export const projectTable = convexTable(
     slug: text().notNull(),
   },
   (projectTable) => [
-    index('by_orgSlug').on(projectTable.orgSlug),
-    index('by_slug').on(projectTable.slug),
-    index('by_updatedTime').on(projectTable.updatedTime),
-    index('by_orgSlug_slug').on(projectTable.orgSlug, projectTable.slug),
-    index('by_orgSlug_visibility_updatedAt').on(
+    index("by_orgSlug").on(projectTable.orgSlug),
+    index("by_slug").on(projectTable.slug),
+    index("by_updatedTime").on(projectTable.updatedTime),
+    index("by_orgSlug_slug").on(projectTable.orgSlug, projectTable.slug),
+    index("by_orgSlug_visibility_updatedAt").on(
       projectTable.orgSlug,
       projectTable.visibility,
       projectTable.updatedTime
     ),
   ]
-);
+)
 
 export const projectMemberTable = convexTable(
-  'projectMember',
+  "projectMember",
   {
     deletedTime: integer(),
     updatedTime: integer(),
-    profileId: id('profile').notNull().references(() => profileTable.id),
-    projectId: id('project').notNull().references(() => projectTable.id),
+    profileId: id("profile")
+      .notNull()
+      .references(() => profileTable.id),
+    projectId: id("project")
+      .notNull()
+      .references(() => projectTable.id),
     role: textEnum(PROJECT_MEMBER_ROLES).notNull(),
     projectVisibility: textEnum(PROJECT_VISIBILITIES).notNull(),
     projectSlug: text().notNull(),
   },
   (projectMemberTable) => [
-    index('by_projectId').on(projectMemberTable.projectId),
-    index('by_profileId_projectId').on(projectMemberTable.profileId, projectMemberTable.projectId),
-    index('by_profileId_projectSlug').on(projectMemberTable.profileId, projectMemberTable.projectSlug),
-    index('by_profileId_projectId_role').on(
+    index("by_projectId").on(projectMemberTable.projectId),
+    index("by_profileId_projectId").on(
+      projectMemberTable.profileId,
+      projectMemberTable.projectId
+    ),
+    index("by_profileId_projectSlug").on(
+      projectMemberTable.profileId,
+      projectMemberTable.projectSlug
+    ),
+    index("by_profileId_projectId_role").on(
       projectMemberTable.profileId,
       projectMemberTable.projectId,
       projectMemberTable.role
     ),
-    index('by_profileId_projectSlug_role').on(
+    index("by_profileId_projectSlug_role").on(
       projectMemberTable.profileId,
       projectMemberTable.projectSlug,
       projectMemberTable.role
     ),
   ]
-);
+)
 
 export const orgStorageUsageTable = convexTable(
-  'orgStorageUsage',
+  "orgStorageUsage",
   {
     deletedTime: integer(),
     updatedTime: integer(),
@@ -447,198 +502,268 @@ export const orgStorageUsageTable = convexTable(
     totalBytes: integer().notNull(),
     fileCount: integer().notNull(),
   },
-  (orgStorageUsageTable) => [index('by_orgSlug').on(orgStorageUsageTable.orgSlug)]
-);
+  (orgStorageUsageTable) => [
+    index("by_orgSlug").on(orgStorageUsageTable.orgSlug),
+  ]
+)
 
 export const feedbackBoardTable = convexTable(
-  'feedbackBoard',
+  "feedbackBoard",
   {
     deletedTime: integer(),
     updatedTime: integer(),
     name: text().notNull(),
-    projectId: id('project').notNull().references(() => projectTable.id),
+    projectId: id("project")
+      .notNull()
+      .references(() => projectTable.id),
     description: text(),
     icon: text(),
     slug: text().notNull(),
   },
   (feedbackBoardTable) => [
-    index('by_projectId').on(feedbackBoardTable.projectId),
-    index('by_slug_projectId').on(feedbackBoardTable.slug, feedbackBoardTable.projectId),
+    index("by_projectId").on(feedbackBoardTable.projectId),
+    index("by_slug_projectId").on(
+      feedbackBoardTable.slug,
+      feedbackBoardTable.projectId
+    ),
   ]
-);
+)
 
 export const feedbackCommentTable = convexTable(
-  'feedbackComment',
+  "feedbackComment",
   {
     deletedTime: integer(),
     updatedTime: integer(),
-    feedbackId: id('feedback').notNull().references(() => feedbackTable.id),
-    authorProfileId: id('profile').notNull().references(() => profileTable.id),
-    replyFeedbackCommentId: id('feedbackComment'),
+    feedbackId: id("feedback")
+      .notNull()
+      .references(() => feedbackTable.id),
+    authorProfileId: id("profile")
+      .notNull()
+      .references(() => profileTable.id),
+    replyFeedbackCommentId: id("feedbackComment"),
     content: text().notNull(),
     initial: boolean(),
   },
   (feedbackCommentTable) => [
-    index('by_feedbackId').on(feedbackCommentTable.feedbackId),
-    index('by_authorProfileId').on(feedbackCommentTable.authorProfileId),
+    index("by_feedbackId").on(feedbackCommentTable.feedbackId),
+    index("by_authorProfileId").on(feedbackCommentTable.authorProfileId),
   ]
-);
+)
 
 export const feedbackTable = convexTable(
-  'feedback',
+  "feedback",
   {
     deletedTime: integer(),
     updatedTime: integer(),
     slug: text().notNull(),
     title: text().notNull(),
-    authorProfileId: id('profile').notNull().references(() => profileTable.id),
-    projectId: id('project').notNull().references(() => projectTable.id),
+    authorProfileId: id("profile")
+      .notNull()
+      .references(() => profileTable.id),
+    projectId: id("project")
+      .notNull()
+      .references(() => projectTable.id),
     upvotes: integer().notNull(),
-    boardId: id('feedbackBoard').notNull().references(() => feedbackBoardTable.id),
-    firstCommentId: id('feedbackComment'),
-    answerCommentId: id('feedbackComment'),
-    assignedProfileId: id('profile').references(() => profileTable.id),
+    boardId: id("feedbackBoard")
+      .notNull()
+      .references(() => feedbackBoardTable.id),
+    firstCommentId: id("feedbackComment"),
+    answerCommentId: id("feedbackComment"),
+    assignedProfileId: id("profile").references(() => profileTable.id),
     status: textEnum(FEEDBACK_STATUSES).notNull(),
     tags: arrayOf(text().notNull()),
     searchContent: text(),
   },
   (feedbackTable) => [
-    index('by_slug').on(feedbackTable.slug),
-    index('by_projectId').on(feedbackTable.projectId),
-    index('by_projectId_slug').on(feedbackTable.projectId, feedbackTable.slug),
-    index('by_projectId_boardId').on(feedbackTable.projectId, feedbackTable.boardId),
-    index('by_projectId_status').on(feedbackTable.projectId, feedbackTable.status),
-    index('by_projectId_boardId_status').on(
+    index("by_slug").on(feedbackTable.slug),
+    index("by_projectId").on(feedbackTable.projectId),
+    index("by_projectId_slug").on(feedbackTable.projectId, feedbackTable.slug),
+    index("by_projectId_boardId").on(
+      feedbackTable.projectId,
+      feedbackTable.boardId
+    ),
+    index("by_projectId_status").on(
+      feedbackTable.projectId,
+      feedbackTable.status
+    ),
+    index("by_projectId_boardId_status").on(
       feedbackTable.projectId,
       feedbackTable.boardId,
       feedbackTable.status
     ),
-    searchIndex('by_projectId_boardId_status_searchContent')
+    searchIndex("by_projectId_boardId_status_searchContent")
       .on(feedbackTable.searchContent)
-      .filter(feedbackTable.projectId, feedbackTable.boardId, feedbackTable.status),
+      .filter(
+        feedbackTable.projectId,
+        feedbackTable.boardId,
+        feedbackTable.status
+      ),
   ]
-);
+)
 
 export const feedbackCommentEmoteTable = convexTable(
-  'feedbackCommentEmote',
+  "feedbackCommentEmote",
   {
     deletedTime: integer(),
     updatedTime: integer(),
-    authorProfileId: id('profile').notNull().references(() => profileTable.id),
-    feedbackId: id('feedback').notNull().references(() => feedbackTable.id),
-    feedbackCommentId: id('feedbackComment').notNull().references(() => feedbackCommentTable.id),
+    authorProfileId: id("profile")
+      .notNull()
+      .references(() => profileTable.id),
+    feedbackId: id("feedback")
+      .notNull()
+      .references(() => feedbackTable.id),
+    feedbackCommentId: id("feedbackComment")
+      .notNull()
+      .references(() => feedbackCommentTable.id),
     content: textEnum(EMOTE_CONTENTS).notNull(),
   },
   (feedbackCommentEmoteTable) => [
-    index('by_authorProfileId').on(feedbackCommentEmoteTable.authorProfileId),
-    index('by_feedbackId').on(feedbackCommentEmoteTable.feedbackId),
-    index('by_feedbackCommentId').on(feedbackCommentEmoteTable.feedbackCommentId),
+    index("by_authorProfileId").on(feedbackCommentEmoteTable.authorProfileId),
+    index("by_feedbackId").on(feedbackCommentEmoteTable.feedbackId),
+    index("by_feedbackCommentId").on(
+      feedbackCommentEmoteTable.feedbackCommentId
+    ),
   ]
-);
+)
 
 export const feedbackEventTable = convexTable(
-  'feedbackEvent',
+  "feedbackEvent",
   {
     deletedTime: integer(),
     updatedTime: integer(),
-    feedbackId: id('feedback').notNull().references(() => feedbackTable.id),
-    actorProfileId: id('profile').notNull().references(() => profileTable.id),
+    feedbackId: id("feedback")
+      .notNull()
+      .references(() => feedbackTable.id),
+    actorProfileId: id("profile")
+      .notNull()
+      .references(() => profileTable.id),
     eventType: textEnum(FEEDBACK_EVENT_TYPES).notNull(),
     metadata: json(),
   },
-  (feedbackEventTable) => [index('by_feedbackId').on(feedbackEventTable.feedbackId)]
-);
+  (feedbackEventTable) => [
+    index("by_feedbackId").on(feedbackEventTable.feedbackId),
+  ]
+)
 
 export const feedbackUpvoteTable = convexTable(
-  'feedbackUpvote',
+  "feedbackUpvote",
   {
     deletedTime: integer(),
     updatedTime: integer(),
-    feedbackId: id('feedback').notNull().references(() => feedbackTable.id),
-    authorProfileId: id('profile').notNull().references(() => profileTable.id),
+    feedbackId: id("feedback")
+      .notNull()
+      .references(() => feedbackTable.id),
+    authorProfileId: id("profile")
+      .notNull()
+      .references(() => profileTable.id),
   },
   (feedbackUpvoteTable) => [
-    index('by_feedbackId').on(feedbackUpvoteTable.feedbackId),
-    index('by_feedbackId_authorProfileId').on(
+    index("by_feedbackId").on(feedbackUpvoteTable.feedbackId),
+    index("by_feedbackId_authorProfileId").on(
       feedbackUpvoteTable.feedbackId,
       feedbackUpvoteTable.authorProfileId
     ),
   ]
-);
+)
 
 export const updateTable = convexTable(
-  'update',
+  "update",
   {
     deletedTime: integer(),
     updatedTime: integer(),
     slug: text().notNull(),
     title: text().notNull(),
     content: text().notNull(),
-    authorProfileId: id('profile').notNull().references(() => profileTable.id),
-    projectId: id('project').notNull().references(() => projectTable.id),
+    authorProfileId: id("profile")
+      .notNull()
+      .references(() => profileTable.id),
+    projectId: id("project")
+      .notNull()
+      .references(() => projectTable.id),
     status: textEnum(UPDATE_STATUSES).notNull(),
     publishedAt: integer(),
     category: textEnum(UPDATE_CATEGORIES).notNull(),
     tags: arrayOf(text().notNull()),
-    relatedFeedbackIds: arrayOf(id('feedback').notNull()),
+    relatedFeedbackIds: arrayOf(id("feedback").notNull()),
     coverImageId: text(),
     authorAsOrg: boolean(),
   },
   (updateTable) => [
-    index('by_projectId_slug').on(updateTable.projectId, updateTable.slug),
-    index('by_projectId_status_publishedAt').on(
+    index("by_projectId_slug").on(updateTable.projectId, updateTable.slug),
+    index("by_projectId_updatedTime").on(
+      updateTable.projectId,
+      updateTable.updatedTime
+    ),
+    index("by_projectId_status_publishedAt").on(
       updateTable.projectId,
       updateTable.status,
       updateTable.publishedAt
     ),
   ]
-);
+)
 
 export const updateCommentTable = convexTable(
-  'updateComment',
+  "updateComment",
   {
     deletedTime: integer(),
     updatedTime: integer(),
-    updateId: id('update').notNull().references(() => updateTable.id),
-    authorProfileId: id('profile').notNull().references(() => profileTable.id),
+    updateId: id("update")
+      .notNull()
+      .references(() => updateTable.id),
+    authorProfileId: id("profile")
+      .notNull()
+      .references(() => profileTable.id),
     content: text().notNull(),
   },
   (updateCommentTable) => [
-    index('by_updateId').on(updateCommentTable.updateId),
-    index('by_authorProfileId').on(updateCommentTable.authorProfileId),
+    index("by_updateId").on(updateCommentTable.updateId),
+    index("by_authorProfileId").on(updateCommentTable.authorProfileId),
   ]
-);
+)
 
 export const updateEmoteTable = convexTable(
-  'updateEmote',
+  "updateEmote",
   {
     deletedTime: integer(),
     updatedTime: integer(),
-    updateId: id('update').notNull().references(() => updateTable.id),
-    authorProfileId: id('profile').notNull().references(() => profileTable.id),
+    updateId: id("update")
+      .notNull()
+      .references(() => updateTable.id),
+    authorProfileId: id("profile")
+      .notNull()
+      .references(() => profileTable.id),
     content: textEnum(EMOTE_CONTENTS).notNull(),
   },
   (updateEmoteTable) => [
-    index('by_updateId').on(updateEmoteTable.updateId),
-    index('by_updateId_authorProfileId').on(updateEmoteTable.updateId, updateEmoteTable.authorProfileId),
+    index("by_updateId").on(updateEmoteTable.updateId),
+    index("by_updateId_authorProfileId").on(
+      updateEmoteTable.updateId,
+      updateEmoteTable.authorProfileId
+    ),
   ]
-);
+)
 
 export const updateCommentEmoteTable = convexTable(
-  'updateCommentEmote',
+  "updateCommentEmote",
   {
     deletedTime: integer(),
     updatedTime: integer(),
-    updateId: id('update').notNull().references(() => updateTable.id),
-    updateCommentId: id('updateComment').notNull().references(() => updateCommentTable.id),
-    authorProfileId: id('profile').notNull().references(() => profileTable.id),
+    updateId: id("update")
+      .notNull()
+      .references(() => updateTable.id),
+    updateCommentId: id("updateComment")
+      .notNull()
+      .references(() => updateCommentTable.id),
+    authorProfileId: id("profile")
+      .notNull()
+      .references(() => profileTable.id),
     content: textEnum(EMOTE_CONTENTS).notNull(),
   },
   (updateCommentEmoteTable) => [
-    index('by_updateCommentId').on(updateCommentEmoteTable.updateCommentId),
-    index('by_updateId').on(updateCommentEmoteTable.updateId),
+    index("by_updateCommentId").on(updateCommentEmoteTable.updateCommentId),
+    index("by_updateId").on(updateCommentEmoteTable.updateId),
   ]
-);
+)
 
 export const tables = {
   user: userTable,
@@ -663,7 +788,7 @@ export const tables = {
   updateComment: updateCommentTable,
   updateEmote: updateEmoteTable,
   updateCommentEmote: updateCommentEmoteTable,
-};
+}
 
 export default defineSchema(tables)
   .relations((r) => ({
@@ -765,56 +890,58 @@ export default defineSchema(tables)
   .triggers({
     member: {
       change: async (change, ctx) => {
-        if (change.operation === 'delete') {
+        if (change.operation === "delete") {
           await syncProjectMembershipsForOrgMember(ctx, {
             organizationId: change.oldDoc.organizationId,
             role: null,
             userId: change.oldDoc.userId,
-          });
-          return;
+          })
+          return
         }
 
         await syncProjectMembershipsForOrgMember(ctx, {
           organizationId: change.newDoc.organizationId,
           role: change.newDoc.role,
           userId: change.newDoc.userId,
-        });
+        })
       },
     },
     project: {
       change: async (change, ctx) => {
-        if (change.operation === 'insert') {
+        if (change.operation === "insert") {
           await syncProjectMembershipsForProject(ctx, {
             _id: change.newDoc.id,
             orgSlug: change.newDoc.orgSlug,
             slug: change.newDoc.slug,
             visibility: change.newDoc.visibility,
-          });
+          })
 
-          const boards = ['Bugs', 'Feature Requests', 'Improvements'] as const;
+          const boards = ["Bugs", "Feature Requests", "Improvements"] as const
           await Promise.all(
             boards.map((name) =>
               ctx.orm.insert(feedbackBoardTable).values({
                 icon:
-                  name === 'Bugs'
-                    ? 'bug'
-                    : name === 'Improvements'
-                      ? 'chart-up'
-                      : 'lightbulb',
+                  name === "Bugs"
+                    ? "bug"
+                    : name === "Improvements"
+                      ? "chart-up"
+                      : "lightbulb",
                 name,
                 projectId: change.newDoc.id as any,
-                slug: name.toLowerCase().replace(/\s+/g, '-'),
+                slug: name.toLowerCase().replace(/\s+/g, "-"),
               })
             )
-          );
-          return;
+          )
+          return
         }
 
-        if (change.operation === 'update') {
+        if (change.operation === "update") {
           const memberships = await ctx.db
-            .query('projectMember')
-            .withIndex('by_projectId', (q: any) => q.eq('projectId', change.newDoc.id))
-            .collect();
+            .query("projectMember")
+            .withIndex("by_projectId", (q: any) =>
+              q.eq("projectId", change.newDoc.id)
+            )
+            .collect()
 
           await Promise.all(
             memberships.map((membership: any) =>
@@ -823,124 +950,149 @@ export default defineSchema(tables)
                 projectVisibility: change.newDoc.visibility,
               })
             )
-          );
-          return;
+          )
+          return
         }
 
         const boards = await ctx.db
-          .query('feedbackBoard')
-          .withIndex('by_projectId', (q: any) => q.eq('projectId', change.oldDoc.id))
-          .collect();
+          .query("feedbackBoard")
+          .withIndex("by_projectId", (q: any) =>
+            q.eq("projectId", change.oldDoc.id)
+          )
+          .collect()
 
-        await Promise.all(
-          boards.map((board: any) => ctx.db.delete(board._id))
-        );
+        await Promise.all(boards.map((board: any) => ctx.db.delete(board._id)))
       },
     },
     feedbackBoard: {
       change: async (change, ctx) => {
-        if (change.operation !== 'delete') return;
+        if (change.operation !== "delete") return
 
         const feedbackRows = await ctx.db
-          .query('feedback')
-          .withIndex('by_projectId_boardId', (q: any) =>
-            q.eq('projectId', change.oldDoc.projectId).eq('boardId', change.oldDoc.id)
+          .query("feedback")
+          .withIndex("by_projectId_boardId", (q: any) =>
+            q
+              .eq("projectId", change.oldDoc.projectId)
+              .eq("boardId", change.oldDoc.id)
           )
-          .collect();
+          .collect()
 
-        await Promise.all(feedbackRows.map((row: any) => ctx.db.delete(row._id)));
+        await Promise.all(
+          feedbackRows.map((row: any) => ctx.db.delete(row._id))
+        )
       },
     },
     feedbackComment: {
       change: async (change, ctx) => {
-        if (change.operation === 'delete') {
+        if (change.operation === "delete") {
           const emotes = await ctx.db
-            .query('feedbackCommentEmote')
-            .withIndex('by_feedbackCommentId', (q: any) => q.eq('feedbackCommentId', change.oldDoc.id))
-            .collect();
+            .query("feedbackCommentEmote")
+            .withIndex("by_feedbackCommentId", (q: any) =>
+              q.eq("feedbackCommentId", change.oldDoc.id)
+            )
+            .collect()
 
-          await Promise.all(emotes.map((emote: any) => ctx.db.delete(emote._id)));
+          await Promise.all(
+            emotes.map((emote: any) => ctx.db.delete(emote._id))
+          )
 
-          const feedback = await ctx.db.get(change.oldDoc.feedbackId);
+          const feedback = await ctx.db.get(change.oldDoc.feedbackId)
           if (feedback?.answerCommentId === change.oldDoc.id) {
-            await ctx.db.patch(feedback._id, { answerCommentId: undefined, updatedTime: Date.now() });
+            await ctx.db.patch(feedback._id, {
+              answerCommentId: undefined,
+              updatedTime: Date.now(),
+            })
           }
-          return;
+          return
         }
 
-        if (change.operation === 'update' && change.newDoc.initial) {
-          const feedback = await ctx.db.get(change.newDoc.feedbackId);
+        if (change.operation === "update" && change.newDoc.initial) {
+          const feedback = await ctx.db.get(change.newDoc.feedbackId)
           if (feedback) {
             await ctx.db.patch(feedback._id, {
               searchContent: `${feedback.title} ${change.newDoc.content}`,
               updatedTime: Date.now(),
-            });
+            })
           }
         }
       },
     },
     feedback: {
       change: async (change, ctx) => {
-        if (change.operation !== 'delete') return;
+        if (change.operation !== "delete") return
 
         const [comments, events, upvotes] = await Promise.all([
           ctx.db
-            .query('feedbackComment')
-            .withIndex('by_feedbackId', (q: any) => q.eq('feedbackId', change.oldDoc.id))
+            .query("feedbackComment")
+            .withIndex("by_feedbackId", (q: any) =>
+              q.eq("feedbackId", change.oldDoc.id)
+            )
             .collect(),
           ctx.db
-            .query('feedbackEvent')
-            .withIndex('by_feedbackId', (q: any) => q.eq('feedbackId', change.oldDoc.id))
+            .query("feedbackEvent")
+            .withIndex("by_feedbackId", (q: any) =>
+              q.eq("feedbackId", change.oldDoc.id)
+            )
             .collect(),
           ctx.db
-            .query('feedbackUpvote')
-            .withIndex('by_feedbackId', (q: any) => q.eq('feedbackId', change.oldDoc.id))
+            .query("feedbackUpvote")
+            .withIndex("by_feedbackId", (q: any) =>
+              q.eq("feedbackId", change.oldDoc.id)
+            )
             .collect(),
-        ]);
+        ])
 
         await Promise.all([
           ...comments.map((comment: any) => ctx.db.delete(comment._id)),
           ...events.map((event: any) => ctx.db.delete(event._id)),
           ...upvotes.map((upvote: any) => ctx.db.delete(upvote._id)),
-        ]);
+        ])
       },
     },
     updateComment: {
       change: async (change, ctx) => {
-        if (change.operation !== 'delete') return;
+        if (change.operation !== "delete") return
 
         const emotes = await ctx.db
-          .query('updateCommentEmote')
-          .withIndex('by_updateCommentId', (q: any) => q.eq('updateCommentId', change.oldDoc.id))
-          .collect();
+          .query("updateCommentEmote")
+          .withIndex("by_updateCommentId", (q: any) =>
+            q.eq("updateCommentId", change.oldDoc.id)
+          )
+          .collect()
 
-        await Promise.all(emotes.map((emote: any) => ctx.db.delete(emote._id)));
+        await Promise.all(emotes.map((emote: any) => ctx.db.delete(emote._id)))
       },
     },
     update: {
       change: async (change, ctx) => {
-        if (change.operation !== 'delete') return;
+        if (change.operation !== "delete") return
 
         const [comments, commentEmotes, emotes] = await Promise.all([
           ctx.db
-            .query('updateComment')
-            .withIndex('by_updateId', (q: any) => q.eq('updateId', change.oldDoc.id))
+            .query("updateComment")
+            .withIndex("by_updateId", (q: any) =>
+              q.eq("updateId", change.oldDoc.id)
+            )
             .collect(),
           ctx.db
-            .query('updateCommentEmote')
-            .withIndex('by_updateId', (q: any) => q.eq('updateId', change.oldDoc.id))
+            .query("updateCommentEmote")
+            .withIndex("by_updateId", (q: any) =>
+              q.eq("updateId", change.oldDoc.id)
+            )
             .collect(),
           ctx.db
-            .query('updateEmote')
-            .withIndex('by_updateId', (q: any) => q.eq('updateId', change.oldDoc.id))
+            .query("updateEmote")
+            .withIndex("by_updateId", (q: any) =>
+              q.eq("updateId", change.oldDoc.id)
+            )
             .collect(),
-        ]);
+        ])
 
         await Promise.all([
           ...comments.map((comment: any) => ctx.db.delete(comment._id)),
           ...commentEmotes.map((emote: any) => ctx.db.delete(emote._id)),
           ...emotes.map((emote: any) => ctx.db.delete(emote._id)),
-        ]);
+        ])
       },
     },
-  });
+  })

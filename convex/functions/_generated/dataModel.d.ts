@@ -962,6 +962,7 @@ export type DataModel = {
         "publishedAt",
         "_creationTime",
       ];
+      by_projectId_updatedTime: ["projectId", "updatedTime", "_creationTime"];
     };
     searchIndexes: {};
     vectorIndexes: {};
