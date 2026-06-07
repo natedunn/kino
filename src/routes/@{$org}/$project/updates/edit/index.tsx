@@ -99,7 +99,7 @@ type DashboardUpdate = {
 
 type DeleteDialogState = {
   ids: string[]
-  titles: string[]
+  updates: Array<{ id: string; title: string }>
 } | null
 
 type StatusFilter = "all" | "draft" | "published"
@@ -410,7 +410,7 @@ function UpdatesDashboard({
         enableHiding: false,
       }),
     ],
-    []
+    [params.org, params.project]
   )
 
   const table = useReactTable({
@@ -509,7 +509,7 @@ function UpdatesDashboard({
             </DialogTitle>
             <DialogDescription>
               This action cannot be undone.
-              {deleteDialog && deleteDialog.titles.length > 0
+              {deleteDialog && deleteDialog.updates.length > 0
                 ? " These posts will be removed:"
                 : null}
             </DialogDescription>
@@ -517,9 +517,9 @@ function UpdatesDashboard({
           {deleteDialog ? (
             <div className="rounded-md border bg-muted/30 p-3 text-sm">
               <ul className="space-y-1">
-                {deleteDialog.titles.map((title) => (
-                  <li key={title} className="truncate">
-                    {title}
+                {deleteDialog.updates.map((update) => (
+                  <li key={update.id} className="truncate">
+                    {update.title}
                   </li>
                 ))}
               </ul>
@@ -676,7 +676,7 @@ function UpdatesDashboard({
                       setSheetUpdateId(null)
                       setDeleteDialog({
                         ids: [sheetUpdate.id],
-                        titles: [sheetUpdate.title],
+                        updates: [{ id: sheetUpdate.id, title: sheetUpdate.title }],
                       })
                     }}
                     type="button"
@@ -863,12 +863,12 @@ function UpdatesDashboard({
                   <Button
                     disabled={pendingAction}
                     onClick={() => {
-                      const selectedTitles = rows
+                      const selectedUpdates = rows
                         .filter((row) => selectedIds.includes(row.id))
-                        .map((row) => row.title)
+                        .map((row) => ({ id: row.id, title: row.title }))
                       setDeleteDialog({
                         ids: selectedIds,
-                        titles: selectedTitles,
+                        updates: selectedUpdates,
                       })
                     }}
                     size="sm"

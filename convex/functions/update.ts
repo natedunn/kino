@@ -273,6 +273,18 @@ export const bulkPublish = authMutation
   )
   .mutation(async ({ ctx, input }) => {
     const projectId = asId<"project">(input.projectId)
+    const project = await getDocOrThrow(ctx, projectId, "Project not found")
+    const access = await verifyProjectAccess(ctx, {
+      slug: project.slug,
+      userId: ctx.userId,
+    })
+
+    if (!access.permissions.canEdit) {
+      throw new CRPCError({
+        code: "FORBIDDEN",
+        message: "You do not have permission to publish these updates",
+      })
+    }
 
     for (const id of input.ids) {
       const existingUpdate = await getDocOrThrow(
@@ -287,23 +299,6 @@ export const bulkPublish = authMutation
         })
       }
 
-      const project = await getDocOrThrow(
-        ctx,
-        existingUpdate.projectId,
-        "Project not found"
-      )
-      const access = await verifyProjectAccess(ctx, {
-        slug: project.slug,
-        userId: ctx.userId,
-      })
-
-      if (!access.permissions.canEdit) {
-        throw new CRPCError({
-          code: "FORBIDDEN",
-          message: "You do not have permission to publish these updates",
-        })
-      }
-
       await ctx.orm
         .update(updateTable)
         .set({
@@ -315,6 +310,54 @@ export const bulkPublish = authMutation
     }
 
     return { success: true }
+  })
+
+export const backfillProjectUpdatedTimes = authMutation
+  .input(
+    z.object({
+      cursor: z.string().optional(),
+      limit: z.number().int().min(1).max(100).optional(),
+      projectId: z.string(),
+    })
+  )
+  .mutation(async ({ ctx, input }) => {
+    const project = await getDocOrThrow(
+      ctx,
+      asId<"project">(input.projectId),
+      "Project not found"
+    )
+    const access = await verifyProjectAccess(ctx, {
+      slug: project.slug,
+      userId: ctx.userId,
+    })
+
+    if (!access.permissions.canEdit) {
+      throw new CRPCError({
+        code: "FORBIDDEN",
+        message: "You do not have permission to manage updates for this project",
+      })
+    }
+
+    const result = await ctx.db
+      .query("update")
+      .withIndex("by_projectId_slug", (q: any) => q.eq("projectId", project._id))
+      .paginate({
+        cursor: input.cursor ?? null,
+        numItems: input.limit ?? 50,
+      })
+
+    let updatedCount = 0
+    for (const item of result.page) {
+      if (item.updatedTime !== undefined && item.updatedTime !== null) continue
+      await ctx.db.patch(item._id, { updatedTime: item._creationTime })
+      updatedCount += 1
+    }
+
+    return {
+      continueCursor: result.continueCursor,
+      isDone: result.isDone,
+      updatedCount,
+    }
   })
 
 export const bulkUnpublish = authMutation

@@ -670,7 +670,7 @@ export const updateTable = convexTable(
   "update",
   {
     deletedTime: integer(),
-    updatedTime: integer(),
+    updatedTime: integer().notNull(),
     slug: text().notNull(),
     title: text().notNull(),
     content: text().notNull(),
