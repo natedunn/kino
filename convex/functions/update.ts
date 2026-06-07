@@ -369,6 +369,18 @@ export const bulkUnpublish = authMutation
   )
   .mutation(async ({ ctx, input }) => {
     const projectId = asId<"project">(input.projectId)
+    const project = await getDocOrThrow(ctx, projectId, "Project not found")
+    const access = await verifyProjectAccess(ctx, {
+      slug: project.slug,
+      userId: ctx.userId,
+    })
+
+    if (!access.permissions.canEdit) {
+      throw new CRPCError({
+        code: "FORBIDDEN",
+        message: "You do not have permission to unpublish these updates",
+      })
+    }
 
     for (const id of input.ids) {
       const existingUpdate = await getDocOrThrow(
@@ -380,23 +392,6 @@ export const bulkUnpublish = authMutation
         throw new CRPCError({
           code: "BAD_REQUEST",
           message: "Update does not belong to this project",
-        })
-      }
-
-      const project = await getDocOrThrow(
-        ctx,
-        existingUpdate.projectId,
-        "Project not found"
-      )
-      const access = await verifyProjectAccess(ctx, {
-        slug: project.slug,
-        userId: ctx.userId,
-      })
-
-      if (!access.permissions.canEdit) {
-        throw new CRPCError({
-          code: "FORBIDDEN",
-          message: "You do not have permission to unpublish these updates",
         })
       }
 
@@ -421,6 +416,18 @@ export const bulkRemove = authMutation
   )
   .mutation(async ({ ctx, input }) => {
     const projectId = asId<"project">(input.projectId)
+    const project = await getDocOrThrow(ctx, projectId, "Project not found")
+    const access = await verifyProjectAccess(ctx, {
+      slug: project.slug,
+      userId: ctx.userId,
+    })
+
+    if (!access.permissions.canDelete) {
+      throw new CRPCError({
+        code: "FORBIDDEN",
+        message: "You do not have permission to delete these updates",
+      })
+    }
 
     for (const id of input.ids) {
       const existingUpdate = await getDocOrThrow(
@@ -432,23 +439,6 @@ export const bulkRemove = authMutation
         throw new CRPCError({
           code: "BAD_REQUEST",
           message: "Update does not belong to this project",
-        })
-      }
-
-      const project = await getDocOrThrow(
-        ctx,
-        existingUpdate.projectId,
-        "Project not found"
-      )
-      const access = await verifyProjectAccess(ctx, {
-        slug: project.slug,
-        userId: ctx.userId,
-      })
-
-      if (!access.permissions.canDelete) {
-        throw new CRPCError({
-          code: "FORBIDDEN",
-          message: "You do not have permission to delete these updates",
         })
       }
 
