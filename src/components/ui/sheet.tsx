@@ -17,7 +17,7 @@ function SheetClose({ ...props }: React.ComponentProps<typeof SheetPrimitive.Clo
 }
 
 function SheetPortal({ ...props }: React.ComponentProps<typeof SheetPrimitive.Portal>) {
-	return <SheetPrimitive.Portal data-slot='sheet-portal' keepMounted {...props} />;
+	return <SheetPrimitive.Portal data-slot='sheet-portal' {...props} />;
 }
 
 function SheetOverlay({
@@ -28,7 +28,7 @@ function SheetOverlay({
 		<SheetPrimitive.Backdrop
 			data-slot='sheet-overlay'
 			className={cn(
-				'fixed inset-0 z-50 bg-black/50 data-[ending-style]:animate-out data-[ending-style]:fade-out-0 data-[starting-style]:animate-in data-[starting-style]:fade-in-0',
+				'fixed inset-0 z-50 bg-black/50 transition-opacity duration-150 data-[starting-style]:opacity-0 data-[ending-style]:opacity-0',
 				className
 			)}
 			{...props}
@@ -50,15 +50,15 @@ function SheetContent({
 			<SheetPrimitive.Popup
 				data-slot='sheet-content'
 				className={cn(
-					'fixed z-50 flex flex-col gap-4 bg-background shadow-lg transition ease-in-out data-[ending-style]:animate-out data-[ending-style]:duration-300 data-[starting-style]:animate-in data-[starting-style]:duration-500',
+					'fixed z-50 flex flex-col gap-4 bg-background shadow-lg transition-transform duration-300 ease-in-out',
 					side === 'right' &&
-						'inset-y-0 right-0 h-full w-3/4 border-l data-[ending-style]:slide-out-to-right data-[starting-style]:slide-in-from-right sm:max-w-sm',
+						'inset-y-0 right-0 h-full w-3/4 border-l data-[starting-style]:translate-x-full data-[ending-style]:translate-x-full sm:max-w-sm',
 					side === 'left' &&
-						'inset-y-0 left-0 h-full w-3/4 border-r data-[ending-style]:slide-out-to-left data-[starting-style]:slide-in-from-left sm:max-w-sm',
+						'inset-y-0 left-0 h-full w-3/4 border-r data-[starting-style]:-translate-x-full data-[ending-style]:-translate-x-full sm:max-w-sm',
 					side === 'top' &&
-						'inset-x-0 top-0 h-auto border-b data-[ending-style]:slide-out-to-top data-[starting-style]:slide-in-from-top',
+						'inset-x-0 top-0 h-auto border-b data-[starting-style]:-translate-y-full data-[ending-style]:-translate-y-full',
 					side === 'bottom' &&
-						'inset-x-0 bottom-0 h-auto border-t data-[ending-style]:slide-out-to-bottom data-[starting-style]:slide-in-from-bottom',
+						'inset-x-0 bottom-0 h-auto border-t data-[starting-style]:translate-y-full data-[ending-style]:translate-y-full',
 					className
 				)}
 				{...props}

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import CalendarDays from "@/icons/calendar-days"
 import CirclePlusOutline from "@/icons/circle-plus-outline"
 import Missing from "@/icons/missing"
+import { Settings2 } from "lucide-react"
 import { useCRPC } from "@/lib/convex/crpc"
 import { crpcServer } from "@/lib/convex/crpc-server"
 
@@ -100,14 +101,30 @@ function UpdatesListRoute() {
           <div className="sticky top-6 flex flex-col overflow-hidden">
             {canEdit ? (
               <div className="border-b pb-6 pl-6">
-                <Button asChild className="w-full" size="lg">
-                  <Link
-                    params={{ org: orgSlug, project: projectSlug }}
-                    to="/@{$org}/$project/updates/new"
+                <div className="flex flex-col gap-2">
+                  <Button asChild className="w-full" size="lg">
+                    <Link
+                      params={{ org: orgSlug, project: projectSlug }}
+                      to="/@{$org}/$project/updates/new"
+                    >
+                      <CirclePlusOutline size="16px" /> New Update
+                    </Link>
+                  </Button>
+                  <Button
+                    asChild
+                    className="w-full"
+                    size="lg"
+                    variant="outline"
                   >
-                    <CirclePlusOutline size="16px" /> New Update
-                  </Link>
-                </Button>
+                    <Link
+                      params={{ org: orgSlug, project: projectSlug }}
+                      search={{ pageSize: 20 }}
+                      to="/@{$org}/$project/updates/edit"
+                    >
+                      <Settings2 className="size-4" /> Manage Updates
+                    </Link>
+                  </Button>
+                </div>
               </div>
             ) : null}
             <div className={canEdit ? "mt-4" : ""}>
