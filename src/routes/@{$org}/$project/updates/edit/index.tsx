@@ -410,7 +410,7 @@ function UpdatesDashboard({
         enableHiding: false,
       }),
     ],
-    [params]
+    [params.org, params.project]
   )
 
   const table = useReactTable({

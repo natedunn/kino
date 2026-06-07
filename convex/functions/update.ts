@@ -285,6 +285,7 @@ export const bulkPublish = authMutation
         message: "You do not have permission to publish these updates",
       })
     }
+    const timestamp = Date.now()
 
     for (const id of input.ids) {
       const existingUpdate = await getDocOrThrow(
@@ -302,9 +303,9 @@ export const bulkPublish = authMutation
       await ctx.orm
         .update(updateTable)
         .set({
-          publishedAt: Date.now(),
+          publishedAt: timestamp,
           status: "published",
-          updatedTime: Date.now(),
+          updatedTime: timestamp,
         })
         .where(eq(updateTable.id, existingUpdate._id as any))
     }
@@ -381,6 +382,7 @@ export const bulkUnpublish = authMutation
         message: "You do not have permission to unpublish these updates",
       })
     }
+    const timestamp = Date.now()
 
     for (const id of input.ids) {
       const existingUpdate = await getDocOrThrow(
@@ -399,7 +401,7 @@ export const bulkUnpublish = authMutation
         .update(updateTable)
         .set({
           status: "draft",
-          updatedTime: Date.now(),
+          updatedTime: timestamp,
         })
         .where(eq(updateTable.id, existingUpdate._id as any))
     }
