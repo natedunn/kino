@@ -27,6 +27,13 @@ import { Badge } from "@/components/ui/badge"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu"
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
@@ -58,6 +65,14 @@ const DEFAULT_SIDEBAR_STATE = {
   people: true,
   related: true,
 }
+
+const FEEDBACK_STATUS_OPTIONS = [
+  { label: "Open", value: "open" },
+  { label: "In progress", value: "in-progress" },
+  { label: "Paused", value: "paused" },
+  { label: "Completed", value: "completed" },
+  { label: "Closed", value: "closed" },
+] as const
 
 type ProfileSummary = {
   id?: string
@@ -245,6 +260,31 @@ function FeedbackDetailRoute() {
         ),
       ]
     : (assignableQuery.data ?? [])
+  const statusSelectItems = FEEDBACK_STATUS_OPTIONS.map((status) => ({
+    label: (
+      <span className="inline-flex items-center gap-1.5">
+        <StatusIcon colored size="14" status={status.value} />
+        {status.label}
+      </span>
+    ),
+    value: status.value,
+  }))
+  const boardSelectItems = boardOptions.map((board: { id: string; name: string }) => ({
+    label: board.name,
+    value: board.id,
+  }))
+  const assigneeSelectItems = [
+    { label: "Unassigned", value: "" },
+    ...assigneeOptions.map(
+      (member: {
+        profile?: ProfileSummary | null
+        profileId: string
+      }) => ({
+        label: member.profile?.name ?? member.profile?.username ?? "Unknown",
+        value: member.profileId,
+      })
+    ),
+  ]
 
   const statusMutation = useMutation(
     crpc.feedback.updateStatus.mutationOptions()
@@ -331,22 +371,28 @@ function FeedbackDetailRoute() {
               <div className="flex items-center justify-between py-1.5">
                 <span className="text-sm text-muted-foreground">Status</span>
                 {canEditStatus ? (
-                  <select
-                    className="h-auto rounded-md border bg-background px-2 py-1 text-xs"
-                    value={feedback.status}
-                    onChange={(event) =>
+                  <Select
+                    items={statusSelectItems}
+                    onValueChange={(value) =>
                       statusMutation.mutate({
                         id: feedback.id,
-                        status: event.target.value as never,
+                        status: value as never,
                       })
                     }
+                    value={feedback.status}
                   >
-                    <option value="open">open</option>
-                    <option value="in-progress">in-progress</option>
-                    <option value="paused">paused</option>
-                    <option value="completed">completed</option>
-                    <option value="closed">closed</option>
-                  </select>
+                    <SelectTrigger className="min-w-32">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {FEEDBACK_STATUS_OPTIONS.map((status) => (
+                        <SelectItem key={status.value} value={status.value}>
+                          <StatusIcon colored size="14" status={status.value} />
+                          {status.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 ) : (
                   <span className="inline-flex items-center gap-1.5 text-sm">
                     <StatusIcon colored size="14" status={feedback.status} />
@@ -358,22 +404,27 @@ function FeedbackDetailRoute() {
               <div className="flex items-center justify-between py-1.5">
                 <span className="text-sm text-muted-foreground">Board</span>
                 {canEditStatus ? (
-                  <select
-                    className="h-auto rounded-md border bg-background px-2 py-1 text-xs"
-                    value={feedback.boardId}
-                    onChange={(event) =>
+                  <Select
+                    items={boardSelectItems}
+                    onValueChange={(value) =>
                       boardMutation.mutate({
-                        boardId: event.target.value,
+                        boardId: value,
                         id: feedback.id,
                       })
                     }
+                    value={feedback.boardId}
                   >
-                    {boardOptions.map((board: { id: string; name: string }) => (
-                      <option key={board.id} value={board.id}>
-                        {board.name}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger className="max-w-56 min-w-32">
+                      <SelectValue placeholder="No board" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {boardOptions.map((board: { id: string; name: string }) => (
+                        <SelectItem key={board.id} value={board.id}>
+                          {board.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 ) : (
                   <span className="text-sm">
                     {feedbackData.board?.name ?? "No board"}
@@ -418,28 +469,33 @@ function FeedbackDetailRoute() {
               <div className="flex items-center justify-between py-1.5">
                 <span className="text-sm text-muted-foreground">Assignee</span>
                 {canEditStatus ? (
-                  <select
-                    className="h-auto rounded-md border bg-background px-2 py-1 text-xs"
-                    value={feedback.assignedProfileId ?? ""}
-                    onChange={(event) =>
+                  <Select
+                    items={assigneeSelectItems}
+                    onValueChange={(value) =>
                       assigneeMutation.mutate({
-                        assignedProfileId: event.target.value || null,
+                        assignedProfileId: value || null,
                         feedbackId: feedback.id,
                       })
                     }
+                    value={feedback.assignedProfileId ?? ""}
                   >
-                    <option value="">Unassigned</option>
-                    {assigneeOptions.map(
-                      (member: {
-                        profile?: ProfileSummary | null
-                        profileId: string
-                      }) => (
-                        <option key={member.profileId} value={member.profileId}>
-                          {member.profile?.name ?? member.profile?.username}
-                        </option>
-                      )
-                    )}
-                  </select>
+                    <SelectTrigger className="max-w-48 min-w-32">
+                      <SelectValue placeholder="Unassigned" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Unassigned</SelectItem>
+                      {assigneeOptions.map(
+                        (member: {
+                          profile?: ProfileSummary | null
+                          profileId: string
+                        }) => (
+                          <SelectItem key={member.profileId} value={member.profileId}>
+                            {member.profile?.name ?? member.profile?.username}
+                          </SelectItem>
+                        )
+                      )}
+                    </SelectContent>
+                  </Select>
                 ) : (
                   <span className="text-sm">
                     {feedbackData.assignedProfile?.name ??

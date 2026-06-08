@@ -14,8 +14,8 @@ import {
   Select,
   SelectContent,
   SelectItem,
-  SelectPositioner,
   SelectTrigger,
+  SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { authClient } from '@/lib/convex/auth-client';
@@ -27,6 +27,10 @@ import { CategoryBadge, type UpdateCategory } from '../-components/category-badg
 import { FeedbackSelector } from '../-components/feedback-selector';
 
 const UPDATE_CATEGORIES = ['changelog', 'article', 'announcement'] as const;
+const UPDATE_CATEGORY_ITEMS = UPDATE_CATEGORIES.map((category) => ({
+  label: <CategoryBadge category={category} />,
+  value: category,
+}));
 
 const SIDEBAR_STORAGE_KEY = 'update-new-sidebar-state';
 
@@ -271,21 +275,20 @@ function NewUpdateRoute() {
                   <div className="flex flex-col gap-2">
                     <label className="text-sm text-muted-foreground">Category</label>
                     <Select
+                      items={UPDATE_CATEGORY_ITEMS}
                       onValueChange={(value) => field.handleChange(value as UpdateCategory)}
                       value={field.state.value}
                     >
                       <SelectTrigger className="w-full">
-                        <CategoryBadge category={field.state.value} />
+                        <SelectValue />
                       </SelectTrigger>
-                      <SelectPositioner>
-                        <SelectContent>
-                          {UPDATE_CATEGORIES.map((category) => (
-                            <SelectItem key={category} value={category}>
-                              <CategoryBadge category={category} />
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </SelectPositioner>
+                      <SelectContent>
+                        {UPDATE_CATEGORIES.map((category) => (
+                          <SelectItem key={category} value={category}>
+                            <CategoryBadge category={category} />
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
                     </Select>
                   </div>
                 )}

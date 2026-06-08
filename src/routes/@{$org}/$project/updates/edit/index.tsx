@@ -49,8 +49,8 @@ import {
   Select,
   SelectContent,
   SelectItem,
-  SelectPositioner,
   SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 import {
@@ -103,6 +103,10 @@ type DeleteDialogState = {
 } | null
 
 type StatusFilter = "all" | "draft" | "published"
+const UPDATE_STATUS_ITEMS = [
+  { label: <StatusBadge status="draft" />, value: "draft" },
+  { label: <StatusBadge status="published" />, value: "published" },
+] as const
 
 const COLUMN_LABELS: Record<string, string> = {
   author: "Author",
@@ -628,6 +632,7 @@ function UpdatesDashboard({
                     Status
                   </p>
                   <Select
+                    items={UPDATE_STATUS_ITEMS}
                     onValueChange={(value) => {
                       setActionError("")
                       if (
@@ -651,18 +656,16 @@ function UpdatesDashboard({
                     value={sheetUpdate.status}
                   >
                     <SelectTrigger className="w-full">
-                      <StatusBadge status={sheetUpdate.status} />
+                      <SelectValue />
                     </SelectTrigger>
-                    <SelectPositioner>
-                      <SelectContent>
-                        <SelectItem value="draft">
-                          <StatusBadge status="draft" />
-                        </SelectItem>
-                        <SelectItem value="published">
-                          <StatusBadge status="published" />
-                        </SelectItem>
-                      </SelectContent>
-                    </SelectPositioner>
+                    <SelectContent>
+                      <SelectItem value="draft">
+                        <StatusBadge status="draft" />
+                      </SelectItem>
+                      <SelectItem value="published">
+                        <StatusBadge status="published" />
+                      </SelectItem>
+                    </SelectContent>
                   </Select>
                 </div>
               </div>

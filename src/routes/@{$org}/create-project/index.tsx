@@ -14,7 +14,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select-shadcn';
+} from '@/components/ui/select';
 import { useCRPC } from '@/lib/convex/crpc';
 import { cn } from '@/lib/utils';
 
