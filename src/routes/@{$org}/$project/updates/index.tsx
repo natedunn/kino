@@ -99,10 +99,21 @@ function UpdatesListRoute() {
       <div className="flex-1 grid-cols-12 gap-8 md:grid">
         <div className="order-first border-l border-border/75 py-6 md:order-last md:col-span-3">
           <div className="sticky top-6 flex flex-col overflow-hidden">
+            <div className="pb-6 pl-6">
+              <h2 className="mx-2 text-sm font-bold text-muted-foreground">
+                Categories
+              </h2>
+              <div className="mt-2">
+                <CategoriesNav />
+              </div>
+            </div>
             {canEdit ? (
-              <div className="border-b pb-6 pl-6">
-                <div className="flex flex-col gap-2">
-                  <Button asChild className="w-full" size="lg">
+              <div className="border-t pt-6 pl-6">
+                <h2 className="mx-2 text-sm font-bold text-muted-foreground">
+                  Actions
+                </h2>
+                <div className="mt-2 flex flex-col gap-3">
+                  <Button asChild className="w-full">
                     <Link
                       params={{ org: orgSlug, project: projectSlug }}
                       to="/@{$org}/$project/updates/new"
@@ -110,12 +121,7 @@ function UpdatesListRoute() {
                       <CirclePlusOutline size="16px" /> New Update
                     </Link>
                   </Button>
-                  <Button
-                    asChild
-                    className="w-full"
-                    size="lg"
-                    variant="outline"
-                  >
+                  <Button asChild className="w-full" variant="outline">
                     <Link
                       params={{ org: orgSlug, project: projectSlug }}
                       search={{ pageSize: 20 }}
@@ -127,16 +133,6 @@ function UpdatesListRoute() {
                 </div>
               </div>
             ) : null}
-            <div className={canEdit ? "mt-4" : ""}>
-              <div className="pb-6 pl-6">
-                <h2 className="mx-2 text-sm font-bold text-muted-foreground">
-                  Categories
-                </h2>
-                <div className="mt-2">
-                  <CategoriesNav />
-                </div>
-              </div>
-            </div>
           </div>
         </div>
 
