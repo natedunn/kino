@@ -6,7 +6,7 @@
     "dev": "pnpm run dev:portless",
     "dev:portless": "pnpm run dev:vite:portless & pnpm run dev:convex & wait",
     "dev:vite": "VITE_PORTLESS_URL=${PORTLESS_URL:-} vite dev",
-    "dev:vite:portless": "PORTLESS_PORT=${PORTLESS_PORT:-1355} portless run pnpm run dev:vite",
+    "dev:vite:portless": "sh scripts/dev-portless.sh pnpm run dev:vite",
     "dev:convex": "kitcn dev",
     "build": "vite build",
     "build:cloudflare": "sh scripts/cloudflare-build.sh",

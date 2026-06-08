@@ -3,7 +3,8 @@ set -euo pipefail
 
 CDP_PORT="${CDP_PORT:-9222}"
 CDP_PROFILE="${CDP_PROFILE:-$HOME/.kino/chrome-cdp-profile}"
-DEFAULT_URL="${DEFAULT_URL:-https://sidebar-toggle-data-loss.kino.localhost:1355}"
+PORTLESS_PROXY_PORT="${PORTLESS_PORT:-1355}"
+DEFAULT_URL="${DEFAULT_URL:-https://$(sh "$(dirname "$0")/portless-name.sh" kino).localhost:$PORTLESS_PROXY_PORT}"
 
 if [[ "${1:-}" == "--" ]]; then
   shift
