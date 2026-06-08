@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "pnpm run dev:portless",
-    "dev:portless": "pnpm run dev:vite:portless & pnpm run dev:convex & wait",
+    "dev:portless": "node scripts/dev-supervisor.mjs",
     "dev:vite": "VITE_PORTLESS_URL=${PORTLESS_URL:-} vite dev",
     "dev:vite:portless": "sh scripts/dev-portless.sh pnpm run dev:vite",
     "dev:convex": "kitcn dev",
