@@ -14,6 +14,7 @@ import type { ActionCtx, MutationCtx, QueryCtx } from './server';
 import type { OrmTriggerContext } from 'kitcn/orm';
 
 const procedureRegistry = {
+  "backfillProjectUpdatedTimes": ["mutation", typedProcedureResolver(createGeneratedFunctionReference<"mutation", "public", typeof import("../update").backfillProjectUpdatedTimes>("update:backfillProjectUpdatedTimes"), () => (require("../update") as Record<string, unknown>)["backfillProjectUpdatedTimes"])],
   "bulkPublish": ["mutation", typedProcedureResolver(createGeneratedFunctionReference<"mutation", "public", typeof import("../update").bulkPublish>("update:bulkPublish"), () => (require("../update") as Record<string, unknown>)["bulkPublish"])],
   "bulkRemove": ["mutation", typedProcedureResolver(createGeneratedFunctionReference<"mutation", "public", typeof import("../update").bulkRemove>("update:bulkRemove"), () => (require("../update") as Record<string, unknown>)["bulkRemove"])],
   "bulkUnpublish": ["mutation", typedProcedureResolver(createGeneratedFunctionReference<"mutation", "public", typeof import("../update").bulkUnpublish>("update:bulkUnpublish"), () => (require("../update") as Record<string, unknown>)["bulkUnpublish"])],

@@ -931,7 +931,7 @@ export type DataModel = {
       status: "draft" | "published";
       tags?: null | Array<string>;
       title: string;
-      updatedTime?: null | number;
+      updatedTime: number;
       _id: Id<"update">;
       _creationTime: number;
     };

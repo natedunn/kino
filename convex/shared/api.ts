@@ -71,6 +71,7 @@ export const api = {
     listAssignableMembers: createApiLeaf<"query", typeof import("../functions/projectMember").listAssignableMembers>(createGeneratedFunctionReference<"query", "public", typeof import("../functions/projectMember").listAssignableMembers>("projectMember:listAssignableMembers"), { auth: "required", type: "query" }),
   },
   update: {
+    backfillProjectUpdatedTimes: createApiLeaf<"mutation", typeof import("../functions/update").backfillProjectUpdatedTimes>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/update").backfillProjectUpdatedTimes>("update:backfillProjectUpdatedTimes"), { auth: "required", type: "mutation" }),
     bulkPublish: createApiLeaf<"mutation", typeof import("../functions/update").bulkPublish>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/update").bulkPublish>("update:bulkPublish"), { auth: "required", type: "mutation" }),
     bulkRemove: createApiLeaf<"mutation", typeof import("../functions/update").bulkRemove>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/update").bulkRemove>("update:bulkRemove"), { auth: "required", type: "mutation" }),
     bulkUnpublish: createApiLeaf<"mutation", typeof import("../functions/update").bulkUnpublish>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/update").bulkUnpublish>("update:bulkUnpublish"), { auth: "required", type: "mutation" }),
