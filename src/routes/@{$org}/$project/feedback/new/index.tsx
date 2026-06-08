@@ -12,7 +12,8 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-} from "@/components/ui/select-shadcn"
+  SelectValue,
+} from "@/components/ui/select"
 import { authClient } from "@/lib/convex/auth-client"
 import { useCRPC } from "@/lib/convex/crpc"
 import { cn } from "@/lib/utils"
@@ -115,28 +116,22 @@ function NewFeedbackRoute() {
         >
           <form.Field name="boardId">
             {(field) => {
-              const selectedBoard = boards.find(
-                (board) => board.id === field.state.value
-              )
+              const boardItems = boards.map((board) => ({
+                label: board.name,
+                value: board.id,
+              }))
 
               return (
                 <div className="flex flex-col gap-2">
                   <label className="text-sm font-medium">Board</label>
                   <Select
                     disabled={createMutation.isPending}
-                    onValueChange={(value) => field.handleChange(value)}
+                    items={boardItems}
+                    onValueChange={(value) => field.handleChange(value ?? "")}
                     value={field.state.value}
                   >
                     <SelectTrigger className="w-48">
-                      <span
-                        className={cn(
-                          "line-clamp-1 flex items-center gap-2",
-                          !selectedBoard && "text-muted-foreground"
-                        )}
-                        data-slot="select-value"
-                      >
-                        {selectedBoard?.name ?? "Select Board"}
-                      </span>
+                      <SelectValue placeholder="Select Board" />
                     </SelectTrigger>
                     <SelectContent>
                       {boards.map((board) => (

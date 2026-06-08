@@ -9,7 +9,6 @@ import {
   Select,
   SelectContent,
   SelectItem,
-  SelectPositioner,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
@@ -123,15 +122,13 @@ export function FeedbackToolbar() {
                 <SelectTrigger id="status-filter">
                   <SelectValue placeholder="All statuses" />
                 </SelectTrigger>
-                <SelectPositioner alignItemWithTrigger>
-                  <SelectContent>
-                    {STATUS_OPTIONS.map(({ label, value }) => (
-                      <SelectItem key={`value-${value ?? 'undefined'}`} value={value}>
-                        {label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </SelectPositioner>
+                <SelectContent>
+                  {STATUS_OPTIONS.map(({ label, value }) => (
+                    <SelectItem key={`value-${value ?? 'undefined'}`} value={value}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
               </Select>
             </div>
           </div>
