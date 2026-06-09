@@ -96,10 +96,10 @@ function UpdatesListRoute() {
 
   return (
     <div className="container flex flex-1 flex-col overflow-visible">
-      <div className="flex-1 grid-cols-12 gap-8 md:grid">
-        <div className="order-first border-l border-border/75 py-6 md:order-last md:col-span-3">
+      <div className="flex flex-1 flex-col gap-8 md:grid md:grid-cols-12">
+        <div className="order-last py-6 md:col-span-3 md:border-l md:border-border/75">
           <div className="sticky top-6 flex flex-col overflow-hidden">
-            <div className="pb-6 pl-6">
+            <div className="pb-6 md:pl-6">
               <h2 className="mx-2 text-sm font-bold text-muted-foreground">
                 Categories
               </h2>
@@ -108,7 +108,7 @@ function UpdatesListRoute() {
               </div>
             </div>
             {canEdit ? (
-              <div className="border-t pt-6 pl-6">
+              <div className="border-t pt-6 md:pl-6">
                 <h2 className="mx-2 text-sm font-bold text-muted-foreground">
                   Actions
                 </h2>

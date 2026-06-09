@@ -52,13 +52,13 @@ function BoardsIndexRoute() {
   return (
     <div className="flex flex-1 flex-col">
       <div className="overflow-hidden border-b bg-muted/50 pt-12 pb-6">
-        <div className="container relative flex items-center justify-between">
+        <div className="container relative flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative">
-            <h1 className="relative z-10 flex items-center gap-2 text-3xl font-bold">
+            <h1 className="relative z-10 flex flex-wrap items-center gap-2 text-2xl font-bold md:text-3xl">
               <span className="text-muted-foreground">Feedback</span>
               <VArrowRight className="text-muted-foreground" size="20px" /> Boards
             </h1>
-            <h1 className="pointer-events-none absolute top-10 scale-[2.5] text-3xl font-bold opacity-50 blur-xl select-none">
+            <h1 className="pointer-events-none absolute top-10 hidden scale-[2.5] text-3xl font-bold opacity-50 blur-xl select-none md:flex md:items-center md:gap-2">
               <span className="text-muted-foreground">Feedback</span>
               <VArrowRight className="text-muted-foreground" size="20px" /> Boards
             </h1>

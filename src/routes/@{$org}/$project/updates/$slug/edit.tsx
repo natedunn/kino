@@ -237,8 +237,8 @@ function EditUpdateRoute() {
                 Back
               </span>
             </Link>
-            <Separator className="h-4" orientation="vertical" />
-            <span className="text-sm font-medium text-muted-foreground">
+            <Separator className="hidden h-4 sm:block" orientation="vertical" />
+            <span className="hidden text-sm font-medium text-muted-foreground sm:inline">
               Edit Update
             </span>
             {isPublished ? (
@@ -321,10 +321,10 @@ function EditUpdateRoute() {
       ) : null}
 
       {/* Two-column layout */}
-      <div className="container flex-1 grid-cols-12 gap-8 md:grid">
+      <div className="container flex flex-1 flex-col gap-8 md:grid md:grid-cols-12">
         {/* Sidebar */}
-        <div className="order-first border-l border-border/75 py-6 md:order-last md:col-span-4">
-          <div className="sticky top-14 flex flex-col gap-6 pl-8">
+        <div className="order-last py-6 md:col-span-4 md:border-l md:border-border/75">
+          <div className="sticky top-14 flex flex-col gap-6 md:pl-8">
             <SidebarSection
               icon={<Settings2 className="size-3.5" />}
               onOpenChange={(open) => setSidebarSection("settings", open)}
