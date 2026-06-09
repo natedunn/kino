@@ -242,10 +242,10 @@ function FeedbackListRoute() {
 
   return (
     <div className="container flex flex-1 flex-col overflow-visible">
-      <div className="flex-1 grid-cols-12 gap-8 md:grid">
-        <div className="order-first border-l border-border/75 py-6 md:order-last md:col-span-3">
+      <div className="flex flex-1 flex-col gap-8 md:grid md:grid-cols-12">
+        <div className="order-last py-6 md:col-span-3 md:border-l md:border-border/75">
           <div className="sticky top-6 flex flex-col overflow-hidden">
-            <div className="border-b pb-6 pl-6">
+            <div className="border-b pb-6 md:pl-6">
               <Button asChild className="w-full" size="lg">
                 <Link
                   params={{ org: orgSlug, project: projectSlug }}
@@ -256,7 +256,7 @@ function FeedbackListRoute() {
               </Button>
             </div>
             <div className="mt-4">
-              <div className="border-b pb-6 pl-6">
+              <div className="border-b pb-6 md:pl-6">
                 <h2 className="mx-2 text-sm font-bold text-muted-foreground">
                   Boards
                 </h2>
@@ -265,7 +265,7 @@ function FeedbackListRoute() {
                 </div>
               </div>
               {projectData.permissions.canEdit ? (
-                <div className="mt-6 pb-6 pl-6">
+                <div className="mt-6 pb-6 md:pl-6">
                   <h2 className="mx-2 text-sm font-bold text-muted-foreground">
                     Options
                   </h2>

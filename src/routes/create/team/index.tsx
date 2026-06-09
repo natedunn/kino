@@ -88,7 +88,7 @@ function AuthenticatedCreateTeamRoute() {
   return (
     <div className="relative w-full">
       <div className="absolute top-0 right-0 left-0 z-0 h-64 w-full bg-linear-to-t from-background to-muted" />
-      <div className="relative z-10 mx-auto max-w-2xl px-10 py-12">
+      <div className="relative z-10 mx-auto max-w-2xl px-4 py-12 sm:px-6 md:px-10">
         <div>
           <h1 className="text-3xl font-bold">Create a team</h1>
           {!underLimit ? (
@@ -153,8 +153,8 @@ function AuthenticatedCreateTeamRoute() {
                         field.handleChange(value as "public" | "private")
                       }
                     >
-                      <SelectTrigger className="w-48">
-                        <SelectValue placeholder="Sort by..." />
+                      <SelectTrigger className="w-full sm:w-48">
+                        <SelectValue placeholder="Select visibility" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="public">Public</SelectItem>

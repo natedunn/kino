@@ -36,8 +36,8 @@ function BoardDetailRoute() {
   const board = boardQuery.data;
 
   return (
-    <div className="container">
-      <pre>
+    <div className="container py-6">
+      <pre className="overflow-x-auto rounded-lg border bg-muted p-4 text-xs">
         <code>{JSON.stringify(board, null, 2)}</code>
       </pre>
     </div>
