@@ -86,7 +86,9 @@ export const MainNav = ({ children, isUserPending = false, user }: MainNavProps)
 						<div className='flex min-w-0 shrink-0 items-center gap-3'>
 							<div className='flex items-center gap-2'>
 								<div className='flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-primary'>
-									<span className='text-sm font-bold text-primary-foreground'>K</span>
+									<span aria-hidden='true' className='text-sm font-bold text-primary-foreground'>
+										K
+									</span>
 									<span className='sr-only'>Kino</span>
 								</div>
 								{!!orgSlug && (
