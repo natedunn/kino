@@ -90,7 +90,7 @@ function CreateProjectRoute() {
     <div className="flex flex-auto flex-col">
       <div className="container flex flex-auto flex-col">
         <div className="grid flex-1 grid-cols-1 md:grid-cols-12">
-          <div className="col-span-3 hidden border-r md:block">
+          <div className="hidden border-r md:col-span-3 md:block">
             <form.Subscribe selector={(state) => state.values}>
               {(values) => (
                 <div className="relative flex flex-col pr-6">
@@ -133,7 +133,7 @@ function CreateProjectRoute() {
               )}
             </form.Subscribe>
           </div>
-          <div className="col-span-9 p-4 sm:p-6 md:p-12">
+          <div className="p-4 sm:p-6 md:col-span-9 md:p-12">
             <h1 className="inline-flex flex-wrap items-center gap-y-1 text-2xl font-bold md:text-3xl">
               <span className="mr-2 inline-block">Create a new project for</span>
               <span className="inline-flex items-center gap-2 rounded-lg px-2 text-foreground">
@@ -184,7 +184,7 @@ function CreateProjectRoute() {
                       <div className="flex flex-1 flex-col gap-2">
                         <label className="text-sm font-medium">Project Slug</label>
                         <p className="text-sm text-muted-foreground">
-                          Will be be used in URL of your project. Must be unique to your organization.
+                          Will be used in URL of your project. Must be unique to your organization.
                         </p>
                         <div className="flex items-stretch">
                           <div className="flex items-center rounded-l-lg border-y border-l border-border bg-muted px-3 text-sm">

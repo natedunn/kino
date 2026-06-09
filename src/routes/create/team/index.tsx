@@ -154,7 +154,7 @@ function AuthenticatedCreateTeamRoute() {
                       }
                     >
                       <SelectTrigger className="w-full sm:w-48">
-                        <SelectValue placeholder="Sort by..." />
+                        <SelectValue placeholder="Select visibility" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="public">Public</SelectItem>

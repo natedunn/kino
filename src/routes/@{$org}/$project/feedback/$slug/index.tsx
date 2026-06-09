@@ -331,7 +331,7 @@ function FeedbackDetailRoute() {
   return (
     <div className="container flex flex-1 flex-col gap-8 md:grid md:grid-cols-12">
       <div className="order-last py-6 md:col-span-4 md:border-l md:border-border/75">
-        <div className="sticky top-4 flex flex-col gap-6 pl-8">
+        <div className="sticky top-4 flex flex-col gap-6 md:pl-8">
           <div>
             <div className="flex items-center gap-3">
               <UpvoteButton
