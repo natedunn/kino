@@ -219,6 +219,17 @@ export declare const api: {
       { orgSlug: string; projectSlug: string },
       any
     >;
+    startInstallationRefresh: FunctionReference<
+      "mutation",
+      "public",
+      {
+        callbackTargetUrl?: string;
+        mode?: "read" | "read_write";
+        orgSlug: string;
+        projectSlug: string;
+      },
+      any
+    >;
     startProjectConnection: FunctionReference<
       "mutation",
       "public",
@@ -737,6 +748,21 @@ export declare const internal: {
           repository_selection: string;
         };
         setupAction?: string;
+        state: string;
+      },
+      any
+    >;
+    completeUserInstallationsCallback: FunctionReference<
+      "mutation",
+      "internal",
+      {
+        installations: Array<{
+          account: { id: number; login: string; type: string } | null;
+          events: Array<string>;
+          id: number;
+          permissions: Record<string, string>;
+          repository_selection: string;
+        }>;
         state: string;
       },
       any

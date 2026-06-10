@@ -58,6 +58,13 @@ function GitHubIntegrationRoute() {
       },
     })
   )
+  const refreshInstallations = useMutation(
+    crpc.github.startInstallationRefresh.mutationOptions({
+      onSuccess: (result) => {
+        window.location.href = result.authorizeUrl
+      },
+    })
+  )
   const repositoriesQuery = useMutation(
     crpc.githubExternal.listInstallationRepositoriesForProject.mutationOptions({
       onSuccess: (repositories) => {
@@ -203,10 +210,32 @@ function GitHubIntegrationRoute() {
                   <GitBranch className="size-4" />
                   {installations.length > 0 ? "Update install" : "Install app"}
                 </Button>
+                <Button
+                  disabled={refreshInstallations.isPending}
+                  onClick={() =>
+                    refreshInstallations.mutate({
+                      callbackTargetUrl:
+                        `${window.location.origin}/api/github/callback`,
+                      mode,
+                      orgSlug: params.org,
+                      projectSlug: params.project,
+                    })
+                  }
+                  type="button"
+                  variant="outline"
+                >
+                  <RefreshCw className="size-4" />
+                  Refresh installs
+                </Button>
               </div>
               {startConnection.error ? (
                 <InlineAlert variant="danger">
                   {startConnection.error.message}
+                </InlineAlert>
+              ) : null}
+              {refreshInstallations.error ? (
+                <InlineAlert variant="danger">
+                  {refreshInstallations.error.message}
                 </InlineAlert>
               ) : null}
             </section>

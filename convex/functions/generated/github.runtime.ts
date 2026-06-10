@@ -15,10 +15,12 @@ import type { OrmTriggerContext } from 'kitcn/orm';
 
 const procedureRegistry = {
   "completeInstallationCallback": ["mutation", typedProcedureResolver(createGeneratedFunctionReference<"mutation", "internal", typeof import("../github").completeInstallationCallback>("github:completeInstallationCallback"), () => (require("../github") as Record<string, unknown>)["completeInstallationCallback"])],
+  "completeUserInstallationsCallback": ["mutation", typedProcedureResolver(createGeneratedFunctionReference<"mutation", "internal", typeof import("../github").completeUserInstallationsCallback>("github:completeUserInstallationsCallback"), () => (require("../github") as Record<string, unknown>)["completeUserInstallationsCallback"])],
   "getInstallationForExternal": ["query", typedProcedureResolver(createGeneratedFunctionReference<"query", "internal", typeof import("../github").getInstallationForExternal>("github:getInstallationForExternal"), () => (require("../github") as Record<string, unknown>)["getInstallationForExternal"])],
   "getProjectIntegration": ["query", typedProcedureResolver(createGeneratedFunctionReference<"query", "public", typeof import("../github").getProjectIntegration>("github:getProjectIntegration"), () => (require("../github") as Record<string, unknown>)["getProjectIntegration"])],
   "recordWebhookDelivery": ["mutation", typedProcedureResolver(createGeneratedFunctionReference<"mutation", "internal", typeof import("../github").recordWebhookDelivery>("github:recordWebhookDelivery"), () => (require("../github") as Record<string, unknown>)["recordWebhookDelivery"])],
   "saveRepositoryConnection": ["mutation", typedProcedureResolver(createGeneratedFunctionReference<"mutation", "internal", typeof import("../github").saveRepositoryConnection>("github:saveRepositoryConnection"), () => (require("../github") as Record<string, unknown>)["saveRepositoryConnection"])],
+  "startInstallationRefresh": ["mutation", typedProcedureResolver(createGeneratedFunctionReference<"mutation", "public", typeof import("../github").startInstallationRefresh>("github:startInstallationRefresh"), () => (require("../github") as Record<string, unknown>)["startInstallationRefresh"])],
   "startProjectConnection": ["mutation", typedProcedureResolver(createGeneratedFunctionReference<"mutation", "public", typeof import("../github").startProjectConnection>("github:startProjectConnection"), () => (require("../github") as Record<string, unknown>)["startProjectConnection"])],
 } as const;
 

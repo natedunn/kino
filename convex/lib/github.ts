@@ -5,6 +5,7 @@ const GITHUB_API_URL = "https://api.github.com"
 const GITHUB_GRAPHQL_URL = "https://api.github.com/graphql"
 const GITHUB_OAUTH_ACCESS_TOKEN_URL =
   "https://github.com/login/oauth/access_token"
+const GITHUB_OAUTH_AUTHORIZE_URL = "https://github.com/login/oauth/authorize"
 
 type GitHubAppEnv = {
   appId: string
@@ -579,4 +580,12 @@ export async function probeRepository(args: {
 export function githubAppInstallationUrl(state: string) {
   const env = getRequiredGitHubAppEnv()
   return `https://github.com/apps/${env.slug}/installations/new?state=${encodeURIComponent(state)}`
+}
+
+export function githubAppUserAuthorizationUrl(state: string) {
+  const env = getRequiredGitHubAppEnv()
+  const url = new URL(GITHUB_OAUTH_AUTHORIZE_URL)
+  url.searchParams.set("client_id", env.clientId)
+  url.searchParams.set("state", state)
+  return url.toString()
 }

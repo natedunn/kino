@@ -15,6 +15,7 @@ import {
 import {
   createGitHubAppState,
   githubAppInstallationUrl,
+  githubAppUserAuthorizationUrl,
   resolveGitHubCallbackTargetUrl,
   sha256Hex,
   verifyGitHubAppStateForCurrentTarget,
@@ -154,6 +155,53 @@ export const startProjectConnection = authMutation
 
     return {
       installUrl: githubAppInstallationUrl(state),
+    }
+  })
+
+export const startInstallationRefresh = authMutation
+  .input(
+    z.object({
+      callbackTargetUrl: z.string().optional(),
+      mode: connectionModeSchema.default("read"),
+      orgSlug: z.string(),
+      projectSlug: z.string(),
+    })
+  )
+  .mutation(async ({ ctx, input }) => {
+    const { organization, profile, project } = await verifyOrgAdminForProject(
+      ctx,
+      {
+        orgSlug: input.orgSlug,
+        projectSlug: input.projectSlug,
+        userId: ctx.userId,
+      }
+    )
+
+    const nonce = crypto.randomUUID()
+    const now = Date.now()
+    const expiresAt = now + 10 * 60 * 1000
+    const state = await createGitHubAppState({
+      exp: expiresAt,
+      nonce,
+      targetUrl: resolveGitHubCallbackTargetUrl(input.callbackTargetUrl),
+    })
+
+    await ctx.orm.insert(githubConnectionStateTable).values({
+      createdByProfileId: profile._id as any,
+      createdByUserId: ctx.userId,
+      expiresAt,
+      mode: input.mode,
+      orgId: organization.id,
+      orgSlug: organization.slug,
+      projectId: project._id,
+      projectSlug: project.slug,
+      stateHash: await sha256Hex(nonce),
+      status: "pending",
+      updatedTime: now,
+    })
+
+    return {
+      authorizeUrl: githubAppUserAuthorizationUrl(state),
     }
   })
 
@@ -340,6 +388,101 @@ export const completeInstallationCallback = privateMutation
       .where(eq(githubConnectionStateTable.id, stateDoc._id as any))
 
     return {
+      mode: stateDoc.mode,
+      orgSlug: stateDoc.orgSlug,
+      projectSlug: stateDoc.projectSlug,
+    }
+  })
+
+export const completeUserInstallationsCallback = privateMutation
+  .input(
+    z.object({
+      installations: z.array(githubInstallationSchema).min(1),
+      state: z.string(),
+    })
+  )
+  .mutation(async ({ ctx, input }) => {
+    const statePayload = await verifyGitHubAppStateForCurrentTarget(input.state)
+    const stateHash = await sha256Hex(statePayload.nonce)
+    const stateDoc = await ctx.db
+      .query("githubConnectionState")
+      .withIndex("by_stateHash", (q: any) => q.eq("stateHash", stateHash))
+      .unique()
+    if (!stateDoc || stateDoc.status !== "pending") {
+      throw new CRPCError({
+        code: "BAD_REQUEST",
+        message: "GitHub connection state is invalid",
+      })
+    }
+    if (stateDoc.expiresAt < Date.now()) {
+      await ctx.orm
+        .update(githubConnectionStateTable)
+        .set({ status: "expired", updatedTime: Date.now() })
+        .where(eq(githubConnectionStateTable.id, stateDoc._id as any))
+      throw new CRPCError({
+        code: "BAD_REQUEST",
+        message: "GitHub connection state expired",
+      })
+    }
+
+    const now = Date.now()
+    let savedCount = 0
+    for (const installation of input.installations) {
+      if (!installation.account) continue
+
+      const existing = await ctx.db
+        .query("githubInstallation")
+        .withIndex("by_orgId_installationId", (q: any) =>
+          q
+            .eq("orgId", stateDoc.orgId)
+            .eq("installationId", installation.id)
+        )
+        .unique()
+
+      const values = {
+        accountId: installation.account.id,
+        accountLogin: installation.account.login,
+        accountType: installation.account.type,
+        connectedByProfileId: stateDoc.createdByProfileId,
+        events: installation.events,
+        installationId: installation.id,
+        orgId: stateDoc.orgId,
+        orgSlug: stateDoc.orgSlug,
+        permissions: installation.permissions,
+        repositorySelection: installation.repository_selection,
+        status: "active" as const,
+        updatedTime: now,
+      }
+
+      if (existing) {
+        await ctx.orm
+          .update(githubInstallationTable)
+          .set(values)
+          .where(eq(githubInstallationTable.id, existing._id as any))
+      } else {
+        await ctx.orm.insert(githubInstallationTable).values(values)
+      }
+      savedCount += 1
+    }
+
+    if (savedCount === 0) {
+      throw new CRPCError({
+        code: "NOT_FOUND",
+        message: "No accessible GitHub installations were found",
+      })
+    }
+
+    await ctx.orm
+      .update(githubConnectionStateTable)
+      .set({
+        consumedAt: now,
+        status: "consumed",
+        updatedTime: now,
+      })
+      .where(eq(githubConnectionStateTable.id, stateDoc._id as any))
+
+    return {
+      installationCount: savedCount,
       mode: stateDoc.mode,
       orgSlug: stateDoc.orgSlug,
       projectSlug: stateDoc.projectSlug,

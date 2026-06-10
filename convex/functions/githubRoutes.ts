@@ -53,12 +53,25 @@ export const callback = publicRoute
     let redirect = `${getEnv().SITE_URL.replace(/\/$/, "")}/dashboard?github=error`
 
     try {
-      if (!searchParams.code || !searchParams.state || !searchParams.installation_id) {
+      if (!searchParams.code || !searchParams.state) {
         throw new Error("GitHub callback is missing required parameters")
       }
 
       const userToken = await exchangeGitHubSetupCode(searchParams.code)
       const userInstallations = await listUserInstallations(userToken)
+      if (!searchParams.installation_id) {
+        const result = await caller.completeUserInstallationsCallback({
+          installations: userInstallations.map(sanitizeGitHubInstallationDetails),
+          state: searchParams.state,
+        })
+        redirect = projectGitHubSettingsUrl({
+          orgSlug: result.orgSlug,
+          projectSlug: result.projectSlug,
+          status: "connected",
+        })
+        return c.redirect(redirect)
+      }
+
       const userCanAccessInstallation = userInstallations.some(
         (installation) => installation.id === searchParams.installation_id
       )

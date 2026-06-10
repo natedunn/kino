@@ -48,6 +48,7 @@ export const api = {
   },
   github: {
     getProjectIntegration: createApiLeaf<"query", typeof import("../functions/github").getProjectIntegration>(createGeneratedFunctionReference<"query", "public", typeof import("../functions/github").getProjectIntegration>("github:getProjectIntegration"), { auth: "required", type: "query" }),
+    startInstallationRefresh: createApiLeaf<"mutation", typeof import("../functions/github").startInstallationRefresh>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/github").startInstallationRefresh>("github:startInstallationRefresh"), { auth: "required", type: "mutation" }),
     startProjectConnection: createApiLeaf<"mutation", typeof import("../functions/github").startProjectConnection>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/github").startProjectConnection>("github:startProjectConnection"), { auth: "required", type: "mutation" }),
   },
   githubExternal: {

@@ -4,6 +4,7 @@ import {
   createGitHubAppState,
   getGitHubCallbackTargetUrl,
   githubAppInstallationUrl,
+  githubAppUserAuthorizationUrl,
   privateKeyToDer,
   resolveGitHubCallbackTargetUrl,
   sanitizeGitHubInstallationDetails,
@@ -134,6 +135,14 @@ describe("github helpers", () => {
 
     expect(githubAppInstallationUrl("state with spaces")).toBe(
       "https://github.com/apps/kino-test/installations/new?state=state%20with%20spaces"
+    )
+  })
+
+  it("builds the GitHub App user authorization URL with encoded state", () => {
+    setGitHubAppEnv()
+
+    expect(githubAppUserAuthorizationUrl("state with spaces")).toBe(
+      "https://github.com/login/oauth/authorize?client_id=client_id&state=state+with+spaces"
     )
   })
 
