@@ -191,6 +191,8 @@ function GitHubIntegrationRoute() {
                   disabled={startConnection.isPending}
                   onClick={() =>
                     startConnection.mutate({
+                      callbackTargetUrl:
+                        `${window.location.origin}/api/github/callback`,
                       mode,
                       orgSlug: params.org,
                       projectSlug: params.project,

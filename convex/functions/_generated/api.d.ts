@@ -222,7 +222,12 @@ export declare const api: {
     startProjectConnection: FunctionReference<
       "mutation",
       "public",
-      { mode?: "read" | "read_write"; orgSlug: string; projectSlug: string },
+      {
+        callbackTargetUrl?: string;
+        mode?: "read" | "read_write";
+        orgSlug: string;
+        projectSlug: string;
+      },
       any
     >;
   };

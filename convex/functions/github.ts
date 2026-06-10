@@ -14,8 +14,8 @@ import {
 } from "../lib/kino"
 import {
   createGitHubAppState,
-  getGitHubCallbackTargetUrl,
   githubAppInstallationUrl,
+  resolveGitHubCallbackTargetUrl,
   sha256Hex,
   verifyGitHubAppStateForCurrentTarget,
   type GitHubInstallationDetails,
@@ -113,6 +113,7 @@ async function verifyOrgAdminForProject(
 export const startProjectConnection = authMutation
   .input(
     z.object({
+      callbackTargetUrl: z.string().optional(),
       mode: connectionModeSchema.default("read"),
       orgSlug: z.string(),
       projectSlug: z.string(),
@@ -134,7 +135,7 @@ export const startProjectConnection = authMutation
     const state = await createGitHubAppState({
       exp: expiresAt,
       nonce,
-      targetUrl: getGitHubCallbackTargetUrl(),
+      targetUrl: resolveGitHubCallbackTargetUrl(input.callbackTargetUrl),
     })
 
     await ctx.orm.insert(githubConnectionStateTable).values({

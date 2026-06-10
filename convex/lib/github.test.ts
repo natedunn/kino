@@ -5,6 +5,7 @@ import {
   getGitHubCallbackTargetUrl,
   githubAppInstallationUrl,
   privateKeyToDer,
+  resolveGitHubCallbackTargetUrl,
   sanitizeGitHubInstallationDetails,
   sanitizeGitHubRepository,
   sha256Hex,
@@ -175,6 +176,39 @@ describe("github helpers", () => {
     expect(getGitHubCallbackTargetUrl()).toBe(
       "https://local.kino.localhost:1355/api/github/callback"
     )
+  })
+
+  it("uses a trusted requested callback target URL when no override is configured", () => {
+    setGitHubAppEnv()
+
+    expect(
+      resolveGitHubCallbackTargetUrl(
+        "https://mizar.kino.localhost:1355/api/github/callback"
+      )
+    ).toBe("https://mizar.kino.localhost:1355/api/github/callback")
+  })
+
+  it("keeps the explicit callback target override ahead of requested targets", () => {
+    setGitHubAppEnv()
+    process.env.GITHUB_APP_CALLBACK_TARGET_URL =
+      "https://brainy-boar-871.convex.site/api/github/callback"
+    process.env.TRUSTED_ORIGINS = "https://brainy-boar-871.convex.site"
+
+    expect(
+      resolveGitHubCallbackTargetUrl(
+        "https://mizar.kino.localhost:1355/api/github/callback"
+      )
+    ).toBe("https://brainy-boar-871.convex.site/api/github/callback")
+  })
+
+  it("rejects untrusted requested callback targets", () => {
+    setGitHubAppEnv()
+
+    expect(() =>
+      resolveGitHubCallbackTargetUrl(
+        "https://evil.example.com/api/github/callback"
+      )
+    ).toThrow("GitHub callback target URL is not trusted")
   })
 
   it("verifies GitHub webhook signatures", async () => {

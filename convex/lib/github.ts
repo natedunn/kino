@@ -273,6 +273,19 @@ export function getGitHubCallbackTargetUrl() {
   return `${siteUrl}/api/github/callback`
 }
 
+export function resolveGitHubCallbackTargetUrl(requestedTargetUrl?: string) {
+  const env = getRequiredGitHubAppEnv()
+  const targetUrl =
+    env.callbackTargetUrl ?? requestedTargetUrl ?? getGitHubCallbackTargetUrl()
+  if (!isTrustedGitHubCallbackTarget(targetUrl)) {
+    throw new CRPCError({
+      code: "BAD_REQUEST",
+      message: "GitHub callback target URL is not trusted",
+    })
+  }
+  return targetUrl
+}
+
 export function isTrustedGitHubCallbackTarget(targetUrl: string) {
   try {
     const target = new URL(targetUrl)
@@ -361,14 +374,7 @@ export async function verifyGitHubAppState(state: string) {
 }
 
 export async function verifyGitHubAppStateForCurrentTarget(state: string) {
-  const payload = await verifyGitHubAppState(state)
-  if (payload.targetUrl !== getGitHubCallbackTargetUrl()) {
-    throw new CRPCError({
-      code: "BAD_REQUEST",
-      message: "GitHub state target does not match this environment",
-    })
-  }
-  return payload
+  return await verifyGitHubAppState(state)
 }
 
 export async function createGitHubAppJwt() {
