@@ -21,6 +21,7 @@ import { Route as CreateTeamIndexRouteImport } from './routes/create/team/index'
 import { Route as AtChar123orgChar125EditIndexRouteImport } from './routes/@{$org}/edit/index'
 import { Route as AtChar123orgChar125CreateProjectIndexRouteImport } from './routes/@{$org}/create-project/index'
 import { Route as AtChar123orgChar125ProjectIndexRouteImport } from './routes/@{$org}/$project/index'
+import { Route as ApiGithubSplatRouteImport } from './routes/api/github/$'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as AtChar123orgChar125ProjectUpdatesIndexRouteImport } from './routes/@{$org}/$project/updates/index'
 import { Route as AtChar123orgChar125ProjectRoadmapIndexRouteImport } from './routes/@{$org}/$project/roadmap/index'
@@ -31,6 +32,7 @@ import { Route as AtChar123orgChar125ProjectChatIndexRouteImport } from './route
 import { Route as AtChar123orgChar125ProjectUpdatesNewIndexRouteImport } from './routes/@{$org}/$project/updates/new/index'
 import { Route as AtChar123orgChar125ProjectUpdatesEditIndexRouteImport } from './routes/@{$org}/$project/updates/edit/index'
 import { Route as AtChar123orgChar125ProjectUpdatesSlugIndexRouteImport } from './routes/@{$org}/$project/updates/$slug/index'
+import { Route as AtChar123orgChar125ProjectIntegrationsGithubIndexRouteImport } from './routes/@{$org}/$project/integrations/github/index'
 import { Route as AtChar123orgChar125ProjectFeedbackNewIndexRouteImport } from './routes/@{$org}/$project/feedback/new/index'
 import { Route as AtChar123orgChar125ProjectFeedbackBoardsIndexRouteImport } from './routes/@{$org}/$project/feedback/boards/index'
 import { Route as AtChar123orgChar125ProjectFeedbackSlugIndexRouteImport } from './routes/@{$org}/$project/feedback/$slug/index'
@@ -105,6 +107,11 @@ const AtChar123orgChar125ProjectIndexRoute =
     path: '/',
     getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
   } as any)
+const ApiGithubSplatRoute = ApiGithubSplatRouteImport.update({
+  id: '/api/github/$',
+  path: '/api/github/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
@@ -164,6 +171,12 @@ const AtChar123orgChar125ProjectUpdatesSlugIndexRoute =
     path: '/updates/$slug/',
     getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
   } as any)
+const AtChar123orgChar125ProjectIntegrationsGithubIndexRoute =
+  AtChar123orgChar125ProjectIntegrationsGithubIndexRouteImport.update({
+    id: '/integrations/github/',
+    path: '/integrations/github/',
+    getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
+  } as any)
 const AtChar123orgChar125ProjectFeedbackNewIndexRoute =
   AtChar123orgChar125ProjectFeedbackNewIndexRouteImport.update({
     id: '/feedback/new/',
@@ -215,6 +228,7 @@ export interface FileRoutesByFullPath {
   '/@{$org}/$project': typeof AtChar123orgChar125ProjectRouteRouteWithChildren
   '/@{$org}/': typeof AtChar123orgChar125IndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/github/$': typeof ApiGithubSplatRoute
   '/@{$org}/$project/': typeof AtChar123orgChar125ProjectIndexRoute
   '/@{$org}/create-project/': typeof AtChar123orgChar125CreateProjectIndexRoute
   '/@{$org}/edit/': typeof AtChar123orgChar125EditIndexRoute
@@ -232,6 +246,7 @@ export interface FileRoutesByFullPath {
   '/@{$org}/$project/feedback/$slug/': typeof AtChar123orgChar125ProjectFeedbackSlugIndexRoute
   '/@{$org}/$project/feedback/boards/': typeof AtChar123orgChar125ProjectFeedbackBoardsIndexRoute
   '/@{$org}/$project/feedback/new/': typeof AtChar123orgChar125ProjectFeedbackNewIndexRoute
+  '/@{$org}/$project/integrations/github/': typeof AtChar123orgChar125ProjectIntegrationsGithubIndexRoute
   '/@{$org}/$project/updates/$slug/': typeof AtChar123orgChar125ProjectUpdatesSlugIndexRoute
   '/@{$org}/$project/updates/edit/': typeof AtChar123orgChar125ProjectUpdatesEditIndexRoute
   '/@{$org}/$project/updates/new/': typeof AtChar123orgChar125ProjectUpdatesNewIndexRoute
@@ -244,6 +259,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/@{$org}': typeof AtChar123orgChar125IndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/github/$': typeof ApiGithubSplatRoute
   '/@{$org}/$project': typeof AtChar123orgChar125ProjectIndexRoute
   '/@{$org}/create-project': typeof AtChar123orgChar125CreateProjectIndexRoute
   '/@{$org}/edit': typeof AtChar123orgChar125EditIndexRoute
@@ -261,6 +277,7 @@ export interface FileRoutesByTo {
   '/@{$org}/$project/feedback/$slug': typeof AtChar123orgChar125ProjectFeedbackSlugIndexRoute
   '/@{$org}/$project/feedback/boards': typeof AtChar123orgChar125ProjectFeedbackBoardsIndexRoute
   '/@{$org}/$project/feedback/new': typeof AtChar123orgChar125ProjectFeedbackNewIndexRoute
+  '/@{$org}/$project/integrations/github': typeof AtChar123orgChar125ProjectIntegrationsGithubIndexRoute
   '/@{$org}/$project/updates/$slug': typeof AtChar123orgChar125ProjectUpdatesSlugIndexRoute
   '/@{$org}/$project/updates/edit': typeof AtChar123orgChar125ProjectUpdatesEditIndexRoute
   '/@{$org}/$project/updates/new': typeof AtChar123orgChar125ProjectUpdatesNewIndexRoute
@@ -276,6 +293,7 @@ export interface FileRoutesById {
   '/@{$org}/$project': typeof AtChar123orgChar125ProjectRouteRouteWithChildren
   '/@{$org}/': typeof AtChar123orgChar125IndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/github/$': typeof ApiGithubSplatRoute
   '/@{$org}/$project/': typeof AtChar123orgChar125ProjectIndexRoute
   '/@{$org}/create-project/': typeof AtChar123orgChar125CreateProjectIndexRoute
   '/@{$org}/edit/': typeof AtChar123orgChar125EditIndexRoute
@@ -293,6 +311,7 @@ export interface FileRoutesById {
   '/@{$org}/$project/feedback/$slug/': typeof AtChar123orgChar125ProjectFeedbackSlugIndexRoute
   '/@{$org}/$project/feedback/boards/': typeof AtChar123orgChar125ProjectFeedbackBoardsIndexRoute
   '/@{$org}/$project/feedback/new/': typeof AtChar123orgChar125ProjectFeedbackNewIndexRoute
+  '/@{$org}/$project/integrations/github/': typeof AtChar123orgChar125ProjectIntegrationsGithubIndexRoute
   '/@{$org}/$project/updates/$slug/': typeof AtChar123orgChar125ProjectUpdatesSlugIndexRoute
   '/@{$org}/$project/updates/edit/': typeof AtChar123orgChar125ProjectUpdatesEditIndexRoute
   '/@{$org}/$project/updates/new/': typeof AtChar123orgChar125ProjectUpdatesNewIndexRoute
@@ -309,6 +328,7 @@ export interface FileRouteTypes {
     | '/@{$org}/$project'
     | '/@{$org}/'
     | '/api/auth/$'
+    | '/api/github/$'
     | '/@{$org}/$project/'
     | '/@{$org}/create-project/'
     | '/@{$org}/edit/'
@@ -326,6 +346,7 @@ export interface FileRouteTypes {
     | '/@{$org}/$project/feedback/$slug/'
     | '/@{$org}/$project/feedback/boards/'
     | '/@{$org}/$project/feedback/new/'
+    | '/@{$org}/$project/integrations/github/'
     | '/@{$org}/$project/updates/$slug/'
     | '/@{$org}/$project/updates/edit/'
     | '/@{$org}/$project/updates/new/'
@@ -338,6 +359,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/@{$org}'
     | '/api/auth/$'
+    | '/api/github/$'
     | '/@{$org}/$project'
     | '/@{$org}/create-project'
     | '/@{$org}/edit'
@@ -355,6 +377,7 @@ export interface FileRouteTypes {
     | '/@{$org}/$project/feedback/$slug'
     | '/@{$org}/$project/feedback/boards'
     | '/@{$org}/$project/feedback/new'
+    | '/@{$org}/$project/integrations/github'
     | '/@{$org}/$project/updates/$slug'
     | '/@{$org}/$project/updates/edit'
     | '/@{$org}/$project/updates/new'
@@ -369,6 +392,7 @@ export interface FileRouteTypes {
     | '/@{$org}/$project'
     | '/@{$org}/'
     | '/api/auth/$'
+    | '/api/github/$'
     | '/@{$org}/$project/'
     | '/@{$org}/create-project/'
     | '/@{$org}/edit/'
@@ -386,6 +410,7 @@ export interface FileRouteTypes {
     | '/@{$org}/$project/feedback/$slug/'
     | '/@{$org}/$project/feedback/boards/'
     | '/@{$org}/$project/feedback/new/'
+    | '/@{$org}/$project/integrations/github/'
     | '/@{$org}/$project/updates/$slug/'
     | '/@{$org}/$project/updates/edit/'
     | '/@{$org}/$project/updates/new/'
@@ -399,6 +424,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   DashboardRoute: typeof DashboardRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiGithubSplatRoute: typeof ApiGithubSplatRoute
   CreateTeamIndexRoute: typeof CreateTeamIndexRoute
   ProfileSettingsIndexRoute: typeof ProfileSettingsIndexRoute
   UUsernameIndexRoute: typeof UUsernameIndexRoute
@@ -490,6 +516,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AtChar123orgChar125ProjectIndexRouteImport
       parentRoute: typeof AtChar123orgChar125ProjectRouteRoute
     }
+    '/api/github/$': {
+      id: '/api/github/$'
+      path: '/api/github/$'
+      fullPath: '/api/github/$'
+      preLoaderRoute: typeof ApiGithubSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
@@ -560,6 +593,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AtChar123orgChar125ProjectUpdatesSlugIndexRouteImport
       parentRoute: typeof AtChar123orgChar125ProjectRouteRoute
     }
+    '/@{$org}/$project/integrations/github/': {
+      id: '/@{$org}/$project/integrations/github/'
+      path: '/integrations/github'
+      fullPath: '/@{$org}/$project/integrations/github/'
+      preLoaderRoute: typeof AtChar123orgChar125ProjectIntegrationsGithubIndexRouteImport
+      parentRoute: typeof AtChar123orgChar125ProjectRouteRoute
+    }
     '/@{$org}/$project/feedback/new/': {
       id: '/@{$org}/$project/feedback/new/'
       path: '/feedback/new'
@@ -625,6 +665,7 @@ interface AtChar123orgChar125ProjectRouteRouteChildren {
   AtChar123orgChar125ProjectFeedbackSlugIndexRoute: typeof AtChar123orgChar125ProjectFeedbackSlugIndexRoute
   AtChar123orgChar125ProjectFeedbackBoardsIndexRoute: typeof AtChar123orgChar125ProjectFeedbackBoardsIndexRoute
   AtChar123orgChar125ProjectFeedbackNewIndexRoute: typeof AtChar123orgChar125ProjectFeedbackNewIndexRoute
+  AtChar123orgChar125ProjectIntegrationsGithubIndexRoute: typeof AtChar123orgChar125ProjectIntegrationsGithubIndexRoute
   AtChar123orgChar125ProjectUpdatesSlugIndexRoute: typeof AtChar123orgChar125ProjectUpdatesSlugIndexRoute
   AtChar123orgChar125ProjectUpdatesEditIndexRoute: typeof AtChar123orgChar125ProjectUpdatesEditIndexRoute
   AtChar123orgChar125ProjectUpdatesNewIndexRoute: typeof AtChar123orgChar125ProjectUpdatesNewIndexRoute
@@ -657,6 +698,8 @@ const AtChar123orgChar125ProjectRouteRouteChildren: AtChar123orgChar125ProjectRo
       AtChar123orgChar125ProjectFeedbackBoardsIndexRoute,
     AtChar123orgChar125ProjectFeedbackNewIndexRoute:
       AtChar123orgChar125ProjectFeedbackNewIndexRoute,
+    AtChar123orgChar125ProjectIntegrationsGithubIndexRoute:
+      AtChar123orgChar125ProjectIntegrationsGithubIndexRoute,
     AtChar123orgChar125ProjectUpdatesSlugIndexRoute:
       AtChar123orgChar125ProjectUpdatesSlugIndexRoute,
     AtChar123orgChar125ProjectUpdatesEditIndexRoute:
@@ -702,6 +745,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   DashboardRoute: DashboardRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiGithubSplatRoute: ApiGithubSplatRoute,
   CreateTeamIndexRoute: CreateTeamIndexRoute,
   ProfileSettingsIndexRoute: ProfileSettingsIndexRoute,
   UUsernameIndexRoute: UUsernameIndexRoute,

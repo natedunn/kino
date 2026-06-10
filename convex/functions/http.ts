@@ -8,6 +8,7 @@ import { cors } from "hono/cors"
 import { createHttpRouter } from "kitcn/server"
 import { Hono } from "hono"
 import { router } from "../lib/crpc"
+import { githubRoutes } from "./githubRoutes"
 // __KITCN_HTTP_IMPORTS__
 
 const app = new Hono()
@@ -60,6 +61,7 @@ app.use(async (c, next) => {
 })
 
 export const httpRouter = router({
+  github: githubRoutes,
   // __KITCN_HTTP_ROUTES__
 })
 

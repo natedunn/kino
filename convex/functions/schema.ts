@@ -41,6 +41,18 @@ const FEEDBACK_EVENT_TYPES = [
 ] as const
 const UPDATE_STATUSES = ["draft", "published"] as const
 const UPDATE_CATEGORIES = ["changelog", "article", "announcement"] as const
+const GITHUB_SYNC_MODES = ["read", "read_write"] as const
+const GITHUB_CONNECTION_STATE_STATUSES = [
+  "pending",
+  "consumed",
+  "expired",
+] as const
+const GITHUB_INSTALLATION_STATUSES = ["active", "suspended", "deleted"] as const
+const GITHUB_WEBHOOK_DELIVERY_STATUSES = [
+  "received",
+  "processed",
+  "failed",
+] as const
 const EMOTE_CONTENTS = [
   "thumbsUp",
   "thumbsDown",
@@ -765,6 +777,144 @@ export const updateCommentEmoteTable = convexTable(
   ]
 )
 
+export const githubConnectionStateTable = convexTable(
+  "githubConnectionState",
+  {
+    deletedTime: integer(),
+    updatedTime: integer(),
+    createdByProfileId: id("profile")
+      .notNull()
+      .references(() => profileTable.id),
+    createdByUserId: text()
+      .notNull()
+      .references(() => userTable.id),
+    expiresAt: integer().notNull(),
+    mode: textEnum(GITHUB_SYNC_MODES).notNull(),
+    orgId: text()
+      .notNull()
+      .references(() => organizationTable.id),
+    orgSlug: text().notNull(),
+    projectId: id("project")
+      .notNull()
+      .references(() => projectTable.id),
+    projectSlug: text().notNull(),
+    stateHash: text().notNull(),
+    status: textEnum(GITHUB_CONNECTION_STATE_STATUSES).notNull(),
+    consumedAt: integer(),
+  },
+  (githubConnectionStateTable) => [
+    index("by_stateHash").on(githubConnectionStateTable.stateHash),
+    index("by_orgId").on(githubConnectionStateTable.orgId),
+    index("by_projectId").on(githubConnectionStateTable.projectId),
+    index("by_expiresAt").on(githubConnectionStateTable.expiresAt),
+  ]
+)
+
+export const githubInstallationTable = convexTable(
+  "githubInstallation",
+  {
+    deletedTime: integer(),
+    updatedTime: integer(),
+    accountId: integer().notNull(),
+    accountLogin: text().notNull(),
+    accountType: text().notNull(),
+    connectedByProfileId: id("profile")
+      .notNull()
+      .references(() => profileTable.id),
+    events: arrayOf(text().notNull()),
+    installationId: integer().notNull(),
+    orgId: text()
+      .notNull()
+      .references(() => organizationTable.id),
+    orgSlug: text().notNull(),
+    permissions: json(),
+    repositorySelection: text().notNull(),
+    status: textEnum(GITHUB_INSTALLATION_STATUSES).notNull(),
+  },
+  (githubInstallationTable) => [
+    index("by_installationId").on(githubInstallationTable.installationId),
+    index("by_orgId").on(githubInstallationTable.orgId),
+    index("by_orgId_installationId").on(
+      githubInstallationTable.orgId,
+      githubInstallationTable.installationId
+    ),
+  ]
+)
+
+export const githubRepositoryConnectionTable = convexTable(
+  "githubRepositoryConnection",
+  {
+    deletedTime: integer(),
+    updatedTime: integer(),
+    connectedByProfileId: id("profile")
+      .notNull()
+      .references(() => profileTable.id),
+    enabledSources: arrayOf(text().notNull()),
+    githubInstallationId: id("githubInstallation")
+      .notNull()
+      .references(() => githubInstallationTable.id),
+    issuesVerifiedAt: integer(),
+    discussionsVerifiedAt: integer(),
+    lastWebhookAt: integer(),
+    mode: textEnum(GITHUB_SYNC_MODES).notNull(),
+    orgId: text()
+      .notNull()
+      .references(() => organizationTable.id),
+    orgSlug: text().notNull(),
+    projectId: id("project")
+      .notNull()
+      .references(() => projectTable.id),
+    projectSlug: text().notNull(),
+    repoFullName: text().notNull(),
+    repoId: integer().notNull(),
+    repoName: text().notNull(),
+    repoNodeId: text().notNull(),
+    repoOwner: text().notNull(),
+    verificationStatus: text().notNull(),
+    verificationSummary: json(),
+  },
+  (githubRepositoryConnectionTable) => [
+    index("by_projectId").on(githubRepositoryConnectionTable.projectId),
+    index("by_orgId_repoId").on(
+      githubRepositoryConnectionTable.orgId,
+      githubRepositoryConnectionTable.repoId
+    ),
+    index("by_githubInstallationId").on(
+      githubRepositoryConnectionTable.githubInstallationId
+    ),
+    index("by_repoId").on(githubRepositoryConnectionTable.repoId),
+  ]
+)
+
+export const githubWebhookDeliveryTable = convexTable(
+  "githubWebhookDelivery",
+  {
+    deletedTime: integer(),
+    updatedTime: integer(),
+    action: text(),
+    deliveryId: text().notNull(),
+    error: text(),
+    event: text().notNull(),
+    githubInstallationId: id("githubInstallation").references(
+      () => githubInstallationTable.id
+    ),
+    installationId: integer(),
+    payloadSummary: json(),
+    processedAt: integer(),
+    receivedAt: integer().notNull(),
+    repoId: integer(),
+    status: textEnum(GITHUB_WEBHOOK_DELIVERY_STATUSES).notNull(),
+  },
+  (githubWebhookDeliveryTable) => [
+    index("by_deliveryId").on(githubWebhookDeliveryTable.deliveryId),
+    index("by_installationId").on(githubWebhookDeliveryTable.installationId),
+    index("by_githubInstallationId").on(
+      githubWebhookDeliveryTable.githubInstallationId
+    ),
+    index("by_repoId").on(githubWebhookDeliveryTable.repoId),
+  ]
+)
+
 export const tables = {
   user: userTable,
   session: sessionTable,
@@ -788,6 +938,10 @@ export const tables = {
   updateComment: updateCommentTable,
   updateEmote: updateEmoteTable,
   updateCommentEmote: updateCommentEmoteTable,
+  githubConnectionState: githubConnectionStateTable,
+  githubInstallation: githubInstallationTable,
+  githubRepositoryConnection: githubRepositoryConnectionTable,
+  githubWebhookDelivery: githubWebhookDeliveryTable,
 }
 
 export default defineSchema(tables)
@@ -835,6 +989,14 @@ export default defineSchema(tables)
         from: r.organization.id,
         to: r.invitation.organizationId,
       }),
+      githubInstallations: r.many.githubInstallation({
+        from: r.organization.id,
+        to: r.githubInstallation.orgId,
+      }),
+      githubRepositoryConnections: r.many.githubRepositoryConnection({
+        from: r.organization.id,
+        to: r.githubRepositoryConnection.orgId,
+      }),
     },
     member: {
       organization: r.one.organization({
@@ -875,6 +1037,10 @@ export default defineSchema(tables)
         from: r.project.id,
         to: r.projectMember.projectId,
       }),
+      githubRepositoryConnections: r.many.githubRepositoryConnection({
+        from: r.project.id,
+        to: r.githubRepositoryConnection.projectId,
+      }),
     },
     projectMember: {
       profile: r.one.profile({
@@ -884,6 +1050,58 @@ export default defineSchema(tables)
       project: r.one.project({
         from: r.projectMember.projectId,
         to: r.project.id,
+      }),
+    },
+    githubConnectionState: {
+      creator: r.one.profile({
+        from: r.githubConnectionState.createdByProfileId,
+        to: r.profile.id,
+      }),
+      organization: r.one.organization({
+        from: r.githubConnectionState.orgId,
+        to: r.organization.id,
+      }),
+      project: r.one.project({
+        from: r.githubConnectionState.projectId,
+        to: r.project.id,
+      }),
+    },
+    githubInstallation: {
+      connectedBy: r.one.profile({
+        from: r.githubInstallation.connectedByProfileId,
+        to: r.profile.id,
+      }),
+      organization: r.one.organization({
+        from: r.githubInstallation.orgId,
+        to: r.organization.id,
+      }),
+      repositoryConnections: r.many.githubRepositoryConnection({
+        from: r.githubInstallation.id,
+        to: r.githubRepositoryConnection.githubInstallationId,
+      }),
+    },
+    githubRepositoryConnection: {
+      connectedBy: r.one.profile({
+        from: r.githubRepositoryConnection.connectedByProfileId,
+        to: r.profile.id,
+      }),
+      githubInstallation: r.one.githubInstallation({
+        from: r.githubRepositoryConnection.githubInstallationId,
+        to: r.githubInstallation.id,
+      }),
+      organization: r.one.organization({
+        from: r.githubRepositoryConnection.orgId,
+        to: r.organization.id,
+      }),
+      project: r.one.project({
+        from: r.githubRepositoryConnection.projectId,
+        to: r.project.id,
+      }),
+    },
+    githubWebhookDelivery: {
+      githubInstallation: r.one.githubInstallation({
+        from: r.githubWebhookDelivery.githubInstallationId,
+        to: r.githubInstallation.id,
       }),
     },
   }))

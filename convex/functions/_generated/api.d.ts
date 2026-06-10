@@ -212,6 +212,41 @@ export declare const api: {
       any
     >;
   };
+  github: {
+    getProjectIntegration: FunctionReference<
+      "query",
+      "public",
+      { orgSlug: string; projectSlug: string },
+      any
+    >;
+    startProjectConnection: FunctionReference<
+      "mutation",
+      "public",
+      { mode?: "read" | "read_write"; orgSlug: string; projectSlug: string },
+      any
+    >;
+  };
+  githubExternal: {
+    connectRepository: FunctionReference<
+      "action",
+      "public",
+      {
+        enabledSources?: Array<"issues" | "discussions">;
+        installationId: number;
+        mode?: "read" | "read_write";
+        orgSlug: string;
+        projectSlug: string;
+        repoId: number;
+      },
+      any
+    >;
+    listInstallationRepositoriesForProject: FunctionReference<
+      "action",
+      "public",
+      { installationId: number; orgSlug: string },
+      any
+    >;
+  };
   org: {
     create: FunctionReference<
       "mutation",
@@ -683,6 +718,68 @@ export declare const internal: {
         any
       >;
     };
+  };
+  github: {
+    completeInstallationCallback: FunctionReference<
+      "mutation",
+      "internal",
+      {
+        installation: {
+          account: { id: number; login: string; type: string } | null;
+          events: Array<string>;
+          id: number;
+          permissions: Record<string, string>;
+          repository_selection: string;
+        };
+        setupAction?: string;
+        state: string;
+      },
+      any
+    >;
+    getInstallationForExternal: FunctionReference<
+      "query",
+      "internal",
+      { installationId: number; orgSlug: string; userId: string },
+      any
+    >;
+    recordWebhookDelivery: FunctionReference<
+      "mutation",
+      "internal",
+      {
+        action?: string;
+        deliveryId: string;
+        event: string;
+        installationId?: number;
+        payloadSummary?: any;
+        repoId?: number;
+      },
+      any
+    >;
+    saveRepositoryConnection: FunctionReference<
+      "mutation",
+      "internal",
+      {
+        enabledSources: Array<"issues" | "discussions">;
+        installationId: number;
+        mode: "read" | "read_write";
+        orgSlug: string;
+        projectSlug: string;
+        repository: {
+          full_name: string;
+          id: number;
+          name: string;
+          node_id: string;
+          owner: { login: string };
+          private: boolean;
+        };
+        userId: string;
+        verificationSummary: {
+          discussions: { enabled: boolean; ok: boolean };
+          issues: { ok: boolean };
+        };
+      },
+      any
+    >;
   };
   profile: {
     onAvatarMetadataSynced: FunctionReference<

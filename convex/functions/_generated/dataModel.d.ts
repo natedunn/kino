@@ -526,6 +526,199 @@ export type DataModel = {
     searchIndexes: {};
     vectorIndexes: {};
   };
+  githubConnectionState: {
+    document: {
+      consumedAt?: null | number;
+      createdByProfileId: Id<"profile">;
+      createdByUserId: string;
+      deletedTime?: null | number;
+      expiresAt: number;
+      mode: "read" | "read_write";
+      orgId: string;
+      orgSlug: string;
+      projectId: Id<"project">;
+      projectSlug: string;
+      stateHash: string;
+      status: "pending" | "consumed" | "expired";
+      updatedTime?: null | number;
+      _id: Id<"githubConnectionState">;
+      _creationTime: number;
+    };
+    fieldPaths:
+      | "_creationTime"
+      | "_id"
+      | "consumedAt"
+      | "createdByProfileId"
+      | "createdByUserId"
+      | "deletedTime"
+      | "expiresAt"
+      | "mode"
+      | "orgId"
+      | "orgSlug"
+      | "projectId"
+      | "projectSlug"
+      | "stateHash"
+      | "status"
+      | "updatedTime";
+    indexes: {
+      by_id: ["_id"];
+      by_creation_time: ["_creationTime"];
+      by_expiresAt: ["expiresAt", "_creationTime"];
+      by_orgId: ["orgId", "_creationTime"];
+      by_projectId: ["projectId", "_creationTime"];
+      by_stateHash: ["stateHash", "_creationTime"];
+    };
+    searchIndexes: {};
+    vectorIndexes: {};
+  };
+  githubInstallation: {
+    document: {
+      accountId: number;
+      accountLogin: string;
+      accountType: string;
+      connectedByProfileId: Id<"profile">;
+      deletedTime?: null | number;
+      events?: null | Array<string>;
+      installationId: number;
+      orgId: string;
+      orgSlug: string;
+      permissions?: null | any;
+      repositorySelection: string;
+      status: "active" | "suspended" | "deleted";
+      updatedTime?: null | number;
+      _id: Id<"githubInstallation">;
+      _creationTime: number;
+    };
+    fieldPaths:
+      | "_creationTime"
+      | "_id"
+      | "accountId"
+      | "accountLogin"
+      | "accountType"
+      | "connectedByProfileId"
+      | "deletedTime"
+      | "events"
+      | "installationId"
+      | "orgId"
+      | "orgSlug"
+      | "permissions"
+      | "repositorySelection"
+      | "status"
+      | "updatedTime";
+    indexes: {
+      by_id: ["_id"];
+      by_creation_time: ["_creationTime"];
+      by_installationId: ["installationId", "_creationTime"];
+      by_orgId: ["orgId", "_creationTime"];
+      by_orgId_installationId: ["orgId", "installationId", "_creationTime"];
+    };
+    searchIndexes: {};
+    vectorIndexes: {};
+  };
+  githubRepositoryConnection: {
+    document: {
+      connectedByProfileId: Id<"profile">;
+      deletedTime?: null | number;
+      discussionsVerifiedAt?: null | number;
+      enabledSources?: null | Array<string>;
+      githubInstallationId: Id<"githubInstallation">;
+      issuesVerifiedAt?: null | number;
+      lastWebhookAt?: null | number;
+      mode: "read" | "read_write";
+      orgId: string;
+      orgSlug: string;
+      projectId: Id<"project">;
+      projectSlug: string;
+      repoFullName: string;
+      repoId: number;
+      repoName: string;
+      repoNodeId: string;
+      repoOwner: string;
+      updatedTime?: null | number;
+      verificationStatus: string;
+      verificationSummary?: null | any;
+      _id: Id<"githubRepositoryConnection">;
+      _creationTime: number;
+    };
+    fieldPaths:
+      | "_creationTime"
+      | "_id"
+      | "connectedByProfileId"
+      | "deletedTime"
+      | "discussionsVerifiedAt"
+      | "enabledSources"
+      | "githubInstallationId"
+      | "issuesVerifiedAt"
+      | "lastWebhookAt"
+      | "mode"
+      | "orgId"
+      | "orgSlug"
+      | "projectId"
+      | "projectSlug"
+      | "repoFullName"
+      | "repoId"
+      | "repoName"
+      | "repoNodeId"
+      | "repoOwner"
+      | "updatedTime"
+      | "verificationStatus"
+      | "verificationSummary";
+    indexes: {
+      by_id: ["_id"];
+      by_creation_time: ["_creationTime"];
+      by_githubInstallationId: ["githubInstallationId", "_creationTime"];
+      by_orgId_repoId: ["orgId", "repoId", "_creationTime"];
+      by_projectId: ["projectId", "_creationTime"];
+      by_repoId: ["repoId", "_creationTime"];
+    };
+    searchIndexes: {};
+    vectorIndexes: {};
+  };
+  githubWebhookDelivery: {
+    document: {
+      action?: null | string;
+      deletedTime?: null | number;
+      deliveryId: string;
+      error?: null | string;
+      event: string;
+      githubInstallationId?: null | Id<"githubInstallation">;
+      installationId?: null | number;
+      payloadSummary?: null | any;
+      processedAt?: null | number;
+      receivedAt: number;
+      repoId?: null | number;
+      status: "received" | "processed" | "failed";
+      updatedTime?: null | number;
+      _id: Id<"githubWebhookDelivery">;
+      _creationTime: number;
+    };
+    fieldPaths:
+      | "_creationTime"
+      | "_id"
+      | "action"
+      | "deletedTime"
+      | "deliveryId"
+      | "error"
+      | "event"
+      | "githubInstallationId"
+      | "installationId"
+      | "payloadSummary"
+      | "processedAt"
+      | "receivedAt"
+      | "repoId"
+      | "status"
+      | "updatedTime";
+    indexes: {
+      by_id: ["_id"];
+      by_creation_time: ["_creationTime"];
+      by_deliveryId: ["deliveryId", "_creationTime"];
+      by_githubInstallationId: ["githubInstallationId", "_creationTime"];
+      by_installationId: ["installationId", "_creationTime"];
+      by_repoId: ["repoId", "_creationTime"];
+    };
+    searchIndexes: {};
+    vectorIndexes: {};
+  };
   invitation: {
     document: {
       createdAt: number;

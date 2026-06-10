@@ -52,6 +52,25 @@ export function getGitHubOAuthEnv() {
   }
 }
 
+export function getGitHubAppEnv() {
+  return {
+    appId: getRuntimeEnvValue(["GITHUB", "APP", "ID"]),
+    callbackTargetUrl: getRuntimeEnvValue([
+      "GITHUB",
+      "APP",
+      "CALLBACK",
+      "TARGET",
+      "URL",
+    ]),
+    clientId: getRuntimeEnvValue(["GITHUB", "APP", "CLIENT", "ID"]),
+    clientSecret: getRuntimeEnvValue(["GITHUB", "APP", "CLIENT", "SECRET"]),
+    privateKey: getRuntimeEnvValue(["GITHUB", "APP", "PRIVATE", "KEY"]),
+    slug: getRuntimeEnvValue(["GITHUB", "APP", "SLUG"]),
+    stateSecret: getRuntimeEnvValue(["GITHUB", "APP", "STATE", "SECRET"]),
+    webhookSecret: getRuntimeEnvValue(["GITHUB", "APP", "WEBHOOK", "SECRET"]),
+  }
+}
+
 export function getJwksEnv() {
   return getRuntimeEnvValue(["JWKS"])
 }

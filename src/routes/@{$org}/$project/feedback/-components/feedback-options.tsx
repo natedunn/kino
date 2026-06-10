@@ -19,6 +19,17 @@ export function FeedbackOptions() {
         <span>All boards</span>
         <SquareArrowOutUpRight className="size-4 text-muted-foreground" />
       </Link>
+      <Link
+        className={buttonVariants({
+          variant: 'outline',
+          className: 'group inline-flex! w-full items-center justify-between! text-left',
+        })}
+        params={{ org, project }}
+        to="/@{$org}/$project/integrations/github"
+      >
+        <span>GitHub</span>
+        <SquareArrowOutUpRight className="size-4 text-muted-foreground" />
+      </Link>
     </div>
   );
 }

@@ -46,6 +46,19 @@ export const api = {
     hasUpvoted: createApiLeaf<"query", typeof import("../functions/feedbackUpvote").hasUpvoted>(createGeneratedFunctionReference<"query", "public", typeof import("../functions/feedbackUpvote").hasUpvoted>("feedbackUpvote:hasUpvoted"), { auth: "optional", type: "query" }),
     toggle: createApiLeaf<"mutation", typeof import("../functions/feedbackUpvote").toggle>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/feedbackUpvote").toggle>("feedbackUpvote:toggle"), { auth: "required", type: "mutation" }),
   },
+  github: {
+    getProjectIntegration: createApiLeaf<"query", typeof import("../functions/github").getProjectIntegration>(createGeneratedFunctionReference<"query", "public", typeof import("../functions/github").getProjectIntegration>("github:getProjectIntegration"), { auth: "required", type: "query" }),
+    startProjectConnection: createApiLeaf<"mutation", typeof import("../functions/github").startProjectConnection>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/github").startProjectConnection>("github:startProjectConnection"), { auth: "required", type: "mutation" }),
+  },
+  githubExternal: {
+    connectRepository: createApiLeaf<"action", typeof import("../functions/githubExternal").connectRepository>(createGeneratedFunctionReference<"action", "public", typeof import("../functions/githubExternal").connectRepository>("githubExternal:connectRepository"), { auth: "required", type: "action" }),
+    listInstallationRepositoriesForProject: createApiLeaf<"action", typeof import("../functions/githubExternal").listInstallationRepositoriesForProject>(createGeneratedFunctionReference<"action", "public", typeof import("../functions/githubExternal").listInstallationRepositoriesForProject>("githubExternal:listInstallationRepositoriesForProject"), { auth: "required", type: "action" }),
+  },
+  githubRoutes: {
+    callback: createApiLeaf<"query", typeof import("../functions/githubRoutes").callback>(createGeneratedFunctionReference<"query", "public", typeof import("../functions/githubRoutes").callback>("githubRoutes:callback"), { type: "query" }),
+    oauthCallback: createApiLeaf<"query", typeof import("../functions/githubRoutes").oauthCallback>(createGeneratedFunctionReference<"query", "public", typeof import("../functions/githubRoutes").oauthCallback>("githubRoutes:oauthCallback"), { type: "query" }),
+    webhook: createApiLeaf<"mutation", typeof import("../functions/githubRoutes").webhook>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/githubRoutes").webhook>("githubRoutes:webhook"), { type: "mutation" }),
+  },
   org: {
     create: createApiLeaf<"mutation", typeof import("../functions/org").create>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/org").create>("org:create"), { auth: "required", type: "mutation" }),
     findMyOrgs: createApiLeaf<"query", typeof import("../functions/org").findMyOrgs>(createGeneratedFunctionReference<"query", "public", typeof import("../functions/org").findMyOrgs>("org:findMyOrgs"), { auth: "required", type: "query" }),
