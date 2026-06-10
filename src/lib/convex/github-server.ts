@@ -12,7 +12,37 @@ function convexGithubRequestUrl(requestUrl: string) {
   return target.toString()
 }
 
-function cloneHeaders(source: Headers) {
+const STRIPPED_PROXY_REQUEST_HEADERS = new Set([
+  "accept-encoding",
+  "cf-connecting-ip",
+  "cf-ipcountry",
+  "cf-ray",
+  "cf-visitor",
+  "connection",
+  "content-length",
+  "host",
+  "x-forwarded-for",
+  "x-forwarded-host",
+  "x-forwarded-proto",
+  "x-real-ip",
+])
+
+export function cloneGitHubProxyRequestHeaders(source: Headers) {
+  const headers = new Headers()
+  for (const [key, value] of source.entries()) {
+    const normalized = key.toLowerCase()
+    if (
+      STRIPPED_PROXY_REQUEST_HEADERS.has(normalized) ||
+      normalized.startsWith("cf-")
+    ) {
+      continue
+    }
+    headers.append(key, value)
+  }
+  return headers
+}
+
+function cloneResponseHeaders(source: Headers) {
   const headers = new Headers()
   for (const [key, value] of source.entries()) {
     headers.append(key, value)
@@ -28,14 +58,14 @@ export async function handler(request: Request) {
         ? undefined
         : request.body,
     duplex: "half",
-    headers: request.headers,
+    headers: cloneGitHubProxyRequestHeaders(request.headers),
     method: request.method,
   }
 
   const response = await fetch(targetUrl, init)
 
   return new Response(response.body, {
-    headers: cloneHeaders(response.headers),
+    headers: cloneResponseHeaders(response.headers),
     status: response.status,
     statusText: response.statusText,
   })
