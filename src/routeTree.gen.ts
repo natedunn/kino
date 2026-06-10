@@ -21,6 +21,9 @@ import { Route as CreateTeamIndexRouteImport } from './routes/create/team/index'
 import { Route as AtChar123orgChar125EditIndexRouteImport } from './routes/@{$org}/edit/index'
 import { Route as AtChar123orgChar125CreateProjectIndexRouteImport } from './routes/@{$org}/create-project/index'
 import { Route as AtChar123orgChar125ProjectIndexRouteImport } from './routes/@{$org}/$project/index'
+import { Route as ApiGithubWebhookRouteImport } from './routes/api/github/webhook'
+import { Route as ApiGithubOauthCallbackRouteImport } from './routes/api/github/oauth-callback'
+import { Route as ApiGithubCallbackRouteImport } from './routes/api/github/callback'
 import { Route as ApiGithubSplatRouteImport } from './routes/api/github/$'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as AtChar123orgChar125ProjectUpdatesIndexRouteImport } from './routes/@{$org}/$project/updates/index'
@@ -107,6 +110,21 @@ const AtChar123orgChar125ProjectIndexRoute =
     path: '/',
     getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
   } as any)
+const ApiGithubWebhookRoute = ApiGithubWebhookRouteImport.update({
+  id: '/api/github/webhook',
+  path: '/api/github/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiGithubOauthCallbackRoute = ApiGithubOauthCallbackRouteImport.update({
+  id: '/api/github/oauth-callback',
+  path: '/api/github/oauth-callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiGithubCallbackRoute = ApiGithubCallbackRouteImport.update({
+  id: '/api/github/callback',
+  path: '/api/github/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiGithubSplatRoute = ApiGithubSplatRouteImport.update({
   id: '/api/github/$',
   path: '/api/github/$',
@@ -229,6 +247,9 @@ export interface FileRoutesByFullPath {
   '/@{$org}/': typeof AtChar123orgChar125IndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/github/$': typeof ApiGithubSplatRoute
+  '/api/github/callback': typeof ApiGithubCallbackRoute
+  '/api/github/oauth-callback': typeof ApiGithubOauthCallbackRoute
+  '/api/github/webhook': typeof ApiGithubWebhookRoute
   '/@{$org}/$project/': typeof AtChar123orgChar125ProjectIndexRoute
   '/@{$org}/create-project/': typeof AtChar123orgChar125CreateProjectIndexRoute
   '/@{$org}/edit/': typeof AtChar123orgChar125EditIndexRoute
@@ -260,6 +281,9 @@ export interface FileRoutesByTo {
   '/@{$org}': typeof AtChar123orgChar125IndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/github/$': typeof ApiGithubSplatRoute
+  '/api/github/callback': typeof ApiGithubCallbackRoute
+  '/api/github/oauth-callback': typeof ApiGithubOauthCallbackRoute
+  '/api/github/webhook': typeof ApiGithubWebhookRoute
   '/@{$org}/$project': typeof AtChar123orgChar125ProjectIndexRoute
   '/@{$org}/create-project': typeof AtChar123orgChar125CreateProjectIndexRoute
   '/@{$org}/edit': typeof AtChar123orgChar125EditIndexRoute
@@ -294,6 +318,9 @@ export interface FileRoutesById {
   '/@{$org}/': typeof AtChar123orgChar125IndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/github/$': typeof ApiGithubSplatRoute
+  '/api/github/callback': typeof ApiGithubCallbackRoute
+  '/api/github/oauth-callback': typeof ApiGithubOauthCallbackRoute
+  '/api/github/webhook': typeof ApiGithubWebhookRoute
   '/@{$org}/$project/': typeof AtChar123orgChar125ProjectIndexRoute
   '/@{$org}/create-project/': typeof AtChar123orgChar125CreateProjectIndexRoute
   '/@{$org}/edit/': typeof AtChar123orgChar125EditIndexRoute
@@ -329,6 +356,9 @@ export interface FileRouteTypes {
     | '/@{$org}/'
     | '/api/auth/$'
     | '/api/github/$'
+    | '/api/github/callback'
+    | '/api/github/oauth-callback'
+    | '/api/github/webhook'
     | '/@{$org}/$project/'
     | '/@{$org}/create-project/'
     | '/@{$org}/edit/'
@@ -360,6 +390,9 @@ export interface FileRouteTypes {
     | '/@{$org}'
     | '/api/auth/$'
     | '/api/github/$'
+    | '/api/github/callback'
+    | '/api/github/oauth-callback'
+    | '/api/github/webhook'
     | '/@{$org}/$project'
     | '/@{$org}/create-project'
     | '/@{$org}/edit'
@@ -393,6 +426,9 @@ export interface FileRouteTypes {
     | '/@{$org}/'
     | '/api/auth/$'
     | '/api/github/$'
+    | '/api/github/callback'
+    | '/api/github/oauth-callback'
+    | '/api/github/webhook'
     | '/@{$org}/$project/'
     | '/@{$org}/create-project/'
     | '/@{$org}/edit/'
@@ -425,6 +461,9 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiGithubSplatRoute: typeof ApiGithubSplatRoute
+  ApiGithubCallbackRoute: typeof ApiGithubCallbackRoute
+  ApiGithubOauthCallbackRoute: typeof ApiGithubOauthCallbackRoute
+  ApiGithubWebhookRoute: typeof ApiGithubWebhookRoute
   CreateTeamIndexRoute: typeof CreateTeamIndexRoute
   ProfileSettingsIndexRoute: typeof ProfileSettingsIndexRoute
   UUsernameIndexRoute: typeof UUsernameIndexRoute
@@ -515,6 +554,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/@{$org}/$project/'
       preLoaderRoute: typeof AtChar123orgChar125ProjectIndexRouteImport
       parentRoute: typeof AtChar123orgChar125ProjectRouteRoute
+    }
+    '/api/github/webhook': {
+      id: '/api/github/webhook'
+      path: '/api/github/webhook'
+      fullPath: '/api/github/webhook'
+      preLoaderRoute: typeof ApiGithubWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/github/oauth-callback': {
+      id: '/api/github/oauth-callback'
+      path: '/api/github/oauth-callback'
+      fullPath: '/api/github/oauth-callback'
+      preLoaderRoute: typeof ApiGithubOauthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/github/callback': {
+      id: '/api/github/callback'
+      path: '/api/github/callback'
+      fullPath: '/api/github/callback'
+      preLoaderRoute: typeof ApiGithubCallbackRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/github/$': {
       id: '/api/github/$'
@@ -746,6 +806,9 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiGithubSplatRoute: ApiGithubSplatRoute,
+  ApiGithubCallbackRoute: ApiGithubCallbackRoute,
+  ApiGithubOauthCallbackRoute: ApiGithubOauthCallbackRoute,
+  ApiGithubWebhookRoute: ApiGithubWebhookRoute,
   CreateTeamIndexRoute: CreateTeamIndexRoute,
   ProfileSettingsIndexRoute: ProfileSettingsIndexRoute,
   UUsernameIndexRoute: UUsernameIndexRoute,
