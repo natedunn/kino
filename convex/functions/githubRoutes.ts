@@ -5,6 +5,7 @@ import {
   exchangeGitHubSetupCode,
   getAppInstallation,
   listUserInstallations,
+  sanitizeGitHubInstallationDetails,
   verifyGitHubAppState,
   verifyGitHubWebhookSignature,
 } from "../lib/github"
@@ -67,7 +68,7 @@ export const callback = publicRoute
 
       const installation = await getAppInstallation(searchParams.installation_id)
       const result = await caller.completeInstallationCallback({
-        installation,
+        installation: sanitizeGitHubInstallationDetails(installation),
         setupAction: searchParams.setup_action,
         state: searchParams.state,
       })

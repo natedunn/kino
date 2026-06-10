@@ -5,6 +5,8 @@ import {
   getGitHubCallbackTargetUrl,
   githubAppInstallationUrl,
   privateKeyToDer,
+  sanitizeGitHubInstallationDetails,
+  sanitizeGitHubRepository,
   sha256Hex,
   verifyGitHubAppState,
   verifyGitHubWebhookSignature,
@@ -64,6 +66,60 @@ describe("github helpers", () => {
         )
       )
     ).toEqual([1, 2, 3, 4])
+  })
+
+  it("strips extra GitHub installation fields before cRPC validation", () => {
+    expect(
+      sanitizeGitHubInstallationDetails({
+        account: {
+          avatar_url: "https://avatars.githubusercontent.com/u/1?v=4",
+          id: 1,
+          login: "natedunn",
+          type: "User",
+        } as any,
+        events: ["issues"],
+        id: 123,
+        permissions: { issues: "write", metadata: "read" },
+        repository_selection: "selected",
+        target_type: "User",
+      } as any)
+    ).toEqual({
+      account: {
+        id: 1,
+        login: "natedunn",
+        type: "User",
+      },
+      events: ["issues"],
+      id: 123,
+      permissions: { issues: "write", metadata: "read" },
+      repository_selection: "selected",
+    })
+  })
+
+  it("strips extra GitHub repository fields before cRPC validation", () => {
+    expect(
+      sanitizeGitHubRepository({
+        full_name: "natedunn/kino",
+        html_url: "https://github.com/natedunn/kino",
+        id: 456,
+        name: "kino",
+        node_id: "R_kgDOTest",
+        owner: {
+          avatar_url: "https://avatars.githubusercontent.com/u/1?v=4",
+          login: "natedunn",
+        },
+        private: true,
+      } as any)
+    ).toEqual({
+      full_name: "natedunn/kino",
+      id: 456,
+      name: "kino",
+      node_id: "R_kgDOTest",
+      owner: {
+        login: "natedunn",
+      },
+      private: true,
+    })
   })
 
   it("hashes state values with sha256 hex", async () => {

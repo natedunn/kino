@@ -5,6 +5,7 @@ import {
   createInstallationToken,
   listInstallationRepositories,
   probeRepository,
+  sanitizeGitHubRepository,
 } from "../lib/github"
 import { createGithubCaller } from "./generated/github.runtime"
 
@@ -96,7 +97,7 @@ export const connectRepository = authAction
       mode: input.mode,
       orgSlug: input.orgSlug,
       projectSlug: input.projectSlug,
-      repository,
+      repository: sanitizeGitHubRepository(repository),
       userId: ctx.userId,
       verificationSummary: {
         discussions: probe.discussions,

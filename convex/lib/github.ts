@@ -58,6 +58,39 @@ export type GitHubRepositoryProbe = {
   repository: GitHubRepository
 }
 
+export function sanitizeGitHubInstallationDetails(
+  installation: GitHubInstallationDetails
+): GitHubInstallationDetails {
+  return {
+    account: installation.account
+      ? {
+          id: installation.account.id,
+          login: installation.account.login,
+          type: installation.account.type,
+        }
+      : null,
+    events: installation.events,
+    id: installation.id,
+    permissions: installation.permissions,
+    repository_selection: installation.repository_selection,
+  }
+}
+
+export function sanitizeGitHubRepository(
+  repository: GitHubRepository
+): GitHubRepository {
+  return {
+    full_name: repository.full_name,
+    id: repository.id,
+    name: repository.name,
+    node_id: repository.node_id,
+    owner: {
+      login: repository.owner.login,
+    },
+    private: repository.private,
+  }
+}
+
 function assertString(value: string | undefined, name: string) {
   if (!value) {
     throw new CRPCError({
