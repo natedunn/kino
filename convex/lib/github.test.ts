@@ -4,6 +4,7 @@ import {
   createGitHubAppState,
   getGitHubCallbackTargetUrl,
   githubAppInstallationUrl,
+  privateKeyToDer,
   sha256Hex,
   verifyGitHubAppState,
   verifyGitHubWebhookSignature,
@@ -37,6 +38,34 @@ afterEach(() => {
 })
 
 describe("github helpers", () => {
+  it("parses GitHub App private keys with RSA and PKCS#8 PEM wrappers", () => {
+    const base64Der = "AQIDBA=="
+
+    const rsaWrapped = Array.from(
+      new Uint8Array(
+        privateKeyToDer(
+          `-----BEGIN RSA PRIVATE KEY-----\n${base64Der}\n-----END RSA PRIVATE KEY-----`
+        )
+      )
+    )
+
+    expect(rsaWrapped).toEqual([
+      0x30, 0x18, 0x02, 0x01, 0x00, 0x30, 0x0d, 0x06, 0x09, 0x2a, 0x86, 0x48,
+      0x86, 0xf7, 0x0d, 0x01, 0x01, 0x01, 0x05, 0x00, 0x04, 0x04, 0x01, 0x02,
+      0x03, 0x04,
+    ])
+
+    expect(
+      Array.from(
+        new Uint8Array(
+          privateKeyToDer(
+            `-----BEGIN PRIVATE KEY-----\n${base64Der}\n-----END PRIVATE KEY-----`
+          )
+        )
+      )
+    ).toEqual([1, 2, 3, 4])
+  })
+
   it("hashes state values with sha256 hex", async () => {
     await expect(sha256Hex("kino")).resolves.toBe(
       "ddcd2b747d1b6983fa3314509013b8c20ba4bb250e31d511ea6c342dd898fc2f"

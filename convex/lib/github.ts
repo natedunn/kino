@@ -113,17 +113,74 @@ function normalizePrivateKey(privateKey: string) {
   return privateKey.replace(/\\n/g, "\n").trim()
 }
 
-function privateKeyToDer(privateKey: string) {
-  const pem = normalizePrivateKey(privateKey)
-    .replace("-----BEGIN PRIVATE KEY-----", "")
-    .replace("-----END PRIVATE KEY-----", "")
-    .replace(/\s/g, "")
-  const binary = atob(pem)
+function decodeBase64Der(value: string) {
+  const binary = atob(value)
   const bytes = new Uint8Array(binary.length)
   for (let index = 0; index < binary.length; index++) {
     bytes[index] = binary.charCodeAt(index)
   }
-  return bytes.buffer
+  return bytes
+}
+
+function derLength(length: number) {
+  if (length < 0x80) return [length]
+
+  const bytes: number[] = []
+  let remaining = length
+  while (remaining > 0) {
+    bytes.unshift(remaining & 0xff)
+    remaining >>= 8
+  }
+  return [0x80 | bytes.length, ...bytes]
+}
+
+function derSequence(...parts: Uint8Array[]) {
+  const length = parts.reduce((total, part) => total + part.length, 0)
+  const bytes = new Uint8Array(1 + derLength(length).length + length)
+  let offset = 0
+  bytes[offset++] = 0x30
+  for (const byte of derLength(length)) {
+    bytes[offset++] = byte
+  }
+  for (const part of parts) {
+    bytes.set(part, offset)
+    offset += part.length
+  }
+  return bytes
+}
+
+function derOctetString(value: Uint8Array) {
+  const length = derLength(value.length)
+  const bytes = new Uint8Array(1 + length.length + value.length)
+  bytes[0] = 0x04
+  bytes.set(length, 1)
+  bytes.set(value, 1 + length.length)
+  return bytes
+}
+
+function rsaPrivateKeyToPkcs8Der(rsaPrivateKeyDer: Uint8Array) {
+  const version = new Uint8Array([0x02, 0x01, 0x00])
+  const rsaEncryptionAlgorithmIdentifier = new Uint8Array([
+    0x30, 0x0d, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01,
+    0x01, 0x05, 0x00,
+  ])
+
+  return derSequence(
+    version,
+    rsaEncryptionAlgorithmIdentifier,
+    derOctetString(rsaPrivateKeyDer)
+  )
+}
+
+export function privateKeyToDer(privateKey: string) {
+  const normalized = normalizePrivateKey(privateKey)
+  const isPkcs1Rsa = normalized.includes("-----BEGIN RSA PRIVATE KEY-----")
+  const pem = normalized
+    .replace(/-----BEGIN (?:RSA )?PRIVATE KEY-----/, "")
+    .replace(/-----END (?:RSA )?PRIVATE KEY-----/, "")
+    .replace(/\s/g, "")
+  const bytes = decodeBase64Der(pem)
+  return (isPkcs1Rsa ? rsaPrivateKeyToPkcs8Der(bytes) : bytes).buffer
 }
 
 export async function sha256Hex(value: string) {
