@@ -224,12 +224,65 @@ function UpdateDetailRoute() {
   }
 
   return (
-    <div className="container flex flex-1 flex-col gap-8 md:grid md:grid-cols-12">
-      <div className="order-last py-6 md:col-span-4 md:border-l md:border-border/75">
-        <div className="sticky top-4 flex flex-col gap-6 md:pl-8">
-          <style>{heartPopKeyframes}</style>
-
-          <div className="flex items-center justify-between">
+    <div className="flex flex-1 flex-col">
+      <div className="border-b">
+        <div className="container flex items-start gap-4 pt-10 pb-6">
+          <div className="flex flex-1 flex-col gap-2">
+            <div className="flex items-center gap-2">
+              {update.status === "draft" ? (
+                <Badge
+                  className="text-yellow-600 dark:text-yellow-400"
+                  variant="outline"
+                >
+                  Draft
+                </Badge>
+              ) : null}
+              {update.category ? (
+                <CategoryBadge category={update.category} />
+              ) : null}
+            </div>
+            <h1 className="text-3xl font-bold">{update.title}</h1>
+            <div className="flex items-center gap-3 text-sm text-muted-foreground">
+              {updateData.author ? (
+                <Link
+                  className="flex items-center gap-2 hover:underline"
+                  params={{ username: updateData.author.username }}
+                  to="/u/$username"
+                >
+                  {updateData.author.imageUrl ? (
+                    <img
+                      alt={updateData.author.username}
+                      className="h-5 w-5 rounded-full"
+                      src={updateData.author.imageUrl}
+                    />
+                  ) : (
+                    <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                      {updateData.author.name?.charAt(0) ?? "?"}
+                    </div>
+                  )}
+                  <span>@{updateData.author.username}</span>
+                </Link>
+              ) : null}
+              {update.publishedAt ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="flex cursor-pointer items-center gap-1">
+                      <Calendar className="h-4 w-4" />
+                      <span suppressHydrationWarning>
+                        {formatRelativeDay(Number(update.publishedAt))}
+                      </span>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <span suppressHydrationWarning>
+                      {formatFullDate(Number(update.publishedAt))}
+                    </span>
+                  </TooltipContent>
+                </Tooltip>
+              ) : null}
+            </div>
+          </div>
+          <div className="flex shrink-0 items-center gap-1">
             <Button
               className={cn(
                 "group gap-2",
@@ -253,52 +306,56 @@ function UpdateDetailRoute() {
                 {likeCount} {likeCount === 1 ? "like" : "likes"}
               </span>
             </Button>
-
-            <div className="flex items-center">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button onClick={handleCopyLink} size="icon" variant="ghost">
-                    {copied ? (
-                      <Check className="size-4" />
-                    ) : (
-                      <Link2 className="size-4" />
-                    )}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {copied ? "Copied!" : "Copy link"}
-                </TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    onClick={handleShareTwitter}
-                    size="icon"
-                    variant="ghost"
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button onClick={handleCopyLink} size="icon" variant="ghost">
+                  {copied ? (
+                    <Check className="size-4" />
+                  ) : (
+                    <Link2 className="size-4" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {copied ? "Copied!" : "Copy link"}
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={handleShareTwitter}
+                  size="icon"
+                  variant="ghost"
+                >
+                  <svg
+                    className="size-4"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
                   >
-                    <svg
-                      className="size-4"
-                      fill="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                    </svg>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Share on X</TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button asChild size="icon" variant="ghost">
-                    <a href={rssUrl}>
-                      <Rss className="size-4" />
-                    </a>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>RSS Feed</TooltipContent>
-              </Tooltip>
-            </div>
+                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                  </svg>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Share on X</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button asChild size="icon" variant="ghost">
+                  <a href={rssUrl}>
+                    <Rss className="size-4" />
+                  </a>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>RSS Feed</TooltipContent>
+            </Tooltip>
           </div>
+        </div>
+      </div>
+      <div className="container flex flex-1 flex-col">
+      <div className="flex flex-1 flex-col gap-8 md:grid md:grid-cols-12">
+      <div className="order-last py-8 md:col-span-4 md:border-l md:border-border/75">
+        <div className="sticky top-4 flex flex-col gap-6 md:pl-8">
+          <style>{heartPopKeyframes}</style>
 
           <SidebarSection
             icon={<Info className="size-3.5" />}
@@ -387,62 +444,6 @@ function UpdateDetailRoute() {
       </div>
 
       <div className="flex flex-col gap-4 py-8 md:col-span-8">
-        <div className="flex flex-col gap-2 border-b pt-6 pb-6">
-          <div className="flex items-center gap-2">
-            {update.status === "draft" ? (
-              <Badge
-                className="text-yellow-600 dark:text-yellow-400"
-                variant="outline"
-              >
-                Draft
-              </Badge>
-            ) : null}
-            {update.category ? (
-              <CategoryBadge category={update.category} />
-            ) : null}
-          </div>
-          <h1 className="text-3xl font-bold">{update.title}</h1>
-          <div className="flex items-center gap-3 text-sm text-muted-foreground">
-            {updateData.author ? (
-              <Link
-                className="flex items-center gap-2 hover:underline"
-                params={{ username: updateData.author.username }}
-                to="/u/$username"
-              >
-                {updateData.author.imageUrl ? (
-                  <img
-                    alt={updateData.author.username}
-                    className="h-5 w-5 rounded-full"
-                    src={updateData.author.imageUrl}
-                  />
-                ) : (
-                  <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
-                    {updateData.author.name?.charAt(0) ?? "?"}
-                  </div>
-                )}
-                <span>@{updateData.author.username}</span>
-              </Link>
-            ) : null}
-            {update.publishedAt ? (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="flex cursor-pointer items-center gap-1">
-                    <Calendar className="h-4 w-4" />
-                    <span suppressHydrationWarning>
-                      {formatRelativeDay(Number(update.publishedAt))}
-                    </span>
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <span suppressHydrationWarning>
-                    {formatFullDate(Number(update.publishedAt))}
-                  </span>
-                </TooltipContent>
-              </Tooltip>
-            ) : null}
-          </div>
-        </div>
-
         {updateData.coverImageUrl ? (
           <img
             alt={update.title}
@@ -457,11 +458,12 @@ function UpdateDetailRoute() {
 
         <div className="mt-8 border-t pt-8">
           <CommentEditorProvider>
-            <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold">
-              <MessageSquare className="size-5" />
-              {updateData.commentCount}{" "}
-              {updateData.commentCount === 1 ? "Comment" : "Comments"}
-            </h3>
+            <div className="mb-4 flex w-full items-center border-b pb-2">
+              <h2 className="flex items-center gap-1.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                <MessageSquare className="size-3.5" />
+                Discussion
+              </h2>
+            </div>
             <CommentList
               comments={comments as ThreadComment[]}
               currentProfileId={currentProfile?.id}
@@ -503,6 +505,8 @@ function UpdateDetailRoute() {
             />
           </CommentEditorProvider>
         </div>
+      </div>
+      </div>
       </div>
     </div>
   )

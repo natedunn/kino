@@ -6,7 +6,6 @@ import { z } from "zod"
 
 import { RoutePending } from "@/components/route-pending"
 import { Button } from "@/components/ui/button"
-import CalendarDays from "@/icons/calendar-days"
 import CirclePlusOutline from "@/icons/circle-plus-outline"
 import Missing from "@/icons/missing"
 import { Settings2 } from "lucide-react"
@@ -97,9 +96,9 @@ function UpdatesListRoute() {
   return (
     <div className="container flex flex-1 flex-col overflow-visible">
       <div className="flex flex-1 flex-col gap-8 md:grid md:grid-cols-12">
-        <div className="order-last py-6 md:col-span-3 md:border-l md:border-border/75">
+        <div className="order-last py-6 md:order-first md:col-span-3 md:border-r md:border-border/75">
           <div className="sticky top-6 flex flex-col overflow-hidden">
-            <div className="pb-6 md:pl-6">
+            <div className="pb-6 md:pr-6">
               <h2 className="mx-2 text-sm font-bold text-muted-foreground">
                 Categories
               </h2>
@@ -108,7 +107,7 @@ function UpdatesListRoute() {
               </div>
             </div>
             {canEdit ? (
-              <div className="border-t pt-6 md:pl-6">
+              <div className="border-t pt-6 md:pr-6">
                 <h2 className="mx-2 text-sm font-bold text-muted-foreground">
                   Actions
                 </h2>
@@ -141,16 +140,6 @@ function UpdatesListRoute() {
           aria-busy={updatesQuery.isFetching}
           aria-live="polite"
         >
-          <div className="flex items-start gap-3 border-b pt-6 pb-6 md:-mr-8.25">
-            <CalendarDays className="mt-1 text-muted-foreground" size="28px" />
-            <div className="flex flex-col gap-1">
-              <h1 className="text-3xl font-bold">Updates</h1>
-              <p className="text-muted-foreground">
-                The latest news and announcements.
-              </p>
-            </div>
-          </div>
-
           {updates.length === 0 ? (
             <Notice icon={<Missing aria-hidden="true" size="32px" />}>
               No updates yet.
