@@ -494,6 +494,13 @@ function GitHubIntegrationRoute() {
               <Button
                 disabled={disconnectRepository.isPending}
                 onClick={() => {
+                  if (
+                    !window.confirm(
+                      "Disconnect this repository? This will stop syncing issues and discussions from GitHub."
+                    )
+                  ) {
+                    return
+                  }
                   disconnectRepository.mutate({
                     connectionId: activeConnection.id,
                     orgSlug: params.org,
