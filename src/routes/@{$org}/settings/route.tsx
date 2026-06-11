@@ -4,16 +4,16 @@ import {
   createFileRoute,
   useRouterState,
 } from "@tanstack/react-router"
-import { GitBranch, LayoutDashboard } from "lucide-react"
+import { GitBranch, Settings } from "lucide-react"
 
 import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
-export const Route = createFileRoute("/@{$org}/$project/settings")({
-  component: ProjectSettingsRoute,
+export const Route = createFileRoute("/@{$org}/settings")({
+  component: OrganizationSettingsRoute,
 })
 
-function ProjectSettingsRoute() {
+function OrganizationSettingsRoute() {
   const params = Route.useParams()
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
@@ -21,14 +21,14 @@ function ProjectSettingsRoute() {
 
   const items = [
     {
-      icon: LayoutDashboard,
-      label: "Boards",
-      to: "/@{$org}/$project/settings/boards" as const,
+      icon: Settings,
+      label: "General",
+      to: "/@{$org}/settings/general" as const,
     },
     {
       icon: GitBranch,
       label: "Integrations",
-      to: "/@{$org}/$project/settings/integrations" as const,
+      to: "/@{$org}/settings/integrations" as const,
     },
   ]
 
@@ -44,15 +44,14 @@ function ProjectSettingsRoute() {
               <div className="mt-2 flex flex-col gap-1">
                 {items.map((item) => {
                   const Icon = item.icon
-                  const routePath = item.to
-                    .replace("/@{$org}", `/@${params.org}`)
-                    .replace("$project", params.project)
-                  const isActive = pathname.startsWith(routePath)
+                  const isActive = pathname.startsWith(
+                    item.to.replace("/@{$org}", `/@${params.org}`)
+                  )
 
                   return (
                     <Link
                       key={item.to}
-                      params={{ org: params.org, project: params.project }}
+                      params={{ org: params.org }}
                       to={item.to}
                     >
                       <span

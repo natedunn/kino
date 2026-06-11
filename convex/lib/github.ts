@@ -254,16 +254,6 @@ function constantTimeEqual(left: string, right: string) {
   return result === 0
 }
 
-export async function verifyGitHubWebhookSignature(args: {
-  body: string
-  signature: string | null | undefined
-}) {
-  if (!args.signature?.startsWith("sha256=")) return false
-  const env = getRequiredGitHubAppEnv()
-  const expected = `sha256=${await hmacSha256Hex(env.webhookSecret, args.body)}`
-  return constantTimeEqual(expected, args.signature)
-}
-
 export function getGitHubCallbackTargetUrl() {
   const env = getRequiredGitHubAppEnv()
   if (env.callbackTargetUrl) {

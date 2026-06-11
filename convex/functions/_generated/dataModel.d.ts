@@ -623,7 +623,6 @@ export type DataModel = {
       enabledSources?: null | Array<string>;
       githubInstallationId: Id<"githubInstallation">;
       issuesVerifiedAt?: null | number;
-      lastWebhookAt?: null | number;
       mode: "read" | "read_write";
       orgId: string;
       orgSlug: string;
@@ -649,7 +648,6 @@ export type DataModel = {
       | "enabledSources"
       | "githubInstallationId"
       | "issuesVerifiedAt"
-      | "lastWebhookAt"
       | "mode"
       | "orgId"
       | "orgSlug"
@@ -669,51 +667,6 @@ export type DataModel = {
       by_githubInstallationId: ["githubInstallationId", "_creationTime"];
       by_orgId_repoId: ["orgId", "repoId", "_creationTime"];
       by_projectId: ["projectId", "_creationTime"];
-      by_repoId: ["repoId", "_creationTime"];
-    };
-    searchIndexes: {};
-    vectorIndexes: {};
-  };
-  githubWebhookDelivery: {
-    document: {
-      action?: null | string;
-      deletedTime?: null | number;
-      deliveryId: string;
-      error?: null | string;
-      event: string;
-      githubInstallationId?: null | Id<"githubInstallation">;
-      installationId?: null | number;
-      payloadSummary?: null | any;
-      processedAt?: null | number;
-      receivedAt: number;
-      repoId?: null | number;
-      status: "received" | "processed" | "failed";
-      updatedTime?: null | number;
-      _id: Id<"githubWebhookDelivery">;
-      _creationTime: number;
-    };
-    fieldPaths:
-      | "_creationTime"
-      | "_id"
-      | "action"
-      | "deletedTime"
-      | "deliveryId"
-      | "error"
-      | "event"
-      | "githubInstallationId"
-      | "installationId"
-      | "payloadSummary"
-      | "processedAt"
-      | "receivedAt"
-      | "repoId"
-      | "status"
-      | "updatedTime";
-    indexes: {
-      by_id: ["_id"];
-      by_creation_time: ["_creationTime"];
-      by_deliveryId: ["deliveryId", "_creationTime"];
-      by_githubInstallationId: ["githubInstallationId", "_creationTime"];
-      by_installationId: ["installationId", "_creationTime"];
       by_repoId: ["repoId", "_creationTime"];
     };
     searchIndexes: {};

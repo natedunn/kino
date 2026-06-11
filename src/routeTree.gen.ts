@@ -14,22 +14,25 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AtChar123orgChar125RouteRouteImport } from './routes/@{$org}/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AtChar123orgChar125IndexRouteImport } from './routes/@{$org}/index'
+import { Route as AtChar123orgChar125SettingsRouteRouteImport } from './routes/@{$org}/settings/route'
 import { Route as AtChar123orgChar125OptionsRouteRouteImport } from './routes/@{$org}/options/route'
 import { Route as AtChar123orgChar125ProjectRouteRouteImport } from './routes/@{$org}/$project/route'
 import { Route as UUsernameIndexRouteImport } from './routes/u/$username/index'
 import { Route as ProfileSettingsIndexRouteImport } from './routes/profile/settings/index'
 import { Route as CreateTeamIndexRouteImport } from './routes/create/team/index'
+import { Route as AtChar123orgChar125SettingsIndexRouteImport } from './routes/@{$org}/settings/index'
 import { Route as AtChar123orgChar125OptionsIndexRouteImport } from './routes/@{$org}/options/index'
 import { Route as AtChar123orgChar125EditIndexRouteImport } from './routes/@{$org}/edit/index'
 import { Route as AtChar123orgChar125CreateProjectIndexRouteImport } from './routes/@{$org}/create-project/index'
 import { Route as AtChar123orgChar125ProjectIndexRouteImport } from './routes/@{$org}/$project/index'
-import { Route as ApiGithubWebhookRouteImport } from './routes/api/github/webhook'
 import { Route as ApiGithubOauthCallbackRouteImport } from './routes/api/github/oauth-callback'
 import { Route as ApiGithubCallbackRouteImport } from './routes/api/github/callback'
 import { Route as ApiGithubSplatRouteImport } from './routes/api/github/$'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as AtChar123orgChar125ProjectSettingsRouteRouteImport } from './routes/@{$org}/$project/settings/route'
 import { Route as AtChar123orgChar125ProjectOptionsRouteRouteImport } from './routes/@{$org}/$project/options/route'
+import { Route as AtChar123orgChar125SettingsIntegrationsIndexRouteImport } from './routes/@{$org}/settings/integrations/index'
+import { Route as AtChar123orgChar125SettingsGeneralIndexRouteImport } from './routes/@{$org}/settings/general/index'
 import { Route as AtChar123orgChar125OptionsIntegrationsIndexRouteImport } from './routes/@{$org}/options/integrations/index'
 import { Route as AtChar123orgChar125OptionsGithubIndexRouteImport } from './routes/@{$org}/options/github/index'
 import { Route as AtChar123orgChar125OptionsGeneralIndexRouteImport } from './routes/@{$org}/options/general/index'
@@ -85,6 +88,12 @@ const AtChar123orgChar125IndexRoute =
     path: '/',
     getParentRoute: () => AtChar123orgChar125RouteRoute,
   } as any)
+const AtChar123orgChar125SettingsRouteRoute =
+  AtChar123orgChar125SettingsRouteRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => AtChar123orgChar125RouteRoute,
+  } as any)
 const AtChar123orgChar125OptionsRouteRoute =
   AtChar123orgChar125OptionsRouteRouteImport.update({
     id: '/options',
@@ -112,6 +121,12 @@ const CreateTeamIndexRoute = CreateTeamIndexRouteImport.update({
   path: '/create/team/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AtChar123orgChar125SettingsIndexRoute =
+  AtChar123orgChar125SettingsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AtChar123orgChar125SettingsRouteRoute,
+  } as any)
 const AtChar123orgChar125OptionsIndexRoute =
   AtChar123orgChar125OptionsIndexRouteImport.update({
     id: '/',
@@ -136,11 +151,6 @@ const AtChar123orgChar125ProjectIndexRoute =
     path: '/',
     getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
   } as any)
-const ApiGithubWebhookRoute = ApiGithubWebhookRouteImport.update({
-  id: '/api/github/webhook',
-  path: '/api/github/webhook',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiGithubOauthCallbackRoute = ApiGithubOauthCallbackRouteImport.update({
   id: '/api/github/oauth-callback',
   path: '/api/github/oauth-callback',
@@ -172,6 +182,18 @@ const AtChar123orgChar125ProjectOptionsRouteRoute =
     id: '/options',
     path: '/options',
     getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
+  } as any)
+const AtChar123orgChar125SettingsIntegrationsIndexRoute =
+  AtChar123orgChar125SettingsIntegrationsIndexRouteImport.update({
+    id: '/integrations/',
+    path: '/integrations/',
+    getParentRoute: () => AtChar123orgChar125SettingsRouteRoute,
+  } as any)
+const AtChar123orgChar125SettingsGeneralIndexRoute =
+  AtChar123orgChar125SettingsGeneralIndexRouteImport.update({
+    id: '/general/',
+    path: '/general/',
+    getParentRoute: () => AtChar123orgChar125SettingsRouteRoute,
   } as any)
 const AtChar123orgChar125OptionsIntegrationsIndexRoute =
   AtChar123orgChar125OptionsIntegrationsIndexRouteImport.update({
@@ -343,6 +365,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/@{$org}/$project': typeof AtChar123orgChar125ProjectRouteRouteWithChildren
   '/@{$org}/options': typeof AtChar123orgChar125OptionsRouteRouteWithChildren
+  '/@{$org}/settings': typeof AtChar123orgChar125SettingsRouteRouteWithChildren
   '/@{$org}/': typeof AtChar123orgChar125IndexRoute
   '/@{$org}/$project/options': typeof AtChar123orgChar125ProjectOptionsRouteRouteWithChildren
   '/@{$org}/$project/settings': typeof AtChar123orgChar125ProjectSettingsRouteRouteWithChildren
@@ -350,11 +373,11 @@ export interface FileRoutesByFullPath {
   '/api/github/$': typeof ApiGithubSplatRoute
   '/api/github/callback': typeof ApiGithubCallbackRoute
   '/api/github/oauth-callback': typeof ApiGithubOauthCallbackRoute
-  '/api/github/webhook': typeof ApiGithubWebhookRoute
   '/@{$org}/$project/': typeof AtChar123orgChar125ProjectIndexRoute
   '/@{$org}/create-project/': typeof AtChar123orgChar125CreateProjectIndexRoute
   '/@{$org}/edit/': typeof AtChar123orgChar125EditIndexRoute
   '/@{$org}/options/': typeof AtChar123orgChar125OptionsIndexRoute
+  '/@{$org}/settings/': typeof AtChar123orgChar125SettingsIndexRoute
   '/create/team/': typeof CreateTeamIndexRoute
   '/profile/settings/': typeof ProfileSettingsIndexRoute
   '/u/$username/': typeof UUsernameIndexRoute
@@ -370,6 +393,8 @@ export interface FileRoutesByFullPath {
   '/@{$org}/options/general/': typeof AtChar123orgChar125OptionsGeneralIndexRoute
   '/@{$org}/options/github/': typeof AtChar123orgChar125OptionsGithubIndexRoute
   '/@{$org}/options/integrations/': typeof AtChar123orgChar125OptionsIntegrationsIndexRoute
+  '/@{$org}/settings/general/': typeof AtChar123orgChar125SettingsGeneralIndexRoute
+  '/@{$org}/settings/integrations/': typeof AtChar123orgChar125SettingsIntegrationsIndexRoute
   '/@{$org}/$project/feedback/boards/new': typeof AtChar123orgChar125ProjectFeedbackBoardsNewRoute
   '/@{$org}/$project/updates/$slug/edit': typeof AtChar123orgChar125ProjectUpdatesSlugEditRoute
   '/@{$org}/$project/feedback/$slug/': typeof AtChar123orgChar125ProjectFeedbackSlugIndexRoute
@@ -395,11 +420,11 @@ export interface FileRoutesByTo {
   '/api/github/$': typeof ApiGithubSplatRoute
   '/api/github/callback': typeof ApiGithubCallbackRoute
   '/api/github/oauth-callback': typeof ApiGithubOauthCallbackRoute
-  '/api/github/webhook': typeof ApiGithubWebhookRoute
   '/@{$org}/$project': typeof AtChar123orgChar125ProjectIndexRoute
   '/@{$org}/create-project': typeof AtChar123orgChar125CreateProjectIndexRoute
   '/@{$org}/edit': typeof AtChar123orgChar125EditIndexRoute
   '/@{$org}/options': typeof AtChar123orgChar125OptionsIndexRoute
+  '/@{$org}/settings': typeof AtChar123orgChar125SettingsIndexRoute
   '/create/team': typeof CreateTeamIndexRoute
   '/profile/settings': typeof ProfileSettingsIndexRoute
   '/u/$username': typeof UUsernameIndexRoute
@@ -415,6 +440,8 @@ export interface FileRoutesByTo {
   '/@{$org}/options/general': typeof AtChar123orgChar125OptionsGeneralIndexRoute
   '/@{$org}/options/github': typeof AtChar123orgChar125OptionsGithubIndexRoute
   '/@{$org}/options/integrations': typeof AtChar123orgChar125OptionsIntegrationsIndexRoute
+  '/@{$org}/settings/general': typeof AtChar123orgChar125SettingsGeneralIndexRoute
+  '/@{$org}/settings/integrations': typeof AtChar123orgChar125SettingsIntegrationsIndexRoute
   '/@{$org}/$project/feedback/boards/new': typeof AtChar123orgChar125ProjectFeedbackBoardsNewRoute
   '/@{$org}/$project/updates/$slug/edit': typeof AtChar123orgChar125ProjectUpdatesSlugEditRoute
   '/@{$org}/$project/feedback/$slug': typeof AtChar123orgChar125ProjectFeedbackSlugIndexRoute
@@ -439,6 +466,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/@{$org}/$project': typeof AtChar123orgChar125ProjectRouteRouteWithChildren
   '/@{$org}/options': typeof AtChar123orgChar125OptionsRouteRouteWithChildren
+  '/@{$org}/settings': typeof AtChar123orgChar125SettingsRouteRouteWithChildren
   '/@{$org}/': typeof AtChar123orgChar125IndexRoute
   '/@{$org}/$project/options': typeof AtChar123orgChar125ProjectOptionsRouteRouteWithChildren
   '/@{$org}/$project/settings': typeof AtChar123orgChar125ProjectSettingsRouteRouteWithChildren
@@ -446,11 +474,11 @@ export interface FileRoutesById {
   '/api/github/$': typeof ApiGithubSplatRoute
   '/api/github/callback': typeof ApiGithubCallbackRoute
   '/api/github/oauth-callback': typeof ApiGithubOauthCallbackRoute
-  '/api/github/webhook': typeof ApiGithubWebhookRoute
   '/@{$org}/$project/': typeof AtChar123orgChar125ProjectIndexRoute
   '/@{$org}/create-project/': typeof AtChar123orgChar125CreateProjectIndexRoute
   '/@{$org}/edit/': typeof AtChar123orgChar125EditIndexRoute
   '/@{$org}/options/': typeof AtChar123orgChar125OptionsIndexRoute
+  '/@{$org}/settings/': typeof AtChar123orgChar125SettingsIndexRoute
   '/create/team/': typeof CreateTeamIndexRoute
   '/profile/settings/': typeof ProfileSettingsIndexRoute
   '/u/$username/': typeof UUsernameIndexRoute
@@ -466,6 +494,8 @@ export interface FileRoutesById {
   '/@{$org}/options/general/': typeof AtChar123orgChar125OptionsGeneralIndexRoute
   '/@{$org}/options/github/': typeof AtChar123orgChar125OptionsGithubIndexRoute
   '/@{$org}/options/integrations/': typeof AtChar123orgChar125OptionsIntegrationsIndexRoute
+  '/@{$org}/settings/general/': typeof AtChar123orgChar125SettingsGeneralIndexRoute
+  '/@{$org}/settings/integrations/': typeof AtChar123orgChar125SettingsIntegrationsIndexRoute
   '/@{$org}/$project/feedback/boards/new': typeof AtChar123orgChar125ProjectFeedbackBoardsNewRoute
   '/@{$org}/$project/updates/$slug/edit': typeof AtChar123orgChar125ProjectUpdatesSlugEditRoute
   '/@{$org}/$project/feedback/$slug/': typeof AtChar123orgChar125ProjectFeedbackSlugIndexRoute
@@ -491,6 +521,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/@{$org}/$project'
     | '/@{$org}/options'
+    | '/@{$org}/settings'
     | '/@{$org}/'
     | '/@{$org}/$project/options'
     | '/@{$org}/$project/settings'
@@ -498,11 +529,11 @@ export interface FileRouteTypes {
     | '/api/github/$'
     | '/api/github/callback'
     | '/api/github/oauth-callback'
-    | '/api/github/webhook'
     | '/@{$org}/$project/'
     | '/@{$org}/create-project/'
     | '/@{$org}/edit/'
     | '/@{$org}/options/'
+    | '/@{$org}/settings/'
     | '/create/team/'
     | '/profile/settings/'
     | '/u/$username/'
@@ -518,6 +549,8 @@ export interface FileRouteTypes {
     | '/@{$org}/options/general/'
     | '/@{$org}/options/github/'
     | '/@{$org}/options/integrations/'
+    | '/@{$org}/settings/general/'
+    | '/@{$org}/settings/integrations/'
     | '/@{$org}/$project/feedback/boards/new'
     | '/@{$org}/$project/updates/$slug/edit'
     | '/@{$org}/$project/feedback/$slug/'
@@ -543,11 +576,11 @@ export interface FileRouteTypes {
     | '/api/github/$'
     | '/api/github/callback'
     | '/api/github/oauth-callback'
-    | '/api/github/webhook'
     | '/@{$org}/$project'
     | '/@{$org}/create-project'
     | '/@{$org}/edit'
     | '/@{$org}/options'
+    | '/@{$org}/settings'
     | '/create/team'
     | '/profile/settings'
     | '/u/$username'
@@ -563,6 +596,8 @@ export interface FileRouteTypes {
     | '/@{$org}/options/general'
     | '/@{$org}/options/github'
     | '/@{$org}/options/integrations'
+    | '/@{$org}/settings/general'
+    | '/@{$org}/settings/integrations'
     | '/@{$org}/$project/feedback/boards/new'
     | '/@{$org}/$project/updates/$slug/edit'
     | '/@{$org}/$project/feedback/$slug'
@@ -586,6 +621,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/@{$org}/$project'
     | '/@{$org}/options'
+    | '/@{$org}/settings'
     | '/@{$org}/'
     | '/@{$org}/$project/options'
     | '/@{$org}/$project/settings'
@@ -593,11 +629,11 @@ export interface FileRouteTypes {
     | '/api/github/$'
     | '/api/github/callback'
     | '/api/github/oauth-callback'
-    | '/api/github/webhook'
     | '/@{$org}/$project/'
     | '/@{$org}/create-project/'
     | '/@{$org}/edit/'
     | '/@{$org}/options/'
+    | '/@{$org}/settings/'
     | '/create/team/'
     | '/profile/settings/'
     | '/u/$username/'
@@ -613,6 +649,8 @@ export interface FileRouteTypes {
     | '/@{$org}/options/general/'
     | '/@{$org}/options/github/'
     | '/@{$org}/options/integrations/'
+    | '/@{$org}/settings/general/'
+    | '/@{$org}/settings/integrations/'
     | '/@{$org}/$project/feedback/boards/new'
     | '/@{$org}/$project/updates/$slug/edit'
     | '/@{$org}/$project/feedback/$slug/'
@@ -639,7 +677,6 @@ export interface RootRouteChildren {
   ApiGithubSplatRoute: typeof ApiGithubSplatRoute
   ApiGithubCallbackRoute: typeof ApiGithubCallbackRoute
   ApiGithubOauthCallbackRoute: typeof ApiGithubOauthCallbackRoute
-  ApiGithubWebhookRoute: typeof ApiGithubWebhookRoute
   CreateTeamIndexRoute: typeof CreateTeamIndexRoute
   ProfileSettingsIndexRoute: typeof ProfileSettingsIndexRoute
   UUsernameIndexRoute: typeof UUsernameIndexRoute
@@ -682,6 +719,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AtChar123orgChar125IndexRouteImport
       parentRoute: typeof AtChar123orgChar125RouteRoute
     }
+    '/@{$org}/settings': {
+      id: '/@{$org}/settings'
+      path: '/settings'
+      fullPath: '/@{$org}/settings'
+      preLoaderRoute: typeof AtChar123orgChar125SettingsRouteRouteImport
+      parentRoute: typeof AtChar123orgChar125RouteRoute
+    }
     '/@{$org}/options': {
       id: '/@{$org}/options'
       path: '/options'
@@ -717,6 +761,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CreateTeamIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/@{$org}/settings/': {
+      id: '/@{$org}/settings/'
+      path: '/'
+      fullPath: '/@{$org}/settings/'
+      preLoaderRoute: typeof AtChar123orgChar125SettingsIndexRouteImport
+      parentRoute: typeof AtChar123orgChar125SettingsRouteRoute
+    }
     '/@{$org}/options/': {
       id: '/@{$org}/options/'
       path: '/'
@@ -744,13 +795,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/@{$org}/$project/'
       preLoaderRoute: typeof AtChar123orgChar125ProjectIndexRouteImport
       parentRoute: typeof AtChar123orgChar125ProjectRouteRoute
-    }
-    '/api/github/webhook': {
-      id: '/api/github/webhook'
-      path: '/api/github/webhook'
-      fullPath: '/api/github/webhook'
-      preLoaderRoute: typeof ApiGithubWebhookRouteImport
-      parentRoute: typeof rootRouteImport
     }
     '/api/github/oauth-callback': {
       id: '/api/github/oauth-callback'
@@ -793,6 +837,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/@{$org}/$project/options'
       preLoaderRoute: typeof AtChar123orgChar125ProjectOptionsRouteRouteImport
       parentRoute: typeof AtChar123orgChar125ProjectRouteRoute
+    }
+    '/@{$org}/settings/integrations/': {
+      id: '/@{$org}/settings/integrations/'
+      path: '/integrations'
+      fullPath: '/@{$org}/settings/integrations/'
+      preLoaderRoute: typeof AtChar123orgChar125SettingsIntegrationsIndexRouteImport
+      parentRoute: typeof AtChar123orgChar125SettingsRouteRoute
+    }
+    '/@{$org}/settings/general/': {
+      id: '/@{$org}/settings/general/'
+      path: '/general'
+      fullPath: '/@{$org}/settings/general/'
+      preLoaderRoute: typeof AtChar123orgChar125SettingsGeneralIndexRouteImport
+      parentRoute: typeof AtChar123orgChar125SettingsRouteRoute
     }
     '/@{$org}/options/integrations/': {
       id: '/@{$org}/options/integrations/'
@@ -1122,9 +1180,31 @@ const AtChar123orgChar125OptionsRouteRouteWithChildren =
     AtChar123orgChar125OptionsRouteRouteChildren,
   )
 
+interface AtChar123orgChar125SettingsRouteRouteChildren {
+  AtChar123orgChar125SettingsIndexRoute: typeof AtChar123orgChar125SettingsIndexRoute
+  AtChar123orgChar125SettingsGeneralIndexRoute: typeof AtChar123orgChar125SettingsGeneralIndexRoute
+  AtChar123orgChar125SettingsIntegrationsIndexRoute: typeof AtChar123orgChar125SettingsIntegrationsIndexRoute
+}
+
+const AtChar123orgChar125SettingsRouteRouteChildren: AtChar123orgChar125SettingsRouteRouteChildren =
+  {
+    AtChar123orgChar125SettingsIndexRoute:
+      AtChar123orgChar125SettingsIndexRoute,
+    AtChar123orgChar125SettingsGeneralIndexRoute:
+      AtChar123orgChar125SettingsGeneralIndexRoute,
+    AtChar123orgChar125SettingsIntegrationsIndexRoute:
+      AtChar123orgChar125SettingsIntegrationsIndexRoute,
+  }
+
+const AtChar123orgChar125SettingsRouteRouteWithChildren =
+  AtChar123orgChar125SettingsRouteRoute._addFileChildren(
+    AtChar123orgChar125SettingsRouteRouteChildren,
+  )
+
 interface AtChar123orgChar125RouteRouteChildren {
   AtChar123orgChar125ProjectRouteRoute: typeof AtChar123orgChar125ProjectRouteRouteWithChildren
   AtChar123orgChar125OptionsRouteRoute: typeof AtChar123orgChar125OptionsRouteRouteWithChildren
+  AtChar123orgChar125SettingsRouteRoute: typeof AtChar123orgChar125SettingsRouteRouteWithChildren
   AtChar123orgChar125IndexRoute: typeof AtChar123orgChar125IndexRoute
   AtChar123orgChar125CreateProjectIndexRoute: typeof AtChar123orgChar125CreateProjectIndexRoute
   AtChar123orgChar125EditIndexRoute: typeof AtChar123orgChar125EditIndexRoute
@@ -1137,6 +1217,8 @@ const AtChar123orgChar125RouteRouteChildren: AtChar123orgChar125RouteRouteChildr
       AtChar123orgChar125ProjectRouteRouteWithChildren,
     AtChar123orgChar125OptionsRouteRoute:
       AtChar123orgChar125OptionsRouteRouteWithChildren,
+    AtChar123orgChar125SettingsRouteRoute:
+      AtChar123orgChar125SettingsRouteRouteWithChildren,
     AtChar123orgChar125IndexRoute: AtChar123orgChar125IndexRoute,
     AtChar123orgChar125CreateProjectIndexRoute:
       AtChar123orgChar125CreateProjectIndexRoute,
@@ -1159,7 +1241,6 @@ const rootRouteChildren: RootRouteChildren = {
   ApiGithubSplatRoute: ApiGithubSplatRoute,
   ApiGithubCallbackRoute: ApiGithubCallbackRoute,
   ApiGithubOauthCallbackRoute: ApiGithubOauthCallbackRoute,
-  ApiGithubWebhookRoute: ApiGithubWebhookRoute,
   CreateTeamIndexRoute: CreateTeamIndexRoute,
   ProfileSettingsIndexRoute: ProfileSettingsIndexRoute,
   UUsernameIndexRoute: UUsernameIndexRoute,

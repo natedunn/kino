@@ -48,11 +48,6 @@ const GITHUB_CONNECTION_STATE_STATUSES = [
   "expired",
 ] as const
 const GITHUB_INSTALLATION_STATUSES = ["active", "suspended", "deleted"] as const
-const GITHUB_WEBHOOK_DELIVERY_STATUSES = [
-  "received",
-  "processed",
-  "failed",
-] as const
 const EMOTE_CONTENTS = [
   "thumbsUp",
   "thumbsDown",
@@ -853,7 +848,6 @@ export const githubRepositoryConnectionTable = convexTable(
       .references(() => githubInstallationTable.id),
     issuesVerifiedAt: integer(),
     discussionsVerifiedAt: integer(),
-    lastWebhookAt: integer(),
     mode: textEnum(GITHUB_SYNC_MODES).notNull(),
     orgId: text()
       .notNull()
@@ -884,35 +878,6 @@ export const githubRepositoryConnectionTable = convexTable(
   ]
 )
 
-export const githubWebhookDeliveryTable = convexTable(
-  "githubWebhookDelivery",
-  {
-    deletedTime: integer(),
-    updatedTime: integer(),
-    action: text(),
-    deliveryId: text().notNull(),
-    error: text(),
-    event: text().notNull(),
-    githubInstallationId: id("githubInstallation").references(
-      () => githubInstallationTable.id
-    ),
-    installationId: integer(),
-    payloadSummary: json(),
-    processedAt: integer(),
-    receivedAt: integer().notNull(),
-    repoId: integer(),
-    status: textEnum(GITHUB_WEBHOOK_DELIVERY_STATUSES).notNull(),
-  },
-  (githubWebhookDeliveryTable) => [
-    index("by_deliveryId").on(githubWebhookDeliveryTable.deliveryId),
-    index("by_installationId").on(githubWebhookDeliveryTable.installationId),
-    index("by_githubInstallationId").on(
-      githubWebhookDeliveryTable.githubInstallationId
-    ),
-    index("by_repoId").on(githubWebhookDeliveryTable.repoId),
-  ]
-)
-
 export const tables = {
   user: userTable,
   session: sessionTable,
@@ -939,7 +904,6 @@ export const tables = {
   githubConnectionState: githubConnectionStateTable,
   githubInstallation: githubInstallationTable,
   githubRepositoryConnection: githubRepositoryConnectionTable,
-  githubWebhookDelivery: githubWebhookDeliveryTable,
 }
 
 export default defineSchema(tables)
@@ -1094,12 +1058,6 @@ export default defineSchema(tables)
       project: r.one.project({
         from: r.githubRepositoryConnection.projectId,
         to: r.project.id,
-      }),
-    },
-    githubWebhookDelivery: {
-      githubInstallation: r.one.githubInstallation({
-        from: r.githubWebhookDelivery.githubInstallationId,
-        to: r.githubInstallation.id,
       }),
     },
   }))

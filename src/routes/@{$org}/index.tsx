@@ -93,9 +93,9 @@ function OrganizationRoute() {
             </div>
             {orgData.permissions.canEdit ? (
               <Button asChild variant="outline">
-                <Link params={params} to="/@{$org}/options">
+                <Link params={params} to="/@{$org}/settings">
                   <Settings />
-                  Options
+                  Settings
                 </Link>
               </Button>
             ) : null}

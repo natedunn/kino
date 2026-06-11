@@ -65,7 +65,7 @@ function AuthenticatedDashboard() {
   return (
     <div className="flex min-h-svh flex-col">
       {/* Minimal top bar */}
-      <header className="border-b border-border/50 bg-absolute">
+      <header className="border-b border-border/50 bg-background dark:bg-absolute">
         <div className="container flex items-center justify-between py-3">
           <Link to="/dashboard" className="flex items-center gap-2.5">
             <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary">

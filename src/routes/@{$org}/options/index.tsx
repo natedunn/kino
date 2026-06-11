@@ -1,10 +1,10 @@
 import { Navigate, createFileRoute } from "@tanstack/react-router"
 
 export const Route = createFileRoute("/@{$org}/options/")({
-  component: OrganizationOptionsIndexRoute,
+  component: OrganizationOptionsIndexRedirectRoute,
 })
 
-function OrganizationOptionsIndexRoute() {
+function OrganizationOptionsIndexRedirectRoute() {
   const params = Route.useParams()
-  return <Navigate params={params} to="/@{$org}/options/general" />
+  return <Navigate params={params} to="/@{$org}/settings" />
 }

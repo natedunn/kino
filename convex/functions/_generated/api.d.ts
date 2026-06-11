@@ -812,19 +812,6 @@ export declare const internal: {
       { state: string },
       any
     >;
-    recordWebhookDelivery: FunctionReference<
-      "mutation",
-      "internal",
-      {
-        action?: string;
-        deliveryId: string;
-        event: string;
-        installationId?: number;
-        payloadSummary?: any;
-        repoId?: number;
-      },
-      any
-    >;
     saveRepositoryConnection: FunctionReference<
       "mutation",
       "internal",

@@ -220,7 +220,7 @@ export function CommentCard({
   return (
     <li
       className={cn(
-        "update-comment relative z-10 flex overflow-hidden rounded-lg border bg-background transition-all duration-500",
+        "comment-component relative z-10 flex overflow-hidden rounded-lg border bg-card transition-all duration-500",
         isHighlighted &&
           "ring-2 ring-primary ring-offset-2 ring-offset-background",
         className
@@ -280,7 +280,7 @@ export function CommentCard({
       <div className={cn("flex w-full min-w-0", { absolute: isEditing })}>
         <div
           className={cn(
-            "flex shrink-0 flex-col items-center justify-start border-r bg-muted pt-3 pl-4",
+            "flex shrink-0 flex-col items-center justify-start border-r bg-accent pt-3 pl-4",
             railClassName
           )}
         >
@@ -300,7 +300,7 @@ export function CommentCard({
             )}
           </div>
         </div>
-        <div className="flex w-full min-w-0 flex-col bg-background">
+        <div className="flex w-full min-w-0 flex-col bg-card">
           <div className="flex w-full justify-between gap-2 border-b px-6 py-4">
             <span>
               {comment.author?.username ? (
