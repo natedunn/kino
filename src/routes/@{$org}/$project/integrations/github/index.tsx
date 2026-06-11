@@ -129,7 +129,8 @@ function GitHubIntegrationRoute() {
             <div>
               <h1 className="text-2xl font-bold md:text-3xl">GitHub</h1>
               <p className="text-muted-foreground">
-                Connect a repository to this project.
+                Connect GitHub access for this organization, then choose the
+                repository this project syncs with.
               </p>
             </div>
           </div>
@@ -150,8 +151,8 @@ function GitHubIntegrationRoute() {
           <div className="space-y-8">
             {search.github === "connected" ? (
               <InlineAlert variant="success">
-                GitHub installation connected. Select a repository below to
-                verify permissions.
+                GitHub access connected. Select the repository this project
+                should sync with.
               </InlineAlert>
             ) : null}
             {search.github === "error" ? (
@@ -162,10 +163,13 @@ function GitHubIntegrationRoute() {
 
             <section className="space-y-4">
               <div>
-                <h2 className="text-lg font-semibold">Installation</h2>
+                <h2 className="text-lg font-semibold">
+                  Organization GitHub access
+                </h2>
                 <p className="text-sm text-muted-foreground">
-                  Install the Kino GitHub App on the repositories this project
-                  can import from.
+                  Install the Kino GitHub App once on a GitHub organization or
+                  user account. Projects can then choose from repositories that
+                  installation can access.
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-3">
@@ -181,7 +185,7 @@ function GitHubIntegrationRoute() {
                   value={activeInstallationId ? String(activeInstallationId) : ""}
                 >
                   <SelectTrigger className="min-w-60">
-                    <SelectValue placeholder="No installation connected" />
+                    <SelectValue placeholder="No GitHub account connected" />
                   </SelectTrigger>
                   <SelectContent>
                     {installations.map((installation) => (
@@ -208,7 +212,9 @@ function GitHubIntegrationRoute() {
                   type="button"
                 >
                   <GitBranch className="size-4" />
-                  {installations.length > 0 ? "Update install" : "Install app"}
+                  {installations.length > 0
+                    ? "Manage GitHub access"
+                    : "Install GitHub App"}
                 </Button>
                 <Button
                   disabled={refreshInstallations.isPending}
@@ -225,7 +231,7 @@ function GitHubIntegrationRoute() {
                   variant="outline"
                 >
                   <RefreshCw className="size-4" />
-                  Refresh installs
+                  Refresh accounts
                 </Button>
               </div>
               {startConnection.error ? (
@@ -242,9 +248,12 @@ function GitHubIntegrationRoute() {
 
             <section className="space-y-4">
               <div>
-                <h2 className="text-lg font-semibold">Repository</h2>
+                <h2 className="text-lg font-semibold">
+                  Project repository sync
+                </h2>
                 <p className="text-sm text-muted-foreground">
-                  Verify API access before enabling sync.
+                  Choose one repository from the connected GitHub account and
+                  verify API access before enabling sync.
                 </p>
               </div>
 
@@ -311,7 +320,7 @@ function GitHubIntegrationRoute() {
                   variant="outline"
                 >
                   <RefreshCw className="size-4" />
-                  Load repositories
+                  Load accessible repos
                 </Button>
 
                 <Select
@@ -323,7 +332,7 @@ function GitHubIntegrationRoute() {
                   value={selectedRepoId ? String(selectedRepoId) : ""}
                 >
                   <SelectTrigger className="min-w-72">
-                    <SelectValue placeholder="Select repository" />
+                    <SelectValue placeholder="Select project repository" />
                   </SelectTrigger>
                   <SelectContent>
                     {repositories.map((repository: RepositoryOption) => (
@@ -379,12 +388,41 @@ function GitHubIntegrationRoute() {
           <aside className="space-y-6 border-t pt-6 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-6">
             <section>
               <h2 className="text-sm font-bold text-muted-foreground">
-                Connected repositories
+                GitHub accounts
+              </h2>
+              <div className="mt-3 space-y-3">
+                {installations.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    No GitHub accounts connected.
+                  </p>
+                ) : (
+                  installations.map((installation) => (
+                    <div
+                      className="rounded-lg border p-3 text-sm"
+                      key={installation.id}
+                    >
+                      <div className="font-medium">
+                        {installation.accountLogin}
+                      </div>
+                      <div className="mt-1 text-muted-foreground">
+                        {installation.repositorySelection === "all"
+                          ? "All repositories"
+                          : "Selected repositories"}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </section>
+
+            <section>
+              <h2 className="text-sm font-bold text-muted-foreground">
+                Project repositories
               </h2>
               <div className="mt-3 space-y-3">
                 {connections.length === 0 ? (
                   <p className="text-sm text-muted-foreground">
-                    No repositories connected.
+                    No repositories connected to this project.
                   </p>
                 ) : (
                   connections.map((connection) => (
