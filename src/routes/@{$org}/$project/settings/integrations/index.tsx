@@ -72,6 +72,7 @@ function GitHubIntegrationRoute() {
   const disconnectRepository = useMutation(
     crpc.github.disconnectRepository.mutationOptions({
       onSuccess: () => {
+        connectRepository.reset()
         setSelectedRepoId(null)
         void integrationQuery.refetch()
       },
