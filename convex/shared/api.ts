@@ -47,6 +47,7 @@ export const api = {
     toggle: createApiLeaf<"mutation", typeof import("../functions/feedbackUpvote").toggle>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/feedbackUpvote").toggle>("feedbackUpvote:toggle"), { auth: "required", type: "mutation" }),
   },
   github: {
+    disconnectRepository: createApiLeaf<"mutation", typeof import("../functions/github").disconnectRepository>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/github").disconnectRepository>("github:disconnectRepository"), { auth: "required", type: "mutation" }),
     getOrgIntegration: createApiLeaf<"query", typeof import("../functions/github").getOrgIntegration>(createGeneratedFunctionReference<"query", "public", typeof import("../functions/github").getOrgIntegration>("github:getOrgIntegration"), { auth: "required", type: "query" }),
     getProjectIntegration: createApiLeaf<"query", typeof import("../functions/github").getProjectIntegration>(createGeneratedFunctionReference<"query", "public", typeof import("../functions/github").getProjectIntegration>("github:getProjectIntegration"), { auth: "required", type: "query" }),
     startInstallationRefresh: createApiLeaf<"mutation", typeof import("../functions/github").startInstallationRefresh>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/github").startInstallationRefresh>("github:startInstallationRefresh"), { auth: "required", type: "mutation" }),

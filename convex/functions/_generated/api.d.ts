@@ -213,6 +213,12 @@ export declare const api: {
     >;
   };
   github: {
+    disconnectRepository: FunctionReference<
+      "mutation",
+      "public",
+      { connectionId: string; orgSlug: string; projectSlug: string },
+      any
+    >;
     getOrgIntegration: FunctionReference<
       "query",
       "public",

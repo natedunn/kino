@@ -1,7 +1,7 @@
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { createFileRoute, Link } from "@tanstack/react-router"
-import { GitBranch, RefreshCw, ShieldCheck } from "lucide-react"
+import { GitBranch, ShieldCheck, Unplug } from "lucide-react"
 
 import { InlineAlert } from "@/components/inline-alert"
 import { EmptyState } from "@/components/kino/common"
@@ -43,6 +43,9 @@ function GitHubIntegrationRoute() {
     number | null
   >(null)
   const [selectedRepoId, setSelectedRepoId] = useState<number | null>(null)
+  const [repositoriesInstallationId, setRepositoriesInstallationId] = useState<
+    number | null
+  >(null)
   const [sources, setSources] = useState<Source[]>(["issues"])
 
   const integrationQuery = useQuery(
@@ -52,11 +55,7 @@ function GitHubIntegrationRoute() {
     })
   )
   const repositoriesQuery = useMutation(
-    crpc.githubExternal.listInstallationRepositoriesForProject.mutationOptions({
-      onSuccess: (repositories) => {
-        setSelectedRepoId(repositories[0]?.id ?? null)
-      },
-    })
+    crpc.githubExternal.listInstallationRepositoriesForProject.mutationOptions()
   )
   const connectRepository = useMutation(
     crpc.githubExternal.connectRepository.mutationOptions({
@@ -65,20 +64,119 @@ function GitHubIntegrationRoute() {
       },
     })
   )
+  const disconnectRepository = useMutation(
+    crpc.github.disconnectRepository.mutationOptions({
+      onSuccess: () => {
+        setSelectedRepoId(null)
+        void integrationQuery.refetch()
+      },
+    })
+  )
 
   const installations = integrationQuery.data?.installations ?? []
   const connections = integrationQuery.data?.connections ?? []
-  const repositories = repositoriesQuery.data ?? []
+  const connectedInstallation = connections[0]
+    ? installations.find(
+        (item) => item.id === connections[0].githubInstallationId
+      )
+    : null
   const selectedInstallation =
     installations.find(
       (installation) => installation.installationId === selectedInstallationId
-    ) ?? installations[0]
+    ) ??
+    connectedInstallation ??
+    installations[0]
   const activeInstallationId =
     selectedInstallationId ?? selectedInstallation?.installationId ?? null
+  const repositories =
+    repositoriesInstallationId === activeInstallationId
+      ? (repositoriesQuery.data ?? [])
+      : []
   const selectedRepository = useMemo(
     () => repositories.find((repository) => repository.id === selectedRepoId),
     [repositories, selectedRepoId]
   )
+
+  useEffect(() => {
+    if (selectedInstallationId !== null) return
+
+    const connection = connections[0]
+    if (!connection) return
+
+    const installation = installations.find(
+      (item) => item.id === connection.githubInstallationId
+    )
+    if (!installation) return
+
+    setSelectedInstallationId(installation.installationId)
+    setSelectedRepoId(connection.repoId)
+    setMode(connection.mode as ConnectionMode)
+    setSources(
+      connection.enabledSources.length > 0
+        ? (connection.enabledSources as Source[])
+        : ["issues"]
+    )
+  }, [connections, installations, selectedInstallationId])
+
+  useEffect(() => {
+    if (!activeInstallationId) {
+      repositoriesQuery.reset()
+      setRepositoriesInstallationId(null)
+      setSelectedRepoId(null)
+      return
+    }
+
+    repositoriesQuery.reset()
+    setRepositoriesInstallationId(activeInstallationId)
+    repositoriesQuery.mutate({
+      installationId: activeInstallationId,
+      orgSlug: params.org,
+    })
+  }, [activeInstallationId, params.org])
+
+  useEffect(() => {
+    if (
+      !repositoriesQuery.data ||
+      repositoriesInstallationId !== activeInstallationId
+    ) {
+      return
+    }
+
+    setSelectedRepoId((currentRepoId) => {
+      if (
+        currentRepoId &&
+        repositoriesQuery.data.some(
+          (repository) => repository.id === currentRepoId
+        )
+      ) {
+        return currentRepoId
+      }
+
+      const connectedRepoId = connections.find((connection) => {
+        const installation = installations.find(
+          (item) => item.id === connection.githubInstallationId
+        )
+        return installation?.installationId === activeInstallationId
+      })?.repoId
+
+      if (
+        connectedRepoId &&
+        repositoriesQuery.data.some(
+          (repository) => repository.id === connectedRepoId
+        )
+      ) {
+        return connectedRepoId
+      }
+
+      return repositoriesQuery.data[0]?.id ?? null
+    })
+  }, [
+    activeInstallationId,
+    connections,
+    installations,
+    repositoriesInstallationId,
+    repositoriesQuery.data,
+  ])
 
   function toggleSource(source: Source) {
     setSources((current) => {
@@ -156,6 +254,7 @@ function GitHubIntegrationRoute() {
                 }))}
                 onValueChange={(value) => {
                   setSelectedInstallationId(Number(value))
+                  setRepositoriesInstallationId(null)
                   setSelectedRepoId(null)
                 }}
                 value={activeInstallationId ? String(activeInstallationId) : ""}
@@ -236,23 +335,8 @@ function GitHubIntegrationRoute() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <Button
-              disabled={!activeInstallationId || repositoriesQuery.isPending}
-              onClick={() => {
-                if (!activeInstallationId) return
-                repositoriesQuery.mutate({
-                  installationId: activeInstallationId,
-                  orgSlug: params.org,
-                })
-              }}
-              type="button"
-              variant="outline"
-            >
-              <RefreshCw className="size-4" />
-              Load accessible repos
-            </Button>
-
             <Select
+              disabled={!activeInstallationId || repositoriesQuery.isPending}
               items={repositories.map((repository: RepositoryOption) => ({
                 label: repository.fullName,
                 value: String(repository.id),
@@ -261,7 +345,13 @@ function GitHubIntegrationRoute() {
               value={selectedRepoId ? String(selectedRepoId) : ""}
             >
               <SelectTrigger className="min-w-72">
-                <SelectValue placeholder="Select project repository" />
+                <SelectValue
+                  placeholder={
+                    repositoriesQuery.isPending
+                      ? "Loading repositories..."
+                      : "Select project repository"
+                  }
+                />
               </SelectTrigger>
               <SelectContent>
                 {repositories.map((repository: RepositoryOption) => (
@@ -295,6 +385,19 @@ function GitHubIntegrationRoute() {
               Verify and connect
             </Button>
           </div>
+          {activeInstallationId && repositoriesQuery.isPending ? (
+            <p className="text-xs text-muted-foreground">
+              Loading repositories from GitHub...
+            </p>
+          ) : null}
+          {activeInstallationId &&
+          !repositoriesQuery.isPending &&
+          repositories.length === 0 &&
+          !repositoriesQuery.error ? (
+            <p className="text-xs text-muted-foreground">
+              No repositories are available for this GitHub account.
+            </p>
+          ) : null}
 
           {repositoriesQuery.error ? (
             <InlineAlert variant="danger">
@@ -309,6 +412,16 @@ function GitHubIntegrationRoute() {
           {connectRepository.isSuccess ? (
             <InlineAlert variant="success">
               Repository connection verified.
+            </InlineAlert>
+          ) : null}
+          {disconnectRepository.error ? (
+            <InlineAlert variant="danger">
+              {disconnectRepository.error.message}
+            </InlineAlert>
+          ) : null}
+          {disconnectRepository.isSuccess ? (
+            <InlineAlert variant="success">
+              Repository disconnected.
             </InlineAlert>
           ) : null}
         </section>
@@ -344,7 +457,7 @@ function GitHubIntegrationRoute() {
 
         <section>
           <h2 className="text-sm font-bold text-muted-foreground">
-            Project repositories
+            Project repository
           </h2>
           <div className="mt-3 space-y-3">
             {connections.length === 0 ? (
@@ -364,6 +477,31 @@ function GitHubIntegrationRoute() {
                       : "Read only"}{" "}
                     / {connection.enabledSources.join(", ")}
                   </div>
+                  <Button
+                    className="mt-3"
+                    disabled={disconnectRepository.isPending}
+                    onClick={() => {
+                      if (
+                        !window.confirm(
+                          `Disconnect ${connection.repoFullName} from this project?`
+                        )
+                      ) {
+                        return
+                      }
+
+                      disconnectRepository.mutate({
+                        connectionId: connection.id,
+                        orgSlug: params.org,
+                        projectSlug: params.project,
+                      })
+                    }}
+                    size="sm"
+                    type="button"
+                    variant="destructive"
+                  >
+                    <Unplug className="size-3.5" />
+                    Disconnect
+                  </Button>
                 </div>
               ))
             )}

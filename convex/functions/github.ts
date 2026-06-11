@@ -93,7 +93,10 @@ async function verifyOrgAdminForProject(
     userId: args.userId,
   })
   if (!access.organization) {
-    throw new CRPCError({ code: "NOT_FOUND", message: "Organization not found" })
+    throw new CRPCError({
+      code: "NOT_FOUND",
+      message: "Organization not found",
+    })
   }
   if (!access.permissions.canCreate) {
     throw new CRPCError({
@@ -120,7 +123,10 @@ async function verifyOrgAdmin(
     userId: args.userId,
   })
   if (!access.organization) {
-    throw new CRPCError({ code: "NOT_FOUND", message: "Organization not found" })
+    throw new CRPCError({
+      code: "NOT_FOUND",
+      message: "Organization not found",
+    })
   }
   if (!access.permissions.canCreate) {
     throw new CRPCError({
@@ -335,7 +341,7 @@ export const getProjectIntegration = authQuery
       })
     }
 
-    const [rawInstallations, connections] = await Promise.all([
+    const [rawInstallations, rawConnections] = await Promise.all([
       ctx.db
         .query("githubInstallation")
         .withIndex("by_orgId", (q: any) =>
@@ -350,6 +356,9 @@ export const getProjectIntegration = authQuery
     const installations = rawInstallations
       .filter((installation: any) => installation.status === "active")
       .slice(0, 20)
+    const connections = rawConnections.filter(
+      (connection: any) => !connection.deletedTime
+    )
     const recentDeliveries = (
       await Promise.all(
         installations.map((installation: any) =>
@@ -564,7 +573,9 @@ export const completeInstallationCallback = privateMutation
       permissions: input.installation.permissions,
       repositorySelection: input.installation.repository_selection,
       status:
-        input.setupAction === "remove" ? ("deleted" as const) : ("active" as const),
+        input.setupAction === "remove"
+          ? ("deleted" as const)
+          : ("active" as const),
       updatedTime: Date.now(),
     }
 
@@ -633,9 +644,7 @@ export const completeUserInstallationsCallback = privateMutation
       const existing = await ctx.db
         .query("githubInstallation")
         .withIndex("by_orgId_installationId", (q: any) =>
-          q
-            .eq("orgId", stateDoc.orgId)
-            .eq("installationId", installation.id)
+          q.eq("orgId", stateDoc.orgId).eq("installationId", installation.id)
         )
         .unique()
 
@@ -747,16 +756,22 @@ export const saveRepositoryConnection = privateMutation
         q.eq("orgId", organization.id).eq("repoId", input.repository.id)
       )
       .unique()
-    if (existingForRepo && existingForRepo.projectId !== project._id) {
+    if (
+      existingForRepo &&
+      !existingForRepo.deletedTime &&
+      existingForRepo.projectId !== project._id
+    ) {
       throw new CRPCError({
         code: "CONFLICT",
-        message: "This GitHub repository is already connected to another Kino project",
+        message:
+          "This GitHub repository is already connected to another Kino project",
       })
     }
 
     const now = Date.now()
     const values = {
       connectedByProfileId: profile._id as any,
+      deletedTime: null,
       discussionsVerifiedAt: input.verificationSummary.discussions.ok
         ? now
         : undefined,
@@ -778,11 +793,32 @@ export const saveRepositoryConnection = privateMutation
       verificationSummary: input.verificationSummary,
     }
 
+    const projectConnections = await ctx.db
+      .query("githubRepositoryConnection")
+      .withIndex("by_projectId", (q: any) => q.eq("projectId", project._id))
+      .take(20)
+
+    await Promise.all(
+      projectConnections
+        .filter(
+          (connection: any) =>
+            !connection.deletedTime && connection._id !== existingForRepo?._id
+        )
+        .map((connection: any) =>
+          ctx.db.patch(connection._id, {
+            deletedTime: now,
+            updatedTime: now,
+          })
+        )
+    )
+
     if (existingForRepo) {
       await ctx.orm
         .update(githubRepositoryConnectionTable)
         .set(values)
-        .where(eq(githubRepositoryConnectionTable.id, existingForRepo._id as any))
+        .where(
+          eq(githubRepositoryConnectionTable.id, existingForRepo._id as any)
+        )
       return { connectionId: existingForRepo._id }
     }
 
@@ -791,6 +827,46 @@ export const saveRepositoryConnection = privateMutation
       .values(values)
       .returning()
     return { connectionId: connection.id }
+  })
+
+export const disconnectRepository = authMutation
+  .input(
+    z.object({
+      connectionId: z.string(),
+      orgSlug: z.string(),
+      projectSlug: z.string(),
+    })
+  )
+  .mutation(async ({ ctx, input }) => {
+    const { organization, project } = await verifyOrgAdminForProject(ctx, {
+      orgSlug: input.orgSlug,
+      projectSlug: input.projectSlug,
+      userId: ctx.userId,
+    })
+    const connections = await ctx.db
+      .query("githubRepositoryConnection")
+      .withIndex("by_projectId", (q: any) => q.eq("projectId", project._id))
+      .take(20)
+    const connection = connections.find(
+      (item: any) =>
+        item._id === input.connectionId &&
+        item.orgId === organization.id &&
+        !item.deletedTime
+    )
+
+    if (!connection) {
+      throw new CRPCError({
+        code: "NOT_FOUND",
+        message: "GitHub repository connection not found",
+      })
+    }
+
+    await ctx.db.patch(connection._id, {
+      deletedTime: Date.now(),
+      updatedTime: Date.now(),
+    })
+
+    return { success: true }
   })
 
 export const recordWebhookDelivery = privateMutation
@@ -807,7 +883,9 @@ export const recordWebhookDelivery = privateMutation
   .mutation(async ({ ctx, input }) => {
     const existing = await ctx.db
       .query("githubWebhookDelivery")
-      .withIndex("by_deliveryId", (q: any) => q.eq("deliveryId", input.deliveryId))
+      .withIndex("by_deliveryId", (q: any) =>
+        q.eq("deliveryId", input.deliveryId)
+      )
       .unique()
     if (existing) {
       return { duplicate: true, deliveryId: existing._id }
