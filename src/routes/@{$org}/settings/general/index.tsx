@@ -19,6 +19,14 @@ function GeneralSettingsRoute() {
   const params = Route.useParams()
   const navigate = useNavigate()
   const crpc = useCRPC()
+  const slugUrlPrefix = useMemo(() => {
+    const siteUrl =
+      typeof window === "undefined"
+        ? (import.meta.env.VITE_SITE_URL as string | undefined)
+        : window.location.origin
+
+    return `${(siteUrl ?? "https://kino.io").replace(/^https?:\/\//, "").replace(/\/$/, "")}/@`
+  }, [])
   const orgQuery = useQuery(
     crpc.org.getDetails.queryOptions({
       slug: params.org,
@@ -123,7 +131,7 @@ function GeneralSettingsRoute() {
                   </LabelWrapper>
                   <div className="flex items-stretch overflow-hidden rounded-md border bg-background focus-within:ring-1 focus-within:ring-ring">
                     <span className="flex items-center bg-muted/60 px-3 font-mono text-sm text-muted-foreground">
-                      kino.io/@
+                      {slugUrlPrefix}
                     </span>
                     <Input
                       className="rounded-none border-0 bg-transparent focus-visible:ring-0"
