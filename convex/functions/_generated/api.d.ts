@@ -213,6 +213,12 @@ export declare const api: {
     >;
   };
   github: {
+    getOrgIntegration: FunctionReference<
+      "query",
+      "public",
+      { orgSlug: string },
+      any
+    >;
     getProjectIntegration: FunctionReference<
       "query",
       "public",
@@ -227,6 +233,26 @@ export declare const api: {
         mode?: "read" | "read_write";
         orgSlug: string;
         projectSlug: string;
+      },
+      any
+    >;
+    startOrgConnection: FunctionReference<
+      "mutation",
+      "public",
+      {
+        callbackTargetUrl?: string;
+        mode?: "read" | "read_write";
+        orgSlug: string;
+      },
+      any
+    >;
+    startOrgInstallationRefresh: FunctionReference<
+      "mutation",
+      "public",
+      {
+        callbackTargetUrl?: string;
+        mode?: "read" | "read_write";
+        orgSlug: string;
       },
       any
     >;

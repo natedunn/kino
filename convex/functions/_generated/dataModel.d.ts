@@ -536,8 +536,8 @@ export type DataModel = {
       mode: "read" | "read_write";
       orgId: string;
       orgSlug: string;
-      projectId: Id<"project">;
-      projectSlug: string;
+      projectId?: null | Id<"project">;
+      projectSlug?: null | string;
       stateHash: string;
       status: "pending" | "consumed" | "expired";
       updatedTime?: null | number;

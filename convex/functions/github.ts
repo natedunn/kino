@@ -111,6 +111,32 @@ async function verifyOrgAdminForProject(
   }
 }
 
+async function verifyOrgAdmin(
+  ctx: any,
+  args: { orgSlug: string; userId: string }
+) {
+  const access = await verifyOrgAccess(ctx, {
+    slug: args.orgSlug,
+    userId: args.userId,
+  })
+  if (!access.organization) {
+    throw new CRPCError({ code: "NOT_FOUND", message: "Organization not found" })
+  }
+  if (!access.permissions.canCreate) {
+    throw new CRPCError({
+      code: "FORBIDDEN",
+      message: "Only organization admins can manage GitHub connections",
+    })
+  }
+
+  const profile = await getCurrentProfileOrThrow(ctx, args.userId)
+
+  return {
+    organization: access.organization,
+    profile,
+  }
+}
+
 export const startProjectConnection = authMutation
   .input(
     z.object({
@@ -158,6 +184,46 @@ export const startProjectConnection = authMutation
     }
   })
 
+export const startOrgConnection = authMutation
+  .input(
+    z.object({
+      callbackTargetUrl: z.string().optional(),
+      mode: connectionModeSchema.default("read"),
+      orgSlug: z.string(),
+    })
+  )
+  .mutation(async ({ ctx, input }) => {
+    const { organization, profile } = await verifyOrgAdmin(ctx, {
+      orgSlug: input.orgSlug,
+      userId: ctx.userId,
+    })
+
+    const nonce = crypto.randomUUID()
+    const now = Date.now()
+    const expiresAt = now + 10 * 60 * 1000
+    const state = await createGitHubAppState({
+      exp: expiresAt,
+      nonce,
+      targetUrl: resolveGitHubCallbackTargetUrl(input.callbackTargetUrl),
+    })
+
+    await ctx.orm.insert(githubConnectionStateTable).values({
+      createdByProfileId: profile._id as any,
+      createdByUserId: ctx.userId,
+      expiresAt,
+      mode: input.mode,
+      orgId: organization.id,
+      orgSlug: organization.slug,
+      stateHash: await sha256Hex(nonce),
+      status: "pending",
+      updatedTime: now,
+    })
+
+    return {
+      installUrl: githubAppInstallationUrl(state),
+    }
+  })
+
 export const startInstallationRefresh = authMutation
   .input(
     z.object({
@@ -195,6 +261,46 @@ export const startInstallationRefresh = authMutation
       orgSlug: organization.slug,
       projectId: project._id,
       projectSlug: project.slug,
+      stateHash: await sha256Hex(nonce),
+      status: "pending",
+      updatedTime: now,
+    })
+
+    return {
+      authorizeUrl: githubAppUserAuthorizationUrl(state),
+    }
+  })
+
+export const startOrgInstallationRefresh = authMutation
+  .input(
+    z.object({
+      callbackTargetUrl: z.string().optional(),
+      mode: connectionModeSchema.default("read"),
+      orgSlug: z.string(),
+    })
+  )
+  .mutation(async ({ ctx, input }) => {
+    const { organization, profile } = await verifyOrgAdmin(ctx, {
+      orgSlug: input.orgSlug,
+      userId: ctx.userId,
+    })
+
+    const nonce = crypto.randomUUID()
+    const now = Date.now()
+    const expiresAt = now + 10 * 60 * 1000
+    const state = await createGitHubAppState({
+      exp: expiresAt,
+      nonce,
+      targetUrl: resolveGitHubCallbackTargetUrl(input.callbackTargetUrl),
+    })
+
+    await ctx.orm.insert(githubConnectionStateTable).values({
+      createdByProfileId: profile._id as any,
+      createdByUserId: ctx.userId,
+      expiresAt,
+      mode: input.mode,
+      orgId: organization.id,
+      orgSlug: organization.slug,
       stateHash: await sha256Hex(nonce),
       status: "pending",
       updatedTime: now,
@@ -260,6 +366,51 @@ export const getProjectIntegration = authQuery
 
     return {
       connections: connections.map(toPublicDoc),
+      installations: installations.map(toPublicDoc),
+      recentDeliveries: recentDeliveries.map(toPublicDoc),
+    }
+  })
+
+export const getOrgIntegration = authQuery
+  .input(
+    z.object({
+      orgSlug: z.string(),
+    })
+  )
+  .query(async ({ ctx, input }) => {
+    const access = await verifyOrgAccess(ctx, {
+      slug: input.orgSlug,
+      userId: ctx.userId,
+    })
+    if (!access.organization || !access.permissions.canCreate) {
+      throw new CRPCError({
+        code: "FORBIDDEN",
+        message: "Only organization admins can view GitHub connections",
+      })
+    }
+
+    const installations = await ctx.db
+      .query("githubInstallation")
+      .withIndex("by_orgId", (q: any) => q.eq("orgId", access.organization.id))
+      .take(20)
+    const recentDeliveries = (
+      await Promise.all(
+        installations.map((installation: any) =>
+          ctx.db
+            .query("githubWebhookDelivery")
+            .withIndex("by_githubInstallationId", (q: any) =>
+              q.eq("githubInstallationId", installation._id)
+            )
+            .order("desc")
+            .take(5)
+        )
+      )
+    )
+      .flat()
+      .sort((left: any, right: any) => right.receivedAt - left.receivedAt)
+      .slice(0, 20)
+
+    return {
       installations: installations.map(toPublicDoc),
       recentDeliveries: recentDeliveries.map(toPublicDoc),
     }

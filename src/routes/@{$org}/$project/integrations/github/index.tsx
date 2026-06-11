@@ -51,20 +51,6 @@ function GitHubIntegrationRoute() {
       projectSlug: params.project,
     })
   )
-  const startConnection = useMutation(
-    crpc.github.startProjectConnection.mutationOptions({
-      onSuccess: (result) => {
-        window.location.href = result.installUrl
-      },
-    })
-  )
-  const refreshInstallations = useMutation(
-    crpc.github.startInstallationRefresh.mutationOptions({
-      onSuccess: (result) => {
-        window.location.href = result.authorizeUrl
-      },
-    })
-  )
   const repositoriesQuery = useMutation(
     crpc.githubExternal.listInstallationRepositoriesForProject.mutationOptions({
       onSuccess: (repositories) => {
@@ -129,8 +115,8 @@ function GitHubIntegrationRoute() {
             <div>
               <h1 className="text-2xl font-bold md:text-3xl">GitHub</h1>
               <p className="text-muted-foreground">
-                Connect GitHub access for this organization, then choose the
-                repository this project syncs with.
+                Choose which repository this project syncs with. GitHub accounts
+                are managed at the organization level.
               </p>
             </div>
           </div>
@@ -160,91 +146,12 @@ function GitHubIntegrationRoute() {
                 GitHub installation could not be completed.
               </InlineAlert>
             ) : null}
-
-            <section className="space-y-4">
-              <div>
-                <h2 className="text-lg font-semibold">
-                  Organization GitHub access
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  Install the Kino GitHub App once on a GitHub organization or
-                  user account. Projects can then choose from repositories that
-                  installation can access.
-                </p>
-              </div>
-              <div className="flex flex-wrap items-center gap-3">
-                <Select
-                  items={installations.map((installation) => ({
-                    label: installation.accountLogin,
-                    value: String(installation.installationId),
-                  }))}
-                  onValueChange={(value) => {
-                    setSelectedInstallationId(Number(value))
-                    setSelectedRepoId(null)
-                  }}
-                  value={activeInstallationId ? String(activeInstallationId) : ""}
-                >
-                  <SelectTrigger className="min-w-60">
-                    <SelectValue placeholder="No GitHub account connected" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {installations.map((installation) => (
-                      <SelectItem
-                        key={installation.id}
-                        value={String(installation.installationId)}
-                      >
-                        {installation.accountLogin}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button
-                  disabled={startConnection.isPending}
-                  onClick={() =>
-                    startConnection.mutate({
-                      callbackTargetUrl:
-                        `${window.location.origin}/api/github/callback`,
-                      mode,
-                      orgSlug: params.org,
-                      projectSlug: params.project,
-                    })
-                  }
-                  type="button"
-                >
-                  <GitBranch className="size-4" />
-                  {installations.length > 0
-                    ? "Manage GitHub access"
-                    : "Install GitHub App"}
-                </Button>
-                <Button
-                  disabled={refreshInstallations.isPending}
-                  onClick={() =>
-                    refreshInstallations.mutate({
-                      callbackTargetUrl:
-                        `${window.location.origin}/api/github/callback`,
-                      mode,
-                      orgSlug: params.org,
-                      projectSlug: params.project,
-                    })
-                  }
-                  type="button"
-                  variant="outline"
-                >
-                  <RefreshCw className="size-4" />
-                  Refresh accounts
-                </Button>
-              </div>
-              {startConnection.error ? (
-                <InlineAlert variant="danger">
-                  {startConnection.error.message}
-                </InlineAlert>
-              ) : null}
-              {refreshInstallations.error ? (
-                <InlineAlert variant="danger">
-                  {refreshInstallations.error.message}
-                </InlineAlert>
-              ) : null}
-            </section>
+            {installations.length === 0 ? (
+              <InlineAlert variant="warning">
+                Connect GitHub access for this organization before selecting a
+                project repository.
+              </InlineAlert>
+            ) : null}
 
             <section className="space-y-4">
               <div>
@@ -255,6 +162,53 @@ function GitHubIntegrationRoute() {
                   Choose one repository from the connected GitHub account and
                   verify API access before enabling sync.
                 </p>
+              </div>
+
+              <div className="space-y-2">
+                <LabelWrapper>
+                  <Label>GitHub account</Label>
+                  <LabelDescription>
+                    Accounts are connected in organization settings.
+                  </LabelDescription>
+                </LabelWrapper>
+                <div className="flex flex-wrap items-center gap-3">
+                  <Select
+                    items={installations.map((installation) => ({
+                      label: installation.accountLogin,
+                      value: String(installation.installationId),
+                    }))}
+                    onValueChange={(value) => {
+                      setSelectedInstallationId(Number(value))
+                      setSelectedRepoId(null)
+                    }}
+                    value={
+                      activeInstallationId ? String(activeInstallationId) : ""
+                    }
+                  >
+                    <SelectTrigger className="min-w-60">
+                      <SelectValue placeholder="No GitHub account connected" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {installations.map((installation) => (
+                        <SelectItem
+                          key={installation.id}
+                          value={String(installation.installationId)}
+                        >
+                          {installation.accountLogin}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button asChild type="button" variant="outline">
+                    <Link
+                      params={{ org: params.org }}
+                      to="/@{$org}/integrations/github"
+                    >
+                      <GitBranch className="size-4" />
+                      Manage GitHub access
+                    </Link>
+                  </Button>
+                </div>
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">

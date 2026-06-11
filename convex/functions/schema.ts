@@ -794,10 +794,8 @@ export const githubConnectionStateTable = convexTable(
       .notNull()
       .references(() => organizationTable.id),
     orgSlug: text().notNull(),
-    projectId: id("project")
-      .notNull()
-      .references(() => projectTable.id),
-    projectSlug: text().notNull(),
+    projectId: id("project").references(() => projectTable.id),
+    projectSlug: text(),
     stateHash: text().notNull(),
     status: textEnum(GITHUB_CONNECTION_STATE_STATUSES).notNull(),
     consumedAt: integer(),

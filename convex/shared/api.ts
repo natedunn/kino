@@ -47,8 +47,11 @@ export const api = {
     toggle: createApiLeaf<"mutation", typeof import("../functions/feedbackUpvote").toggle>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/feedbackUpvote").toggle>("feedbackUpvote:toggle"), { auth: "required", type: "mutation" }),
   },
   github: {
+    getOrgIntegration: createApiLeaf<"query", typeof import("../functions/github").getOrgIntegration>(createGeneratedFunctionReference<"query", "public", typeof import("../functions/github").getOrgIntegration>("github:getOrgIntegration"), { auth: "required", type: "query" }),
     getProjectIntegration: createApiLeaf<"query", typeof import("../functions/github").getProjectIntegration>(createGeneratedFunctionReference<"query", "public", typeof import("../functions/github").getProjectIntegration>("github:getProjectIntegration"), { auth: "required", type: "query" }),
     startInstallationRefresh: createApiLeaf<"mutation", typeof import("../functions/github").startInstallationRefresh>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/github").startInstallationRefresh>("github:startInstallationRefresh"), { auth: "required", type: "mutation" }),
+    startOrgConnection: createApiLeaf<"mutation", typeof import("../functions/github").startOrgConnection>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/github").startOrgConnection>("github:startOrgConnection"), { auth: "required", type: "mutation" }),
+    startOrgInstallationRefresh: createApiLeaf<"mutation", typeof import("../functions/github").startOrgInstallationRefresh>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/github").startOrgInstallationRefresh>("github:startOrgInstallationRefresh"), { auth: "required", type: "mutation" }),
     startProjectConnection: createApiLeaf<"mutation", typeof import("../functions/github").startProjectConnection>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/github").startProjectConnection>("github:startProjectConnection"), { auth: "required", type: "mutation" }),
   },
   githubExternal: {

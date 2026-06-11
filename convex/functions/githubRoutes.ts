@@ -21,6 +21,37 @@ function projectGitHubSettingsUrl(args: {
   return `${siteUrl}/@${args.orgSlug}/${args.projectSlug}/integrations/github?github=${args.status}`
 }
 
+function orgGitHubSettingsUrl(args: {
+  orgSlug: string
+  siteUrl?: string
+  status: "connected" | "error"
+}) {
+  const siteUrl = (args.siteUrl ?? getEnv().SITE_URL).replace(/\/$/, "")
+  return `${siteUrl}/@${args.orgSlug}/integrations/github?github=${args.status}`
+}
+
+function githubSettingsUrl(args: {
+  orgSlug: string
+  projectSlug?: string | null
+  siteUrl?: string
+  status: "connected" | "error"
+}) {
+  if (args.projectSlug) {
+    return projectGitHubSettingsUrl({
+      orgSlug: args.orgSlug,
+      projectSlug: args.projectSlug,
+      siteUrl: args.siteUrl,
+      status: args.status,
+    })
+  }
+
+  return orgGitHubSettingsUrl({
+    orgSlug: args.orgSlug,
+    siteUrl: args.siteUrl,
+    status: args.status,
+  })
+}
+
 async function siteUrlFromState(state: string | undefined) {
   if (!state) return getEnv().SITE_URL
 
@@ -77,7 +108,7 @@ export const callback = publicRoute
           installations: userInstallations.map(sanitizeGitHubInstallationDetails),
           state: searchParams.state,
         })
-        redirect = projectGitHubSettingsUrl({
+        redirect = githubSettingsUrl({
           orgSlug: result.orgSlug,
           projectSlug: result.projectSlug,
           siteUrl: redirectSiteUrl,
@@ -99,7 +130,7 @@ export const callback = publicRoute
         setupAction: searchParams.setup_action,
         state: searchParams.state,
       })
-      redirect = projectGitHubSettingsUrl({
+      redirect = githubSettingsUrl({
         orgSlug: result.orgSlug,
         projectSlug: result.projectSlug,
         siteUrl: redirectSiteUrl,
