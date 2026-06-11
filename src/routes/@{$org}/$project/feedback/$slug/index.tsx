@@ -270,17 +270,16 @@ function FeedbackDetailRoute() {
     ),
     value: status.value,
   }))
-  const boardSelectItems = boardOptions.map((board: { id: string; name: string }) => ({
-    label: board.name,
-    value: board.id,
-  }))
+  const boardSelectItems = boardOptions.map(
+    (board: { id: string; name: string }) => ({
+      label: board.name,
+      value: board.id,
+    })
+  )
   const assigneeSelectItems = [
     { label: "Unassigned", value: "" },
     ...assigneeOptions.map(
-      (member: {
-        profile?: ProfileSummary | null
-        profileId: string
-      }) => ({
+      (member: { profile?: ProfileSummary | null; profileId: string }) => ({
         label: member.profile?.name ?? member.profile?.username ?? "Unknown",
         value: member.profileId,
       })
@@ -366,387 +365,419 @@ function FeedbackDetailRoute() {
         </div>
       </div>
       <div className="container flex flex-1 flex-col">
-      <div className="flex flex-1 flex-col gap-8 md:grid md:grid-cols-12">
-      <div className="order-last py-8 md:col-span-4 md:border-l md:border-border/75">
-        <div className="sticky top-4 flex flex-col gap-6 md:pl-8">
-          <SidebarSection
-            icon={<Info className="size-3.5" />}
-            onOpenChange={(open) => setSidebarSection("details", open)}
-            open={sidebarState.details}
-            title="Details"
-          >
-            <div className="flex flex-col">
-              <div className="flex items-center justify-between py-1.5">
-                <span className="text-sm text-muted-foreground">Status</span>
-                {canEditStatus ? (
-                  <Select
-                    items={statusSelectItems}
-                    onValueChange={(value) =>
-                      statusMutation.mutate({
-                        id: feedback.id,
-                        status: value as never,
-                      })
-                    }
-                    value={feedback.status}
-                  >
-                    <SelectTrigger className="min-w-32">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {FEEDBACK_STATUS_OPTIONS.map((status) => (
-                        <SelectItem key={status.value} value={status.value}>
-                          <StatusIcon colored size="14" status={status.value} />
-                          {status.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                ) : (
-                  <span className="inline-flex items-center gap-1.5 text-sm">
-                    <StatusIcon colored size="14" status={feedback.status} />
-                    {feedback.status}
-                  </span>
-                )}
-              </div>
+        <div className="flex flex-1 flex-col gap-8 md:grid md:grid-cols-12">
+          <div className="order-last py-8 md:col-span-4 md:border-l md:border-border/75">
+            <div className="sticky top-4 flex flex-col gap-6 md:pl-8">
+              <SidebarSection
+                icon={<Info className="size-3.5" />}
+                onOpenChange={(open) => setSidebarSection("details", open)}
+                open={sidebarState.details}
+                title="Details"
+              >
+                <div className="flex flex-col">
+                  <div className="flex items-center justify-between py-1.5">
+                    <span className="text-sm text-muted-foreground">
+                      Status
+                    </span>
+                    {canEditStatus ? (
+                      <Select
+                        items={statusSelectItems}
+                        onValueChange={(value) =>
+                          statusMutation.mutate({
+                            id: feedback.id,
+                            status: value as never,
+                          })
+                        }
+                        value={feedback.status}
+                      >
+                        <SelectTrigger className="min-w-32">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {FEEDBACK_STATUS_OPTIONS.map((status) => (
+                            <SelectItem key={status.value} value={status.value}>
+                              <StatusIcon
+                                colored
+                                size="14"
+                                status={status.value}
+                              />
+                              {status.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 text-sm">
+                        <StatusIcon
+                          colored
+                          size="14"
+                          status={feedback.status}
+                        />
+                        {feedback.status}
+                      </span>
+                    )}
+                  </div>
 
-              <div className="flex items-center justify-between py-1.5">
-                <span className="text-sm text-muted-foreground">Board</span>
-                {canEditStatus ? (
-                  <Select
-                    items={boardSelectItems}
-                    onValueChange={(value) =>
-                      boardMutation.mutate({
-                        boardId: value,
-                        id: feedback.id,
-                      })
-                    }
-                    value={feedback.boardId}
-                  >
-                    <SelectTrigger className="max-w-56 min-w-32">
-                      <SelectValue placeholder="No board" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {boardOptions.map((board: { id: string; name: string }) => (
-                        <SelectItem key={board.id} value={board.id}>
-                          {board.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                ) : (
-                  <span className="text-sm">
-                    {feedbackData.board?.name ?? "No board"}
-                  </span>
-                )}
-              </div>
+                  <div className="flex items-center justify-between py-1.5">
+                    <span className="text-sm text-muted-foreground">Board</span>
+                    {canEditStatus ? (
+                      <Select
+                        items={boardSelectItems}
+                        onValueChange={(value) =>
+                          boardMutation.mutate({
+                            boardId: value,
+                            id: feedback.id,
+                          })
+                        }
+                        value={feedback.boardId}
+                      >
+                        <SelectTrigger className="max-w-56 min-w-32">
+                          <SelectValue placeholder="No board" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {boardOptions.map(
+                            (board: { id: string; name: string }) => (
+                              <SelectItem key={board.id} value={board.id}>
+                                {board.name}
+                              </SelectItem>
+                            )
+                          )}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <span className="text-sm">
+                        {feedbackData.board?.name ?? "No board"}
+                      </span>
+                    )}
+                  </div>
 
-              <div className="flex items-center justify-between py-1.5">
-                <span className="text-sm text-muted-foreground">Priority</span>
-                <Button
-                  className="h-auto gap-1.5 px-2 py-1 text-xs"
-                  size="sm"
-                  variant="outline"
-                >
-                  <span className="size-2 rounded-full bg-amber-500" />
-                  Medium
-                  <ChevronDown size={12} />
-                </Button>
-              </div>
+                  <div className="flex items-center justify-between py-1.5">
+                    <span className="text-sm text-muted-foreground">
+                      Priority
+                    </span>
+                    <Button
+                      className="h-auto gap-1.5 px-2 py-1 text-xs"
+                      size="sm"
+                      variant="outline"
+                    >
+                      <span className="size-2 rounded-full bg-amber-500" />
+                      Medium
+                      <ChevronDown size={12} />
+                    </Button>
+                  </div>
 
-              <div className="flex items-center justify-between py-1.5">
-                <span className="text-sm text-muted-foreground">Due date</span>
-                <Button
-                  className="h-auto px-2 py-1 text-xs text-muted-foreground"
-                  size="sm"
-                  variant="ghost"
-                >
-                  <Calendar className="mr-1.5 size-3" />
-                  Set date
-                </Button>
-              </div>
-            </div>
-          </SidebarSection>
-
-          <SidebarSection
-            icon={<Users className="size-3.5" />}
-            onOpenChange={(open) => setSidebarSection("people", open)}
-            open={sidebarState.people}
-            title="People"
-          >
-            <div className="flex flex-col">
-              <div className="flex items-center justify-between py-1.5">
-                <span className="text-sm text-muted-foreground">Assignee</span>
-                {canEditStatus ? (
-                  <Select
-                    items={assigneeSelectItems}
-                    onValueChange={(value) =>
-                      assigneeMutation.mutate({
-                        assignedProfileId: value || null,
-                        feedbackId: feedback.id,
-                      })
-                    }
-                    value={feedback.assignedProfileId ?? ""}
-                  >
-                    <SelectTrigger className="max-w-48 min-w-32">
-                      <SelectValue placeholder="Unassigned" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="">Unassigned</SelectItem>
-                      {assigneeOptions.map(
-                        (member: {
-                          profile?: ProfileSummary | null
-                          profileId: string
-                        }) => (
-                          <SelectItem key={member.profileId} value={member.profileId}>
-                            {member.profile?.name ?? member.profile?.username}
-                          </SelectItem>
-                        )
-                      )}
-                    </SelectContent>
-                  </Select>
-                ) : (
-                  <span className="text-sm">
-                    {feedbackData.assignedProfile?.name ??
-                      feedbackData.assignedProfile?.username ??
-                      "Unassigned"}
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center justify-between py-1.5">
-                <span className="text-sm text-muted-foreground">Author</span>
-                <ProfileLinkOrUnknown
-                  profile={feedbackData.author}
-                  display="name"
-                />
-              </div>
-              <div className="flex items-center justify-between py-1.5">
-                <span className="text-sm text-muted-foreground">Watchers</span>
-                <div className="flex items-center -space-x-1.5">
-                  <div className="size-5 rounded-full border-2 border-background bg-emerald-500" />
-                  <div className="size-5 rounded-full border-2 border-background bg-blue-500" />
-                  <div className="size-5 rounded-full border-2 border-background bg-purple-500" />
-                  <span className="ml-2 text-xs text-muted-foreground">
-                    +12
-                  </span>
+                  <div className="flex items-center justify-between py-1.5">
+                    <span className="text-sm text-muted-foreground">
+                      Due date
+                    </span>
+                    <Button
+                      className="h-auto px-2 py-1 text-xs text-muted-foreground"
+                      size="sm"
+                      variant="ghost"
+                    >
+                      <Calendar className="mr-1.5 size-3" />
+                      Set date
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            </div>
-          </SidebarSection>
+              </SidebarSection>
 
-          <SidebarSection
-            icon={<Tag className="size-3.5" />}
-            onOpenChange={(open) => setSidebarSection("labels", open)}
-            open={sidebarState.labels}
-            title="Labels"
-          >
-            <div className="flex flex-wrap items-center gap-1.5">
-              <Badge className="gap-1 font-normal" variant="secondary">
-                <span className="size-1.5 rounded-full bg-blue-500" />
-                feature-request
-              </Badge>
-              <Badge className="gap-1 font-normal" variant="secondary">
-                <span className="size-1.5 rounded-full bg-purple-500" />
-                ux
-              </Badge>
-              <Badge className="gap-1 font-normal" variant="secondary">
-                <span className="size-1.5 rounded-full bg-emerald-500" />
-                enhancement
-              </Badge>
-              <Button
-                className="h-6 gap-1 px-2 text-xs text-muted-foreground"
-                size="sm"
-                variant="ghost"
+              <SidebarSection
+                icon={<Users className="size-3.5" />}
+                onOpenChange={(open) => setSidebarSection("people", open)}
+                open={sidebarState.people}
+                title="People"
               >
-                <Plus className="size-3" />
-                Add
-              </Button>
-            </div>
-          </SidebarSection>
+                <div className="flex flex-col">
+                  <div className="flex items-center justify-between py-1.5">
+                    <span className="text-sm text-muted-foreground">
+                      Assignee
+                    </span>
+                    {canEditStatus ? (
+                      <Select
+                        items={assigneeSelectItems}
+                        onValueChange={(value) =>
+                          assigneeMutation.mutate({
+                            assignedProfileId: value || null,
+                            feedbackId: feedback.id,
+                          })
+                        }
+                        value={feedback.assignedProfileId ?? ""}
+                      >
+                        <SelectTrigger className="max-w-48 min-w-32">
+                          <SelectValue placeholder="Unassigned" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="">Unassigned</SelectItem>
+                          {assigneeOptions.map(
+                            (member: {
+                              profile?: ProfileSummary | null
+                              profileId: string
+                            }) => (
+                              <SelectItem
+                                key={member.profileId}
+                                value={member.profileId}
+                              >
+                                {member.profile?.name ??
+                                  member.profile?.username}
+                              </SelectItem>
+                            )
+                          )}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <span className="text-sm">
+                        {feedbackData.assignedProfile?.name ??
+                          feedbackData.assignedProfile?.username ??
+                          "Unassigned"}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center justify-between py-1.5">
+                    <span className="text-sm text-muted-foreground">
+                      Author
+                    </span>
+                    <ProfileLinkOrUnknown
+                      profile={feedbackData.author}
+                      display="name"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between py-1.5">
+                    <span className="text-sm text-muted-foreground">
+                      Watchers
+                    </span>
+                    <div className="flex items-center -space-x-1.5">
+                      <div className="size-5 rounded-full border-2 border-background bg-emerald-500" />
+                      <div className="size-5 rounded-full border-2 border-background bg-blue-500" />
+                      <div className="size-5 rounded-full border-2 border-background bg-purple-500" />
+                      <span className="ml-2 text-xs text-muted-foreground">
+                        +12
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </SidebarSection>
 
-          <SidebarSection
-            icon={<LinkIcon className="size-3.5" />}
-            onOpenChange={(open) => setSidebarSection("related", open)}
-            open={sidebarState.related}
-            title="Related"
-          >
-            <div className="flex flex-col">
-              <div className="flex cursor-pointer items-center gap-2.5 rounded-md py-2 transition-colors hover:bg-muted/50">
-                <StatusIcon colored size="14" status="completed" />
-                <span className="flex-1 truncate text-sm">
-                  Add dark mode support
-                </span>
-                <ChevronRight className="size-4 text-muted-foreground" />
-              </div>
-              <div className="flex cursor-pointer items-center gap-2.5 rounded-md py-2 transition-colors hover:bg-muted/50">
-                <StatusIcon colored size="14" status="in-progress" />
-                <span className="flex-1 truncate text-sm">
-                  Improve mobile responsiveness
-                </span>
-                <ChevronRight className="size-4 text-muted-foreground" />
-              </div>
-              <Link
-                className={cn(
-                  buttonVariants({ size: "sm", variant: "ghost" }),
-                  "mt-1 h-8 w-full justify-start gap-1.5 px-0 text-xs text-muted-foreground"
-                )}
-                params={{ org: params.org, project: params.project }}
-                to="/@{$org}/$project/feedback"
+              <SidebarSection
+                icon={<Tag className="size-3.5" />}
+                onOpenChange={(open) => setSidebarSection("labels", open)}
+                open={sidebarState.labels}
+                title="Labels"
               >
-                <Plus className="size-3" />
-                Link related feedback
-              </Link>
-            </div>
-          </SidebarSection>
-        </div>
-      </div>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <Badge className="gap-1 font-normal" variant="secondary">
+                    <span className="size-1.5 rounded-full bg-blue-500" />
+                    feature-request
+                  </Badge>
+                  <Badge className="gap-1 font-normal" variant="secondary">
+                    <span className="size-1.5 rounded-full bg-purple-500" />
+                    ux
+                  </Badge>
+                  <Badge className="gap-1 font-normal" variant="secondary">
+                    <span className="size-1.5 rounded-full bg-emerald-500" />
+                    enhancement
+                  </Badge>
+                  <Button
+                    className="h-6 gap-1 px-2 text-xs text-muted-foreground"
+                    size="sm"
+                    variant="ghost"
+                  >
+                    <Plus className="size-3" />
+                    Add
+                  </Button>
+                </div>
+              </SidebarSection>
 
-      <div className="flex flex-col gap-4 py-8 md:col-span-8">
-        <div className="flex w-full items-center border-b pb-2">
-          <h2 className="flex items-center gap-1.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-            <MessageSquare className="size-3.5" />
-            Discussion
-          </h2>
-        </div>
-        <CommentEditorProvider>
-          {firstComment || timelineItems.length > 0 ? (
-            <ul
-              className={cn(
-                "relative flex flex-col gap-6",
-                timelineItems.length > 0 &&
-                  "before:absolute before:top-0 before:bottom-0 before:left-[33px] before:z-0 before:border-r before:border-border"
-              )}
-            >
-              {firstComment ? (
-                <CommentCard
-                  badges={
-                    <>
-                      <CommentBadge kind="author" label="Author" />
-                      {firstCommentWithEmotes?.isTeamMember ? (
-                        <CommentBadge kind="team" label="Team" />
-                      ) : null}
-                    </>
-                  }
-                  comment={
-                    {
-                      ...firstComment,
-                      author: feedbackData.author,
-                      canDelete: firstCommentWithEmotes?.canDelete,
-                      canEdit: firstCommentWithEmotes?.canEdit,
-                      emoteCounts: firstCommentWithEmotes?.emoteCounts,
-                    } as ThreadComment
-                  }
-                  currentProfileId={currentProfile?.id}
-                  isDeleting={commentDeleteMutation.isPending}
-                  isUpdating={commentUpdateMutation.isPending}
-                  onDelete={(commentId) =>
-                    commentDeleteMutation.mutate({ _id: commentId })
-                  }
-                  onToggleEmote={(commentId, content) =>
-                    commentEmoteMutation.mutate({
-                      content,
-                      feedbackCommentId: commentId,
-                      feedbackId: feedback.id,
-                    })
-                  }
-                  onUpdate={(commentId, content) =>
-                    commentUpdateMutation.mutate({ _id: commentId, content })
-                  }
-                  verb="opened this feedback"
-                />
-              ) : null}
-              {timelineItems.map((item) =>
-                item.type === "comment" ? (
-                  <CommentCard
-                    badges={
-                      <>
-                        {item.data.author?.id === feedback.authorProfileId ? (
+              <SidebarSection
+                icon={<LinkIcon className="size-3.5" />}
+                onOpenChange={(open) => setSidebarSection("related", open)}
+                open={sidebarState.related}
+                title="Related"
+              >
+                <div className="flex flex-col">
+                  <div className="flex cursor-pointer items-center gap-2.5 rounded-md py-2 transition-colors hover:bg-muted/50">
+                    <StatusIcon colored size="14" status="completed" />
+                    <span className="flex-1 truncate text-sm">
+                      Add dark mode support
+                    </span>
+                    <ChevronRight className="size-4 text-muted-foreground" />
+                  </div>
+                  <div className="flex cursor-pointer items-center gap-2.5 rounded-md py-2 transition-colors hover:bg-muted/50">
+                    <StatusIcon colored size="14" status="in-progress" />
+                    <span className="flex-1 truncate text-sm">
+                      Improve mobile responsiveness
+                    </span>
+                    <ChevronRight className="size-4 text-muted-foreground" />
+                  </div>
+                  <Link
+                    className={cn(
+                      buttonVariants({ size: "sm", variant: "ghost" }),
+                      "mt-1 h-8 w-full justify-start gap-1.5 px-0 text-xs text-muted-foreground"
+                    )}
+                    params={{ org: params.org, project: params.project }}
+                    to="/@{$org}/$project/feedback"
+                  >
+                    <Plus className="size-3" />
+                    Link related feedback
+                  </Link>
+                </div>
+              </SidebarSection>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-4 py-8 md:col-span-8">
+            <div className="flex w-full items-center border-b pb-2">
+              <h2 className="flex items-center gap-1.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                <MessageSquare className="size-3.5" />
+                Discussion
+              </h2>
+            </div>
+            <CommentEditorProvider>
+              {firstComment || timelineItems.length > 0 ? (
+                <ul
+                  className={cn(
+                    "relative flex flex-col gap-6",
+                    timelineItems.length > 0 &&
+                      "before:absolute before:top-0 before:bottom-0 before:left-[33px] before:z-0 before:border-r before:border-border"
+                  )}
+                >
+                  {firstComment ? (
+                    <CommentCard
+                      badges={
+                        <>
                           <CommentBadge kind="author" label="Author" />
-                        ) : null}
-                        {item.data.isTeamMember ? (
-                          <CommentBadge kind="team" label="Team" />
-                        ) : null}
-                        {feedback.answerCommentId === item.data.id ? (
-                          <CommentBadge kind="answer" label="Answer" />
-                        ) : null}
-                      </>
-                    }
-                    className={
-                      feedback.answerCommentId === item.data.id
-                        ? "border-green-500 dark:border-green-600"
-                        : undefined
-                    }
-                    comment={item.data as ThreadComment}
-                    currentProfileId={currentProfile?.id}
-                    dropdownItems={
-                      canMarkAnswer ? (
-                        <DropdownMenuItem
-                          onClick={() =>
-                            answerMutation.mutate({
-                              commentId:
-                                feedback.answerCommentId === item.data.id
-                                  ? null
-                                  : item.data.id,
-                              feedbackId: feedback.id,
-                            })
-                          }
-                        >
-                          <Check size={14} />
-                          {feedback.answerCommentId === item.data.id
-                            ? "Unmark as answer"
-                            : "Mark as answer"}
-                        </DropdownMenuItem>
-                      ) : null
-                    }
-                    isDeleting={commentDeleteMutation.isPending}
-                    isUpdating={commentUpdateMutation.isPending}
-                    key={item.data.id}
-                    onDelete={(commentId) =>
-                      commentDeleteMutation.mutate({ _id: commentId })
-                    }
-                    onToggleEmote={(commentId, content) =>
-                      commentEmoteMutation.mutate({
-                        content,
-                        feedbackCommentId: commentId,
-                        feedbackId: feedback.id,
-                      })
-                    }
-                    onUpdate={(commentId, content) =>
-                      commentUpdateMutation.mutate({ _id: commentId, content })
-                    }
-                    railClassName={
-                      feedback.answerCommentId === item.data.id
-                        ? "border-r-green-700 bg-linear-to-b from-green-400/20 via-green-400/10 to-transparent"
-                        : undefined
-                    }
-                  />
-                ) : (
-                  <FeedbackEventItem event={item.data} key={item.data.id} />
-                )
-              )}
-            </ul>
-          ) : null}
+                          {firstCommentWithEmotes?.isTeamMember ? (
+                            <CommentBadge kind="team" label="Team" />
+                          ) : null}
+                        </>
+                      }
+                      comment={
+                        {
+                          ...firstComment,
+                          author: feedbackData.author,
+                          canDelete: firstCommentWithEmotes?.canDelete,
+                          canEdit: firstCommentWithEmotes?.canEdit,
+                          emoteCounts: firstCommentWithEmotes?.emoteCounts,
+                        } as ThreadComment
+                      }
+                      currentProfileId={currentProfile?.id}
+                      isDeleting={commentDeleteMutation.isPending}
+                      isUpdating={commentUpdateMutation.isPending}
+                      onDelete={(commentId) =>
+                        commentDeleteMutation.mutate({ _id: commentId })
+                      }
+                      onToggleEmote={(commentId, content) =>
+                        commentEmoteMutation.mutate({
+                          content,
+                          feedbackCommentId: commentId,
+                          feedbackId: feedback.id,
+                        })
+                      }
+                      onUpdate={(commentId, content) =>
+                        commentUpdateMutation.mutate({
+                          _id: commentId,
+                          content,
+                        })
+                      }
+                      verb="opened this feedback"
+                    />
+                  ) : null}
+                  {timelineItems.map((item) =>
+                    item.type === "comment" ? (
+                      <CommentCard
+                        badges={
+                          <>
+                            {item.data.author?.id ===
+                            feedback.authorProfileId ? (
+                              <CommentBadge kind="author" label="Author" />
+                            ) : null}
+                            {item.data.isTeamMember ? (
+                              <CommentBadge kind="team" label="Team" />
+                            ) : null}
+                            {feedback.answerCommentId === item.data.id ? (
+                              <CommentBadge kind="answer" label="Answer" />
+                            ) : null}
+                          </>
+                        }
+                        className={
+                          feedback.answerCommentId === item.data.id
+                            ? "border-green-500 dark:border-green-600"
+                            : undefined
+                        }
+                        comment={item.data as ThreadComment}
+                        currentProfileId={currentProfile?.id}
+                        dropdownItems={
+                          canMarkAnswer ? (
+                            <DropdownMenuItem
+                              onClick={() =>
+                                answerMutation.mutate({
+                                  commentId:
+                                    feedback.answerCommentId === item.data.id
+                                      ? null
+                                      : item.data.id,
+                                  feedbackId: feedback.id,
+                                })
+                              }
+                            >
+                              <Check size={14} />
+                              {feedback.answerCommentId === item.data.id
+                                ? "Unmark as answer"
+                                : "Mark as answer"}
+                            </DropdownMenuItem>
+                          ) : null
+                        }
+                        isDeleting={commentDeleteMutation.isPending}
+                        isUpdating={commentUpdateMutation.isPending}
+                        key={item.data.id}
+                        onDelete={(commentId) =>
+                          commentDeleteMutation.mutate({ _id: commentId })
+                        }
+                        onToggleEmote={(commentId, content) =>
+                          commentEmoteMutation.mutate({
+                            content,
+                            feedbackCommentId: commentId,
+                            feedbackId: feedback.id,
+                          })
+                        }
+                        onUpdate={(commentId, content) =>
+                          commentUpdateMutation.mutate({
+                            _id: commentId,
+                            content,
+                          })
+                        }
+                        railClassName={
+                          feedback.answerCommentId === item.data.id
+                            ? "border-r-green-700 bg-linear-to-b from-green-400/20 via-green-400/10 to-transparent"
+                            : undefined
+                        }
+                      />
+                    ) : (
+                      <FeedbackEventItem event={item.data} key={item.data.id} />
+                    )
+                  )}
+                </ul>
+              ) : null}
 
-          <CommentForm
-            isAuthenticated={isAuthenticated}
-            isSubmitting={commentCreateMutation.isPending}
-            onSubmit={async (content) => {
-              await commentCreateMutation.mutateAsync({
-                content,
-                feedbackId: feedback.id,
-              })
-            }}
-            placeholder="Leave a comment..."
-            redirectTo={`/@${params.org}/${params.project}/feedback/${params.slug}`}
-            signedOut="rich"
-            submitLabel="Comment"
-          />
-        </CommentEditorProvider>
-      </div>
-      </div>
+              <CommentForm
+                isAuthenticated={isAuthenticated}
+                isSubmitting={commentCreateMutation.isPending}
+                onSubmit={async (content) => {
+                  await commentCreateMutation.mutateAsync({
+                    content,
+                    feedbackId: feedback.id,
+                  })
+                }}
+                placeholder="Leave a comment..."
+                redirectTo={`/@${params.org}/${params.project}/feedback/${params.slug}`}
+                signedOut="rich"
+                submitLabel="Comment"
+              />
+            </CommentEditorProvider>
+          </div>
+        </div>
       </div>
     </div>
   )
-
 }
 
 function CommentBadge({
@@ -777,7 +808,7 @@ function FeedbackEventItem({ event }: { event: FeedbackEventData }) {
   const createdAt = getTimestamp(event.createdAt)
 
   return (
-    <li className="relative z-10 flex items-start gap-3 bg-background py-2 pl-4">
+    <li className="relative z-10 flex items-start gap-3 py-2 pl-4">
       <div className="ml-0.5 flex h-6 w-8 shrink-0 items-center justify-center">
         <div className="flex h-6 w-6 items-center justify-center rounded-full border bg-muted">
           <Icon className="h-3 w-3 text-muted-foreground" />

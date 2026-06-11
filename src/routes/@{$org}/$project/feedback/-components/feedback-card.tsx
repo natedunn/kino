@@ -1,23 +1,23 @@
-import { ClickableContainer } from '@/components/clickable-container';
-import { StatusIcon } from '@/icons';
-import { stripHtml, truncateToNearestSpace } from '@/lib/utils/truncate';
+import { ClickableContainer } from "@/components/clickable-container"
+import { StatusIcon } from "@/icons"
+import { stripHtml, truncateToNearestSpace } from "@/lib/utils/truncate"
 
-import { UpvoteButton } from './upvote-button';
+import { UpvoteButton } from "./upvote-button"
 
 export function FeedbackCard({
   onNavigationClick,
   feedback,
   isAuthenticated,
 }: {
-  onNavigationClick: () => void;
-  feedback: any;
-  isAuthenticated: boolean;
+  onNavigationClick: () => void
+  feedback: any
+  isAuthenticated: boolean
 }) {
-  const { title, firstComment, upvotes, board, status, hasUpvoted } = feedback;
+  const { title, firstComment, upvotes, board, status, hasUpvoted } = feedback
 
   return (
-    <li className="flex overflow-hidden rounded-lg border">
-      <div className="border-r bg-muted px-4 pt-4">
+    <li className="flex rounded-lg border bg-card">
+      <div className="rounded-l-lg border-r bg-accent px-4 pt-4">
         <UpvoteButton
           feedbackId={feedback.id}
           initialCount={upvotes}
@@ -26,7 +26,7 @@ export function FeedbackCard({
         />
       </div>
       <ClickableContainer
-        className="group flex w-full flex-col bg-muted p-5 transition-colors duration-100 ease-in-out hocus:bg-foreground/3 hocus:outline-primary"
+        className="group flex w-full flex-col rounded-r-lg p-5 transition-colors duration-100 ease-in-out hocus:bg-accent/50 hocus:outline-primary"
         onClick={() => onNavigationClick?.()}
       >
         <div className="flex items-start gap-4">
@@ -38,7 +38,10 @@ export function FeedbackCard({
               {title}
             </span>
             <div className="mt-2 h-full max-h-62.5 space-y-4 overflow-hidden text-sm text-ellipsis text-muted-foreground">
-              {truncateToNearestSpace(stripHtml(firstComment?.content ?? ''), 300)}
+              {truncateToNearestSpace(
+                stripHtml(firstComment?.content ?? ""),
+                300
+              )}
             </div>
             {board ? (
               <div className="mt-8 text-sm text-muted-foreground">
@@ -49,5 +52,5 @@ export function FeedbackCard({
         </div>
       </ClickableContainer>
     </li>
-  );
+  )
 }
