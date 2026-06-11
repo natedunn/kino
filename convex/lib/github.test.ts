@@ -1,4 +1,3 @@
-import { createHmac } from "node:crypto"
 import { afterEach, describe, expect, it } from "vitest"
 import {
   createGitHubAppState,
@@ -11,7 +10,6 @@ import {
   sanitizeGitHubRepository,
   sha256Hex,
   verifyGitHubAppState,
-  verifyGitHubWebhookSignature,
 } from "./github"
 
 const ORIGINAL_ENV = { ...process.env }
@@ -218,23 +216,5 @@ describe("github helpers", () => {
         "https://evil.example.com/api/github/callback"
       )
     ).toThrow("GitHub callback target URL is not trusted")
-  })
-
-  it("verifies GitHub webhook signatures", async () => {
-    setGitHubAppEnv()
-    const body = JSON.stringify({ action: "opened" })
-    const signature = `sha256=${createHmac("sha256", "webhook-secret")
-      .update(body)
-      .digest("hex")}`
-
-    await expect(
-      verifyGitHubWebhookSignature({ body, signature })
-    ).resolves.toBe(true)
-    await expect(
-      verifyGitHubWebhookSignature({ body, signature: "sha256=bad" })
-    ).resolves.toBe(false)
-    await expect(
-      verifyGitHubWebhookSignature({ body, signature: undefined })
-    ).resolves.toBe(false)
   })
 })

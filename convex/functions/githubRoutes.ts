@@ -7,7 +7,6 @@ import {
   listUserInstallations,
   sanitizeGitHubInstallationDetails,
   verifyGitHubAppState,
-  verifyGitHubWebhookSignature,
 } from "../lib/github"
 import { createGithubCaller } from "./generated/github.runtime"
 
@@ -27,7 +26,7 @@ function orgGitHubSettingsUrl(args: {
   status: "connected" | "error"
 }) {
   const siteUrl = (args.siteUrl ?? getEnv().SITE_URL).replace(/\/$/, "")
-  return `${siteUrl}/@${args.orgSlug}/options/integrations?github=${args.status}`
+  return `${siteUrl}/@${args.orgSlug}/settings/integrations?github=${args.status}`
 }
 
 function githubSettingsUrl(args: {
@@ -60,28 +59,6 @@ async function siteUrlFromState(state: string | undefined) {
     return new URL(payload.targetUrl).origin
   } catch {
     return getEnv().SITE_URL
-  }
-}
-
-function summarizeWebhookPayload(payload: any) {
-  return {
-    action: typeof payload.action === "string" ? payload.action : undefined,
-    installationId:
-      typeof payload.installation?.id === "number"
-        ? payload.installation.id
-        : undefined,
-    repositoryFullName:
-      typeof payload.repository?.full_name === "string"
-        ? payload.repository.full_name
-        : undefined,
-    repositoryId:
-      typeof payload.repository?.id === "number"
-        ? payload.repository.id
-        : undefined,
-    sender:
-      typeof payload.sender?.login === "string"
-        ? payload.sender.login
-        : undefined,
   }
 }
 
@@ -231,45 +208,7 @@ export const oauthCallback = publicRoute
     }
   })
 
-export const webhook = publicRoute
-  .post("/api/github/webhook")
-  .mutation(async ({ ctx, c }) => {
-    const body = await c.req.text()
-    const signature = c.req.header("x-hub-signature-256")
-    const valid = await verifyGitHubWebhookSignature({ body, signature })
-    if (!valid) {
-      return c.json({ error: "Invalid signature" }, 401)
-    }
-
-    const deliveryId = c.req.header("x-github-delivery")
-    const event = c.req.header("x-github-event")
-    if (!deliveryId || !event) {
-      return c.json({ error: "Missing GitHub webhook headers" }, 400)
-    }
-
-    let payload: any
-    try {
-      payload = JSON.parse(body)
-    } catch {
-      return c.json({ error: "Invalid JSON payload" }, 400)
-    }
-
-    const summary = summarizeWebhookPayload(payload)
-    const caller = createGithubCaller(ctx)
-    const result = await caller.recordWebhookDelivery({
-      action: summary.action,
-      deliveryId,
-      event,
-      installationId: summary.installationId,
-      payloadSummary: summary,
-      repoId: summary.repositoryId,
-    })
-
-    return c.json({ ok: true, ...result })
-  })
-
 export const githubRoutes = router({
   callback,
   oauthCallback,
-  webhook,
 })

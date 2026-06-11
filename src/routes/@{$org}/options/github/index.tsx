@@ -1,10 +1,10 @@
 import { Navigate, createFileRoute } from "@tanstack/react-router"
 
 export const Route = createFileRoute("/@{$org}/options/github/")({
-  component: GitHubOptionsRedirectRoute,
+  component: OrganizationOptionsGitHubRedirectRoute,
 })
 
-function GitHubOptionsRedirectRoute() {
+function OrganizationOptionsGitHubRedirectRoute() {
   const params = Route.useParams()
   const search = Route.useSearch() as { github?: string }
 
@@ -12,7 +12,7 @@ function GitHubOptionsRedirectRoute() {
     <Navigate
       params={params}
       search={{ github: search.github }}
-      to="/@{$org}/options/integrations"
+      to="/@{$org}/settings/integrations"
     />
   )
 }

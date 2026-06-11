@@ -26,7 +26,6 @@ import {
   githubConnectionStateTable,
   githubInstallationTable,
   githubRepositoryConnectionTable,
-  githubWebhookDeliveryTable,
 } from "./schema"
 
 const connectionModeSchema = z.enum(["read", "read_write"])
@@ -359,27 +358,9 @@ export const getProjectIntegration = authQuery
     const connections = rawConnections.filter(
       (connection: any) => !connection.deletedTime
     )
-    const recentDeliveries = (
-      await Promise.all(
-        installations.map((installation: any) =>
-          ctx.db
-            .query("githubWebhookDelivery")
-            .withIndex("by_githubInstallationId", (q: any) =>
-              q.eq("githubInstallationId", installation._id)
-            )
-            .order("desc")
-            .take(5)
-        )
-      )
-    )
-      .flat()
-      .sort((left: any, right: any) => right.receivedAt - left.receivedAt)
-      .slice(0, 20)
-
     return {
       connections: connections.map(toPublicDoc),
       installations: installations.map(toPublicDoc),
-      recentDeliveries: recentDeliveries.map(toPublicDoc),
     }
   })
 
@@ -408,26 +389,8 @@ export const getOrgIntegration = authQuery
     const installations = rawInstallations
       .filter((installation: any) => installation.status === "active")
       .slice(0, 20)
-    const recentDeliveries = (
-      await Promise.all(
-        installations.map((installation: any) =>
-          ctx.db
-            .query("githubWebhookDelivery")
-            .withIndex("by_githubInstallationId", (q: any) =>
-              q.eq("githubInstallationId", installation._id)
-            )
-            .order("desc")
-            .take(5)
-        )
-      )
-    )
-      .flat()
-      .sort((left: any, right: any) => right.receivedAt - left.receivedAt)
-      .slice(0, 20)
-
     return {
       installations: installations.map(toPublicDoc),
-      recentDeliveries: recentDeliveries.map(toPublicDoc),
     }
   })
 
@@ -867,87 +830,6 @@ export const disconnectRepository = authMutation
     })
 
     return { success: true }
-  })
-
-export const recordWebhookDelivery = privateMutation
-  .input(
-    z.object({
-      action: z.string().optional(),
-      deliveryId: z.string(),
-      event: z.string(),
-      installationId: z.number().int().optional(),
-      payloadSummary: z.any().optional(),
-      repoId: z.number().int().optional(),
-    })
-  )
-  .mutation(async ({ ctx, input }) => {
-    const existing = await ctx.db
-      .query("githubWebhookDelivery")
-      .withIndex("by_deliveryId", (q: any) =>
-        q.eq("deliveryId", input.deliveryId)
-      )
-      .unique()
-    if (existing) {
-      return { duplicate: true, deliveryId: existing._id }
-    }
-
-    const installation = input.installationId
-      ? await ctx.db
-          .query("githubInstallation")
-          .withIndex("by_installationId", (q: any) =>
-            q.eq("installationId", input.installationId)
-          )
-          .first()
-      : null
-    const now = Date.now()
-
-    const [delivery] = await ctx.orm
-      .insert(githubWebhookDeliveryTable)
-      .values({
-        action: input.action,
-        deliveryId: input.deliveryId,
-        event: input.event,
-        githubInstallationId: installation?._id,
-        installationId: input.installationId,
-        payloadSummary: input.payloadSummary,
-        receivedAt: now,
-        repoId: input.repoId,
-        status: "processed",
-        processedAt: now,
-        updatedTime: now,
-      })
-      .returning()
-
-    if (installation && input.event === "installation") {
-      const status =
-        input.action === "deleted"
-          ? "deleted"
-          : input.action === "suspend"
-            ? "suspended"
-            : input.action === "unsuspend"
-              ? "active"
-              : installation.status
-      if (status !== installation.status) {
-        await ctx.orm
-          .update(githubInstallationTable)
-          .set({ status, updatedTime: now })
-          .where(eq(githubInstallationTable.id, installation._id as any))
-      }
-    }
-
-    if (input.repoId) {
-      const connections = await ctx.db
-        .query("githubRepositoryConnection")
-        .withIndex("by_repoId", (q: any) => q.eq("repoId", input.repoId))
-        .take(20)
-      await Promise.all(
-        connections.map((connection: any) =>
-          ctx.db.patch(connection._id, { lastWebhookAt: now, updatedTime: now })
-        )
-      )
-    }
-
-    return { duplicate: false, deliveryId: delivery.id }
   })
 
 export type GithubInstallationForExternal = GitHubInstallationDetails
