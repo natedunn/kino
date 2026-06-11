@@ -4,7 +4,6 @@ import {
   ArrowUpRight,
   CircleCheck,
   FolderOpen,
-  GitBranch,
   Settings,
   User,
 } from "lucide-react"
@@ -93,20 +92,12 @@ function OrganizationRoute() {
               </h1>
             </div>
             {orgData.permissions.canEdit ? (
-              <div className="flex items-center gap-2">
-                <Button asChild variant="outline">
-                  <Link params={params} to="/@{$org}/integrations/github">
-                    <GitBranch />
-                    GitHub
-                  </Link>
-                </Button>
-                <Button asChild variant="outline">
-                  <Link params={params} to="/@{$org}/edit">
-                    <Settings />
-                    Edit
-                  </Link>
-                </Button>
-              </div>
+              <Button asChild variant="outline">
+                <Link params={params} to="/@{$org}/options">
+                  <Settings />
+                  Options
+                </Link>
+              </Button>
             ) : null}
           </div>
         </div>

@@ -27,7 +27,7 @@ function orgGitHubSettingsUrl(args: {
   status: "connected" | "error"
 }) {
   const siteUrl = (args.siteUrl ?? getEnv().SITE_URL).replace(/\/$/, "")
-  return `${siteUrl}/@${args.orgSlug}/integrations/github?github=${args.status}`
+  return `${siteUrl}/@${args.orgSlug}/options/github?github=${args.status}`
 }
 
 function githubSettingsUrl(args: {
@@ -75,9 +75,13 @@ function summarizeWebhookPayload(payload: any) {
         ? payload.repository.full_name
         : undefined,
     repositoryId:
-      typeof payload.repository?.id === "number" ? payload.repository.id : undefined,
+      typeof payload.repository?.id === "number"
+        ? payload.repository.id
+        : undefined,
     sender:
-      typeof payload.sender?.login === "string" ? payload.sender.login : undefined,
+      typeof payload.sender?.login === "string"
+        ? payload.sender.login
+        : undefined,
   }
 }
 
@@ -105,7 +109,9 @@ export const callback = publicRoute
       const userInstallations = await listUserInstallations(userToken)
       if (!searchParams.installation_id) {
         const result = await caller.completeUserInstallationsCallback({
-          installations: userInstallations.map(sanitizeGitHubInstallationDetails),
+          installations: userInstallations.map(
+            sanitizeGitHubInstallationDetails
+          ),
           state: searchParams.state,
         })
         redirect = githubSettingsUrl({
@@ -121,10 +127,14 @@ export const callback = publicRoute
         (installation) => installation.id === searchParams.installation_id
       )
       if (!userCanAccessInstallation) {
-        throw new Error("GitHub installation was not available to the authorizing user")
+        throw new Error(
+          "GitHub installation was not available to the authorizing user"
+        )
       }
 
-      const installation = await getAppInstallation(searchParams.installation_id)
+      const installation = await getAppInstallation(
+        searchParams.installation_id
+      )
       const result = await caller.completeInstallationCallback({
         installation: sanitizeGitHubInstallationDetails(installation),
         setupAction: searchParams.setup_action,

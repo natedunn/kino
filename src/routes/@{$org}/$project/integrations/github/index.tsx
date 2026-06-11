@@ -28,9 +28,7 @@ type RepositoryOption = {
   private: boolean
 }
 
-export const Route = createFileRoute(
-  "/@{$org}/$project/integrations/github/"
-)({
+export const Route = createFileRoute("/@{$org}/$project/integrations/github/")({
   component: GitHubIntegrationRoute,
 })
 
@@ -202,7 +200,7 @@ function GitHubIntegrationRoute() {
                   <Button asChild type="button" variant="outline">
                     <Link
                       params={{ org: params.org }}
-                      to="/@{$org}/integrations/github"
+                      to="/@{$org}/options/github"
                     >
                       <GitBranch className="size-4" />
                       Manage GitHub access
@@ -262,7 +260,9 @@ function GitHubIntegrationRoute() {
 
               <div className="flex flex-wrap items-center gap-3">
                 <Button
-                  disabled={!activeInstallationId || repositoriesQuery.isPending}
+                  disabled={
+                    !activeInstallationId || repositoriesQuery.isPending
+                  }
                   onClick={() => {
                     if (!activeInstallationId) return
                     repositoriesQuery.mutate({
@@ -290,7 +290,10 @@ function GitHubIntegrationRoute() {
                   </SelectTrigger>
                   <SelectContent>
                     {repositories.map((repository: RepositoryOption) => (
-                      <SelectItem key={repository.id} value={String(repository.id)}>
+                      <SelectItem
+                        key={repository.id}
+                        value={String(repository.id)}
+                      >
                         {repository.fullName}
                       </SelectItem>
                     ))}
@@ -384,7 +387,9 @@ function GitHubIntegrationRoute() {
                       className="rounded-lg border p-3 text-sm"
                       key={connection.id}
                     >
-                      <div className="font-medium">{connection.repoFullName}</div>
+                      <div className="font-medium">
+                        {connection.repoFullName}
+                      </div>
                       <div className="mt-1 text-muted-foreground">
                         {connection.mode === "read_write"
                           ? "Read and write"
@@ -402,7 +407,8 @@ function GitHubIntegrationRoute() {
                 Webhook health
               </h2>
               <div className="mt-3 space-y-2 text-sm text-muted-foreground">
-                {(integrationQuery.data?.recentDeliveries ?? []).length === 0 ? (
+                {(integrationQuery.data?.recentDeliveries ?? []).length ===
+                0 ? (
                   <p>No webhook deliveries recorded yet.</p>
                 ) : (
                   integrationQuery.data?.recentDeliveries.map((delivery) => (
