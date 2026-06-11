@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { createFileRoute, Link } from "@tanstack/react-router"
-import { GitBranch, ShieldCheck } from "lucide-react"
+import { GitBranch, ShieldCheck, Unplug } from "lucide-react"
 
 import { InlineAlert } from "@/components/inline-alert"
 import { EmptyState } from "@/components/kino/common"
@@ -69,6 +69,14 @@ function GitHubIntegrationRoute() {
       },
     })
   )
+  const disconnectRepository = useMutation(
+    crpc.github.disconnectRepository.mutationOptions({
+      onSuccess: () => {
+        setSelectedRepoId(null)
+        void integrationQuery.refetch()
+      },
+    })
+  )
 
   const installations = integrationQuery.data?.installations ?? []
   const connections = integrationQuery.data?.connections ?? []
@@ -96,6 +104,7 @@ function GitHubIntegrationRoute() {
     ? String(selectedRepository.id)
     : ""
   const hasInstallations = installations.length > 0
+  const activeConnection = connections[0] ?? null
 
   useEffect(() => {
     if (selectedInstallationId !== null) return
@@ -465,6 +474,49 @@ function GitHubIntegrationRoute() {
           <InlineAlert variant="success">
             Repository settings saved.
           </InlineAlert>
+        ) : null}
+
+        {activeConnection ? (
+          <section className="overflow-hidden rounded-xl border border-destructive/30 bg-card">
+            <div className="p-6">
+              <h3 className="text-sm font-semibold text-destructive">
+                Danger zone
+              </h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Disconnecting removes the GitHub sync for this project. You can
+                reconnect at any time.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t bg-muted/30 px-6 py-4">
+              <p className="text-xs text-muted-foreground">
+                This will stop syncing issues and discussions from GitHub.
+              </p>
+              <Button
+                disabled={disconnectRepository.isPending}
+                onClick={() => {
+                  disconnectRepository.mutate({
+                    connectionId: activeConnection.id,
+                    orgSlug: params.org,
+                    projectSlug: params.project,
+                  })
+                }}
+                type="button"
+                variant="destructive"
+              >
+                <Unplug className="size-4" />
+                {disconnectRepository.isPending
+                  ? "Disconnecting..."
+                  : "Disconnect repository"}
+              </Button>
+            </div>
+            {disconnectRepository.error ? (
+              <div className="border-t px-6 py-4">
+                <InlineAlert variant="danger">
+                  {disconnectRepository.error.message}
+                </InlineAlert>
+              </div>
+            ) : null}
+          </section>
         ) : null}
       </div>
     </div>
