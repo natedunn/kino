@@ -200,7 +200,7 @@ function GitHubIntegrationRoute() {
                   <Button asChild type="button" variant="outline">
                     <Link
                       params={{ org: params.org }}
-                      to="/@{$org}/options/github"
+                      to="/@{$org}/options/integrations"
                     >
                       <GitBranch className="size-4" />
                       Manage GitHub access

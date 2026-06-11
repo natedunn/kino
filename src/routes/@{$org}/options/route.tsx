@@ -26,8 +26,8 @@ function OrganizationOptionsRoute() {
     },
     {
       icon: GitBranch,
-      label: "GitHub",
-      to: "/@{$org}/options/github" as const,
+      label: "Integrations",
+      to: "/@{$org}/options/integrations" as const,
     },
   ]
 

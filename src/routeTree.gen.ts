@@ -28,6 +28,7 @@ import { Route as ApiGithubOauthCallbackRouteImport } from './routes/api/github/
 import { Route as ApiGithubCallbackRouteImport } from './routes/api/github/callback'
 import { Route as ApiGithubSplatRouteImport } from './routes/api/github/$'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as AtChar123orgChar125OptionsIntegrationsIndexRouteImport } from './routes/@{$org}/options/integrations/index'
 import { Route as AtChar123orgChar125OptionsGithubIndexRouteImport } from './routes/@{$org}/options/github/index'
 import { Route as AtChar123orgChar125OptionsGeneralIndexRouteImport } from './routes/@{$org}/options/general/index'
 import { Route as AtChar123orgChar125IntegrationsGithubIndexRouteImport } from './routes/@{$org}/integrations/github/index'
@@ -152,6 +153,12 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AtChar123orgChar125OptionsIntegrationsIndexRoute =
+  AtChar123orgChar125OptionsIntegrationsIndexRouteImport.update({
+    id: '/integrations/',
+    path: '/integrations/',
+    getParentRoute: () => AtChar123orgChar125OptionsRouteRoute,
+  } as any)
 const AtChar123orgChar125OptionsGithubIndexRoute =
   AtChar123orgChar125OptionsGithubIndexRouteImport.update({
     id: '/github/',
@@ -302,6 +309,7 @@ export interface FileRoutesByFullPath {
   '/@{$org}/integrations/github/': typeof AtChar123orgChar125IntegrationsGithubIndexRoute
   '/@{$org}/options/general/': typeof AtChar123orgChar125OptionsGeneralIndexRoute
   '/@{$org}/options/github/': typeof AtChar123orgChar125OptionsGithubIndexRoute
+  '/@{$org}/options/integrations/': typeof AtChar123orgChar125OptionsIntegrationsIndexRoute
   '/@{$org}/$project/feedback/boards/new': typeof AtChar123orgChar125ProjectFeedbackBoardsNewRoute
   '/@{$org}/$project/updates/$slug/edit': typeof AtChar123orgChar125ProjectUpdatesSlugEditRoute
   '/@{$org}/$project/feedback/$slug/': typeof AtChar123orgChar125ProjectFeedbackSlugIndexRoute
@@ -340,6 +348,7 @@ export interface FileRoutesByTo {
   '/@{$org}/integrations/github': typeof AtChar123orgChar125IntegrationsGithubIndexRoute
   '/@{$org}/options/general': typeof AtChar123orgChar125OptionsGeneralIndexRoute
   '/@{$org}/options/github': typeof AtChar123orgChar125OptionsGithubIndexRoute
+  '/@{$org}/options/integrations': typeof AtChar123orgChar125OptionsIntegrationsIndexRoute
   '/@{$org}/$project/feedback/boards/new': typeof AtChar123orgChar125ProjectFeedbackBoardsNewRoute
   '/@{$org}/$project/updates/$slug/edit': typeof AtChar123orgChar125ProjectUpdatesSlugEditRoute
   '/@{$org}/$project/feedback/$slug': typeof AtChar123orgChar125ProjectFeedbackSlugIndexRoute
@@ -382,6 +391,7 @@ export interface FileRoutesById {
   '/@{$org}/integrations/github/': typeof AtChar123orgChar125IntegrationsGithubIndexRoute
   '/@{$org}/options/general/': typeof AtChar123orgChar125OptionsGeneralIndexRoute
   '/@{$org}/options/github/': typeof AtChar123orgChar125OptionsGithubIndexRoute
+  '/@{$org}/options/integrations/': typeof AtChar123orgChar125OptionsIntegrationsIndexRoute
   '/@{$org}/$project/feedback/boards/new': typeof AtChar123orgChar125ProjectFeedbackBoardsNewRoute
   '/@{$org}/$project/updates/$slug/edit': typeof AtChar123orgChar125ProjectUpdatesSlugEditRoute
   '/@{$org}/$project/feedback/$slug/': typeof AtChar123orgChar125ProjectFeedbackSlugIndexRoute
@@ -425,6 +435,7 @@ export interface FileRouteTypes {
     | '/@{$org}/integrations/github/'
     | '/@{$org}/options/general/'
     | '/@{$org}/options/github/'
+    | '/@{$org}/options/integrations/'
     | '/@{$org}/$project/feedback/boards/new'
     | '/@{$org}/$project/updates/$slug/edit'
     | '/@{$org}/$project/feedback/$slug/'
@@ -463,6 +474,7 @@ export interface FileRouteTypes {
     | '/@{$org}/integrations/github'
     | '/@{$org}/options/general'
     | '/@{$org}/options/github'
+    | '/@{$org}/options/integrations'
     | '/@{$org}/$project/feedback/boards/new'
     | '/@{$org}/$project/updates/$slug/edit'
     | '/@{$org}/$project/feedback/$slug'
@@ -504,6 +516,7 @@ export interface FileRouteTypes {
     | '/@{$org}/integrations/github/'
     | '/@{$org}/options/general/'
     | '/@{$org}/options/github/'
+    | '/@{$org}/options/integrations/'
     | '/@{$org}/$project/feedback/boards/new'
     | '/@{$org}/$project/updates/$slug/edit'
     | '/@{$org}/$project/feedback/$slug/'
@@ -666,6 +679,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/auth/$'
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/@{$org}/options/integrations/': {
+      id: '/@{$org}/options/integrations/'
+      path: '/integrations'
+      fullPath: '/@{$org}/options/integrations/'
+      preLoaderRoute: typeof AtChar123orgChar125OptionsIntegrationsIndexRouteImport
+      parentRoute: typeof AtChar123orgChar125OptionsRouteRoute
     }
     '/@{$org}/options/github/': {
       id: '/@{$org}/options/github/'
@@ -879,6 +899,7 @@ interface AtChar123orgChar125OptionsRouteRouteChildren {
   AtChar123orgChar125OptionsIndexRoute: typeof AtChar123orgChar125OptionsIndexRoute
   AtChar123orgChar125OptionsGeneralIndexRoute: typeof AtChar123orgChar125OptionsGeneralIndexRoute
   AtChar123orgChar125OptionsGithubIndexRoute: typeof AtChar123orgChar125OptionsGithubIndexRoute
+  AtChar123orgChar125OptionsIntegrationsIndexRoute: typeof AtChar123orgChar125OptionsIntegrationsIndexRoute
 }
 
 const AtChar123orgChar125OptionsRouteRouteChildren: AtChar123orgChar125OptionsRouteRouteChildren =
@@ -888,6 +909,8 @@ const AtChar123orgChar125OptionsRouteRouteChildren: AtChar123orgChar125OptionsRo
       AtChar123orgChar125OptionsGeneralIndexRoute,
     AtChar123orgChar125OptionsGithubIndexRoute:
       AtChar123orgChar125OptionsGithubIndexRoute,
+    AtChar123orgChar125OptionsIntegrationsIndexRoute:
+      AtChar123orgChar125OptionsIntegrationsIndexRoute,
   }
 
 const AtChar123orgChar125OptionsRouteRouteWithChildren =
