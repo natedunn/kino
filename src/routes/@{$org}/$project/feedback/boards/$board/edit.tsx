@@ -40,7 +40,7 @@ function EditBoardRoute() {
       onSuccess: () => {
         navigate({
           params,
-          to: "/@{$org}/$project/options/boards",
+          to: "/@{$org}/$project/settings/boards",
         })
       },
     })
@@ -50,7 +50,7 @@ function EditBoardRoute() {
       onSuccess: () => {
         navigate({
           params: { org: params.org, project: params.project },
-          to: "/@{$org}/$project/options/boards",
+          to: "/@{$org}/$project/settings/boards",
         })
       },
     })
@@ -109,7 +109,7 @@ function EditBoardRoute() {
         <Link
           className="link-text inline-flex items-center gap-2 text-muted-foreground hocus:text-foreground"
           params={{ org: params.org, project: params.project }}
-          to="/@{$org}/$project/options/boards"
+          to="/@{$org}/$project/settings/boards"
         >
           <ChevronLeft className="size-3" />
           Back to all boards

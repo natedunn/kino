@@ -15,7 +15,7 @@ export function FeedbackOptions() {
             "group inline-flex! w-full items-center justify-between! text-left",
         })}
         params={{ org, project }}
-        to="/@{$org}/$project/options/boards"
+        to="/@{$org}/$project/settings/boards"
       >
         <span>All boards</span>
         <SquareArrowOutUpRight className="size-4 text-muted-foreground" />
@@ -27,7 +27,7 @@ export function FeedbackOptions() {
             "group inline-flex! w-full items-center justify-between! text-left",
         })}
         params={{ org, project }}
-        to="/@{$org}/$project/options/integrations"
+        to="/@{$org}/$project/settings/integrations"
       >
         <span>Integrations</span>
         <SquareArrowOutUpRight className="size-4 text-muted-foreground" />

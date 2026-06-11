@@ -1,10 +1,10 @@
 import { Navigate, createFileRoute } from "@tanstack/react-router"
 
-export const Route = createFileRoute("/@{$org}/$project/feedback/boards/")({
-  component: BoardsRedirectRoute,
+export const Route = createFileRoute("/@{$org}/$project/settings/")({
+  component: ProjectSettingsIndexRoute,
 })
 
-function BoardsRedirectRoute() {
+function ProjectSettingsIndexRoute() {
   const params = Route.useParams()
   return <Navigate params={params} to="/@{$org}/$project/settings/boards" />
 }

@@ -29,7 +29,7 @@ function NewBoardRoute() {
       onSuccess: () => {
         navigate({
           params,
-          to: "/@{$org}/$project/options/boards",
+          to: "/@{$org}/$project/settings/boards",
         })
       },
     })

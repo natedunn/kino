@@ -13,7 +13,7 @@ function ProjectIndexRoute() {
       <Link
         className="link-text mt-4 inline-flex text-sm"
         params={params}
-        to="/@{$org}/$project/options"
+        to="/@{$org}/$project/settings"
       >
         Project settings
       </Link>
