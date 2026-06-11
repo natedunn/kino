@@ -10,6 +10,7 @@ import {
   FolderInput,
   Info,
   Link as LinkIcon,
+  MessageSquare,
   Plus,
   Tag,
   UserMinus,
@@ -329,38 +330,45 @@ function FeedbackDetailRoute() {
   )
 
   return (
-    <div className="container flex flex-1 flex-col gap-8 md:grid md:grid-cols-12">
-      <div className="order-last py-6 md:col-span-4 md:border-l md:border-border/75">
-        <div className="sticky top-4 flex flex-col gap-6 md:pl-8">
-          <div>
-            <div className="flex items-center gap-3">
-              <UpvoteButton
-                feedbackId={feedback.id}
-                initialCount={feedback.upvotes}
-                initialHasUpvoted={feedbackData.hasUpvoted}
-                isAuthenticated={isAuthenticated}
-              />
-              <div className="flex-1">
-                <div className="text-sm font-medium">
-                  {feedback.upvotes} upvote{feedback.upvotes !== 1 ? "s" : ""}
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  {feedbackData.hasUpvoted
-                    ? "You've upvoted this"
-                    : "Show your support"}
-                </div>
-              </div>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button className="size-8" size="icon" variant="ghost">
-                    <Bell className="size-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Subscribe to updates</TooltipContent>
-              </Tooltip>
+    <div className="flex flex-1 flex-col">
+      <div className="border-b">
+        <div className="container flex items-start gap-4 pt-10 pb-6">
+          <div className="mt-1">
+            <StatusIcon colored size="28" status={feedback.status} />
+          </div>
+          <div className="flex flex-1 flex-col gap-2">
+            <h1 className="text-3xl">{feedback.title}</h1>
+            <div className="text-sm text-muted-foreground">
+              <span suppressHydrationWarning>
+                {feedback.status === "open" ? "Opened" : "Updated"}{" "}
+                {formatTimestamp(getTimestamp(feedback.createdAt))} ·{" "}
+                {feedback.upvotes} upvote
+                {feedback.upvotes !== 1 ? "s" : ""}
+              </span>
             </div>
           </div>
-
+          <div className="flex shrink-0 items-center gap-1">
+            <UpvoteButton
+              feedbackId={feedback.id}
+              initialCount={feedback.upvotes}
+              initialHasUpvoted={feedbackData.hasUpvoted}
+              isAuthenticated={isAuthenticated}
+            />
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button className="size-8" size="icon" variant="ghost">
+                  <Bell className="size-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Subscribe to updates</TooltipContent>
+            </Tooltip>
+          </div>
+        </div>
+      </div>
+      <div className="container flex flex-1 flex-col">
+      <div className="flex flex-1 flex-col gap-8 md:grid md:grid-cols-12">
+      <div className="order-last py-8 md:col-span-4 md:border-l md:border-border/75">
+        <div className="sticky top-4 flex flex-col gap-6 md:pl-8">
           <SidebarSection
             icon={<Info className="size-3.5" />}
             onOpenChange={(open) => setSidebarSection("details", open)}
@@ -593,23 +601,12 @@ function FeedbackDetailRoute() {
       </div>
 
       <div className="flex flex-col gap-4 py-8 md:col-span-8">
-        <div className="mb-6 flex items-start gap-4 border-b pt-6 pb-6 md:-mr-8.25">
-          <div className="mt-1">
-            <StatusIcon colored size="28" status={feedback.status} />
-          </div>
-          <div className="flex flex-1 flex-col gap-2">
-            <h1 className="text-3xl">{feedback.title}</h1>
-            <div className="text-sm text-muted-foreground">
-              <span suppressHydrationWarning>
-                {feedback.status === "open" ? "Opened" : "Updated"}{" "}
-                {formatTimestamp(getTimestamp(feedback.createdAt))} ·{" "}
-                {feedback.upvotes} upvote
-                {feedback.upvotes !== 1 ? "s" : ""}
-              </span>
-            </div>
-          </div>
+        <div className="flex w-full items-center border-b pb-2">
+          <h2 className="flex items-center gap-1.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+            <MessageSquare className="size-3.5" />
+            Discussion
+          </h2>
         </div>
-
         <CommentEditorProvider>
           {firstComment || timelineItems.length > 0 ? (
             <ul
@@ -745,8 +742,11 @@ function FeedbackDetailRoute() {
           />
         </CommentEditorProvider>
       </div>
+      </div>
+      </div>
     </div>
   )
+
 }
 
 function CommentBadge({

@@ -11,7 +11,6 @@ import { z } from "zod"
 
 import { RoutePending } from "@/components/route-pending"
 import { Button } from "@/components/ui/button"
-import ArchivePencil from "@/icons/archive-pencil"
 import CirclePlusOutline from "@/icons/circle-plus-outline"
 import Missing from "@/icons/missing"
 import { useCRPC } from "@/lib/convex/crpc"
@@ -243,20 +242,22 @@ function FeedbackListRoute() {
   return (
     <div className="container flex flex-1 flex-col overflow-visible">
       <div className="flex flex-1 flex-col gap-8 md:grid md:grid-cols-12">
-        <div className="order-last py-6 md:col-span-3 md:border-l md:border-border/75">
+        <div className="order-last py-8 md:order-first md:col-span-3 md:border-r md:border-border/75">
           <div className="sticky top-6 flex flex-col overflow-hidden">
-            <div className="border-b pb-6 md:pl-6">
-              <Button asChild className="w-full" size="lg">
+            <div className="border-b pb-6 md:pr-6">
+              <Button asChild className="w-full">
                 <Link
                   params={{ org: orgSlug, project: projectSlug }}
                   to="/@{$org}/$project/feedback/new"
                 >
-                  <CirclePlusOutline size="16px" /> Add feedback
+                  <CirclePlusOutline size="16px" />
+                  Add feedback
+                  <kbd className="ml-1 rounded border border-current px-1.5 py-px text-xs opacity-50 font-sans">⌘O</kbd>
                 </Link>
               </Button>
             </div>
             <div className="mt-4">
-              <div className="border-b pb-6 md:pl-6">
+              <div className="border-b pb-6 md:pr-6">
                 <h2 className="mx-2 text-sm font-bold text-muted-foreground">
                   Boards
                 </h2>
@@ -265,7 +266,7 @@ function FeedbackListRoute() {
                 </div>
               </div>
               {projectData.permissions.canEdit ? (
-                <div className="mt-6 pb-6 md:pl-6">
+                <div className="mt-6 pb-6 md:pr-6">
                   <h2 className="mx-2 text-sm font-bold text-muted-foreground">
                     Options
                   </h2>
@@ -278,15 +279,6 @@ function FeedbackListRoute() {
           </div>
         </div>
         <div className="flex flex-col gap-4 py-8 md:col-span-9">
-          <div className="flex items-start gap-3 border-b pt-6 pb-6 md:-mr-8.25">
-            <ArchivePencil className="mt-1 text-muted-foreground" size="28px" />
-            <div className="flex flex-col gap-1">
-              <h1 className="text-3xl font-bold">Feedback</h1>
-              <p className="text-muted-foreground">
-                Share your ideas and help us improve.
-              </p>
-            </div>
-          </div>
           <FeedbackToolbar />
           <div
             aria-busy={refreshingFeedback || loadingMoreFeedback}
