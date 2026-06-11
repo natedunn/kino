@@ -96,6 +96,9 @@ function GitHubIntegrationRoute() {
     () => repositories.find((repository) => repository.id === selectedRepoId),
     [repositories, selectedRepoId]
   )
+  const selectedRepositoryValue = selectedRepository
+    ? String(selectedRepository.id)
+    : ""
 
   useEffect(() => {
     if (selectedInstallationId !== null) return
@@ -342,7 +345,7 @@ function GitHubIntegrationRoute() {
                 value: String(repository.id),
               }))}
               onValueChange={(value) => setSelectedRepoId(Number(value))}
-              value={selectedRepoId ? String(selectedRepoId) : ""}
+              value={selectedRepositoryValue}
             >
               <SelectTrigger className="min-w-72">
                 <SelectValue
