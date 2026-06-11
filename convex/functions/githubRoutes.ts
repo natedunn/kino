@@ -85,6 +85,38 @@ function summarizeWebhookPayload(payload: any) {
   }
 }
 
+function isGitHubNotFoundError(error: unknown) {
+  const message = error instanceof Error ? error.message : ""
+  return (
+    (typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      (error as { code?: string }).code === "NOT_FOUND") ||
+    message.includes("GitHub request failed (404)")
+  )
+}
+
+async function findDeletedInstallationIds(args: {
+  knownInstallationIds: number[]
+  userInstallationIds: Set<number>
+}) {
+  const deletedInstallationIds: number[] = []
+  await Promise.all(
+    args.knownInstallationIds.map(async (installationId) => {
+      if (args.userInstallationIds.has(installationId)) return
+
+      try {
+        await getAppInstallation(installationId)
+      } catch (error) {
+        if (isGitHubNotFoundError(error)) {
+          deletedInstallationIds.push(installationId)
+        }
+      }
+    })
+  )
+  return deletedInstallationIds
+}
+
 export const callback = publicRoute
   .get("/api/github/callback")
   .searchParams(
@@ -108,7 +140,20 @@ export const callback = publicRoute
       const userToken = await exchangeGitHubSetupCode(searchParams.code)
       const userInstallations = await listUserInstallations(userToken)
       if (!searchParams.installation_id) {
+        const refreshState = await caller.getRefreshInstallationsForCallback({
+          state: searchParams.state,
+        })
+        const userInstallationIds = new Set(
+          userInstallations.map((installation) => installation.id)
+        )
+        const deletedInstallationIds = await findDeletedInstallationIds({
+          knownInstallationIds: refreshState.installations.map(
+            (installation) => installation.installationId
+          ),
+          userInstallationIds,
+        })
         const result = await caller.completeUserInstallationsCallback({
+          deletedInstallationIds,
           installations: userInstallations.map(
             sanitizeGitHubInstallationDetails
           ),

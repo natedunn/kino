@@ -782,6 +782,7 @@ export declare const internal: {
       "mutation",
       "internal",
       {
+        deletedInstallationIds?: Array<number>;
         installations: Array<{
           account: { id: number; login: string; type: string } | null;
           events: Array<string>;
@@ -797,6 +798,12 @@ export declare const internal: {
       "query",
       "internal",
       { installationId: number; orgSlug: string; userId: string },
+      any
+    >;
+    getRefreshInstallationsForCallback: FunctionReference<
+      "query",
+      "internal",
+      { state: string },
       any
     >;
     recordWebhookDelivery: FunctionReference<

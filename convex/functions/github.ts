@@ -335,18 +335,21 @@ export const getProjectIntegration = authQuery
       })
     }
 
-    const [installations, connections] = await Promise.all([
+    const [rawInstallations, connections] = await Promise.all([
       ctx.db
         .query("githubInstallation")
         .withIndex("by_orgId", (q: any) =>
           q.eq("orgId", access.organization.id)
         )
-        .take(20),
+        .take(100),
       ctx.db
         .query("githubRepositoryConnection")
         .withIndex("by_projectId", (q: any) => q.eq("projectId", project._id))
         .take(20),
     ])
+    const installations = rawInstallations
+      .filter((installation: any) => installation.status === "active")
+      .slice(0, 20)
     const recentDeliveries = (
       await Promise.all(
         installations.map((installation: any) =>
@@ -389,10 +392,13 @@ export const getOrgIntegration = authQuery
       })
     }
 
-    const installations = await ctx.db
+    const rawInstallations = await ctx.db
       .query("githubInstallation")
       .withIndex("by_orgId", (q: any) => q.eq("orgId", access.organization.id))
-      .take(20)
+      .take(100)
+    const installations = rawInstallations
+      .filter((installation: any) => installation.status === "active")
+      .slice(0, 20)
     const recentDeliveries = (
       await Promise.all(
         installations.map((installation: any) =>
@@ -413,6 +419,48 @@ export const getOrgIntegration = authQuery
     return {
       installations: installations.map(toPublicDoc),
       recentDeliveries: recentDeliveries.map(toPublicDoc),
+    }
+  })
+
+export const getRefreshInstallationsForCallback = privateQuery
+  .input(
+    z.object({
+      state: z.string(),
+    })
+  )
+  .query(async ({ ctx, input }) => {
+    const statePayload = await verifyGitHubAppStateForCurrentTarget(input.state)
+    const stateHash = await sha256Hex(statePayload.nonce)
+    const stateDoc = await ctx.db
+      .query("githubConnectionState")
+      .withIndex("by_stateHash", (q: any) => q.eq("stateHash", stateHash))
+      .unique()
+    if (!stateDoc || stateDoc.status !== "pending") {
+      throw new CRPCError({
+        code: "BAD_REQUEST",
+        message: "GitHub connection state is invalid",
+      })
+    }
+    if (stateDoc.expiresAt < Date.now()) {
+      throw new CRPCError({
+        code: "BAD_REQUEST",
+        message: "GitHub connection state expired",
+      })
+    }
+
+    const installations = await ctx.db
+      .query("githubInstallation")
+      .withIndex("by_orgId", (q: any) => q.eq("orgId", stateDoc.orgId))
+      .take(100)
+
+    return {
+      installations: installations
+        .filter((installation: any) => installation.status === "active")
+        .map((installation: any) => ({
+          installationId: installation.installationId,
+        })),
+      orgSlug: stateDoc.orgSlug,
+      projectSlug: stateDoc.projectSlug,
     }
   })
 
@@ -548,7 +596,8 @@ export const completeInstallationCallback = privateMutation
 export const completeUserInstallationsCallback = privateMutation
   .input(
     z.object({
-      installations: z.array(githubInstallationSchema).min(1),
+      deletedInstallationIds: z.array(z.number().int()).default([]),
+      installations: z.array(githubInstallationSchema),
       state: z.string(),
     })
   )
@@ -616,11 +665,25 @@ export const completeUserInstallationsCallback = privateMutation
       savedCount += 1
     }
 
-    if (savedCount === 0) {
-      throw new CRPCError({
-        code: "NOT_FOUND",
-        message: "No accessible GitHub installations were found",
-      })
+    let deletedCount = 0
+    const deletedInstallationIds = new Set(input.deletedInstallationIds)
+    for (const installationId of deletedInstallationIds) {
+      const existing = await ctx.db
+        .query("githubInstallation")
+        .withIndex("by_orgId_installationId", (q: any) =>
+          q.eq("orgId", stateDoc.orgId).eq("installationId", installationId)
+        )
+        .unique()
+      if (!existing || existing.status === "deleted") continue
+
+      await ctx.orm
+        .update(githubInstallationTable)
+        .set({
+          status: "deleted",
+          updatedTime: now,
+        })
+        .where(eq(githubInstallationTable.id, existing._id as any))
+      deletedCount += 1
     }
 
     await ctx.orm
@@ -633,6 +696,7 @@ export const completeUserInstallationsCallback = privateMutation
       .where(eq(githubConnectionStateTable.id, stateDoc._id as any))
 
     return {
+      deletedInstallationCount: deletedCount,
       installationCount: savedCount,
       mode: stateDoc.mode,
       orgSlug: stateDoc.orgSlug,
