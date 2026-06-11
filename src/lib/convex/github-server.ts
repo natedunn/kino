@@ -60,6 +60,7 @@ export async function handler(request: Request) {
     duplex: "half",
     headers: cloneGitHubProxyRequestHeaders(request.headers),
     method: request.method,
+    redirect: "manual",
   }
 
   const response = await fetch(targetUrl, init)

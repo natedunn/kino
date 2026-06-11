@@ -14,10 +14,22 @@ import { createGithubCaller } from "./generated/github.runtime"
 function projectGitHubSettingsUrl(args: {
   orgSlug: string
   projectSlug: string
+  siteUrl?: string
   status: "connected" | "error"
 }) {
-  const siteUrl = getEnv().SITE_URL.replace(/\/$/, "")
+  const siteUrl = (args.siteUrl ?? getEnv().SITE_URL).replace(/\/$/, "")
   return `${siteUrl}/@${args.orgSlug}/${args.projectSlug}/integrations/github?github=${args.status}`
+}
+
+async function siteUrlFromState(state: string | undefined) {
+  if (!state) return getEnv().SITE_URL
+
+  try {
+    const payload = await verifyGitHubAppState(state)
+    return new URL(payload.targetUrl).origin
+  } catch {
+    return getEnv().SITE_URL
+  }
 }
 
 function summarizeWebhookPayload(payload: any) {
@@ -50,7 +62,8 @@ export const callback = publicRoute
   )
   .query(async ({ ctx, c, searchParams }) => {
     const caller = createGithubCaller(ctx)
-    let redirect = `${getEnv().SITE_URL.replace(/\/$/, "")}/dashboard?github=error`
+    const redirectSiteUrl = await siteUrlFromState(searchParams.state)
+    let redirect = `${redirectSiteUrl.replace(/\/$/, "")}/dashboard?github=error`
 
     try {
       if (!searchParams.code || !searchParams.state) {
@@ -67,6 +80,7 @@ export const callback = publicRoute
         redirect = projectGitHubSettingsUrl({
           orgSlug: result.orgSlug,
           projectSlug: result.projectSlug,
+          siteUrl: redirectSiteUrl,
           status: "connected",
         })
         return c.redirect(redirect)
@@ -88,10 +102,11 @@ export const callback = publicRoute
       redirect = projectGitHubSettingsUrl({
         orgSlug: result.orgSlug,
         projectSlug: result.projectSlug,
+        siteUrl: redirectSiteUrl,
         status: "connected",
       })
     } catch {
-      redirect = `${getEnv().SITE_URL.replace(/\/$/, "")}/dashboard?github=error`
+      redirect = `${redirectSiteUrl.replace(/\/$/, "")}/dashboard?github=error`
     }
 
     return c.redirect(redirect)
