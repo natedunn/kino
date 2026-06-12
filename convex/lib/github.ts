@@ -294,22 +294,12 @@ export function resolveGitHubCallbackTargetUrl(requestedTargetUrl?: string) {
 export function isTrustedGitHubCallbackTarget(targetUrl: string) {
   try {
     const target = new URL(targetUrl)
-    const hostname = target.hostname.toLowerCase()
     const origin = `${target.protocol}//${target.host}`
 
     if (target.pathname !== "/api/github/callback") return false
     if (target.protocol !== "https:" && target.protocol !== "http:") return false
 
-    return (
-      hostname === "usekino.com" ||
-      hostname === "localhost" ||
-      hostname === "127.0.0.1" ||
-      hostname === "::1" ||
-      hostname.endsWith(".localhost") ||
-      hostname === "kino.hello-fc8.workers.dev" ||
-      hostname.endsWith("-kino.hello-fc8.workers.dev") ||
-      isTrustedOrigin(origin)
-    )
+    return isTrustedOrigin(origin)
   } catch {
     return false
   }
