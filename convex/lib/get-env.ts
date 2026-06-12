@@ -45,29 +45,35 @@ function getRuntimeEnvValue(parts: string[]) {
   return getRuntimeEnv()[parts.join("_")]
 }
 
-export function getGitHubOAuthEnv() {
+/**
+ * Naming scheme — three things, three names:
+ * - "Auth"    = the GitHub OAuth app used for user login     (GITHUB_AUTH_*)
+ * - "Relay"   = the GitHub App used for org/repo sync        (GITHUB_RELAY_*)
+ * - "Gateway" = the per-tier Cloudflare Worker fronting both (GATEWAY_*)
+ */
+
+/** GitHub OAuth app used for user login ("Kino Auth"). */
+export function getGitHubAuthEnv() {
   return {
-    clientId: getRuntimeEnvValue(["GITHUB", "CLIENT", "ID"]),
-    clientSecret: getRuntimeEnvValue(["GITHUB", "CLIENT", "SECRET"]),
+    clientId: getRuntimeEnvValue(["GITHUB", "AUTH", "CLIENT", "ID"]),
+    clientSecret: getRuntimeEnvValue(["GITHUB", "AUTH", "CLIENT", "SECRET"]),
   }
 }
 
-export function getGitHubAppEnv() {
+/** GitHub App used for org/repo sync ("Kino Relay"). */
+export function getGitHubRelayEnv() {
+  const value = (parts: string[]) =>
+    getRuntimeEnvValue(["GITHUB", "RELAY", ...parts])
+
   return {
-    appId: getRuntimeEnvValue(["GITHUB", "APP", "ID"]),
-    callbackTargetUrl: getRuntimeEnvValue([
-      "GITHUB",
-      "APP",
-      "CALLBACK",
-      "TARGET",
-      "URL",
-    ]),
-    clientId: getRuntimeEnvValue(["GITHUB", "APP", "CLIENT", "ID"]),
-    clientSecret: getRuntimeEnvValue(["GITHUB", "APP", "CLIENT", "SECRET"]),
-    privateKey: getRuntimeEnvValue(["GITHUB", "APP", "PRIVATE", "KEY"]),
-    slug: getRuntimeEnvValue(["GITHUB", "APP", "SLUG"]),
-    stateSecret: getRuntimeEnvValue(["GITHUB", "APP", "STATE", "SECRET"]),
-    webhookSecret: getRuntimeEnvValue(["GITHUB", "APP", "WEBHOOK", "SECRET"]),
+    appId: value(["APP", "ID"]),
+    callbackTargetUrl: value(["CALLBACK", "TARGET", "URL"]),
+    clientId: value(["CLIENT", "ID"]),
+    clientSecret: value(["CLIENT", "SECRET"]),
+    privateKey: value(["PRIVATE", "KEY"]),
+    slug: value(["SLUG"]),
+    stateSecret: value(["STATE", "SECRET"]),
+    webhookSecret: value(["WEBHOOK", "SECRET"]),
   }
 }
 

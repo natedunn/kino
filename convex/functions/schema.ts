@@ -878,6 +878,22 @@ export const githubRepositoryConnectionTable = convexTable(
   ]
 )
 
+export const githubWebhookDeliveryTable = convexTable(
+  "githubWebhookDelivery",
+  {
+    action: text(),
+    deliveryId: text().notNull(),
+    event: text().notNull(),
+    installationId: integer(),
+    receivedTime: integer().notNull(),
+    result: textEnum(["processed", "ignored"] as const).notNull(),
+  },
+  (githubWebhookDeliveryTable) => [
+    index("by_deliveryId").on(githubWebhookDeliveryTable.deliveryId),
+    index("by_receivedTime").on(githubWebhookDeliveryTable.receivedTime),
+  ]
+)
+
 export const tables = {
   user: userTable,
   session: sessionTable,
@@ -904,6 +920,7 @@ export const tables = {
   githubConnectionState: githubConnectionStateTable,
   githubInstallation: githubInstallationTable,
   githubRepositoryConnection: githubRepositoryConnectionTable,
+  githubWebhookDelivery: githubWebhookDeliveryTable,
 }
 
 export default defineSchema(tables)

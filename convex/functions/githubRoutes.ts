@@ -7,7 +7,9 @@ import {
   listUserInstallations,
   sanitizeGitHubInstallationDetails,
   verifyGitHubAppState,
+  verifyGitHubWebhookSignature,
 } from "../lib/github"
+import { CRPCError } from "kitcn/server"
 import { createGithubCaller } from "./generated/github.runtime"
 
 function projectGitHubSettingsUrl(args: {
@@ -208,7 +210,70 @@ export const oauthCallback = publicRoute
     }
   })
 
+export const webhook = publicRoute
+  .post("/api/github/webhook")
+  .mutation(async ({ ctx, c }) => {
+    const body = await c.req.text()
+    const verified = await verifyGitHubWebhookSignature(
+      body,
+      c.req.header("x-hub-signature-256")
+    )
+    if (!verified) {
+      throw new CRPCError({
+        code: "UNAUTHORIZED",
+        message: "Invalid webhook signature",
+      })
+    }
+
+    const deliveryId = c.req.header("x-github-delivery")
+    const event = c.req.header("x-github-event")
+    if (!deliveryId || !event) {
+      throw new CRPCError({
+        code: "BAD_REQUEST",
+        message: "Missing webhook delivery headers",
+      })
+    }
+
+    let payload: {
+      action?: string
+      installation?: {
+        events?: string[]
+        id?: number
+        permissions?: Record<string, string>
+        repository_selection?: string
+      }
+    }
+    try {
+      payload = JSON.parse(body)
+    } catch {
+      throw new CRPCError({
+        code: "BAD_REQUEST",
+        message: "Webhook payload is not valid JSON",
+      })
+    }
+
+    const caller = createGithubCaller(ctx)
+    const result = await caller.processWebhookEvent({
+      action: payload.action,
+      deliveryId,
+      event,
+      ...(typeof payload.installation?.id === "number"
+        ? {
+            installation: {
+              events: payload.installation.events,
+              id: payload.installation.id,
+              permissions: payload.installation.permissions,
+              repository_selection: payload.installation.repository_selection,
+            },
+          }
+        : {}),
+    })
+
+    return c.json({ ok: true, ...result }, 200)
+  })
+
 export const githubRoutes = router({
   callback,
   oauthCallback,
+  webhook,
 })

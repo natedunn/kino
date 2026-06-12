@@ -22,15 +22,15 @@ function resetEnv(overrides: Record<string, string | undefined>) {
   Object.assign(process.env, ORIGINAL_ENV, overrides)
 }
 
-function setGitHubAppEnv() {
+function setGitHubRelayEnv() {
   resetEnv({
-    GITHUB_APP_CLIENT_ID: "client_id",
-    GITHUB_APP_CLIENT_SECRET: "client_secret",
-    GITHUB_APP_ID: "123",
-    GITHUB_APP_PRIVATE_KEY: "private-key",
-    GITHUB_APP_SLUG: "kino-test",
-    GITHUB_APP_STATE_SECRET: "state-secret",
-    GITHUB_APP_WEBHOOK_SECRET: "webhook-secret",
+    GITHUB_RELAY_CLIENT_ID: "client_id",
+    GITHUB_RELAY_CLIENT_SECRET: "client_secret",
+    GITHUB_RELAY_APP_ID: "123",
+    GITHUB_RELAY_PRIVATE_KEY: "private-key",
+    GITHUB_RELAY_SLUG: "kino-test",
+    GITHUB_RELAY_STATE_SECRET: "state-secret",
+    GITHUB_RELAY_WEBHOOK_SECRET: "webhook-secret",
     SITE_URL: "https://usekino.com",
   })
 }
@@ -129,7 +129,7 @@ describe("github helpers", () => {
   })
 
   it("builds the GitHub App installation URL with encoded state", () => {
-    setGitHubAppEnv()
+    setGitHubRelayEnv()
 
     expect(githubAppInstallationUrl("state with spaces")).toBe(
       "https://github.com/apps/kino-test/installations/new?state=state%20with%20spaces"
@@ -137,7 +137,7 @@ describe("github helpers", () => {
   })
 
   it("builds the GitHub App user authorization URL with encoded state", () => {
-    setGitHubAppEnv()
+    setGitHubRelayEnv()
 
     expect(githubAppUserAuthorizationUrl("state with spaces")).toBe(
       "https://github.com/login/oauth/authorize?client_id=client_id&state=state+with+spaces"
@@ -145,7 +145,7 @@ describe("github helpers", () => {
   })
 
   it("creates and verifies signed callback state", async () => {
-    setGitHubAppEnv()
+    setGitHubRelayEnv()
 
     const state = await createGitHubAppState({
       exp: Date.now() + 60_000,
@@ -164,7 +164,7 @@ describe("github helpers", () => {
   })
 
   it("rejects untrusted callback targets", async () => {
-    setGitHubAppEnv()
+    setGitHubRelayEnv()
 
     await expect(
       createGitHubAppState({
@@ -176,8 +176,8 @@ describe("github helpers", () => {
   })
 
   it("uses explicit GitHub callback target URL when configured", () => {
-    setGitHubAppEnv()
-    process.env.GITHUB_APP_CALLBACK_TARGET_URL =
+    setGitHubRelayEnv()
+    process.env.GITHUB_RELAY_CALLBACK_TARGET_URL =
       "https://local.kino.localhost:1355/api/github/callback"
 
     expect(getGitHubCallbackTargetUrl()).toBe(
@@ -186,7 +186,7 @@ describe("github helpers", () => {
   })
 
   it("uses a trusted requested callback target URL when no override is configured", () => {
-    setGitHubAppEnv()
+    setGitHubRelayEnv()
 
     expect(
       resolveGitHubCallbackTargetUrl(
@@ -196,8 +196,8 @@ describe("github helpers", () => {
   })
 
   it("keeps the explicit callback target override ahead of requested targets", () => {
-    setGitHubAppEnv()
-    process.env.GITHUB_APP_CALLBACK_TARGET_URL =
+    setGitHubRelayEnv()
+    process.env.GITHUB_RELAY_CALLBACK_TARGET_URL =
       "https://brainy-boar-871.convex.site/api/github/callback"
     process.env.TRUSTED_ORIGINS = "https://brainy-boar-871.convex.site"
 
@@ -209,7 +209,7 @@ describe("github helpers", () => {
   })
 
   it("rejects untrusted requested callback targets", () => {
-    setGitHubAppEnv()
+    setGitHubRelayEnv()
 
     expect(() =>
       resolveGitHubCallbackTargetUrl(

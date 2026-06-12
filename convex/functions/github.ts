@@ -26,6 +26,7 @@ import {
   githubConnectionStateTable,
   githubInstallationTable,
   githubRepositoryConnectionTable,
+  githubWebhookDeliveryTable,
 } from "./schema"
 
 const connectionModeSchema = z.enum(["read", "read_write"])
@@ -830,6 +831,92 @@ export const disconnectRepository = authMutation
     })
 
     return { success: true }
+  })
+
+const webhookInstallationSchema = z.object({
+  events: z.array(z.string()).optional(),
+  id: z.number().int(),
+  permissions: z.record(z.string(), z.string()).optional(),
+  repository_selection: z.string().optional(),
+})
+
+/**
+ * Webhook deliveries arrive via the relay broadcast, so this env may receive
+ * events for installations it has never seen — that is normal, not an error.
+ * Deliveries are deduped on GitHub's delivery GUID (relay retries, GitHub
+ * redeliveries). Only `installation` lifecycle events mutate state today;
+ * issues/discussions sync handlers will extend the dispatch when built.
+ */
+export const processWebhookEvent = privateMutation
+  .input(
+    z.object({
+      action: z.string().optional(),
+      deliveryId: z.string().min(1),
+      event: z.string().min(1),
+      installation: webhookInstallationSchema.optional(),
+    })
+  )
+  .mutation(async ({ ctx, input }) => {
+    const existing = await ctx.db
+      .query("githubWebhookDelivery")
+      .withIndex("by_deliveryId", (q: any) =>
+        q.eq("deliveryId", input.deliveryId)
+      )
+      .unique()
+    if (existing) {
+      return { duplicate: true, result: existing.result }
+    }
+
+    const now = Date.now()
+    let result: "processed" | "ignored" = "ignored"
+
+    if (input.event === "installation" && input.installation) {
+      const installations = await ctx.db
+        .query("githubInstallation")
+        .withIndex("by_installationId", (q: any) =>
+          q.eq("installationId", input.installation!.id)
+        )
+        .take(50)
+
+      const updates: Record<string, unknown> | null =
+        input.action === "deleted"
+          ? { status: "deleted" }
+          : input.action === "suspend"
+            ? { status: "suspended" }
+            : input.action === "unsuspend"
+              ? { status: "active" }
+              : input.action === "new_permissions_accepted"
+                ? {
+                    ...(input.installation.events
+                      ? { events: input.installation.events }
+                      : {}),
+                    ...(input.installation.permissions
+                      ? { permissions: input.installation.permissions }
+                      : {}),
+                  }
+                : null
+
+      if (updates && installations.length > 0) {
+        for (const installation of installations) {
+          await ctx.db.patch(installation._id, {
+            ...updates,
+            updatedTime: now,
+          })
+        }
+        result = "processed"
+      }
+    }
+
+    await ctx.orm.insert(githubWebhookDeliveryTable).values({
+      action: input.action,
+      deliveryId: input.deliveryId,
+      event: input.event,
+      installationId: input.installation?.id,
+      receivedTime: now,
+      result,
+    })
+
+    return { duplicate: false, result }
   })
 
 export type GithubInstallationForExternal = GitHubInstallationDetails

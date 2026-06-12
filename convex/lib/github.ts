@@ -1,5 +1,5 @@
 import { CRPCError } from "kitcn/server"
-import { getEnv, getGitHubAppEnv, isTrustedOrigin } from "./get-env"
+import { getEnv, getGitHubRelayEnv, isTrustedOrigin } from "./get-env"
 
 const GITHUB_API_URL = "https://api.github.com"
 const GITHUB_GRAPHQL_URL = "https://api.github.com/graphql"
@@ -7,7 +7,7 @@ const GITHUB_OAUTH_ACCESS_TOKEN_URL =
   "https://github.com/login/oauth/access_token"
 const GITHUB_OAUTH_AUTHORIZE_URL = "https://github.com/login/oauth/authorize"
 
-type GitHubAppEnv = {
+type GitHubRelayEnv = {
   appId: string
   callbackTargetUrl?: string
   clientId: string
@@ -102,22 +102,22 @@ function assertString(value: string | undefined, name: string) {
   return value
 }
 
-export function getRequiredGitHubAppEnv(): GitHubAppEnv {
-  const env = getGitHubAppEnv()
+export function getRequiredGitHubRelayEnv(): GitHubRelayEnv {
+  const env = getGitHubRelayEnv()
   return {
-    appId: assertString(env.appId, "GITHUB_APP_ID"),
+    appId: assertString(env.appId, "GITHUB_RELAY_APP_ID"),
     callbackTargetUrl: env.callbackTargetUrl,
-    clientId: assertString(env.clientId, "GITHUB_APP_CLIENT_ID"),
-    clientSecret: assertString(env.clientSecret, "GITHUB_APP_CLIENT_SECRET"),
-    privateKey: assertString(env.privateKey, "GITHUB_APP_PRIVATE_KEY"),
-    slug: assertString(env.slug, "GITHUB_APP_SLUG"),
+    clientId: assertString(env.clientId, "GITHUB_RELAY_CLIENT_ID"),
+    clientSecret: assertString(env.clientSecret, "GITHUB_RELAY_CLIENT_SECRET"),
+    privateKey: assertString(env.privateKey, "GITHUB_RELAY_PRIVATE_KEY"),
+    slug: assertString(env.slug, "GITHUB_RELAY_SLUG"),
     stateSecret: env.stateSecret ?? assertString(
       env.webhookSecret,
-      "GITHUB_APP_WEBHOOK_SECRET"
+      "GITHUB_RELAY_WEBHOOK_SECRET"
     ),
     webhookSecret: assertString(
       env.webhookSecret,
-      "GITHUB_APP_WEBHOOK_SECRET"
+      "GITHUB_RELAY_WEBHOOK_SECRET"
     ),
   }
 }
@@ -254,8 +254,19 @@ function constantTimeEqual(left: string, right: string) {
   return result === 0
 }
 
+export async function verifyGitHubWebhookSignature(
+  body: string,
+  signatureHeader: string | null | undefined
+) {
+  if (!signatureHeader?.startsWith("sha256=")) return false
+
+  const env = getRequiredGitHubRelayEnv()
+  const expected = `sha256=${await hmacSha256Hex(env.webhookSecret, body)}`
+  return constantTimeEqual(expected, signatureHeader)
+}
+
 export function getGitHubCallbackTargetUrl() {
-  const env = getRequiredGitHubAppEnv()
+  const env = getRequiredGitHubRelayEnv()
   if (env.callbackTargetUrl) {
     return env.callbackTargetUrl
   }
@@ -265,7 +276,7 @@ export function getGitHubCallbackTargetUrl() {
 }
 
 export function resolveGitHubCallbackTargetUrl(requestedTargetUrl?: string) {
-  const env = getRequiredGitHubAppEnv()
+  const env = getRequiredGitHubRelayEnv()
   const targetUrl =
     env.callbackTargetUrl ?? requestedTargetUrl ?? getGitHubCallbackTargetUrl()
   if (!isTrustedGitHubCallbackTarget(targetUrl)) {
@@ -304,7 +315,7 @@ export function isTrustedGitHubCallbackTarget(targetUrl: string) {
 export async function createGitHubAppState(
   payload: Omit<GitHubAppStatePayload, "v">
 ) {
-  const env = getRequiredGitHubAppEnv()
+  const env = getRequiredGitHubRelayEnv()
   const fullPayload: GitHubAppStatePayload = { ...payload, v: 1 }
   if (!isTrustedGitHubCallbackTarget(fullPayload.targetUrl)) {
     throw new CRPCError({
@@ -319,7 +330,7 @@ export async function createGitHubAppState(
 }
 
 export async function verifyGitHubAppState(state: string) {
-  const env = getRequiredGitHubAppEnv()
+  const env = getRequiredGitHubRelayEnv()
   const [encodedPayload, signature] = state.split(".")
   if (!encodedPayload || !signature) {
     throw new CRPCError({
@@ -369,7 +380,7 @@ export async function verifyGitHubAppStateForCurrentTarget(state: string) {
 }
 
 export async function createGitHubAppJwt() {
-  const env = getRequiredGitHubAppEnv()
+  const env = getRequiredGitHubRelayEnv()
   const nowSeconds = Math.floor(Date.now() / 1000)
   const header = base64UrlEncode(JSON.stringify({ alg: "RS256", typ: "JWT" }))
   const payload = base64UrlEncode(
@@ -423,7 +434,7 @@ async function githubFetch<T>(
 }
 
 export async function exchangeGitHubSetupCode(code: string) {
-  const env = getRequiredGitHubAppEnv()
+  const env = getRequiredGitHubRelayEnv()
   const result = await githubFetch<{ access_token?: string; error?: string }>(
     GITHUB_OAUTH_ACCESS_TOKEN_URL,
     {
@@ -568,12 +579,12 @@ export async function probeRepository(args: {
 }
 
 export function githubAppInstallationUrl(state: string) {
-  const env = getRequiredGitHubAppEnv()
+  const env = getRequiredGitHubRelayEnv()
   return `https://github.com/apps/${env.slug}/installations/new?state=${encodeURIComponent(state)}`
 }
 
 export function githubAppUserAuthorizationUrl(state: string) {
-  const env = getRequiredGitHubAppEnv()
+  const env = getRequiredGitHubRelayEnv()
   const url = new URL(GITHUB_OAUTH_AUTHORIZE_URL)
   url.searchParams.set("client_id", env.clientId)
   url.searchParams.set("state", state)
