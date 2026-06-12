@@ -576,6 +576,14 @@ export declare const api: {
  * ```
  */
 export declare const internal: {
+  crons: {
+    cleanupWebhookDeliveries: FunctionReference<
+      "mutation",
+      "internal",
+      {},
+      any
+    >;
+  };
   feedbackEvent: {
     create: FunctionReference<
       "mutation",

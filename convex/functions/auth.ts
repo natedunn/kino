@@ -29,6 +29,15 @@ export default defineAuth(() => {
   // No default: a wrong fallback would send GitHub a redirect_uri it rejects.
   const oauthProxyProductionUrl = getOAuthProxyProductionUrlEnv()
   const oauthProxySecret = getOAuthProxySecretEnv()
+
+  if (oauthProxySecret && !oauthProxyProductionUrl) {
+    console.warn(
+      "OAUTH_PROXY_SECRET is set but OAUTH_PROXY_PRODUCTION_URL is not — " +
+        "the OAuth proxy is disabled and GitHub login will fail. Set " +
+        "OAUTH_PROXY_PRODUCTION_URL to this tier's gateway origin " +
+        "(see docs/github-environments.md)."
+    )
+  }
   const trustedOrigins = getTrustedOrigins()
   const isLocalHttp = env.SITE_URL.startsWith("http://")
   const baseURLProtocol: "auto" | "https" = env.SITE_URL.startsWith("http://")
