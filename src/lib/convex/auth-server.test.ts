@@ -5,7 +5,6 @@ import {
   getSetCookieValues,
   publicAuthRequestUrl,
   rewriteAuthRedirectLocation,
-  shouldSkipOAuthProxyForFirstPartySignIn,
   syncSignInSocialLocationHeader,
 } from "./auth-server"
 
@@ -132,37 +131,6 @@ describe("rewriteAuthRedirectLocation", () => {
         requestUrl: "https://usekino.com/api/auth/callback/github?code=abc",
       })
     ).toBe(location)
-  })
-})
-
-describe("shouldSkipOAuthProxyForFirstPartySignIn", () => {
-  it("skips the proxy for production social sign-in", () => {
-    expect(
-      shouldSkipOAuthProxyForFirstPartySignIn(
-        new Request("https://usekino.com/api/auth/sign-in/social", {
-          method: "POST",
-        })
-      )
-    ).toBe(true)
-  })
-
-  it("keeps preview social sign-in on the proxy path", () => {
-    expect(
-      shouldSkipOAuthProxyForFirstPartySignIn(
-        new Request(
-          "https://preview-auth-oauth-debug-kino.hello-fc8.workers.dev/api/auth/sign-in/social",
-          { method: "POST" }
-        )
-      )
-    ).toBe(false)
-  })
-
-  it("keeps production OAuth callbacks proxy-compatible for previews", () => {
-    expect(
-      shouldSkipOAuthProxyForFirstPartySignIn(
-        new Request("https://usekino.com/api/auth/callback/github?code=abc")
-      )
-    ).toBe(false)
   })
 })
 

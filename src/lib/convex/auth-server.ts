@@ -146,24 +146,6 @@ function isSignInSocialRequest(request: Request) {
   }
 }
 
-export function shouldSkipOAuthProxyForFirstPartySignIn(request: Request) {
-  try {
-    const { hostname } = new URL(request.url)
-    return hostname === "usekino.com" && isSignInSocialRequest(request)
-  } catch {
-    return false
-  }
-}
-
-function withFirstPartyOAuthProxyBypass(request: Request) {
-  if (!shouldSkipOAuthProxyForFirstPartySignIn(request)) return request
-
-  const headers = new Headers(request.headers)
-  headers.set("x-skip-oauth-proxy", "true")
-
-  return new Request(request, { headers })
-}
-
 function getJsonRedirectUrl(body: string) {
   try {
     const parsed = JSON.parse(body) as { url?: unknown }
@@ -316,11 +298,15 @@ function cloneAuthResponse(response: Response) {
 }
 
 export async function handler(request: Request) {
+  // Production is "just another environment" behind the gateway: every env's
+  // sign-in takes the oAuthProxy leg via OAUTH_PROXY_PRODUCTION_URL. (The old
+  // first-party x-skip-oauth-proxy bypass for usekino.com is gone — GitHub's
+  // registered callback now points at the gateway, so skipping the proxy
+  // produces a redirect_uri GitHub rejects.)
   const publicRequest = withPublicAuthRequestUrl(request)
-  const authRequest = withFirstPartyOAuthProxyBypass(publicRequest)
   const response = await syncSignInSocialLocationHeader(
     publicRequest,
-    await getAuth().handler(authRequest)
+    await getAuth().handler(publicRequest)
   )
   const location = response.headers.get("location")
 
