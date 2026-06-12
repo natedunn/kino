@@ -15,7 +15,6 @@ import type { OrmTriggerContext } from 'kitcn/orm';
 
 const procedureRegistry = {
   "callback": ["query", typedProcedureResolver(createGeneratedFunctionReference<"query", "public", typeof import("../githubRoutes").callback>("githubRoutes:callback"), () => (require("../githubRoutes") as Record<string, unknown>)["callback"])],
-  "oauthCallback": ["query", typedProcedureResolver(createGeneratedFunctionReference<"query", "public", typeof import("../githubRoutes").oauthCallback>("githubRoutes:oauthCallback"), () => (require("../githubRoutes") as Record<string, unknown>)["oauthCallback"])],
   "webhook": ["mutation", typedProcedureResolver(createGeneratedFunctionReference<"mutation", "public", typeof import("../githubRoutes").webhook>("githubRoutes:webhook"), () => (require("../githubRoutes") as Record<string, unknown>)["webhook"])],
 } as const;
 

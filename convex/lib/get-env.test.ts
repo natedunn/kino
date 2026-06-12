@@ -2,7 +2,6 @@ import { afterEach, describe, expect, it } from "vitest"
 
 import {
   getBetterAuthAllowedHosts,
-  getOAuthProxyCurrentUrlEnv,
   getOAuthProxyProductionUrlEnv,
   getTrustedForwardedAuthOrigin,
   getTrustedOrigins,
@@ -103,17 +102,15 @@ describe("trusted auth origins", () => {
     expect(isTrustedOrigin("http://rasalhague.kino.localhost:1355")).toBe(true)
   })
 
-  it("keeps OAuth proxy current and production URLs independently configurable", () => {
+  it("reads the OAuth proxy production URL (the tier gateway)", () => {
     resetEnv({
-      OAUTH_PROXY_CURRENT_URL: "https://feature-kino.hello-fc8.workers.dev",
-      OAUTH_PROXY_PRODUCTION_URL: "https://usekino.com",
+      OAUTH_PROXY_PRODUCTION_URL: "https://gateway-dev.usekino.com",
       SITE_URL: "https://usekino.com",
     })
 
-    expect(getOAuthProxyCurrentUrlEnv()).toBe(
-      "https://feature-kino.hello-fc8.workers.dev"
+    expect(getOAuthProxyProductionUrlEnv()).toBe(
+      "https://gateway-dev.usekino.com"
     )
-    expect(getOAuthProxyProductionUrlEnv()).toBe("https://usekino.com")
   })
 
   it("extracts trusted forwarded auth origins for Better Auth base URL resolution", () => {

@@ -11,7 +11,6 @@ const AUTH_KEYS = [
   "GITHUB_AUTH_CLIENT_SECRET",
   "OAUTH_PROXY_SECRET",
   "OAUTH_PROXY_PRODUCTION_URL",
-  "OAUTH_PROXY_CURRENT_URL",
   "BETTER_AUTH_SECRET",
 ]
 
@@ -21,13 +20,20 @@ const SECRET_KEYS = new Set([
   "OAUTH_PROXY_SECRET",
 ])
 
-const SHARED_OAUTH_KEYS = [
+// Two-tier model (docs/github-environments.md): these keys must be identical
+// WITHIN a tier (dev tier: convex-dev + preview defaults + local; prod tier:
+// convex-prod + prod defaults) and must NOT be shared ACROSS tiers — the dev
+// tier has its own "Kino Auth Dev" OAuth app and its own proxy secret.
+const TIER_OAUTH_KEYS = [
   "GITHUB_AUTH_CLIENT_ID",
   "GITHUB_AUTH_CLIENT_SECRET",
   "OAUTH_PROXY_SECRET",
 ]
 
-const OPTIONAL_SHARED_KEYS = ["OAUTH_PROXY_PRODUCTION_URL"]
+const EXPECTED_GATEWAY = {
+  dev: "https://gateway-dev.usekino.com",
+  prod: "https://gateway.usekino.com",
+}
 
 function parseEnvFile(path) {
   const env = {}
@@ -114,32 +120,33 @@ function printEnvTable(envs) {
   }
 }
 
+function bothSet(envs, key, a, b) {
+  return hasValue(envs, key, a) && hasValue(envs, key, b)
+}
+
 function collectFindings(envs) {
   const errors = []
   const warnings = []
 
-  for (const key of SHARED_OAUTH_KEYS) {
+  for (const key of TIER_OAUTH_KEYS) {
+    // Present in each tier's deployments.
     if (!hasValue(envs, key, "convex-dev")) {
       errors.push(`Convex dev is missing ${key}.`)
     }
     if (!hasValue(envs, key, "convex-prod")) {
       errors.push(`Convex prod is missing ${key}.`)
     }
-    if (!sameValue(envs, key, ["convex-dev", "convex-prod"])) {
-      errors.push(`Convex dev/prod mismatch for ${key}.`)
-    }
     if (!hasValue(envs, key, "default-preview")) {
       warnings.push(
         `Convex preview defaults are missing ${key}. New preview deployments may drift.`
       )
     }
-    if (!sameValue(envs, key, ["default-preview", "convex-prod"])) {
+
+    // Consistent WITHIN the dev tier (dev deployment + preview defaults + local files).
+    if (!sameValue(envs, key, ["convex-dev", "default-preview"])) {
       errors.push(
-        `Convex preview default/prod deployment mismatch for ${key}.`
+        `Dev tier mismatch for ${key}: Convex dev and preview defaults differ.`
       )
-    }
-    if (!sameValue(envs, key, ["default-prod", "convex-prod"])) {
-      warnings.push(`Convex prod default/deployment differ for ${key}.`)
     }
     if (
       hasValue(envs, key, "local") &&
@@ -157,29 +164,43 @@ function collectFindings(envs) {
         `convex/.env ${key} differs from Convex dev. kitcn dev watches convex/.env and can push this value.`
       )
     }
-  }
 
-  for (const key of OPTIONAL_SHARED_KEYS) {
-    if (!sameValue(envs, key, ["convex-dev", "convex-prod"])) {
-      warnings.push(`Convex dev/prod differ for ${key}.`)
+    // Consistent WITHIN the prod tier.
+    if (!sameValue(envs, key, ["default-prod", "convex-prod"])) {
+      warnings.push(`Convex prod default/deployment differ for ${key}.`)
     }
+
+    // NOT shared ACROSS tiers — dev reusing prod credentials defeats the
+    // tier isolation (and vice versa).
     if (
-      hasValue(envs, key, "default-preview") &&
-      !sameValue(envs, key, ["default-preview", "convex-prod"])
+      bothSet(envs, key, "convex-dev", "convex-prod") &&
+      sameValue(envs, key, ["convex-dev", "convex-prod"])
     ) {
-      warnings.push(`Convex preview default/prod differ for ${key}.`)
+      errors.push(
+        `${key} is identical on Convex dev and prod. Tiers must not share credentials — dev uses the "Kino Auth Dev" app and its own secrets.`
+      )
     }
   }
 
-  if (hasValue(envs, "OAUTH_PROXY_CURRENT_URL", "convex-dev")) {
-    warnings.push(
-      "Convex dev has OAUTH_PROXY_CURRENT_URL set. This pins auth to one host and can break multiple worktrees."
-    )
-  }
-  if (hasValue(envs, "OAUTH_PROXY_CURRENT_URL", "convex-prod")) {
-    warnings.push(
-      "Convex prod has OAUTH_PROXY_CURRENT_URL set. This is unusual for production."
-    )
+  // The oAuthProxy plugin only mounts when both the secret and the gateway
+  // URL are present; a missing URL silently disables GitHub login.
+  for (const [name, tier] of [
+    ["convex-dev", "dev"],
+    ["default-preview", "dev"],
+    ["convex-prod", "prod"],
+  ]) {
+    if (!hasValue(envs, "OAUTH_PROXY_SECRET", name)) continue
+
+    const url = envs[name]?.OAUTH_PROXY_PRODUCTION_URL
+    if (!url) {
+      errors.push(
+        `${name} has OAUTH_PROXY_SECRET but no OAUTH_PROXY_PRODUCTION_URL — the OAuth proxy is disabled and GitHub login will fail there.`
+      )
+    } else if (url !== EXPECTED_GATEWAY[tier]) {
+      warnings.push(
+        `${name} OAUTH_PROXY_PRODUCTION_URL is ${url}, expected ${EXPECTED_GATEWAY[tier]}.`
+      )
+    }
   }
 
   if (!hasValue(envs, "SITE_URL", "convex-prod")) {

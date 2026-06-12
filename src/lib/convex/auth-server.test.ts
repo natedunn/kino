@@ -94,35 +94,9 @@ describe("rewriteAuthRedirectLocation", () => {
     ).toBe("https://scrupulous-lemming-700.convex.site/somewhere-else")
   })
 
-  it("rewrites cross-deployment OAuth proxy callbacks onto the callback origin", () => {
-    expect(
-      rewriteAuthRedirectLocation({
-        convexSiteUrl: "https://brainy-boar-871.convex.site",
-        location:
-          "https://gregarious-gerbil-969.convex.site/api/auth/oauth-proxy-callback?callbackURL=https%3A%2F%2Fpreview-auth-oauth-debug-kino.hello-fc8.workers.dev%2Fauth&profile=encrypted-profile",
-        requestUrl: "https://usekino.com/api/auth/callback/github?code=abc",
-      })
-    ).toBe(
-      "https://preview-auth-oauth-debug-kino.hello-fc8.workers.dev/api/auth/oauth-proxy-callback?callbackURL=https%3A%2F%2Fpreview-auth-oauth-debug-kino.hello-fc8.workers.dev%2Fauth&profile=encrypted-profile"
-    )
-  })
-
-  it("rewrites production OAuth proxy callbacks back to local Portless origins", () => {
-    expect(
-      rewriteAuthRedirectLocation({
-        convexSiteUrl: "https://brainy-boar-871.convex.site",
-        location:
-          "https://scrupulous-lemming-700.convex.site/api/auth/oauth-proxy-callback?callbackURL=https%3A%2F%2Flocal-dev-portless-worktrees.kino.localhost%3A1355%2Fauth&profile=encrypted-profile",
-        requestUrl: "https://usekino.com/api/auth/callback/github?code=abc",
-      })
-    ).toBe(
-      "https://local-dev-portless-worktrees.kino.localhost:1355/api/auth/oauth-proxy-callback?callbackURL=https%3A%2F%2Flocal-dev-portless-worktrees.kino.localhost%3A1355%2Fauth&profile=encrypted-profile"
-    )
-  })
-
-  it("does not rewrite OAuth proxy callbacks to untrusted callback origins", () => {
+  it("leaves cross-deployment convex.site redirects alone (gateway's job now)", () => {
     const location =
-      "https://gregarious-gerbil-969.convex.site/api/auth/oauth-proxy-callback?callbackURL=https%3A%2F%2Fevil.example.com%2Fauth&profile=encrypted-profile"
+      "https://gregarious-gerbil-969.convex.site/api/auth/oauth-proxy-callback?callbackURL=https%3A%2F%2Fpreview-auth-oauth-debug-kino.hello-fc8.workers.dev%2Fauth&profile=encrypted-profile"
 
     expect(
       rewriteAuthRedirectLocation({

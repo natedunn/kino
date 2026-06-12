@@ -61,7 +61,6 @@ export const api = {
   },
   githubRoutes: {
     callback: createApiLeaf<"query", typeof import("../functions/githubRoutes").callback>(createGeneratedFunctionReference<"query", "public", typeof import("../functions/githubRoutes").callback>("githubRoutes:callback"), { type: "query" }),
-    oauthCallback: createApiLeaf<"query", typeof import("../functions/githubRoutes").oauthCallback>(createGeneratedFunctionReference<"query", "public", typeof import("../functions/githubRoutes").oauthCallback>("githubRoutes:oauthCallback"), { type: "query" }),
     webhook: createApiLeaf<"mutation", typeof import("../functions/githubRoutes").webhook>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/githubRoutes").webhook>("githubRoutes:webhook"), { type: "mutation" }),
   },
   org: {
