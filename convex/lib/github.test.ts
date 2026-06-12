@@ -4,6 +4,7 @@ import {
   getGitHubCallbackTargetUrl,
   githubAppInstallationUrl,
   githubAppUserAuthorizationUrl,
+  isTrustedGitHubCallbackTarget,
   privateKeyToDer,
   resolveGitHubCallbackTargetUrl,
   sanitizeGitHubInstallationDetails,
@@ -176,8 +177,72 @@ describe("github helpers", () => {
     ).rejects.toThrow("GitHub callback target URL is not trusted")
   })
 
+  it("trusts callback targets through the shared origin policy", () => {
+    setGitHubRelayEnv()
+
+    expect(
+      isTrustedGitHubCallbackTarget(
+        "https://usekino.com/api/github/callback"
+      )
+    ).toBe(true)
+    expect(
+      isTrustedGitHubCallbackTarget(
+        "https://preview-kino.hello-fc8.workers.dev/api/github/callback"
+      )
+    ).toBe(true)
+
+    process.env.TRUSTED_ORIGINS =
+      "https://brainy-boar-871.convex.site,https://staging.usekino.com"
+
+    expect(
+      isTrustedGitHubCallbackTarget(
+        "https://brainy-boar-871.convex.site/api/github/callback"
+      )
+    ).toBe(true)
+    expect(
+      isTrustedGitHubCallbackTarget(
+        "https://staging.usekino.com/api/github/callback"
+      )
+    ).toBe(true)
+  })
+
+  it("trusts local callback targets only when local origins are trusted", () => {
+    setGitHubRelayEnv()
+
+    expect(
+      isTrustedGitHubCallbackTarget(
+        "https://mizar.kino.localhost:1355/api/github/callback"
+      )
+    ).toBe(false)
+
+    process.env.SITE_URL = "http://localhost:3000"
+
+    expect(
+      isTrustedGitHubCallbackTarget(
+        "https://mizar.kino.localhost:1355/api/github/callback"
+      )
+    ).toBe(true)
+    expect(
+      isTrustedGitHubCallbackTarget(
+        "http://127.0.0.1:5173/api/github/callback"
+      )
+    ).toBe(true)
+  })
+
+  it("rejects callback targets with untrusted paths or protocols", () => {
+    setGitHubRelayEnv()
+
+    expect(
+      isTrustedGitHubCallbackTarget("https://usekino.com/auth")
+    ).toBe(false)
+    expect(
+      isTrustedGitHubCallbackTarget("ftp://usekino.com/api/github/callback")
+    ).toBe(false)
+  })
+
   it("uses explicit GitHub callback target URL when configured", () => {
     setGitHubRelayEnv()
+    process.env.SITE_URL = "http://localhost:3000"
     process.env.GITHUB_RELAY_CALLBACK_TARGET_URL =
       "https://local.kino.localhost:1355/api/github/callback"
 
@@ -188,6 +253,7 @@ describe("github helpers", () => {
 
   it("uses a trusted requested callback target URL when no override is configured", () => {
     setGitHubRelayEnv()
+    process.env.SITE_URL = "http://localhost:3000"
 
     expect(
       resolveGitHubCallbackTargetUrl(
