@@ -86,6 +86,13 @@ names are gone.
 
 Both optional: absent → webhook target registration is a silent no-op.
 
+In Workers Builds, env vars apply to every branch, so CI uses branch-suffixed
+variants instead: `GATEWAY_URL_PREVIEW` / `GATEWAY_ADMIN_TOKEN_PREVIEW` for
+non-production branches and `GATEWAY_URL_PRODUCTION` /
+`GATEWAY_ADMIN_TOKEN_PRODUCTION` for the production branch.
+`scripts/cloudflare-build.sh` maps the right pair onto `GATEWAY_URL` /
+`GATEWAY_ADMIN_TOKEN` per build, so cross-tier registration can't happen.
+
 ### Gateway Worker (wrangler secrets + vars per env)
 
 Secrets: `OAUTH_PROXY_SECRET`, `BETTER_AUTH_SECRET` (gateway-local),

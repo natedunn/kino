@@ -197,10 +197,12 @@ on any org yet — that's Step 6, through Kino's own UI.
       ```
       (`GITHUB_RELAY_PRIVATE_KEY` is the *contents* of the `.pem` file, and
       `OAUTH_PROXY_PRODUCTION_URL` is `https://gateway-dev.usekino.com`.)
-- [ ] **5b** Cloudflare dashboard → Workers Builds config for `kino` (preview
-      branches) → add build env vars `GATEWAY_URL`
-      (`https://gateway-dev.usekino.com`) and `GATEWAY_ADMIN_TOKEN` (value
-      from the secrets file).
+- [ ] **5b** Cloudflare dashboard → Workers Builds config for `kino` → add
+      build env vars (they apply to all branches; `scripts/cloudflare-build.sh`
+      routes the `_PREVIEW` variants to non-production builds only):
+      - `GATEWAY_URL_PREVIEW` = `https://gateway-dev.usekino.com`
+      - `GATEWAY_ADMIN_TOKEN_PREVIEW` = the `GATEWAY_ADMIN_TOKEN` value from
+        the secrets file
 
 ---
 
@@ -244,7 +246,7 @@ first prod deploy of this branch.
       `GITHUB_RELAY_*`) and set
       `OAUTH_PROXY_PRODUCTION_URL=https://gateway.usekino.com`.
 - [ ] **7d** Edit the **existing prod** OAuth app + GitHub App: point callback
-      URL / webhook URL at `gateway.usekino.com` (same paths as dev). Prod CI:
-      `GATEWAY_URL` + `GATEWAY_ADMIN_TOKEN`.
+      URL / webhook URL at `gateway.usekino.com` (same paths as dev). Workers
+      Builds env: `GATEWAY_URL_PRODUCTION` + `GATEWAY_ADMIN_TOKEN_PRODUCTION`.
 - [ ] **7e** Verify prod login + sync, then remove the prod-origin
       special-casing from `src/lib/convex/auth-server.ts` (cleanup PR).
