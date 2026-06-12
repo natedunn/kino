@@ -623,6 +623,7 @@ export type DataModel = {
       enabledSources?: null | Array<string>;
       githubInstallationId: Id<"githubInstallation">;
       issuesVerifiedAt?: null | number;
+      lastWebhookAt?: null | number;
       mode: "read" | "read_write";
       orgId: string;
       orgSlug: string;
@@ -648,6 +649,7 @@ export type DataModel = {
       | "enabledSources"
       | "githubInstallationId"
       | "issuesVerifiedAt"
+      | "lastWebhookAt"
       | "mode"
       | "orgId"
       | "orgSlug"
