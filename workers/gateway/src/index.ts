@@ -1,6 +1,7 @@
 import { createGatewayAuth } from "./auth"
 import { handleGitHubRelayOAuthCallback } from "./github-relay"
 import { handleGitHubWebhook, handleTargetsApi } from "./hooks"
+import { rewriteProxyCallbackRedirect } from "./redirect-rewrite"
 import type { GatewayEnv } from "./env"
 
 export default {
@@ -9,7 +10,8 @@ export default {
 
     // Better Auth oAuthProxy production leg (GitHub OAuth login callback).
     if (url.pathname.startsWith("/api/auth")) {
-      return createGatewayAuth(env).handler(request)
+      const response = await createGatewayAuth(env).handler(request)
+      return rewriteProxyCallbackRedirect(env, response)
     }
 
     // GitHub App (sync) install/authorize trampoline.
