@@ -98,8 +98,10 @@ function getSetCookieNames(source: Headers) {
     .filter((value): value is string => !!value)
 }
 
+// Opt-in structured logging of auth request/redirect/cookie flow.
+// Enable with AUTH_DEBUG=1 on the Worker when diagnosing OAuth issues.
 function shouldLogAuthDebug() {
-  return true
+  return getRuntimeEnv().AUTH_DEBUG === "1"
 }
 
 function sanitizeAuthUrl(url: string) {
@@ -203,25 +205,12 @@ function logAuthDebug(
   )
 }
 
-function isTrustedAuthRedirectOrigin(origin: URL, request: URL) {
-  const hostname = origin.hostname.toLowerCase()
-
-  return (
-    hostname === "usekino.com" ||
-    (isLocalDevHostname(request.hostname) && isLocalDevHostname(hostname)) ||
-    isLocalDevHostname(hostname) ||
-    hostname.endsWith("-kino.hello-fc8.workers.dev") ||
-    hostname === "kino.hello-fc8.workers.dev"
-  )
-}
-
-function isConvexSiteAuthCallback(url: URL) {
-  return (
-    url.hostname.endsWith(".convex.site") &&
-    url.pathname.startsWith("/api/auth/oauth-proxy-callback")
-  )
-}
-
+/**
+ * Rewrites this deployment's own convex.site auth redirects onto the current
+ * app origin so cookies land on the app host. (Cross-environment proxy
+ * callback rewriting — the old prod-as-trampoline role — is handled by the
+ * gateway Worker now; see workers/gateway/src/redirect-rewrite.ts.)
+ */
 export function rewriteAuthRedirectLocation({
   convexSiteUrl,
   location,
@@ -235,19 +224,6 @@ export function rewriteAuthRedirectLocation({
     const request = new URL(requestUrl)
     const target = new URL(location, request)
     const convexSite = new URL(convexSiteUrl)
-
-    if (isConvexSiteAuthCallback(target)) {
-      const callbackURL = target.searchParams.get("callbackURL")
-      if (!callbackURL) return location
-
-      const callbackTarget = new URL(callbackURL)
-      if (!isTrustedAuthRedirectOrigin(callbackTarget, request)) return location
-
-      target.protocol = callbackTarget.protocol
-      target.host = callbackTarget.host
-
-      return target.toString()
-    }
 
     if (target.origin !== convexSite.origin) {
       return location

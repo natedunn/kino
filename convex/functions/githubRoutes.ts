@@ -177,38 +177,9 @@ export const callback = publicRoute
     return c.redirect(redirect)
   })
 
-export const oauthCallback = publicRoute
-  .get("/api/github/oauth-callback")
-  .searchParams(
-    z.object({
-      code: z.string().optional(),
-      error: z.string().optional(),
-      error_description: z.string().optional(),
-      installation_id: z.coerce.number().int().optional(),
-      setup_action: z.string().optional(),
-      state: z.string().optional(),
-    })
-  )
-  .query(async ({ c, searchParams }) => {
-    try {
-      if (!searchParams.state) {
-        throw new Error("GitHub callback is missing state")
-      }
-
-      const state = await verifyGitHubAppState(searchParams.state)
-      const target = new URL(state.targetUrl)
-      for (const [key, value] of Object.entries(searchParams)) {
-        if (value !== undefined) {
-          target.searchParams.set(key, String(value))
-        }
-      }
-
-      return c.redirect(target.toString())
-    } catch {
-      const redirect = `${getEnv().SITE_URL.replace(/\/$/, "")}/dashboard?github=error`
-      return c.redirect(redirect)
-    }
-  })
+// The install/authorize trampoline (GET /api/github/oauth-callback) lives on
+// the gateway Worker now (workers/gateway/src/github-relay.ts); the tier
+// GitHub App's callback URL points there, never at the app.
 
 export const webhook = publicRoute
   .post("/api/github/webhook")
@@ -274,6 +245,5 @@ export const webhook = publicRoute
 
 export const githubRoutes = router({
   callback,
-  oauthCallback,
   webhook,
 })

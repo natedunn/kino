@@ -1,22 +1,17 @@
 import { convex } from "kitcn/auth"
-import { createAuthMiddleware } from "better-auth/api"
 import { admin, oAuthProxy, organization, username } from "better-auth/plugins"
 import {
   getBetterAuthAllowedHosts,
   getEnv,
   getGitHubAuthEnv,
   getJwksEnv,
-  getOAuthProxyCurrentUrlEnv,
   getOAuthProxyProductionUrlEnv,
   getOAuthProxySecretEnv,
-  getTrustedForwardedAuthOrigin,
   getTrustedOrigins,
 } from "../lib/get-env"
 import authConfig from "./auth.config"
 import { defineAuth } from "./generated/auth"
 import { ensureUserBootstrap, ensureUniqueUsername } from "../lib/kino"
-
-const DEFAULT_OAUTH_PROXY_PRODUCTION_URL = "https://usekino.com"
 
 function isSuperAdminEmail(email: string) {
   const configured = (
@@ -25,82 +20,14 @@ function isSuperAdminEmail(email: string) {
   return !!configured && configured.toLowerCase() === email.toLowerCase()
 }
 
-function isLoopbackSiteUrl(siteUrl: string) {
-  try {
-    const hostname = new URL(siteUrl).hostname.toLowerCase()
-    return (
-      hostname === "localhost" ||
-      hostname === "127.0.0.1" ||
-      hostname === "::1"
-    )
-  } catch {
-    return false
-  }
-}
-
-export function forwardedAuthRequestUrl(request: Request | undefined) {
-  const forwardedOrigin = getTrustedForwardedAuthOrigin(request)
-  if (!forwardedOrigin || !request) return null
-
-  try {
-    const url = new URL(request.url)
-    return `${forwardedOrigin.protocol}://${forwardedOrigin.host}${url.pathname}${url.search}`
-  } catch {
-    return null
-  }
-}
-
-export function forwardedAuthRequestContext(request: Request | undefined) {
-  const forwardedUrl = forwardedAuthRequestUrl(request)
-  if (!forwardedUrl || !request) return null
-
-  return {
-    request: new Request(forwardedUrl, {
-      headers: request.headers,
-      method: request.method,
-    }),
-  }
-}
-
-export function defaultOAuthProxyProductionUrl(env: { SITE_URL: string }) {
-  if (isLoopbackSiteUrl(env.SITE_URL)) {
-    return DEFAULT_OAUTH_PROXY_PRODUCTION_URL
-  }
-
-  return env.SITE_URL.startsWith("http://") ? undefined : env.SITE_URL
-}
-
-function forwardedAuthRequestPlugin() {
-  return {
-    id: "forwarded-auth-request",
-    hooks: {
-      before: [
-        {
-          matcher(context: { path?: string }) {
-            return !!(
-              context.path?.startsWith("/sign-in/social") ||
-              context.path?.startsWith("/sign-in/oauth2")
-            )
-          },
-          handler: createAuthMiddleware(async (ctx: any) => {
-            const context = forwardedAuthRequestContext(ctx.request)
-            if (!context) return
-
-            return { context }
-          }),
-        },
-      ],
-    },
-  }
-}
-
 export default defineAuth(() => {
   const env = getEnv()
   const githubAuth = getGitHubAuthEnv()
   const jwks = getJwksEnv()
-  const oauthProxyCurrentUrl = getOAuthProxyCurrentUrlEnv()
-  const oauthProxyProductionUrl =
-    getOAuthProxyProductionUrlEnv() ?? defaultOAuthProxyProductionUrl(env)
+  // Every environment must point this at its tier gateway
+  // (https://gateway-dev.usekino.com or https://gateway.usekino.com).
+  // No default: a wrong fallback would send GitHub a redirect_uri it rejects.
+  const oauthProxyProductionUrl = getOAuthProxyProductionUrlEnv()
   const oauthProxySecret = getOAuthProxySecretEnv()
   const trustedOrigins = getTrustedOrigins()
   const isLocalHttp = env.SITE_URL.startsWith("http://")
@@ -143,13 +70,9 @@ export default defineAuth(() => {
           },
         },
       }),
-      forwardedAuthRequestPlugin(),
-      ...(oauthProxySecret
+      ...(oauthProxySecret && oauthProxyProductionUrl
         ? [
             oAuthProxy({
-              ...(oauthProxyCurrentUrl
-                ? { currentURL: oauthProxyCurrentUrl }
-                : {}),
               productionURL: oauthProxyProductionUrl,
               secret: oauthProxySecret,
             }),

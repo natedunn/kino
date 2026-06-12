@@ -11,7 +11,6 @@ const AUTH_KEYS = [
   "GITHUB_AUTH_CLIENT_SECRET",
   "OAUTH_PROXY_SECRET",
   "OAUTH_PROXY_PRODUCTION_URL",
-  "OAUTH_PROXY_CURRENT_URL",
   "BETTER_AUTH_SECRET",
 ]
 
@@ -169,17 +168,6 @@ function collectFindings(envs) {
     ) {
       warnings.push(`Convex preview default/prod differ for ${key}.`)
     }
-  }
-
-  if (hasValue(envs, "OAUTH_PROXY_CURRENT_URL", "convex-dev")) {
-    warnings.push(
-      "Convex dev has OAUTH_PROXY_CURRENT_URL set. This pins auth to one host and can break multiple worktrees."
-    )
-  }
-  if (hasValue(envs, "OAUTH_PROXY_CURRENT_URL", "convex-prod")) {
-    warnings.push(
-      "Convex prod has OAUTH_PROXY_CURRENT_URL set. This is unusual for production."
-    )
   }
 
   if (!hasValue(envs, "SITE_URL", "convex-prod")) {

@@ -7,7 +7,6 @@ const envSchema = z.object({
   TRUSTED_ORIGINS: z.string().optional(),
   TRUSTED_HOSTS: z.string().optional(),
   CLOUDFLARE_WORKER_NAME: z.string().optional(),
-  OAUTH_PROXY_CURRENT_URL: z.string().optional(),
   OAUTH_PROXY_PRODUCTION_URL: z.string().optional(),
 })
 
@@ -29,7 +28,6 @@ export function getEnv() {
       SITE_URL: runtimeEnv.SITE_URL,
       TRUSTED_HOSTS: runtimeEnv.TRUSTED_HOSTS,
       TRUSTED_ORIGINS: runtimeEnv.TRUSTED_ORIGINS,
-      OAUTH_PROXY_CURRENT_URL: runtimeEnv.OAUTH_PROXY_CURRENT_URL,
       OAUTH_PROXY_PRODUCTION_URL: runtimeEnv.OAUTH_PROXY_PRODUCTION_URL,
       CLOUDFLARE_WORKER_NAME:
         runtimeEnv.CLOUDFLARE_WORKER_NAME ??
@@ -83,10 +81,6 @@ export function getJwksEnv() {
 
 export function getOAuthProxySecretEnv() {
   return getRuntimeEnvValue(["OAUTH", "PROXY", "SECRET"])
-}
-
-export function getOAuthProxyCurrentUrlEnv() {
-  return getRuntimeEnvValue(["OAUTH", "PROXY", "CURRENT", "URL"])
 }
 
 export function getOAuthProxyProductionUrlEnv() {

@@ -848,10 +848,6 @@ export const githubRepositoryConnectionTable = convexTable(
       .references(() => githubInstallationTable.id),
     issuesVerifiedAt: integer(),
     discussionsVerifiedAt: integer(),
-    // Written by a since-removed prod webhook implementation; kept optional so
-    // existing prod documents validate. Safe to drop after a migration clears
-    // it from old rows.
-    lastWebhookAt: integer(),
     mode: textEnum(GITHUB_SYNC_MODES).notNull(),
     orgId: text()
       .notNull()
