@@ -41,7 +41,7 @@
       },
       "kv_namespaces": [
         // Create with: wrangler kv namespace create TARGETS --env production
-        { "binding": "TARGETS", "id": "REPLACE_WITH_PROD_KV_ID" },
+        { "binding": "TARGETS", "id": "5f28cf640ea44c5f94bf053e21b5db94" },
       ],
     },
   },
