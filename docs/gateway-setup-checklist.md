@@ -231,22 +231,57 @@ on any org yet — that's Step 6, through Kino's own UI.
 
 ---
 
-## Step 7 — Prod cutover (LATER, only after Step 6 is fully green)
+## Step 7 — Prod cutover
 
-Summary only — ask for a detailed walkthrough when you get here. There are
-**no legacy env fallbacks** in the code, so 7c must land together with the
-first prod deploy of this branch.
+⚠️ Once 7.1 runs, prod login is in a broken "cutover window" until 7.4 + 7.6
+are BOTH done (fine pre-launch). There are no legacy env fallbacks in the
+code, so the merge (7.6) is what completes the cutover.
 
-- [ ] **7a** Create `workers/gateway/secrets.production.local` the same way
-      (reuse prod's existing OAuth proxy secret + GitHub creds; fresh
-      `GATEWAY_ADMIN_TOKEN` + `BETTER_AUTH_SECRET`).
-- [ ] **7b** KV namespace + secrets + `pnpm deploy:production`
-      (`gateway.usekino.com`).
-- [ ] **7c** Rename prod Convex env vars to the new names (`GITHUB_AUTH_*`,
-      `GITHUB_RELAY_*`) and set
-      `OAUTH_PROXY_PRODUCTION_URL=https://gateway.usekino.com`.
-- [ ] **7d** Edit the **existing prod** OAuth app + GitHub App: point callback
-      URL / webhook URL at `gateway.usekino.com` (same paths as dev). Workers
-      Builds env: `GATEWAY_URL_PRODUCTION` + `GATEWAY_ADMIN_TOKEN_PRODUCTION`.
-- [ ] **7e** Verify prod login + sync, then remove the prod-origin
-      special-casing from `src/lib/convex/auth-server.ts` (cleanup PR).
+- [x] **7.1** `workers/gateway/secrets.production.local` created — reuses
+      prod's existing `OAUTH_PROXY_SECRET`, OAuth app creds, state/webhook
+      secrets; fresh `GATEWAY_ADMIN_TOKEN` + `BETTER_AUTH_SECRET`. *(done)*
+- [x] **7.2** Prod KV namespace created + wired into `wrangler.jsonc`; seven
+      secrets pushed; `kino-gateway` deployed; `gateway.usekino.com` live
+      (health + auth endpoint verified). *(done)*
+- [x] **7.3** Prod Convex (`brainy-boar-871`): all values copied to the new
+      names (`GITHUB_AUTH_*`, `GITHUB_RELAY_*`,
+      `GITHUB_RELAY_CALLBACK_TARGET_URL`); old names kept until 7.7;
+      `OAUTH_PROXY_PRODUCTION_URL=https://gateway.usekino.com`. *(done — this
+      is what opens the cutover window)*
+- [ ] **7.4** GitHub UI — repoint the two **production** apps (NOT the Dev
+      ones):
+      - **7.4a** Prod OAuth app (login):
+        <https://github.com/settings/developers> → OAuth Apps → your original
+        prod app → set **Authorization callback URL** =
+        `https://gateway.usekino.com/api/auth/callback/github` → Update
+        application.
+      - **7.4b** Prod GitHub App (sync):
+        <https://github.com/settings/apps> → your original prod app → General:
+        - **Callback URL** =
+          `https://gateway.usekino.com/github-relay/oauth-callback`
+        - **Webhook URL** = `https://gateway.usekino.com/hooks/github`
+        - Webhook secret: leave unchanged (the gateway already holds it).
+        - Save changes.
+- [ ] **7.5** Cloudflare dashboard → Workers & Pages → kino → Settings →
+      **Build** → Build variables (same place as the `_PREVIEW` pair):
+      - `GATEWAY_URL_PRODUCTION` = `https://gateway.usekino.com`
+      - `GATEWAY_ADMIN_TOKEN_PRODUCTION` = value of `GATEWAY_ADMIN_TOKEN` in
+        `workers/gateway/secrets.production.local`
+        (`grep GATEWAY_ADMIN_TOKEN workers/gateway/secrets.production.local`)
+- [ ] **7.6** Merge PR #39 (<https://github.com/natedunn/kino/pull/39>).
+      The main-branch build deploys the new code (new env names), and
+      `cloudflare-build.sh` registers prod's webhook receiver with the prod
+      gateway. Watch the build succeed in the Cloudflare dashboard or
+      `gh pr checks`.
+- [ ] **7.7** Verification + cleanup (agent-assisted):
+      - Headless prod sign-in probe: `redirect_uri` must be
+        `https://gateway.usekino.com/...` with the prod OAuth client id.
+      - Browser: log in at <https://usekino.com>.
+      - Webhook: signed fan-out test against
+        `https://gateway.usekino.com/hooks/github`; prod registry lists prod's
+        convex.site target; rows appear in prod `githubWebhookDelivery`.
+      - Remove the OLD env names from prod Convex (`GITHUB_CLIENT_*`,
+        `GITHUB_APP_*`).
+      - Cleanup PR: remove prod-origin special-casing
+        (`withFirstPartyOAuthProxyBypass`, legacy convex.site rewrite branch)
+        from `src/lib/convex/auth-server.ts`.
