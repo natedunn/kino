@@ -10,6 +10,7 @@ import {
   sanitizeGitHubRepository,
   sha256Hex,
   verifyGitHubAppState,
+  verifyGitHubWebhookSignature,
 } from "./github"
 
 const ORIGINAL_ENV = { ...process.env }
@@ -216,5 +217,55 @@ describe("github helpers", () => {
         "https://evil.example.com/api/github/callback"
       )
     ).toThrow("GitHub callback target URL is not trusted")
+  })
+})
+
+describe("verifyGitHubWebhookSignature", () => {
+  // echo -n '{"action":"ping"}' | openssl dgst -sha256 -hmac webhook-secret
+  const BODY = '{"action":"ping"}'
+  const VALID_SIG =
+    "sha256=b79f7f179b41184d008131377978dead58052349a984dd3e0352c64488989813"
+
+  it("accepts a valid signature", async () => {
+    setGitHubRelayEnv()
+    expect(await verifyGitHubWebhookSignature(BODY, VALID_SIG)).toBe(true)
+  })
+
+  it("rejects a tampered body", async () => {
+    setGitHubRelayEnv()
+    expect(
+      await verifyGitHubWebhookSignature('{"action":"pong"}', VALID_SIG)
+    ).toBe(false)
+  })
+
+  it("rejects a wrong signature of the right length", async () => {
+    setGitHubRelayEnv()
+    const wrong = `sha256=${"0".repeat(64)}`
+    expect(await verifyGitHubWebhookSignature(BODY, wrong)).toBe(false)
+  })
+
+  it("rejects missing or unprefixed signature headers", async () => {
+    setGitHubRelayEnv()
+    expect(await verifyGitHubWebhookSignature(BODY, null)).toBe(false)
+    expect(await verifyGitHubWebhookSignature(BODY, undefined)).toBe(false)
+    expect(
+      await verifyGitHubWebhookSignature(BODY, VALID_SIG.replace("sha256=", ""))
+    ).toBe(false)
+    expect(
+      await verifyGitHubWebhookSignature(BODY, VALID_SIG.replace("sha256=", "sha1="))
+    ).toBe(false)
+  })
+
+  it("verifies with only the webhook secret configured", async () => {
+    // Receipt must not depend on unrelated GITHUB_RELAY_* vars (private key etc.)
+    resetEnv({ GITHUB_RELAY_WEBHOOK_SECRET: "webhook-secret" })
+    expect(await verifyGitHubWebhookSignature(BODY, VALID_SIG)).toBe(true)
+  })
+
+  it("throws when the webhook secret is not configured", async () => {
+    resetEnv({})
+    await expect(verifyGitHubWebhookSignature(BODY, VALID_SIG)).rejects.toThrow(
+      "GITHUB_RELAY_WEBHOOK_SECRET"
+    )
   })
 })

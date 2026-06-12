@@ -111,10 +111,7 @@ export function getRequiredGitHubRelayEnv(): GitHubRelayEnv {
     clientSecret: assertString(env.clientSecret, "GITHUB_RELAY_CLIENT_SECRET"),
     privateKey: assertString(env.privateKey, "GITHUB_RELAY_PRIVATE_KEY"),
     slug: assertString(env.slug, "GITHUB_RELAY_SLUG"),
-    stateSecret: env.stateSecret ?? assertString(
-      env.webhookSecret,
-      "GITHUB_RELAY_WEBHOOK_SECRET"
-    ),
+    stateSecret: assertString(env.stateSecret, "GITHUB_RELAY_STATE_SECRET"),
     webhookSecret: assertString(
       env.webhookSecret,
       "GITHUB_RELAY_WEBHOOK_SECRET"
