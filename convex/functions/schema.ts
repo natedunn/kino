@@ -716,7 +716,7 @@ export const updateCommentTable = convexTable(
     updatedTime: integer(),
     updateId: id("update")
       .notNull()
-      .references(() => updateTable.id),
+      .references(() => updateTable.id, { onDelete: "cascade" }),
     authorProfileId: id("profile")
       .notNull()
       .references(() => profileTable.id),
@@ -735,7 +735,7 @@ export const updateEmoteTable = convexTable(
     updatedTime: integer(),
     updateId: id("update")
       .notNull()
-      .references(() => updateTable.id),
+      .references(() => updateTable.id, { onDelete: "cascade" }),
     authorProfileId: id("profile")
       .notNull()
       .references(() => profileTable.id),
@@ -757,10 +757,10 @@ export const updateCommentEmoteTable = convexTable(
     updatedTime: integer(),
     updateId: id("update")
       .notNull()
-      .references(() => updateTable.id),
+      .references(() => updateTable.id, { onDelete: "cascade" }),
     updateCommentId: id("updateComment")
       .notNull()
-      .references(() => updateCommentTable.id),
+      .references(() => updateCommentTable.id, { onDelete: "cascade" }),
     authorProfileId: id("profile")
       .notNull()
       .references(() => profileTable.id),
