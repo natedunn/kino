@@ -260,8 +260,14 @@ export async function verifyGitHubWebhookSignature(
 ) {
   if (!signatureHeader?.startsWith("sha256=")) return false
 
-  const env = getRequiredGitHubRelayEnv()
-  const expected = `sha256=${await hmacSha256Hex(env.webhookSecret, body)}`
+  // Only the webhook secret is needed here. Deliberately not using
+  // getRequiredGitHubRelayEnv(): a missing unrelated var (e.g. private key)
+  // must not turn webhook receipt into a 500.
+  const webhookSecret = assertString(
+    getGitHubRelayEnv().webhookSecret,
+    "GITHUB_RELAY_WEBHOOK_SECRET"
+  )
+  const expected = `sha256=${await hmacSha256Hex(webhookSecret, body)}`
   return constantTimeEqual(expected, signatureHeader)
 }
 
