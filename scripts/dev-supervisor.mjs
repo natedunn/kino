@@ -49,6 +49,16 @@ function killProcessGroup(child, signal) {
   }
 }
 
+// Best-effort: register this dev deployment's webhook receiver with the gateway
+// fan-out (no-op when gateway env vars are absent). Convex dev deployments have
+// publicly reachable *.convex.site URLs, so GitHub webhooks work locally
+// without tunnels.
+spawn("node", [path.join("scripts", "gateway-webhook-target.mjs"), "register"], {
+  stdio: "inherit",
+  env: process.env,
+  cwd: workspaceRoot,
+})
+
 const children = [
   {
     name: "vite",

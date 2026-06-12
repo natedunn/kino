@@ -672,6 +672,35 @@ export type DataModel = {
     searchIndexes: {};
     vectorIndexes: {};
   };
+  githubWebhookDelivery: {
+    document: {
+      action?: null | string;
+      deliveryId: string;
+      event: string;
+      installationId?: null | number;
+      receivedTime: number;
+      result: "processed" | "ignored";
+      _id: Id<"githubWebhookDelivery">;
+      _creationTime: number;
+    };
+    fieldPaths:
+      | "_creationTime"
+      | "_id"
+      | "action"
+      | "deliveryId"
+      | "event"
+      | "installationId"
+      | "receivedTime"
+      | "result";
+    indexes: {
+      by_id: ["_id"];
+      by_creation_time: ["_creationTime"];
+      by_deliveryId: ["deliveryId", "_creationTime"];
+      by_receivedTime: ["receivedTime", "_creationTime"];
+    };
+    searchIndexes: {};
+    vectorIndexes: {};
+  };
   invitation: {
     document: {
       createdAt: number;

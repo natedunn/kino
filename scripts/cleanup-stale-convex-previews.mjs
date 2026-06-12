@@ -179,6 +179,17 @@ async function main() {
       continue
     }
 
+    // Best-effort: drop the deployment's webhook target from the gateway registry.
+    execFileSync(
+      "node",
+      [
+        "scripts/gateway-webhook-target.mjs",
+        "unregister",
+        `https://${deployment.name}.convex.site/api/github/webhook`,
+      ],
+      { stdio: "inherit" }
+    )
+
     await convexFetch(
       `/deployments/${encodeURIComponent(deployment.name)}/delete`,
       { method: "POST" }

@@ -26,6 +26,8 @@
     "lint": "eslint",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx}\"",
     "auth:env:audit": "node scripts/auth-env-audit.mjs",
+    "gateway:webhook:register": "node scripts/gateway-webhook-target.mjs register",
+    "gateway:webhook:unregister": "node scripts/gateway-webhook-target.mjs unregister",
     "typecheck": "tsc --noEmit && pnpm run typecheck:convex",
     "codegen": "kitcn codegen",
     "typecheck:convex": "tsc --noEmit --project convex/functions/tsconfig.json"

@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { spawnSync } from "node:child_process"
 import { existsSync, readFileSync } from "node:fs"
 
 loadEnvFiles()
@@ -140,6 +141,17 @@ async function main() {
       `Convex preview deployment '${previewIdentifier}' is missing a deployment name.`
     )
   }
+
+  // Best-effort: drop the deployment's webhook target from the gateway registry.
+  spawnSync(
+    "node",
+    [
+      "scripts/gateway-webhook-target.mjs",
+      "unregister",
+      `https://${deployment.name}.convex.site/api/github/webhook`,
+    ],
+    { stdio: "inherit" }
+  )
 
   await convexFetch(
     `/deployments/${encodeURIComponent(deployment.name)}/delete`,

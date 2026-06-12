@@ -8,9 +8,21 @@ fi
 branch="${branch:-local}"
 
 production_branch="${PRODUCTION_BRANCH:-main}"
-build_cmd='VITE_CONVEX_SITE_URL="$(printf "%s" "$VITE_CONVEX_URL" | sed "s/\.convex\.cloud$/.convex.site/")" pnpm run build'
+build_cmd='sh scripts/cloudflare-vite-build.sh'
 
 preview_name="$(sh scripts/preview-name.sh "$branch" 48)"
+
+# Workers Builds env vars apply to every branch, so the gateway target
+# registration uses branch-suffixed variants: production builds must register
+# with the prod gateway and preview builds with the dev gateway — never
+# cross-tier. Unset variants mean registration is skipped (best-effort no-op).
+if [ "$branch" = "$production_branch" ]; then
+  export GATEWAY_URL="${GATEWAY_URL_PRODUCTION:-}"
+  export GATEWAY_ADMIN_TOKEN="${GATEWAY_ADMIN_TOKEN_PRODUCTION:-}"
+else
+  export GATEWAY_URL="${GATEWAY_URL_PREVIEW:-}"
+  export GATEWAY_ADMIN_TOKEN="${GATEWAY_ADMIN_TOKEN_PREVIEW:-}"
+fi
 
 if [ "$branch" = "$production_branch" ]; then
   if [ -z "${CONVEX_PROD_DEPLOY_KEY:-}" ]; then

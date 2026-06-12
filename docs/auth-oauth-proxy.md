@@ -2,6 +2,15 @@
 
 Last updated: May 25, 2026.
 
+> **Superseded (June 2026):** the prod-anchored proxy flow described here is
+> being replaced by per-tier gateway Workers and split dev/prod GitHub
+> registrations ("Kino Auth" OAuth apps + "Kino Relay" GitHub Apps). See
+> `docs/github-environments.md` for the current architecture and
+> `docs/gateway-setup-checklist.md` for setup. These notes remain accurate
+> for the transition period while production still anchors the proxy leg.
+> Note: env var names referenced below (`GITHUB_CLIENT_*`) are now
+> `GITHUB_AUTH_CLIENT_*`.
+
 ## Current Problem
 
 Kino uses Kitcn, TanStack Start, Convex, Better Auth, and the Better Auth OAuth proxy plugin. Preview deployments should be able to authenticate with GitHub without creating a new GitHub OAuth app for every preview URL.

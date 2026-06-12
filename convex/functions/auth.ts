@@ -4,7 +4,7 @@ import { admin, oAuthProxy, organization, username } from "better-auth/plugins"
 import {
   getBetterAuthAllowedHosts,
   getEnv,
-  getGitHubOAuthEnv,
+  getGitHubAuthEnv,
   getJwksEnv,
   getOAuthProxyCurrentUrlEnv,
   getOAuthProxyProductionUrlEnv,
@@ -96,7 +96,7 @@ function forwardedAuthRequestPlugin() {
 
 export default defineAuth(() => {
   const env = getEnv()
-  const githubOAuth = getGitHubOAuthEnv()
+  const githubAuth = getGitHubAuthEnv()
   const jwks = getJwksEnv()
   const oauthProxyCurrentUrl = getOAuthProxyCurrentUrlEnv()
   const oauthProxyProductionUrl =
@@ -271,13 +271,13 @@ export default defineAuth(() => {
     },
   }
 
-  if (githubOAuth.clientId && githubOAuth.clientSecret) {
+  if (githubAuth.clientId && githubAuth.clientSecret) {
     return {
       ...baseOptions,
       socialProviders: {
         github: {
-          clientId: githubOAuth.clientId,
-          clientSecret: githubOAuth.clientSecret,
+          clientId: githubAuth.clientId,
+          clientSecret: githubAuth.clientSecret,
         },
       },
     }

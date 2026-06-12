@@ -7,8 +7,8 @@ const AUTH_KEYS = [
   "SITE_URL",
   "VITE_CONVEX_URL",
   "VITE_CONVEX_SITE_URL",
-  "GITHUB_CLIENT_ID",
-  "GITHUB_CLIENT_SECRET",
+  "GITHUB_AUTH_CLIENT_ID",
+  "GITHUB_AUTH_CLIENT_SECRET",
   "OAUTH_PROXY_SECRET",
   "OAUTH_PROXY_PRODUCTION_URL",
   "OAUTH_PROXY_CURRENT_URL",
@@ -17,13 +17,13 @@ const AUTH_KEYS = [
 
 const SECRET_KEYS = new Set([
   "BETTER_AUTH_SECRET",
-  "GITHUB_CLIENT_SECRET",
+  "GITHUB_AUTH_CLIENT_SECRET",
   "OAUTH_PROXY_SECRET",
 ])
 
 const SHARED_OAUTH_KEYS = [
-  "GITHUB_CLIENT_ID",
-  "GITHUB_CLIENT_SECRET",
+  "GITHUB_AUTH_CLIENT_ID",
+  "GITHUB_AUTH_CLIENT_SECRET",
   "OAUTH_PROXY_SECRET",
 ]
 
@@ -178,7 +178,7 @@ function collectFindings(envs) {
   }
   if (hasValue(envs, "OAUTH_PROXY_CURRENT_URL", "convex-prod")) {
     warnings.push(
-      "Convex prod has OAUTH_PROXY_CURRENT_URL set. This is unusual for the production relay."
+      "Convex prod has OAUTH_PROXY_CURRENT_URL set. This is unusual for production."
     )
   }
 

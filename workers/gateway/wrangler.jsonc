@@ -1,0 +1,48 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "kino-gateway",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-05-22",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+  "workers_dev": false,
+
+  // Secrets (set per env with `wrangler secret put <NAME> --env <env>`):
+  //   OAUTH_PROXY_SECRET        shared with every app deployment in this tier
+  //   BETTER_AUTH_SECRET        gateway-local better-auth secret (any random value)
+  //   GITHUB_AUTH_CLIENT_ID          tier OAuth app (login) client id
+  //   GITHUB_AUTH_CLIENT_SECRET      tier OAuth app (login) client secret
+  //   GITHUB_RELAY_STATE_SECRET   tier GitHub App signed-state secret
+  //   GITHUB_RELAY_WEBHOOK_SECRET tier GitHub App webhook secret
+  //   GATEWAY_ADMIN_TOKEN         bearer token for the /hooks/targets registry API
+
+  "env": {
+    "dev": {
+      "name": "kino-gateway-dev",
+      "routes": [
+        { "pattern": "gateway-dev.usekino.com", "custom_domain": true },
+      ],
+      "vars": {
+        "GATEWAY_ORIGIN": "https://gateway-dev.usekino.com",
+        // Comma-separated origin patterns allowed as redirect/webhook targets.
+        "TRUSTED_TARGET_PATTERNS": "https://*-kino.hello-fc8.workers.dev,https://kino.hello-fc8.workers.dev,https://*.kino.localhost:*,https://*.kino.localhost,http://*.kino.localhost:*,http://localhost:*,http://127.0.0.1:*,https://*.convex.site",
+      },
+      "kv_namespaces": [
+        // Create with: wrangler kv namespace create TARGETS --env dev
+        { "binding": "TARGETS", "id": "c0daa6e26ec349399a1aaf6426f4e619" },
+      ],
+    },
+    "production": {
+      "name": "kino-gateway",
+      "routes": [{ "pattern": "gateway.usekino.com", "custom_domain": true }],
+      "vars": {
+        "GATEWAY_ORIGIN": "https://gateway.usekino.com",
+        "TRUSTED_TARGET_PATTERNS": "https://usekino.com,https://*.convex.site",
+      },
+      "kv_namespaces": [
+        // Create with: wrangler kv namespace create TARGETS --env production
+        { "binding": "TARGETS", "id": "5f28cf640ea44c5f94bf053e21b5db94" },
+      ],
+    },
+  },
+}
