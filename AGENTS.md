@@ -11,3 +11,13 @@ Convex agent skills for common tasks can be installed by running
 `npx convex ai-files install`.
 
 <!-- convex-ai-end -->
+
+## GitHub integration & gateway
+
+When working on anything involving GitHub auth (login), the Kino Relay GitHub
+App (org/repo sync), webhooks, or `workers/gateway/`, **read
+`docs/github-environments.md` first**. It documents the Auth/Relay/Gateway
+naming scheme, the per-tier architecture, and a set of invariants (better-auth
+version locking, the load-bearing redirect rewrite, bundler traps, Convex
+schema-vs-prod-data validation) where violations pass local tests but break
+deployed OAuth flows.

@@ -11,3 +11,7 @@ Convex agent skills for common tasks can be installed by running
 `npx convex ai-files install`.
 
 <!-- convex-ai-end -->
+
+When working on GitHub auth, the Kino Relay sync app, webhooks, or
+`workers/gateway/`, read `docs/github-environments.md` first — it contains
+required invariants for the gateway architecture.
