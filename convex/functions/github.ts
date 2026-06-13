@@ -752,6 +752,7 @@ export const saveRepositoryConnection = privateMutation
       repoName: input.repository.name,
       repoNodeId: input.repository.node_id,
       repoOwner: input.repository.owner.login,
+      repoPrivate: input.repository.private,
       updatedTime: now,
       verificationStatus: "verified",
       verificationSummary: input.verificationSummary,
@@ -840,12 +841,21 @@ const webhookInstallationSchema = z.object({
   repository_selection: z.string().optional(),
 })
 
+const webhookIssueSchema = z.object({
+  nodeId: z.string().min(1),
+  number: z.number().int(),
+  repositoryId: z.number().int(),
+  state: z.string().min(1),
+  title: z.string(),
+  url: z.string().url(),
+})
+
 /**
  * Webhook deliveries arrive via the relay broadcast, so this env may receive
  * events for installations it has never seen — that is normal, not an error.
  * Deliveries are deduped on GitHub's delivery GUID (relay retries, GitHub
  * redeliveries). Only `installation` lifecycle events mutate state today;
- * issues/discussions sync handlers will extend the dispatch when built.
+ * issue events update any linked feedback connection snapshots.
  */
 export const processWebhookEvent = privateMutation
   .input(
@@ -854,6 +864,7 @@ export const processWebhookEvent = privateMutation
       deliveryId: z.string().min(1),
       event: z.string().min(1),
       installation: webhookInstallationSchema.optional(),
+      issue: webhookIssueSchema.optional(),
     })
   )
   .mutation(async ({ ctx, input }) => {
@@ -903,6 +914,57 @@ export const processWebhookEvent = privateMutation
             updatedTime: now,
           })
         }
+        result = "processed"
+      }
+    }
+
+    if (
+      (input.event === "issues" || input.event === "issue_comment") &&
+      input.issue
+    ) {
+      const repositoryConnections = await ctx.db
+        .query("githubRepositoryConnection")
+        .withIndex("by_repoId", (q: any) =>
+          q.eq("repoId", input.issue!.repositoryId)
+        )
+        .take(50)
+
+      let updatedCount = 0
+      for (const repositoryConnection of repositoryConnections) {
+        if (repositoryConnection.deletedTime) continue
+
+        const feedbackConnections = await ctx.db
+          .query("feedbackGithubConnection")
+          .withIndex("by_githubRepositoryConnectionId", (q: any) =>
+            q.eq("githubRepositoryConnectionId", repositoryConnection._id)
+          )
+          .take(200)
+
+        for (const feedbackConnection of feedbackConnections) {
+          if (feedbackConnection.deletedTime) continue
+          if (feedbackConnection.githubNodeId !== input.issue.nodeId) continue
+
+          if (
+            feedbackConnection.githubNumber === input.issue.number &&
+            feedbackConnection.state === input.issue.state &&
+            feedbackConnection.title === input.issue.title &&
+            feedbackConnection.url === input.issue.url
+          ) {
+            continue
+          }
+
+          await ctx.db.patch(feedbackConnection._id, {
+            githubNumber: input.issue.number,
+            state: input.issue.state,
+            title: input.issue.title,
+            updatedTime: now,
+            url: input.issue.url,
+          })
+          updatedCount += 1
+        }
+      }
+
+      if (updatedCount > 0) {
         result = "processed"
       }
     }

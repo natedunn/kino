@@ -59,6 +59,15 @@ export type GitHubRepositoryProbe = {
   repository: GitHubRepository
 }
 
+export type GitHubIssueTarget = {
+  databaseId: number
+  nodeId: string
+  number: number
+  state: string
+  title: string
+  url: string
+}
+
 export function sanitizeGitHubInstallationDetails(
   installation: GitHubInstallationDetails
 ): GitHubInstallationDetails {
@@ -297,7 +306,8 @@ export function isTrustedGitHubCallbackTarget(targetUrl: string) {
     const origin = `${target.protocol}//${target.host}`
 
     if (target.pathname !== "/api/github/callback") return false
-    if (target.protocol !== "https:" && target.protocol !== "http:") return false
+    if (target.protocol !== "https:" && target.protocol !== "http:")
+      return false
 
     return isTrustedOrigin(origin)
   } catch {
@@ -340,7 +350,9 @@ export async function verifyGitHubAppState(state: string) {
     })
   }
 
-  const payload = JSON.parse(base64UrlDecode(encodedPayload)) as Partial<GitHubAppStatePayload>
+  const payload = JSON.parse(
+    base64UrlDecode(encodedPayload)
+  ) as Partial<GitHubAppStatePayload>
   if (
     payload.v !== 1 ||
     typeof payload.exp !== "number" ||
@@ -449,10 +461,12 @@ export async function exchangeGitHubSetupCode(code: string) {
 }
 
 export async function listUserInstallations(userToken: string) {
-  const result = await githubFetch<{ installations: GitHubInstallationDetails[] }>(
-    `${GITHUB_API_URL}/user/installations?per_page=100`,
-    { method: "GET", token: userToken }
-  )
+  const result = await githubFetch<{
+    installations: GitHubInstallationDetails[]
+  }>(`${GITHUB_API_URL}/user/installations?per_page=100`, {
+    method: "GET",
+    token: userToken,
+  })
   return result.installations
 }
 
@@ -497,15 +511,120 @@ export async function listInstallationRepositories(token: string) {
   return result.repositories
 }
 
-async function graphql<T>(token: string, query: string, variables: unknown) {
-  const result = await githubFetch<{ data?: T; errors?: Array<{ message: string }> }>(
-    GITHUB_GRAPHQL_URL,
+type GitHubIssueApiItem = {
+  html_url: string
+  id: number
+  node_id: string
+  number: number
+  pull_request?: unknown
+  state: string
+  title: string
+}
+
+function toIssueTarget(issue: GitHubIssueApiItem): GitHubIssueTarget {
+  return {
+    databaseId: issue.id,
+    nodeId: issue.node_id,
+    number: issue.number,
+    state: issue.state,
+    title: issue.title,
+    url: issue.html_url,
+  }
+}
+
+export async function searchRepositoryIssues(args: {
+  query: string
+  repository: Pick<GitHubRepository, "full_name">
+  token: string
+}) {
+  const search = args.query.trim()
+  if (!search) {
+    const result = await githubFetch<GitHubIssueApiItem[]>(
+      `${GITHUB_API_URL}/repos/${args.repository.full_name}/issues?state=all&sort=updated&direction=desc&per_page=10`,
+      { method: "GET", token: args.token }
+    )
+    return result
+      .filter((issue) => !issue.pull_request)
+      .slice(0, 10)
+      .map(toIssueTarget)
+  }
+
+  const url = new URL(`${GITHUB_API_URL}/search/issues`)
+  url.searchParams.set(
+    "q",
+    `repo:${args.repository.full_name} is:issue ${search}`
+  )
+  url.searchParams.set("sort", "updated")
+  url.searchParams.set("order", "desc")
+  url.searchParams.set("per_page", "10")
+
+  const result = await githubFetch<{ items: GitHubIssueApiItem[] }>(
+    url.toString(),
+    { method: "GET", token: args.token }
+  )
+  return result.items.map(toIssueTarget)
+}
+
+export async function getRepositoryIssue(args: {
+  issueNumber: number
+  repository: Pick<GitHubRepository, "full_name">
+  token: string
+}) {
+  const issue = await githubFetch<GitHubIssueApiItem>(
+    `${GITHUB_API_URL}/repos/${args.repository.full_name}/issues/${args.issueNumber}`,
+    { method: "GET", token: args.token }
+  )
+  if (issue.pull_request) {
+    throw new CRPCError({
+      code: "BAD_REQUEST",
+      message: "Pull requests cannot be connected as feedback issues",
+    })
+  }
+  return toIssueTarget(issue)
+}
+
+export async function createRepositoryIssue(args: {
+  body: string
+  repository: Pick<GitHubRepository, "full_name">
+  title: string
+  token: string
+}) {
+  const issue = await githubFetch<GitHubIssueApiItem>(
+    `${GITHUB_API_URL}/repos/${args.repository.full_name}/issues`,
     {
-      body: JSON.stringify({ query, variables }),
+      body: JSON.stringify({ body: args.body, title: args.title }),
       method: "POST",
-      token,
+      token: args.token,
     }
   )
+  return toIssueTarget(issue)
+}
+
+export async function createIssueComment(args: {
+  body: string
+  issueNumber: number
+  repository: Pick<GitHubRepository, "full_name">
+  token: string
+}) {
+  await githubFetch<unknown>(
+    `${GITHUB_API_URL}/repos/${args.repository.full_name}/issues/${args.issueNumber}/comments`,
+    {
+      body: JSON.stringify({ body: args.body }),
+      method: "POST",
+      token: args.token,
+    }
+  )
+}
+
+async function graphql<T>(token: string, query: string, variables: unknown) {
+  const result = await githubFetch<{
+    data?: T
+    errors?: Array<{ message: string }>
+  }>(GITHUB_GRAPHQL_URL, {
+    body: JSON.stringify({ query, variables }),
+    method: "POST",
+    token,
+  })
   if (result.errors?.length) {
     throw new CRPCError({
       code: "BAD_REQUEST",
@@ -538,17 +657,27 @@ export async function probeRepository(args: {
     } | null
   }>(
     args.token,
-    `query KinoRepositoryProbe($owner: String!, $name: String!) {
-      repository(owner: $owner, name: $name) {
-        hasDiscussionsEnabled
-        discussionCategories(first: 1) {
-          nodes { id name }
-        }
-        discussions(first: 1) {
-          nodes { id number title updatedAt }
+    `
+      query KinoRepositoryProbe($owner: String!, $name: String!) {
+        repository(owner: $owner, name: $name) {
+          hasDiscussionsEnabled
+          discussionCategories(first: 1) {
+            nodes {
+              id
+              name
+            }
+          }
+          discussions(first: 1) {
+            nodes {
+              id
+              number
+              title
+              updatedAt
+            }
+          }
         }
       }
-    }`,
+    `,
     { name, owner }
   )
 

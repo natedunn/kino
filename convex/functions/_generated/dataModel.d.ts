@@ -531,6 +531,59 @@ export type DataModel = {
     searchIndexes: {};
     vectorIndexes: {};
   };
+  feedbackGithubConnection: {
+    document: {
+      connectedByProfileId: Id<"profile">;
+      deletedTime?: null | number;
+      feedbackId: Id<"feedback">;
+      githubDatabaseId?: null | number;
+      githubNodeId: string;
+      githubNumber: number;
+      githubRepositoryConnectionId: Id<"githubRepositoryConnection">;
+      kind: "issue";
+      projectId: Id<"project">;
+      state: string;
+      title: string;
+      updatedTime?: null | number;
+      url: string;
+      _id: Id<"feedbackGithubConnection">;
+      _creationTime: number;
+    };
+    fieldPaths:
+      | "_creationTime"
+      | "_id"
+      | "connectedByProfileId"
+      | "deletedTime"
+      | "feedbackId"
+      | "githubDatabaseId"
+      | "githubNodeId"
+      | "githubNumber"
+      | "githubRepositoryConnectionId"
+      | "kind"
+      | "projectId"
+      | "state"
+      | "title"
+      | "updatedTime"
+      | "url";
+    indexes: {
+      by_id: ["_id"];
+      by_creation_time: ["_creationTime"];
+      by_feedbackId: ["feedbackId", "_creationTime"];
+      by_feedbackId_kind_githubNodeId: [
+        "feedbackId",
+        "kind",
+        "githubNodeId",
+        "_creationTime",
+      ];
+      by_githubRepositoryConnectionId: [
+        "githubRepositoryConnectionId",
+        "_creationTime",
+      ];
+      by_projectId: ["projectId", "_creationTime"];
+    };
+    searchIndexes: {};
+    vectorIndexes: {};
+  };
   feedbackUpvote: {
     document: {
       authorProfileId: Id<"profile">;
@@ -667,6 +720,7 @@ export type DataModel = {
       repoName: string;
       repoNodeId: string;
       repoOwner: string;
+      repoPrivate?: null | boolean;
       updatedTime?: null | number;
       verificationStatus: string;
       verificationSummary?: null | any;
@@ -692,6 +746,7 @@ export type DataModel = {
       | "repoName"
       | "repoNodeId"
       | "repoOwner"
+      | "repoPrivate"
       | "updatedTime"
       | "verificationStatus"
       | "verificationSummary";

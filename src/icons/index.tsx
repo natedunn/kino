@@ -10,6 +10,7 @@ import CircleDot from './circle-dot';
 import CirclePause from './circle-pause';
 import CirclePlay from './circle-play';
 import CircleSlash from './circle-slash';
+import Github from './github';
 import GridDots from './grid-dots';
 import Lightbulb from './lightbulb';
 
@@ -19,6 +20,7 @@ export const iconRegistry = {
 	gridDots: GridDots,
 	box: Box,
 	chartUp: ChartUp,
+	github: Github,
 } as const;
 
 export type IconValue = (typeof iconRegistry)[keyof typeof iconRegistry];
@@ -88,3 +90,5 @@ export const StatusIcon = ({
 			return <CircleDot className={classes} size={size} {...props} />;
 	}
 };
+
+export { default as GithubIcon } from './github';
