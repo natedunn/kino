@@ -83,4 +83,3 @@ export function createFeedbackGithubHandler<TCtx extends ProcedureHandlerContext
 ): GeneratedProcedureHandler<TCtx> {
   return generatedRuntime.getHandlerFactory()(ctx) as GeneratedProcedureHandler<TCtx>;
 }
-

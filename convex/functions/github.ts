@@ -935,14 +935,17 @@ export const processWebhookEvent = privateMutation
 
         const feedbackConnections = await ctx.db
           .query("feedbackGithubConnection")
-          .withIndex("by_githubRepositoryConnectionId", (q: any) =>
-            q.eq("githubRepositoryConnectionId", repositoryConnection._id)
+          .withIndex(
+            "by_githubRepositoryConnectionId_githubNodeId",
+            (q: any) =>
+              q
+                .eq("githubRepositoryConnectionId", repositoryConnection._id)
+                .eq("githubNodeId", input.issue!.nodeId)
           )
-          .take(200)
+          .take(50)
 
         for (const feedbackConnection of feedbackConnections) {
           if (feedbackConnection.deletedTime) continue
-          if (feedbackConnection.githubNodeId !== input.issue.nodeId) continue
 
           if (
             feedbackConnection.githubNumber === input.issue.number &&

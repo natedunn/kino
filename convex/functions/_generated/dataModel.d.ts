@@ -579,6 +579,11 @@ export type DataModel = {
         "githubRepositoryConnectionId",
         "_creationTime",
       ];
+      by_githubRepositoryConnectionId_githubNodeId: [
+        "githubRepositoryConnectionId",
+        "githubNodeId",
+        "_creationTime",
+      ];
       by_projectId: ["projectId", "_creationTime"];
     };
     searchIndexes: {};

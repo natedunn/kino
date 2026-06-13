@@ -943,6 +943,10 @@ export const feedbackGithubConnectionTable = convexTable(
     index("by_githubRepositoryConnectionId").on(
       feedbackGithubConnectionTable.githubRepositoryConnectionId
     ),
+    index("by_githubRepositoryConnectionId_githubNodeId").on(
+      feedbackGithubConnectionTable.githubRepositoryConnectionId,
+      feedbackGithubConnectionTable.githubNodeId
+    ),
     index("by_feedbackId_kind_githubNodeId").on(
       feedbackGithubConnectionTable.feedbackId,
       feedbackGithubConnectionTable.kind,
