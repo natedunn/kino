@@ -209,6 +209,55 @@ export declare const api: {
       any
     >;
   };
+  feedbackGithub: {
+    connectExisting: FunctionReference<
+      "action",
+      "public",
+      {
+        feedbackId: string;
+        feedbackUrl: string;
+        githubNumber: number;
+        kind: "issue";
+      },
+      any
+    >;
+    createAndConnect: FunctionReference<
+      "action",
+      "public",
+      {
+        body?: string;
+        feedbackId: string;
+        feedbackUrl: string;
+        kind: "issue";
+        title: string;
+      },
+      any
+    >;
+    getAvailability: FunctionReference<
+      "query",
+      "public",
+      { feedbackId: string },
+      any
+    >;
+    listByFeedback: FunctionReference<
+      "query",
+      "public",
+      { feedbackId: string },
+      any
+    >;
+    refreshCounts: FunctionReference<
+      "action",
+      "public",
+      { feedbackId: string },
+      any
+    >;
+    searchTargets: FunctionReference<
+      "action",
+      "public",
+      { feedbackId: string; kind: "issue"; query?: string },
+      any
+    >;
+  };
   feedbackUpvote: {
     getCount: FunctionReference<"query", "public", { feedbackId: string }, any>;
     getUpvoteData: FunctionReference<
@@ -627,6 +676,49 @@ export declare const internal: {
       any
     >;
   };
+  feedbackGithub: {
+    ensureNotConnected: FunctionReference<
+      "query",
+      "internal",
+      { feedbackId: string; githubNodeId: string; kind: "issue" },
+      any
+    >;
+    getContextForAction: FunctionReference<
+      "query",
+      "internal",
+      {
+        feedbackId: string;
+        kind: "issue";
+        requireSource?: boolean;
+        userId: string;
+      },
+      any
+    >;
+    saveConnection: FunctionReference<
+      "mutation",
+      "internal",
+      {
+        connectedByProfileId: string;
+        feedbackId: string;
+        githubDatabaseId?: number;
+        githubNodeId: string;
+        githubNumber: number;
+        githubRepositoryConnectionId: string;
+        kind: "issue";
+        projectId: string;
+        state: string;
+        title: string;
+        url: string;
+      },
+      any
+    >;
+    updateConnectionSnapshot: FunctionReference<
+      "mutation",
+      "internal",
+      { connectionId: string; state: string; title: string; url: string },
+      any
+    >;
+  };
   generated: {
     auth: {
       create: FunctionReference<
@@ -851,6 +943,14 @@ export declare const internal: {
           id: number;
           permissions?: Record<string, string>;
           repository_selection?: string;
+        };
+        issue?: {
+          nodeId: string;
+          number: number;
+          repositoryId: number;
+          state: string;
+          title: string;
+          url: string;
         };
       },
       any

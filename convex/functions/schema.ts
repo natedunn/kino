@@ -48,6 +48,7 @@ const GITHUB_CONNECTION_STATE_STATUSES = [
   "expired",
 ] as const
 const GITHUB_INSTALLATION_STATUSES = ["active", "suspended", "deleted"] as const
+const FEEDBACK_GITHUB_CONNECTION_KINDS = ["issue"] as const
 const EMOTE_CONTENTS = [
   "thumbsUp",
   "thumbsDown",
@@ -894,6 +895,7 @@ export const githubRepositoryConnectionTable = convexTable(
     repoName: text().notNull(),
     repoNodeId: text().notNull(),
     repoOwner: text().notNull(),
+    repoPrivate: boolean(),
     verificationStatus: text().notNull(),
     verificationSummary: json(),
   },
@@ -907,6 +909,49 @@ export const githubRepositoryConnectionTable = convexTable(
       githubRepositoryConnectionTable.githubInstallationId
     ),
     index("by_repoId").on(githubRepositoryConnectionTable.repoId),
+  ]
+)
+
+export const feedbackGithubConnectionTable = convexTable(
+  "feedbackGithubConnection",
+  {
+    deletedTime: integer(),
+    updatedTime: integer(),
+    connectedByProfileId: id("profile")
+      .notNull()
+      .references(() => profileTable.id),
+    feedbackId: id("feedback")
+      .notNull()
+      .references(() => feedbackTable.id),
+    githubRepositoryConnectionId: id("githubRepositoryConnection")
+      .notNull()
+      .references(() => githubRepositoryConnectionTable.id),
+    projectId: id("project")
+      .notNull()
+      .references(() => projectTable.id),
+    kind: textEnum(FEEDBACK_GITHUB_CONNECTION_KINDS).notNull(),
+    githubDatabaseId: integer(),
+    githubNodeId: text().notNull(),
+    githubNumber: integer().notNull(),
+    title: text().notNull(),
+    url: text().notNull(),
+    state: text().notNull(),
+  },
+  (feedbackGithubConnectionTable) => [
+    index("by_feedbackId").on(feedbackGithubConnectionTable.feedbackId),
+    index("by_projectId").on(feedbackGithubConnectionTable.projectId),
+    index("by_githubRepositoryConnectionId").on(
+      feedbackGithubConnectionTable.githubRepositoryConnectionId
+    ),
+    index("by_githubRepositoryConnectionId_githubNodeId").on(
+      feedbackGithubConnectionTable.githubRepositoryConnectionId,
+      feedbackGithubConnectionTable.githubNodeId
+    ),
+    index("by_feedbackId_kind_githubNodeId").on(
+      feedbackGithubConnectionTable.feedbackId,
+      feedbackGithubConnectionTable.kind,
+      feedbackGithubConnectionTable.githubNodeId
+    ),
   ]
 )
 
@@ -952,6 +997,7 @@ export const tables = {
   githubConnectionState: githubConnectionStateTable,
   githubInstallation: githubInstallationTable,
   githubRepositoryConnection: githubRepositoryConnectionTable,
+  feedbackGithubConnection: feedbackGithubConnectionTable,
   githubWebhookDelivery: githubWebhookDeliveryTable,
 }
 
@@ -1042,6 +1088,10 @@ export default defineSchema(tables)
         from: r.profile.id,
         to: r.projectMember.profileId,
       }),
+      feedbackGithubConnections: r.many.feedbackGithubConnection({
+        from: r.profile.id,
+        to: r.feedbackGithubConnection.connectedByProfileId,
+      }),
     },
     project: {
       memberships: r.many.projectMember({
@@ -1051,6 +1101,10 @@ export default defineSchema(tables)
       githubRepositoryConnections: r.many.githubRepositoryConnection({
         from: r.project.id,
         to: r.githubRepositoryConnection.projectId,
+      }),
+      feedbackGithubConnections: r.many.feedbackGithubConnection({
+        from: r.project.id,
+        to: r.feedbackGithubConnection.projectId,
       }),
     },
     projectMember: {
@@ -1106,6 +1160,28 @@ export default defineSchema(tables)
       }),
       project: r.one.project({
         from: r.githubRepositoryConnection.projectId,
+        to: r.project.id,
+      }),
+      feedbackGithubConnections: r.many.feedbackGithubConnection({
+        from: r.githubRepositoryConnection.id,
+        to: r.feedbackGithubConnection.githubRepositoryConnectionId,
+      }),
+    },
+    feedbackGithubConnection: {
+      connectedBy: r.one.profile({
+        from: r.feedbackGithubConnection.connectedByProfileId,
+        to: r.profile.id,
+      }),
+      feedback: r.one.feedback({
+        from: r.feedbackGithubConnection.feedbackId,
+        to: r.feedback.id,
+      }),
+      githubRepositoryConnection: r.one.githubRepositoryConnection({
+        from: r.feedbackGithubConnection.githubRepositoryConnectionId,
+        to: r.githubRepositoryConnection.id,
+      }),
+      project: r.one.project({
+        from: r.feedbackGithubConnection.projectId,
         to: r.project.id,
       }),
     },
@@ -1244,31 +1320,41 @@ export default defineSchema(tables)
       change: async (change, ctx) => {
         if (change.operation !== "delete") return
 
-        const [comments, events, upvotes] = await Promise.all([
-          ctx.db
-            .query("feedbackComment")
-            .withIndex("by_feedbackId", (q: any) =>
-              q.eq("feedbackId", change.oldDoc.id)
-            )
-            .collect(),
-          ctx.db
-            .query("feedbackEvent")
-            .withIndex("by_feedbackId", (q: any) =>
-              q.eq("feedbackId", change.oldDoc.id)
-            )
-            .collect(),
-          ctx.db
-            .query("feedbackUpvote")
-            .withIndex("by_feedbackId", (q: any) =>
-              q.eq("feedbackId", change.oldDoc.id)
-            )
-            .collect(),
-        ])
+        const [comments, events, upvotes, githubConnections] =
+          await Promise.all([
+            ctx.db
+              .query("feedbackComment")
+              .withIndex("by_feedbackId", (q: any) =>
+                q.eq("feedbackId", change.oldDoc.id)
+              )
+              .collect(),
+            ctx.db
+              .query("feedbackEvent")
+              .withIndex("by_feedbackId", (q: any) =>
+                q.eq("feedbackId", change.oldDoc.id)
+              )
+              .collect(),
+            ctx.db
+              .query("feedbackUpvote")
+              .withIndex("by_feedbackId", (q: any) =>
+                q.eq("feedbackId", change.oldDoc.id)
+              )
+              .collect(),
+            ctx.db
+              .query("feedbackGithubConnection")
+              .withIndex("by_feedbackId", (q: any) =>
+                q.eq("feedbackId", change.oldDoc.id)
+              )
+              .collect(),
+          ])
 
         await Promise.all([
           ...comments.map((comment: any) => ctx.db.delete(comment._id)),
           ...events.map((event: any) => ctx.db.delete(event._id)),
           ...upvotes.map((upvote: any) => ctx.db.delete(upvote._id)),
+          ...githubConnections.map((connection: any) =>
+            ctx.db.delete(connection._id)
+          ),
         ])
       },
     },

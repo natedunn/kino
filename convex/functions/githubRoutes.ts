@@ -213,6 +213,16 @@ export const webhook = publicRoute
         permissions?: Record<string, string>
         repository_selection?: string
       }
+      issue?: {
+        html_url?: string
+        node_id?: string
+        number?: number
+        state?: string
+        title?: string
+      }
+      repository?: {
+        id?: number
+      }
     }
     try {
       payload = JSON.parse(body)
@@ -235,6 +245,23 @@ export const webhook = publicRoute
               id: payload.installation.id,
               permissions: payload.installation.permissions,
               repository_selection: payload.installation.repository_selection,
+            },
+          }
+        : {}),
+      ...(typeof payload.repository?.id === "number" &&
+      typeof payload.issue?.node_id === "string" &&
+      typeof payload.issue.number === "number" &&
+      typeof payload.issue.title === "string" &&
+      typeof payload.issue.html_url === "string" &&
+      typeof payload.issue.state === "string"
+        ? {
+            issue: {
+              nodeId: payload.issue.node_id,
+              number: payload.issue.number,
+              repositoryId: payload.repository.id,
+              state: payload.issue.state,
+              title: payload.issue.title,
+              url: payload.issue.html_url,
             },
           }
         : {}),

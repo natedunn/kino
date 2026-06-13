@@ -43,6 +43,14 @@ export const api = {
   feedbackEvent: {
     listByFeedback: createApiLeaf<"query", typeof import("../functions/feedbackEvent").listByFeedback>(createGeneratedFunctionReference<"query", "public", typeof import("../functions/feedbackEvent").listByFeedback>("feedbackEvent:listByFeedback"), { type: "query" }),
   },
+  feedbackGithub: {
+    connectExisting: createApiLeaf<"action", typeof import("../functions/feedbackGithub").connectExisting>(createGeneratedFunctionReference<"action", "public", typeof import("../functions/feedbackGithub").connectExisting>("feedbackGithub:connectExisting"), { auth: "required", type: "action" }),
+    createAndConnect: createApiLeaf<"action", typeof import("../functions/feedbackGithub").createAndConnect>(createGeneratedFunctionReference<"action", "public", typeof import("../functions/feedbackGithub").createAndConnect>("feedbackGithub:createAndConnect"), { auth: "required", type: "action" }),
+    getAvailability: createApiLeaf<"query", typeof import("../functions/feedbackGithub").getAvailability>(createGeneratedFunctionReference<"query", "public", typeof import("../functions/feedbackGithub").getAvailability>("feedbackGithub:getAvailability"), { auth: "required", type: "query" }),
+    listByFeedback: createApiLeaf<"query", typeof import("../functions/feedbackGithub").listByFeedback>(createGeneratedFunctionReference<"query", "public", typeof import("../functions/feedbackGithub").listByFeedback>("feedbackGithub:listByFeedback"), { auth: "optional", type: "query" }),
+    refreshCounts: createApiLeaf<"action", typeof import("../functions/feedbackGithub").refreshCounts>(createGeneratedFunctionReference<"action", "public", typeof import("../functions/feedbackGithub").refreshCounts>("feedbackGithub:refreshCounts"), { auth: "required", type: "action" }),
+    searchTargets: createApiLeaf<"action", typeof import("../functions/feedbackGithub").searchTargets>(createGeneratedFunctionReference<"action", "public", typeof import("../functions/feedbackGithub").searchTargets>("feedbackGithub:searchTargets"), { auth: "required", type: "action" }),
+  },
   feedbackUpvote: {
     getCount: createApiLeaf<"query", typeof import("../functions/feedbackUpvote").getCount>(createGeneratedFunctionReference<"query", "public", typeof import("../functions/feedbackUpvote").getCount>("feedbackUpvote:getCount"), { auth: "optional", type: "query" }),
     getUpvoteData: createApiLeaf<"query", typeof import("../functions/feedbackUpvote").getUpvoteData>(createGeneratedFunctionReference<"query", "public", typeof import("../functions/feedbackUpvote").getUpvoteData>("feedbackUpvote:getUpvoteData"), { auth: "optional", type: "query" }),
