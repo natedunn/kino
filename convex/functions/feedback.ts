@@ -623,25 +623,22 @@ export const listPendingDeletion = authQuery
 
     const result = await ctx.db
       .query("feedback")
-      .withIndex("by_projectId", (q: any) =>
-        q.eq("projectId", asId<"project">(input.projectId))
+      .withIndex("by_projectId_deletedTime", (q: any) =>
+        q
+          .eq("projectId", asId<"project">(input.projectId))
+          .gt("deletedTime", Date.now())
       )
       .order("desc")
       .paginate({
         cursor: input.cursor,
         numItems: input.limit,
       })
-    const now = Date.now()
-    const page = result.page.filter(
-      (item: any) =>
-        typeof item.deletedTime === "number" && item.deletedTime > now
-    )
 
     return {
       continueCursor: result.continueCursor,
       isDone: result.isDone,
       page: await Promise.all(
-        page.map(async (item: any) => {
+        result.page.map(async (item: any) => {
           const board = await getDoc<"feedbackBoard">(ctx, item.boardId)
           const firstComment = await getDoc<"feedbackComment">(
             ctx,
