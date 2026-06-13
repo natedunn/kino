@@ -39,6 +39,12 @@ export declare const api: {
       { projectId: string; slug: string },
       any
     >;
+    listPendingDeletion: FunctionReference<
+      "query",
+      "public",
+      { cursor?: string | null; limit?: number; projectId: string },
+      { continueCursor: string | null; isDone: boolean; page: Array<any> }
+    >;
     listProjectFeedback: FunctionReference<
       "query",
       "public",
@@ -54,6 +60,12 @@ export declare const api: {
       },
       { continueCursor: string | null; isDone: boolean; page: Array<any> }
     >;
+    markForDeletion: FunctionReference<
+      "mutation",
+      "public",
+      { id: string },
+      any
+    >;
     searchForLinking: FunctionReference<
       "query",
       "public",
@@ -64,6 +76,12 @@ export declare const api: {
       "mutation",
       "public",
       { commentId: string | null; feedbackId: string },
+      any
+    >;
+    unmarkForDeletion: FunctionReference<
+      "mutation",
+      "public",
+      { id: string },
       any
     >;
     updateAssigned: FunctionReference<
@@ -583,6 +601,7 @@ export declare const internal: {
       {},
       any
     >;
+    purgeDueFeedback: FunctionReference<"mutation", "internal", {}, any>;
   };
   feedbackEvent: {
     create: FunctionReference<

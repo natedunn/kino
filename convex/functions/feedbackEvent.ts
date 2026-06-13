@@ -25,6 +25,10 @@ const feedbackEventMetadataSchema = z
 
 const COALESCE_WINDOW_MS = 60 * 1000;
 
+function isMarkedForDeletion(feedback: { deletedTime?: number | null } | null) {
+  return feedback?.deletedTime != null;
+}
+
 async function createOrUpdateFeedbackEvent(
   ctx: { db: any; orm: any },
   input: {
@@ -109,6 +113,9 @@ export const listByFeedback = publicQuery
     })
   )
   .query(async ({ ctx, input }) => {
+    const feedback = await getDoc(ctx, asId<'feedback'>(input.feedbackId));
+    if (!feedback || isMarkedForDeletion(feedback)) return [];
+
     const events = await ctx.db
       .query('feedbackEvent')
       .withIndex('by_feedbackId', (q: any) => q.eq('feedbackId', input.feedbackId))

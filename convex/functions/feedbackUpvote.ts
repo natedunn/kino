@@ -5,6 +5,10 @@ import { authMutation, optionalAuthQuery } from '../lib/crpc';
 import { asId, getCurrentProfile, getDoc } from '../lib/kino';
 import { feedbackTable, feedbackUpvoteTable } from './schema';
 
+function isMarkedForDeletion(feedback: { deletedTime?: number | null } | null) {
+  return feedback?.deletedTime != null;
+}
+
 export const toggle = authMutation
   .input(
     z.object({
@@ -18,7 +22,7 @@ export const toggle = authMutation
     }
 
     const feedback = await getDoc(ctx, asId<'feedback'>(input.feedbackId));
-    if (!feedback) {
+    if (!feedback || isMarkedForDeletion(feedback)) {
       throw new CRPCError({ code: 'NOT_FOUND', message: 'Feedback not found' });
     }
 
@@ -52,6 +56,9 @@ export const getCount = optionalAuthQuery
     })
   )
   .query(async ({ ctx, input }) => {
+    const feedback = await getDoc(ctx, asId<'feedback'>(input.feedbackId));
+    if (!feedback || isMarkedForDeletion(feedback)) return 0;
+
     const rows = await ctx.db
       .query('feedbackUpvote')
       .withIndex('by_feedbackId', (q: any) => q.eq('feedbackId', input.feedbackId))
@@ -68,6 +75,8 @@ export const hasUpvoted = optionalAuthQuery
   .query(async ({ ctx, input }) => {
     const profile = await getCurrentProfile(ctx, ctx.userId);
     if (!profile) return false;
+    const feedback = await getDoc(ctx, asId<'feedback'>(input.feedbackId));
+    if (!feedback || isMarkedForDeletion(feedback)) return false;
 
     const existing = await ctx.db
       .query('feedbackUpvote')
@@ -87,9 +96,10 @@ export const getUpvoteData = optionalAuthQuery
   .query(async ({ ctx, input }) => {
     const profile = await getCurrentProfile(ctx, ctx.userId);
     const feedback = await getDoc(ctx, asId<'feedback'>(input.feedbackId));
-    const count = feedback?.upvotes ?? 0;
+    const count = feedback && !isMarkedForDeletion(feedback) ? feedback.upvotes ?? 0 : 0;
 
     if (!profile) return { count, hasUpvoted: false };
+    if (!feedback || isMarkedForDeletion(feedback)) return { count, hasUpvoted: false };
 
     const existing = await ctx.db
       .query('feedbackUpvote')

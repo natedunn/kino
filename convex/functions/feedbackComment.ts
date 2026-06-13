@@ -13,6 +13,18 @@ import { feedbackCommentTable } from "./schema"
 
 const TEAM_ROLES = new Set(["admin", "org:admin", "org:editor"])
 
+function isMarkedForDeletion(feedback: { deletedTime?: number | null } | null) {
+  return feedback?.deletedTime != null
+}
+
+async function getActiveFeedbackOrThrow(ctx: any, feedbackId: string) {
+  const feedback = await getDoc(ctx, asId<"feedback">(feedbackId))
+  if (!feedback || isMarkedForDeletion(feedback)) {
+    throw new CRPCError({ code: "NOT_FOUND", message: "Feedback not found" })
+  }
+  return feedback
+}
+
 export const create = authMutation
   .input(
     z.object({
@@ -22,6 +34,7 @@ export const create = authMutation
   )
   .mutation(async ({ ctx, input }) => {
     const profile = await getCurrentProfileOrThrow(ctx, ctx.userId)
+    await getActiveFeedbackOrThrow(ctx, input.feedbackId)
     const [comment] = await ctx.orm
       .insert(feedbackCommentTable)
       .values({
@@ -46,6 +59,7 @@ export const update = authMutation
     const comment = await getDoc(ctx, asId<"feedbackComment">(input._id))
     if (!comment)
       throw new CRPCError({ code: "NOT_FOUND", message: "Comment not found" })
+    await getActiveFeedbackOrThrow(ctx, comment.feedbackId)
     if (comment.authorProfileId !== profile._id) {
       throw new CRPCError({
         code: "FORBIDDEN",
@@ -71,6 +85,7 @@ export const remove = authMutation
     const comment = await getDoc(ctx, asId<"feedbackComment">(input._id))
     if (!comment)
       throw new CRPCError({ code: "NOT_FOUND", message: "Comment not found" })
+    await getActiveFeedbackOrThrow(ctx, comment.feedbackId)
     if (comment.authorProfileId !== profile._id) {
       throw new CRPCError({
         code: "FORBIDDEN",
@@ -95,6 +110,9 @@ export const listByFeedback = optionalAuthQuery
     })
   )
   .query(async ({ ctx, input }) => {
+    const feedback = await getDoc(ctx, asId<"feedback">(input.feedbackId))
+    if (!feedback || isMarkedForDeletion(feedback)) return []
+
     const comments = await ctx.db
       .query("feedbackComment")
       .withIndex("by_feedbackId", (q: any) =>
@@ -103,7 +121,6 @@ export const listByFeedback = optionalAuthQuery
       .order("asc")
       .collect()
 
-    const feedback = await getDoc(ctx, asId<"feedback">(input.feedbackId))
     const projectId = feedback?.projectId
     const currentProfile = await getCurrentProfile(ctx, ctx.userId)
 

@@ -561,6 +561,7 @@ export const feedbackTable = convexTable(
   "feedback",
   {
     deletedTime: integer(),
+    deletionScheduled: boolean(),
     updatedTime: integer(),
     slug: text().notNull(),
     title: text().notNull(),
@@ -584,17 +585,47 @@ export const feedbackTable = convexTable(
   (feedbackTable) => [
     index("by_slug").on(feedbackTable.slug),
     index("by_projectId").on(feedbackTable.projectId),
+    index("by_deletedTime").on(feedbackTable.deletedTime),
+    index("by_projectId_deletedTime").on(
+      feedbackTable.projectId,
+      feedbackTable.deletedTime
+    ),
+    index("by_projectId_deletionScheduled").on(
+      feedbackTable.projectId,
+      feedbackTable.deletionScheduled
+    ),
     index("by_projectId_slug").on(feedbackTable.projectId, feedbackTable.slug),
+    index("by_projectId_slug_deletedTime").on(
+      feedbackTable.projectId,
+      feedbackTable.slug,
+      feedbackTable.deletedTime
+    ),
     index("by_projectId_boardId").on(
       feedbackTable.projectId,
+      feedbackTable.boardId
+    ),
+    index("by_projectId_deletedTime_boardId").on(
+      feedbackTable.projectId,
+      feedbackTable.deletedTime,
       feedbackTable.boardId
     ),
     index("by_projectId_status").on(
       feedbackTable.projectId,
       feedbackTable.status
     ),
+    index("by_projectId_deletedTime_status").on(
+      feedbackTable.projectId,
+      feedbackTable.deletedTime,
+      feedbackTable.status
+    ),
     index("by_projectId_boardId_status").on(
       feedbackTable.projectId,
+      feedbackTable.boardId,
+      feedbackTable.status
+    ),
+    index("by_projectId_deletedTime_boardId_status").on(
+      feedbackTable.projectId,
+      feedbackTable.deletedTime,
       feedbackTable.boardId,
       feedbackTable.status
     ),
@@ -603,7 +634,8 @@ export const feedbackTable = convexTable(
       .filter(
         feedbackTable.projectId,
         feedbackTable.boardId,
-        feedbackTable.status
+        feedbackTable.status,
+        feedbackTable.deletedTime
       ),
   ]
 )
