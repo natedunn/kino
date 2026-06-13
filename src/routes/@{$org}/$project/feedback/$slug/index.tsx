@@ -11,22 +11,43 @@ import {
   Info,
   Link as LinkIcon,
   MessageSquare,
+  MoreHorizontal,
   Plus,
   Tag,
+  Trash2,
   UserMinus,
   UserPlus,
   Users,
 } from "lucide-react"
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
 import { useMutation, useQuery, useSuspenseQuery } from "@tanstack/react-query"
-import { Link, createFileRoute, notFound } from "@tanstack/react-router"
+import {
+  Link,
+  createFileRoute,
+  notFound,
+  useNavigate,
+} from "@tanstack/react-router"
 
 import { ProfileLinkOrUnknown } from "@/components/profile-link"
 import { RoutePending } from "@/components/route-pending"
 import { SidebarSection } from "@/components/sidebar-section"
 import { Badge } from "@/components/ui/badge"
 import { Button, buttonVariants } from "@/components/ui/button"
-import { DropdownMenuItem } from "@/components/ui/dropdown-menu"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Input } from "@/components/ui/input-shadcn"
 import {
   Select,
   SelectContent,
@@ -175,7 +196,12 @@ export const Route = createFileRoute("/@{$org}/$project/feedback/$slug/")({
 
 function FeedbackDetailRoute() {
   const params = Route.useParams()
+  const navigate = useNavigate()
   const crpc = useCRPC()
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [deleteAcknowledged, setDeleteAcknowledged] = useState(false)
+  const [deleteConfirmText, setDeleteConfirmText] = useState("")
+  const [deleteError, setDeleteError] = useState("")
   const { state: sidebarState, setSection: setSidebarSection } =
     useSidebarState(SIDEBAR_STORAGE_KEY, DEFAULT_SIDEBAR_STATE)
 
@@ -308,6 +334,23 @@ function FeedbackDetailRoute() {
   const commentEmoteMutation = useMutation(
     crpc.feedbackCommentEmote.toggle.mutationOptions()
   )
+  const markForDeletionMutation = useMutation(
+    crpc.feedback.markForDeletion.mutationOptions({
+      onError: (error) => setDeleteError(error.message),
+      onSuccess: () => {
+        setDeleteDialogOpen(false)
+        navigate({
+          params: { org: params.org, project: params.project },
+          to: "/@{$org}/$project/feedback",
+        })
+      },
+    })
+  )
+
+  const canSubmitDelete =
+    deleteAcknowledged &&
+    deleteConfirmText === "DELETE" &&
+    !markForDeletionMutation.isPending
 
   const timelineItems = useMemo(
     () =>
@@ -330,6 +373,79 @@ function FeedbackDetailRoute() {
 
   return (
     <div className="flex flex-1 flex-col">
+      <Dialog
+        open={deleteDialogOpen}
+        onOpenChange={(open) => {
+          setDeleteDialogOpen(open)
+          if (!open) {
+            setDeleteAcknowledged(false)
+            setDeleteConfirmText("")
+            setDeleteError("")
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete feedback</DialogTitle>
+            <DialogDescription>
+              This marks the Feedback for complete database deletion in 48
+              hours. It will immediately disappear from normal views, feeds,
+              search, and admin/editor lists. After permanent deletion there is
+              no recovery.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <label className="flex items-start gap-3 rounded-md border p-3 text-sm">
+              <input
+                checked={deleteAcknowledged}
+                className="mt-0.5"
+                onChange={(event) =>
+                  setDeleteAcknowledged(event.target.checked)
+                }
+                type="checkbox"
+              />
+              <span>
+                I understand this Feedback will be permanently deleted after
+                the 48-hour recovery window.
+              </span>
+            </label>
+            <div className="space-y-2">
+              <label className="text-sm font-medium" htmlFor="delete-feedback">
+                Type DELETE to confirm
+              </label>
+              <Input
+                id="delete-feedback"
+                onChange={(event) => setDeleteConfirmText(event.target.value)}
+                value={deleteConfirmText}
+              />
+            </div>
+            {deleteError ? (
+              <p className="text-sm text-destructive">{deleteError}</p>
+            ) : null}
+          </div>
+          <DialogFooter>
+            <Button
+              onClick={() => setDeleteDialogOpen(false)}
+              type="button"
+              variant="outline"
+            >
+              Cancel
+            </Button>
+            <Button
+              disabled={!canSubmitDelete}
+              onClick={() => {
+                setDeleteError("")
+                markForDeletionMutation.mutate({ id: feedback.id })
+              }}
+              type="button"
+              variant="destructive"
+            >
+              <Trash2 className="size-4" />
+              Mark for deletion
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <div className="border-b">
         <div className="container flex items-start gap-4 pt-10 pb-6">
           <div className="mt-1">
@@ -361,6 +477,29 @@ function FeedbackDetailRoute() {
               </TooltipTrigger>
               <TooltipContent>Subscribe to updates</TooltipContent>
             </Tooltip>
+            {projectData.permissions.canEdit ? (
+              <DropdownMenu>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <DropdownMenuTrigger asChild>
+                      <Button className="size-8" size="icon" variant="ghost">
+                        <MoreHorizontal className="size-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent>Admin actions</TooltipContent>
+                </Tooltip>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    onClick={() => setDeleteDialogOpen(true)}
+                    variant="destructive"
+                  >
+                    <Trash2 className="size-4" />
+                    Delete feedback
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : null}
           </div>
         </div>
       </div>

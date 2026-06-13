@@ -1,8 +1,13 @@
 import { z } from 'zod';
 import { eq } from 'kitcn/orm';
+import { CRPCError } from 'kitcn/server';
 import { authMutation } from '../lib/crpc';
-import { getCurrentProfileOrThrow } from '../lib/kino';
+import { asId, getCurrentProfileOrThrow, getDoc } from '../lib/kino';
 import { feedbackCommentEmoteTable } from './schema';
+
+function isMarkedForDeletion(feedback: { deletedTime?: number | null } | null) {
+  return feedback?.deletedTime != null;
+}
 
 export const toggle = authMutation
   .input(
@@ -25,6 +30,14 @@ export const toggle = authMutation
   )
   .mutation(async ({ ctx, input }) => {
     const profile = await getCurrentProfileOrThrow(ctx, ctx.userId);
+    const feedback = await getDoc(ctx, asId<'feedback'>(input.feedbackId));
+    if (!feedback || isMarkedForDeletion(feedback)) {
+      throw new CRPCError({ code: 'NOT_FOUND', message: 'Feedback not found' });
+    }
+    const comment = await getDoc(ctx, asId<'feedbackComment'>(input.feedbackCommentId));
+    if (!comment || comment.feedbackId !== feedback._id) {
+      throw new CRPCError({ code: 'BAD_REQUEST', message: 'Invalid feedback comment' });
+    }
 
     const existingEmote = await ctx.db
       .query('feedbackCommentEmote')

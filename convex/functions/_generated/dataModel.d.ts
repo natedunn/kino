@@ -308,6 +308,7 @@ export type DataModel = {
       authorProfileId: Id<"profile">;
       boardId: Id<"feedbackBoard">;
       deletedTime?: null | number;
+      deletionScheduled?: null | boolean;
       firstCommentId?: null | Id<"feedbackComment">;
       projectId: Id<"project">;
       searchContent?: null | string;
@@ -328,6 +329,7 @@ export type DataModel = {
       | "authorProfileId"
       | "boardId"
       | "deletedTime"
+      | "deletionScheduled"
       | "firstCommentId"
       | "projectId"
       | "searchContent"
@@ -340,6 +342,7 @@ export type DataModel = {
     indexes: {
       by_id: ["_id"];
       by_creation_time: ["_creationTime"];
+      by_deletedTime: ["deletedTime", "_creationTime"];
       by_projectId: ["projectId", "_creationTime"];
       by_projectId_boardId: ["projectId", "boardId", "_creationTime"];
       by_projectId_boardId_status: [
@@ -348,14 +351,45 @@ export type DataModel = {
         "status",
         "_creationTime",
       ];
+      by_projectId_deletedTime: ["projectId", "deletedTime", "_creationTime"];
+      by_projectId_deletedTime_boardId: [
+        "projectId",
+        "deletedTime",
+        "boardId",
+        "_creationTime",
+      ];
+      by_projectId_deletedTime_boardId_status: [
+        "projectId",
+        "deletedTime",
+        "boardId",
+        "status",
+        "_creationTime",
+      ];
+      by_projectId_deletedTime_status: [
+        "projectId",
+        "deletedTime",
+        "status",
+        "_creationTime",
+      ];
+      by_projectId_deletionScheduled: [
+        "projectId",
+        "deletionScheduled",
+        "_creationTime",
+      ];
       by_projectId_slug: ["projectId", "slug", "_creationTime"];
+      by_projectId_slug_deletedTime: [
+        "projectId",
+        "slug",
+        "deletedTime",
+        "_creationTime",
+      ];
       by_projectId_status: ["projectId", "status", "_creationTime"];
       by_slug: ["slug", "_creationTime"];
     };
     searchIndexes: {
       by_projectId_boardId_status_searchContent: {
         searchField: "searchContent";
-        filterFields: "boardId" | "projectId" | "status";
+        filterFields: "boardId" | "deletedTime" | "projectId" | "status";
       };
     };
     vectorIndexes: {};
