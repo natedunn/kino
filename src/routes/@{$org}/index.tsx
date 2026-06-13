@@ -1,17 +1,23 @@
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query"
 import { Link, createFileRoute } from "@tanstack/react-router"
 import {
-  ArrowUpRight,
-  CircleCheck,
+  Activity,
+  ArrowRight,
+  CheckCircle2,
+  Clock,
   FolderOpen,
+  Globe,
+  Lock,
   Settings,
-  User,
+  Users,
+  Zap,
 } from "lucide-react"
 
 import { EmptyState } from "@/components/kino/common"
 import { NoPublicProjects } from "./-components/no-public-projects"
 import { OrgProjects } from "./-components/org-projects"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { useCRPC } from "@/lib/convex/crpc"
 import { crpcServer } from "@/lib/convex/crpc-server"
@@ -42,6 +48,54 @@ export const Route = createFileRoute("/@{$org}/")({
   },
   component: OrganizationRoute,
 })
+
+const PLACEHOLDER_ACTIVITY = [
+  {
+    id: 1,
+    label: "Issue #42 closed",
+    sub: "Bug: login redirect loop",
+    time: "2h ago",
+    color: "bg-green-500",
+  },
+  {
+    id: 2,
+    label: "New project created",
+    sub: "mobile-app",
+    time: "Yesterday",
+    color: "bg-primary",
+  },
+  {
+    id: 3,
+    label: "Member joined",
+    sub: "@alex joined the org",
+    time: "3 days ago",
+    color: "bg-violet-500",
+  },
+  {
+    id: 4,
+    label: "Issue #38 closed",
+    sub: "Feat: dark mode toggle",
+    time: "4 days ago",
+    color: "bg-green-500",
+  },
+  {
+    id: 5,
+    label: "Issue #31 opened",
+    sub: "Feat: API rate limiting",
+    time: "1 week ago",
+    color: "bg-amber-500",
+  },
+]
+
+const PLACEHOLDER_MEMBERS = [
+  { id: 1, initials: "AJ", name: "Alex Johnson", role: "Admin" },
+  { id: 2, initials: "SK", name: "Sara Kim", role: "Member" },
+  { id: 3, initials: "MR", name: "Marcus Reed", role: "Member" },
+  { id: 4, initials: "PL", name: "Priya Lal", role: "Member" },
+  { id: 5, initials: "TC", name: "Tom Chen", role: "Member" },
+  { id: 6, initials: "NW", name: "Nia Wright", role: "Member" },
+  { id: 7, initials: "DC", name: "Diego Cruz", role: "Viewer" },
+]
 
 function OrganizationRoute() {
   const params = Route.useParams()
@@ -76,25 +130,80 @@ function OrganizationRoute() {
     )
   }
 
+  const orgInitial = orgData.org.name[0]?.toUpperCase() ?? "?"
+  const isPublic = orgData.org.visibility === "public"
+
   return (
     <div>
-      <div className="border-b bg-muted/50">
-        <div className="container pt-12 pb-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Avatar className="size-10 border md:size-12">
-                <AvatarFallback className="text-lg font-bold">
-                  {orgData.org.name[0]?.toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <h1 className="text-2xl font-bold md:text-3xl">
-                {orgData.org.name}
-              </h1>
+      {/* ── Hero ──────────────────────────────────────────── */}
+      <div className="relative overflow-hidden border-b bg-card">
+        {/* Subtle dot-grid background */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 opacity-[0.03] dark:opacity-[0.06]"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle, currentColor 1px, transparent 1px)",
+            backgroundSize: "24px 24px",
+          }}
+        />
+        {/* Primary glow in top-right */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -top-32 -right-32 h-96 w-96 rounded-full bg-primary/10 blur-3xl"
+        />
+
+        <div className="container relative py-12">
+          <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex items-center gap-5">
+              {/* Org avatar */}
+              <div className="relative shrink-0">
+                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary/60 shadow-lg shadow-primary/20 md:h-20 md:w-20">
+                  <span className="text-2xl font-bold text-primary-foreground md:text-3xl">
+                    {orgInitial}
+                  </span>
+                </div>
+                {/* Online dot */}
+                <span className="absolute -right-1 -bottom-1 flex h-4 w-4 items-center justify-center rounded-full bg-background">
+                  <span className="h-2.5 w-2.5 rounded-full bg-green-500" />
+                </span>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
+                    {orgData.org.name}
+                  </h1>
+                  <Badge variant="outline" className="gap-1 text-xs">
+                    {isPublic ? (
+                      <Globe className="size-3" />
+                    ) : (
+                      <Lock className="size-3" />
+                    )}
+                    {isPublic ? "Public" : "Private"}
+                  </Badge>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {/* Placeholder description — swap for real org.description when available */}
+                  Building the future, one project at a time.
+                </p>
+                <div className="mt-1 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                  <span className="flex items-center gap-1.5">
+                    <Users className="size-3.5" />
+                    {PLACEHOLDER_MEMBERS.length} members
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <FolderOpen className="size-3.5" />
+                    {projects.length} project{projects.length !== 1 ? "s" : ""}
+                  </span>
+                </div>
+              </div>
             </div>
+
             {orgData.permissions.canEdit ? (
-              <Button asChild variant="outline">
+              <Button asChild variant="outline" className="shrink-0 self-start">
                 <Link params={params} to="/@{$org}/settings">
-                  <Settings />
+                  <Settings className="size-4" />
                   Settings
                 </Link>
               </Button>
@@ -102,81 +211,174 @@ function OrganizationRoute() {
           </div>
         </div>
       </div>
-      <div className="container">
-        <div className="mt-6 flex items-center gap-4">
-          {projects.length === 0 ? (
-            <NoPublicProjects
-              canCreate={orgData.permissions.canCreate}
-              orgName={orgData.org.name}
-              orgSlug={params.org}
-            />
-          ) : (
-            <div className="w-full">
-              <div className="flex flex-col justify-stretch gap-6 md:flex-row">
-                <div className="inline-flex flex-auto flex-col gap-2 rounded-lg border bg-muted p-6">
-                  <div className="flex items-center gap-2">
-                    <User className="size-7" />
-                    <span className="text-gradient-primary text-3xl font-bold">
-                      7
-                    </span>
-                  </div>
-                  <span className="text-muted-foreground">members</span>
-                </div>
-                <div className="inline-flex flex-auto flex-col gap-2 rounded-lg border bg-muted p-6">
-                  <div className="flex items-center gap-2">
-                    <CircleCheck className="size-7" />
-                    <span className="text-gradient-primary text-3xl font-bold">
-                      126
-                    </span>
-                  </div>
-                  <span className="text-muted-foreground">
-                    closed items this month
+
+      {/* ── Stats bar ─────────────────────────────────────── */}
+      {projects.length > 0 && (
+        <div className="border-b bg-muted/40">
+          <div className="container">
+            <div className="flex divide-x divide-border overflow-x-auto">
+              <StatCell
+                icon={<FolderOpen className="size-4 text-primary" />}
+                value={projects.length}
+                label="Active projects"
+                real
+              />
+              <StatCell
+                icon={<Users className="size-4 text-violet-500" />}
+                value={7}
+                label="Team members"
+              />
+              <StatCell
+                icon={<CheckCircle2 className="size-4 text-green-500" />}
+                value={126}
+                label="Closed this month"
+              />
+              <StatCell
+                icon={<Zap className="size-4 text-amber-500" />}
+                value={14}
+                label="Open issues"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Body ──────────────────────────────────────────── */}
+      <div className="container py-10">
+        {projects.length === 0 ? (
+          <NoPublicProjects
+            canCreate={orgData.permissions.canCreate}
+            orgName={orgData.org.name}
+            orgSlug={params.org}
+          />
+        ) : (
+          <div className="grid grid-cols-1 gap-10 md:grid-cols-12">
+            {/* ── Projects ───────────────────────────────── */}
+            <section className="col-span-1 md:col-span-8">
+              <div className="mb-5 flex items-center justify-between">
+                <h2 className="text-lg font-semibold">Projects</h2>
+                {orgData.permissions.canCreate &&
+                limitsQuery.data?.canAddProjects ? (
+                  <Link
+                    className="inline-flex items-center gap-1 text-sm text-primary underline decoration-primary/40 decoration-2 underline-offset-2 hover:decoration-primary/70"
+                    params={{ org: params.org }}
+                    to="/@{$org}/create-project"
+                  >
+                    New project
+                    <ArrowRight className="size-3.5" />
+                  </Link>
+                ) : null}
+              </div>
+              <OrgProjects orgSlug={params.org} projects={projects} />
+            </section>
+
+            {/* ── Sidebar ────────────────────────────────── */}
+            <aside className="col-span-1 flex flex-col gap-8 md:col-span-4">
+              {/* Members */}
+              <div>
+                <div className="mb-4 flex items-center justify-between">
+                  <h2 className="text-lg font-semibold">Members</h2>
+                  <span className="text-sm text-muted-foreground">
+                    {PLACEHOLDER_MEMBERS.length} total
                   </span>
                 </div>
-                <div className="inline-flex flex-auto flex-col gap-2 rounded-lg border bg-muted p-6">
-                  <div className="flex items-center gap-2">
-                    <FolderOpen className="size-7" />
-                    <span className="text-gradient-primary text-3xl font-bold">
-                      {projects.length}
-                    </span>
-                  </div>
-                  <span className="text-muted-foreground">active projects</span>
-                </div>
-                <div className="inline-flex flex-auto flex-col gap-2 rounded-lg border bg-muted p-6">
-                  <div className="flex items-center gap-2">
-                    <ArrowUpRight className="size-7" />
-                  </div>
-                  <span>see all stats</span>
-                </div>
-              </div>
-              <div className="mt-12 grid w-full grid-cols-1 gap-12 md:grid-cols-12">
-                <div className="col-span-1 md:col-span-8">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-2xl font-bold">Projects</h3>
-                    {orgData.permissions.canCreate &&
-                    limitsQuery.data?.canAddProjects ? (
-                      <Link
-                        className="link-text"
-                        params={{ org: params.org }}
-                        to="/@{$org}/create-project"
-                      >
-                        Create a new project
-                      </Link>
-                    ) : null}
-                  </div>
-                  <div className="mt-5">
-                    <OrgProjects orgSlug={params.org} projects={projects} />
-                  </div>
-                </div>
-                <div className="col-span-1 md:col-span-4">
-                  <h3 className="text-2xl font-bold">Members</h3>
-                  <div className="mt-5">Members will go here</div>
+                <div className="flex flex-col gap-2">
+                  {PLACEHOLDER_MEMBERS.slice(0, 5).map((m) => (
+                    <div
+                      key={m.id}
+                      className="flex items-center gap-3 rounded-lg px-1 py-1"
+                    >
+                      <Avatar className="size-8 shrink-0">
+                        <AvatarFallback className="text-xs font-semibold">
+                          {m.initials}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex flex-1 items-center justify-between gap-2 min-w-0">
+                        <span className="truncate text-sm font-medium">
+                          {m.name}
+                        </span>
+                        <Badge
+                          variant="outline"
+                          className="shrink-0 text-[10px] text-muted-foreground"
+                        >
+                          {m.role}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+                  {PLACEHOLDER_MEMBERS.length > 5 && (
+                    <button className="mt-1 text-left text-sm text-muted-foreground hover:text-foreground transition-colors">
+                      +{PLACEHOLDER_MEMBERS.length - 5} more members
+                    </button>
+                  )}
                 </div>
               </div>
-            </div>
-          )}
-        </div>
+
+              {/* Recent Activity */}
+              <div>
+                <div className="mb-4 flex items-center gap-2">
+                  <h2 className="text-lg font-semibold">Activity</h2>
+                  <Activity className="size-4 text-muted-foreground" />
+                </div>
+                <div className="relative flex flex-col gap-0">
+                  {/* Vertical line */}
+                  <div className="absolute top-0 bottom-0 left-[7px] w-px bg-border" />
+                  {PLACEHOLDER_ACTIVITY.map((item) => (
+                    <div key={item.id} className="relative flex gap-4 pb-5 last:pb-0">
+                      <div
+                        className={`relative z-10 mt-1 h-3.5 w-3.5 shrink-0 rounded-full ring-2 ring-background ${item.color}`}
+                      />
+                      <div className="flex flex-col gap-0.5 min-w-0">
+                        <span className="text-sm font-medium leading-snug">
+                          {item.label}
+                        </span>
+                        <span className="truncate text-xs text-muted-foreground">
+                          {item.sub}
+                        </span>
+                        <span className="flex items-center gap-1 text-[11px] text-muted-foreground/60">
+                          <Clock className="size-2.5" />
+                          {item.time}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </aside>
+          </div>
+        )}
       </div>
+    </div>
+  )
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+type StatCellProps = {
+  icon: React.ReactNode
+  value: number
+  label: string
+  real?: boolean
+}
+
+function StatCell({ icon, value, label, real }: StatCellProps) {
+  return (
+    <div className="flex min-w-[120px] flex-1 flex-col gap-1 px-6 py-4">
+      <div className="flex items-center gap-2">
+        {icon}
+        <span className="text-gradient-primary text-2xl font-bold">
+          {value}
+        </span>
+        {!real && (
+          <span
+            title="Placeholder number"
+            className="text-[10px] text-muted-foreground/40"
+          >
+            ·
+          </span>
+        )}
+      </div>
+      <span className="text-xs text-muted-foreground">{label}</span>
     </div>
   )
 }
