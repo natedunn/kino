@@ -13,7 +13,7 @@ importers:
         version: 1.4.1(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@convex-dev/r2':
         specifier: ^0.10.1
-        version: 0.10.1(@standard-schema/spec@1.1.0)(convex@1.39.1(react@19.2.6))(hono@4.12.9)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3)(zod@4.4.3)
+        version: 0.10.1(@standard-schema/spec@1.1.0)(convex@1.41.0(react@19.2.6))(hono@4.12.9)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3)(zod@4.4.3)
       '@dnd-kit/core':
         specifier: ^6.3.1
         version: 6.3.1(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
@@ -93,14 +93,14 @@ importers:
         specifier: ^1.1.1
         version: 1.1.1(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       convex:
-        specifier: 1.39.1
-        version: 1.39.1(react@19.2.6)
+        specifier: 1.41.0
+        version: 1.41.0(react@19.2.6)
       hono:
         specifier: 4.12.9
         version: 4.12.9
       kitcn:
         specifier: 0.15.0
-        version: 0.15.0(@babel/core@7.29.0)(@babel/template@7.28.6)(@tanstack/query-core@5.100.10)(@tanstack/react-query@5.95.2(react@19.2.6))(@types/react@19.2.14)(better-auth@1.6.9(@opentelemetry/api@1.9.0)(@tanstack/react-start@1.167.65(crossws@0.4.5(srvx@0.11.15))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(vite@7.3.3(@types/node@22.19.19)(jiti@2.7.0)(lightningcss@1.32.0)))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(solid-js@1.9.12)(vitest@3.2.4(@types/node@22.19.19)(jiti@2.7.0)(jsdom@27.4.0(@noble/hashes@2.2.0))(lightningcss@1.32.0)(msw@2.14.6(@types/node@22.19.19)(typescript@5.9.3))))(convex@1.39.1(react@19.2.6))(hono@4.12.9)(react@19.2.6)(solid-js@1.9.12)(zod@4.4.3)
+        version: 0.15.0(@babel/core@7.29.0)(@babel/template@7.28.6)(@tanstack/query-core@5.100.10)(@tanstack/react-query@5.95.2(react@19.2.6))(@types/react@19.2.14)(better-auth@1.6.9(@opentelemetry/api@1.9.0)(@tanstack/react-start@1.167.65(crossws@0.4.5(srvx@0.11.15))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(vite@7.3.3(@types/node@22.19.19)(jiti@2.7.0)(lightningcss@1.32.0)))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(solid-js@1.9.12)(vitest@3.2.4(@types/node@22.19.19)(jiti@2.7.0)(jsdom@27.4.0(@noble/hashes@2.2.0))(lightningcss@1.32.0)(msw@2.14.6(@types/node@22.19.19)(typescript@5.9.3))))(convex@1.41.0(react@19.2.6))(hono@4.12.9)(react@19.2.6)(solid-js@1.9.12)(zod@4.4.3)
       lowlight:
         specifier: ^3.3.0
         version: 3.3.0
@@ -3208,8 +3208,8 @@ packages:
       zod:
         optional: true
 
-  convex@1.39.1:
-    resolution: {integrity: sha512-W+gVXA7BpRF1xLlS1kGTtKVaqd5yonqbGESKiPtIUXjV744GdDz8IG7RVsSY5KzHbgxuJBHKaJYk+92OIHTskQ==}
+  convex@1.41.0:
+    resolution: {integrity: sha512-euxVf6yfpB7/VGKOobkLgjpbJidsUgW+b0ezonEyCUPqlpHFwR4/yIiI1hjjErzraiw91GxrtxpXQClMLNqU+w==}
     engines: {node: '>=18.0.0', npm: '>=7.0.0'}
     hasBin: true
     peerDependencies:
@@ -5399,18 +5399,6 @@ packages:
   wrappy@1.0.2:
     resolution: {integrity: sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ==}
 
-  ws@8.18.0:
-    resolution: {integrity: sha512-8VbfWfHLbbwu3+N6OKsOMpBdT4kXPDDB9cJk2bJ6mh9ucxdlnNvH1e+roYkKmN9Nxw2yjz7VzeO9oOz2zJ04Pw==}
-    engines: {node: '>=10.0.0'}
-    peerDependencies:
-      bufferutil: ^4.0.1
-      utf-8-validate: '>=5.0.2'
-    peerDependenciesMeta:
-      bufferutil:
-        optional: true
-      utf-8-validate:
-        optional: true
-
   ws@8.20.1:
     resolution: {integrity: sha512-It4dO0K5v//JtTXuPkfEOaI3uUN87iYPnqo/ZzqCoG3g8uhA66QUMs/SrM0YK7/NAu+r4LMh/9dq2A7k+rHs+w==}
     engines: {node: '>=10.0.0'}
@@ -6111,17 +6099,17 @@ snapshots:
   '@cloudflare/workerd-windows-64@1.20260521.1':
     optional: true
 
-  '@convex-dev/action-retrier@0.3.0(convex@1.39.1(react@19.2.6))':
+  '@convex-dev/action-retrier@0.3.0(convex@1.41.0(react@19.2.6))':
     dependencies:
-      convex: 1.39.1(react@19.2.6)
+      convex: 1.41.0(react@19.2.6)
 
-  '@convex-dev/r2@0.10.1(@standard-schema/spec@1.1.0)(convex@1.39.1(react@19.2.6))(hono@4.12.9)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3)(zod@4.4.3)':
+  '@convex-dev/r2@0.10.1(@standard-schema/spec@1.1.0)(convex@1.41.0(react@19.2.6))(hono@4.12.9)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3)(zod@4.4.3)':
     dependencies:
       '@aws-sdk/client-s3': 3.1050.0
       '@aws-sdk/s3-request-presigner': 3.1050.0
-      '@convex-dev/action-retrier': 0.3.0(convex@1.39.1(react@19.2.6))
-      convex: 1.39.1(react@19.2.6)
-      convex-helpers: 0.1.118(@standard-schema/spec@1.1.0)(convex@1.39.1(react@19.2.6))(hono@4.12.9)(react@19.2.6)(typescript@5.9.3)(zod@4.4.3)
+      '@convex-dev/action-retrier': 0.3.0(convex@1.41.0(react@19.2.6))
+      convex: 1.41.0(react@19.2.6)
+      convex-helpers: 0.1.118(@standard-schema/spec@1.1.0)(convex@1.41.0(react@19.2.6))(hono@4.12.9)(react@19.2.6)(typescript@5.9.3)(zod@4.4.3)
       file-type: 21.3.4
       uuid: 13.0.2
     optionalDependencies:
@@ -8343,9 +8331,9 @@ snapshots:
 
   convert-source-map@2.0.0: {}
 
-  convex-helpers@0.1.118(@standard-schema/spec@1.1.0)(convex@1.39.1(react@19.2.6))(hono@4.12.9)(react@19.2.6)(typescript@5.9.3)(zod@4.4.3):
+  convex-helpers@0.1.118(@standard-schema/spec@1.1.0)(convex@1.41.0(react@19.2.6))(hono@4.12.9)(react@19.2.6)(typescript@5.9.3)(zod@4.4.3):
     dependencies:
-      convex: 1.39.1(react@19.2.6)
+      convex: 1.41.0(react@19.2.6)
     optionalDependencies:
       '@standard-schema/spec': 1.1.0
       hono: 4.12.9
@@ -8353,11 +8341,11 @@ snapshots:
       typescript: 5.9.3
       zod: 4.4.3
 
-  convex@1.39.1(react@19.2.6):
+  convex@1.41.0(react@19.2.6):
     dependencies:
       esbuild: 0.27.0
       prettier: 3.8.3
-      ws: 8.18.0
+      ws: 8.20.1
     optionalDependencies:
       react: 19.2.6
     transitivePeerDependencies:
@@ -9269,7 +9257,7 @@ snapshots:
     dependencies:
       json-buffer: 3.0.1
 
-  kitcn@0.15.0(@babel/core@7.29.0)(@babel/template@7.28.6)(@tanstack/query-core@5.100.10)(@tanstack/react-query@5.95.2(react@19.2.6))(@types/react@19.2.14)(better-auth@1.6.9(@opentelemetry/api@1.9.0)(@tanstack/react-start@1.167.65(crossws@0.4.5(srvx@0.11.15))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(vite@7.3.3(@types/node@22.19.19)(jiti@2.7.0)(lightningcss@1.32.0)))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(solid-js@1.9.12)(vitest@3.2.4(@types/node@22.19.19)(jiti@2.7.0)(jsdom@27.4.0(@noble/hashes@2.2.0))(lightningcss@1.32.0)(msw@2.14.6(@types/node@22.19.19)(typescript@5.9.3))))(convex@1.39.1(react@19.2.6))(hono@4.12.9)(react@19.2.6)(solid-js@1.9.12)(zod@4.4.3):
+  kitcn@0.15.0(@babel/core@7.29.0)(@babel/template@7.28.6)(@tanstack/query-core@5.100.10)(@tanstack/react-query@5.95.2(react@19.2.6))(@types/react@19.2.14)(better-auth@1.6.9(@opentelemetry/api@1.9.0)(@tanstack/react-start@1.167.65(crossws@0.4.5(srvx@0.11.15))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(vite@7.3.3(@types/node@22.19.19)(jiti@2.7.0)(lightningcss@1.32.0)))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(solid-js@1.9.12)(vitest@3.2.4(@types/node@22.19.19)(jiti@2.7.0)(jsdom@27.4.0(@noble/hashes@2.2.0))(lightningcss@1.32.0)(msw@2.14.6(@types/node@22.19.19)(typescript@5.9.3))))(convex@1.41.0(react@19.2.6))(hono@4.12.9)(react@19.2.6)(solid-js@1.9.12)(zod@4.4.3):
     dependencies:
       '@babel/parser': 7.29.3
       '@better-fetch/fetch': 1.1.21
@@ -9277,7 +9265,7 @@ snapshots:
       '@tanstack/query-core': 5.100.10
       chokidar: 5.0.0
       common-tags: 1.8.2
-      convex: 1.39.1(react@19.2.6)
+      convex: 1.41.0(react@19.2.6)
       diff: 8.0.4
       dotenv: 17.4.2
       esbuild: 0.27.7
@@ -10547,8 +10535,6 @@ snapshots:
       strip-ansi: 6.0.1
 
   wrappy@1.0.2: {}
-
-  ws@8.18.0: {}
 
   ws@8.20.1: {}
 

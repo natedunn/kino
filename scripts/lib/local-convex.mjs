@@ -1,0 +1,240 @@
+import { spawnSync } from "node:child_process"
+import fs from "node:fs"
+import path from "node:path"
+
+export function anonymousEnvFilePath(workspaceRoot) {
+  return path.join(workspaceRoot, ".convex", "anonymous.env")
+}
+
+export function sharedDevStatePath(workspaceRoot) {
+  return path.join(workspaceRoot, ".convex", "shared-dev-deployment.env")
+}
+
+export function projectLocalStateDir(workspaceRoot) {
+  return path.join(workspaceRoot, ".convex", "local", "default")
+}
+
+export function projectLocalConfigPath(workspaceRoot) {
+  return path.join(projectLocalStateDir(workspaceRoot), "config.json")
+}
+
+export function parseEnvValue(value) {
+  const trimmed = value.trim()
+  if (
+    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+    (trimmed.startsWith("'") && trimmed.endsWith("'"))
+  ) {
+    return trimmed.slice(1, -1)
+  }
+
+  const commentIndex = trimmed.search(/\s+#/)
+  return (commentIndex === -1 ? trimmed : trimmed.slice(0, commentIndex)).trim()
+}
+
+export function readEnvFile(filePath) {
+  const env = {}
+  if (!fs.existsSync(filePath)) return env
+
+  for (const line of fs.readFileSync(filePath, "utf8").split(/\r?\n/)) {
+    const match = line.match(/^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/)
+    if (!match) continue
+    env[match[1]] = parseEnvValue(match[2])
+  }
+
+  return env
+}
+
+export function readLocalEnv(workspaceRoot) {
+  return {
+    ...readEnvFile(path.join(workspaceRoot, ".env")),
+    ...readEnvFile(path.join(workspaceRoot, ".env.local")),
+  }
+}
+
+export function anonymousConvexEnv(env = process.env) {
+  return {
+    ...env,
+    CONVEX_AGENT_MODE: "anonymous",
+    CONVEX_DEPLOYMENT: "anonymous-agent",
+    CONVEX_DEPLOY_KEY: "",
+    CONVEX_DEPLOYMENT_TOKEN: "",
+    CONVEX_SELF_HOSTED_URL: "",
+    CONVEX_SELF_HOSTED_ADMIN_KEY: "",
+  }
+}
+
+export function preserveSharedDevDeployment(
+  workspaceRoot,
+  writtenBy = "local Convex workspace setup"
+) {
+  const localEnv = readLocalEnv(workspaceRoot)
+  const configuredDeployment = localEnv.CONVEX_DEPLOYMENT
+
+  if (!configuredDeployment?.startsWith("dev:")) return
+
+  const deploymentName = configuredDeployment.slice("dev:".length)
+  const statePath = sharedDevStatePath(workspaceRoot)
+  fs.mkdirSync(path.dirname(statePath), { recursive: true })
+  fs.writeFileSync(
+    statePath,
+    [
+      `# Written by ${writtenBy} before switching this worktree to anonymous Convex.`,
+      `KINO_CONVEX_SEED_SOURCE=${deploymentName}`,
+      `CONVEX_DEPLOYMENT=${configuredDeployment}`,
+      "",
+    ].join("\n")
+  )
+}
+
+export function ensureAnonymousEnvFile(workspaceRoot) {
+  const envPath = anonymousEnvFilePath(workspaceRoot)
+  fs.mkdirSync(path.dirname(envPath), { recursive: true })
+  fs.writeFileSync(
+    envPath,
+    [
+      "# Used by kitcn/Convex CLI to avoid reusing .env.local's shared dev deployment.",
+      "CONVEX_DEPLOYMENT=anonymous-agent",
+      "",
+    ].join("\n")
+  )
+}
+
+export function configuredLocalBackendPort(workspaceRoot) {
+  const configPath = projectLocalConfigPath(workspaceRoot)
+  if (!fs.existsSync(configPath)) return null
+
+  try {
+    const config = JSON.parse(fs.readFileSync(configPath, "utf8"))
+    const port = config?.ports?.cloud
+    return Number.isInteger(port) ? port : null
+  } catch {
+    return null
+  }
+}
+
+export function localBackendPids(port, workspaceRoot = process.cwd()) {
+  if (process.platform === "win32") return []
+
+  const result = spawnSync("lsof", ["-ti", `tcp:${port}`], {
+    cwd: workspaceRoot,
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "ignore"],
+  })
+
+  if (result.status !== 0 || !result.stdout.trim()) return []
+
+  return [
+    ...new Set(
+      result.stdout
+        .trim()
+        .split(/\s+/)
+        .map((pid) => Number(pid))
+        .filter(Number.isInteger)
+    ),
+  ]
+}
+
+export function processCommand(pid, workspaceRoot = process.cwd()) {
+  const result = spawnSync("ps", ["-p", String(pid), "-o", "command="], {
+    cwd: workspaceRoot,
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "ignore"],
+  })
+
+  return result.status === 0 ? result.stdout.trim() : ""
+}
+
+export function localBackendPidsForWorkspace(workspaceRoot) {
+  const port = configuredLocalBackendPort(workspaceRoot)
+  if (port === null) return { port: null, pids: [] }
+
+  const stateDir = projectLocalStateDir(workspaceRoot)
+  const pids = localBackendPids(port, workspaceRoot).filter((pid) =>
+    processCommand(pid, workspaceRoot).includes(stateDir)
+  )
+
+  return { port, pids }
+}
+
+export function sleep(ms) {
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms)
+}
+
+export function waitForPidsToStop(pids, timeoutMs) {
+  const started = Date.now()
+  while (Date.now() - started < timeoutMs) {
+    const stillRunning = pids.filter((pid) => {
+      try {
+        process.kill(pid, 0)
+        return true
+      } catch {
+        return false
+      }
+    })
+
+    if (stillRunning.length === 0) return true
+    sleep(250)
+  }
+
+  return false
+}
+
+export function waitForLocalBackendToStop(port, timeoutMs, workspaceRoot) {
+  const started = Date.now()
+  while (Date.now() - started < timeoutMs) {
+    if (localBackendPids(port, workspaceRoot).length === 0) return true
+    sleep(250)
+  }
+  return localBackendPids(port, workspaceRoot).length === 0
+}
+
+export function waitForLocalBackendToStart(port, timeoutMs, workspaceRoot) {
+  const started = Date.now()
+  while (Date.now() - started < timeoutMs) {
+    if (localBackendPids(port, workspaceRoot).length > 0) {
+      sleep(750)
+      return true
+    }
+    sleep(250)
+  }
+  return localBackendPids(port, workspaceRoot).length > 0
+}
+
+export function terminatePids(pids, signal) {
+  for (const pid of pids) {
+    try {
+      process.kill(pid, signal)
+    } catch {
+      // Process is already gone.
+    }
+  }
+}
+
+export function stopLocalBackendForWorkspace(
+  workspaceRoot,
+  { logPrefix = "[convex]", failOnStubborn = false } = {}
+) {
+  const { port, pids } = localBackendPidsForWorkspace(workspaceRoot)
+  if (port === null || pids.length === 0) return true
+
+  console.log(
+    `${logPrefix} stopping this worktree's local Convex backend on port ${port}: ${pids.join(
+      ", "
+    )}`
+  )
+
+  terminatePids(pids, "SIGTERM")
+  if (waitForPidsToStop(pids, 5000)) return true
+
+  const remaining = localBackendPidsForWorkspace(workspaceRoot).pids
+  terminatePids(remaining, "SIGKILL")
+  const stopped = waitForPidsToStop(remaining, 2000)
+
+  if (!stopped && failOnStubborn) {
+    console.error(
+      `${logPrefix} port ${port} is still occupied by this worktree. Stop pnpm dev/kitcn dev and rerun.`
+    )
+  }
+
+  return stopped
+}
