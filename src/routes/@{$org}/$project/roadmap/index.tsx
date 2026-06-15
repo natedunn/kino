@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import {
   DndContext,
   DragOverlay,
@@ -281,8 +281,16 @@ const LIST_ORDER: Array<RoadmapStatus> = [
   "backlog",
   "released",
 ]
-const QUARTERS = ["Q1 2025", "Q2 2025", "Q3 2025", "Q4 2025", "Q1 2026"]
-const CURRENT_QUARTER = "Q3 2025"
+// TODO: derive QUARTERS and CURRENT_QUARTER from real data when wired to backend
+const QUARTERS = [
+  "Q1 2025",
+  "Q2 2025",
+  "Q3 2025",
+  "Q4 2025",
+  "Q1 2026",
+  "Q2 2026",
+]
+const CURRENT_QUARTER = "Q2 2026"
 
 // ─── Drag & Drop ─────────────────────────────────────────────────────────────
 
@@ -469,8 +477,13 @@ function DroppableColumn({
 
 // ─── Board View ───────────────────────────────────────────────────────────────
 
-function BoardView() {
-  const [items, setItems] = useState<Array<RoadmapItem>>(MOCK_ITEMS)
+function BoardView({
+  items,
+  onStatusChange,
+}: {
+  items: Array<RoadmapItem>
+  onStatusChange: React.Dispatch<React.SetStateAction<Array<RoadmapItem>>>
+}) {
   const [activeItem, setActiveItem] = useState<RoadmapItem | null>(null)
   const [mobileStatus, setMobileStatus] = useState<RoadmapStatus>("in-progress")
 
@@ -478,9 +491,13 @@ function BoardView() {
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } })
   )
 
-  const itemsByStatus = Object.fromEntries(
-    STATUSES.map((s) => [s, items.filter((i) => i.status === s)])
-  ) as Record<RoadmapStatus, Array<RoadmapItem>>
+  const itemsByStatus = useMemo(
+    () =>
+      Object.fromEntries(
+        STATUSES.map((s) => [s, items.filter((i) => i.status === s)])
+      ) as Record<RoadmapStatus, Array<RoadmapItem>>,
+    [items]
+  )
 
   function handleDragStart(event: DragStartEvent) {
     const dragged = event.active.data.current?.item as RoadmapItem | undefined
@@ -493,7 +510,7 @@ function BoardView() {
     if (!over) return
     const itemId = active.id as string
     const newStatus = over.id as RoadmapStatus
-    setItems((prev) =>
+    onStatusChange((prev) =>
       prev.map((item) =>
         item.id === itemId ? { ...item, status: newStatus } : item
       )
@@ -640,13 +657,13 @@ function ListItem({ item }: { item: RoadmapItem }) {
 
 // ─── List View ────────────────────────────────────────────────────────────────
 
-function ListView() {
+function ListView({ items }: { items: Array<RoadmapItem> }) {
   return (
     <div className="container py-6">
       <div className="flex flex-col gap-6">
         {LIST_ORDER.map((status) => {
-          const items = MOCK_ITEMS.filter((i) => i.status === status)
-          if (items.length === 0) return null
+          const statusItems = items.filter((i) => i.status === status)
+          if (statusItems.length === 0) return null
           const config = STATUS_CONFIG[status]
           const { Icon } = config
 
@@ -663,11 +680,11 @@ function ListView() {
                     config.colorClass
                   )}
                 >
-                  {items.length}
+                  {statusItems.length}
                 </span>
               </div>
               <div className="divide-y divide-border/50 overflow-hidden rounded-lg border">
-                {items.map((item) => (
+                {statusItems.map((item) => (
                   <ListItem key={item.id} item={item} />
                 ))}
               </div>
@@ -716,10 +733,10 @@ function TimelineCard({ item }: { item: RoadmapItem }) {
 
 // ─── Timeline View ────────────────────────────────────────────────────────────
 
-function TimelineView() {
+function TimelineView({ items }: { items: Array<RoadmapItem> }) {
   const itemsByQuarter: Record<string, Array<RoadmapItem>> = {}
   for (const q of QUARTERS) {
-    itemsByQuarter[q] = MOCK_ITEMS.filter((i) => i.quarter === q)
+    itemsByQuarter[q] = items.filter((i) => i.quarter === q)
   }
   const currentIndex = QUARTERS.indexOf(CURRENT_QUARTER)
 
@@ -728,7 +745,8 @@ function TimelineView() {
       <div className="min-w-max px-6">
         {/* Quarter grid */}
         <div className="relative flex">
-          {/* Connecting timeline line */}
+          {/* Connecting timeline line — vertically centered on the dot (28px from top),
+              inset by half the column width (110px) so it spans dot-to-dot */}
           <div
             className="pointer-events-none absolute h-px bg-border"
             style={{
@@ -815,6 +833,17 @@ const VIEW_OPTIONS: Array<{
 function RoadmapPage() {
   const [view, setView] = useState<ViewMode>("board")
   const [search, setSearch] = useState("")
+  const [items, setItems] = useState<Array<RoadmapItem>>(MOCK_ITEMS)
+
+  const filteredItems = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    if (!q) return items
+    return items.filter(
+      (item) =>
+        item.title.toLowerCase().includes(q) ||
+        item.tags.some((tag) => tag.toLowerCase().includes(q))
+    )
+  }, [items, search])
 
   return (
     <div className="flex flex-1 flex-col">
@@ -822,11 +851,17 @@ function RoadmapPage() {
       <div className="border-b">
         <div className="container flex items-center justify-between gap-4 py-3">
           {/* View toggle — left */}
-          <div className="flex items-center gap-0.5 rounded-lg border bg-muted/70 p-1">
+          <div
+            role="tablist"
+            aria-label="Roadmap view"
+            className="flex items-center gap-0.5 rounded-lg border bg-muted/70 p-1"
+          >
             {VIEW_OPTIONS.map(({ mode, label, Icon: ViewIcon }) => (
               <button
                 key={mode}
+                role="tab"
                 type="button"
+                aria-selected={view === mode}
                 onClick={() => setView(mode)}
                 className={cn(
                   "flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors",
@@ -846,6 +881,7 @@ function RoadmapPage() {
             <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
             <input
               type="search"
+              aria-label="Search roadmap"
               placeholder="Search roadmap…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -856,9 +892,11 @@ function RoadmapPage() {
       </div>
 
       {/* View content */}
-      {view === "board" && <BoardView />}
-      {view === "list" && <ListView />}
-      {view === "timeline" && <TimelineView />}
+      {view === "board" && (
+        <BoardView items={filteredItems} onStatusChange={setItems} />
+      )}
+      {view === "list" && <ListView items={filteredItems} />}
+      {view === "timeline" && <TimelineView items={filteredItems} />}
     </div>
   )
 }
