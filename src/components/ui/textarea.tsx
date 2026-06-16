@@ -1,92 +1,55 @@
-'use client';
+import * as React from "react"
 
-import { forwardRef, useEffect, useRef, useState } from 'react';
-import { mergeRefs } from 'react-merge-refs';
+import { cn } from "@/lib/utils"
 
-import { cn } from '@/lib/utils';
+function supportsFieldSizing() {
+  return (
+    typeof CSS !== "undefined" &&
+    typeof CSS.supports === "function" &&
+    CSS.supports("field-sizing", "content")
+  )
+}
 
-type ChildrenState = {
-  isDirty: boolean;
-  maxLength: number;
-  value: React.TextareaHTMLAttributes<HTMLTextAreaElement>['value'];
-};
+function Textarea({ className, ...props }: React.ComponentProps<"textarea">) {
+  const ref = React.useRef<HTMLTextAreaElement>(null)
 
-type OnChangeData = {
-  isDirty: boolean;
-};
+  // Modern browsers auto-grow via the CSS `field-sizing: content` rule below.
+  // Firefox and Safari < 17.4 don't support it yet, so fall back to a JS
+  // resize listener there. This is a no-op on browsers that do support it.
+  React.useEffect(() => {
+    const el = ref.current
+    if (!el || supportsFieldSizing()) return
 
-export type TextAreaProps = React.TextareaHTMLAttributes<HTMLTextAreaElement> & {
-  adaptive?: boolean | number;
-  children?: ((state: ChildrenState) => React.ReactNode) | React.ReactNode;
-  error?: string;
-  onChange?: (
-    event: React.ChangeEvent<HTMLTextAreaElement>,
-    data: OnChangeData
-  ) => void;
-};
+    const resize = () => {
+      el.style.height = "auto"
+      el.style.height = `${el.scrollHeight}px`
+    }
 
-export const Textarea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
-  (
-    {
-      adaptive = true,
-      children,
-      className,
-      maxLength = 1000,
-      onChange,
-      rows = 2,
-      ...props
-    },
-    ref
-  ) => {
-    const inputRef = useRef<HTMLTextAreaElement>(null);
-    const [value, setValue] = useState(props.defaultValue ?? '');
-    const [isDirty, setIsDirty] = useState(false);
+    resize()
+    el.addEventListener("input", resize)
+    return () => el.removeEventListener("input", resize)
+  }, [])
 
-    useEffect(() => {
-      if (inputRef.current && adaptive) {
-        inputRef.current.style.height = 'auto';
-        const scrollHeight = inputRef.current.scrollHeight;
-        const heightBumper = typeof adaptive === 'number' ? adaptive : 0;
-        inputRef.current.style.height = value ? `${scrollHeight + heightBumper}px` : 'auto';
-      }
-    }, [adaptive, value]);
+  // Keep height in sync when the value is controlled externally.
+  React.useEffect(() => {
+    const el = ref.current
+    if (!el || supportsFieldSizing()) return
 
-    useEffect(() => {
-      if ((props.defaultValue && props.defaultValue !== value) || (!props.defaultValue && value)) {
-        setIsDirty(true);
-      } else {
-        setIsDirty(false);
-      }
-    }, [props.defaultValue, value]);
+    el.style.height = "auto"
+    el.style.height = `${el.scrollHeight}px`
+  }, [props.value])
 
-    const renderChildren = () => {
-      if (typeof children === 'function') {
-        return children({ isDirty, maxLength, value });
-      }
-      return children;
-    };
+  return (
+    <textarea
+      ref={ref}
+      data-slot="textarea"
+      className={cn(
+        "flex field-sizing-content min-h-16 w-full rounded-lg border border-input bg-transparent px-2.5 py-2 text-base transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30 dark:disabled:bg-input/80 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40",
+        className
+      )}
+      {...props}
+    />
+  )
+}
 
-    return (
-      <>
-        <textarea
-          {...props}
-          className={cn(
-            'flex min-h-16 w-full rounded-md border border-input bg-white px-3 py-2 text-base transition-[color] outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30 dark:aria-invalid:ring-destructive/40',
-            adaptive && 'resize-none',
-            className
-          )}
-          maxLength={maxLength}
-          onChange={(event) => {
-            setValue(event.target.value);
-            onChange?.(event, { isDirty });
-          }}
-          ref={mergeRefs([inputRef, ref])}
-          rows={rows}
-        />
-        {renderChildren()}
-      </>
-    );
-  }
-);
-
-Textarea.displayName = 'Textarea';
+export { Textarea }

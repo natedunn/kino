@@ -15,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { authClient } from "@/lib/auth/auth-client"
+import { setThemePreference } from "@/lib/theme"
 
 export function UserDropdown({
   user,
@@ -65,8 +66,7 @@ export function UserDropdown({
           <DropdownMenuSubContent>
             <DropdownMenuItem
               onClick={() => {
-                document.documentElement.classList.remove("dark")
-                localStorage.theme = "light"
+                setThemePreference("light")
               }}
             >
               <Sun className="mr-2 h-4 w-4" />
@@ -74,8 +74,7 @@ export function UserDropdown({
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => {
-                document.documentElement.classList.add("dark")
-                localStorage.theme = "dark"
+                setThemePreference("dark")
               }}
             >
               <Moon className="mr-2 h-4 w-4" />
