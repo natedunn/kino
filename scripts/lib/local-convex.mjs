@@ -36,7 +36,8 @@ export function readEnvFile(filePath) {
   if (!fs.existsSync(filePath)) return env
 
   for (const line of fs.readFileSync(filePath, "utf8").split(/\r?\n/)) {
-    const match = line.match(/^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/)
+    // Support both `KEY=value` and `export KEY=value` (shell-sourced env files).
+    const match = line.match(/^(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)=(.*)$/)
     if (!match) continue
     env[match[1]] = parseEnvValue(match[2])
   }
@@ -52,15 +53,18 @@ export function readLocalEnv(workspaceRoot) {
 }
 
 export function anonymousConvexEnv(env = process.env) {
-  return {
+  const result = {
     ...env,
     CONVEX_AGENT_MODE: "anonymous",
     CONVEX_DEPLOYMENT: "anonymous-agent",
-    CONVEX_DEPLOY_KEY: "",
-    CONVEX_DEPLOYMENT_TOKEN: "",
-    CONVEX_SELF_HOSTED_URL: "",
-    CONVEX_SELF_HOSTED_ADMIN_KEY: "",
   }
+  // Delete rather than set to "" — some CLI tools distinguish between an empty
+  // string and an absent key, and leaving these set can cause auth failures.
+  delete result.CONVEX_DEPLOY_KEY
+  delete result.CONVEX_DEPLOYMENT_TOKEN
+  delete result.CONVEX_SELF_HOSTED_URL
+  delete result.CONVEX_SELF_HOSTED_ADMIN_KEY
+  return result
 }
 
 export function preserveSharedDevDeployment(
@@ -156,8 +160,12 @@ export function localBackendPidsForWorkspace(workspaceRoot) {
   return { port, pids }
 }
 
+// Reuse a single buffer across all sleep() calls to avoid allocating a fresh
+// SharedArrayBuffer on every invocation.
+const _sleepBuffer = new Int32Array(new SharedArrayBuffer(4))
+
 export function sleep(ms) {
-  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms)
+  Atomics.wait(_sleepBuffer, 0, 0, ms)
 }
 
 export function waitForPidsToStop(pids, timeoutMs) {

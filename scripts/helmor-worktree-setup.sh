@@ -82,13 +82,27 @@ fi
 
 cd "$WORKTREE_ROOT"
 
+# Use `timeout` (GNU coreutils / macOS 12+) or `gtimeout` (Homebrew) when
+# available so hung network commands don't block setup indefinitely.
+run_with_timeout() {
+  local secs=$1
+  shift
+  if command -v timeout >/dev/null 2>&1; then
+    timeout "$secs" "$@"
+  elif command -v gtimeout >/dev/null 2>&1; then
+    gtimeout "$secs" "$@"
+  else
+    "$@"
+  fi
+}
+
 step 2 "Install dependencies"
-detail "Running pnpm install"
-pnpm install
+detail "Running pnpm install (timeout 180s)"
+run_with_timeout 180 pnpm install
 
 step 3 "Refresh Convex AI files"
-detail "Running npx convex ai-files update"
-npx convex ai-files update
+detail "Running npx convex ai-files update (timeout 60s)"
+run_with_timeout 60 npx convex ai-files update
 
 step 4 "Resolve seed options"
 seed_args=(--stop-running-local)
