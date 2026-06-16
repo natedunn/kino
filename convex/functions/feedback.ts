@@ -237,6 +237,47 @@ export const updateStatus = authMutation
     return { success: true }
   })
 
+export const updateTitle = authMutation
+  .input(
+    z.object({
+      id: z.string(),
+      title: z.string().trim().min(1).max(100),
+    })
+  )
+  .mutation(async ({ ctx, input }) => {
+    const { feedback, isOwner, permissions, profile } =
+      await verifyFeedbackWriteAccess(ctx, input.id, ctx.userId)
+    if (!isOwner && !permissions.canEdit) {
+      throw new CRPCError({
+        code: "FORBIDDEN",
+        message: "You do not have permission to update this feedback title",
+      })
+    }
+
+    if (feedback.title === input.title) {
+      return { success: true }
+    }
+
+    const firstComment = await getDoc(ctx, feedback.firstCommentId)
+    await ctx.orm
+      .update(feedbackTable)
+      .set({
+        searchContent: `${input.title} ${firstComment?.content ?? ""}`.trim(),
+        title: input.title,
+        updatedTime: Date.now(),
+      })
+      .where(eq(feedbackTable.id, feedback._id as any))
+
+    await recordFeedbackEvent(ctx, {
+      actorProfileId: profile._id,
+      eventType: "title_changed",
+      feedbackId: feedback._id,
+      metadata: { oldValue: feedback.title, newValue: input.title },
+    })
+
+    return { success: true }
+  })
+
 export const updateBoard = authMutation
   .input(
     z.object({

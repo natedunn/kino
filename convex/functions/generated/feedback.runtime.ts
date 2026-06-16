@@ -26,6 +26,7 @@ const procedureRegistry = {
   "updateAssigned": ["mutation", typedProcedureResolver(createGeneratedFunctionReference<"mutation", "public", typeof import("../feedback").updateAssigned>("feedback:updateAssigned"), () => (require("../feedback") as Record<string, unknown>)["updateAssigned"])],
   "updateBoard": ["mutation", typedProcedureResolver(createGeneratedFunctionReference<"mutation", "public", typeof import("../feedback").updateBoard>("feedback:updateBoard"), () => (require("../feedback") as Record<string, unknown>)["updateBoard"])],
   "updateStatus": ["mutation", typedProcedureResolver(createGeneratedFunctionReference<"mutation", "public", typeof import("../feedback").updateStatus>("feedback:updateStatus"), () => (require("../feedback") as Record<string, unknown>)["updateStatus"])],
+  "updateTitle": ["mutation", typedProcedureResolver(createGeneratedFunctionReference<"mutation", "public", typeof import("../feedback").updateTitle>("feedback:updateTitle"), () => (require("../feedback") as Record<string, unknown>)["updateTitle"])],
 } as const;
 
   const handlerRegistry = procedureRegistry;
