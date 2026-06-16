@@ -22,7 +22,15 @@ import {
   UserPlus,
   Users,
 } from "lucide-react"
-import { type FormEvent, useEffect, useMemo, useRef, useState } from "react"
+import {
+  type CSSProperties,
+  type FormEvent,
+  type KeyboardEvent,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react"
 import { useMutation, useQuery, useSuspenseQuery } from "@tanstack/react-query"
 import {
   Link,
@@ -1080,11 +1088,13 @@ function InlineFeedbackTitleEditor({
   onSave: (title: string) => Promise<unknown>
   title: string
 }) {
+  const editorRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
-  const formRef = useRef<HTMLFormElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
   const [editing, setEditing] = useState(false)
   const [draftTitle, setDraftTitle] = useState(title)
   const [error, setError] = useState("")
+  const [mobileEditorTop, setMobileEditorTop] = useState(0)
   const trimmedDraftTitle = draftTitle.trim()
   const hasEdits = draftTitle !== title
   const canSave =
@@ -1100,9 +1110,29 @@ function InlineFeedbackTitleEditor({
     if (!editing) return
 
     window.setTimeout(() => {
-      inputRef.current?.focus()
-      inputRef.current?.select()
+      const titleField = textareaRef.current ?? inputRef.current
+      titleField?.focus()
+      titleField?.select()
     }, 0)
+  }, [editing])
+
+  useEffect(() => {
+    if (!editing) return
+
+    function updateMobileEditorPosition() {
+      const rect = editorRef.current?.getBoundingClientRect()
+      if (!rect) return
+      setMobileEditorTop(Math.max(16, rect.top - 8))
+    }
+
+    updateMobileEditorPosition()
+    window.addEventListener("resize", updateMobileEditorPosition)
+    window.addEventListener("scroll", updateMobileEditorPosition, true)
+
+    return () => {
+      window.removeEventListener("resize", updateMobileEditorPosition)
+      window.removeEventListener("scroll", updateMobileEditorPosition, true)
+    }
   }, [editing])
 
   function startEditing() {
@@ -1134,7 +1164,8 @@ function InlineFeedbackTitleEditor({
       return
     }
 
-    inputRef.current?.focus()
+    const titleField = textareaRef.current ?? inputRef.current
+    titleField?.focus()
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -1150,12 +1181,33 @@ function InlineFeedbackTitleEditor({
     }
   }
 
+  function handleTitleKeyDown(
+    event: KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) {
+    if (event.key === "Escape") {
+      event.preventDefault()
+      requestClose()
+      return
+    }
+    if (event.key === "Enter" && event.metaKey) {
+      event.preventDefault()
+      event.currentTarget.form?.requestSubmit()
+    }
+  }
+
+  const mobileEditorStyle = {
+    position: "fixed",
+    top: mobileEditorTop,
+    left: 16,
+    right: 16,
+  } as CSSProperties
+
   if (!canEdit) {
     return <h1 className="text-3xl">{title}</h1>
   }
 
   return (
-    <div className="group/title relative -mx-2 px-2">
+    <div className="group/title relative -mx-2 w-full px-2" ref={editorRef}>
       <div
         aria-hidden={editing}
         className={cn(
@@ -1193,10 +1245,41 @@ function InlineFeedbackTitleEditor({
             type="button"
           />
           <form
-            className="absolute -top-2 -right-36 -left-2 z-50 flex min-w-0 items-start gap-2 rounded-lg border bg-background p-2 shadow-2xl max-md:right-0"
+            className="fixed z-50 flex min-w-0 flex-col items-stretch gap-3 rounded-lg border bg-background p-3 shadow-2xl md:hidden"
             onMouseDown={(event) => event.stopPropagation()}
             onSubmit={handleSubmit}
-            ref={formRef}
+            style={mobileEditorStyle}
+          >
+            <div className="min-w-0 flex-1">
+              <Textarea
+                aria-label="Feedback title"
+                className="min-h-32 resize-none rounded-none border-0 bg-transparent px-0 py-0 text-3xl leading-tight shadow-none focus-visible:ring-0"
+                disabled={isSaving}
+                onChange={(event) => {
+                  setDraftTitle(event.target.value)
+                  setError("")
+                }}
+                onKeyDown={handleTitleKeyDown}
+                ref={textareaRef}
+                value={draftTitle}
+              />
+              {error ? (
+                <p className="mt-2 text-sm text-destructive">{error}</p>
+              ) : null}
+            </div>
+            <Button
+              className="w-full"
+              disabled={!canSave}
+              type="submit"
+            >
+              <Check className="size-4" />
+              Save
+            </Button>
+          </form>
+          <form
+            className="absolute -top-2 -right-36 -left-2 z-50 hidden min-w-0 items-start gap-2 rounded-lg border bg-background p-2 shadow-2xl md:flex"
+            onMouseDown={(event) => event.stopPropagation()}
+            onSubmit={handleSubmit}
           >
             <div className="min-w-0 flex-1">
               <Input
@@ -1207,17 +1290,7 @@ function InlineFeedbackTitleEditor({
                   setDraftTitle(event.target.value)
                   setError("")
                 }}
-                onKeyDown={(event) => {
-                  if (event.key === "Escape") {
-                    event.preventDefault()
-                    requestClose()
-                    return
-                  }
-                  if (event.key === "Enter" && event.metaKey) {
-                    event.preventDefault()
-                    formRef.current?.requestSubmit()
-                  }
-                }}
+                onKeyDown={handleTitleKeyDown}
                 ref={inputRef}
                 value={draftTitle}
               />
