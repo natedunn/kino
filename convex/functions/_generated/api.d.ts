@@ -105,6 +105,12 @@ export declare const api: {
       },
       any
     >;
+    updateTitle: FunctionReference<
+      "mutation",
+      "public",
+      { id: string; title: string },
+      any
+    >;
   };
   feedbackBoard: {
     _delete: FunctionReference<

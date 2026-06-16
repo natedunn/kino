@@ -22,7 +22,15 @@ import {
   UserPlus,
   Users,
 } from "lucide-react"
-import { useEffect, useMemo, useState } from "react"
+import {
+  type CSSProperties,
+  type FormEvent,
+  type KeyboardEvent,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react"
 import { useMutation, useQuery, useSuspenseQuery } from "@tanstack/react-query"
 import {
   Link,
@@ -64,7 +72,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { GithubIcon, StatusIcon } from "@/icons"
+import { EditIcon, GithubIcon, StatusIcon } from "@/icons"
 import { useCRPC } from "@/lib/convex/crpc"
 import { crpcServer } from "@/lib/convex/crpc-server"
 import { useSidebarState } from "@/lib/hooks/use-sidebar-state"
@@ -350,6 +358,7 @@ function FeedbackDetailRoute() {
   const statusMutation = useMutation(
     crpc.feedback.updateStatus.mutationOptions()
   )
+  const titleMutation = useMutation(crpc.feedback.updateTitle.mutationOptions())
   const boardMutation = useMutation(crpc.feedback.updateBoard.mutationOptions())
   const assigneeMutation = useMutation(
     crpc.feedback.updateAssigned.mutationOptions()
@@ -521,7 +530,14 @@ function FeedbackDetailRoute() {
             <StatusIcon colored size="28" status={feedback.status} />
           </div>
           <div className="flex flex-1 flex-col gap-2">
-            <h1 className="text-3xl">{feedback.title}</h1>
+            <InlineFeedbackTitleEditor
+              canEdit={canEditStatus}
+              isSaving={titleMutation.isPending}
+              onSave={(title) =>
+                titleMutation.mutateAsync({ id: feedback.id, title })
+              }
+              title={feedback.title}
+            />
             <div className="text-sm text-muted-foreground">
               <span suppressHydrationWarning>
                 {feedback.status === "open" ? "Opened" : "Updated"}{" "}
@@ -1061,6 +1077,238 @@ function CommentBadge({
   )
 }
 
+function InlineFeedbackTitleEditor({
+  canEdit,
+  isSaving,
+  onSave,
+  title,
+}: {
+  canEdit: boolean
+  isSaving: boolean
+  onSave: (title: string) => Promise<unknown>
+  title: string
+}) {
+  const editorRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const [editing, setEditing] = useState(false)
+  const [draftTitle, setDraftTitle] = useState(title)
+  const [error, setError] = useState("")
+  const [mobileEditorTop, setMobileEditorTop] = useState(0)
+  const trimmedDraftTitle = draftTitle.trim()
+  const hasEdits = draftTitle !== title
+  const canSave =
+    trimmedDraftTitle.length > 0 && trimmedDraftTitle !== title && !isSaving
+
+  useEffect(() => {
+    if (!editing) {
+      setDraftTitle(title)
+    }
+  }, [editing, title])
+
+  useEffect(() => {
+    if (!editing) return
+
+    window.setTimeout(() => {
+      const titleField = textareaRef.current ?? inputRef.current
+      titleField?.focus()
+      titleField?.select()
+    }, 0)
+  }, [editing])
+
+  useEffect(() => {
+    if (!editing) return
+
+    function updateMobileEditorPosition() {
+      const rect = editorRef.current?.getBoundingClientRect()
+      if (!rect) return
+      setMobileEditorTop(Math.max(16, rect.top - 8))
+    }
+
+    updateMobileEditorPosition()
+    window.addEventListener("resize", updateMobileEditorPosition)
+    window.addEventListener("scroll", updateMobileEditorPosition, true)
+
+    return () => {
+      window.removeEventListener("resize", updateMobileEditorPosition)
+      window.removeEventListener("scroll", updateMobileEditorPosition, true)
+    }
+  }, [editing])
+
+  function startEditing() {
+    if (!canEdit) return
+
+    setDraftTitle(title)
+    setError("")
+    setEditing(true)
+  }
+
+  function closeEditor() {
+    setEditing(false)
+    setError("")
+    setDraftTitle(title)
+  }
+
+  function requestClose() {
+    if (!hasEdits) {
+      closeEditor()
+      return
+    }
+
+    if (
+      window.confirm(
+        "You have unsaved title changes. Discard them and close the editor?"
+      )
+    ) {
+      closeEditor()
+      return
+    }
+
+    const titleField = textareaRef.current ?? inputRef.current
+    titleField?.focus()
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!canSave) return
+
+    setError("")
+    try {
+      await onSave(trimmedDraftTitle)
+      closeEditor()
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Unable to save title")
+    }
+  }
+
+  function handleTitleKeyDown(
+    event: KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) {
+    if (event.key === "Escape") {
+      event.preventDefault()
+      requestClose()
+      return
+    }
+    if (event.key === "Enter" && event.metaKey) {
+      event.preventDefault()
+      event.currentTarget.form?.requestSubmit()
+    }
+  }
+
+  const mobileEditorStyle = {
+    position: "fixed",
+    top: mobileEditorTop,
+    left: 16,
+    right: 16,
+  } as CSSProperties
+
+  if (!canEdit) {
+    return <h1 className="text-3xl">{title}</h1>
+  }
+
+  return (
+    <div className="group/title relative -mx-2 w-full px-2" ref={editorRef}>
+      <div
+        aria-hidden={editing}
+        className={cn(
+          "flex items-start gap-1.5",
+          editing && "pointer-events-none invisible"
+        )}
+      >
+        <h1 className="min-w-0 text-3xl">{title}</h1>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              aria-label="Edit title"
+              className="mt-0.5 size-8 opacity-0 transition-opacity group-hover/title:opacity-100 focus-visible:opacity-100"
+              onClick={startEditing}
+              size="icon"
+              type="button"
+              variant="ghost"
+            >
+              <EditIcon className="size-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Edit title</TooltipContent>
+        </Tooltip>
+      </div>
+
+      {editing ? (
+        <>
+          <button
+            aria-label="Close title editor"
+            className="fixed inset-0 z-40 cursor-default bg-black/45"
+            onMouseDown={(event) => {
+              event.preventDefault()
+              requestClose()
+            }}
+            type="button"
+          />
+          <form
+            className="fixed z-50 flex min-w-0 flex-col items-stretch gap-3 rounded-lg border bg-background p-3 shadow-2xl md:hidden"
+            onMouseDown={(event) => event.stopPropagation()}
+            onSubmit={handleSubmit}
+            style={mobileEditorStyle}
+          >
+            <div className="min-w-0 flex-1">
+              <Textarea
+                aria-label="Feedback title"
+                className="min-h-32 resize-none rounded-none border-0 bg-transparent px-0 py-0 text-3xl leading-tight shadow-none focus-visible:ring-0"
+                disabled={isSaving}
+                onChange={(event) => {
+                  setDraftTitle(event.target.value)
+                  setError("")
+                }}
+                onKeyDown={handleTitleKeyDown}
+                ref={textareaRef}
+                value={draftTitle}
+              />
+              {error ? (
+                <p className="mt-2 text-sm text-destructive">{error}</p>
+              ) : null}
+            </div>
+            <Button
+              className="w-full"
+              disabled={!canSave}
+              type="submit"
+            >
+              <Check className="size-4" />
+              Save
+            </Button>
+          </form>
+          <form
+            className="absolute -top-2 -right-36 -left-2 z-50 hidden min-w-0 items-start gap-2 rounded-lg border bg-background p-2 shadow-2xl md:flex"
+            onMouseDown={(event) => event.stopPropagation()}
+            onSubmit={handleSubmit}
+          >
+            <div className="min-w-0 flex-1">
+              <Input
+                aria-label="Feedback title"
+                className="h-auto rounded-none border-0 bg-transparent px-0 py-0 text-3xl shadow-none focus-visible:ring-0 md:text-3xl"
+                disabled={isSaving}
+                onChange={(event) => {
+                  setDraftTitle(event.target.value)
+                  setError("")
+                }}
+                onKeyDown={handleTitleKeyDown}
+                ref={inputRef}
+                value={draftTitle}
+              />
+              {error ? (
+                <p className="mt-2 text-sm text-destructive">{error}</p>
+              ) : null}
+            </div>
+            <Button disabled={!canSave} type="submit">
+              <Check className="size-4" />
+              Save
+            </Button>
+          </form>
+        </>
+      ) : null}
+    </div>
+  )
+}
+
 function GithubConnectionIcon() {
   return <GithubIcon className="size-3.5 shrink-0 text-muted-foreground" />
 }
@@ -1512,6 +1760,8 @@ function getEventIcon(eventType: FeedbackEventData["eventType"]) {
       return ArrowRightLeft
     case "board_changed":
       return FolderInput
+    case "title_changed":
+      return Tag
     case "assigned":
       return UserPlus
     case "unassigned":
@@ -1542,6 +1792,19 @@ function getEventDescription(event: FeedbackEventData) {
           moved to board{" "}
           <span className="rounded bg-muted px-1.5 py-0.5 text-xs font-medium">
             {metadata?.newValue ?? "Unknown"}
+          </span>
+        </span>
+      )
+    case "title_changed":
+      return (
+        <span>
+          changed title from{" "}
+          <span className="rounded bg-muted px-1.5 py-0.5 text-xs font-medium">
+            {metadata?.oldValue ?? "Untitled"}
+          </span>{" "}
+          to{" "}
+          <span className="rounded bg-muted px-1.5 py-0.5 text-xs font-medium">
+            {metadata?.newValue ?? "Untitled"}
           </span>
         </span>
       )

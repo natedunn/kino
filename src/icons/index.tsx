@@ -10,6 +10,7 @@ import CircleDot from './circle-dot';
 import CirclePause from './circle-pause';
 import CirclePlay from './circle-play';
 import CircleSlash from './circle-slash';
+import Edit from './edit';
 import Github from './github';
 import GridDots from './grid-dots';
 import Lightbulb from './lightbulb';
@@ -21,6 +22,7 @@ export const iconRegistry = {
 	box: Box,
 	chartUp: ChartUp,
 	github: Github,
+	edit: Edit,
 } as const;
 
 export type IconValue = (typeof iconRegistry)[keyof typeof iconRegistry];
@@ -92,3 +94,4 @@ export const StatusIcon = ({
 };
 
 export { default as GithubIcon } from './github';
+export { default as EditIcon } from './edit';
