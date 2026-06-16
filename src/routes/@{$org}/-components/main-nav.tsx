@@ -15,6 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { cn } from "@/lib/utils"
 
 const notifications = [
   {
@@ -70,7 +71,7 @@ export const MainNav = ({
 
   return (
     <>
-      <nav className="bg-muted dark:bg-black">
+      <nav className={cn("bg-muted dark:bg-black", !projectSlug && "border-b")}>
         <div className="container">
           {/* Top row */}
           <div className="flex items-center justify-between py-3">
