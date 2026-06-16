@@ -16,6 +16,14 @@ export function useCommandPalette() {
   }
 }
 
+/**
+ * Registers a set of contextual commands for the lifetime of the calling
+ * component, keyed by `scopeId` (re-registering the same scope replaces it).
+ *
+ * IMPORTANT: `commands` is compared by reference. Always pass a memoized array
+ * (e.g. `useMemo`) — an inline array re-registers on every render, which loops
+ * provider state updates and re-renders the whole tree.
+ */
 export function useRegisterCommands(
   scopeId: string,
   commands: Array<AppCommand>

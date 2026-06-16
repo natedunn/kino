@@ -148,8 +148,7 @@ export function CommandProvider({ children }: { children: ReactNode }) {
           id: "project.discussions",
           keywords: ["project", "discussions"],
           title: "Go to discussions",
-          run: () =>
-            navigate({ params, to: "/@{$org}/$project/discussions" }),
+          run: () => navigate({ params, to: "/@{$org}/$project/discussions" }),
         }
       )
     }
@@ -174,7 +173,7 @@ export function CommandProvider({ children }: { children: ReactNode }) {
     const handleKeyDown = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
         event.preventDefault()
-        setOpen(true)
+        setOpen((current) => !current)
       }
     }
 
@@ -184,7 +183,9 @@ export function CommandProvider({ children }: { children: ReactNode }) {
 
   const runCommand = useCallback((command: AppCommand) => {
     setOpen(false)
-    void command.run()
+    Promise.resolve(command.run()).catch((error) => {
+      console.error(`Command "${command.id}" failed:`, error)
+    })
   }, [])
 
   const contextValue = useMemo(

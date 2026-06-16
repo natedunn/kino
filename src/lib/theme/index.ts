@@ -11,7 +11,12 @@ export function setThemePreference(theme: ThemePreference) {
     document.documentElement.classList.remove("dark")
   }
 
-  localStorage.theme = theme
+  try {
+    localStorage.theme = theme
+  } catch {
+    // Accessing localStorage can throw (Safari private mode, blocked
+    // storage). The class change above still applies for this session.
+  }
 
   window.setTimeout(() => {
     document.documentElement.classList.remove("disable-transitions")
@@ -25,18 +30,23 @@ export function getCurrentThemePreference(): ThemePreference {
     return "dark"
   }
 
-  if (
-    !("theme" in localStorage) &&
-    window.matchMedia("(prefers-color-scheme: dark)").matches
-  ) {
-    return "dark"
+  try {
+    if (
+      !("theme" in localStorage) &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches
+    ) {
+      return "dark"
+    }
+  } catch {
+    // localStorage may be inaccessible; fall back to system preference.
+    if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+      return "dark"
+    }
   }
 
   return "light"
 }
 
 export function toggleThemePreference() {
-  setThemePreference(
-    getCurrentThemePreference() === "dark" ? "light" : "dark"
-  )
+  setThemePreference(getCurrentThemePreference() === "dark" ? "light" : "dark")
 }

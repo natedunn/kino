@@ -32,21 +32,34 @@ export function CommandPalette({
   open,
 }: CommandPaletteProps) {
   const [query, setQuery] = useState("")
-  const enabledCommands = commands.filter((command) => !command.disabled)
+  const commandsByGroup = useMemo(() => {
+    const grouped = new Map<CommandGroupName, Array<AppCommand>>()
+
+    for (const command of commands) {
+      if (command.disabled) continue
+
+      const existing = grouped.get(command.group)
+      if (existing) {
+        existing.push(command)
+      } else {
+        grouped.set(command.group, [command])
+      }
+    }
+
+    return grouped
+  }, [commands])
   const groupOrder = useMemo(() => {
     if (!query.trim()) return GROUP_ORDER
 
     const contextualGroups = GROUP_ORDER.filter((group) =>
-      enabledCommands.some(
-        (command) => command.group === group && command.contextual
-      )
+      commandsByGroup.get(group)?.some((command) => command.contextual)
     )
     const remainingGroups = GROUP_ORDER.filter(
       (group) => !contextualGroups.includes(group)
     )
 
     return [...contextualGroups, ...remainingGroups]
-  }, [enabledCommands, query])
+  }, [commandsByGroup, query])
 
   function handleOpenChange(nextOpen: boolean) {
     if (!nextOpen) {
@@ -66,11 +79,9 @@ export function CommandPalette({
       <CommandList>
         <CommandEmpty>No results found.</CommandEmpty>
         {groupOrder.map((group) => {
-          const groupCommands = enabledCommands.filter(
-            (command) => command.group === group
-          )
+          const groupCommands = commandsByGroup.get(group)
 
-          if (groupCommands.length === 0) return null
+          if (!groupCommands || groupCommands.length === 0) return null
 
           return (
             <CommandGroup key={group} heading={group}>

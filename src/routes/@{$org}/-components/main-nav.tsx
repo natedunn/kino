@@ -127,6 +127,7 @@ export const MainNav = ({
               <div className="hidden md:block">
                 <Button
                   variant="outline"
+                  aria-keyshortcuts="Meta+K Control+K"
                   className="max-w-xs justify-start border-border bg-muted/50 px-3 py-4! text-muted-foreground hover:bg-muted"
                   onClick={commandPalette.open}
                 >
@@ -143,6 +144,7 @@ export const MainNav = ({
               <Button
                 variant="outline"
                 size="sm"
+                aria-keyshortcuts="Meta+K Control+K"
                 className="border-border bg-muted/50 text-muted-foreground hover:bg-muted md:hidden"
                 onClick={commandPalette.open}
               >
