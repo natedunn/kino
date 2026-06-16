@@ -43,7 +43,14 @@ const targetUrl = explicitTarget ?? defaultTargetUrl()
 
 if (!targetUrl) {
   console.log(
-    "Skipping gateway webhook target update: no target URL given and VITE_CONVEX_URL is not set."
+    "Skipping gateway webhook target update: no target URL given and VITE_CONVEX_SITE_URL/VITE_CONVEX_URL is not set."
+  )
+  process.exit(0)
+}
+
+if (!explicitTarget && !targetUrl.startsWith("https://")) {
+  console.log(
+    `Skipping gateway webhook target update: ${targetUrl} is not publicly reachable.`
   )
   process.exit(0)
 }
@@ -66,6 +73,11 @@ function loadEnvFiles() {
 }
 
 function defaultTargetUrl() {
+  const convexSiteUrl = process.env.VITE_CONVEX_SITE_URL
+  if (convexSiteUrl) {
+    return `${convexSiteUrl.replace(/\/$/, "")}/api/github/webhook`
+  }
+
   const convexUrl = process.env.VITE_CONVEX_URL
   if (!convexUrl) return null
 

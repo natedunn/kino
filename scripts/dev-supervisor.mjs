@@ -2,22 +2,37 @@ import { spawn } from "node:child_process"
 import fs from "node:fs"
 import os from "node:os"
 import path from "node:path"
+import {
+  anonymousConvexEnv,
+  anonymousEnvFilePath as getAnonymousEnvFilePath,
+  ensureAnonymousEnvFile,
+  preserveSharedDevDeployment,
+  projectLocalConfigPath as getProjectLocalConfigPath,
+  readLocalEnv,
+  stopLocalBackendForWorkspace,
+} from "./lib/local-convex.mjs"
 
 const workspaceRoot = process.cwd()
 const binDir = path.join(workspaceRoot, "node_modules", ".bin")
-const kitcnCmd = path.join(binDir, process.platform === "win32" ? "kitcn.cmd" : "kitcn")
+const kitcnCmd = path.join(
+  binDir,
+  process.platform === "win32" ? "kitcn.cmd" : "kitcn"
+)
 const shellCmd = process.platform === "win32" ? "sh.exe" : "sh"
 const logDir = path.join(os.tmpdir(), "kino-dev", path.basename(workspaceRoot))
+const convexMode = process.env.KINO_CONVEX_MODE ?? "anonymous"
+const anonymousEnvFilePath = getAnonymousEnvFilePath(workspaceRoot)
+const projectLocalConfigPath = getProjectLocalConfigPath(workspaceRoot)
 
 fs.mkdirSync(logDir, { recursive: true })
 
-function startProcess(name, command, args) {
+function startProcess(name, command, args, env = process.env) {
   const logPath = path.join(logDir, `${name}.log`)
   const logFd = fs.openSync(logPath, "w")
   const child = spawn(command, args, {
     stdio: ["ignore", logFd, logFd],
     detached: true,
-    env: process.env,
+    env,
     cwd: workspaceRoot,
   })
   fs.closeSync(logFd)
@@ -28,11 +43,35 @@ function startProcess(name, command, args) {
 
   const tail = spawn("tail", ["-n", "+1", "-f", logPath], {
     stdio: "inherit",
-    env: process.env,
+    env,
     cwd: workspaceRoot,
   })
 
   return { child, tail }
+}
+
+function prepareAnonymousConvex() {
+  preserveSharedDevDeployment(workspaceRoot, "scripts/dev-supervisor.mjs")
+  ensureAnonymousEnvFile(workspaceRoot)
+
+  if (!fs.existsSync(projectLocalConfigPath)) {
+    console.warn(
+      "[convex] anonymous local backend is not seeded yet. Run scripts/helmor-worktree-setup.sh to initialize and seed this worktree before dev."
+    )
+    return
+  }
+
+  stopLocalBackendForWorkspace(workspaceRoot)
+}
+
+function convexDevArgs() {
+  if (convexMode !== "anonymous") return ["dev"]
+
+  return [
+    "dev",
+    "--env-file",
+    path.relative(workspaceRoot, anonymousEnvFilePath),
+  ]
 }
 
 function killProcessGroup(child, signal) {
@@ -49,27 +88,47 @@ function killProcessGroup(child, signal) {
   }
 }
 
+if (convexMode === "anonymous") {
+  prepareAnonymousConvex()
+} else if (convexMode !== "shared") {
+  console.error(
+    `Unknown KINO_CONVEX_MODE "${convexMode}". Expected "anonymous" or "shared".`
+  )
+  process.exit(1)
+}
+
+const localEnv = readLocalEnv(workspaceRoot)
+const frontendEnv = { ...process.env, ...localEnv }
+const convexEnv =
+  convexMode === "anonymous" ? anonymousConvexEnv() : { ...process.env }
+
 // Best-effort: register this dev deployment's webhook receiver with the gateway
-// fan-out (no-op when gateway env vars are absent). Convex dev deployments have
-// publicly reachable *.convex.site URLs, so GitHub webhooks work locally
-// without tunnels.
-spawn("node", [path.join("scripts", "gateway-webhook-target.mjs"), "register"], {
-  stdio: "inherit",
-  env: process.env,
-  cwd: workspaceRoot,
-})
+// fan-out (no-op when gateway env vars are absent, or when the selected Convex
+// site URL is local-only).
+spawn(
+  "node",
+  [path.join("scripts", "gateway-webhook-target.mjs"), "register"],
+  {
+    stdio: "inherit",
+    env: frontendEnv,
+    cwd: workspaceRoot,
+  }
+)
 
 const children = [
   {
     name: "vite",
-    ...startProcess("vite", shellCmd, [
-      path.join("scripts", "dev-portless.sh"),
-      "pnpm",
-      "run",
-      "dev:vite",
-    ]),
+    ...startProcess(
+      "vite",
+      shellCmd,
+      [path.join("scripts", "dev-portless.sh"), "pnpm", "run", "dev:vite"],
+      frontendEnv
+    ),
   },
-  { name: "convex", ...startProcess("convex", kitcnCmd, ["dev"]) },
+  {
+    name: "convex",
+    ...startProcess("convex", kitcnCmd, convexDevArgs(), convexEnv),
+  },
 ]
 
 let shuttingDown = false
