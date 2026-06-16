@@ -1,9 +1,11 @@
 import React from "react"
 import { Link, useParams, useRouterState } from "@tanstack/react-router"
 import { Bell, Command, Search } from "lucide-react"
+
+import { UserDropdown } from "./user-dropdown"
 import type { API } from "@/lib/api"
 
-import { CommandPalette } from "@/components/command-palette"
+import { useCommandPalette } from "@/components/command"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -13,8 +15,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-
-import { UserDropdown } from "./user-dropdown"
 
 const notifications = [
   {
@@ -52,7 +52,7 @@ export const MainNav = ({
   isUserPending = false,
   user,
 }: MainNavProps) => {
-  const [isCommandOpen, setIsCommandOpen] = React.useState(false)
+  const commandPalette = useCommandPalette()
   const routerState = useRouterState()
 
   const orgParams = useParams({
@@ -67,18 +67,6 @@ export const MainNav = ({
 
   const orgSlug = orgParams?.org
   const projectSlug = projectParams?.project
-
-  React.useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
-        e.preventDefault()
-        setIsCommandOpen(true)
-      }
-    }
-
-    document.addEventListener("keydown", handleKeyDown)
-    return () => document.removeEventListener("keydown", handleKeyDown)
-  }, [])
 
   return (
     <>
@@ -140,7 +128,7 @@ export const MainNav = ({
                 <Button
                   variant="outline"
                   className="max-w-xs justify-start border-border bg-muted/50 px-3 py-4! text-muted-foreground hover:bg-muted"
-                  onClick={() => setIsCommandOpen(true)}
+                  onClick={commandPalette.open}
                 >
                   <Search className="mr-2 h-4 w-4 shrink-0" />
                   <span className="truncate">Search or jump to...</span>
@@ -156,7 +144,7 @@ export const MainNav = ({
                 variant="outline"
                 size="sm"
                 className="border-border bg-muted/50 text-muted-foreground hover:bg-muted md:hidden"
-                onClick={() => setIsCommandOpen(true)}
+                onClick={commandPalette.open}
               >
                 <Search className="h-4 w-4" />
                 <span className="sr-only">Search</span>
@@ -223,8 +211,6 @@ export const MainNav = ({
 
         {children}
       </nav>
-
-      <CommandPalette open={isCommandOpen} onOpenChange={setIsCommandOpen} />
     </>
   )
 }

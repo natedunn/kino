@@ -1,6 +1,7 @@
 import type { ReactNode } from "react"
 import type { ConvexQueryClient } from "kitcn/react"
 
+import { CommandProvider } from "@/components/command"
 import { AppConvexProvider } from "@/lib/convex/convex-provider"
 
 export function Providers({
@@ -17,7 +18,7 @@ export function Providers({
       convexQueryClient={convexQueryClient}
       initialToken={initialToken}
     >
-      {children}
+      <CommandProvider>{children}</CommandProvider>
     </AppConvexProvider>
   )
 }
