@@ -49,7 +49,7 @@ const GRANULARITY_SORT_ORDER: Record<TargetGranularity, number> = {
   year: 3,
 }
 
-function pad2(value: number) {
+export function pad2(value: number) {
   return String(value).padStart(2, "0")
 }
 
@@ -198,6 +198,32 @@ export function formatTargetOrUnscheduled(
     return "Unscheduled"
   }
   return formatTarget(target, granularity)
+}
+
+// UI-facing date helpers (pure; safe to call from the frontend). These build on
+// the parsers above so the client and server share a single source of truth.
+export function dayTargetFromDate(date: Date) {
+  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(
+    date.getDate()
+  )}`
+}
+
+export function dateFromDayTarget(target: string | null | undefined) {
+  const parsed = parseDay(target ?? "")
+  if (!parsed) return undefined
+  return new Date(parsed.year, parsed.month - 1, parsed.day)
+}
+
+export function getQuarterFromDate(date: Date) {
+  return Math.floor(date.getMonth() / 3) + 1
+}
+
+export function parseMonthParts(target: string) {
+  return parseMonth(target)
+}
+
+export function parseQuarterParts(target: string) {
+  return parseQuarter(target)
 }
 
 export function compareTargets(

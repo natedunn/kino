@@ -8,6 +8,7 @@ import {
 } from "../shared/target"
 
 import { internal } from "./_generated/api"
+import type { Doc } from "./_generated/dataModel"
 import { authMutation, authQuery, optionalAuthQuery } from "../lib/crpc"
 import {
   asId,
@@ -60,7 +61,7 @@ function assertCanAdminFeedback(permissions: { canEdit: boolean }) {
   }
 }
 
-function toPublicFeedbackDoc(feedback: any) {
+function toPublicFeedbackDoc(feedback: Doc<"feedback">) {
   return {
     ...toPublicDoc(feedback),
     targetRange: resolveTargetOrNull(

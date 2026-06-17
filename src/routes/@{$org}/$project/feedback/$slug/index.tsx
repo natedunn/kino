@@ -39,9 +39,15 @@ import {
   useNavigate,
 } from "@tanstack/react-router"
 import {
+  dateFromDayTarget,
+  dayTargetFromDate,
   formatTargetOrUnscheduled,
   formatTarget,
+  getQuarterFromDate,
   isValidTarget,
+  pad2,
+  parseMonthParts,
+  parseQuarterParts,
 } from "@convex/target"
 
 import type { TargetGranularity } from "@convex/target"
@@ -142,13 +148,20 @@ const QUARTER_OPTIONS = [
   { label: "Q4", value: "Q4" },
 ] as const
 
-function pad2(value: number) {
-  return String(value).padStart(2, "0")
-}
-
-function getCurrentQuarter(date = new Date()) {
-  return Math.floor(date.getMonth() / 3) + 1
-}
+const MONTH_OPTIONS = [
+  { label: "January", value: "01" },
+  { label: "February", value: "02" },
+  { label: "March", value: "03" },
+  { label: "April", value: "04" },
+  { label: "May", value: "05" },
+  { label: "June", value: "06" },
+  { label: "July", value: "07" },
+  { label: "August", value: "08" },
+  { label: "September", value: "09" },
+  { label: "October", value: "10" },
+  { label: "November", value: "11" },
+  { label: "December", value: "12" },
+] as const
 
 function defaultTargetForGranularity(granularity: TargetGranularity) {
   const now = new Date()
@@ -162,29 +175,26 @@ function defaultTargetForGranularity(granularity: TargetGranularity) {
     case "month":
       return `${year}-${pad2(month)}`
     case "quarter":
-      return `${year}-Q${getCurrentQuarter(now)}`
+      return `${year}-Q${getQuarterFromDate(now)}`
     case "year":
       return String(year)
   }
 }
 
-function dateFromDayTarget(target: string | null | undefined) {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(target ?? "")
-  if (!match) return undefined
-  return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]))
-}
-
-function dayTargetFromDate(date: Date) {
-  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(
-    date.getDate()
-  )}`
-}
-
 function parseQuarterTarget(target: string) {
-  const match = /^(\d{4})-Q([1-4])$/.exec(target)
+  const parsed = parseQuarterParts(target)
   return {
-    quarter: match ? `Q${match[2]}` : `Q${getCurrentQuarter()}`,
-    year: match ? match[1] : String(new Date().getFullYear()),
+    quarter: parsed ? `Q${parsed.quarter}` : `Q${getQuarterFromDate(new Date())}`,
+    year: parsed ? String(parsed.year) : String(new Date().getFullYear()),
+  }
+}
+
+function parseMonthTarget(target: string) {
+  const parsed = parseMonthParts(target)
+  const now = new Date()
+  return {
+    month: parsed ? pad2(parsed.month) : pad2(now.getMonth() + 1),
+    year: parsed ? String(parsed.year) : String(now.getFullYear()),
   }
 }
 
@@ -1216,45 +1226,48 @@ function FeedbackTargetSheet({
   ) => Promise<unknown>
   open: boolean
 }) {
-  const initialGranularity =
-    currentTarget &&
-    currentGranularity &&
-    isValidTarget(currentTarget, currentGranularity)
-      ? currentGranularity
-      : "quarter"
-  const [granularity, setGranularity] =
-    useState<TargetGranularity>(initialGranularity)
-  const [target, setTarget] = useState(
-    currentTarget &&
-      currentGranularity &&
-      isValidTarget(currentTarget, currentGranularity)
-      ? currentTarget
-      : defaultTargetForGranularity(initialGranularity)
-  )
-  const [error, setError] = useState("")
-
-  useEffect(() => {
-    if (!open) return
-    const nextGranularity =
+  const resolveInitialState = () => {
+    const granularity =
       currentTarget &&
       currentGranularity &&
       isValidTarget(currentTarget, currentGranularity)
         ? currentGranularity
         : "quarter"
-    setGranularity(nextGranularity)
-    setTarget(
+    const target =
       currentTarget &&
-        currentGranularity &&
-        isValidTarget(currentTarget, currentGranularity)
+      currentGranularity &&
+      isValidTarget(currentTarget, currentGranularity)
         ? currentTarget
-        : defaultTargetForGranularity(nextGranularity)
-    )
-    setError("")
-  }, [currentGranularity, currentTarget, open])
+        : defaultTargetForGranularity(granularity)
+    return { granularity, target }
+  }
+
+  const initialState = resolveInitialState()
+  const [granularity, setGranularity] = useState<TargetGranularity>(
+    initialState.granularity
+  )
+  const [target, setTarget] = useState(initialState.target)
+  const [error, setError] = useState("")
+
+  // Only seed local edit state when the sheet transitions to open. Re-seeding on
+  // every `currentTarget`/`currentGranularity` change would discard the user's
+  // in-progress edits whenever the live Convex query re-emits the feedback doc.
+  const wasOpen = useRef(false)
+  useEffect(() => {
+    if (open && !wasOpen.current) {
+      const next = resolveInitialState()
+      setGranularity(next.granularity)
+      setTarget(next.target)
+      setError("")
+    }
+    wasOpen.current = open
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open])
 
   const selectedDate =
     granularity === "day" ? dateFromDayTarget(target) : undefined
   const quarterTarget = parseQuarterTarget(target)
+  const monthTarget = parseMonthTarget(target)
   const trimmedTarget = target.trim()
   const targetPreview = isValidTarget(trimmedTarget, granularity)
     ? formatTarget(trimmedTarget, granularity)
@@ -1379,20 +1392,51 @@ function FeedbackTargetSheet({
             ) : null}
 
             {granularity === "month" ? (
-              <div className="flex flex-col gap-2">
-                <label
-                  className="text-xs font-medium text-muted-foreground"
-                  htmlFor="target-month"
-                >
-                  Month
-                </label>
-                <Input
-                  className="h-10"
-                  id="target-month"
-                  onChange={(event) => setTarget(event.target.value)}
-                  type="month"
-                  value={target}
-                />
+              <div className="grid grid-cols-[minmax(0,1fr)_7rem] gap-3">
+                <div className="flex min-w-0 flex-col gap-2">
+                  <label
+                    className="text-xs font-medium text-muted-foreground"
+                    htmlFor="target-month"
+                  >
+                    Month
+                  </label>
+                  <Select
+                    onValueChange={(value) =>
+                      setTarget(`${monthTarget.year}-${value}`)
+                    }
+                    value={monthTarget.month}
+                  >
+                    <SelectTrigger className="h-10 w-full" id="target-month">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {MONTH_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex min-w-0 flex-col gap-2">
+                  <label
+                    className="text-xs font-medium text-muted-foreground"
+                    htmlFor="target-month-year"
+                  >
+                    Year
+                  </label>
+                  <Input
+                    className="h-10"
+                    id="target-month-year"
+                    max={9999}
+                    min={1000}
+                    onChange={(event) =>
+                      setTarget(`${event.target.value}-${monthTarget.month}`)
+                    }
+                    type="number"
+                    value={monthTarget.year}
+                  />
+                </div>
               </div>
             ) : null}
 
