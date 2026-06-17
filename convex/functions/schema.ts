@@ -67,11 +67,15 @@ const urlField = arrayOf(
   })
 )
 
+// Org roles are owner/admin/editor only (no plain org "member"). They cascade
+// to projects as org:admin/org:editor. The project "member" role is NEVER
+// produced here — it is exclusively a DIRECT per-project grant (see
+// projectMember.inviteProjectMember), so org-derived and direct rows can't be
+// conflated.
 const ORG_ROLE_TO_PROJECT_ROLE = {
   owner: "org:admin",
   admin: "org:admin",
   editor: "org:editor",
-  member: "member",
 } as const
 
 type SupportedOrgRole = keyof typeof ORG_ROLE_TO_PROJECT_ROLE
@@ -79,12 +83,7 @@ type SupportedOrgRole = keyof typeof ORG_ROLE_TO_PROJECT_ROLE
 function isSupportedOrgRole(
   role: string | null | undefined
 ): role is SupportedOrgRole {
-  return (
-    role === "owner" ||
-    role === "admin" ||
-    role === "editor" ||
-    role === "member"
-  )
+  return role === "owner" || role === "admin" || role === "editor"
 }
 
 async function syncProjectMembershipsForOrgMember(

@@ -131,15 +131,14 @@ export const listByUpdate = optionalAuthQuery
     const item = await getDoc(ctx, asId<"update">(input.updateId))
     if (!item) return []
 
-    if (item.status === "draft") {
-      const project = await getDoc(ctx, item.projectId)
-      if (!project) return []
-      const access = await verifyProjectAccess(ctx, {
-        slug: project.slug,
-        userId: ctx.userId,
-      })
-      if (!access.permissions.canEdit) return []
-    }
+    const project = await getDoc(ctx, item.projectId)
+    if (!project) return []
+    const access = await verifyProjectAccess(ctx, {
+      slug: project.slug,
+      userId: ctx.userId,
+    })
+    if (!access.permissions.canView) return []
+    if (item.status === "draft" && !access.permissions.canEdit) return []
 
     const currentProfile = await getCurrentProfile(ctx, ctx.userId)
     const comments = await ctx.db

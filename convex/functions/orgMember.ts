@@ -209,18 +209,16 @@ export const listPendingInvitations = authQuery
 
     const organizationId: string = access.organization.id
     const invitations = await ctx.orm.query.invitation.findMany({
-      where: { organizationId },
+      where: { organizationId, status: "pending" },
       limit: 100,
     })
 
-    return invitations
-      .filter((inv: any) => inv.status === "pending")
-      .map((inv: any) => ({
-        email: inv.email,
-        expiresAt: inv.expiresAt,
-        id: inv.id,
-        role: inv.role ?? "member",
-      }))
+    return invitations.map((inv: any) => ({
+      email: inv.email,
+      expiresAt: inv.expiresAt,
+      id: inv.id,
+      role: inv.role ?? "editor",
+    }))
   })
 
 export const cancelInvitation = authMutation

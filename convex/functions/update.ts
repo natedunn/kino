@@ -336,13 +336,16 @@ export const backfillProjectUpdatedTimes = authMutation
     if (!access.permissions.canEdit) {
       throw new CRPCError({
         code: "FORBIDDEN",
-        message: "You do not have permission to manage updates for this project",
+        message:
+          "You do not have permission to manage updates for this project",
       })
     }
 
     const result = await ctx.db
       .query("update")
-      .withIndex("by_projectId_slug", (q: any) => q.eq("projectId", project._id))
+      .withIndex("by_projectId_slug", (q: any) =>
+        q.eq("projectId", project._id)
+      )
       .paginate({
         cursor: input.cursor ?? null,
         numItems: input.limit ?? 50,
@@ -683,6 +686,9 @@ export const getBySlug = optionalAuthQuery
       slug: project.slug,
       userId: ctx.userId,
     })
+    if (!access.permissions.canView) {
+      return null
+    }
     if (item.status === "draft" && !access.permissions.canEdit) {
       return null
     }
@@ -767,6 +773,9 @@ export const listByProject = optionalAuthQuery
       slug: project.slug,
       userId: ctx.userId,
     })
+    if (!access.permissions.canView) {
+      return { canEdit: false, updates: [] }
+    }
     const query = ctx.db
       .query("update")
       .withIndex("by_projectId_status_publishedAt", (q: any) =>
