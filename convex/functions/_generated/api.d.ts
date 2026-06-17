@@ -424,11 +424,7 @@ export declare const api: {
     inviteMember: FunctionReference<
       "mutation",
       "public",
-      {
-        email: string;
-        organizationId: string;
-        role: "admin" | "editor" | "member";
-      },
+      { email: string; organizationId: string; role: "admin" | "editor" },
       any
     >;
     leaveOrganization: FunctionReference<
@@ -453,7 +449,7 @@ export declare const api: {
     updateMemberRole: FunctionReference<
       "mutation",
       "public",
-      { memberId: string; role: "owner" | "admin" | "editor" | "member" },
+      { memberId: string; role: "owner" | "admin" | "editor" },
       any
     >;
   };
@@ -528,10 +524,28 @@ export declare const api: {
     >;
   };
   projectMember: {
+    inviteProjectMember: FunctionReference<
+      "mutation",
+      "public",
+      { email: string; projectId: string },
+      any
+    >;
     listAssignableMembers: FunctionReference<
       "query",
       "public",
       { projectId: string },
+      any
+    >;
+    listProjectMembers: FunctionReference<
+      "query",
+      "public",
+      { projectId: string },
+      any
+    >;
+    removeProjectMember: FunctionReference<
+      "mutation",
+      "public",
+      { projectMemberId: string },
       any
     >;
   };

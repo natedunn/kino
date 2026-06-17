@@ -109,7 +109,10 @@ export const api = {
     update: createApiLeaf<"mutation", typeof import("../functions/project").update>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/project").update>("project:update"), { auth: "required", type: "mutation" }),
   },
   projectMember: {
+    inviteProjectMember: createApiLeaf<"mutation", typeof import("../functions/projectMember").inviteProjectMember>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/projectMember").inviteProjectMember>("projectMember:inviteProjectMember"), { auth: "required", type: "mutation" }),
     listAssignableMembers: createApiLeaf<"query", typeof import("../functions/projectMember").listAssignableMembers>(createGeneratedFunctionReference<"query", "public", typeof import("../functions/projectMember").listAssignableMembers>("projectMember:listAssignableMembers"), { auth: "required", type: "query" }),
+    listProjectMembers: createApiLeaf<"query", typeof import("../functions/projectMember").listProjectMembers>(createGeneratedFunctionReference<"query", "public", typeof import("../functions/projectMember").listProjectMembers>("projectMember:listProjectMembers"), { auth: "required", type: "query" }),
+    removeProjectMember: createApiLeaf<"mutation", typeof import("../functions/projectMember").removeProjectMember>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/projectMember").removeProjectMember>("projectMember:removeProjectMember"), { auth: "required", type: "mutation" }),
   },
   update: {
     backfillProjectUpdatedTimes: createApiLeaf<"mutation", typeof import("../functions/update").backfillProjectUpdatedTimes>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/update").backfillProjectUpdatedTimes>("update:backfillProjectUpdatedTimes"), { auth: "required", type: "mutation" }),

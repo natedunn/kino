@@ -3,10 +3,13 @@ import { CRPCError } from "kitcn/server"
 import { authMutation, authQuery } from "../lib/crpc"
 import { getDoc, verifyOrgAccess } from "../lib/kino"
 
-// owner/admin can manage members; editor/member cannot. "Manage" maps to the
-// canDelete permission from verifyOrgAccess (admin or owner).
-const assignableRoleSchema = z.enum(["admin", "editor", "member"])
-const updatableRoleSchema = z.enum(["owner", "admin", "editor", "member"])
+// Org membership is for the team that runs the org (and, by cascade, all its
+// projects). owner/admin manage; editor edits content. There is no plain org
+// "member" role — public users participate in public projects without org
+// membership, and private-project access is granted per-project (see
+// projectMember). So org roles are only owner/admin/editor.
+const assignableRoleSchema = z.enum(["admin", "editor"])
+const updatableRoleSchema = z.enum(["owner", "admin", "editor"])
 
 async function requireOrgManage(
   ctx: any,
@@ -14,7 +17,10 @@ async function requireOrgManage(
 ) {
   const access = await verifyOrgAccess(ctx, { ...args, userId: ctx.userId })
   if (!access.organization) {
-    throw new CRPCError({ code: "NOT_FOUND", message: "Organization not found" })
+    throw new CRPCError({
+      code: "NOT_FOUND",
+      message: "Organization not found",
+    })
   }
   if (!access.permissions.canDelete) {
     throw new CRPCError({
@@ -224,7 +230,10 @@ export const cancelInvitation = authMutation
       where: { id: input.invitationId },
     })
     if (!invitation) {
-      throw new CRPCError({ code: "NOT_FOUND", message: "Invitation not found" })
+      throw new CRPCError({
+        code: "NOT_FOUND",
+        message: "Invitation not found",
+      })
     }
 
     await requireOrgManage(ctx, { id: invitation.organizationId })

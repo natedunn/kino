@@ -16,7 +16,7 @@ export const Route = createFileRoute("/@{$org}/settings/members/")({
   component: MembersSettingsRoute,
 })
 
-const ASSIGNABLE_ROLES = ["admin", "editor", "member"] as const
+const ASSIGNABLE_ROLES = ["admin", "editor"] as const
 type AssignableRole = (typeof ASSIGNABLE_ROLES)[number]
 
 function mutationErrorMessage(error: unknown) {
@@ -51,7 +51,7 @@ function MembersSettingsRoute() {
   )
 
   const [email, setEmail] = useState("")
-  const [inviteRole, setInviteRole] = useState<AssignableRole>("member")
+  const [inviteRole, setInviteRole] = useState<AssignableRole>("editor")
 
   const data = membersQuery.data
   const organizationId = orgQuery.data?.org?.id
@@ -89,8 +89,10 @@ function MembersSettingsRoute() {
       <header className="border-b pb-4">
         <h2 className="text-xl font-semibold">Members</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Invite people and manage their roles. Admins manage settings and
-          members; editors can edit content; members can view and comment.
+          Invite the team that runs this organization. Admins manage settings
+          and members; editors can create and edit content. Both cascade to
+          every project in the org. Anyone with a Kino account can already
+          participate in your public projects without being a member here.
         </p>
       </header>
 
