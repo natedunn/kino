@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { pickPersonalOrganizationId } from "./kino";
+import { pickPersonalOrganizationId, verifyProjectAccess } from "./kino";
 
 describe("pickPersonalOrganizationId", () => {
   it("prefers an admin membership whose slug matches the username", () => {
@@ -36,5 +36,52 @@ describe("pickPersonalOrganizationId", () => {
         profileUsername: "nate",
       })
     ).toBeNull();
+  });
+});
+
+describe("verifyProjectAccess", () => {
+  it("treats direct project editors as project editors", async () => {
+    const ctx = {
+      orm: {
+        query: {
+          project: {
+            findMany: async () => [
+              {
+                id: "project_1",
+                slug: "feedback",
+                visibility: "public",
+              },
+            ],
+          },
+          profile: {
+            findMany: async () => [
+              {
+                id: "profile_1",
+                role: "user",
+                userId: "user_1",
+              },
+            ],
+          },
+          projectMember: {
+            findMany: async () => [
+              {
+                id: "member_1",
+                profileId: "profile_1",
+                projectId: "project_1",
+                role: "editor",
+              },
+            ],
+          },
+        },
+      },
+    };
+
+    const access = await verifyProjectAccess(ctx as any, {
+      id: "project_1",
+      userId: "user_1",
+    });
+
+    expect(access.permissions.canEdit).toBe(true);
+    expect(access.permissions.canView).toBe(true);
   });
 });

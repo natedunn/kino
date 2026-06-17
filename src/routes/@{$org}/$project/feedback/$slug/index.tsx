@@ -1,7 +1,7 @@
 import {
   ArrowRightLeft,
   Bell,
-  Calendar,
+  Calendar as CalendarIcon,
   Check,
   CheckCircle2,
   ChevronDown,
@@ -38,12 +38,26 @@ import {
   notFound,
   useNavigate,
 } from "@tanstack/react-router"
+import {
+  dateFromDayTarget,
+  dayTargetFromDate,
+  formatTargetOrUnscheduled,
+  formatTarget,
+  getQuarterFromDate,
+  isValidTarget,
+  pad2,
+  parseMonthParts,
+  parseQuarterParts,
+} from "@convex/target"
+
+import type { TargetGranularity } from "@convex/target"
 
 import { ProfileLinkOrUnknown } from "@/components/profile-link"
 import { RoutePending } from "@/components/route-pending"
 import { SidebarSection } from "@/components/sidebar-section"
 import { Badge } from "@/components/ui/badge"
 import { Button, buttonVariants } from "@/components/ui/button"
+import { Calendar } from "@/components/ui/calendar"
 import {
   Dialog,
   DialogContent,
@@ -66,6 +80,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet"
 import { Textarea } from "@/components/ui/textarea"
 import {
   Tooltip,
@@ -108,6 +130,73 @@ const FEEDBACK_STATUS_OPTIONS = [
   { label: "Completed", value: "completed" },
   { label: "Closed", value: "closed" },
 ] as const
+
+const TARGET_GRANULARITY_OPTIONS: Array<{
+  label: string
+  value: TargetGranularity
+}> = [
+  { label: "Day", value: "day" },
+  { label: "Month", value: "month" },
+  { label: "Quarter", value: "quarter" },
+  { label: "Year", value: "year" },
+]
+
+const QUARTER_OPTIONS = [
+  { label: "Q1", value: "Q1" },
+  { label: "Q2", value: "Q2" },
+  { label: "Q3", value: "Q3" },
+  { label: "Q4", value: "Q4" },
+] as const
+
+const MONTH_OPTIONS = [
+  { label: "January", value: "01" },
+  { label: "February", value: "02" },
+  { label: "March", value: "03" },
+  { label: "April", value: "04" },
+  { label: "May", value: "05" },
+  { label: "June", value: "06" },
+  { label: "July", value: "07" },
+  { label: "August", value: "08" },
+  { label: "September", value: "09" },
+  { label: "October", value: "10" },
+  { label: "November", value: "11" },
+  { label: "December", value: "12" },
+] as const
+
+function defaultTargetForGranularity(granularity: TargetGranularity) {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = now.getMonth() + 1
+  const day = now.getDate()
+
+  switch (granularity) {
+    case "day":
+      return `${year}-${pad2(month)}-${pad2(day)}`
+    case "month":
+      return `${year}-${pad2(month)}`
+    case "quarter":
+      return `${year}-Q${getQuarterFromDate(now)}`
+    case "year":
+      return String(year)
+  }
+}
+
+function parseQuarterTarget(target: string) {
+  const parsed = parseQuarterParts(target)
+  return {
+    quarter: parsed ? `Q${parsed.quarter}` : `Q${getQuarterFromDate(new Date())}`,
+    year: parsed ? String(parsed.year) : String(new Date().getFullYear()),
+  }
+}
+
+function parseMonthTarget(target: string) {
+  const parsed = parseMonthParts(target)
+  const now = new Date()
+  return {
+    month: parsed ? pad2(parsed.month) : pad2(now.getMonth() + 1),
+    year: parsed ? String(parsed.year) : String(now.getFullYear()),
+  }
+}
 
 type ProfileSummary = {
   id?: string
@@ -240,6 +329,7 @@ function FeedbackDetailRoute() {
   const [deleteConfirmText, setDeleteConfirmText] = useState("")
   const [deleteError, setDeleteError] = useState("")
   const [connectionDialogOpen, setConnectionDialogOpen] = useState(false)
+  const [targetSheetOpen, setTargetSheetOpen] = useState(false)
   const { state: sidebarState, setSection: setSidebarSection } =
     useSidebarState(SIDEBAR_STORAGE_KEY, DEFAULT_SIDEBAR_STATE)
 
@@ -360,6 +450,9 @@ function FeedbackDetailRoute() {
   )
   const titleMutation = useMutation(crpc.feedback.updateTitle.mutationOptions())
   const boardMutation = useMutation(crpc.feedback.updateBoard.mutationOptions())
+  const targetMutation = useMutation(
+    crpc.feedback.updateTarget.mutationOptions()
+  )
   const assigneeMutation = useMutation(
     crpc.feedback.updateAssigned.mutationOptions()
   )
@@ -523,6 +616,22 @@ function FeedbackDetailRoute() {
         onOpenChange={setConnectionDialogOpen}
         orgSlug={params.org}
         projectSlug={params.project}
+      />
+      <FeedbackTargetSheet
+        currentGranularity={feedback.targetGranularity ?? null}
+        currentTarget={feedback.target ?? null}
+        feedbackId={feedback.id}
+        feedbackTitle={feedback.title}
+        isSaving={targetMutation.isPending}
+        onOpenChange={setTargetSheetOpen}
+        onSave={(value) =>
+          targetMutation.mutateAsync({
+            feedbackId: feedback.id,
+            target: value?.target ?? null,
+            targetGranularity: value?.targetGranularity ?? null,
+          })
+        }
+        open={targetSheetOpen}
       />
       <div className="border-b">
         <div className="container flex items-start gap-4 pt-10 pb-6">
@@ -692,16 +801,32 @@ function FeedbackDetailRoute() {
 
                   <div className="flex items-center justify-between py-1.5">
                     <span className="text-sm text-muted-foreground">
-                      Due date
+                      Target
                     </span>
-                    <Button
-                      className="h-auto px-2 py-1 text-xs text-muted-foreground"
-                      size="sm"
-                      variant="ghost"
-                    >
-                      <Calendar className="mr-1.5 size-3" />
-                      Set date
-                    </Button>
+                    {projectData.permissions.canEdit ? (
+                      <Button
+                        className="h-auto max-w-52 justify-end gap-1.5 px-2 py-1 text-xs"
+                        onClick={() => setTargetSheetOpen(true)}
+                        size="sm"
+                        type="button"
+                        variant="ghost"
+                      >
+                        <CalendarIcon className="size-3" />
+                        <span className="truncate">
+                          {formatTargetOrUnscheduled(
+                            feedback.target ?? null,
+                            feedback.targetGranularity ?? null
+                          )}
+                        </span>
+                      </Button>
+                    ) : (
+                      <span className="max-w-52 truncate text-sm">
+                        {formatTargetOrUnscheduled(
+                          feedback.target ?? null,
+                          feedback.targetGranularity ?? null
+                        )}
+                      </span>
+                    )}
                   </div>
                 </div>
               </SidebarSection>
@@ -727,7 +852,7 @@ function FeedbackDetailRoute() {
                             target="_blank"
                           >
                             <GithubConnectionIcon />
-                            <span className="min-w-0 flex-1 overflow-hidden text-sm whitespace-nowrap [-webkit-mask-image:linear-gradient(to_right,black_calc(100%_-_1.5rem),transparent)] [mask-image:linear-gradient(to_right,black_calc(100%_-_1.5rem),transparent)]">
+                            <span className="min-w-0 flex-1 overflow-hidden [mask-image:linear-gradient(to_right,black_calc(100%_-_1.5rem),transparent)] text-sm whitespace-nowrap [-webkit-mask-image:linear-gradient(to_right,black_calc(100%_-_1.5rem),transparent)]">
                               #{connection.githubNumber} {connection.title}
                             </span>
                             <GithubIssueStateBadge state={connection.state} />
@@ -1077,6 +1202,352 @@ function CommentBadge({
   )
 }
 
+function FeedbackTargetSheet({
+  currentGranularity,
+  currentTarget,
+  feedbackId,
+  feedbackTitle,
+  isSaving,
+  onOpenChange,
+  onSave,
+  open,
+}: {
+  currentGranularity: TargetGranularity | null
+  currentTarget: string | null
+  feedbackId: string
+  feedbackTitle: string
+  isSaving: boolean
+  onOpenChange: (open: boolean) => void
+  onSave: (
+    value: {
+      target: string
+      targetGranularity: TargetGranularity
+    } | null
+  ) => Promise<unknown>
+  open: boolean
+}) {
+  const resolveInitialState = () => {
+    const granularity =
+      currentTarget &&
+      currentGranularity &&
+      isValidTarget(currentTarget, currentGranularity)
+        ? currentGranularity
+        : "quarter"
+    const target =
+      currentTarget &&
+      currentGranularity &&
+      isValidTarget(currentTarget, currentGranularity)
+        ? currentTarget
+        : defaultTargetForGranularity(granularity)
+    return { granularity, target }
+  }
+
+  const initialState = resolveInitialState()
+  const [granularity, setGranularity] = useState<TargetGranularity>(
+    initialState.granularity
+  )
+  const [target, setTarget] = useState(initialState.target)
+  const [error, setError] = useState("")
+
+  // Only seed local edit state when the sheet transitions to open. Re-seeding on
+  // every `currentTarget`/`currentGranularity` change would discard the user's
+  // in-progress edits whenever the live Convex query re-emits the feedback doc.
+  const wasOpen = useRef(false)
+  useEffect(() => {
+    if (open && !wasOpen.current) {
+      const next = resolveInitialState()
+      setGranularity(next.granularity)
+      setTarget(next.target)
+      setError("")
+    }
+    wasOpen.current = open
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open])
+
+  const selectedDate =
+    granularity === "day" ? dateFromDayTarget(target) : undefined
+  const quarterTarget = parseQuarterTarget(target)
+  const monthTarget = parseMonthTarget(target)
+  const trimmedTarget = target.trim()
+  const targetPreview = isValidTarget(trimmedTarget, granularity)
+    ? formatTarget(trimmedTarget, granularity)
+    : "Invalid target"
+
+  function handleGranularityChange(nextGranularity: TargetGranularity) {
+    setGranularity(nextGranularity)
+    setTarget(defaultTargetForGranularity(nextGranularity))
+    setError("")
+  }
+
+  async function handleSave(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const nextTarget = target.trim()
+    if (!isValidTarget(nextTarget, granularity)) {
+      setError("Enter a valid target for the selected type.")
+      return
+    }
+
+    try {
+      setError("")
+      await onSave({ target: nextTarget, targetGranularity: granularity })
+      onOpenChange(false)
+    } catch (saveError) {
+      setError(
+        saveError instanceof Error ? saveError.message : "Failed to save target"
+      )
+    }
+  }
+
+  async function handleClear() {
+    try {
+      setError("")
+      await onSave(null)
+      onOpenChange(false)
+    } catch (clearError) {
+      setError(
+        clearError instanceof Error
+          ? clearError.message
+          : "Failed to clear target"
+      )
+    }
+  }
+
+  return (
+    <Sheet onOpenChange={onOpenChange} open={open}>
+      <SheetContent
+        className="gap-0 overflow-hidden sm:max-w-[28rem]"
+        side="right"
+      >
+        <SheetHeader className="border-b bg-muted/40 px-5 py-5">
+          <div className="flex items-start gap-3 pr-8">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-lg border bg-background text-primary shadow-xs">
+              <CalendarIcon className="size-4" />
+            </span>
+            <div className="min-w-0 space-y-1">
+              <div className="text-xs font-medium text-muted-foreground uppercase">
+                Target
+              </div>
+              <SheetTitle className="line-clamp-2 text-base leading-snug">
+                {feedbackTitle}
+              </SheetTitle>
+            </div>
+          </div>
+          <SheetDescription className="sr-only">
+            Target options for feedback {feedbackId}
+          </SheetDescription>
+        </SheetHeader>
+
+        <form className="flex min-h-0 flex-1 flex-col" onSubmit={handleSave}>
+          <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-5 py-6">
+            <div className="rounded-xl border bg-gradient-to-b from-muted/50 to-muted/10 px-5 py-4">
+              <div className="text-[0.7rem] font-medium tracking-[0.1em] text-muted-foreground uppercase">
+                Selected target
+              </div>
+              <div
+                className={cn(
+                  "mt-1.5 truncate text-2xl font-semibold tracking-tight",
+                  !isValidTarget(trimmedTarget, granularity) &&
+                    "text-muted-foreground/60"
+                )}
+              >
+                {targetPreview}
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <span className="text-xs font-medium text-muted-foreground">
+                Resolution
+              </span>
+              <div className="grid grid-cols-4 gap-1 rounded-lg bg-muted p-1">
+                {TARGET_GRANULARITY_OPTIONS.map((option) => (
+                  <button
+                    aria-pressed={granularity === option.value}
+                    className={cn(
+                      "h-8 rounded-md text-xs font-medium transition-all",
+                      granularity === option.value
+                        ? "bg-background text-foreground shadow-xs"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                    key={option.value}
+                    onClick={() => handleGranularityChange(option.value)}
+                    type="button"
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {granularity === "day" ? (
+              <div className="flex justify-center rounded-xl border bg-card p-1">
+                <Calendar
+                  className="p-2"
+                  mode="single"
+                  onSelect={(date) => {
+                    if (date) setTarget(dayTargetFromDate(date))
+                  }}
+                  selected={selectedDate}
+                />
+              </div>
+            ) : null}
+
+            {granularity === "month" ? (
+              <div className="grid grid-cols-[minmax(0,1fr)_7rem] gap-3">
+                <div className="flex min-w-0 flex-col gap-2">
+                  <label
+                    className="text-xs font-medium text-muted-foreground"
+                    htmlFor="target-month"
+                  >
+                    Month
+                  </label>
+                  <Select
+                    onValueChange={(value) =>
+                      setTarget(`${monthTarget.year}-${value}`)
+                    }
+                    value={monthTarget.month}
+                  >
+                    <SelectTrigger className="h-10 w-full" id="target-month">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {MONTH_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex min-w-0 flex-col gap-2">
+                  <label
+                    className="text-xs font-medium text-muted-foreground"
+                    htmlFor="target-month-year"
+                  >
+                    Year
+                  </label>
+                  <Input
+                    className="h-10"
+                    id="target-month-year"
+                    max={9999}
+                    min={1000}
+                    onChange={(event) =>
+                      setTarget(`${event.target.value}-${monthTarget.month}`)
+                    }
+                    type="number"
+                    value={monthTarget.year}
+                  />
+                </div>
+              </div>
+            ) : null}
+
+            {granularity === "quarter" ? (
+              <div className="grid grid-cols-[minmax(0,1fr)_7rem] gap-3">
+                <div className="flex min-w-0 flex-col gap-2">
+                  <label
+                    className="text-xs font-medium text-muted-foreground"
+                    htmlFor="target-quarter"
+                  >
+                    Quarter
+                  </label>
+                  <Select
+                    onValueChange={(value) =>
+                      setTarget(`${quarterTarget.year}-${value}`)
+                    }
+                    value={quarterTarget.quarter}
+                  >
+                    <SelectTrigger className="h-10 w-full" id="target-quarter">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {QUARTER_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex min-w-0 flex-col gap-2">
+                  <label
+                    className="text-xs font-medium text-muted-foreground"
+                    htmlFor="target-quarter-year"
+                  >
+                    Year
+                  </label>
+                  <Input
+                    className="h-10"
+                    id="target-quarter-year"
+                    max={9999}
+                    min={1000}
+                    onChange={(event) =>
+                      setTarget(`${event.target.value}-${quarterTarget.quarter}`)
+                    }
+                    type="number"
+                    value={quarterTarget.year}
+                  />
+                </div>
+              </div>
+            ) : null}
+
+            {granularity === "year" ? (
+              <div className="flex flex-col gap-2">
+                <label
+                  className="text-xs font-medium text-muted-foreground"
+                  htmlFor="target-year"
+                >
+                  Year
+                </label>
+                <Input
+                  className="h-10"
+                  id="target-year"
+                  max={9999}
+                  min={1000}
+                  onChange={(event) => setTarget(event.target.value)}
+                  type="number"
+                  value={target}
+                />
+              </div>
+            ) : null}
+
+            {error ? (
+              <p className="rounded-md border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                {error}
+              </p>
+            ) : null}
+          </div>
+
+          <SheetFooter className="border-t bg-muted/40 px-5 py-4">
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <Button
+                className="sm:mr-auto"
+                disabled={isSaving}
+                onClick={handleClear}
+                type="button"
+                variant="ghost"
+              >
+                Clear
+              </Button>
+              <div className="flex flex-col-reverse gap-2 sm:flex-row">
+                <Button
+                  disabled={isSaving}
+                  onClick={() => onOpenChange(false)}
+                  type="button"
+                  variant="outline"
+                >
+                  Cancel
+                </Button>
+                <Button disabled={isSaving} type="submit">
+                  {isSaving ? "Saving..." : "Save target"}
+                </Button>
+              </div>
+            </div>
+          </SheetFooter>
+        </form>
+      </SheetContent>
+    </Sheet>
+  )
+}
+
 function InlineFeedbackTitleEditor({
   canEdit,
   isSaving,
@@ -1267,11 +1738,7 @@ function InlineFeedbackTitleEditor({
                 <p className="mt-2 text-sm text-destructive">{error}</p>
               ) : null}
             </div>
-            <Button
-              className="w-full"
-              disabled={!canSave}
-              type="submit"
-            >
+            <Button className="w-full" disabled={!canSave} type="submit">
               <Check className="size-4" />
               Save
             </Button>

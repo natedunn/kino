@@ -105,6 +105,16 @@ export declare const api: {
       },
       any
     >;
+    updateTarget: FunctionReference<
+      "mutation",
+      "public",
+      {
+        feedbackId: string;
+        target: string | null;
+        targetGranularity: "day" | "month" | "quarter" | "year" | null;
+      },
+      any
+    >;
     updateTitle: FunctionReference<
       "mutation",
       "public",
