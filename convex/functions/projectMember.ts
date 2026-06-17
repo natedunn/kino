@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { authQuery } from '../lib/crpc';
-import { asId } from '../lib/kino';
+import { asId, verifyProjectAccess } from '../lib/kino';
 import { resolveProfileImageUrl } from '../lib/storage';
 
 const EDIT_ROLES = new Set(['admin', 'editor', 'org:admin', 'org:editor']);
@@ -12,6 +12,12 @@ export const listAssignableMembers = authQuery
     })
   )
   .query(async ({ ctx, input }) => {
+    const access = await verifyProjectAccess(ctx, {
+      id: input.projectId,
+      userId: ctx.userId,
+    });
+    if (!access.permissions.canView) return [];
+
     const projectMembers = await ctx.orm.query.projectMember.findMany({
       where: { projectId: asId<'project'>(input.projectId) },
       with: { profile: true },

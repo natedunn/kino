@@ -43,7 +43,7 @@ export const api = {
     toggle: createApiLeaf<"mutation", typeof import("../functions/feedbackCommentEmote").toggle>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/feedbackCommentEmote").toggle>("feedbackCommentEmote:toggle"), { auth: "required", type: "mutation" }),
   },
   feedbackEvent: {
-    listByFeedback: createApiLeaf<"query", typeof import("../functions/feedbackEvent").listByFeedback>(createGeneratedFunctionReference<"query", "public", typeof import("../functions/feedbackEvent").listByFeedback>("feedbackEvent:listByFeedback"), { type: "query" }),
+    listByFeedback: createApiLeaf<"query", typeof import("../functions/feedbackEvent").listByFeedback>(createGeneratedFunctionReference<"query", "public", typeof import("../functions/feedbackEvent").listByFeedback>("feedbackEvent:listByFeedback"), { auth: "optional", type: "query" }),
   },
   feedbackGithub: {
     connectExisting: createApiLeaf<"action", typeof import("../functions/feedbackGithub").connectExisting>(createGeneratedFunctionReference<"action", "public", typeof import("../functions/feedbackGithub").connectExisting>("feedbackGithub:connectExisting"), { auth: "required", type: "action" }),
@@ -87,7 +87,6 @@ export const api = {
     findMyProfile: createApiLeaf<"query", typeof import("../functions/profile").findMyProfile>(createGeneratedFunctionReference<"query", "public", typeof import("../functions/profile").findMyProfile>("profile:findMyProfile"), { auth: "required", type: "query" }),
     generateAvatarUploadUrl: createApiLeaf<"mutation", typeof import("../functions/profile").generateAvatarUploadUrl>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/profile").generateAvatarUploadUrl>("profile:generateAvatarUploadUrl"), { auth: "required", type: "mutation" }),
     getByUsername: createApiLeaf<"query", typeof import("../functions/profile").getByUsername>(createGeneratedFunctionReference<"query", "public", typeof import("../functions/profile").getByUsername>("profile:getByUsername"), { auth: "optional", type: "query" }),
-    getList: createApiLeaf<"query", typeof import("../functions/profile").getList>(createGeneratedFunctionReference<"query", "public", typeof import("../functions/profile").getList>("profile:getList"), { type: "query" }),
     syncMetadata: createApiLeaf<"mutation", typeof import("../functions/profile").syncMetadata>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/profile").syncMetadata>("profile:syncMetadata"), { auth: "required", type: "mutation" }),
     update: createApiLeaf<"mutation", typeof import("../functions/profile").update>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/profile").update>("profile:update"), { auth: "required", type: "mutation" }),
   },

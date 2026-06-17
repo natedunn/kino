@@ -410,6 +410,28 @@ export async function verifyProjectAccess(
   };
 }
 
+const NO_ACCESS_PERMISSIONS = { canDelete: false, canEdit: false, canView: false } as const;
+
+/**
+ * Non-throwing project access check. Returns canView=false (rather than throwing
+ * NOT_FOUND) when the project is missing, so read paths can fail closed/quietly.
+ */
+export async function getProjectViewAccess(
+  ctx: OrmCtx,
+  args: { id?: string; slug?: string; userId?: string | null }
+) {
+  const project = await findProject(ctx, args);
+  if (!project) {
+    return {
+      profile: null,
+      project: null,
+      projectMember: null,
+      permissions: { ...NO_ACCESS_PERMISSIONS },
+    };
+  }
+  return await verifyProjectAccess(ctx, { id: project.id, userId: args.userId });
+}
+
 export async function setUserProfileId(ctx: OrmMutationCtx, userId: string, profileId: string) {
   await ctx.db.patch(userId as any, { profileId });
 }

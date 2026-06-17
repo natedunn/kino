@@ -420,7 +420,6 @@ export declare const api: {
       { username: string },
       any
     >;
-    getList: FunctionReference<"query", "public", { limit?: number }, any>;
     syncMetadata: FunctionReference<"mutation", "public", { key: string }, any>;
     update: FunctionReference<
       "mutation",

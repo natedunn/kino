@@ -6,7 +6,9 @@ import {
   getCurrentProfile,
   getCurrentProfileOrThrow,
   getDoc,
+  getProjectViewAccess,
   toPublicDoc,
+  verifyProjectAccess,
 } from "../lib/kino"
 import { resolveProfileImageUrl } from "../lib/storage"
 import { feedbackCommentTable } from "./schema"
@@ -34,7 +36,17 @@ export const create = authMutation
   )
   .mutation(async ({ ctx, input }) => {
     const profile = await getCurrentProfileOrThrow(ctx, ctx.userId)
-    await getActiveFeedbackOrThrow(ctx, input.feedbackId)
+    const feedback = await getActiveFeedbackOrThrow(ctx, input.feedbackId)
+    const access = await verifyProjectAccess(ctx, {
+      id: feedback.projectId,
+      userId: ctx.userId,
+    })
+    if (!access.permissions.canView) {
+      throw new CRPCError({
+        code: "FORBIDDEN",
+        message: "You do not have access to this feedback",
+      })
+    }
     const [comment] = await ctx.orm
       .insert(feedbackCommentTable)
       .values({
@@ -112,6 +124,12 @@ export const listByFeedback = optionalAuthQuery
   .query(async ({ ctx, input }) => {
     const feedback = await getDoc(ctx, asId<"feedback">(input.feedbackId))
     if (!feedback || isMarkedForDeletion(feedback)) return []
+
+    const access = await getProjectViewAccess(ctx, {
+      id: feedback.projectId,
+      userId: ctx.userId,
+    })
+    if (!access.permissions.canView) return []
 
     const comments = await ctx.db
       .query("feedbackComment")

@@ -10,6 +10,7 @@ import {
   getCurrentProfileOrThrow,
   getDoc,
   getDocOrThrow,
+  getProjectViewAccess,
   toPublicDoc,
   verifyProjectAccess,
 } from "../lib/kino"
@@ -638,7 +639,22 @@ export const getCoverImageUrl = optionalAuthQuery
       key: z.string(),
     })
   )
-  .query(async ({ input }) => {
+  .query(async ({ ctx, input }) => {
+    // Keys are `UPDATE_COVER_PHOTO.<updateId>`. Only resolve a signed URL for a
+    // caller who can actually view the owning update — never trust the raw key.
+    const parts = input.key.split(".")
+    if (parts[0] !== "UPDATE_COVER_PHOTO" || !parts[1]) return null
+
+    const update = await getDoc<"update">(ctx, asId<"update">(parts[1]))
+    if (!update) return null
+
+    const access = await getProjectViewAccess(ctx, {
+      id: update.projectId,
+      userId: ctx.userId,
+    })
+    if (!access.permissions.canView) return null
+    if (update.status === "draft" && !access.permissions.canEdit) return null
+
     return await resolveCoverImageUrl(input.key)
   })
 

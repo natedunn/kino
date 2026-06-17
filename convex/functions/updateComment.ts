@@ -25,16 +25,20 @@ async function ensureUpdateCommentAccess(
     asId<"update">(updateId),
     "Update not found"
   )
-  if (item.status !== "draft") {
-    return item
-  }
 
   const project = await getDocOrThrow(ctx, item.projectId, "Project not found")
   const access = await verifyProjectAccess(ctx, { slug: project.slug, userId })
-  if (!access.permissions.canEdit) {
+  if (item.status === "draft") {
+    if (!access.permissions.canEdit) {
+      throw new CRPCError({
+        code: "FORBIDDEN",
+        message: "You cannot comment on draft updates",
+      })
+    }
+  } else if (!access.permissions.canView) {
     throw new CRPCError({
       code: "FORBIDDEN",
-      message: "You cannot comment on draft updates",
+      message: "You do not have access to this update",
     })
   }
   return item

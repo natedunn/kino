@@ -2,7 +2,7 @@ import { createFunctionHandle } from 'convex/server';
 import { ConvexError, v } from 'convex/values';
 import { z } from 'zod';
 import { CRPCError } from 'kitcn/server';
-import { authMutation, authQuery, optionalAuthQuery, publicQuery } from '../lib/crpc';
+import { authMutation, authQuery, optionalAuthQuery } from '../lib/crpc';
 import { getCurrentProfile, getDoc, toPublicDoc } from '../lib/kino';
 import {
   getUserUploadR2Metadata,
@@ -94,26 +94,6 @@ async function toPublicProfileSummary(
     username: profile.username,
   };
 }
-
-export const getList = publicQuery
-  .input(
-    z.object({
-      limit: z.number().min(1).max(50).default(20).optional(),
-    })
-  )
-  .query(async ({ ctx, input }) => {
-    const profiles = await ctx.orm.query.profile.findMany({
-      limit: input.limit ?? 20,
-      orderBy: { createdAt: 'desc' },
-    });
-
-    return await Promise.all(
-      profiles.map(async (profile) => ({
-        ...profile,
-        imageUrl: await resolveProfileImageUrl(profile),
-      }))
-    );
-  });
 
 export const findMyProfile = authQuery.query(async ({ ctx }) => {
   const profile = await getCurrentProfile(ctx, ctx.userId);
