@@ -1,5 +1,5 @@
 import { convex } from "kitcn/auth"
-import { admin, oAuthProxy, organization, username } from "better-auth/plugins"
+import { oAuthProxy, organization, username } from "better-auth/plugins"
 import {
   getBetterAuthAllowedHosts,
   getEnv,
@@ -70,7 +70,6 @@ export default defineAuth(() => {
         minUsernameLength: 3,
         maxUsernameLength: 39,
       }),
-      admin(),
       organization({
         schema: {
           organization: {
@@ -105,6 +104,14 @@ export default defineAuth(() => {
     user: {
       additionalFields: {
         profileId: {
+          type: "string" as const,
+          required: false,
+        },
+        // `role` previously came from the better-auth admin plugin. With that
+        // plugin removed we declare it here so better-auth keeps persisting it
+        // on create/update and returning it on the session. `user.role` remains
+        // the source of truth; `profile.role` is the derived copy.
+        role: {
           type: "string" as const,
           required: false,
         },

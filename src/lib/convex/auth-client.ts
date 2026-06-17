@@ -1,6 +1,5 @@
 import { createAuthClient } from 'better-auth/react';
 import {
-  adminClient,
   organizationClient,
   usernameClient,
 } from 'better-auth/client/plugins';
@@ -15,7 +14,7 @@ export const authClient = createAuthClient({
   sessionOptions: {
     refetchOnWindowFocus: false,
   },
-  plugins: [usernameClient(), adminClient(), organizationClient(), convexClient()],
+  plugins: [usernameClient(), organizationClient(), convexClient()],
 });
 
 export const {
