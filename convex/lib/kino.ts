@@ -365,7 +365,7 @@ export async function verifyProjectAccess(
   }
 
   const role = projectMember?.role ?? '_none';
-  const editorRoles = ['admin', 'org:admin', 'org:editor'];
+  const editorRoles = ['admin', 'editor', 'org:admin', 'org:editor'];
   const memberRoles = [...editorRoles, 'member'];
 
   if (project.visibility === 'public') {

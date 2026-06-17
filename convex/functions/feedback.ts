@@ -1,6 +1,12 @@
 import { z } from "zod"
 import { eq } from "kitcn/orm"
 import { CRPCError } from "kitcn/server"
+import {
+  isValidTarget,
+  resolveTargetOrNull,
+  targetGranularities,
+} from "../shared/target"
+
 import { internal } from "./_generated/api"
 import { authMutation, authQuery, optionalAuthQuery } from "../lib/crpc"
 import {
@@ -25,9 +31,10 @@ const feedbackStatusSchema = z.enum([
   "completed",
   "paused",
 ])
-const EDIT_ROLES = new Set(["admin", "org:admin", "org:editor"])
+const targetGranularitySchema = z.enum(targetGranularities)
+const EDIT_ROLES = new Set(["admin", "editor", "org:admin", "org:editor"])
 
-function hasOverlap(left: string[], right: string[]) {
+function hasOverlap(left: Array<string>, right: Array<string>) {
   return left.some((value) => right.includes(value))
 }
 
@@ -50,6 +57,16 @@ function assertCanAdminFeedback(permissions: { canEdit: boolean }) {
       code: "FORBIDDEN",
       message: "You do not have permission to manage this feedback",
     })
+  }
+}
+
+function toPublicFeedbackDoc(feedback: any) {
+  return {
+    ...toPublicDoc(feedback),
+    targetRange: resolveTargetOrNull(
+      feedback.target,
+      feedback.targetGranularity
+    ),
   }
 }
 
@@ -462,6 +479,69 @@ export const updateAssigned = authMutation
     return { success: true }
   })
 
+export const updateTarget = authMutation
+  .input(
+    z.object({
+      feedbackId: z.string(),
+      target: z.string().trim().nullable(),
+      targetGranularity: targetGranularitySchema.nullable(),
+    })
+  )
+  .mutation(async ({ ctx, input }) => {
+    const { feedback, permissions } = await verifyFeedbackWriteAccess(
+      ctx,
+      input.feedbackId,
+      ctx.userId
+    )
+    if (!permissions.canEdit) {
+      throw new CRPCError({
+        code: "FORBIDDEN",
+        message: "You do not have permission to update this feedback target",
+      })
+    }
+
+    const target = input.target
+    const targetGranularity = input.targetGranularity
+    const hasTarget = target !== null && target.length > 0
+    const hasGranularity = targetGranularity !== null
+    if (hasTarget !== hasGranularity) {
+      throw new CRPCError({
+        code: "BAD_REQUEST",
+        message: "Target and granularity must be provided together",
+      })
+    }
+
+    if (!hasTarget || !target || !targetGranularity) {
+      await ctx.orm
+        .update(feedbackTable)
+        .set({
+          target: null,
+          targetGranularity: null,
+          updatedTime: Date.now(),
+        })
+        .where(eq(feedbackTable.id, feedback._id as any))
+      return { success: true }
+    }
+
+    if (!isValidTarget(target, targetGranularity)) {
+      throw new CRPCError({
+        code: "BAD_REQUEST",
+        message: "Target does not match the selected granularity",
+      })
+    }
+
+    await ctx.orm
+      .update(feedbackTable)
+      .set({
+        target,
+        targetGranularity,
+        updatedTime: Date.now(),
+      })
+      .where(eq(feedbackTable.id, feedback._id as any))
+
+    return { success: true }
+  })
+
 export const getBySlug = optionalAuthQuery
   .input(
     z.object({
@@ -498,7 +578,7 @@ export const getBySlug = optionalAuthQuery
     }
 
     return {
-      feedback: toPublicDoc(feedback),
+      feedback: toPublicFeedbackDoc(feedback),
       hasUpvoted,
       author: author
         ? {
@@ -638,7 +718,7 @@ export const listProjectFeedback = optionalAuthQuery
             hasUpvoted = !!existing
           }
           return {
-            ...toPublicDoc(item),
+            ...toPublicFeedbackDoc(item),
             board: board ? { id: board._id, name: board.name } : null,
             firstComment: firstComment ? toPublicDoc(firstComment) : null,
             hasUpvoted,
@@ -686,7 +766,7 @@ export const listPendingDeletion = authQuery
             item.firstCommentId
           )
           return {
-            ...toPublicDoc(item),
+            ...toPublicFeedbackDoc(item),
             board: board ? { id: board._id, name: board.name } : null,
             firstComment: firstComment ? toPublicDoc(firstComment) : null,
           }
@@ -730,6 +810,9 @@ export const searchForLinking = optionalAuthQuery
           board: board ? { id: board._id, name: board.name } : null,
           slug: item.slug,
           status: item.status,
+          target: item.target ?? null,
+          targetGranularity: item.targetGranularity ?? null,
+          targetRange: resolveTargetOrNull(item.target, item.targetGranularity),
           title: item.title,
         }
       })
@@ -753,6 +836,9 @@ export const getByIds = optionalAuthQuery
           board: board ? { id: board._id, name: board.name } : null,
           slug: item.slug,
           status: item.status,
+          target: item.target ?? null,
+          targetGranularity: item.targetGranularity ?? null,
+          targetRange: resolveTargetOrNull(item.target, item.targetGranularity),
           title: item.title,
         }
       })

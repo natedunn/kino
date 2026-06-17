@@ -23,6 +23,7 @@ export const api = {
     updateAssigned: createApiLeaf<"mutation", typeof import("../functions/feedback").updateAssigned>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/feedback").updateAssigned>("feedback:updateAssigned"), { auth: "required", type: "mutation" }),
     updateBoard: createApiLeaf<"mutation", typeof import("../functions/feedback").updateBoard>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/feedback").updateBoard>("feedback:updateBoard"), { auth: "required", type: "mutation" }),
     updateStatus: createApiLeaf<"mutation", typeof import("../functions/feedback").updateStatus>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/feedback").updateStatus>("feedback:updateStatus"), { auth: "required", type: "mutation" }),
+    updateTarget: createApiLeaf<"mutation", typeof import("../functions/feedback").updateTarget>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/feedback").updateTarget>("feedback:updateTarget"), { auth: "required", type: "mutation" }),
     updateTitle: createApiLeaf<"mutation", typeof import("../functions/feedback").updateTitle>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/feedback").updateTitle>("feedback:updateTitle"), { auth: "required", type: "mutation" }),
   },
   feedbackBoard: {

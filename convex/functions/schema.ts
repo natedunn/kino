@@ -13,6 +13,7 @@ import {
   textEnum,
   timestamp,
 } from "kitcn/orm"
+import { targetGranularities } from "../shared/target"
 
 const PROFILE_ROLES = ["system:admin", "system:editor", "user"] as const
 const PROJECT_VISIBILITIES = ["public", "private", "archived"] as const
@@ -580,6 +581,8 @@ export const feedbackTable = convexTable(
     answerCommentId: id("feedbackComment"),
     assignedProfileId: id("profile").references(() => profileTable.id),
     status: textEnum(FEEDBACK_STATUSES).notNull(),
+    target: text(),
+    targetGranularity: textEnum(targetGranularities),
     tags: arrayOf(text().notNull()),
     searchContent: text(),
   },

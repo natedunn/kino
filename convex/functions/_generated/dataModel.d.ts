@@ -315,6 +315,8 @@ export type DataModel = {
       slug: string;
       status: "open" | "in-progress" | "closed" | "completed" | "paused";
       tags?: null | Array<string>;
+      target?: null | string;
+      targetGranularity?: null | "day" | "month" | "quarter" | "year";
       title: string;
       updatedTime?: null | number;
       upvotes: number;
@@ -336,6 +338,8 @@ export type DataModel = {
       | "slug"
       | "status"
       | "tags"
+      | "target"
+      | "targetGranularity"
       | "title"
       | "updatedTime"
       | "upvotes";
