@@ -34,7 +34,7 @@ const feedbackStatusSchema = z.enum([
   "paused",
 ])
 const targetGranularitySchema = z.enum(targetGranularities)
-const EDIT_ROLES = new Set(["admin", "editor", "org:admin", "org:editor"])
+const EDIT_ROLES = new Set(["org:admin", "org:editor"])
 
 function hasOverlap(left: Array<string>, right: Array<string>) {
   return left.some((value) => right.includes(value))

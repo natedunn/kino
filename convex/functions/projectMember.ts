@@ -3,7 +3,7 @@ import { authQuery } from '../lib/crpc';
 import { asId, verifyProjectAccess } from '../lib/kino';
 import { resolveProfileImageUrl } from '../lib/storage';
 
-const EDIT_ROLES = new Set(['admin', 'editor', 'org:admin', 'org:editor']);
+const EDIT_ROLES = new Set(['org:admin', 'org:editor']);
 
 export const listAssignableMembers = authQuery
   .input(

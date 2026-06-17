@@ -71,7 +71,7 @@ describe("pickPersonalOrganizationId", () => {
 });
 
 describe("verifyProjectAccess", () => {
-  it("treats direct project editors as project editors", async () => {
+  it("treats org:editor members as project editors (but not deleters)", async () => {
     const ctx = {
       orm: {
         query: {
@@ -99,7 +99,7 @@ describe("verifyProjectAccess", () => {
                 id: "member_1",
                 profileId: "profile_1",
                 projectId: "project_1",
-                role: "editor",
+                role: "org:editor",
               },
             ],
           },
@@ -114,6 +114,7 @@ describe("verifyProjectAccess", () => {
 
     expect(access.permissions.canEdit).toBe(true);
     expect(access.permissions.canView).toBe(true);
+    expect(access.permissions.canDelete).toBe(false);
   });
 
   it("lets anyone view a public project but not edit it", async () => {

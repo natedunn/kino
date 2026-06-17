@@ -1115,7 +1115,7 @@ export type DataModel = {
       projectId: Id<"project">;
       projectSlug: string;
       projectVisibility: "public" | "private" | "archived";
-      role: "admin" | "member" | "editor" | "org:admin" | "org:editor";
+      role: "member" | "org:admin" | "org:editor";
       updatedTime?: null | number;
       _id: Id<"projectMember">;
       _creationTime: number;

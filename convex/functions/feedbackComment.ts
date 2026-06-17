@@ -13,7 +13,7 @@ import {
 import { resolveProfileImageUrl } from "../lib/storage"
 import { feedbackCommentTable } from "./schema"
 
-const TEAM_ROLES = new Set(["admin", "org:admin", "org:editor"])
+const TEAM_ROLES = new Set(["org:admin", "org:editor"])
 
 function isMarkedForDeletion(feedback: { deletedTime?: number | null } | null) {
   return feedback?.deletedTime != null

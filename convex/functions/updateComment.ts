@@ -13,7 +13,7 @@ import {
 import { resolveProfileImageUrl } from "../lib/storage"
 import { updateCommentTable } from "./schema"
 
-const TEAM_ROLES = new Set(["admin", "org:admin", "org:editor"])
+const TEAM_ROLES = new Set(["org:admin", "org:editor"])
 
 async function ensureUpdateCommentAccess(
   ctx: any,

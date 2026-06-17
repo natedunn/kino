@@ -377,8 +377,11 @@ export async function verifyProjectAccess(
     };
   }
 
+  // Project roles are derived from org roles: org:admin (org owner/admin),
+  // org:editor (org editor), member (org member). Only org:admin can delete a
+  // project; org:admin and org:editor can edit; all three can view.
   const role = projectMember?.role ?? '_none';
-  const editorRoles = ['admin', 'editor', 'org:admin', 'org:editor'];
+  const editorRoles = ['org:admin', 'org:editor'];
   const memberRoles = [...editorRoles, 'member'];
 
   if (project.visibility === 'public') {

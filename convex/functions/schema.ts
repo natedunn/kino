@@ -17,13 +17,11 @@ import { targetGranularities } from "../shared/target"
 
 const PROFILE_ROLES = ["system:admin", "system:editor", "user"] as const
 const PROJECT_VISIBILITIES = ["public", "private", "archived"] as const
-const PROJECT_MEMBER_ROLES = [
-  "admin",
-  "member",
-  "editor",
-  "org:admin",
-  "org:editor",
-] as const
+// Project membership is purely DERIVED from org membership (see
+// ORG_ROLE_TO_PROJECT_ROLE). owner/admin -> org:admin, editor -> org:editor,
+// member -> member. The old direct "admin"/"editor" values were never written
+// by any code path and have been removed (verified: no rows used them).
+const PROJECT_MEMBER_ROLES = ["member", "org:admin", "org:editor"] as const
 const FEEDBACK_STATUSES = [
   "open",
   "in-progress",
