@@ -20,6 +20,9 @@ import type { GenericId as Id } from "convex/values";
  * ```
  */
 export declare const api: {
+  admin: {
+    getSystemMetrics: FunctionReference<"query", "public", {}, any>;
+  };
   feedback: {
     create: FunctionReference<
       "mutation",

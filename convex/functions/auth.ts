@@ -11,7 +11,11 @@ import {
 } from "../lib/get-env"
 import authConfig from "./auth.config"
 import { defineAuth } from "./generated/auth"
-import { ensureUserBootstrap, ensureUniqueUsername } from "../lib/kino"
+import {
+  ensureUserBootstrap,
+  ensureUniqueUsername,
+  sanitizeSystemRole,
+} from "../lib/kino"
 
 function isSuperAdminEmail(email: string) {
   const configured = (
@@ -169,12 +173,7 @@ export default defineAuth(() => {
           const profileId = change.newDoc.profileId
           if (!profileId) return
 
-          const role =
-            change.newDoc.role === "system:admin" ||
-            change.newDoc.role === "system:editor" ||
-            change.newDoc.role === "user"
-              ? change.newDoc.role
-              : "user"
+          const role = sanitizeSystemRole(change.newDoc.role)
 
           const db = (ctx as any).db
           const profile = await db.get(profileId as any)

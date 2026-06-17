@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
   getProjectViewAccess,
   pickPersonalOrganizationId,
+  reconcileSystemRole,
+  sanitizeSystemRole,
   verifyProjectAccess,
 } from "./kino";
 
@@ -180,6 +182,67 @@ describe("verifyProjectAccess", () => {
     expect(access.permissions.canView).toBe(true);
     expect(access.permissions.canEdit).toBe(false);
     expect(access.permissions.canDelete).toBe(true);
+  });
+});
+
+describe("sanitizeSystemRole", () => {
+  it("passes through the three valid system roles", () => {
+    expect(sanitizeSystemRole("system:admin")).toBe("system:admin");
+    expect(sanitizeSystemRole("system:editor")).toBe("system:editor");
+    expect(sanitizeSystemRole("user")).toBe("user");
+  });
+
+  it("collapses unknown/empty roles to 'user'", () => {
+    expect(sanitizeSystemRole("admin")).toBe("user");
+    expect(sanitizeSystemRole("owner")).toBe("user");
+    expect(sanitizeSystemRole(null)).toBe("user");
+    expect(sanitizeSystemRole(undefined)).toBe("user");
+  });
+});
+
+describe("reconcileSystemRole", () => {
+  function makeReconcileCtx(
+    profile: { id: string; role: string; userId: string } | null
+  ) {
+    const patches: Array<{ id: string; data: Record<string, unknown> }> = [];
+    const ctx = {
+      orm: { query: { profile: { findFirst: async () => profile } } },
+      db: {
+        patch: async (id: string, data: Record<string, unknown>) => {
+          patches.push({ id, data });
+        },
+      },
+    } as any;
+    return { ctx, patches };
+  }
+
+  it("patches profile.role to match user.role when drifted", async () => {
+    const { ctx, patches } = makeReconcileCtx({
+      id: "p1",
+      role: "user",
+      userId: "u1",
+    });
+    const result = await reconcileSystemRole(ctx, {
+      id: "u1",
+      role: "system:admin",
+    });
+    expect(result).toBe("system:admin");
+    expect(patches).toEqual([{ id: "p1", data: { role: "system:admin" } }]);
+  });
+
+  it("is a no-op when profile.role already matches", async () => {
+    const { ctx, patches } = makeReconcileCtx({
+      id: "p1",
+      role: "system:admin",
+      userId: "u1",
+    });
+    await reconcileSystemRole(ctx, { id: "u1", role: "system:admin" });
+    expect(patches).toEqual([]);
+  });
+
+  it("returns null when there is no profile yet", async () => {
+    const { ctx } = makeReconcileCtx(null);
+    expect(await reconcileSystemRole(ctx, { id: "u1", role: "user" })).toBeNull();
   });
 });
 

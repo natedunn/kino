@@ -10,6 +10,9 @@ import type { httpRouter } from "../functions/http";
 import type { tables } from "../functions/schema";
 
 export const api = {
+  admin: {
+    getSystemMetrics: createApiLeaf<"query", typeof import("../functions/admin").getSystemMetrics>(createGeneratedFunctionReference<"query", "public", typeof import("../functions/admin").getSystemMetrics>("admin:getSystemMetrics"), { auth: "required", type: "query" }),
+  },
   feedback: {
     create: createApiLeaf<"mutation", typeof import("../functions/feedback").create>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/feedback").create>("feedback:create"), { auth: "required", type: "mutation" }),
     getByIds: createApiLeaf<"query", typeof import("../functions/feedback").getByIds>(createGeneratedFunctionReference<"query", "public", typeof import("../functions/feedback").getByIds>("feedback:getByIds"), { auth: "optional", type: "query" }),
