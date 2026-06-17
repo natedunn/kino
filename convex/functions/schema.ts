@@ -263,6 +263,9 @@ export const userTable = convexTable(
     username: text(),
     displayUsername: text(),
     role: text(),
+    banned: boolean(),
+    banReason: text(),
+    banExpires: integer(),
     profileId: text(),
   },
   (userTable) => [
@@ -286,6 +289,7 @@ export const sessionTable = convexTable(
     userId: text()
       .notNull()
       .references(() => userTable.id),
+    impersonatedBy: text(),
     activeOrganizationId: text(),
   },
   (sessionTable) => [
