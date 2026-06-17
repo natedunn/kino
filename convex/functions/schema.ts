@@ -377,6 +377,15 @@ export const memberTable = convexTable(
       memberTable.userId,
       memberTable.organizationId
     ),
+    // better-auth organization plugin queries members by these composites
+    index("organizationId_userId").on(
+      memberTable.organizationId,
+      memberTable.userId
+    ),
+    index("organizationId_role").on(
+      memberTable.organizationId,
+      memberTable.role
+    ),
   ]
 )
 
@@ -401,6 +410,16 @@ export const invitationTable = convexTable(
     index("role").on(invitationTable.role),
     index("status").on(invitationTable.status),
     index("inviterId").on(invitationTable.inviterId),
+    // better-auth organization plugin queries invitations by these composites
+    index("email_organizationId_status").on(
+      invitationTable.email,
+      invitationTable.organizationId,
+      invitationTable.status
+    ),
+    index("organizationId_status").on(
+      invitationTable.organizationId,
+      invitationTable.status
+    ),
   ]
 )
 

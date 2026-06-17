@@ -825,8 +825,15 @@ export type DataModel = {
       by_id: ["_id"];
       by_creation_time: ["_creationTime"];
       email: ["email", "_creationTime"];
+      email_organizationId_status: [
+        "email",
+        "organizationId",
+        "status",
+        "_creationTime",
+      ];
       inviterId: ["inviterId", "_creationTime"];
       organizationId: ["organizationId", "_creationTime"];
+      organizationId_status: ["organizationId", "status", "_creationTime"];
       role: ["role", "_creationTime"];
       status: ["status", "_creationTime"];
     };
@@ -876,6 +883,8 @@ export type DataModel = {
       by_id: ["_id"];
       by_creation_time: ["_creationTime"];
       organizationId: ["organizationId", "_creationTime"];
+      organizationId_role: ["organizationId", "role", "_creationTime"];
+      organizationId_userId: ["organizationId", "userId", "_creationTime"];
       role: ["role", "_creationTime"];
       userId: ["userId", "_creationTime"];
       userId_organizationId: ["userId", "organizationId", "_creationTime"];
