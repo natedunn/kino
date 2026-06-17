@@ -1157,7 +1157,6 @@ export type DataModel = {
       activeOrganizationId?: null | string;
       createdAt: number;
       expiresAt: number;
-      impersonatedBy?: null | string;
       ipAddress?: null | string;
       token: string;
       updatedAt: number;
@@ -1172,7 +1171,6 @@ export type DataModel = {
       | "activeOrganizationId"
       | "createdAt"
       | "expiresAt"
-      | "impersonatedBy"
       | "ipAddress"
       | "token"
       | "updatedAt"
@@ -1349,9 +1347,6 @@ export type DataModel = {
   };
   user: {
     document: {
-      banExpires?: null | number;
-      banReason?: null | string;
-      banned?: null | boolean;
       createdAt: number;
       displayUsername?: null | string;
       email: string;
@@ -1369,9 +1364,6 @@ export type DataModel = {
     fieldPaths:
       | "_creationTime"
       | "_id"
-      | "banExpires"
-      | "banned"
-      | "banReason"
       | "createdAt"
       | "displayUsername"
       | "email"
