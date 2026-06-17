@@ -4,7 +4,7 @@ import {
   createFileRoute,
   useRouterState,
 } from "@tanstack/react-router"
-import { GitBranch, Settings } from "lucide-react"
+import { GitBranch, Settings, Users } from "lucide-react"
 
 import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -24,6 +24,11 @@ function OrganizationSettingsRoute() {
       icon: Settings,
       label: "General",
       to: "/@{$org}/settings/general" as const,
+    },
+    {
+      icon: Users,
+      label: "Members",
+      to: "/@{$org}/settings/members" as const,
     },
     {
       icon: GitBranch,

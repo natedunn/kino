@@ -16,7 +16,7 @@ import {
 import { EmptyState } from "@/components/kino/common"
 import { NoPublicProjects } from "./-components/no-public-projects"
 import { OrgProjects } from "./-components/org-projects"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { useCRPC } from "@/lib/convex/crpc"
@@ -87,16 +87,6 @@ const PLACEHOLDER_ACTIVITY = [
   },
 ]
 
-const PLACEHOLDER_MEMBERS = [
-  { id: 1, initials: "AJ", name: "Alex Johnson", role: "Admin" },
-  { id: 2, initials: "SK", name: "Sara Kim", role: "Member" },
-  { id: 3, initials: "MR", name: "Marcus Reed", role: "Member" },
-  { id: 4, initials: "PL", name: "Priya Lal", role: "Member" },
-  { id: 5, initials: "TC", name: "Tom Chen", role: "Member" },
-  { id: 6, initials: "NW", name: "Nia Wright", role: "Member" },
-  { id: 7, initials: "DC", name: "Diego Cruz", role: "Viewer" },
-]
-
 function OrganizationRoute() {
   const params = Route.useParams()
   const crpc = useCRPC()
@@ -117,6 +107,11 @@ function OrganizationRoute() {
       { enabled: !!orgData?.permissions.canCreate, skipUnauth: true }
     )
   )
+  const membersQuery = useQuery(
+    crpc.orgMember.listMembers.queryOptions({ slug: params.org })
+  )
+  const members = membersQuery.data?.members ?? []
+  const canManageMembers = membersQuery.data?.canManage ?? false
   const projects = projectsData ?? []
 
   if (!orgData?.org) {
@@ -153,7 +148,7 @@ function OrganizationRoute() {
           className="pointer-events-none absolute -top-32 -right-32 h-96 w-96 rounded-full bg-primary/10 blur-3xl"
         />
 
-        <div className="container relative py-12">
+        <div className="relative container py-12">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex items-center gap-5">
               {/* Org avatar */}
@@ -190,7 +185,7 @@ function OrganizationRoute() {
                 <div className="mt-1 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                   <span className="flex items-center gap-1.5">
                     <Users className="size-3.5" />
-                    {PLACEHOLDER_MEMBERS.length} members
+                    {members.length} member{members.length === 1 ? "" : "s"}
                   </span>
                   <span className="flex items-center gap-1.5">
                     <FolderOpen className="size-3.5" />
@@ -225,8 +220,9 @@ function OrganizationRoute() {
               />
               <StatCell
                 icon={<Users className="size-4 text-violet-500" />}
-                value={7}
+                value={members.length}
                 label="Team members"
+                real
               />
               <StatCell
                 icon={<CheckCircle2 className="size-4 text-green-500" />}
@@ -278,40 +274,67 @@ function OrganizationRoute() {
               <div>
                 <div className="mb-4 flex items-center justify-between">
                   <h2 className="text-lg font-semibold">Members</h2>
-                  <span className="text-sm text-muted-foreground">
-                    {PLACEHOLDER_MEMBERS.length} total
-                  </span>
-                </div>
-                <div className="flex flex-col gap-2">
-                  {PLACEHOLDER_MEMBERS.slice(0, 5).map((m) => (
-                    <div
-                      key={m.id}
-                      className="flex items-center gap-3 rounded-lg px-1 py-1"
+                  {canManageMembers ? (
+                    <Link
+                      className="text-sm text-primary underline decoration-primary/40 decoration-2 underline-offset-2 hover:decoration-primary/70"
+                      params={params}
+                      to="/@{$org}/settings/members"
                     >
-                      <Avatar className="size-8 shrink-0">
-                        <AvatarFallback className="text-xs font-semibold">
-                          {m.initials}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex flex-1 items-center justify-between gap-2 min-w-0">
-                        <span className="truncate text-sm font-medium">
-                          {m.name}
-                        </span>
-                        <Badge
-                          variant="outline"
-                          className="shrink-0 text-[10px] text-muted-foreground"
-                        >
-                          {m.role}
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
-                  {PLACEHOLDER_MEMBERS.length > 5 && (
-                    <button className="mt-1 text-left text-sm text-muted-foreground hover:text-foreground transition-colors">
-                      +{PLACEHOLDER_MEMBERS.length - 5} more members
-                    </button>
+                      Manage
+                    </Link>
+                  ) : (
+                    <span className="text-sm text-muted-foreground">
+                      {members.length} total
+                    </span>
                   )}
                 </div>
+                {members.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    No members to show.
+                  </p>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    {members.slice(0, 5).map((m) => (
+                      <div
+                        key={m.id}
+                        className="flex items-center gap-3 rounded-lg px-1 py-1"
+                      >
+                        <Avatar className="size-8 shrink-0">
+                          {m.user.image ? (
+                            <AvatarImage src={m.user.image} />
+                          ) : null}
+                          <AvatarFallback className="text-xs font-semibold">
+                            {(m.user.name ?? m.user.email)[0]?.toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex min-w-0 flex-1 items-center justify-between gap-2">
+                          <span className="truncate text-sm font-medium">
+                            {m.user.name ?? m.user.email}
+                          </span>
+                          <Badge
+                            variant="outline"
+                            className="shrink-0 text-[10px] text-muted-foreground capitalize"
+                          >
+                            {m.role}
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                    {members.length > 5 && canManageMembers ? (
+                      <Link
+                        className="mt-1 text-left text-sm text-muted-foreground transition-colors hover:text-foreground"
+                        params={params}
+                        to="/@{$org}/settings/members"
+                      >
+                        +{members.length - 5} more members
+                      </Link>
+                    ) : members.length > 5 ? (
+                      <span className="mt-1 text-sm text-muted-foreground">
+                        +{members.length - 5} more members
+                      </span>
+                    ) : null}
+                  </div>
+                )}
               </div>
 
               {/* Recent Activity */}
@@ -324,12 +347,15 @@ function OrganizationRoute() {
                   {/* Vertical line */}
                   <div className="absolute top-0 bottom-0 left-[7px] w-px bg-border" />
                   {PLACEHOLDER_ACTIVITY.map((item) => (
-                    <div key={item.id} className="relative flex gap-4 pb-5 last:pb-0">
+                    <div
+                      key={item.id}
+                      className="relative flex gap-4 pb-5 last:pb-0"
+                    >
                       <div
                         className={`relative z-10 mt-1 h-3.5 w-3.5 shrink-0 rounded-full ring-2 ring-background ${item.color}`}
                       />
-                      <div className="flex flex-col gap-0.5 min-w-0">
-                        <span className="text-sm font-medium leading-snug">
+                      <div className="flex min-w-0 flex-col gap-0.5">
+                        <span className="text-sm leading-snug font-medium">
                           {item.label}
                         </span>
                         <span className="truncate text-xs text-muted-foreground">
