@@ -86,6 +86,15 @@ export const api = {
     getMyPermission: createApiLeaf<"query", typeof import("../functions/org").getMyPermission>(createGeneratedFunctionReference<"query", "public", typeof import("../functions/org").getMyPermission>("org:getMyPermission"), { auth: "required", type: "query" }),
     update: createApiLeaf<"mutation", typeof import("../functions/org").update>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/org").update>("org:update"), { auth: "required", type: "mutation" }),
   },
+  orgMember: {
+    cancelInvitation: createApiLeaf<"mutation", typeof import("../functions/orgMember").cancelInvitation>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/orgMember").cancelInvitation>("orgMember:cancelInvitation"), { auth: "required", type: "mutation" }),
+    inviteMember: createApiLeaf<"mutation", typeof import("../functions/orgMember").inviteMember>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/orgMember").inviteMember>("orgMember:inviteMember"), { auth: "required", type: "mutation" }),
+    leaveOrganization: createApiLeaf<"mutation", typeof import("../functions/orgMember").leaveOrganization>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/orgMember").leaveOrganization>("orgMember:leaveOrganization"), { auth: "required", type: "mutation" }),
+    listMembers: createApiLeaf<"query", typeof import("../functions/orgMember").listMembers>(createGeneratedFunctionReference<"query", "public", typeof import("../functions/orgMember").listMembers>("orgMember:listMembers"), { auth: "required", type: "query" }),
+    listPendingInvitations: createApiLeaf<"query", typeof import("../functions/orgMember").listPendingInvitations>(createGeneratedFunctionReference<"query", "public", typeof import("../functions/orgMember").listPendingInvitations>("orgMember:listPendingInvitations"), { auth: "required", type: "query" }),
+    removeMember: createApiLeaf<"mutation", typeof import("../functions/orgMember").removeMember>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/orgMember").removeMember>("orgMember:removeMember"), { auth: "required", type: "mutation" }),
+    updateMemberRole: createApiLeaf<"mutation", typeof import("../functions/orgMember").updateMemberRole>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/orgMember").updateMemberRole>("orgMember:updateMemberRole"), { auth: "required", type: "mutation" }),
+  },
   profile: {
     findMyProfile: createApiLeaf<"query", typeof import("../functions/profile").findMyProfile>(createGeneratedFunctionReference<"query", "public", typeof import("../functions/profile").findMyProfile>("profile:findMyProfile"), { auth: "required", type: "query" }),
     generateAvatarUploadUrl: createApiLeaf<"mutation", typeof import("../functions/profile").generateAvatarUploadUrl>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/profile").generateAvatarUploadUrl>("profile:generateAvatarUploadUrl"), { auth: "required", type: "mutation" }),

@@ -5,6 +5,7 @@ import {
 } from 'better-auth/client/plugins';
 import { convexClient } from 'kitcn/auth/client';
 import { createAuthMutations } from 'kitcn/react';
+import { ac, roles } from '@convex/auth-roles';
 
 export const authClient = createAuthClient({
   baseURL:
@@ -14,7 +15,11 @@ export const authClient = createAuthClient({
   sessionOptions: {
     refetchOnWindowFocus: false,
   },
-  plugins: [usernameClient(), organizationClient(), convexClient()],
+  plugins: [
+    usernameClient(),
+    organizationClient({ ac, roles }),
+    convexClient(),
+  ],
 });
 
 export const {

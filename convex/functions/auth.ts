@@ -10,6 +10,7 @@ import {
   getTrustedOrigins,
 } from "../lib/get-env"
 import authConfig from "./auth.config"
+import { ac, roles } from "../shared/auth-roles"
 import { defineAuth } from "./generated/auth"
 import {
   ensureUserBootstrap,
@@ -71,6 +72,8 @@ export default defineAuth(() => {
         maxUsernameLength: 39,
       }),
       organization({
+        ac,
+        roles,
         schema: {
           organization: {
             additionalFields: {

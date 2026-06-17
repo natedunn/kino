@@ -414,6 +414,49 @@ export declare const api: {
       any
     >;
   };
+  orgMember: {
+    cancelInvitation: FunctionReference<
+      "mutation",
+      "public",
+      { invitationId: string },
+      any
+    >;
+    inviteMember: FunctionReference<
+      "mutation",
+      "public",
+      {
+        email: string;
+        organizationId: string;
+        role: "admin" | "editor" | "member";
+      },
+      any
+    >;
+    leaveOrganization: FunctionReference<
+      "mutation",
+      "public",
+      { organizationId: string },
+      any
+    >;
+    listMembers: FunctionReference<"query", "public", { slug: string }, any>;
+    listPendingInvitations: FunctionReference<
+      "query",
+      "public",
+      { slug: string },
+      any
+    >;
+    removeMember: FunctionReference<
+      "mutation",
+      "public",
+      { memberId: string },
+      any
+    >;
+    updateMemberRole: FunctionReference<
+      "mutation",
+      "public",
+      { memberId: string; role: "owner" | "admin" | "editor" | "member" },
+      any
+    >;
+  };
   profile: {
     findMyProfile: FunctionReference<"query", "public", {}, any>;
     generateAvatarUploadUrl: FunctionReference<"mutation", "public", {}, any>;
