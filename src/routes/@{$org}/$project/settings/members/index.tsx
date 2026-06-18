@@ -9,8 +9,24 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input-shadcn"
 import { useCRPC } from "@/lib/convex/crpc"
+import { crpcServer } from "@/lib/convex/crpc-server"
 
 export const Route = createFileRoute("/@{$org}/$project/settings/members/")({
+  loader: async ({ context, params }) => {
+    const details = await context.queryClient.ensureQueryData(
+      crpcServer.project.getDetails.queryOptions({
+        orgSlug: params.org,
+        slug: params.project,
+      })
+    )
+    const projectId = (details as { project?: { id?: string } } | null)?.project
+      ?.id
+    if (projectId && context.loaderToken) {
+      await context.queryClient.ensureQueryData(
+        crpcServer.projectMember.listProjectMembers.queryOptions({ projectId })
+      )
+    }
+  },
   component: ProjectMembersRoute,
 })
 

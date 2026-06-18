@@ -10,9 +10,27 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input-shadcn"
 import { useCRPC } from "@/lib/convex/crpc"
+import { crpcServer } from "@/lib/convex/crpc-server"
 import { cn } from "@/lib/utils"
 
 export const Route = createFileRoute("/@{$org}/settings/members/")({
+  loader: async ({ context, params }) => {
+    await context.queryClient.ensureQueryData(
+      crpcServer.org.getDetails.queryOptions({ slug: params.org })
+    )
+    if (context.loaderToken) {
+      await Promise.all([
+        context.queryClient.ensureQueryData(
+          crpcServer.orgMember.listMembers.queryOptions({ slug: params.org })
+        ),
+        context.queryClient.ensureQueryData(
+          crpcServer.orgMember.listPendingInvitations.queryOptions({
+            slug: params.org,
+          })
+        ),
+      ])
+    }
+  },
   component: MembersSettingsRoute,
 })
 
