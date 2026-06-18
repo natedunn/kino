@@ -17,6 +17,7 @@ import {
   getCurrentProfileOrThrow,
   getDoc,
   getDocOrThrow,
+  getProjectViewAccess,
   toPublicDoc,
   verifyProjectAccess,
 } from "../lib/kino"
@@ -33,7 +34,7 @@ const feedbackStatusSchema = z.enum([
   "paused",
 ])
 const targetGranularitySchema = z.enum(targetGranularities)
-const EDIT_ROLES = new Set(["admin", "editor", "org:admin", "org:editor"])
+const EDIT_ROLES = new Set(["org:admin", "org:editor"])
 
 function hasOverlap(left: Array<string>, right: Array<string>) {
   return left.some((value) => right.includes(value))
@@ -82,6 +83,30 @@ export const create = authMutation
   )
   .mutation(async ({ ctx, input }) => {
     const profile = await getCurrentProfileOrThrow(ctx, ctx.userId)
+
+    // Authorize: caller must be able to view the target project, and the board
+    // must belong to that project (never trust the client-supplied ids alone).
+    const access = await verifyProjectAccess(ctx, {
+      id: input.projectId,
+      userId: ctx.userId,
+    })
+    if (!access.permissions.canView) {
+      throw new CRPCError({
+        code: "FORBIDDEN",
+        message: "You do not have access to this project",
+      })
+    }
+    const board = await getDoc<"feedbackBoard">(
+      ctx,
+      asId<"feedbackBoard">(input.boardId)
+    )
+    if (!board || board.projectId !== asId<"project">(input.projectId)) {
+      throw new CRPCError({
+        code: "BAD_REQUEST",
+        message: "Invalid board for this project",
+      })
+    }
+
     const slug = generateRandomSlug()
 
     const [feedback] = await ctx.orm
@@ -554,10 +579,18 @@ export const getBySlug = optionalAuthQuery
     const feedback = await ctx.db
       .query("feedback")
       .withIndex("by_projectId_slug", (q: any) =>
-        q.eq("projectId", asId<"project">(input.projectId)).eq("slug", input.slug)
+        q
+          .eq("projectId", asId<"project">(input.projectId))
+          .eq("slug", input.slug)
       )
       .first()
     if (!feedback || isMarkedForDeletion(feedback)) return null
+
+    const access = await getProjectViewAccess(ctx, {
+      id: input.projectId,
+      userId: ctx.userId,
+    })
+    if (!access.permissions.canView) return null
 
     const author = await getDoc(ctx, feedback.authorProfileId)
     const board = await getDoc(ctx, feedback.boardId)
@@ -629,6 +662,14 @@ export const listProjectFeedback = optionalAuthQuery
   )
   .paginated({ limit: 50, item: z.any() })
   .query(async ({ ctx, input }) => {
+    const access = await getProjectViewAccess(ctx, {
+      id: input.projectId,
+      userId: ctx.userId,
+    })
+    if (!access.permissions.canView) {
+      return { continueCursor: "", isDone: true, page: [] }
+    }
+
     let query: any
 
     if (input.search?.trim()) {
@@ -687,7 +728,9 @@ export const listProjectFeedback = optionalAuthQuery
       cursor: input.cursor,
       numItems: input.limit,
     })
-    const activePage = result.page.filter((row: any) => !isMarkedForDeletion(row))
+    const activePage = result.page.filter(
+      (row: any) => !isMarkedForDeletion(row)
+    )
     const page = input.tags?.length
       ? activePage.filter((row: any) =>
           row?.tags ? hasOverlap(row.tags, input.tags ?? []) : false
@@ -784,6 +827,12 @@ export const searchForLinking = optionalAuthQuery
     })
   )
   .query(async ({ ctx, input }) => {
+    const access = await getProjectViewAccess(ctx, {
+      id: input.projectId,
+      userId: ctx.userId,
+    })
+    if (!access.permissions.canView) return []
+
     const feedback = input.search.trim()
       ? await ctx.db
           .query("feedback")
@@ -804,33 +853,58 @@ export const searchForLinking = optionalAuthQuery
           .take(50)
 
     return await Promise.all(
-      feedback.filter((item: any) => !isMarkedForDeletion(item)).slice(0, 20).map(async (item: any) => {
-        const board = await getDoc<"feedbackBoard">(ctx, item.boardId)
-        return {
-          id: item._id,
-          board: board ? { id: board._id, name: board.name } : null,
-          slug: item.slug,
-          status: item.status,
-          target: item.target ?? null,
-          targetGranularity: item.targetGranularity ?? null,
-          targetRange: resolveTargetOrNull(item.target, item.targetGranularity),
-          title: item.title,
-        }
-      })
+      feedback
+        .filter((item: any) => !isMarkedForDeletion(item))
+        .slice(0, 20)
+        .map(async (item: any) => {
+          const board = await getDoc<"feedbackBoard">(ctx, item.boardId)
+          return {
+            id: item._id,
+            board: board ? { id: board._id, name: board.name } : null,
+            slug: item.slug,
+            status: item.status,
+            target: item.target ?? null,
+            targetGranularity: item.targetGranularity ?? null,
+            targetRange: resolveTargetOrNull(
+              item.target,
+              item.targetGranularity
+            ),
+            title: item.title,
+          }
+        })
     )
   })
 
 export const getByIds = optionalAuthQuery
   .input(
     z.object({
-      ids: z.array(z.string()),
+      ids: z.array(z.string()).max(100),
     })
   )
   .query(async ({ ctx, input }) => {
+    const items = await Promise.all(
+      input.ids.map(async (id) => await getDoc(ctx, asId<"feedback">(id)))
+    )
+
+    // Resolve project visibility once per distinct project, then drop any
+    // feedback whose parent project the caller cannot view.
+    const projectViewable = new Map<string, boolean>()
+    for (const item of items) {
+      if (!item) continue
+      const key = String(item.projectId)
+      if (!projectViewable.has(key)) {
+        const access = await getProjectViewAccess(ctx, {
+          id: item.projectId,
+          userId: ctx.userId,
+        })
+        projectViewable.set(key, access.permissions.canView)
+      }
+    }
+
     const rows = await Promise.all(
-      input.ids.map(async (id) => {
-        const item = await getDoc(ctx, asId<"feedback">(id))
+      items.map(async (item) => {
         if (!item || isMarkedForDeletion(item)) return null
+        if (!projectViewable.get(String(item.projectId))) return null
         const board = await getDoc<"feedbackBoard">(ctx, item.boardId)
         return {
           id: item._id,

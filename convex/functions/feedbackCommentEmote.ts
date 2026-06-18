@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { eq } from 'kitcn/orm';
 import { CRPCError } from 'kitcn/server';
 import { authMutation } from '../lib/crpc';
-import { asId, getCurrentProfileOrThrow, getDoc } from '../lib/kino';
+import { asId, getCurrentProfileOrThrow, getDoc, verifyProjectAccess } from '../lib/kino';
 import { feedbackCommentEmoteTable } from './schema';
 
 function isMarkedForDeletion(feedback: { deletedTime?: number | null } | null) {
@@ -33,6 +33,10 @@ export const toggle = authMutation
     const feedback = await getDoc(ctx, asId<'feedback'>(input.feedbackId));
     if (!feedback || isMarkedForDeletion(feedback)) {
       throw new CRPCError({ code: 'NOT_FOUND', message: 'Feedback not found' });
+    }
+    const access = await verifyProjectAccess(ctx, { id: feedback.projectId, userId: ctx.userId });
+    if (!access.permissions.canView) {
+      throw new CRPCError({ code: 'FORBIDDEN', message: 'You do not have access to this feedback' });
     }
     const comment = await getDoc(ctx, asId<'feedbackComment'>(input.feedbackCommentId));
     if (!comment || comment.feedbackId !== feedback._id) {

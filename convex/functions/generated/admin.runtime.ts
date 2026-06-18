@@ -14,11 +14,7 @@ import type { ActionCtx, MutationCtx, QueryCtx } from './server';
 import type { OrmTriggerContext } from 'kitcn/orm';
 
 const procedureRegistry = {
-  "findMyProfile": ["query", typedProcedureResolver(createGeneratedFunctionReference<"query", "public", typeof import("../profile").findMyProfile>("profile:findMyProfile"), () => (require("../profile") as Record<string, unknown>)["findMyProfile"])],
-  "generateAvatarUploadUrl": ["mutation", typedProcedureResolver(createGeneratedFunctionReference<"mutation", "public", typeof import("../profile").generateAvatarUploadUrl>("profile:generateAvatarUploadUrl"), () => (require("../profile") as Record<string, unknown>)["generateAvatarUploadUrl"])],
-  "getByUsername": ["query", typedProcedureResolver(createGeneratedFunctionReference<"query", "public", typeof import("../profile").getByUsername>("profile:getByUsername"), () => (require("../profile") as Record<string, unknown>)["getByUsername"])],
-  "syncMetadata": ["mutation", typedProcedureResolver(createGeneratedFunctionReference<"mutation", "public", typeof import("../profile").syncMetadata>("profile:syncMetadata"), () => (require("../profile") as Record<string, unknown>)["syncMetadata"])],
-  "update": ["mutation", typedProcedureResolver(createGeneratedFunctionReference<"mutation", "public", typeof import("../profile").update>("profile:update"), () => (require("../profile") as Record<string, unknown>)["update"])],
+  "getSystemMetrics": ["query", typedProcedureResolver(createGeneratedFunctionReference<"query", "public", typeof import("../admin").getSystemMetrics>("admin:getSystemMetrics"), () => (require("../admin") as Record<string, unknown>)["getSystemMetrics"])],
 } as const;
 
   const handlerRegistry = procedureRegistry;
@@ -61,7 +57,7 @@ type GeneratedProcedureHandler<
 >;
 
 
-export function createProfileCaller<TCtx extends ProcedureCallerContext>(
+export function createAdminCaller<TCtx extends ProcedureCallerContext>(
   ctx: TCtx
 ): GeneratedProcedureCaller<TCtx> {
   return generatedRuntime.getCallerFactory()(
@@ -69,7 +65,7 @@ export function createProfileCaller<TCtx extends ProcedureCallerContext>(
   ) as GeneratedProcedureCaller<TCtx>;
 }
 
-export function createProfileHandler<TCtx extends ProcedureHandlerContext>(
+export function createAdminHandler<TCtx extends ProcedureHandlerContext>(
   ctx: TCtx
 ): GeneratedProcedureHandler<TCtx> {
   return generatedRuntime.getHandlerFactory()(ctx) as GeneratedProcedureHandler<TCtx>;

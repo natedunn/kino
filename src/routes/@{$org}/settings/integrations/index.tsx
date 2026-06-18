@@ -6,8 +6,15 @@ import { InlineAlert } from "@/components/inline-alert"
 import { EmptyState } from "@/components/kino/common"
 import { Button } from "@/components/ui/button"
 import { useCRPC } from "@/lib/convex/crpc"
+import { crpcServer } from "@/lib/convex/crpc-server"
 
 export const Route = createFileRoute("/@{$org}/settings/integrations/")({
+  loader: async ({ context, params }) => {
+    if (!context.loaderToken) return
+    await context.queryClient.ensureQueryData(
+      crpcServer.github.getOrgIntegration.queryOptions({ orgSlug: params.org })
+    )
+  },
   component: IntegrationsSettingsRoute,
 })
 

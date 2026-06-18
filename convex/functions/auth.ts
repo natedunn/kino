@@ -1,5 +1,5 @@
 import { convex } from "kitcn/auth"
-import { admin, oAuthProxy, organization, username } from "better-auth/plugins"
+import { oAuthProxy, organization, username } from "better-auth/plugins"
 import {
   getBetterAuthAllowedHosts,
   getEnv,
@@ -10,8 +10,13 @@ import {
   getTrustedOrigins,
 } from "../lib/get-env"
 import authConfig from "./auth.config"
+import { ac, roles } from "../shared/auth-roles"
 import { defineAuth } from "./generated/auth"
-import { ensureUserBootstrap, ensureUniqueUsername } from "../lib/kino"
+import {
+  ensureUserBootstrap,
+  ensureUniqueUsername,
+  sanitizeSystemRole,
+} from "../lib/kino"
 
 function isSuperAdminEmail(email: string) {
   const configured = (
@@ -66,8 +71,9 @@ export default defineAuth(() => {
         minUsernameLength: 3,
         maxUsernameLength: 39,
       }),
-      admin(),
       organization({
+        ac,
+        roles,
         schema: {
           organization: {
             additionalFields: {
@@ -101,6 +107,14 @@ export default defineAuth(() => {
     user: {
       additionalFields: {
         profileId: {
+          type: "string" as const,
+          required: false,
+        },
+        // `role` previously came from the better-auth admin plugin. With that
+        // plugin removed we declare it here so better-auth keeps persisting it
+        // on create/update and returning it on the session. `user.role` remains
+        // the source of truth; `profile.role` is the derived copy.
+        role: {
           type: "string" as const,
           required: false,
         },
@@ -169,12 +183,7 @@ export default defineAuth(() => {
           const profileId = change.newDoc.profileId
           if (!profileId) return
 
-          const role =
-            change.newDoc.role === "system:admin" ||
-            change.newDoc.role === "system:editor" ||
-            change.newDoc.role === "user"
-              ? change.newDoc.role
-              : "user"
+          const role = sanitizeSystemRole(change.newDoc.role)
 
           const db = (ctx as any).db
           const profile = await db.get(profileId as any)

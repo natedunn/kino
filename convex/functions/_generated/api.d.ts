@@ -20,6 +20,9 @@ import type { GenericId as Id } from "convex/values";
  * ```
  */
 export declare const api: {
+  admin: {
+    getSystemMetrics: FunctionReference<"query", "public", {}, any>;
+  };
   feedback: {
     create: FunctionReference<
       "mutation",
@@ -411,6 +414,45 @@ export declare const api: {
       any
     >;
   };
+  orgMember: {
+    cancelInvitation: FunctionReference<
+      "mutation",
+      "public",
+      { invitationId: string },
+      any
+    >;
+    inviteMember: FunctionReference<
+      "mutation",
+      "public",
+      { email: string; organizationId: string; role: "admin" | "editor" },
+      any
+    >;
+    leaveOrganization: FunctionReference<
+      "mutation",
+      "public",
+      { organizationId: string },
+      any
+    >;
+    listMembers: FunctionReference<"query", "public", { slug: string }, any>;
+    listPendingInvitations: FunctionReference<
+      "query",
+      "public",
+      { slug: string },
+      any
+    >;
+    removeMember: FunctionReference<
+      "mutation",
+      "public",
+      { memberId: string },
+      any
+    >;
+    updateMemberRole: FunctionReference<
+      "mutation",
+      "public",
+      { memberId: string; role: "owner" | "admin" | "editor" },
+      any
+    >;
+  };
   profile: {
     findMyProfile: FunctionReference<"query", "public", {}, any>;
     generateAvatarUploadUrl: FunctionReference<"mutation", "public", {}, any>;
@@ -420,7 +462,6 @@ export declare const api: {
       { username: string },
       any
     >;
-    getList: FunctionReference<"query", "public", { limit?: number }, any>;
     syncMetadata: FunctionReference<"mutation", "public", { key: string }, any>;
     update: FunctionReference<
       "mutation",
@@ -483,10 +524,28 @@ export declare const api: {
     >;
   };
   projectMember: {
+    inviteProjectMember: FunctionReference<
+      "mutation",
+      "public",
+      { email: string; projectId: string },
+      any
+    >;
     listAssignableMembers: FunctionReference<
       "query",
       "public",
       { projectId: string },
+      any
+    >;
+    listProjectMembers: FunctionReference<
+      "query",
+      "public",
+      { projectId: string },
+      any
+    >;
+    removeProjectMember: FunctionReference<
+      "mutation",
+      "public",
+      { projectMemberId: string },
       any
     >;
   };

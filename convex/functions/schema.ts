@@ -17,13 +17,11 @@ import { targetGranularities } from "../shared/target"
 
 const PROFILE_ROLES = ["system:admin", "system:editor", "user"] as const
 const PROJECT_VISIBILITIES = ["public", "private", "archived"] as const
-const PROJECT_MEMBER_ROLES = [
-  "admin",
-  "member",
-  "editor",
-  "org:admin",
-  "org:editor",
-] as const
+// Project membership is purely DERIVED from org membership (see
+// ORG_ROLE_TO_PROJECT_ROLE). owner/admin -> org:admin, editor -> org:editor,
+// member -> member. The old direct "admin"/"editor" values were never written
+// by any code path and have been removed (verified: no rows used them).
+const PROJECT_MEMBER_ROLES = ["member", "org:admin", "org:editor"] as const
 const FEEDBACK_STATUSES = [
   "open",
   "in-progress",
@@ -69,11 +67,15 @@ const urlField = arrayOf(
   })
 )
 
+// Org roles are owner/admin/editor only (no plain org "member"). They cascade
+// to projects as org:admin/org:editor. The project "member" role is NEVER
+// produced here — it is exclusively a DIRECT per-project grant (see
+// projectMember.inviteProjectMember), so org-derived and direct rows can't be
+// conflated.
 const ORG_ROLE_TO_PROJECT_ROLE = {
   owner: "org:admin",
   admin: "org:admin",
   editor: "org:editor",
-  member: "member",
 } as const
 
 type SupportedOrgRole = keyof typeof ORG_ROLE_TO_PROJECT_ROLE
@@ -81,12 +83,7 @@ type SupportedOrgRole = keyof typeof ORG_ROLE_TO_PROJECT_ROLE
 function isSupportedOrgRole(
   role: string | null | undefined
 ): role is SupportedOrgRole {
-  return (
-    role === "owner" ||
-    role === "admin" ||
-    role === "editor" ||
-    role === "member"
-  )
+  return role === "owner" || role === "admin" || role === "editor"
 }
 
 async function syncProjectMembershipsForOrgMember(
@@ -379,6 +376,15 @@ export const memberTable = convexTable(
       memberTable.userId,
       memberTable.organizationId
     ),
+    // better-auth organization plugin queries members by these composites
+    index("organizationId_userId").on(
+      memberTable.organizationId,
+      memberTable.userId
+    ),
+    index("organizationId_role").on(
+      memberTable.organizationId,
+      memberTable.role
+    ),
   ]
 )
 
@@ -403,6 +409,16 @@ export const invitationTable = convexTable(
     index("role").on(invitationTable.role),
     index("status").on(invitationTable.status),
     index("inviterId").on(invitationTable.inviterId),
+    // better-auth organization plugin queries invitations by these composites
+    index("email_organizationId_status").on(
+      invitationTable.email,
+      invitationTable.organizationId,
+      invitationTable.status
+    ),
+    index("organizationId_status").on(
+      invitationTable.organizationId,
+      invitationTable.status
+    ),
   ]
 )
 

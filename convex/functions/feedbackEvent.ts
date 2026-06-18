@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { eq } from 'kitcn/orm';
-import { privateMutation, publicQuery } from '../lib/crpc';
-import { asId, getDoc, toPublicDoc } from '../lib/kino';
+import { optionalAuthQuery, privateMutation } from '../lib/crpc';
+import { asId, getDoc, getProjectViewAccess, toPublicDoc } from '../lib/kino';
 import { resolveProfileImageUrl } from '../lib/storage';
 import { feedbackEventTable } from './schema';
 
@@ -106,7 +106,7 @@ export async function recordFeedbackEvent(
   return await createOrUpdateFeedbackEvent(ctx, input);
 }
 
-export const listByFeedback = publicQuery
+export const listByFeedback = optionalAuthQuery
   .input(
     z.object({
       feedbackId: z.string(),
@@ -115,6 +115,12 @@ export const listByFeedback = publicQuery
   .query(async ({ ctx, input }) => {
     const feedback = await getDoc(ctx, asId<'feedback'>(input.feedbackId));
     if (!feedback || isMarkedForDeletion(feedback)) return [];
+
+    const access = await getProjectViewAccess(ctx, {
+      id: feedback.projectId,
+      userId: ctx.userId,
+    });
+    if (!access.permissions.canView) return [];
 
     const events = await ctx.db
       .query('feedbackEvent')

@@ -20,14 +20,15 @@ const emoteContentSchema = z.enum([
 
 async function ensureUpdateReactionAccess(ctx: any, updateId: string, userId: string | null | undefined) {
   const item = await getDocOrThrow(ctx, asId<'update'>(updateId), 'Update not found');
-  if (item.status !== 'draft') {
-    return item;
-  }
 
   const project = await getDocOrThrow(ctx, item.projectId, 'Project not found');
   const access = await verifyProjectAccess(ctx, { slug: project.slug, userId });
-  if (!access.permissions.canEdit) {
-    throw new CRPCError({ code: 'FORBIDDEN', message: 'You cannot react to draft updates' });
+  if (item.status === 'draft') {
+    if (!access.permissions.canEdit) {
+      throw new CRPCError({ code: 'FORBIDDEN', message: 'You cannot react to draft updates' });
+    }
+  } else if (!access.permissions.canView) {
+    throw new CRPCError({ code: 'FORBIDDEN', message: 'You do not have access to this update' });
   }
   return item;
 }

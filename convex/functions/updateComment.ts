@@ -13,7 +13,7 @@ import {
 import { resolveProfileImageUrl } from "../lib/storage"
 import { updateCommentTable } from "./schema"
 
-const TEAM_ROLES = new Set(["admin", "org:admin", "org:editor"])
+const TEAM_ROLES = new Set(["org:admin", "org:editor"])
 
 async function ensureUpdateCommentAccess(
   ctx: any,
@@ -25,16 +25,20 @@ async function ensureUpdateCommentAccess(
     asId<"update">(updateId),
     "Update not found"
   )
-  if (item.status !== "draft") {
-    return item
-  }
 
   const project = await getDocOrThrow(ctx, item.projectId, "Project not found")
   const access = await verifyProjectAccess(ctx, { slug: project.slug, userId })
-  if (!access.permissions.canEdit) {
+  if (item.status === "draft") {
+    if (!access.permissions.canEdit) {
+      throw new CRPCError({
+        code: "FORBIDDEN",
+        message: "You cannot comment on draft updates",
+      })
+    }
+  } else if (!access.permissions.canView) {
     throw new CRPCError({
       code: "FORBIDDEN",
-      message: "You cannot comment on draft updates",
+      message: "You do not have access to this update",
     })
   }
   return item
@@ -127,15 +131,14 @@ export const listByUpdate = optionalAuthQuery
     const item = await getDoc(ctx, asId<"update">(input.updateId))
     if (!item) return []
 
-    if (item.status === "draft") {
-      const project = await getDoc(ctx, item.projectId)
-      if (!project) return []
-      const access = await verifyProjectAccess(ctx, {
-        slug: project.slug,
-        userId: ctx.userId,
-      })
-      if (!access.permissions.canEdit) return []
-    }
+    const project = await getDoc(ctx, item.projectId)
+    if (!project) return []
+    const access = await verifyProjectAccess(ctx, {
+      slug: project.slug,
+      userId: ctx.userId,
+    })
+    if (!access.permissions.canView) return []
+    if (item.status === "draft" && !access.permissions.canEdit) return []
 
     const currentProfile = await getCurrentProfile(ctx, ctx.userId)
     const comments = await ctx.db

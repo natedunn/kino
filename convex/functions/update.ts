@@ -10,6 +10,7 @@ import {
   getCurrentProfileOrThrow,
   getDoc,
   getDocOrThrow,
+  getProjectViewAccess,
   toPublicDoc,
   verifyProjectAccess,
 } from "../lib/kino"
@@ -335,13 +336,16 @@ export const backfillProjectUpdatedTimes = authMutation
     if (!access.permissions.canEdit) {
       throw new CRPCError({
         code: "FORBIDDEN",
-        message: "You do not have permission to manage updates for this project",
+        message:
+          "You do not have permission to manage updates for this project",
       })
     }
 
     const result = await ctx.db
       .query("update")
-      .withIndex("by_projectId_slug", (q: any) => q.eq("projectId", project._id))
+      .withIndex("by_projectId_slug", (q: any) =>
+        q.eq("projectId", project._id)
+      )
       .paginate({
         cursor: input.cursor ?? null,
         numItems: input.limit ?? 50,
@@ -638,7 +642,22 @@ export const getCoverImageUrl = optionalAuthQuery
       key: z.string(),
     })
   )
-  .query(async ({ input }) => {
+  .query(async ({ ctx, input }) => {
+    // Keys are `UPDATE_COVER_PHOTO.<updateId>`. Only resolve a signed URL for a
+    // caller who can actually view the owning update — never trust the raw key.
+    const parts = input.key.split(".")
+    if (parts[0] !== "UPDATE_COVER_PHOTO" || !parts[1]) return null
+
+    const update = await getDoc<"update">(ctx, asId<"update">(parts[1]))
+    if (!update) return null
+
+    const access = await getProjectViewAccess(ctx, {
+      id: update.projectId,
+      userId: ctx.userId,
+    })
+    if (!access.permissions.canView) return null
+    if (update.status === "draft" && !access.permissions.canEdit) return null
+
     return await resolveCoverImageUrl(input.key)
   })
 
@@ -667,6 +686,9 @@ export const getBySlug = optionalAuthQuery
       slug: project.slug,
       userId: ctx.userId,
     })
+    if (!access.permissions.canView) {
+      return null
+    }
     if (item.status === "draft" && !access.permissions.canEdit) {
       return null
     }
@@ -751,6 +773,9 @@ export const listByProject = optionalAuthQuery
       slug: project.slug,
       userId: ctx.userId,
     })
+    if (!access.permissions.canView) {
+      return { canEdit: false, updates: [] }
+    }
     const query = ctx.db
       .query("update")
       .withIndex("by_projectId_status_publishedAt", (q: any) =>

@@ -35,15 +35,20 @@ export const toggle = authMutation
       throw new CRPCError({ code: 'BAD_REQUEST', message: 'Comment does not belong to this update' });
     }
 
+    const project = await getDocOrThrow(ctx, item.projectId, 'Project not found');
+    const access = await verifyProjectAccess(ctx, { slug: project.slug, userId: ctx.userId });
     if (item.status === 'draft') {
-      const project = await getDocOrThrow(ctx, item.projectId, 'Project not found');
-      const access = await verifyProjectAccess(ctx, { slug: project.slug, userId: ctx.userId });
       if (!access.permissions.canEdit) {
         throw new CRPCError({
           code: 'FORBIDDEN',
           message: 'You cannot react to comments on draft updates',
         });
       }
+    } else if (!access.permissions.canView) {
+      throw new CRPCError({
+        code: 'FORBIDDEN',
+        message: 'You do not have access to this update',
+      });
     }
 
     const existing = await ctx.db

@@ -4,6 +4,19 @@ import { memberTable, organizationTable, profileTable } from '../functions/schem
 
 export const DEFAULT_FEEDBACK_BOARDS = ['Bugs', 'Feature Requests', 'Improvements'] as const;
 
+export const SYSTEM_ROLES = ['system:admin', 'system:editor', 'user'] as const;
+export type SystemRole = (typeof SYSTEM_ROLES)[number];
+
+/**
+ * The single sanitizer for the system role. `user.role` (better-auth) is the
+ * source of truth; `profile.role` is a derived copy. Any code that writes
+ * `profile.role` MUST funnel through here so the two never diverge into an
+ * unexpected value.
+ */
+export function sanitizeSystemRole(role: string | null | undefined): SystemRole {
+  return role === 'system:admin' || role === 'system:editor' ? role : 'user';
+}
+
 export const LIMITS = {
   ADMIN: { MAX_ORGS: 100, MAX_PROJECTS: 100 },
   FREE: { MAX_ORGS: 1, MAX_PROJECTS: 1 },
@@ -364,8 +377,11 @@ export async function verifyProjectAccess(
     };
   }
 
+  // Project roles are derived from org roles: org:admin (org owner/admin),
+  // org:editor (org editor), member (org member). Only org:admin can delete a
+  // project; org:admin and org:editor can edit; all three can view.
   const role = projectMember?.role ?? '_none';
-  const editorRoles = ['admin', 'editor', 'org:admin', 'org:editor'];
+  const editorRoles = ['org:admin', 'org:editor'];
   const memberRoles = [...editorRoles, 'member'];
 
   if (project.visibility === 'public') {
@@ -408,6 +424,28 @@ export async function verifyProjectAccess(
     projectMember,
     permissions: { canDelete: false, canEdit: false, canView: false },
   };
+}
+
+const NO_ACCESS_PERMISSIONS = { canDelete: false, canEdit: false, canView: false } as const;
+
+/**
+ * Non-throwing project access check. Returns canView=false (rather than throwing
+ * NOT_FOUND) when the project is missing, so read paths can fail closed/quietly.
+ */
+export async function getProjectViewAccess(
+  ctx: OrmCtx,
+  args: { id?: string; slug?: string; userId?: string | null }
+) {
+  const project = await findProject(ctx, args);
+  if (!project) {
+    return {
+      profile: null,
+      project: null,
+      projectMember: null,
+      permissions: { ...NO_ACCESS_PERMISSIONS },
+    };
+  }
+  return await verifyProjectAccess(ctx, { id: project.id, userId: args.userId });
 }
 
 export async function setUserProfileId(ctx: OrmMutationCtx, userId: string, profileId: string) {
@@ -528,10 +566,7 @@ export async function ensureUserBootstrap(ctx: OrmMutationCtx, user: AuthUserBoo
         imageUrl: user.image,
         name: user.name ?? user.email,
         personalOrganizationId: null,
-        role:
-          user.role === 'system:admin' || user.role === 'system:editor' || user.role === 'user'
-            ? user.role
-            : 'user',
+        role: sanitizeSystemRole(user.role),
         userId: publicUserId,
         username: resolvedUsername,
       })
@@ -588,5 +623,33 @@ export async function ensureUserBootstrap(ctx: OrmMutationCtx, user: AuthUserBoo
     );
   }
 
+  // Self-heal the derived role: keep profile.role aligned with the
+  // source-of-truth user.role in case the user.change trigger ever missed one.
+  const desiredRole = sanitizeSystemRole(user.role);
+  if (profileId && profile && profile.role !== desiredRole) {
+    await ctx.db.patch(profileId as any, { role: desiredRole });
+    profile = { ...profile, role: desiredRole };
+  }
+
   return profile;
+}
+
+/**
+ * Re-derives profile.role from the source-of-truth user.role and patches it if
+ * they have drifted. Safe to call on any session bootstrap. Returns the
+ * resolved role, or null when no profile exists yet.
+ */
+export async function reconcileSystemRole(
+  ctx: OrmMutationCtx,
+  user: { id: string; role?: string | null }
+) {
+  const profile = await ctx.orm.query.profile.findFirst({
+    where: { userId: user.id },
+  });
+  if (!profile) return null;
+  const desired = sanitizeSystemRole(user.role);
+  if (profile.role !== desired) {
+    await ctx.db.patch((profile._id ?? profile.id) as any, { role: desired });
+  }
+  return desired;
 }

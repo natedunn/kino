@@ -5,6 +5,8 @@ import { authMutation, optionalAuthQuery } from "../lib/crpc"
 import { projectTable } from "./schema"
 import {
   LIMITS,
+  asId,
+  getCurrentProfile,
   toPublicDoc,
   verifyOrgAccess,
   verifyProjectAccess,
@@ -29,7 +31,10 @@ export const create = authMutation
     })
   )
   .mutation(async ({ ctx, input }) => {
-    const access = await verifyOrgAccess(ctx, { slug: input.orgSlug, userId: ctx.userId })
+    const access = await verifyOrgAccess(ctx, {
+      slug: input.orgSlug,
+      userId: ctx.userId,
+    })
     if (!access.organization) {
       throw new CRPCError({
         code: "NOT_FOUND",
@@ -172,24 +177,64 @@ export const getManyByOrg = optionalAuthQuery
       ? await verifyOrgAccess(ctx, { slug: input.orgSlug, userId: ctx.userId })
       : null
 
-    if (!access?.permissions.canView) {
+    // Org managers (admin/editor/owner) and system roles see every project.
+    // A public org's canView does NOT imply private-project visibility, so we
+    // gate private/archived on canEdit, not canView.
+    if (access?.permissions.canEdit) {
+      const [privateProjects, archivedProjects] = await Promise.all([
+        ctx.orm.query.project.findMany({
+          where: { orgSlug: input.orgSlug, visibility: "private" },
+          limit,
+          orderBy: { updatedTime: "desc" },
+        }),
+        ctx.orm.query.project.findMany({
+          where: { orgSlug: input.orgSlug, visibility: "archived" },
+          limit,
+          orderBy: { updatedTime: "desc" },
+        }),
+      ])
+
+      const merged = [
+        ...publicProjects,
+        ...privateProjects,
+        ...archivedProjects,
+      ]
+        .sort((a, b) => (b.updatedTime ?? 0) - (a.updatedTime ?? 0))
+        .slice(0, limit)
+
+      return merged.length > 0 ? merged : null
+    }
+
+    // Everyone else: public projects, plus any PRIVATE project the current
+    // user is a direct member of (so invited members can reach it). No archived.
+    const profile = ctx.userId ? await getCurrentProfile(ctx, ctx.userId) : null
+    if (!profile) {
       return publicProjects.length > 0 ? publicProjects : null
     }
 
-    const [privateProjects, archivedProjects] = await Promise.all([
-      ctx.orm.query.project.findMany({
-        where: { orgSlug: input.orgSlug, visibility: "private" },
-        limit,
-        orderBy: { updatedTime: "desc" },
-      }),
-      ctx.orm.query.project.findMany({
-        where: { orgSlug: input.orgSlug, visibility: "archived" },
-        limit,
-        orderBy: { updatedTime: "desc" },
-      }),
-    ])
+    const memberships = await ctx.orm.query.projectMember.findMany({
+      where: { profileId: asId<"profile">(profile._id) },
+      limit: 500,
+    })
+    const memberProjectIds = memberships.map((membership: any) =>
+      asId<"project">(membership.projectId)
+    )
 
-    const merged = [...publicProjects, ...privateProjects, ...archivedProjects]
+    // Load the member's projects directly by id (point lookups) so visibility
+    // doesn't depend on a recency window of the org's private projects.
+    let memberPrivateProjects: typeof publicProjects = []
+    if (memberProjectIds.length > 0) {
+      const memberProjects = await ctx.orm.query.project.findMany({
+        where: { id: { in: memberProjectIds } },
+        limit: 500,
+      })
+      memberPrivateProjects = memberProjects.filter(
+        (project: any) =>
+          project.orgSlug === input.orgSlug && project.visibility === "private"
+      )
+    }
+
+    const merged = [...publicProjects, ...memberPrivateProjects]
       .sort((a, b) => (b.updatedTime ?? 0) - (a.updatedTime ?? 0))
       .slice(0, limit)
 

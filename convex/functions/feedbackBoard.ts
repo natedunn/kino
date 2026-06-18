@@ -60,11 +60,15 @@ export const update = authMutation
       throw new CRPCError({ code: 'FORBIDDEN', message: 'User does not have permission' });
     }
 
+    const board = await getDoc<'feedbackBoard'>(ctx, asId<'feedbackBoard'>(input.id));
+    if (!board) {
+      throw new CRPCError({ code: 'NOT_FOUND', message: 'Board not found' });
+    }
+    if (!access.project || board.projectId !== access.project._id) {
+      throw new CRPCError({ code: 'FORBIDDEN', message: 'Board does not belong to this project' });
+    }
+
     if (input.slug || input.name) {
-      const board = await getDoc<'feedbackBoard'>(ctx, asId<'feedbackBoard'>(input.id));
-      if (!board) {
-        throw new CRPCError({ code: 'NOT_FOUND', message: 'Board not found' });
-      }
       const existing = await ctx.db
         .query('feedbackBoard')
         .withIndex('by_slug_projectId', (q: any) =>
@@ -102,7 +106,9 @@ export const get = optionalAuthQuery
   .query(async ({ ctx, input }) => {
     const access = await verifyProjectAccess(ctx, { slug: input.projectSlug, userId: ctx.userId });
     if (!access.permissions.canView) return null;
-    return toPublicDoc(await getDoc<'feedbackBoard'>(ctx, asId<'feedbackBoard'>(input.id)));
+    const board = await getDoc<'feedbackBoard'>(ctx, asId<'feedbackBoard'>(input.id));
+    if (!board || !access.project || board.projectId !== access.project._id) return null;
+    return toPublicDoc(board);
   });
 
 export const listProjectBoards = optionalAuthQuery
@@ -138,6 +144,11 @@ export const _delete = authMutation
     const access = await verifyProjectAccess(ctx, { id: input.projectId, userId: ctx.userId });
     if (!access.permissions.canDelete) {
       throw new CRPCError({ code: 'FORBIDDEN', message: 'User does not have permission' });
+    }
+
+    const board = await getDoc<'feedbackBoard'>(ctx, asId<'feedbackBoard'>(input.boardId));
+    if (!board || !access.project || board.projectId !== access.project._id) {
+      throw new CRPCError({ code: 'NOT_FOUND', message: 'Board not found' });
     }
 
     await ctx.orm.delete(feedbackBoardTable).where(eq(feedbackBoardTable.id, input.boardId as any));

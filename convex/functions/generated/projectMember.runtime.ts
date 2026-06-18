@@ -14,7 +14,10 @@ import type { ActionCtx, MutationCtx, QueryCtx } from './server';
 import type { OrmTriggerContext } from 'kitcn/orm';
 
 const procedureRegistry = {
+  "inviteProjectMember": ["mutation", typedProcedureResolver(createGeneratedFunctionReference<"mutation", "public", typeof import("../projectMember").inviteProjectMember>("projectMember:inviteProjectMember"), () => (require("../projectMember") as Record<string, unknown>)["inviteProjectMember"])],
   "listAssignableMembers": ["query", typedProcedureResolver(createGeneratedFunctionReference<"query", "public", typeof import("../projectMember").listAssignableMembers>("projectMember:listAssignableMembers"), () => (require("../projectMember") as Record<string, unknown>)["listAssignableMembers"])],
+  "listProjectMembers": ["query", typedProcedureResolver(createGeneratedFunctionReference<"query", "public", typeof import("../projectMember").listProjectMembers>("projectMember:listProjectMembers"), () => (require("../projectMember") as Record<string, unknown>)["listProjectMembers"])],
+  "removeProjectMember": ["mutation", typedProcedureResolver(createGeneratedFunctionReference<"mutation", "public", typeof import("../projectMember").removeProjectMember>("projectMember:removeProjectMember"), () => (require("../projectMember") as Record<string, unknown>)["removeProjectMember"])],
 } as const;
 
   const handlerRegistry = procedureRegistry;

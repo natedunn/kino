@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AtChar123orgChar125RouteRouteImport } from './routes/@{$org}/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AtChar123orgChar125IndexRouteImport } from './routes/@{$org}/index'
@@ -31,6 +32,7 @@ import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as AtChar123orgChar125ProjectSettingsRouteRouteImport } from './routes/@{$org}/$project/settings/route'
 import { Route as AtChar123orgChar125ProjectOptionsRouteRouteImport } from './routes/@{$org}/$project/options/route'
 import { Route as AtChar123orgChar125ProjectFeedbackRouteRouteImport } from './routes/@{$org}/$project/feedback/route'
+import { Route as AtChar123orgChar125SettingsMembersIndexRouteImport } from './routes/@{$org}/settings/members/index'
 import { Route as AtChar123orgChar125SettingsIntegrationsIndexRouteImport } from './routes/@{$org}/settings/integrations/index'
 import { Route as AtChar123orgChar125SettingsGeneralIndexRouteImport } from './routes/@{$org}/settings/general/index'
 import { Route as AtChar123orgChar125OptionsIntegrationsIndexRouteImport } from './routes/@{$org}/options/integrations/index'
@@ -48,6 +50,7 @@ import { Route as AtChar123orgChar125ProjectChatIndexRouteImport } from './route
 import { Route as AtChar123orgChar125ProjectUpdatesNewIndexRouteImport } from './routes/@{$org}/$project/updates/new/index'
 import { Route as AtChar123orgChar125ProjectUpdatesEditIndexRouteImport } from './routes/@{$org}/$project/updates/edit/index'
 import { Route as AtChar123orgChar125ProjectUpdatesSlugIndexRouteImport } from './routes/@{$org}/$project/updates/$slug/index'
+import { Route as AtChar123orgChar125ProjectSettingsMembersIndexRouteImport } from './routes/@{$org}/$project/settings/members/index'
 import { Route as AtChar123orgChar125ProjectSettingsIntegrationsIndexRouteImport } from './routes/@{$org}/$project/settings/integrations/index'
 import { Route as AtChar123orgChar125ProjectSettingsDeletedFeedbackIndexRouteImport } from './routes/@{$org}/$project/settings/deleted-feedback/index'
 import { Route as AtChar123orgChar125ProjectSettingsBoardsIndexRouteImport } from './routes/@{$org}/$project/settings/boards/index'
@@ -70,6 +73,11 @@ const DashboardRoute = DashboardRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AtChar123orgChar125RouteRoute =
@@ -185,6 +193,12 @@ const AtChar123orgChar125ProjectFeedbackRouteRoute =
     path: '/feedback',
     getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
   } as any)
+const AtChar123orgChar125SettingsMembersIndexRoute =
+  AtChar123orgChar125SettingsMembersIndexRouteImport.update({
+    id: '/members/',
+    path: '/members/',
+    getParentRoute: () => AtChar123orgChar125SettingsRouteRoute,
+  } as any)
 const AtChar123orgChar125SettingsIntegrationsIndexRoute =
   AtChar123orgChar125SettingsIntegrationsIndexRouteImport.update({
     id: '/integrations/',
@@ -287,6 +301,12 @@ const AtChar123orgChar125ProjectUpdatesSlugIndexRoute =
     path: '/updates/$slug/',
     getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
   } as any)
+const AtChar123orgChar125ProjectSettingsMembersIndexRoute =
+  AtChar123orgChar125ProjectSettingsMembersIndexRouteImport.update({
+    id: '/members/',
+    path: '/members/',
+    getParentRoute: () => AtChar123orgChar125ProjectSettingsRouteRoute,
+  } as any)
 const AtChar123orgChar125ProjectSettingsIntegrationsIndexRoute =
   AtChar123orgChar125ProjectSettingsIntegrationsIndexRouteImport.update({
     id: '/integrations/',
@@ -369,6 +389,7 @@ const AtChar123orgChar125ProjectFeedbackBoardsBoardEditRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/@{$org}': typeof AtChar123orgChar125RouteRouteWithChildren
+  '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
   '/@{$org}/$project': typeof AtChar123orgChar125ProjectRouteRouteWithChildren
@@ -403,6 +424,7 @@ export interface FileRoutesByFullPath {
   '/@{$org}/options/integrations/': typeof AtChar123orgChar125OptionsIntegrationsIndexRoute
   '/@{$org}/settings/general/': typeof AtChar123orgChar125SettingsGeneralIndexRoute
   '/@{$org}/settings/integrations/': typeof AtChar123orgChar125SettingsIntegrationsIndexRoute
+  '/@{$org}/settings/members/': typeof AtChar123orgChar125SettingsMembersIndexRoute
   '/@{$org}/$project/feedback/boards/new': typeof AtChar123orgChar125ProjectFeedbackBoardsNewRoute
   '/@{$org}/$project/updates/$slug/edit': typeof AtChar123orgChar125ProjectUpdatesSlugEditRoute
   '/@{$org}/$project/feedback/$slug/': typeof AtChar123orgChar125ProjectFeedbackSlugIndexRoute
@@ -414,6 +436,7 @@ export interface FileRoutesByFullPath {
   '/@{$org}/$project/settings/boards/': typeof AtChar123orgChar125ProjectSettingsBoardsIndexRoute
   '/@{$org}/$project/settings/deleted-feedback/': typeof AtChar123orgChar125ProjectSettingsDeletedFeedbackIndexRoute
   '/@{$org}/$project/settings/integrations/': typeof AtChar123orgChar125ProjectSettingsIntegrationsIndexRoute
+  '/@{$org}/$project/settings/members/': typeof AtChar123orgChar125ProjectSettingsMembersIndexRoute
   '/@{$org}/$project/updates/$slug/': typeof AtChar123orgChar125ProjectUpdatesSlugIndexRoute
   '/@{$org}/$project/updates/edit/': typeof AtChar123orgChar125ProjectUpdatesEditIndexRoute
   '/@{$org}/$project/updates/new/': typeof AtChar123orgChar125ProjectUpdatesNewIndexRoute
@@ -422,6 +445,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
   '/@{$org}': typeof AtChar123orgChar125IndexRoute
@@ -450,6 +474,7 @@ export interface FileRoutesByTo {
   '/@{$org}/options/integrations': typeof AtChar123orgChar125OptionsIntegrationsIndexRoute
   '/@{$org}/settings/general': typeof AtChar123orgChar125SettingsGeneralIndexRoute
   '/@{$org}/settings/integrations': typeof AtChar123orgChar125SettingsIntegrationsIndexRoute
+  '/@{$org}/settings/members': typeof AtChar123orgChar125SettingsMembersIndexRoute
   '/@{$org}/$project/feedback/boards/new': typeof AtChar123orgChar125ProjectFeedbackBoardsNewRoute
   '/@{$org}/$project/updates/$slug/edit': typeof AtChar123orgChar125ProjectUpdatesSlugEditRoute
   '/@{$org}/$project/feedback/$slug': typeof AtChar123orgChar125ProjectFeedbackSlugIndexRoute
@@ -461,6 +486,7 @@ export interface FileRoutesByTo {
   '/@{$org}/$project/settings/boards': typeof AtChar123orgChar125ProjectSettingsBoardsIndexRoute
   '/@{$org}/$project/settings/deleted-feedback': typeof AtChar123orgChar125ProjectSettingsDeletedFeedbackIndexRoute
   '/@{$org}/$project/settings/integrations': typeof AtChar123orgChar125ProjectSettingsIntegrationsIndexRoute
+  '/@{$org}/$project/settings/members': typeof AtChar123orgChar125ProjectSettingsMembersIndexRoute
   '/@{$org}/$project/updates/$slug': typeof AtChar123orgChar125ProjectUpdatesSlugIndexRoute
   '/@{$org}/$project/updates/edit': typeof AtChar123orgChar125ProjectUpdatesEditIndexRoute
   '/@{$org}/$project/updates/new': typeof AtChar123orgChar125ProjectUpdatesNewIndexRoute
@@ -471,6 +497,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/@{$org}': typeof AtChar123orgChar125RouteRouteWithChildren
+  '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
   '/@{$org}/$project': typeof AtChar123orgChar125ProjectRouteRouteWithChildren
@@ -505,6 +532,7 @@ export interface FileRoutesById {
   '/@{$org}/options/integrations/': typeof AtChar123orgChar125OptionsIntegrationsIndexRoute
   '/@{$org}/settings/general/': typeof AtChar123orgChar125SettingsGeneralIndexRoute
   '/@{$org}/settings/integrations/': typeof AtChar123orgChar125SettingsIntegrationsIndexRoute
+  '/@{$org}/settings/members/': typeof AtChar123orgChar125SettingsMembersIndexRoute
   '/@{$org}/$project/feedback/boards/new': typeof AtChar123orgChar125ProjectFeedbackBoardsNewRoute
   '/@{$org}/$project/updates/$slug/edit': typeof AtChar123orgChar125ProjectUpdatesSlugEditRoute
   '/@{$org}/$project/feedback/$slug/': typeof AtChar123orgChar125ProjectFeedbackSlugIndexRoute
@@ -516,6 +544,7 @@ export interface FileRoutesById {
   '/@{$org}/$project/settings/boards/': typeof AtChar123orgChar125ProjectSettingsBoardsIndexRoute
   '/@{$org}/$project/settings/deleted-feedback/': typeof AtChar123orgChar125ProjectSettingsDeletedFeedbackIndexRoute
   '/@{$org}/$project/settings/integrations/': typeof AtChar123orgChar125ProjectSettingsIntegrationsIndexRoute
+  '/@{$org}/$project/settings/members/': typeof AtChar123orgChar125ProjectSettingsMembersIndexRoute
   '/@{$org}/$project/updates/$slug/': typeof AtChar123orgChar125ProjectUpdatesSlugIndexRoute
   '/@{$org}/$project/updates/edit/': typeof AtChar123orgChar125ProjectUpdatesEditIndexRoute
   '/@{$org}/$project/updates/new/': typeof AtChar123orgChar125ProjectUpdatesNewIndexRoute
@@ -527,6 +556,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/@{$org}'
+    | '/admin'
     | '/auth'
     | '/dashboard'
     | '/@{$org}/$project'
@@ -561,6 +591,7 @@ export interface FileRouteTypes {
     | '/@{$org}/options/integrations/'
     | '/@{$org}/settings/general/'
     | '/@{$org}/settings/integrations/'
+    | '/@{$org}/settings/members/'
     | '/@{$org}/$project/feedback/boards/new'
     | '/@{$org}/$project/updates/$slug/edit'
     | '/@{$org}/$project/feedback/$slug/'
@@ -572,6 +603,7 @@ export interface FileRouteTypes {
     | '/@{$org}/$project/settings/boards/'
     | '/@{$org}/$project/settings/deleted-feedback/'
     | '/@{$org}/$project/settings/integrations/'
+    | '/@{$org}/$project/settings/members/'
     | '/@{$org}/$project/updates/$slug/'
     | '/@{$org}/$project/updates/edit/'
     | '/@{$org}/$project/updates/new/'
@@ -580,6 +612,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/admin'
     | '/auth'
     | '/dashboard'
     | '/@{$org}'
@@ -608,6 +641,7 @@ export interface FileRouteTypes {
     | '/@{$org}/options/integrations'
     | '/@{$org}/settings/general'
     | '/@{$org}/settings/integrations'
+    | '/@{$org}/settings/members'
     | '/@{$org}/$project/feedback/boards/new'
     | '/@{$org}/$project/updates/$slug/edit'
     | '/@{$org}/$project/feedback/$slug'
@@ -619,6 +653,7 @@ export interface FileRouteTypes {
     | '/@{$org}/$project/settings/boards'
     | '/@{$org}/$project/settings/deleted-feedback'
     | '/@{$org}/$project/settings/integrations'
+    | '/@{$org}/$project/settings/members'
     | '/@{$org}/$project/updates/$slug'
     | '/@{$org}/$project/updates/edit'
     | '/@{$org}/$project/updates/new'
@@ -628,6 +663,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/@{$org}'
+    | '/admin'
     | '/auth'
     | '/dashboard'
     | '/@{$org}/$project'
@@ -662,6 +698,7 @@ export interface FileRouteTypes {
     | '/@{$org}/options/integrations/'
     | '/@{$org}/settings/general/'
     | '/@{$org}/settings/integrations/'
+    | '/@{$org}/settings/members/'
     | '/@{$org}/$project/feedback/boards/new'
     | '/@{$org}/$project/updates/$slug/edit'
     | '/@{$org}/$project/feedback/$slug/'
@@ -673,6 +710,7 @@ export interface FileRouteTypes {
     | '/@{$org}/$project/settings/boards/'
     | '/@{$org}/$project/settings/deleted-feedback/'
     | '/@{$org}/$project/settings/integrations/'
+    | '/@{$org}/$project/settings/members/'
     | '/@{$org}/$project/updates/$slug/'
     | '/@{$org}/$project/updates/edit/'
     | '/@{$org}/$project/updates/new/'
@@ -683,6 +721,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AtChar123orgChar125RouteRoute: typeof AtChar123orgChar125RouteRouteWithChildren
+  AdminRoute: typeof AdminRoute
   AuthRoute: typeof AuthRoute
   DashboardRoute: typeof DashboardRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
@@ -707,6 +746,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/@{$org}': {
@@ -849,6 +895,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AtChar123orgChar125ProjectFeedbackRouteRouteImport
       parentRoute: typeof AtChar123orgChar125ProjectRouteRoute
     }
+    '/@{$org}/settings/members/': {
+      id: '/@{$org}/settings/members/'
+      path: '/members'
+      fullPath: '/@{$org}/settings/members/'
+      preLoaderRoute: typeof AtChar123orgChar125SettingsMembersIndexRouteImport
+      parentRoute: typeof AtChar123orgChar125SettingsRouteRoute
+    }
     '/@{$org}/settings/integrations/': {
       id: '/@{$org}/settings/integrations/'
       path: '/integrations'
@@ -967,6 +1020,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/@{$org}/$project/updates/$slug/'
       preLoaderRoute: typeof AtChar123orgChar125ProjectUpdatesSlugIndexRouteImport
       parentRoute: typeof AtChar123orgChar125ProjectRouteRoute
+    }
+    '/@{$org}/$project/settings/members/': {
+      id: '/@{$org}/$project/settings/members/'
+      path: '/members'
+      fullPath: '/@{$org}/$project/settings/members/'
+      preLoaderRoute: typeof AtChar123orgChar125ProjectSettingsMembersIndexRouteImport
+      parentRoute: typeof AtChar123orgChar125ProjectSettingsRouteRoute
     }
     '/@{$org}/$project/settings/integrations/': {
       id: '/@{$org}/$project/settings/integrations/'
@@ -1121,6 +1181,7 @@ interface AtChar123orgChar125ProjectSettingsRouteRouteChildren {
   AtChar123orgChar125ProjectSettingsBoardsIndexRoute: typeof AtChar123orgChar125ProjectSettingsBoardsIndexRoute
   AtChar123orgChar125ProjectSettingsDeletedFeedbackIndexRoute: typeof AtChar123orgChar125ProjectSettingsDeletedFeedbackIndexRoute
   AtChar123orgChar125ProjectSettingsIntegrationsIndexRoute: typeof AtChar123orgChar125ProjectSettingsIntegrationsIndexRoute
+  AtChar123orgChar125ProjectSettingsMembersIndexRoute: typeof AtChar123orgChar125ProjectSettingsMembersIndexRoute
 }
 
 const AtChar123orgChar125ProjectSettingsRouteRouteChildren: AtChar123orgChar125ProjectSettingsRouteRouteChildren =
@@ -1133,6 +1194,8 @@ const AtChar123orgChar125ProjectSettingsRouteRouteChildren: AtChar123orgChar125P
       AtChar123orgChar125ProjectSettingsDeletedFeedbackIndexRoute,
     AtChar123orgChar125ProjectSettingsIntegrationsIndexRoute:
       AtChar123orgChar125ProjectSettingsIntegrationsIndexRoute,
+    AtChar123orgChar125ProjectSettingsMembersIndexRoute:
+      AtChar123orgChar125ProjectSettingsMembersIndexRoute,
   }
 
 const AtChar123orgChar125ProjectSettingsRouteRouteWithChildren =
@@ -1220,6 +1283,7 @@ interface AtChar123orgChar125SettingsRouteRouteChildren {
   AtChar123orgChar125SettingsIndexRoute: typeof AtChar123orgChar125SettingsIndexRoute
   AtChar123orgChar125SettingsGeneralIndexRoute: typeof AtChar123orgChar125SettingsGeneralIndexRoute
   AtChar123orgChar125SettingsIntegrationsIndexRoute: typeof AtChar123orgChar125SettingsIntegrationsIndexRoute
+  AtChar123orgChar125SettingsMembersIndexRoute: typeof AtChar123orgChar125SettingsMembersIndexRoute
 }
 
 const AtChar123orgChar125SettingsRouteRouteChildren: AtChar123orgChar125SettingsRouteRouteChildren =
@@ -1230,6 +1294,8 @@ const AtChar123orgChar125SettingsRouteRouteChildren: AtChar123orgChar125Settings
       AtChar123orgChar125SettingsGeneralIndexRoute,
     AtChar123orgChar125SettingsIntegrationsIndexRoute:
       AtChar123orgChar125SettingsIntegrationsIndexRoute,
+    AtChar123orgChar125SettingsMembersIndexRoute:
+      AtChar123orgChar125SettingsMembersIndexRoute,
   }
 
 const AtChar123orgChar125SettingsRouteRouteWithChildren =
@@ -1271,6 +1337,7 @@ const AtChar123orgChar125RouteRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AtChar123orgChar125RouteRoute: AtChar123orgChar125RouteRouteWithChildren,
+  AdminRoute: AdminRoute,
   AuthRoute: AuthRoute,
   DashboardRoute: DashboardRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,

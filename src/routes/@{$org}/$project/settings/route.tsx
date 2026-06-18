@@ -4,7 +4,7 @@ import {
   createFileRoute,
   useRouterState,
 } from "@tanstack/react-router"
-import { GitBranch, LayoutDashboard, Trash2 } from "lucide-react"
+import { GitBranch, LayoutDashboard, Trash2, Users } from "lucide-react"
 
 import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -24,6 +24,11 @@ function ProjectSettingsRoute() {
       icon: LayoutDashboard,
       label: "Boards",
       to: "/@{$org}/$project/settings/boards" as const,
+    },
+    {
+      icon: Users,
+      label: "Members",
+      to: "/@{$org}/$project/settings/members" as const,
     },
     {
       icon: GitBranch,
