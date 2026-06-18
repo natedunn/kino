@@ -10,6 +10,8 @@ export type LabItem = {
   description: string
   /** Optional small tag shown next to the sidebar entry. */
   tag?: string
+  /** Copy-to-clipboard import snippet shown under the page header. */
+  importCode?: string
   /** Renders the showcase content for this entry. */
   render: () => ReactNode
 }

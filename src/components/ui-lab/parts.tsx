@@ -1,4 +1,7 @@
 import type { ReactNode } from "react"
+import { useState } from "react"
+import { CheckIcon, CopyIcon } from "lucide-react"
+import { toast } from "sonner"
 
 import { cn } from "@/lib/utils"
 
@@ -67,6 +70,56 @@ export function Demo({
         {children}
       </Preview>
     </section>
+  )
+}
+
+/**
+ * A copy-to-clipboard code snippet. Used to show the import statement(s)
+ * needed to use a component or example.
+ */
+export function CopySnippet({
+  code,
+  className,
+}: {
+  code: string
+  className?: string
+}) {
+  const [copied, setCopied] = useState(false)
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(code)
+      setCopied(true)
+      toast.success("Copied to clipboard")
+      window.setTimeout(() => setCopied(false), 1500)
+    } catch {
+      toast.error("Couldn't copy to clipboard")
+    }
+  }
+
+  return (
+    <div
+      className={cn(
+        "group relative flex items-start gap-3 rounded-lg border bg-muted/40 py-2.5 pr-2 pl-3.5",
+        className
+      )}
+    >
+      <pre className="flex-1 overflow-x-auto py-0.5 font-mono text-xs leading-relaxed text-muted-foreground">
+        {code}
+      </pre>
+      <button
+        type="button"
+        onClick={handleCopy}
+        aria-label="Copy code"
+        className="sticky right-0 flex size-7 shrink-0 items-center justify-center rounded-md border bg-background text-muted-foreground transition-colors hover:text-foreground"
+      >
+        {copied ? (
+          <CheckIcon className="size-3.5 text-green-500" />
+        ) : (
+          <CopyIcon className="size-3.5" />
+        )}
+      </button>
+    </div>
   )
 }
 

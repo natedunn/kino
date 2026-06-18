@@ -12,11 +12,17 @@ import {
 import { Input } from "@/components/ui/input"
 import { COMPONENT_ITEMS } from "@/components/ui-lab/component-demos"
 import { EXAMPLE_ITEMS } from "@/components/ui-lab/example-demos"
+import { CopySnippet } from "@/components/ui-lab/parts"
 import type { LabItem } from "@/components/ui-lab/types"
 import { toggleThemePreference } from "@/lib/theme"
 import { cn } from "@/lib/utils"
 
+type UiSearch = { item?: string }
+
 export const Route = createFileRoute("/ui")({
+  validateSearch: (search: Record<string, unknown>): UiSearch => ({
+    item: typeof search.item === "string" ? search.item : undefined,
+  }),
   component: UiLibraryPage,
 })
 
@@ -38,13 +44,17 @@ const SECTIONS: {
 const ALL_ITEMS = [...COMPONENT_ITEMS, ...EXAMPLE_ITEMS]
 
 function UiLibraryPage() {
-  const [activeId, setActiveId] = useState(ALL_ITEMS[0]!.id)
+  const { item } = Route.useSearch()
+  const navigate = Route.useNavigate()
   const [query, setQuery] = useState("")
 
   const active = useMemo(
-    () => ALL_ITEMS.find((item) => item.id === activeId) ?? ALL_ITEMS[0]!,
-    [activeId]
+    () => ALL_ITEMS.find((entry) => entry.id === item) ?? ALL_ITEMS[0]!,
+    [item]
   )
+
+  const setActiveId = (id: string) =>
+    navigate({ search: { item: id }, resetScroll: false })
 
   const sectionOf = SECTIONS.find((s) =>
     s.items.some((i) => i.id === active.id)
@@ -180,11 +190,14 @@ function UiLibraryPage() {
 
         <div className="flex-1 overflow-y-auto">
           <div className="mx-auto w-full max-w-4xl px-8 py-10">
-            <div className="mb-8 space-y-1.5">
-              <h1 className="text-2xl font-semibold tracking-tight">
-                {active.name}
-              </h1>
-              <p className="text-muted-foreground">{active.description}</p>
+            <div className="mb-8 space-y-3">
+              <div className="space-y-1.5">
+                <h1 className="text-2xl font-semibold tracking-tight">
+                  {active.name}
+                </h1>
+                <p className="text-muted-foreground">{active.description}</p>
+              </div>
+              {active.importCode && <CopySnippet code={active.importCode} />}
             </div>
             <div className="space-y-10">{active.render()}</div>
           </div>

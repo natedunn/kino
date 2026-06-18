@@ -511,36 +511,72 @@ export const EXAMPLE_ITEMS: LabItem[] = [
     name: "Sign in",
     description:
       "Card, inputs, checkbox and buttons combined into an auth form.",
+    importCode: `import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Input } from "@/components/ui/input"
+import { Label, LabelWrapper } from "@/components/label"
+import { Separator } from "@/components/ui/separator"`,
     render: () => <SignInExample />,
   },
   {
     id: "feedback-item",
     name: "Feedback item",
     description: "Vote control, status badge, avatars and an actions menu.",
+    importCode: `import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"`,
     render: () => <FeedbackItemExample />,
   },
   {
     id: "settings-panel",
     name: "Settings panel",
     description: "Labels, select, textarea, alert and a destructive dialog.",
+    importCode: `import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
+import { InlineAlert } from "@/components/inline-alert"
+import { Input } from "@/components/ui/input"
+import { Label, LabelWrapper } from "@/components/label"
+import { Select, SelectContent, SelectItem } from "@/components/ui/select"
+import { Separator } from "@/components/ui/separator"
+import { Textarea } from "@/components/ui/textarea"`,
     render: () => <SettingsPanelExample />,
   },
   {
     id: "comment-composer",
     name: "Comment composer",
     description: "Avatar, textarea and a tooltip toolbar with a submit button.",
+    importCode: `import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Button } from "@/components/ui/button"
+import { Textarea } from "@/components/ui/textarea"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"`,
     render: () => <CommentComposerExample />,
   },
   {
     id: "plan-picker",
     name: "Plan picker",
     description: "Selectable cards built from checkbox buttons and badges.",
+    importCode: `import { Badge } from "@/components/ui/badge"
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
+import CheckboxButton from "@/components/checkbox-button"`,
     render: () => <PlanPickerExample />,
   },
   {
     id: "notifications",
     name: "Notifications",
     description: "A stack of inline alerts with batch actions and toasts.",
+    importCode: `import { toast } from "sonner"
+
+import { Button } from "@/components/ui/button"
+import { InlineAlert } from "@/components/inline-alert"`,
     render: () => <NotificationsExample />,
   },
 ]
