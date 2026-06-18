@@ -216,19 +216,21 @@ export const getManyByOrg = optionalAuthQuery
       where: { profileId: asId<"profile">(profile._id) },
       limit: 500,
     })
-    const memberProjectIds = new Set(
-      memberships.map((membership: any) => String(membership.projectId))
+    const memberProjectIds = memberships.map((membership: any) =>
+      asId<"project">(membership.projectId)
     )
 
+    // Load the member's projects directly by id (point lookups) so visibility
+    // doesn't depend on a recency window of the org's private projects.
     let memberPrivateProjects: typeof publicProjects = []
-    if (memberProjectIds.size > 0) {
-      const privateProjects = await ctx.orm.query.project.findMany({
-        where: { orgSlug: input.orgSlug, visibility: "private" },
-        limit,
-        orderBy: { updatedTime: "desc" },
+    if (memberProjectIds.length > 0) {
+      const memberProjects = await ctx.orm.query.project.findMany({
+        where: { id: { in: memberProjectIds } },
+        limit: 500,
       })
-      memberPrivateProjects = privateProjects.filter((project: any) =>
-        memberProjectIds.has(String(project._id ?? project.id))
+      memberPrivateProjects = memberProjects.filter(
+        (project: any) =>
+          project.orgSlug === input.orgSlug && project.visibility === "private"
       )
     }
 

@@ -878,7 +878,7 @@ export const searchForLinking = optionalAuthQuery
 export const getByIds = optionalAuthQuery
   .input(
     z.object({
-      ids: z.array(z.string()),
+      ids: z.array(z.string()).max(100),
     })
   )
   .query(async ({ ctx, input }) => {

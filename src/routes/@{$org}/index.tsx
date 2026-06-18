@@ -108,7 +108,10 @@ function OrganizationRoute() {
     )
   )
   const membersQuery = useQuery(
-    crpc.orgMember.listMembers.queryOptions({ slug: params.org })
+    crpc.orgMember.listMembers.queryOptions(
+      { slug: params.org },
+      { skipUnauth: true }
+    )
   )
   const members = membersQuery.data?.members ?? []
   const canManageMembers = membersQuery.data?.canManage ?? false
