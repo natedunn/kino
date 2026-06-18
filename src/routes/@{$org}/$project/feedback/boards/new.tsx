@@ -5,7 +5,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { EmptyState, slugify } from "@/components/kino/common"
 import { InlineAlert } from "@/components/inline-alert"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input-shadcn"
+import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { useCRPC } from "@/lib/convex/crpc"
 

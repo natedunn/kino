@@ -11,7 +11,7 @@ import { InlineAlert } from "@/components/inline-alert"
 import { Label, LabelWrapper } from "@/components/label"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input-shadcn"
+import { Input } from "@/components/ui/input"
 import { useCRPC } from "@/lib/convex/crpc"
 import { crpcServer } from "@/lib/convex/crpc-server"
 import { cn } from "@/lib/utils"
@@ -110,7 +110,9 @@ function AuthenticatedProfileSettingsRoute() {
           avatarFile: null,
           name: refreshedProfile?.name ?? updatedProfile.name ?? value.name,
           username:
-            refreshedProfile?.username ?? updatedProfile.username ?? value.username,
+            refreshedProfile?.username ??
+            updatedProfile.username ??
+            value.username,
         })
       } catch (error) {
         setFormError(
