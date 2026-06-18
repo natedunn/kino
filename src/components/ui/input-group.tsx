@@ -17,7 +17,8 @@ const inputGroupVariants = cva(
         xs: "h-6 rounded-[min(var(--radius-md),10px)]",
         sm: "h-7 rounded-[min(var(--radius-md),12px)]",
         default: "h-8",
-        lg: "h-9",
+        lg: "h-10",
+        xl: "h-11",
       },
     },
     defaultVariants: {
@@ -93,13 +94,15 @@ const inputGroupButtonVariants = cva(
         xs: "h-6 gap-1 rounded-[calc(var(--radius)-3px)] px-1.5 [&>svg:not([class*='size-'])]:size-3.5",
         sm: "h-7 gap-1 rounded-[calc(var(--radius)-2px)] px-2 [&>svg:not([class*='size-'])]:size-3.5",
         default: "h-8 gap-1.5 px-2.5",
-        lg: "h-9 gap-1.5 px-3",
+        lg: "h-10 gap-2 px-4 [&>svg:not([class*='size-'])]:size-4",
+        xl: "h-11 gap-2 px-5 text-base [&>svg:not([class*='size-'])]:size-4",
         "icon-xs":
           "size-6 rounded-[calc(var(--radius)-3px)] p-0 has-[>svg]:p-0",
         "icon-sm":
           "size-7 rounded-[calc(var(--radius)-2px)] p-0 has-[>svg]:p-0",
         icon: "size-8 p-0 has-[>svg]:p-0",
-        "icon-lg": "size-9 p-0 has-[>svg]:p-0",
+        "icon-lg": "size-10 p-0 has-[>svg]:p-0",
+        "icon-xl": "size-11 p-0 has-[>svg]:p-0",
       },
     },
     defaultVariants: {
@@ -149,7 +152,7 @@ function InputGroupInput({
     <Input
       data-slot="input-group-control"
       className={cn(
-        "h-full flex-1 rounded-none border-0 bg-transparent shadow-none ring-0 focus-visible:ring-0 disabled:bg-transparent in-data-[size=lg]:px-3 in-data-[size=sm]:px-2.5 in-data-[size=sm]:text-sm in-data-[size=xs]:px-2 in-data-[size=xs]:text-xs aria-invalid:ring-0 dark:bg-transparent dark:disabled:bg-transparent",
+        "h-full flex-1 rounded-none border-0 bg-transparent shadow-none ring-0 focus-visible:ring-0 disabled:bg-transparent in-data-[size=lg]:px-3.5 in-data-[size=sm]:px-2.5 in-data-[size=sm]:text-sm in-data-[size=xl]:px-4 in-data-[size=xl]:text-base in-data-[size=xs]:px-2 in-data-[size=xs]:text-xs aria-invalid:ring-0 dark:bg-transparent dark:disabled:bg-transparent",
         className
       )}
       {...props}

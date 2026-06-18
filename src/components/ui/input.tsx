@@ -13,7 +13,8 @@ const inputVariants = cva(
         xs: "h-6 rounded-[min(var(--radius-md),10px)] px-2 py-0 text-xs file:h-4 file:text-xs",
         sm: "h-7 rounded-[min(var(--radius-md),12px)] px-2.5 py-1 text-sm file:h-5 file:text-xs",
         default: "h-8 px-2.5 py-1 text-base file:h-6 file:text-sm md:text-sm",
-        lg: "h-9 px-3 py-1.5 text-base file:h-7 file:text-sm md:text-sm",
+        lg: "h-10 px-3.5 py-2 text-base file:h-7 file:text-sm md:text-sm",
+        xl: "h-11 px-4 py-2.5 text-base file:h-8 file:text-sm md:text-base",
       },
     },
     defaultVariants: {

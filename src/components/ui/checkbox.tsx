@@ -14,7 +14,8 @@ const checkboxVariants = cva(
         xs: "size-3.5 [&_svg]:size-2.5",
         sm: "size-4 [&_svg]:size-3",
         default: "size-[18px] [&_svg]:size-3",
-        lg: "size-5 rounded-[5px] [&_svg]:size-3.5",
+        lg: "size-[22px] rounded-[5px] [&_svg]:size-4",
+        xl: "size-6 rounded-md [&_svg]:size-4",
       },
     },
     defaultVariants: {

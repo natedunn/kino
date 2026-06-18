@@ -14,7 +14,8 @@ const checkboxButtonVariants = cva(
         xs: "h-6 gap-1.5 rounded-[min(var(--radius-md),10px)] px-2 text-xs",
         sm: "h-7 gap-2 rounded-[min(var(--radius-md),12px)] px-2.5 text-sm",
         default: "min-h-8 gap-2.5 px-3 py-1.5 text-sm",
-        lg: "min-h-9 gap-3 px-3.5 py-2 text-sm",
+        lg: "min-h-10 gap-3 px-4 py-2.5 text-base",
+        xl: "min-h-11 gap-3.5 px-5 py-3 text-base",
       },
     },
     defaultVariants: {
@@ -31,7 +32,8 @@ const checkboxButtonIndicatorVariants = cva(
         xs: "size-3.5 [&_svg]:size-2.5",
         sm: "size-4 [&_svg]:size-3",
         default: "size-5 [&_svg]:size-3",
-        lg: "size-5 [&_svg]:size-3.5",
+        lg: "size-[22px] [&_svg]:size-4",
+        xl: "size-6 [&_svg]:size-4",
       },
     },
     defaultVariants: {

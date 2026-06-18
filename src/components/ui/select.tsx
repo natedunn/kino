@@ -37,7 +37,8 @@ const selectTriggerVariants = cva(
         sm: "h-7 gap-1 rounded-[min(var(--radius-md),12px)] px-2.5 text-sm [&_svg:not([class*='size-'])]:size-3.5",
         default:
           "h-8 gap-2 px-2.5 text-sm [&_svg:not([class*='size-'])]:size-4",
-        lg: "h-9 gap-2 px-3 text-sm [&_svg:not([class*='size-'])]:size-4",
+        lg: "h-10 gap-2 px-3.5 text-base [&_svg:not([class*='size-'])]:size-4",
+        xl: "h-11 gap-2.5 px-4 text-base [&_svg:not([class*='size-'])]:size-4",
       },
     },
     defaultVariants: {
@@ -64,7 +65,7 @@ function SelectTrigger({
       {children}
       <SelectPrimitive.Icon
         render={
-          <ChevronDownIcon className="pointer-events-none size-4 text-muted-foreground" />
+          <ChevronDownIcon className="pointer-events-none text-muted-foreground" />
         }
       />
     </SelectPrimitive.Trigger>

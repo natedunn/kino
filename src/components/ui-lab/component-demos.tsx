@@ -140,7 +140,11 @@ function ButtonDemo() {
         <Button size="sm">Small</Button>
         <Button size="default">Default</Button>
         <Button size="lg">Large</Button>
+        <Button size="xl">Extra large</Button>
         <Button size="icon" aria-label="Settings">
+          <Settings />
+        </Button>
+        <Button size="icon-xl" aria-label="Large settings">
           <Settings />
         </Button>
       </Demo>
@@ -258,23 +262,33 @@ function CardDemo() {
 
 function InlineAlertDemo() {
   return (
-    <Demo title="Variants" className="flex-col items-stretch">
-      <InlineAlert variant="default">
-        <strong>Heads up.</strong> This is a neutral, default alert.
-      </InlineAlert>
-      <InlineAlert variant="info">
-        <strong>Info.</strong> A new version is available to install.
-      </InlineAlert>
-      <InlineAlert variant="success">
-        <strong>Success.</strong> Your changes have been saved.
-      </InlineAlert>
-      <InlineAlert variant="warning">
-        <strong>Warning.</strong> Your trial ends in 3 days.
-      </InlineAlert>
-      <InlineAlert variant="danger">
-        <strong>Danger.</strong> This action cannot be undone.
-      </InlineAlert>
-    </Demo>
+    <>
+      <Demo title="Variants" className="flex-col items-stretch">
+        <InlineAlert variant="default">
+          <strong>Heads up.</strong> This is a neutral, default alert.
+        </InlineAlert>
+        <InlineAlert variant="info">
+          <strong>Info.</strong> A new version is available to install.
+        </InlineAlert>
+        <InlineAlert variant="success">
+          <strong>Success.</strong> Your changes have been saved.
+        </InlineAlert>
+        <InlineAlert variant="warning">
+          <strong>Warning.</strong> Your trial ends in 3 days.
+        </InlineAlert>
+        <InlineAlert variant="danger">
+          <strong>Danger.</strong> This action cannot be undone.
+        </InlineAlert>
+      </Demo>
+      <Demo title="Sizes" className="flex-col items-stretch">
+        <InlineAlert size="lg" variant="info">
+          Large alert
+        </InlineAlert>
+        <InlineAlert size="xl" variant="info">
+          Extra large alert
+        </InlineAlert>
+      </Demo>
+    </>
   )
 }
 
@@ -298,6 +312,9 @@ function CheckboxDemo() {
         </Cell>
         <Cell label="lg">
           <Checkbox size="lg" defaultChecked />
+        </Cell>
+        <Cell label="xl">
+          <Checkbox size="xl" defaultChecked />
         </Cell>
       </Demo>
       <Demo title="States & label">
@@ -332,21 +349,31 @@ function CheckboxButtonDemo() {
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
     )
   return (
-    <Demo title="Selectable chips">
-      {[
-        { id: "daily", label: "Daily digest" },
-        { id: "weekly", label: "Weekly summary" },
-        { id: "mentions", label: "Mentions only" },
-      ].map((opt) => (
-        <CheckboxButton
-          key={opt.id}
-          checked={selected.includes(opt.id)}
-          onChange={() => toggle(opt.id)}
-        >
-          {opt.label}
+    <>
+      <Demo title="Selectable chips">
+        {[
+          { id: "daily", label: "Daily digest" },
+          { id: "weekly", label: "Weekly summary" },
+          { id: "mentions", label: "Mentions only" },
+        ].map((opt) => (
+          <CheckboxButton
+            key={opt.id}
+            checked={selected.includes(opt.id)}
+            onChange={() => toggle(opt.id)}
+          >
+            {opt.label}
+          </CheckboxButton>
+        ))}
+      </Demo>
+      <Demo title="Sizes">
+        <CheckboxButton size="lg" defaultChecked>
+          Large
         </CheckboxButton>
-      ))}
-    </Demo>
+        <CheckboxButton size="xl" defaultChecked>
+          Extra large
+        </CheckboxButton>
+      </Demo>
+    </>
   )
 }
 
@@ -362,6 +389,7 @@ function InputDemo() {
         <Input size="sm" placeholder="Small" />
         <Input size="default" placeholder="Default" />
         <Input size="lg" placeholder="Large" />
+        <Input size="xl" placeholder="Extra large" />
       </Demo>
       <Demo title="States" className="flex-col items-stretch sm:max-w-sm">
         <Input placeholder="Disabled" disabled />
@@ -382,6 +410,7 @@ function TextareaDemo() {
       <Textarea size="sm" placeholder="Small textarea" />
       <Textarea placeholder="Default textarea" />
       <Textarea size="lg" placeholder="Large textarea" />
+      <Textarea size="xl" placeholder="Extra large textarea" />
     </Demo>
   )
 }
@@ -418,6 +447,20 @@ function InputGroupDemo() {
               Copy
             </InputGroupButton>
           </InputGroupAddon>
+        </InputGroup>
+      </Demo>
+      <Demo title="Sizes" className="flex-col items-stretch sm:max-w-sm">
+        <InputGroup size="lg">
+          <InputGroupAddon>
+            <Search />
+          </InputGroupAddon>
+          <InputGroupInput placeholder="Large grouped input" />
+        </InputGroup>
+        <InputGroup size="xl">
+          <InputGroupAddon>
+            <Search />
+          </InputGroupAddon>
+          <InputGroupInput placeholder="Extra large grouped input" />
         </InputGroup>
       </Demo>
     </>
@@ -467,6 +510,22 @@ function SelectDemo() {
       >
         <SelectTrigger className="w-60">
           <SelectValue placeholder="Pick a fruit" />
+        </SelectTrigger>
+        <SelectContent>
+          {FRUITS.map((fruit) => (
+            <SelectItem key={fruit.value} value={fruit.value}>
+              {fruit.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <Select
+        items={FRUITS}
+        value={value}
+        onValueChange={(v) => setValue(v as string)}
+      >
+        <SelectTrigger className="w-64" size="xl">
+          <SelectValue placeholder="Extra large select" />
         </SelectTrigger>
         <SelectContent>
           {FRUITS.map((fruit) => (
