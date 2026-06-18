@@ -121,19 +121,11 @@ function AdminMetrics() {
           >
             <p className="text-2xl font-bold tracking-tight">
               {stat.value.toLocaleString()}
-              {data.capped ? "+" : ""}
             </p>
             <p className="mt-1 text-sm text-muted-foreground">{stat.label}</p>
           </div>
         ))}
       </div>
-
-      {data.capped ? (
-        <p className="text-xs text-muted-foreground">
-          Counts are capped at {data.countCap.toLocaleString()} and may
-          understate the true total.
-        </p>
-      ) : null}
 
       <section>
         <h2 className="text-lg font-semibold">Recent sign-ups</h2>

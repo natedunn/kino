@@ -3,11 +3,6 @@ import { authQuery } from "../lib/crpc"
 import { getCurrentProfileOrThrow } from "../lib/kino"
 import { resolveProfileImageUrl } from "../lib/storage"
 
-// Bounded read cap for admin counts. The app has no aggregate indexes yet, so we
-// read up to this many rows and flag `capped` when the real total may exceed it.
-// Revisit with an aggregateIndex if/when tables outgrow this.
-const COUNT_CAP = 5000
-
 async function requireSystemAdmin(ctx: any) {
   const profile = await getCurrentProfileOrThrow(ctx, ctx.userId)
   if (profile.role !== "system:admin") {
@@ -19,20 +14,17 @@ async function requireSystemAdmin(ctx: any) {
   return profile
 }
 
-async function boundedCount(ctx: any, table: string) {
-  const rows = await ctx.db.query(table).take(COUNT_CAP)
-  return { capped: rows.length >= COUNT_CAP, count: rows.length }
-}
-
 export const getSystemMetrics = authQuery.query(async ({ ctx }) => {
   await requireSystemAdmin(ctx)
 
+  // Unfiltered ORM count() uses Convex's native count syscall — O(efficient),
+  // exact at any scale, and never fetches rows. No aggregateIndex needed.
   const [users, organizations, projects, feedback, recentUserRows] =
     await Promise.all([
-      boundedCount(ctx, "user"),
-      boundedCount(ctx, "organization"),
-      boundedCount(ctx, "project"),
-      boundedCount(ctx, "feedback"),
+      ctx.orm.query.user.count(),
+      ctx.orm.query.organization.count(),
+      ctx.orm.query.project.count(),
+      ctx.orm.query.feedback.count(),
       ctx.db.query("user").order("desc").take(5),
     ])
 
@@ -50,17 +42,11 @@ export const getSystemMetrics = authQuery.query(async ({ ctx }) => {
   )
 
   return {
-    capped:
-      users.capped ||
-      organizations.capped ||
-      projects.capped ||
-      feedback.capped,
-    countCap: COUNT_CAP,
     counts: {
-      feedback: feedback.count,
-      organizations: organizations.count,
-      projects: projects.count,
-      users: users.count,
+      feedback,
+      organizations,
+      projects,
+      users,
     },
     recentUsers,
   }
