@@ -1,131 +1,138 @@
-import { useRef, useState } from 'react';
-import { revalidateLogic, useForm } from '@tanstack/react-form';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { createFileRoute, Link, Navigate, useNavigate } from '@tanstack/react-router';
-import { ArrowLeft, LinkIcon, Settings2, Tag, X } from 'lucide-react';
+import { useRef, useState } from "react"
+import { revalidateLogic, useForm } from "@tanstack/react-form"
+import { useMutation, useQuery } from "@tanstack/react-query"
+import {
+  createFileRoute,
+  Link,
+  Navigate,
+  useNavigate,
+} from "@tanstack/react-router"
+import { ArrowLeft, LinkIcon, Settings2, Tag, X } from "lucide-react"
 
-import { MarkdownEditor, sanitizeEditorContent } from '@/components/editor';
-import { InlineAlert } from '@/components/inline-alert';
-import { SidebarSection } from '@/components/sidebar-section';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input-shadcn';
+import { MarkdownEditor, sanitizeEditorContent } from "@/components/editor"
+import { InlineAlert } from "@/components/inline-alert"
+import { SidebarSection } from "@/components/sidebar-section"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
-import { authClient } from '@/lib/convex/auth-client';
-import { useCRPC } from '@/lib/convex/crpc';
-import { useSidebarState } from '@/lib/hooks/use-sidebar-state';
-import { cn } from '@/lib/utils';
+} from "@/components/ui/select"
+import { Separator } from "@/components/ui/separator"
+import { authClient } from "@/lib/convex/auth-client"
+import { useCRPC } from "@/lib/convex/crpc"
+import { useSidebarState } from "@/lib/hooks/use-sidebar-state"
+import { cn } from "@/lib/utils"
 
-import { CategoryBadge, type UpdateCategory } from '../-components/category-badge';
-import { FeedbackSelector } from '../-components/feedback-selector';
+import {
+  CategoryBadge,
+  type UpdateCategory,
+} from "../-components/category-badge"
+import { FeedbackSelector } from "../-components/feedback-selector"
 
-const UPDATE_CATEGORIES = ['changelog', 'article', 'announcement'] as const;
+const UPDATE_CATEGORIES = ["changelog", "article", "announcement"] as const
 const UPDATE_CATEGORY_ITEMS = UPDATE_CATEGORIES.map((category) => ({
   label: <CategoryBadge category={category} />,
   value: category,
-}));
+}))
 
-const SIDEBAR_STORAGE_KEY = 'update-new-sidebar-state';
+const SIDEBAR_STORAGE_KEY = "update-new-sidebar-state"
 
 const DEFAULT_SIDEBAR_STATE = {
   relatedFeedback: false,
   settings: true,
   tags: true,
-};
+}
 
-export const Route = createFileRoute('/@{$org}/$project/updates/new/')({
+export const Route = createFileRoute("/@{$org}/$project/updates/new/")({
   component: NewUpdateRoute,
-});
+})
 
 function NewUpdateRoute() {
-  const params = Route.useParams();
-  const navigate = useNavigate();
-  const crpc = useCRPC();
-  const session = authClient.useSession();
-  const [tagInput, setTagInput] = useState('');
-  const [formError, setFormError] = useState('');
-  const pendingPublishRef = useRef<null | { id: string; slug: string }>(null);
-  const { state: sidebarState, setSection: setSidebarSection } = useSidebarState(
-    SIDEBAR_STORAGE_KEY,
-    DEFAULT_SIDEBAR_STATE
-  );
+  const params = Route.useParams()
+  const navigate = useNavigate()
+  const crpc = useCRPC()
+  const session = authClient.useSession()
+  const [tagInput, setTagInput] = useState("")
+  const [formError, setFormError] = useState("")
+  const pendingPublishRef = useRef<null | { id: string; slug: string }>(null)
+  const { state: sidebarState, setSection: setSidebarSection } =
+    useSidebarState(SIDEBAR_STORAGE_KEY, DEFAULT_SIDEBAR_STATE)
 
   const projectQuery = useQuery(
     crpc.project.getDetails.queryOptions({
       orgSlug: params.org,
       slug: params.project,
     })
-  );
+  )
   const createMutation = useMutation(
     crpc.update.create.mutationOptions({
       onError: (error) => setFormError(error.message),
     })
-  );
+  )
   const publishMutation = useMutation(
     crpc.update.publish.mutationOptions({
       onSuccess: () => {
-        const created = pendingPublishRef.current;
-        pendingPublishRef.current = null;
-        form.reset();
+        const created = pendingPublishRef.current
+        pendingPublishRef.current = null
+        form.reset()
         navigate({
-          params: { ...params, slug: created?.slug ?? '' },
-          to: '/@{$org}/$project/updates/$slug',
-        });
+          params: { ...params, slug: created?.slug ?? "" },
+          to: "/@{$org}/$project/updates/$slug",
+        })
       },
       onError: (error) => setFormError(error.message),
     })
-  );
+  )
 
   const form = useForm({
     defaultValues: {
-      category: 'changelog' as UpdateCategory,
-      content: '',
+      category: "changelog" as UpdateCategory,
+      content: "",
       relatedFeedbackIds: [] as string[],
       tags: [] as string[],
-      title: '',
+      title: "",
     },
     onSubmit: async ({ value }) => {
-      setFormError('');
-      const project = projectQuery.data?.project;
-      if (!project) return;
+      setFormError("")
+      const project = projectQuery.data?.project
+      if (!project) return
 
       const data = await createMutation.mutateAsync({
         category: value.category,
         content: sanitizeEditorContent(value.content),
         projectId: project.id,
-        relatedFeedbackIds: value.relatedFeedbackIds.length > 0 ? value.relatedFeedbackIds : undefined,
+        relatedFeedbackIds:
+          value.relatedFeedbackIds.length > 0
+            ? value.relatedFeedbackIds
+            : undefined,
         tags: value.tags,
         title: value.title,
-      });
-      form.reset();
+      })
+      form.reset()
       navigate({
         params: { ...params, slug: data.slug },
-        to: '/@{$org}/$project/updates/$slug',
-      });
+        to: "/@{$org}/$project/updates/$slug",
+      })
     },
     validationLogic: revalidateLogic({
-      mode: 'submit',
-      modeAfterSubmission: 'change',
+      mode: "submit",
+      modeAfterSubmission: "change",
     }),
-  });
+  })
 
   if (!session.data?.user) {
     return (
-      <InlineAlert variant="warning">
-        Sign in to write updates.
-      </InlineAlert>
-    );
+      <InlineAlert variant="warning">Sign in to write updates.</InlineAlert>
+    )
   }
 
   if (projectQuery.isLoading) {
-    return <div className="h-48 animate-pulse rounded-lg bg-muted/40" />;
+    return <div className="h-48 animate-pulse rounded-lg bg-muted/40" />
   }
 
   if (!projectQuery.data?.permissions?.canEdit) {
@@ -134,52 +141,55 @@ function NewUpdateRoute() {
         params={{ org: params.org, project: params.project }}
         to="/@{$org}/$project/updates"
       />
-    );
+    )
   }
 
-  const project = projectQuery.data.project;
+  const project = projectQuery.data.project
 
   const addTag = () => {
-    const trimmed = tagInput.trim();
-    if (!trimmed) return;
-    const currentTags = form.getFieldValue('tags') || [];
+    const trimmed = tagInput.trim()
+    if (!trimmed) return
+    const currentTags = form.getFieldValue("tags") || []
     if (!currentTags.includes(trimmed)) {
-      form.setFieldValue('tags', [...currentTags, trimmed]);
+      form.setFieldValue("tags", [...currentTags, trimmed])
     }
-    setTagInput('');
-  };
+    setTagInput("")
+  }
 
   const publishFromDraft = async () => {
-    setFormError('');
+    setFormError("")
     const value = {
-      category: form.getFieldValue('category'),
-      content: form.getFieldValue('content'),
-      relatedFeedbackIds: form.getFieldValue('relatedFeedbackIds'),
-      tags: form.getFieldValue('tags'),
-      title: form.getFieldValue('title'),
-    };
-    if (!value.title.trim() || !sanitizeEditorContent(value.content)) return;
+      category: form.getFieldValue("category"),
+      content: form.getFieldValue("content"),
+      relatedFeedbackIds: form.getFieldValue("relatedFeedbackIds"),
+      tags: form.getFieldValue("tags"),
+      title: form.getFieldValue("title"),
+    }
+    if (!value.title.trim() || !sanitizeEditorContent(value.content)) return
 
     try {
       const created = await createMutation.mutateAsync({
         category: value.category,
         content: sanitizeEditorContent(value.content),
         projectId: project.id,
-        relatedFeedbackIds: value.relatedFeedbackIds.length > 0 ? value.relatedFeedbackIds : undefined,
+        relatedFeedbackIds:
+          value.relatedFeedbackIds.length > 0
+            ? value.relatedFeedbackIds
+            : undefined,
         tags: value.tags,
         title: value.title,
-      });
-      pendingPublishRef.current = { id: created.updateId, slug: created.slug };
-      await publishMutation.mutateAsync({ id: created.updateId });
+      })
+      pendingPublishRef.current = { id: created.updateId, slug: created.slug }
+      await publishMutation.mutateAsync({ id: created.updateId })
     } catch {}
-  };
+  }
 
   return (
     <form
       onSubmit={(event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        void form.handleSubmit();
+        event.preventDefault()
+        event.stopPropagation()
+        void form.handleSubmit()
       }}
     >
       {/* Sticky header bar */}
@@ -198,8 +208,13 @@ function NewUpdateRoute() {
               </span>
             </Link>
             <Separator className="h-4" orientation="vertical" />
-            <span className="text-sm font-medium text-muted-foreground">New Update</span>
-            <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400" variant="outline">
+            <span className="text-sm font-medium text-muted-foreground">
+              New Update
+            </span>
+            <Badge
+              className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
+              variant="outline"
+            >
               Draft
             </Badge>
           </div>
@@ -213,40 +228,42 @@ function NewUpdateRoute() {
               })}
             >
               {({ content, isSubmitting, title }) => {
-                const missingRequired = !title.trim() || !sanitizeEditorContent(content);
-                const savingDisabled = missingRequired || isSubmitting || createMutation.isPending;
+                const missingRequired =
+                  !title.trim() || !sanitizeEditorContent(content)
+                const savingDisabled =
+                  missingRequired || isSubmitting || createMutation.isPending
                 const publishingDisabled =
                   missingRequired ||
                   isSubmitting ||
                   createMutation.isPending ||
-                  publishMutation.isPending;
+                  publishMutation.isPending
 
                 return (
                   <>
                     <Button
                       className={cn({
-                        'select-none opacity-50 grayscale': savingDisabled,
+                        "opacity-50 grayscale select-none": savingDisabled,
                       })}
                       disabled={savingDisabled}
                       size="sm"
                       type="submit"
                       variant="outline"
                     >
-                      {createMutation.isPending ? 'Saving...' : 'Save as Draft'}
+                      {createMutation.isPending ? "Saving..." : "Save as Draft"}
                     </Button>
                     <Button
                       className={cn({
-                        'select-none opacity-50 grayscale': publishingDisabled,
+                        "opacity-50 grayscale select-none": publishingDisabled,
                       })}
                       disabled={publishingDisabled}
                       onClick={() => void publishFromDraft()}
                       size="sm"
                       type="button"
                     >
-                      {publishMutation.isPending ? 'Publishing...' : 'Publish'}
+                      {publishMutation.isPending ? "Publishing..." : "Publish"}
                     </Button>
                   </>
-                );
+                )
               }}
             </form.Subscribe>
           </div>
@@ -255,7 +272,9 @@ function NewUpdateRoute() {
 
       {formError ? (
         <div className="container pt-4">
-          <InlineAlert variant="danger">Unable to create update: {formError}</InlineAlert>
+          <InlineAlert variant="danger">
+            Unable to create update: {formError}
+          </InlineAlert>
         </div>
       ) : null}
 
@@ -266,17 +285,21 @@ function NewUpdateRoute() {
           <div className="sticky top-16 flex flex-col gap-6 pl-8">
             <SidebarSection
               icon={<Settings2 className="size-3.5" />}
-              onOpenChange={(open) => setSidebarSection('settings', open)}
+              onOpenChange={(open) => setSidebarSection("settings", open)}
               open={sidebarState.settings}
               title="Settings"
             >
               <form.Field name="category">
                 {(field) => (
                   <div className="flex flex-col gap-2">
-                    <label className="text-sm text-muted-foreground">Category</label>
+                    <label className="text-sm text-muted-foreground">
+                      Category
+                    </label>
                     <Select
                       items={UPDATE_CATEGORY_ITEMS}
-                      onValueChange={(value) => field.handleChange(value as UpdateCategory)}
+                      onValueChange={(value) =>
+                        field.handleChange(value as UpdateCategory)
+                      }
                       value={field.state.value}
                     >
                       <SelectTrigger className="w-full">
@@ -297,7 +320,7 @@ function NewUpdateRoute() {
 
             <SidebarSection
               icon={<Tag className="size-3.5" />}
-              onOpenChange={(open) => setSidebarSection('tags', open)}
+              onOpenChange={(open) => setSidebarSection("tags", open)}
               open={sidebarState.tags}
               title="Tags"
             >
@@ -307,13 +330,21 @@ function NewUpdateRoute() {
                     {(field.state.value || []).length > 0 ? (
                       <div className="flex flex-wrap gap-1.5">
                         {(field.state.value || []).map((tag) => (
-                          <Badge className="gap-1 pr-1" key={tag} variant="secondary">
+                          <Badge
+                            className="gap-1 pr-1"
+                            key={tag}
+                            variant="secondary"
+                          >
                             {tag}
                             <button
                               aria-label={`Remove tag ${tag}`}
                               className="ml-0.5 rounded-sm p-0.5 hover:bg-muted hover:text-destructive"
                               onClick={() =>
-                                field.handleChange((field.state.value || []).filter((value) => value !== tag))
+                                field.handleChange(
+                                  (field.state.value || []).filter(
+                                    (value) => value !== tag
+                                  )
+                                )
                               }
                               type="button"
                             >
@@ -328,15 +359,20 @@ function NewUpdateRoute() {
                         className="flex-1"
                         onChange={(event) => setTagInput(event.target.value)}
                         onKeyDown={(event) => {
-                          if (event.key === 'Enter') {
-                            event.preventDefault();
-                            addTag();
+                          if (event.key === "Enter") {
+                            event.preventDefault()
+                            addTag()
                           }
                         }}
                         placeholder="Add tag..."
                         value={tagInput}
                       />
-                      <Button onClick={addTag} size="sm" type="button" variant="outline">
+                      <Button
+                        onClick={addTag}
+                        size="sm"
+                        type="button"
+                        variant="outline"
+                      >
                         Add
                       </Button>
                     </div>
@@ -347,7 +383,9 @@ function NewUpdateRoute() {
 
             <SidebarSection
               icon={<LinkIcon className="size-3.5" />}
-              onOpenChange={(open) => setSidebarSection('relatedFeedback', open)}
+              onOpenChange={(open) =>
+                setSidebarSection("relatedFeedback", open)
+              }
               open={sidebarState.relatedFeedback}
               title="Related Feedback"
             >
@@ -374,7 +412,9 @@ function NewUpdateRoute() {
           <form.Field name="title">
             {(field) => (
               <div className="flex flex-col gap-2 pt-6">
-                <label className="text-sm font-medium" htmlFor="update-title">Title</label>
+                <label className="text-sm font-medium" htmlFor="update-title">
+                  Title
+                </label>
                 <Input
                   autoFocus
                   className="h-auto px-4 py-3 text-xl font-semibold tracking-tight md:text-2xl"
@@ -403,5 +443,5 @@ function NewUpdateRoute() {
         </div>
       </div>
     </form>
-  );
+  )
 }

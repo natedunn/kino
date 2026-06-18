@@ -24,15 +24,17 @@ const getLoaderToken = createServerFn({ method: "GET" }).handler(async () => {
   return await getServerAuthToken()
 })
 
-const getAppEnvironment = createServerFn({ method: "GET" }).handler(async () => {
-  const { getRequest } = await import("@tanstack/react-start/server")
-  const request = getRequest()
+const getAppEnvironment = createServerFn({ method: "GET" }).handler(
+  async () => {
+    const { getRequest } = await import("@tanstack/react-start/server")
+    const request = getRequest()
 
-  return inferAppEnvironment({
-    hostname: new URL(request.url).hostname,
-    isDev: import.meta.env.DEV,
-  })
-})
+    return inferAppEnvironment({
+      hostname: new URL(request.url).hostname,
+      isDev: import.meta.env.DEV,
+    })
+  }
+)
 
 export const Route = createRootRouteWithContext<{
   loaderToken?: string | null
@@ -118,7 +120,7 @@ function RootDocument({ children }: { children: ReactNode }) {
           {`document.documentElement.classList.toggle('dark', localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches))`}
         </ScriptOnce>
         {children}
-        <Toaster position="top-right" closeButton richColors />
+        <Toaster closeButton richColors />
         {showDevtools ? (
           <TanStackDevtools
             config={{
@@ -142,10 +144,7 @@ function RootComponent() {
   const { convexQueryClient, loaderToken } = Route.useRouteContext()
 
   return (
-    <Providers
-      convexQueryClient={convexQueryClient}
-      initialToken={loaderToken}
-    >
+    <Providers convexQueryClient={convexQueryClient} initialToken={loaderToken}>
       <Outlet />
     </Providers>
   )

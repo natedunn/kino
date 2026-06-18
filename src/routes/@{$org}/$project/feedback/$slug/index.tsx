@@ -72,7 +72,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input-shadcn"
+import { Input } from "@/components/ui/input"
 import {
   Select,
   SelectContent,
@@ -184,7 +184,9 @@ function defaultTargetForGranularity(granularity: TargetGranularity) {
 function parseQuarterTarget(target: string) {
   const parsed = parseQuarterParts(target)
   return {
-    quarter: parsed ? `Q${parsed.quarter}` : `Q${getQuarterFromDate(new Date())}`,
+    quarter: parsed
+      ? `Q${parsed.quarter}`
+      : `Q${getQuarterFromDate(new Date())}`,
     year: parsed ? String(parsed.year) : String(new Date().getFullYear()),
   }
 }
@@ -1480,7 +1482,9 @@ function FeedbackTargetSheet({
                     max={9999}
                     min={1000}
                     onChange={(event) =>
-                      setTarget(`${event.target.value}-${quarterTarget.quarter}`)
+                      setTarget(
+                        `${event.target.value}-${quarterTarget.quarter}`
+                      )
                     }
                     type="number"
                     value={quarterTarget.year}

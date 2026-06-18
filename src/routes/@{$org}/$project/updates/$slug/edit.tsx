@@ -17,7 +17,7 @@ import { InlineAlert } from "@/components/inline-alert"
 import { SidebarSection } from "@/components/sidebar-section"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input-shadcn"
+import { Input } from "@/components/ui/input"
 import {
   Select,
   SelectContent,

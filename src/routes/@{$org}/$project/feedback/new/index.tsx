@@ -6,7 +6,7 @@ import { EmptyState } from "@/components/kino/common"
 import { MarkdownEditor, sanitizeEditorContent } from "@/components/editor"
 import { InlineAlert } from "@/components/inline-alert"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input-shadcn"
+import { Input } from "@/components/ui/input"
 import {
   Select,
   SelectContent,
