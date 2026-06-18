@@ -9,9 +9,15 @@ import { Label, LabelDescription, LabelWrapper } from "@/components/label"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input-shadcn"
 import { useCRPC } from "@/lib/convex/crpc"
+import { crpcServer } from "@/lib/convex/crpc-server"
 import { cn } from "@/lib/utils"
 
 export const Route = createFileRoute("/@{$org}/settings/general/")({
+  loader: async ({ context, params }) => {
+    await context.queryClient.ensureQueryData(
+      crpcServer.org.getDetails.queryOptions({ slug: params.org })
+    )
+  },
   component: GeneralSettingsRoute,
 })
 
@@ -67,9 +73,7 @@ function GeneralSettingsRoute() {
   })
 
   if (orgQuery.isLoading) {
-    return (
-      <div className="h-64 animate-pulse rounded-xl border bg-muted/30" />
-    )
+    return <div className="h-64 animate-pulse rounded-xl border bg-muted/30" />
   }
 
   if (!orgQuery.data?.org || !orgQuery.data.permissions.canEdit) {

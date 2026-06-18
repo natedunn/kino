@@ -8,8 +8,24 @@ import { Icon, type IconName } from "@/icons"
 import Eye from "@/icons/eye"
 import Pen from "@/icons/pen"
 import { useCRPC } from "@/lib/convex/crpc"
+import { crpcServer } from "@/lib/convex/crpc-server"
 
 export const Route = createFileRoute("/@{$org}/$project/settings/boards/")({
+  loader: async ({ context, params }) => {
+    const details = await context.queryClient.ensureQueryData(
+      crpcServer.project.getDetails.queryOptions({
+        orgSlug: params.org,
+        slug: params.project,
+      })
+    )
+    const projectId = (details as { project?: { id?: string } } | null)?.project
+      ?.id
+    if (projectId) {
+      await context.queryClient.ensureQueryData(
+        crpcServer.feedbackBoard.listProjectBoards.queryOptions({ projectId })
+      )
+    }
+  },
   component: BoardsIndexRoute,
 })
 

@@ -7,11 +7,34 @@ import { EmptyState, StatusBadge } from "@/components/kino/common"
 import { InlineAlert } from "@/components/inline-alert"
 import { Button } from "@/components/ui/button"
 import { useCRPC } from "@/lib/convex/crpc"
+import { crpcServer } from "@/lib/convex/crpc-server"
 import { cn } from "@/lib/utils"
 
 export const Route = createFileRoute(
   "/@{$org}/$project/settings/deleted-feedback/"
 )({
+  loader: async ({ context, params }) => {
+    const details = await context.queryClient.ensureQueryData(
+      crpcServer.project.getDetails.queryOptions({
+        orgSlug: params.org,
+        slug: params.project,
+      })
+    )
+    const typed = details as {
+      project?: { id?: string }
+      permissions?: { canEdit?: boolean }
+    } | null
+    const projectId = typed?.project?.id
+    if (projectId && typed?.permissions?.canEdit && context.loaderToken) {
+      await context.queryClient.ensureQueryData(
+        crpcServer.feedback.listPendingDeletion.queryOptions({
+          cursor: null,
+          limit: 50,
+          projectId,
+        })
+      )
+    }
+  },
   component: DeletedFeedbackRoute,
 })
 

@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useCRPC } from "@/lib/convex/crpc"
+import { crpcServer } from "@/lib/convex/crpc-server"
 
 type ConnectionMode = "read" | "read_write"
 type Source = "issues" | "discussions"
@@ -36,6 +37,15 @@ type RepositoryOption = {
 export const Route = createFileRoute(
   "/@{$org}/$project/settings/integrations/"
 )({
+  loader: async ({ context, params }) => {
+    if (!context.loaderToken) return
+    await context.queryClient.ensureQueryData(
+      crpcServer.github.getProjectIntegration.queryOptions({
+        orgSlug: params.org,
+        projectSlug: params.project,
+      })
+    )
+  },
   component: GitHubIntegrationRoute,
 })
 
