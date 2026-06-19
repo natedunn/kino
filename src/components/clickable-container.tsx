@@ -7,6 +7,7 @@ interface ClickableContainerProps {
   children: React.ReactNode
   className?: string
   href?: string
+  keyboardInteractive?: boolean
   "aria-label"?: string
   "aria-labelledby"?: string
   "aria-describedby"?: string
@@ -33,6 +34,7 @@ export const ClickableContainer = forwardRef<
       children,
       className = "",
       href,
+      keyboardInteractive = true,
       "aria-label": ariaLabel,
       "aria-labelledby": ariaLabelledBy,
       "aria-describedby": ariaDescribedBy,
@@ -143,15 +145,15 @@ export const ClickableContainer = forwardRef<
     return (
       <div
         ref={ref}
-        role="button"
-        tabIndex={disabled ? -1 : 0}
+        role={keyboardInteractive ? "button" : undefined}
+        tabIndex={keyboardInteractive ? (disabled ? -1 : 0) : undefined}
         aria-label={ariaLabel}
         aria-labelledby={ariaLabelledBy}
         aria-describedby={ariaDescribedBy}
-        aria-disabled={disabled}
+        aria-disabled={keyboardInteractive ? disabled : undefined}
         onClick={handleClick}
         onContextMenuCapture={handleContextLinkContextMenu}
-        onKeyDown={handleKeyDown}
+        onKeyDown={keyboardInteractive ? handleKeyDown : undefined}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
