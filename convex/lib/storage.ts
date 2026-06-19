@@ -4,6 +4,21 @@ import { orgUploadsR2, userUploadsR2 } from './r2';
 
 export const MAX_COVER_IMAGE_BYTES = 5 * 1024 * 1024;
 export const MAX_PROFILE_IMAGE_BYTES = 5 * 1024 * 1024;
+export const MAX_ORG_AVATAR_BYTES = 5 * 1024 * 1024;
+
+// Still-image formats only. GIF is intentionally excluded (animated); SVG is
+// excluded for security (it can carry scripts). Keep this in sync with the
+// client-side guard in the org general-settings route.
+export const ALLOWED_ORG_AVATAR_CONTENT_TYPES = [
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+] as const;
+
+// Org avatars change rarely, so sign their URLs for a week. Combined with the
+// client query cache this avoids re-issuing a fresh (uncacheable) signed URL on
+// every navigation.
+const ORG_AVATAR_URL_TTL_SECONDS = 60 * 60 * 24 * 7;
 
 type R2StorageMutationCtx = Pick<MutationCtx, 'db' | 'runMutation' | 'runQuery'>;
 
@@ -74,21 +89,32 @@ export function validateProfileImageMetadata(metadata: ImageMetadata) {
 
 export function validateOrganizationLogoMetadata(metadata: ImageMetadata) {
   validateImageMetadata(metadata, {
-    maxBytes: MAX_PROFILE_IMAGE_BYTES,
+    allowedContentTypes: ALLOWED_ORG_AVATAR_CONTENT_TYPES,
+    maxBytes: MAX_ORG_AVATAR_BYTES,
     tooLargeMessage: 'Organization avatars must be 5 MB or smaller',
-    wrongTypeMessage: 'Organization avatar uploads must be image files',
+    wrongTypeMessage: 'Organization avatars must be a JPEG, PNG, or WebP image',
   });
 }
 
 function validateImageMetadata(
   metadata: ImageMetadata,
   args: {
+    allowedContentTypes?: readonly string[];
     maxBytes: number;
     tooLargeMessage: string;
     wrongTypeMessage: string;
   }
 ) {
-  if (metadata.contentType && !metadata.contentType.startsWith('image/')) {
+  if (args.allowedContentTypes) {
+    // Strict allowlist: require a known still-image content type. A missing
+    // content type is rejected so spoofed/empty types can't slip through.
+    if (!metadata.contentType || !args.allowedContentTypes.includes(metadata.contentType)) {
+      throw new CRPCError({
+        code: 'BAD_REQUEST',
+        message: args.wrongTypeMessage,
+      });
+    }
+  } else if (metadata.contentType && !metadata.contentType.startsWith('image/')) {
     throw new CRPCError({
       code: 'BAD_REQUEST',
       message: args.wrongTypeMessage,
@@ -171,7 +197,9 @@ export async function resolveOrganizationLogoUrl(
   if (!organization?.logo) return null;
   const objectKey = getOrganizationLogoObjectKey(organization.logo);
   if (objectKey) {
-    const r2Url = await resolveCoverImageUrl(objectKey);
+    const r2Url = await orgUploadsR2.getUrl(objectKey, {
+      expiresIn: ORG_AVATAR_URL_TTL_SECONDS,
+    });
     if (r2Url) {
       return r2Url;
     }

@@ -13,6 +13,7 @@ import {
   getOrgUploadR2Metadata,
   getOrganizationLogoObjectKey,
   resolveOrganizationLogoUrl,
+  updateOrgStorageUsage,
   validateOrganizationLogoMetadata,
 } from '../lib/storage';
 import { orgUploadsR2 } from '../lib/r2';
@@ -33,10 +34,6 @@ function parseOrgAvatarKey(key: string) {
   }
 
   return organizationId as Id<'organization'>;
-}
-
-function versionOrgAvatarKey(key: string) {
-  return `${key}?v=${Date.now()}`;
 }
 
 async function withResolvedLogo<T extends { logo?: string | null }>(organization: T) {
@@ -189,7 +186,7 @@ export const syncAvatarMetadata = authMutation
 
     await ctx.auth.api.updateOrganization({
       body: {
-        data: { logo: versionOrgAvatarKey(input.key) },
+        data: { logo: input.key },
         organizationId: organization._id,
       },
       headers: ctx.headers,
@@ -218,7 +215,25 @@ export const onAvatarMetadataSynced = internalMutation({
     const metadata = await getOrgUploadR2Metadata(ctx as any, args.key);
     if (!metadata) return;
 
-    validateOrganizationLogoMetadata(metadata);
+    try {
+      validateOrganizationLogoMetadata(metadata);
+    } catch {
+      // The presigned PUT lets the client upload arbitrary bytes, so this is the
+      // server-side enforcement point. Reject invalid uploads by deleting the
+      // object and clearing the (already-set) org logo so nothing bad is served.
+      await orgUploadsR2.deleteObject(ctx as any, args.key);
+      if (organization.logo === args.key) {
+        await ctx.db.patch(organizationId, { logo: undefined });
+      }
+      return;
+    }
+
+    await updateOrgStorageUsage(
+      ctx as any,
+      organization.slug,
+      metadata.size ?? 0,
+      args.isNew ? 1 : 0
+    );
   },
 });
 

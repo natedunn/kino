@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { useForm } from "@tanstack/react-form"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
@@ -18,6 +18,74 @@ type GeneralSettingsFormValues = {
   avatarFile: File | null
   name: string
   slug: string
+}
+
+// Keep in sync with the server-side allowlist in convex/lib/storage.ts.
+const MAX_AVATAR_BYTES = 5 * 1024 * 1024
+const ALLOWED_AVATAR_TYPES = ["image/jpeg", "image/png", "image/webp"]
+
+// Detect animated WebP without decoding the whole file: a still WebP either has
+// no VP8X chunk, or a VP8X chunk whose animation flag (bit 1) is unset and no
+// ANIM chunk present.
+async function isAnimatedWebp(file: File): Promise<boolean> {
+  const buffer = new Uint8Array(await file.slice(0, 1024).arrayBuffer())
+  const matchesAscii = (offset: number, text: string) =>
+    text.split("").every((char, i) => buffer[offset + i] === char.charCodeAt(0))
+
+  if (!matchesAscii(0, "RIFF") || !matchesAscii(8, "WEBP")) return false
+  if (matchesAscii(12, "VP8X") && ((buffer[20] ?? 0) & 0x02) !== 0) return true
+  for (let i = 12; i < buffer.length - 4; i++) {
+    if (matchesAscii(i, "ANIM")) return true
+  }
+  return false
+}
+
+async function validateAvatarFile(file: File): Promise<string | null> {
+  if (!ALLOWED_AVATAR_TYPES.includes(file.type)) {
+    return "Avatar must be a JPEG, PNG, or WebP image."
+  }
+  if (file.size > MAX_AVATAR_BYTES) {
+    return "Avatar must be 5 MB or smaller."
+  }
+  if (file.type === "image/webp" && (await isAnimatedWebp(file))) {
+    return "Animated images are not supported. Please upload a static image."
+  }
+  return null
+}
+
+// Manages the object URL lifecycle so the preview blob is revoked instead of
+// leaking a new URL on every render.
+function AvatarPreview({
+  alt,
+  fallback,
+  file,
+  fallbackSrc,
+}: {
+  alt: string
+  fallback: string
+  file: File | null
+  fallbackSrc?: string
+}) {
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!file) {
+      setPreviewUrl(null)
+      return
+    }
+    const url = URL.createObjectURL(file)
+    setPreviewUrl(url)
+    return () => URL.revokeObjectURL(url)
+  }, [file])
+
+  return (
+    <Avatar className="size-16 rounded-lg border">
+      <AvatarImage alt={alt} src={previewUrl ?? fallbackSrc} />
+      <AvatarFallback className="rounded-lg text-lg font-semibold">
+        {fallback}
+      </AvatarFallback>
+    </Avatar>
+  )
 }
 
 export const Route = createFileRoute("/@{$org}/settings/general/")({
@@ -162,45 +230,48 @@ function GeneralSettingsRoute() {
         <div className="rounded-xl border bg-card">
           <div className="flex flex-col gap-6 p-6">
             <form.Field name="avatarFile">
-              {(field) => {
-                const avatarPreviewUrl = field.state.value
-                  ? URL.createObjectURL(field.state.value)
-                  : null
+              {(field) => (
+                <div className="flex flex-col gap-2">
+                  <LabelWrapper>
+                    <Label>Avatar</Label>
+                    <LabelDescription>
+                      Used anywhere this organization appears in Kino. JPEG,
+                      PNG, or WebP, up to 5 MB.
+                    </LabelDescription>
+                  </LabelWrapper>
+                  <div className="flex items-center gap-4">
+                    <AvatarPreview
+                      alt={org.name}
+                      fallback={org.name[0]?.toUpperCase() ?? ""}
+                      fallbackSrc={org.logo ?? undefined}
+                      file={field.state.value}
+                    />
+                    <Input
+                      accept={ALLOWED_AVATAR_TYPES.join(",")}
+                      className="h-auto! max-w-sm py-4 file:h-auto file:leading-4 hocus:bg-accent/50"
+                      onChange={async (event) => {
+                        const file = event.target.files?.[0] ?? null
+                        if (!file) {
+                          field.handleChange(null)
+                          return
+                        }
 
-                return (
-                  <div className="flex flex-col gap-2">
-                    <LabelWrapper>
-                      <Label>Avatar</Label>
-                      <LabelDescription>
-                        Used anywhere this organization appears in Kino.
-                      </LabelDescription>
-                    </LabelWrapper>
-                    <div className="flex items-center gap-4">
-                      <Avatar className="size-16 rounded-lg border">
-                        <AvatarImage
-                          alt={org.name}
-                          src={
-                            field.state.value
-                              ? (avatarPreviewUrl ?? undefined)
-                              : (org.logo ?? undefined)
-                          }
-                        />
-                        <AvatarFallback className="rounded-lg text-lg font-semibold">
-                          {org.name[0]?.toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <Input
-                        accept="image/*"
-                        className="h-auto! max-w-sm py-4 file:h-auto file:leading-4 hocus:bg-accent/50"
-                        onChange={(event) => {
-                          field.handleChange(event.target.files?.[0] ?? null)
-                        }}
-                        type="file"
-                      />
-                    </div>
+                        const validationError = await validateAvatarFile(file)
+                        if (validationError) {
+                          setFormError(validationError)
+                          field.handleChange(null)
+                          event.target.value = ""
+                          return
+                        }
+
+                        setFormError(null)
+                        field.handleChange(file)
+                      }}
+                      type="file"
+                    />
                   </div>
-                )
-              }}
+                </div>
+              )}
             </form.Field>
 
             <form.Field name="name">
@@ -258,24 +329,22 @@ function GeneralSettingsRoute() {
               })}
             >
               {({ isSubmitting, name }) => {
-                const visuallyDisabled =
-                  !name.trim() ||
+                const isSaving =
                   isSubmitting ||
                   updateMutation.isPending ||
                   uploadUrlMutation.isPending ||
                   syncMetadataMutation.isPending
+                const disabled = !name.trim() || isSaving
 
                 return (
                   <Button
                     className={cn({
-                      "opacity-50 grayscale select-none": visuallyDisabled,
+                      "opacity-50 grayscale select-none": disabled,
                     })}
-                    disabled={visuallyDisabled}
+                    disabled={disabled}
                     type="submit"
                   >
-                    {visuallyDisabled && name.trim()
-                      ? "Saving..."
-                      : "Save changes"}
+                    {isSaving ? "Saving..." : "Save changes"}
                   </Button>
                 )
               }}
