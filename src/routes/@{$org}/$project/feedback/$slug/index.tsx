@@ -112,6 +112,7 @@ import {
   CommentForm,
   type ThreadComment,
 } from "../../-components/comment-thread"
+import { projectTitle, titleFromSlug, titleMeta } from "@/lib/seo"
 
 const SIDEBAR_STORAGE_KEY = "feedback-detail-sidebar-state"
 
@@ -317,7 +318,19 @@ export const Route = createFileRoute("/@{$org}/$project/feedback/$slug/")({
           )
         : Promise.resolve(null),
     ])
+
+    return {
+      title: feedbackData.feedback.title,
+    }
   },
+  head: ({ loaderData, params }) => ({
+    meta: [
+      titleMeta([
+        loaderData?.title ?? titleFromSlug(params.slug),
+        projectTitle(params.org, params.project),
+      ]),
+    ],
+  }),
   pendingComponent: () => <RoutePending variant="detail" />,
   pendingMs: 600,
 })

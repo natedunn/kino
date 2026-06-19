@@ -8,8 +8,12 @@ import { useAuth } from 'kitcn/react';
 
 import { Button } from '@/components/ui/button';
 import { authClient, useSignOutMutationOptions } from '@/lib/convex/auth-client';
+import { titleMeta } from '@/lib/seo';
 
 export const Route = createFileRoute('/auth')({
+  head: () => ({
+    meta: [titleMeta(['Sign in'])],
+  }),
   component: AuthPage,
 });
 

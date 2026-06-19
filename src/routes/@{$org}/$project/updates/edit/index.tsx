@@ -69,6 +69,7 @@ import {
   CategoryBadge,
   type UpdateCategory,
 } from "../-components/category-badge"
+import { projectTitle, titleMeta } from "@/lib/seo"
 
 const DEFAULT_PAGE_SIZE = 20
 const PAGE_SIZE_OPTIONS = [10, 20, 50] as const
@@ -147,6 +148,9 @@ export const Route = createFileRoute("/@{$org}/$project/updates/edit/")({
   pendingComponent: () => <RoutePending variant="page" />,
   pendingMs: 600,
   validateSearch: dashboardSearchParams,
+  head: ({ params }) => ({
+    meta: [titleMeta(["Manage Updates", projectTitle(params.org, params.project)])],
+  }),
 })
 
 function UpdatesDashboardRoute() {

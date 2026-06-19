@@ -8,8 +8,12 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { useCRPC } from "@/lib/convex/crpc"
+import { projectTitle, titleMeta } from "@/lib/seo"
 
 export const Route = createFileRoute("/@{$org}/$project/feedback/boards/new")({
+  head: ({ params }) => ({
+    meta: [titleMeta(["New Board", "Feedback", projectTitle(params.org, params.project)])],
+  }),
   component: NewBoardRoute,
 })
 

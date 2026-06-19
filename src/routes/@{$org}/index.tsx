@@ -21,8 +21,12 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { useCRPC } from "@/lib/convex/crpc"
 import { crpcServer } from "@/lib/convex/crpc-server"
+import { titleFromSlug, titleMeta } from "@/lib/seo"
 
 export const Route = createFileRoute("/@{$org}/")({
+  head: ({ params }) => ({
+    meta: [titleMeta([titleFromSlug(params.org)])],
+  }),
   loader: async ({ context, params }) => {
     const orgData = await context.queryClient.ensureQueryData(
       crpcServer.org.getDetails.queryOptions({

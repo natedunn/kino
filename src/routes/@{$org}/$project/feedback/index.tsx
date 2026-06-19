@@ -20,6 +20,7 @@ import { BoardsNav } from "./-components/boards-nav"
 import { FeedbackCard } from "./-components/feedback-card"
 import { FeedbackOptions } from "./-components/feedback-options"
 import { FeedbackToolbar } from "./-components/feedback-toolbar"
+import { projectTitle, titleMeta } from "@/lib/seo"
 
 const NUM_OF_ITEMS_PER_PAGE = 50
 
@@ -91,6 +92,9 @@ export const Route = createFileRoute("/@{$org}/$project/feedback/")({
   pendingComponent: () => <RoutePending variant="sidebar" />,
   pendingMs: 600,
   validateSearch: feedbackSearchParams,
+  head: ({ params }) => ({
+    meta: [titleMeta(["Feedback", projectTitle(params.org, params.project)])],
+  }),
 })
 
 function getBoardId(

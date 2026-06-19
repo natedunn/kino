@@ -8,8 +8,12 @@ import { useCRPC } from "@/lib/convex/crpc"
 import { crpcServer } from "@/lib/convex/crpc-server"
 
 import { MainNav } from "./-components/main-nav"
+import { titleFromSlug, titleMeta } from "@/lib/seo"
 
 export const Route = createFileRoute("/@{$org}")({
+  head: ({ params }) => ({
+    meta: [titleMeta([titleFromSlug(params.org)])],
+  }),
   loader: async ({ context }) => {
     await context.queryClient.ensureQueryData(
       crpcServer.profile.findMyProfile.queryOptions({}, { skipUnauth: true })

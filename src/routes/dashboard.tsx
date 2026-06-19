@@ -20,8 +20,12 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useCRPC } from "@/lib/convex/crpc"
 import { crpcServer } from "@/lib/convex/crpc-server"
+import { titleMeta } from "@/lib/seo"
 
 export const Route = createFileRoute("/dashboard")({
+  head: () => ({
+    meta: [titleMeta(["Dashboard"])],
+  }),
   loader: async ({ context }) => {
     if (!context.loaderToken) {
       return

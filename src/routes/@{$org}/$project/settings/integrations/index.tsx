@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select"
 import { useCRPC } from "@/lib/convex/crpc"
 import { crpcServer } from "@/lib/convex/crpc-server"
+import { titleMeta } from "@/lib/seo"
 
 type ConnectionMode = "read" | "read_write"
 type Source = "issues" | "discussions"
@@ -37,6 +38,9 @@ type RepositoryOption = {
 export const Route = createFileRoute(
   "/@{$org}/$project/settings/integrations/"
 )({
+  head: () => ({
+    meta: [titleMeta(["Integrations"])],
+  }),
   loader: async ({ context, params }) => {
     if (!context.loaderToken) return
     await context.queryClient.ensureQueryData(

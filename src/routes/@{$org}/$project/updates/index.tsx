@@ -14,6 +14,7 @@ import { crpcServer } from "@/lib/convex/crpc-server"
 
 import { CategoriesNav } from "./-components/categories-nav"
 import { UpdateCard } from "./-components/update-card"
+import { projectTitle, titleMeta } from "@/lib/seo"
 
 const updatesSearchParams = z.object({
   category: z.optional(
@@ -24,6 +25,9 @@ const updatesSearchParams = z.object({
 })
 
 export const Route = createFileRoute("/@{$org}/$project/updates/")({
+  head: ({ params }) => ({
+    meta: [titleMeta(["Updates", projectTitle(params.org, params.project)])],
+  }),
   component: UpdatesListRoute,
   loader: async ({ context, params }) => {
     const projectData = await context.queryClient.ensureQueryData(

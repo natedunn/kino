@@ -1,7 +1,12 @@
 import { useMemo, useState } from "react"
 import { revalidateLogic, useForm } from "@tanstack/react-form"
 import { useMutation, useQuery } from "@tanstack/react-query"
-import { Link, createFileRoute, useNavigate } from "@tanstack/react-router"
+import {
+  Link,
+  createFileRoute,
+  notFound,
+  useNavigate,
+} from "@tanstack/react-router"
 import {
   ArrowLeft,
   Image,
@@ -28,6 +33,7 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { authClient } from "@/lib/convex/auth-client"
 import { useCRPC } from "@/lib/convex/crpc"
+import { crpcServer } from "@/lib/convex/crpc-server"
 import { useSidebarState } from "@/lib/hooks/use-sidebar-state"
 import { cn } from "@/lib/utils"
 
@@ -37,6 +43,7 @@ import {
 } from "../-components/category-badge"
 import { CoverImageUpload } from "../-components/cover-image-upload"
 import { FeedbackSelector } from "../-components/feedback-selector"
+import { projectTitle, titleFromSlug, titleMeta } from "@/lib/seo"
 
 const UPDATE_CATEGORIES = ["changelog", "article", "announcement"] as const
 const UPDATE_CATEGORY_ITEMS = UPDATE_CATEGORIES.map((category) => ({
@@ -62,6 +69,41 @@ const DEFAULT_SIDEBAR_STATE = {
 }
 
 export const Route = createFileRoute("/@{$org}/$project/updates/$slug/edit")({
+  loader: async ({ context, params }) => {
+    const projectData = await context.queryClient.ensureQueryData(
+      crpcServer.project.getDetails.queryOptions({
+        orgSlug: params.org,
+        slug: params.project,
+      })
+    )
+
+    if (!projectData?.project?.id) {
+      throw notFound()
+    }
+
+    const updateData = await context.queryClient.ensureQueryData(
+      crpcServer.update.getBySlug.queryOptions({
+        projectId: projectData.project.id,
+        slug: params.slug,
+      })
+    )
+
+    if (!updateData?.update) {
+      throw notFound()
+    }
+
+    return {
+      title: updateData.update.title,
+    }
+  },
+  head: ({ loaderData, params }) => ({
+    meta: [
+      titleMeta([
+        loaderData?.title ?? titleFromSlug(params.slug),
+        projectTitle(params.org, params.project),
+      ]),
+    ],
+  }),
   component: EditUpdateRoute,
 })
 

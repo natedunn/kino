@@ -17,8 +17,12 @@ import {
 import { authClient } from "@/lib/convex/auth-client"
 import { useCRPC } from "@/lib/convex/crpc"
 import { cn } from "@/lib/utils"
+import { projectTitle, titleMeta } from "@/lib/seo"
 
 export const Route = createFileRoute("/@{$org}/$project/feedback/new/")({
+  head: ({ params }) => ({
+    meta: [titleMeta(["New Feedback", projectTitle(params.org, params.project)])],
+  }),
   component: NewFeedbackRoute,
 })
 

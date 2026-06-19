@@ -38,5 +38,5 @@ export function inferAppEnvironment({
 }
 
 export function getFaviconHref(appEnvironment: AppEnvironment) {
-  return `/favicons/kino-${appEnvironment}.svg`
+  return `/favicons/kino-${appEnvironment}.svg?v=2`
 }

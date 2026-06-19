@@ -39,6 +39,7 @@ import {
   CommentList,
   type ThreadComment,
 } from "../../-components/comment-thread"
+import { projectTitle, titleFromSlug, titleMeta } from "@/lib/seo"
 
 const heartPopKeyframes = `
 @keyframes heart-pop {
@@ -92,7 +93,19 @@ export const Route = createFileRoute("/@{$org}/$project/updates/$slug/")({
         crpcServer.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
       ),
     ])
+
+    return {
+      title: updateData.update.title,
+    }
   },
+  head: ({ loaderData, params }) => ({
+    meta: [
+      titleMeta([
+        loaderData?.title ?? titleFromSlug(params.slug),
+        projectTitle(params.org, params.project),
+      ]),
+    ],
+  }),
   pendingComponent: () => <RoutePending variant="detail" />,
   pendingMs: 600,
 })

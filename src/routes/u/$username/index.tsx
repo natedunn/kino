@@ -7,8 +7,12 @@ import { NotFound } from "@/components/_not-found"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useCRPC } from "@/lib/convex/crpc"
 import { crpcServer } from "@/lib/convex/crpc-server"
+import { titleFromSlug, titleMeta } from "@/lib/seo"
 
 export const Route = createFileRoute("/u/$username/")({
+  head: ({ params }) => ({
+    meta: [titleMeta([titleFromSlug(params.username)])],
+  }),
   loader: async ({ context, params }) => {
     await Promise.all([
       context.queryClient.ensureQueryData(

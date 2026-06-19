@@ -12,8 +12,12 @@ import { Input } from "@/components/ui/input"
 import { useCRPC } from "@/lib/convex/crpc"
 import { crpcServer } from "@/lib/convex/crpc-server"
 import { cn } from "@/lib/utils"
+import { titleMeta } from "@/lib/seo"
 
 export const Route = createFileRoute("/@{$org}/settings/members/")({
+  head: () => ({
+    meta: [titleMeta(["Members"])],
+  }),
   loader: async ({ context, params }) => {
     await context.queryClient.ensureQueryData(
       crpcServer.org.getDetails.queryOptions({ slug: params.org })

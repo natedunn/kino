@@ -11,8 +11,12 @@ import { ArrowLeft } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useCRPC } from "@/lib/convex/crpc"
 import { crpcServer } from "@/lib/convex/crpc-server"
+import { titleMeta } from "@/lib/seo"
 
 export const Route = createFileRoute("/admin")({
+  head: () => ({
+    meta: [titleMeta(["Admin"])],
+  }),
   loader: async ({ context }) => {
     if (!context.loaderToken) {
       return

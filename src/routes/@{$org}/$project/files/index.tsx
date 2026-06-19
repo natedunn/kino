@@ -41,8 +41,12 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
+import { projectTitle, titleMeta } from "@/lib/seo"
 
 export const Route = createFileRoute("/@{$org}/$project/files/")({
+  head: ({ params }) => ({
+    meta: [titleMeta(["Files", projectTitle(params.org, params.project)])],
+  }),
   component: FilesPage,
 })
 

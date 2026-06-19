@@ -8,8 +8,12 @@ import {
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { titleMeta } from "@/lib/seo"
 
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [titleMeta([])],
+  }),
   component: IndexPage,
 })
 

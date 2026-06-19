@@ -1,6 +1,10 @@
 import { Navigate, createFileRoute } from "@tanstack/react-router"
+import { projectTitle, titleMeta } from "@/lib/seo"
 
 export const Route = createFileRoute("/@{$org}/$project/feedback/boards/")({
+  head: ({ params }) => ({
+    meta: [titleMeta(["Boards", "Feedback", projectTitle(params.org, params.project)])],
+  }),
   component: BoardsRedirectRoute,
 })
 

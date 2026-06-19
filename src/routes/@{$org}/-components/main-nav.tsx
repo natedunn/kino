@@ -6,6 +6,7 @@ import { UserDropdown } from "./user-dropdown"
 import type { API } from "@/lib/api"
 
 import { useCommandPalette } from "@/components/command"
+import { KinoMark } from "@/components/kino-mark"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -78,13 +79,8 @@ export const MainNav = ({
             {/* Left: Logo and org/project */}
             <div className="flex min-w-0 shrink-0 items-center gap-3">
               <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-primary">
-                  <span
-                    aria-hidden="true"
-                    className="text-sm font-bold text-primary-foreground"
-                  >
-                    K
-                  </span>
+                <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-md">
+                  <KinoMark aria-hidden="true" className="h-full w-full" />
                   <span className="sr-only">Kino</span>
                 </div>
                 {!!orgSlug && (

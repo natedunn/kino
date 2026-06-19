@@ -17,8 +17,12 @@ import {
 } from "@/components/ui/select"
 import { useCRPC } from "@/lib/convex/crpc"
 import { cn } from "@/lib/utils"
+import { titleFromSlug, titleMeta } from "@/lib/seo"
 
 export const Route = createFileRoute("/@{$org}/create-project/")({
+  head: ({ params }) => ({
+    meta: [titleMeta(["Create Project", titleFromSlug(params.org)])],
+  }),
   component: CreateProjectRoute,
 })
 

@@ -1,7 +1,11 @@
 import { Navigate, createFileRoute } from "@tanstack/react-router"
+import { projectTitle, titleMeta } from "@/lib/seo"
 
 export const Route = createFileRoute("/@{$org}/$project/options/integrations/")(
   {
+    head: ({ params }) => ({
+      meta: [titleMeta(["Integration Options", projectTitle(params.org, params.project)])],
+    }),
     component: ProjectOptionsIntegrationsRedirectRoute,
   }
 )
