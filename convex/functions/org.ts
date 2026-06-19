@@ -1,3 +1,5 @@
+import { createFunctionHandle } from 'convex/server';
+import { ConvexError, v } from 'convex/values';
 import { z } from 'zod';
 import { CRPCError } from 'kitcn/server';
 import { authMutation, authQuery, optionalAuthQuery } from '../lib/crpc';
@@ -7,8 +9,39 @@ import {
   getCurrentProfile,
   verifyOrgAccess,
 } from '../lib/kino';
+import {
+  getOrgUploadR2Metadata,
+  getOrganizationLogoObjectKey,
+  resolveOrganizationLogoUrl,
+  updateOrgStorageUsage,
+  validateOrganizationLogoMetadata,
+} from '../lib/storage';
+import { orgUploadsR2 } from '../lib/r2';
+import { internal } from './_generated/api';
+import type { Id } from './_generated/dataModel';
+import { internalMutation } from './generated/server';
 
 const visibilitySchema = z.enum(['public', 'private']);
+
+function parseOrgAvatarKey(key: string) {
+  const objectKey = getOrganizationLogoObjectKey(key) ?? key;
+  const [type, organizationId] = objectKey.split('.');
+  if (type !== 'ORG_AVATAR' || !organizationId) {
+    throw new ConvexError({
+      code: '400',
+      message: 'Invalid key format for organization avatar upload',
+    });
+  }
+
+  return organizationId as Id<'organization'>;
+}
+
+async function withResolvedLogo<T extends { logo?: string | null }>(organization: T) {
+  return {
+    ...organization,
+    logo: await resolveOrganizationLogoUrl(organization),
+  };
+}
 
 export const create = authMutation
   .input(
@@ -52,7 +85,7 @@ export const create = authMutation
       });
     }
 
-    return organization;
+    return await withResolvedLogo(organization);
   });
 
 export const update = authMutation
@@ -88,7 +121,9 @@ export const update = authMutation
       }).filter(([, value]) => value !== undefined)
     );
 
-    if (Object.keys(patch).length === 0) return access.organization;
+    if (Object.keys(patch).length === 0) {
+      return await withResolvedLogo(access.organization);
+    }
 
     await ctx.auth.api.updateOrganization({
       body: {
@@ -98,12 +133,109 @@ export const update = authMutation
       headers: ctx.headers,
     });
 
-    return {
+    return await withResolvedLogo({
       ...access.organization,
       ...patch,
       slug: nextSlug ?? access.organization.slug,
-    };
+    });
   });
+
+export const generateAvatarUploadUrl = authMutation
+  .input(
+    z.object({
+      organizationId: z.string(),
+    })
+  )
+  .mutation(async ({ ctx, input }) => {
+    const organization = await ctx.db.get(input.organizationId as Id<'organization'>);
+    if (!organization) {
+      throw new CRPCError({ code: 'NOT_FOUND', message: 'Organization not found' });
+    }
+
+    const access = await verifyOrgAccess(ctx, { id: organization._id, userId: ctx.userId });
+    if (!access.permissions.canEdit) {
+      throw new CRPCError({
+        code: 'FORBIDDEN',
+        message: 'You do not have permission to upload this organization avatar',
+      });
+    }
+
+    return await orgUploadsR2.generateUploadUrl(`ORG_AVATAR.${organization._id}`);
+  });
+
+export const syncAvatarMetadata = authMutation
+  .input(
+    z.object({
+      key: z.string(),
+    })
+  )
+  .mutation(async ({ ctx, input }) => {
+    const organizationId = parseOrgAvatarKey(input.key);
+    const organization = await ctx.db.get(organizationId);
+    if (!organization) {
+      throw new CRPCError({ code: 'NOT_FOUND', message: 'Organization not found' });
+    }
+
+    const access = await verifyOrgAccess(ctx, { id: organization._id, userId: ctx.userId });
+    if (!access.permissions.canEdit) {
+      throw new CRPCError({
+        code: 'FORBIDDEN',
+        message: 'You do not have permission to upload this organization avatar',
+      });
+    }
+
+    await ctx.auth.api.updateOrganization({
+      body: {
+        data: { logo: input.key },
+        organizationId: organization._id,
+      },
+      headers: ctx.headers,
+    });
+
+    await ctx.scheduler.runAfter(0, orgUploadsR2.component.lib.syncMetadata, {
+      ...orgUploadsR2.config,
+      key: input.key,
+      onComplete: await createFunctionHandle(internal.org.onAvatarMetadataSynced),
+    });
+
+    return null;
+  });
+
+export const onAvatarMetadataSynced = internalMutation({
+  args: {
+    bucket: v.string(),
+    isNew: v.boolean(),
+    key: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const organizationId = parseOrgAvatarKey(args.key);
+    const organization = await ctx.db.get(organizationId);
+    if (!organization) return;
+
+    const metadata = await getOrgUploadR2Metadata(ctx as any, args.key);
+    if (!metadata) return;
+
+    try {
+      validateOrganizationLogoMetadata(metadata);
+    } catch {
+      // The presigned PUT lets the client upload arbitrary bytes, so this is the
+      // server-side enforcement point. Reject invalid uploads by deleting the
+      // object and clearing the (already-set) org logo so nothing bad is served.
+      await orgUploadsR2.deleteObject(ctx as any, args.key);
+      if (organization.logo === args.key) {
+        await ctx.db.patch(organizationId, { logo: undefined });
+      }
+      return;
+    }
+
+    await updateOrgStorageUsage(
+      ctx as any,
+      organization.slug,
+      metadata.size ?? 0,
+      args.isNew ? 1 : 0
+    );
+  },
+});
 
 export const getDetails = optionalAuthQuery
   .input(z.object({ slug: z.string() }))
@@ -115,7 +247,7 @@ export const getDetails = optionalAuthQuery
 
     return {
       member: access.member,
-      org: access.organization,
+      org: await withResolvedLogo(access.organization),
       permissions: access.permissions,
       userId: access.profile?.id ?? null,
     };
@@ -149,7 +281,7 @@ export const findMyOrgs = authQuery.query(async ({ ctx }) => {
   const maxOrgs = profile?.role === 'system:admin' ? LIMITS.ADMIN.MAX_ORGS : LIMITS.FREE.MAX_ORGS;
 
   return {
-    teams,
+    teams: await Promise.all(teams.map((team: any) => withResolvedLogo(team))),
     underLimit: teams.length < maxOrgs,
   };
 });

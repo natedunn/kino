@@ -16,8 +16,10 @@ import type { OrmTriggerContext } from 'kitcn/orm';
 const procedureRegistry = {
   "create": ["mutation", typedProcedureResolver(createGeneratedFunctionReference<"mutation", "public", typeof import("../org").create>("org:create"), () => (require("../org") as Record<string, unknown>)["create"])],
   "findMyOrgs": ["query", typedProcedureResolver(createGeneratedFunctionReference<"query", "public", typeof import("../org").findMyOrgs>("org:findMyOrgs"), () => (require("../org") as Record<string, unknown>)["findMyOrgs"])],
+  "generateAvatarUploadUrl": ["mutation", typedProcedureResolver(createGeneratedFunctionReference<"mutation", "public", typeof import("../org").generateAvatarUploadUrl>("org:generateAvatarUploadUrl"), () => (require("../org") as Record<string, unknown>)["generateAvatarUploadUrl"])],
   "getDetails": ["query", typedProcedureResolver(createGeneratedFunctionReference<"query", "public", typeof import("../org").getDetails>("org:getDetails"), () => (require("../org") as Record<string, unknown>)["getDetails"])],
   "getMyPermission": ["query", typedProcedureResolver(createGeneratedFunctionReference<"query", "public", typeof import("../org").getMyPermission>("org:getMyPermission"), () => (require("../org") as Record<string, unknown>)["getMyPermission"])],
+  "syncAvatarMetadata": ["mutation", typedProcedureResolver(createGeneratedFunctionReference<"mutation", "public", typeof import("../org").syncAvatarMetadata>("org:syncAvatarMetadata"), () => (require("../org") as Record<string, unknown>)["syncAvatarMetadata"])],
   "update": ["mutation", typedProcedureResolver(createGeneratedFunctionReference<"mutation", "public", typeof import("../org").update>("org:update"), () => (require("../org") as Record<string, unknown>)["update"])],
 } as const;
 
