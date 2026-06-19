@@ -1,102 +1,178 @@
 // components/ClickableCard.tsx
-import { forwardRef, useRef, useState } from 'react';
+import { forwardRef, useEffect, useRef, useState } from "react"
+import { flushSync } from "react-dom"
 
 interface ClickableContainerProps {
-	onClick: () => void;
-	children: React.ReactNode;
-	className?: string;
-	'aria-label'?: string;
-	'aria-labelledby'?: string;
-	'aria-describedby'?: string;
-	disabled?: boolean;
+  onClick: () => void
+  children: React.ReactNode
+  className?: string
+  href?: string
+  "aria-label"?: string
+  "aria-labelledby"?: string
+  "aria-describedby"?: string
+  disabled?: boolean
 }
 
-export const ClickableContainer = forwardRef<HTMLDivElement, ClickableContainerProps>(
-	(
-		{
-			onClick,
-			children,
-			className = '',
-			'aria-label': ariaLabel,
-			'aria-labelledby': ariaLabelledBy,
-			'aria-describedby': ariaDescribedBy,
-			disabled = false,
-			...props
-		},
-		ref
-	) => {
-		const [hasActiveSelection, setHasActiveSelection] = useState(false);
-		const mouseStartPos = useRef<{ x: number; y: number } | null>(null);
+const interactiveSelector = [
+  "a",
+  "button",
+  "input",
+  "select",
+  "textarea",
+  '[role="button"]',
+  '[role="link"]',
+].join(",")
 
-		const handleMouseDown = (e: React.MouseEvent) => {
-			mouseStartPos.current = { x: e.clientX, y: e.clientY };
-			setHasActiveSelection(false);
-		};
+export const ClickableContainer = forwardRef<
+  HTMLDivElement,
+  ClickableContainerProps
+>(
+  (
+    {
+      onClick,
+      children,
+      className = "",
+      href,
+      "aria-label": ariaLabel,
+      "aria-labelledby": ariaLabelledBy,
+      "aria-describedby": ariaDescribedBy,
+      disabled = false,
+      ...props
+    },
+    ref
+  ) => {
+    const [hasActiveSelection, setHasActiveSelection] = useState(false)
+    const [showContextLink, setShowContextLink] = useState(false)
+    const mouseStartPos = useRef<{ x: number; y: number } | null>(null)
+    const contextLinkTimeout = useRef<ReturnType<typeof setTimeout> | null>(
+      null
+    )
 
-		const handleMouseMove = (e: React.MouseEvent) => {
-			if (!mouseStartPos.current) return;
+    useEffect(() => {
+      return () => {
+        if (contextLinkTimeout.current) {
+          clearTimeout(contextLinkTimeout.current)
+        }
+      }
+    }, [])
 
-			const moved =
-				Math.abs(e.clientX - mouseStartPos.current.x) > 3 ||
-				Math.abs(e.clientY - mouseStartPos.current.y) > 3;
+    const hideContextLink = () => {
+      if (contextLinkTimeout.current) {
+        clearTimeout(contextLinkTimeout.current)
+        contextLinkTimeout.current = null
+      }
 
-			if (moved) {
-				setHasActiveSelection(true);
-			}
-		};
+      setShowContextLink(false)
+    }
 
-		const handleMouseUp = () => {
-			setTimeout(() => {
-				const selection = window.getSelection();
-				const hasSelection = selection && selection.toString().length > 0 ? true : false;
-				setHasActiveSelection(hasSelection);
-			}, 10);
-		};
+    const handlePointerDownCapture = (e: React.PointerEvent) => {
+      if (!href || disabled) return
 
-		const handleClick = (e: React.MouseEvent) => {
-			if (disabled || hasActiveSelection) {
-				return;
-			}
+      const isContextMenuPointerDown =
+        e.button === 2 || (e.button === 0 && e.ctrlKey)
+      if (!isContextMenuPointerDown) return
 
-			// Don't navigate if clicking on interactive elements
-			const target = e.target as HTMLElement;
-			if (target.tagName === 'A' || target.tagName === 'BUTTON' || target.tagName === 'INPUT') {
-				return;
-			}
+      flushSync(() => {
+        setShowContextLink(true)
+      })
 
-			onClick();
-		};
+      if (contextLinkTimeout.current) {
+        clearTimeout(contextLinkTimeout.current)
+      }
 
-		const handleKeyDown = (e: React.KeyboardEvent) => {
-			if (disabled) return;
+      contextLinkTimeout.current = setTimeout(() => {
+        setShowContextLink(false)
+        contextLinkTimeout.current = null
+      }, 2000)
+    }
 
-			if (e.key === 'Enter' || e.key === ' ') {
-				e.preventDefault();
-				onClick();
-			}
-		};
+    const handleMouseDown = (e: React.MouseEvent) => {
+      mouseStartPos.current = { x: e.clientX, y: e.clientY }
+      setHasActiveSelection(false)
+    }
 
-		return (
-			<div
-				ref={ref}
-				role='button'
-				tabIndex={disabled ? -1 : 0}
-				aria-label={ariaLabel}
-				aria-labelledby={ariaLabelledBy}
-				aria-describedby={ariaDescribedBy}
-				aria-disabled={disabled}
-				onClick={handleClick}
-				onKeyDown={handleKeyDown}
-				onMouseDown={handleMouseDown}
-				onMouseMove={handleMouseMove}
-				onMouseUp={handleMouseUp}
-				className={` ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 ${className} `}
-				{...props}
-			>
-				{children}
-			</div>
-		);
-	}
-);
+    const handleMouseMove = (e: React.MouseEvent) => {
+      if (!mouseStartPos.current) return
 
-ClickableContainer.displayName = 'ClickableContainer';
+      const moved =
+        Math.abs(e.clientX - mouseStartPos.current.x) > 3 ||
+        Math.abs(e.clientY - mouseStartPos.current.y) > 3
+
+      if (moved) {
+        setHasActiveSelection(true)
+      }
+    }
+
+    const handleMouseUp = () => {
+      setTimeout(() => {
+        const selection = window.getSelection()
+        const hasSelection =
+          selection && selection.toString().length > 0 ? true : false
+        setHasActiveSelection(hasSelection)
+      }, 10)
+    }
+
+    const handleClick = (e: React.MouseEvent) => {
+      if (disabled || hasActiveSelection) {
+        return
+      }
+
+      // Don't navigate if clicking on interactive elements
+      const target = e.target as HTMLElement
+      const interactiveElement = target.closest(interactiveSelector)
+      if (interactiveElement && interactiveElement !== e.currentTarget) {
+        return
+      }
+
+      onClick()
+    }
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+      if (disabled) return
+
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault()
+        onClick()
+      }
+    }
+
+    const handleContextLinkContextMenu = () => {
+      setTimeout(hideContextLink, 0)
+    }
+
+    return (
+      <div
+        ref={ref}
+        role="button"
+        tabIndex={disabled ? -1 : 0}
+        aria-label={ariaLabel}
+        aria-labelledby={ariaLabelledBy}
+        aria-describedby={ariaDescribedBy}
+        aria-disabled={disabled}
+        onClick={handleClick}
+        onContextMenuCapture={handleContextLinkContextMenu}
+        onKeyDown={handleKeyDown}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onPointerDownCapture={handlePointerDownCapture}
+        className={`relative ${disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"} focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 ${className} `}
+        {...props}
+      >
+        {children}
+        {href && showContextLink ? (
+          <a
+            aria-hidden="true"
+            className="absolute inset-0 z-10 cursor-pointer"
+            draggable={false}
+            href={href}
+            onContextMenu={handleContextLinkContextMenu}
+            tabIndex={-1}
+          />
+        ) : null}
+      </div>
+    )
+  }
+)
+
+ClickableContainer.displayName = "ClickableContainer"
