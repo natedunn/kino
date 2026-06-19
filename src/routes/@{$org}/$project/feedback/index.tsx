@@ -256,7 +256,9 @@ function FeedbackListRoute() {
                 >
                   <CirclePlusOutline size="16px" />
                   Add feedback
-                  <kbd className="ml-1 rounded border border-current px-1.5 py-px text-xs opacity-50 font-sans">⌘O</kbd>
+                  <kbd className="ml-1 rounded border border-current px-1.5 py-px font-sans text-xs opacity-50">
+                    ⌘O
+                  </kbd>
                 </Link>
               </Button>
             </div>
@@ -295,23 +297,34 @@ function FeedbackListRoute() {
             ) : null}
             {feedback.length > 0 ? (
               <ul className="flex flex-col gap-4">
-                {feedback.map((item) => (
-                  <FeedbackCard
-                    key={item.id}
-                    feedback={item}
-                    isAuthenticated={!!profileQuery.data}
-                    onNavigationClick={() =>
-                      router.navigate({
-                        params: {
-                          org: orgSlug,
-                          project: projectSlug,
-                          slug: item.slug,
-                        },
-                        to: "/@{$org}/$project/feedback/$slug",
-                      })
-                    }
-                  />
-                ))}
+                {feedback.map((item) => {
+                  const feedbackLinkOptions = {
+                    params: {
+                      org: orgSlug,
+                      project: projectSlug,
+                      slug: item.slug,
+                    },
+                    to: "/@{$org}/$project/feedback/$slug",
+                  } as const
+                  const feedbackLocation =
+                    router.buildLocation(feedbackLinkOptions)
+
+                  return (
+                    <FeedbackCard
+                      key={item.id}
+                      feedback={item}
+                      href={
+                        router.history.createHref(
+                          feedbackLocation.publicHref
+                        ) || "/"
+                      }
+                      isAuthenticated={!!profileQuery.data}
+                      onNavigationClick={() =>
+                        router.navigate(feedbackLinkOptions)
+                      }
+                    />
+                  )
+                })}
               </ul>
             ) : null}
           </div>
