@@ -82,8 +82,10 @@ export const api = {
   org: {
     create: createApiLeaf<"mutation", typeof import("../functions/org").create>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/org").create>("org:create"), { auth: "required", type: "mutation" }),
     findMyOrgs: createApiLeaf<"query", typeof import("../functions/org").findMyOrgs>(createGeneratedFunctionReference<"query", "public", typeof import("../functions/org").findMyOrgs>("org:findMyOrgs"), { auth: "required", type: "query" }),
+    generateAvatarUploadUrl: createApiLeaf<"mutation", typeof import("../functions/org").generateAvatarUploadUrl>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/org").generateAvatarUploadUrl>("org:generateAvatarUploadUrl"), { auth: "required", type: "mutation" }),
     getDetails: createApiLeaf<"query", typeof import("../functions/org").getDetails>(createGeneratedFunctionReference<"query", "public", typeof import("../functions/org").getDetails>("org:getDetails"), { auth: "optional", type: "query" }),
     getMyPermission: createApiLeaf<"query", typeof import("../functions/org").getMyPermission>(createGeneratedFunctionReference<"query", "public", typeof import("../functions/org").getMyPermission>("org:getMyPermission"), { auth: "required", type: "query" }),
+    syncAvatarMetadata: createApiLeaf<"mutation", typeof import("../functions/org").syncAvatarMetadata>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/org").syncAvatarMetadata>("org:syncAvatarMetadata"), { auth: "required", type: "mutation" }),
     update: createApiLeaf<"mutation", typeof import("../functions/org").update>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/org").update>("org:update"), { auth: "required", type: "mutation" }),
   },
   orgMember: {

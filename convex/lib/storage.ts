@@ -17,6 +17,17 @@ type ProfileImageSource = {
   imageUrl?: string | null;
 };
 
+type OrganizationLogoSource = {
+  logo?: string | null;
+};
+
+const ORG_AVATAR_PREFIX = 'ORG_AVATAR.';
+
+export function getOrganizationLogoObjectKey(logo: string | null | undefined) {
+  if (!logo?.startsWith(ORG_AVATAR_PREFIX)) return null;
+  return logo.split('?')[0] ?? null;
+}
+
 export async function updateOrgStorageUsage(
   ctx: Pick<MutationCtx, 'db'>,
   orgSlug: string,
@@ -61,6 +72,14 @@ export function validateProfileImageMetadata(metadata: ImageMetadata) {
   });
 }
 
+export function validateOrganizationLogoMetadata(metadata: ImageMetadata) {
+  validateImageMetadata(metadata, {
+    maxBytes: MAX_PROFILE_IMAGE_BYTES,
+    tooLargeMessage: 'Organization avatars must be 5 MB or smaller',
+    wrongTypeMessage: 'Organization avatar uploads must be image files',
+  });
+}
+
 function validateImageMetadata(
   metadata: ImageMetadata,
   args: {
@@ -90,6 +109,14 @@ export async function resolveCoverImageUrl(key: string | null | undefined) {
 }
 
 export async function getCoverImageR2Metadata(
+  ctx: Pick<MutationCtx, 'runQuery'>,
+  key: string | null | undefined
+) {
+  if (!key) return null;
+  return await orgUploadsR2.getMetadata(ctx, key);
+}
+
+export async function getOrgUploadR2Metadata(
   ctx: Pick<MutationCtx, 'runQuery'>,
   key: string | null | undefined
 ) {
@@ -136,4 +163,18 @@ export async function resolveProfileImageUrl(profile: ProfileImageSource | null 
     }
   }
   return profile.imageUrl ?? null;
+}
+
+export async function resolveOrganizationLogoUrl(
+  organization: OrganizationLogoSource | null | undefined
+) {
+  if (!organization?.logo) return null;
+  const objectKey = getOrganizationLogoObjectKey(organization.logo);
+  if (objectKey) {
+    const r2Url = await resolveCoverImageUrl(objectKey);
+    if (r2Url) {
+      return r2Url;
+    }
+  }
+  return organization.logo;
 }

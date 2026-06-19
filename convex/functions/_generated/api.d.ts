@@ -394,11 +394,23 @@ export declare const api: {
       any
     >;
     findMyOrgs: FunctionReference<"query", "public", {}, any>;
+    generateAvatarUploadUrl: FunctionReference<
+      "mutation",
+      "public",
+      { organizationId: string },
+      any
+    >;
     getDetails: FunctionReference<"query", "public", { slug: string }, any>;
     getMyPermission: FunctionReference<
       "query",
       "public",
       { slug: string },
+      any
+    >;
+    syncAvatarMetadata: FunctionReference<
+      "mutation",
+      "public",
+      { key: string },
       any
     >;
     update: FunctionReference<
@@ -1053,6 +1065,14 @@ export declare const internal: {
           issues: { ok: boolean };
         };
       },
+      any
+    >;
+  };
+  org: {
+    onAvatarMetadataSynced: FunctionReference<
+      "mutation",
+      "internal",
+      { bucket: string; isNew: boolean; key: string },
       any
     >;
   };

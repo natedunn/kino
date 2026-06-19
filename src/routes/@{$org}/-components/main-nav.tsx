@@ -43,6 +43,7 @@ type MainNavProps = {
   children?: React.ReactNode
   isUserPending?: boolean
   org?: {
+    logo?: string | null
     slug: string
     name: string
   }
@@ -52,6 +53,7 @@ type MainNavProps = {
 export const MainNav = ({
   children,
   isUserPending = false,
+  org,
   user,
 }: MainNavProps) => {
   const commandPalette = useCommandPalette()
@@ -67,8 +69,9 @@ export const MainNav = ({
     shouldThrow: false,
   })
 
-  const orgSlug = orgParams?.org
+  const orgSlug = org?.slug ?? orgParams?.org
   const projectSlug = projectParams?.project
+  const orgInitial = (org?.name ?? orgSlug ?? "")[0]?.toUpperCase()
 
   return (
     <>
@@ -84,10 +87,18 @@ export const MainNav = ({
                   <span className="sr-only">Kino</span>
                 </div>
                 {!!orgSlug && (
-                  <div className="-ml-3 flex h-8 w-8 items-center justify-center rounded-full bg-foreground ring-2 ring-background">
-                    <span className="text-sm font-bold text-background">
-                      {String(orgSlug)[0].toUpperCase()}
-                    </span>
+                  <div className="-ml-3 flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-foreground ring-2 ring-background">
+                    {org?.logo ? (
+                      <img
+                        alt=""
+                        className="h-full w-full object-cover"
+                        src={org.logo}
+                      />
+                    ) : (
+                      <span className="text-sm font-bold text-background">
+                        {orgInitial}
+                      </span>
+                    )}
                   </div>
                 )}
               </div>

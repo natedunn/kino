@@ -1,4 +1,4 @@
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { useForm } from "@tanstack/react-form"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
@@ -6,12 +6,19 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { InlineAlert } from "@/components/inline-alert"
 import { EmptyState } from "@/components/kino/common"
 import { Label, LabelDescription, LabelWrapper } from "@/components/label"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useCRPC } from "@/lib/convex/crpc"
 import { crpcServer } from "@/lib/convex/crpc-server"
 import { cn } from "@/lib/utils"
 import { titleMeta } from "@/lib/seo"
+
+type GeneralSettingsFormValues = {
+  avatarFile: File | null
+  name: string
+  slug: string
+}
 
 export const Route = createFileRoute("/@{$org}/settings/general/")({
   head: () => ({
@@ -52,10 +59,18 @@ function GeneralSettingsRoute() {
       },
     })
   )
+  const uploadUrlMutation = useMutation(
+    crpc.org.generateAvatarUploadUrl.mutationOptions()
+  )
+  const syncMetadataMutation = useMutation(
+    crpc.org.syncAvatarMetadata.mutationOptions()
+  )
+  const [formError, setFormError] = useState<string | null>(null)
 
   const org = orgQuery.data?.org
-  const formDefaultValues = useMemo(
+  const formDefaultValues = useMemo<GeneralSettingsFormValues>(
     () => ({
+      avatarFile: null,
       name: org?.name ?? "",
       slug: org?.slug ?? "",
     }),
@@ -64,15 +79,48 @@ function GeneralSettingsRoute() {
 
   const form = useForm({
     defaultValues: formDefaultValues,
-    onSubmit: async ({ value }) => {
+    onSubmit: async ({ value, formApi }) => {
       const org = orgQuery.data?.org
       if (!org) return
+      setFormError(null)
 
-      await updateMutation.mutateAsync({
-        currentSlug: org.slug,
-        name: value.name.trim(),
-        updatedSlug: value.slug.trim(),
-      })
+      try {
+        if (value.avatarFile) {
+          const { key, url } = await uploadUrlMutation.mutateAsync({
+            organizationId: org.id,
+          })
+          const response = await fetch(url, {
+            body: value.avatarFile,
+            headers: { "Content-Type": value.avatarFile.type },
+            method: "PUT",
+          })
+
+          if (!response.ok) {
+            throw new Error("Organization avatar upload failed")
+          }
+
+          await syncMetadataMutation.mutateAsync({ key })
+        }
+
+        const updatedOrg = await updateMutation.mutateAsync({
+          currentSlug: org.slug,
+          name: value.name.trim(),
+          updatedSlug: value.slug.trim(),
+        })
+        const refreshedOrg = (await orgQuery.refetch()).data?.org
+
+        formApi.reset({
+          avatarFile: null,
+          name: refreshedOrg?.name ?? updatedOrg.name ?? value.name,
+          slug: refreshedOrg?.slug ?? updatedOrg.slug ?? value.slug,
+        })
+      } catch (error) {
+        setFormError(
+          error instanceof Error
+            ? error.message
+            : "Unable to update organization"
+        )
+      }
     },
   })
 
@@ -100,7 +148,10 @@ function GeneralSettingsRoute() {
 
       <form
         className={cn("mt-6 flex flex-col gap-6", {
-          "pointer-events-none opacity-50": updateMutation.isPending,
+          "pointer-events-none opacity-50":
+            updateMutation.isPending ||
+            uploadUrlMutation.isPending ||
+            syncMetadataMutation.isPending,
         })}
         onSubmit={(event) => {
           event.preventDefault()
@@ -110,6 +161,48 @@ function GeneralSettingsRoute() {
       >
         <div className="rounded-xl border bg-card">
           <div className="flex flex-col gap-6 p-6">
+            <form.Field name="avatarFile">
+              {(field) => {
+                const avatarPreviewUrl = field.state.value
+                  ? URL.createObjectURL(field.state.value)
+                  : null
+
+                return (
+                  <div className="flex flex-col gap-2">
+                    <LabelWrapper>
+                      <Label>Avatar</Label>
+                      <LabelDescription>
+                        Used anywhere this organization appears in Kino.
+                      </LabelDescription>
+                    </LabelWrapper>
+                    <div className="flex items-center gap-4">
+                      <Avatar className="size-16 rounded-lg border">
+                        <AvatarImage
+                          alt={org.name}
+                          src={
+                            field.state.value
+                              ? (avatarPreviewUrl ?? undefined)
+                              : (org.logo ?? undefined)
+                          }
+                        />
+                        <AvatarFallback className="rounded-lg text-lg font-semibold">
+                          {org.name[0]?.toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <Input
+                        accept="image/*"
+                        className="h-auto! max-w-sm py-4 file:h-auto file:leading-4 hocus:bg-accent/50"
+                        onChange={(event) => {
+                          field.handleChange(event.target.files?.[0] ?? null)
+                        }}
+                        type="file"
+                      />
+                    </div>
+                  </div>
+                )
+              }}
+            </form.Field>
+
             <form.Field name="name">
               {(field) => (
                 <div className="flex flex-col gap-2">
@@ -166,17 +259,21 @@ function GeneralSettingsRoute() {
             >
               {({ isSubmitting, name }) => {
                 const visuallyDisabled =
-                  !name.trim() || isSubmitting || updateMutation.isPending
+                  !name.trim() ||
+                  isSubmitting ||
+                  updateMutation.isPending ||
+                  uploadUrlMutation.isPending ||
+                  syncMetadataMutation.isPending
 
                 return (
                   <Button
                     className={cn({
                       "opacity-50 grayscale select-none": visuallyDisabled,
                     })}
-                    disabled={updateMutation.isPending}
+                    disabled={visuallyDisabled}
                     type="submit"
                   >
-                    {isSubmitting || updateMutation.isPending
+                    {visuallyDisabled && name.trim()
                       ? "Saving..."
                       : "Save changes"}
                   </Button>
@@ -186,9 +283,10 @@ function GeneralSettingsRoute() {
           </div>
         </div>
 
-        {updateMutation.error ? (
+        {formError ?? updateMutation.error ? (
           <InlineAlert variant="danger">
-            Unable to update organization: {updateMutation.error.message}
+            Unable to update organization:{" "}
+            {formError ?? updateMutation.error?.message}
           </InlineAlert>
         ) : null}
       </form>
