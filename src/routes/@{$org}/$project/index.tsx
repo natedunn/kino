@@ -1,6 +1,10 @@
 import { Link, createFileRoute } from "@tanstack/react-router"
+import { projectTitle, titleMeta } from "@/lib/seo"
 
 export const Route = createFileRoute("/@{$org}/$project/")({
+  head: ({ params }) => ({
+    meta: [titleMeta([projectTitle(params.org, params.project)])],
+  }),
   component: ProjectIndexRoute,
 })
 

@@ -9,10 +9,14 @@ import { Button } from "@/components/ui/button"
 import { useCRPC } from "@/lib/convex/crpc"
 import { crpcServer } from "@/lib/convex/crpc-server"
 import { cn } from "@/lib/utils"
+import { titleMeta } from "@/lib/seo"
 
 export const Route = createFileRoute(
   "/@{$org}/$project/settings/deleted-feedback/"
 )({
+  head: () => ({
+    meta: [titleMeta(["Deleted Feedback"])],
+  }),
   loader: async ({ context, params }) => {
     const details = await context.queryClient.ensureQueryData(
       crpcServer.project.getDetails.queryOptions({

@@ -3,8 +3,12 @@ import { Outlet, createFileRoute, useNavigate } from "@tanstack/react-router"
 
 import { useRegisterCommands } from "@/components/command"
 import CirclePlusOutline from "@/icons/circle-plus-outline"
+import { projectTitle, titleMeta } from "@/lib/seo"
 
 export const Route = createFileRoute("/@{$org}/$project/feedback")({
+  head: ({ params }) => ({
+    meta: [titleMeta(["Feedback", projectTitle(params.org, params.project)])],
+  }),
   component: FeedbackRoute,
 })
 

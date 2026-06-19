@@ -30,8 +30,12 @@ import CircleDot from "@/icons/circle-dot"
 import CirclePlay from "@/icons/circle-play"
 import HourglassStart from "@/icons/hourglass-start"
 import { cn } from "@/lib/utils"
+import { projectTitle, titleMeta } from "@/lib/seo"
 
 export const Route = createFileRoute("/@{$org}/$project/roadmap/")({
+  head: ({ params }) => ({
+    meta: [titleMeta(["Roadmap", projectTitle(params.org, params.project)])],
+  }),
   component: RoadmapPage,
 })
 

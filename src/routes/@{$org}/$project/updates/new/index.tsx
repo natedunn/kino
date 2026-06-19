@@ -33,6 +33,7 @@ import {
   type UpdateCategory,
 } from "../-components/category-badge"
 import { FeedbackSelector } from "../-components/feedback-selector"
+import { projectTitle, titleMeta } from "@/lib/seo"
 
 const UPDATE_CATEGORIES = ["changelog", "article", "announcement"] as const
 const UPDATE_CATEGORY_ITEMS = UPDATE_CATEGORIES.map((category) => ({
@@ -49,6 +50,9 @@ const DEFAULT_SIDEBAR_STATE = {
 }
 
 export const Route = createFileRoute("/@{$org}/$project/updates/new/")({
+  head: ({ params }) => ({
+    meta: [titleMeta(["New Update", projectTitle(params.org, params.project)])],
+  }),
   component: NewUpdateRoute,
 })
 

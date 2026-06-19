@@ -21,8 +21,12 @@ import {
 import { useCRPC } from "@/lib/convex/crpc"
 import { crpcServer } from "@/lib/convex/crpc-server"
 import { cn } from "@/lib/utils"
+import { titleMeta } from "@/lib/seo"
 
 export const Route = createFileRoute("/create/team/")({
+  head: () => ({
+    meta: [titleMeta(["Create Team"])],
+  }),
   loader: async ({ context }) => {
     if (!context.loaderToken) {
       return

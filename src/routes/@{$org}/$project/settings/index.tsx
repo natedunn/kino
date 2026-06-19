@@ -1,6 +1,10 @@
 import { Navigate, createFileRoute } from "@tanstack/react-router"
+import { titleMeta } from "@/lib/seo"
 
 export const Route = createFileRoute("/@{$org}/$project/settings/")({
+  head: () => ({
+    meta: [titleMeta(["Settings"])],
+  }),
   component: ProjectSettingsIndexRoute,
 })
 

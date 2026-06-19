@@ -8,8 +8,12 @@ import { GitBranch, Settings, Users } from "lucide-react"
 
 import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { titleMeta } from "@/lib/seo"
 
 export const Route = createFileRoute("/@{$org}/settings")({
+  head: () => ({
+    meta: [titleMeta(["Settings"])],
+  }),
   component: OrganizationSettingsRoute,
 })
 

@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input"
 import { useCRPC } from "@/lib/convex/crpc"
 import { crpcServer } from "@/lib/convex/crpc-server"
 import { cn } from "@/lib/utils"
+import { titleMeta } from "@/lib/seo"
 
 type ProfileSettingsFormValues = {
   avatarFile: File | null
@@ -23,6 +24,9 @@ type ProfileSettingsFormValues = {
 }
 
 export const Route = createFileRoute("/profile/settings/")({
+  head: () => ({
+    meta: [titleMeta(["Profile Settings"])],
+  }),
   loader: async ({ context }) => {
     if (!context.loaderToken) {
       return

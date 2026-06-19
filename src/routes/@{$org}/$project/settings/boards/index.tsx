@@ -9,8 +9,12 @@ import Eye from "@/icons/eye"
 import Pen from "@/icons/pen"
 import { useCRPC } from "@/lib/convex/crpc"
 import { crpcServer } from "@/lib/convex/crpc-server"
+import { titleMeta } from "@/lib/seo"
 
 export const Route = createFileRoute("/@{$org}/$project/settings/boards/")({
+  head: () => ({
+    meta: [titleMeta(["Boards"])],
+  }),
   loader: async ({ context, params }) => {
     const details = await context.queryClient.ensureQueryData(
       crpcServer.project.getDetails.queryOptions({

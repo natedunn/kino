@@ -10,10 +10,33 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import ChevronLeft from "@/icons/chevron-left"
 import { useCRPC } from "@/lib/convex/crpc"
+import { crpcServer } from "@/lib/convex/crpc-server"
+import { projectTitle, titleMeta } from "@/lib/seo"
 
 export const Route = createFileRoute(
   "/@{$org}/$project/feedback/boards/$board/edit"
 )({
+  loader: async ({ context, params }) => {
+    const board = await context.queryClient.ensureQueryData(
+      crpcServer.feedbackBoard.get.queryOptions({
+        id: params.board,
+        orgSlug: params.org,
+        projectSlug: params.project,
+      })
+    )
+
+    return {
+      title: board?.name,
+    }
+  },
+  head: ({ loaderData, params }) => ({
+    meta: [
+      titleMeta([
+        loaderData?.title ?? "Board",
+        projectTitle(params.org, params.project),
+      ]),
+    ],
+  }),
   component: EditBoardRoute,
 })
 

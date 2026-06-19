@@ -1,6 +1,10 @@
 import { Navigate, createFileRoute } from "@tanstack/react-router"
+import { titleFromSlug, titleMeta } from "@/lib/seo"
 
 export const Route = createFileRoute("/@{$org}/options/github/")({
+  head: ({ params }) => ({
+    meta: [titleMeta(["GitHub Options", titleFromSlug(params.org)])],
+  }),
   component: OrganizationOptionsGitHubRedirectRoute,
 })
 

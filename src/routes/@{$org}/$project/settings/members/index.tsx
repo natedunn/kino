@@ -10,8 +10,12 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useCRPC } from "@/lib/convex/crpc"
 import { crpcServer } from "@/lib/convex/crpc-server"
+import { titleMeta } from "@/lib/seo"
 
 export const Route = createFileRoute("/@{$org}/$project/settings/members/")({
+  head: () => ({
+    meta: [titleMeta(["Members"])],
+  }),
   loader: async ({ context, params }) => {
     const details = await context.queryClient.ensureQueryData(
       crpcServer.project.getDetails.queryOptions({
