@@ -543,48 +543,84 @@ function SelectDemo() {
 /* Dropdown menu                                                      */
 /* ------------------------------------------------------------------ */
 
+const DROPDOWN_SIZES = ["xs", "sm", "default", "lg", "xl"] as const
+
 function DropdownMenuDemo() {
   const [notifications, setNotifications] = useState(true)
   return (
-    <Demo title="Menu" center>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline">
-            Open menu
-            <ChevronsUpDown />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="w-56">
-          <DropdownMenuLabel>My account</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem>
-            <User />
-            Profile
-            <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
-          </DropdownMenuItem>
-          <DropdownMenuItem>
-            <CreditCard />
-            Billing
-          </DropdownMenuItem>
-          <DropdownMenuItem>
-            <Settings />
-            Settings
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuCheckboxItem
-            checked={notifications}
-            onCheckedChange={(v) => setNotifications(v === true)}
-          >
-            Email notifications
-          </DropdownMenuCheckboxItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem variant="destructive">
-            <Trash2 />
-            Delete account
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </Demo>
+    <>
+      <Demo title="Menu" center>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline">
+              Open menu
+              <ChevronsUpDown />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-56">
+            <DropdownMenuLabel>My account</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem>
+              <User />
+              Profile
+              <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <CreditCard />
+              Billing
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <Settings />
+              Settings
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuCheckboxItem
+              checked={notifications}
+              onCheckedChange={(v) => setNotifications(v === true)}
+            >
+              Email notifications
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem variant="destructive">
+              <Trash2 />
+              Delete account
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </Demo>
+      <Demo
+        title="Trigger sizes"
+        description="Triggers use the shared xs/sm/default/lg/xl scale, while the menu itself stays one consistent size. Each menu below is identical — only the trigger changes."
+      >
+        {DROPDOWN_SIZES.map((size) => (
+          <DropdownMenu key={size}>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size={size}>
+                {size}
+                <ChevronsUpDown />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-48">
+              <DropdownMenuLabel>Account</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>
+                <User />
+                Profile
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Settings />
+                Settings
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem variant="destructive">
+                <Trash2 />
+                Delete account
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ))}
+      </Demo>
+    </>
   )
 }
 
@@ -1068,7 +1104,8 @@ export const COMPONENT_ITEMS: LabItem[] = [
   {
     id: "dropdown-menu",
     name: "Dropdown Menu",
-    description: "Contextual menus with items, checkboxes and shortcuts.",
+    description:
+      "Contextual menus with items, checkboxes and shortcuts. Supports the shared five-size scale.",
     importCode: `import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
