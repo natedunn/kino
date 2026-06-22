@@ -15,6 +15,7 @@ import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools"
 
 import { DefaultCatchBoundary } from "@/components/_default-catch-boundary"
 import { Providers } from "@/components/providers"
+import { StaleBundleWatcher } from "@/components/stale-bundle-watcher"
 import { Toaster } from "@/components/ui/sonner"
 import { getFaviconHref, inferAppEnvironment } from "@/lib/app-env"
 import appCss from "../styles.css?url"
@@ -125,6 +126,7 @@ function RootDocument({ children }: { children: ReactNode }) {
           {`document.documentElement.classList.toggle('dark', localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches))`}
         </ScriptOnce>
         {children}
+        <StaleBundleWatcher />
         <Toaster closeButton richColors />
         {showDevtools ? (
           <TanStackDevtools
