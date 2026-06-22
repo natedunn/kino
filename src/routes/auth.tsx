@@ -70,9 +70,9 @@ function AuthPage() {
           </Button>
           <Link
             className="inline-flex items-center justify-center rounded-md border px-4 py-2 text-sm font-medium transition hover:bg-muted"
-            to="/profile/settings"
+            to="/account/profile"
           >
-            Profile settings
+            Account settings
           </Link>
         </div>
       </main>

@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from "@tanstack/react-router"
-import { ChevronDown, Moon, Settings, Sun, User } from "lucide-react"
+import { ChevronDown, Settings, User } from "lucide-react"
 import type { API } from "@/lib/api"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -9,13 +9,9 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { authClient } from "@/lib/auth/auth-client"
-import { setThemePreference } from "@/lib/theme"
 
 export function UserDropdown({
   user,
@@ -59,29 +55,6 @@ export function UserDropdown({
         <DropdownMenuItem>Your organizations</DropdownMenuItem>
         <DropdownMenuItem>Your projects</DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuSub>
-          <DropdownMenuSubTrigger>
-            <span>Theme</span>
-          </DropdownMenuSubTrigger>
-          <DropdownMenuSubContent>
-            <DropdownMenuItem
-              onClick={() => {
-                setThemePreference("light")
-              }}
-            >
-              <Sun className="mr-2 h-4 w-4" />
-              Light
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => {
-                setThemePreference("dark")
-              }}
-            >
-              <Moon className="mr-2 h-4 w-4" />
-              Dark
-            </DropdownMenuItem>
-          </DropdownMenuSubContent>
-        </DropdownMenuSub>
         {!!orgSlug && (
           <DropdownMenuItem
             onClick={() => {
@@ -98,11 +71,11 @@ export function UserDropdown({
         <DropdownMenuItem
           onClick={() => {
             navigate({
-              to: "/profile/settings",
+              to: "/account/profile",
             })
           }}
         >
-          Settings
+          Account
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
