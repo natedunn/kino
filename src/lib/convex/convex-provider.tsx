@@ -147,10 +147,14 @@ function ConvexAuthWakeRefresher() {
 
     document.addEventListener("visibilitychange", refreshIfStale)
     window.addEventListener("focus", refreshIfStale)
+    // bfcache restore (iOS Safari / Android Chrome) may fire only pageshow,
+    // not focus/visibilitychange — exactly the "wake after hours" case.
+    window.addEventListener("pageshow", refreshIfStale)
 
     return () => {
       document.removeEventListener("visibilitychange", refreshIfStale)
       window.removeEventListener("focus", refreshIfStale)
+      window.removeEventListener("pageshow", refreshIfStale)
     }
   }, [authStore, fetchAccessToken])
 

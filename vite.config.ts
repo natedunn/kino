@@ -13,6 +13,13 @@ const port = process.env.PORT ? Number(process.env.PORT) : undefined
 // server bundles. Lets a long-lived (stale) tab detect that a newer version has
 // been deployed and prompt a reload. Prefer the CI commit SHA, fall back to the
 // local git SHA, then a build timestamp.
+//
+// IMPORTANT: this must resolve to the SAME value for the client and server
+// bundles of a given deploy. That holds because it runs once per `vite build`
+// process and `define` injects the single literal into both. If the build is
+// ever split across separate processes, the commit-SHA paths stay stable but
+// the `Date.now()` fallback would diverge between bundles — making client and
+// server ids permanently mismatch and showing the reload toast on every load.
 function resolveBuildId(): string {
   const fromEnv =
     process.env.WORKERS_CI_COMMIT_SHA ||
