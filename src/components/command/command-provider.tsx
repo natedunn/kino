@@ -77,9 +77,9 @@ export function CommandProvider({ children }: { children: ReactNode }) {
           group: "Global",
           icon: User,
           id: "global.profile-settings",
-          keywords: ["account", "settings"],
-          title: "Go to profile settings",
-          run: () => navigate({ to: "/profile/settings" }),
+          keywords: ["account", "settings", "profile"],
+          title: "Go to account settings",
+          run: () => navigate({ to: "/account/profile" }),
         }
       )
     }

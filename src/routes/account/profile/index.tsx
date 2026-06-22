@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useState } from "react"
-import { useMutation, useQuery } from "@tanstack/react-query"
+import { useMutation, useSuspenseQuery } from "@tanstack/react-query"
 import { useForm } from "@tanstack/react-form"
-import { createFileRoute, useNavigate } from "@tanstack/react-router"
+import {
+  Navigate,
+  createFileRoute,
+  useRouterState,
+} from "@tanstack/react-router"
 
 import { InlineAlert } from "@/components/inline-alert"
-import { EmptyState } from "@/components/kino/common"
 import { Label, LabelDescription, LabelWrapper } from "@/components/label"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -15,11 +18,27 @@ import { crpcServer } from "@/lib/convex/crpc-server"
 import { cn } from "@/lib/utils"
 import { titleMeta } from "@/lib/seo"
 
-type GeneralSettingsFormValues = {
+type ProfileSettingsFormValues = {
   avatarFile: File | null
   name: string
-  slug: string
+  username: string
 }
+
+export const Route = createFileRoute("/account/profile/")({
+  head: () => ({
+    meta: [titleMeta(["Profile", "Account"])],
+  }),
+  loader: async ({ context }) => {
+    if (!context.loaderToken) {
+      return
+    }
+
+    await context.queryClient.ensureQueryData(
+      crpcServer.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
+    )
+  },
+  component: ProfileSettingsRoute,
+})
 
 // Manages the object URL lifecycle so the preview blob is revoked instead of
 // leaking a new URL on every render.
@@ -56,75 +75,52 @@ function AvatarPreview({
   )
 }
 
-export const Route = createFileRoute("/@{$org}/settings/general/")({
-  head: () => ({
-    meta: [titleMeta(["General Settings"])],
-  }),
-  loader: async ({ context, params }) => {
-    await context.queryClient.ensureQueryData(
-      crpcServer.org.getDetails.queryOptions({ slug: params.org })
-    )
-  },
-  component: GeneralSettingsRoute,
-})
+function ProfileSettingsRoute() {
+  const { loaderToken } = Route.useRouteContext()
+  const pathname = useRouterState({
+    select: (state) => state.location.pathname,
+  })
 
-function GeneralSettingsRoute() {
-  const params = Route.useParams()
-  const navigate = useNavigate()
+  if (!loaderToken) {
+    return <Navigate search={{ redirect: pathname }} to="/auth" />
+  }
+
+  return <AuthenticatedProfileSettingsRoute />
+}
+
+function AuthenticatedProfileSettingsRoute() {
   const crpc = useCRPC()
-  const slugUrlPrefix = useMemo(() => {
-    const siteUrl =
-      typeof window === "undefined"
-        ? (import.meta.env.VITE_SITE_URL as string | undefined)
-        : window.location.origin
-
-    return `${(siteUrl ?? "https://kino.io").replace(/^https?:\/\//, "").replace(/\/$/, "")}/@`
-  }, [])
-  const orgQuery = useQuery(
-    crpc.org.getDetails.queryOptions({
-      slug: params.org,
-    })
-  )
-  const updateMutation = useMutation(
-    crpc.org.update.mutationOptions({
-      onSuccess: (org) => {
-        navigate({
-          params: { org: org.slug },
-          to: "/@{$org}/settings/general",
-        })
-      },
-    })
-  )
   const uploadUrlMutation = useMutation(
-    crpc.org.generateAvatarUploadUrl.mutationOptions()
+    crpc.profile.generateAvatarUploadUrl.mutationOptions()
   )
   const syncMetadataMutation = useMutation(
-    crpc.org.syncAvatarMetadata.mutationOptions()
+    crpc.profile.syncMetadata.mutationOptions()
   )
+  const updateMutation = useMutation(crpc.profile.update.mutationOptions())
   const [formError, setFormError] = useState<string | null>(null)
-
-  const org = orgQuery.data?.org
-  const formDefaultValues = useMemo<GeneralSettingsFormValues>(
+  const profileQuery = useSuspenseQuery(
+    crpc.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
+  )
+  const profile = profileQuery.data
+  const formDefaultValues = useMemo<ProfileSettingsFormValues>(
     () => ({
       avatarFile: null,
-      name: org?.name ?? "",
-      slug: org?.slug ?? "",
+      name: profile?.name ?? "",
+      username: profile?.username ?? "",
     }),
-    [org?.name, org?.slug]
+    [profile?.name, profile?.username]
   )
 
   const form = useForm({
     defaultValues: formDefaultValues,
     onSubmit: async ({ value, formApi }) => {
-      const org = orgQuery.data?.org
-      if (!org) return
+      if (!profile) return
       setFormError(null)
 
       try {
+        let imageKey: string | undefined
         if (value.avatarFile) {
-          const { key, url } = await uploadUrlMutation.mutateAsync({
-            organizationId: org.id,
-          })
+          const { key, url } = await uploadUrlMutation.mutateAsync({})
           const response = await fetch(url, {
             body: value.avatarFile,
             headers: { "Content-Type": value.avatarFile.type },
@@ -132,62 +128,60 @@ function GeneralSettingsRoute() {
           })
 
           if (!response.ok) {
-            throw new Error("Organization avatar upload failed")
+            throw new Error("Avatar upload failed")
           }
 
           await syncMetadataMutation.mutateAsync({ key })
+          imageKey = key
         }
 
-        const updatedOrg = await updateMutation.mutateAsync({
-          currentSlug: org.slug,
-          name: value.name.trim(),
-          updatedSlug: value.slug.trim(),
+        const updatedProfile = await updateMutation.mutateAsync({
+          profile: {
+            ...(imageKey ? { imageKey } : {}),
+          },
+          user: {
+            name: value.name,
+            username: value.username,
+          },
         })
-        const refreshedOrg = (await orgQuery.refetch()).data?.org
 
+        // findMyProfile is a reactive Convex query, so its cache updates on its
+        // own once the mutation commits — reset the form from the mutation
+        // result instead of forcing an extra non-reactive refetch.
         formApi.reset({
           avatarFile: null,
-          name: refreshedOrg?.name ?? updatedOrg.name ?? value.name,
-          slug: refreshedOrg?.slug ?? updatedOrg.slug ?? value.slug,
+          name: updatedProfile.name ?? value.name,
+          username: updatedProfile.username ?? value.username,
         })
       } catch (error) {
         setFormError(
-          error instanceof Error
-            ? error.message
-            : "Unable to update organization"
+          error instanceof Error ? error.message : "Unable to update profile"
         )
       }
     },
   })
 
-  if (orgQuery.isLoading) {
-    return <div className="h-64 animate-pulse rounded-xl border bg-muted/30" />
+  if (!profile) {
+    return null
   }
 
-  if (!orgQuery.data?.org || !orgQuery.data.permissions.canEdit) {
-    return (
-      <EmptyState
-        title="Organization editing unavailable"
-        description="Only organization editors can edit this workspace."
-      />
-    )
-  }
+  const isSaving =
+    updateMutation.isPending ||
+    uploadUrlMutation.isPending ||
+    syncMetadataMutation.isPending
 
   return (
     <section className="max-w-3xl">
       <header className="border-b pb-4">
-        <h2 className="text-xl font-semibold">General</h2>
+        <h2 className="text-xl font-semibold">Profile</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Update your organization name and the slug used in URLs across Kino.
+          Manage how you appear across Kino and the URL for your public profile.
         </p>
       </header>
 
       <form
         className={cn("mt-6 flex flex-col gap-6", {
-          "pointer-events-none opacity-50":
-            updateMutation.isPending ||
-            uploadUrlMutation.isPending ||
-            syncMetadataMutation.isPending,
+          "pointer-events-none opacity-50": isSaving,
         })}
         onSubmit={(event) => {
           event.preventDefault()
@@ -203,15 +197,19 @@ function GeneralSettingsRoute() {
                   <LabelWrapper>
                     <Label>Avatar</Label>
                     <LabelDescription>
-                      Used anywhere this organization appears in Kino. JPEG,
-                      PNG, or WebP, up to 5 MB.
+                      Shown anywhere you appear in Kino. JPEG, PNG, or WebP, up
+                      to 5 MB.
                     </LabelDescription>
                   </LabelWrapper>
                   <div className="flex items-center gap-4">
                     <AvatarPreview
-                      alt={org.name}
-                      fallback={org.name[0]?.toUpperCase() ?? ""}
-                      fallbackSrc={org.logo ?? undefined}
+                      alt={profile.name ?? profile.username ?? ""}
+                      fallback={(
+                        profile.name?.[0] ??
+                        profile.username?.[0] ??
+                        ""
+                      ).toUpperCase()}
+                      fallbackSrc={profile.imageUrl ?? undefined}
                       file={field.state.value}
                     />
                     <Input
@@ -242,17 +240,20 @@ function GeneralSettingsRoute() {
               )}
             </form.Field>
 
-            <form.Field name="name">
+            <form.Field name="username">
               {(field) => (
                 <div className="flex flex-col gap-2">
                   <LabelWrapper>
-                    <Label>Name</Label>
+                    <Label>Username</Label>
                     <LabelDescription>
-                      Displayed across Kino on profiles and project pages.
+                      Changes your public profile URL at{" "}
+                      <span className="font-medium text-foreground">
+                        /u/{field.state.value || "username"}
+                      </span>
+                      . Your workspace URL stays separate.
                     </LabelDescription>
                   </LabelWrapper>
                   <Input
-                    autoFocus
                     onChange={(event) => field.handleChange(event.target.value)}
                     value={field.state.value}
                   />
@@ -260,49 +261,38 @@ function GeneralSettingsRoute() {
               )}
             </form.Field>
 
-            <form.Field name="slug">
+            <form.Field name="name">
               {(field) => (
                 <div className="flex flex-col gap-2">
                   <LabelWrapper>
-                    <Label>Slug</Label>
+                    <Label>Name</Label>
                     <LabelDescription>
-                      Unique identifier used in your organization URL.
+                      Your display name across Kino.
                     </LabelDescription>
                   </LabelWrapper>
-                  <div className="flex items-stretch overflow-hidden rounded-md border bg-background focus-within:ring-1 focus-within:ring-ring">
-                    <span className="flex items-center bg-muted/60 px-3 font-mono text-sm text-muted-foreground">
-                      {slugUrlPrefix}
-                    </span>
-                    <Input
-                      className="rounded-none border-0 bg-transparent focus-visible:ring-0"
-                      onChange={(event) =>
-                        field.handleChange(event.target.value)
-                      }
-                      value={field.state.value}
-                    />
-                  </div>
+                  <Input
+                    onChange={(event) => field.handleChange(event.target.value)}
+                    value={field.state.value}
+                  />
                 </div>
               )}
             </form.Field>
+
+            <div className="flex flex-col gap-2">
+              <LabelWrapper>
+                <Label>Email</Label>
+                <LabelDescription>
+                  Manage your email from the Security section.
+                </LabelDescription>
+              </LabelWrapper>
+              <Input disabled value={profile.email ?? ""} />
+            </div>
           </div>
 
-          <div className="flex items-center justify-between gap-3 border-t bg-muted/30 px-6 py-4">
-            <p className="text-xs text-muted-foreground">
-              Changing the slug will update every link to your organization.
-            </p>
-            <form.Subscribe
-              selector={(state) => ({
-                isSubmitting: state.isSubmitting,
-                name: state.values.name,
-              })}
-            >
-              {({ isSubmitting, name }) => {
-                const isSaving =
-                  isSubmitting ||
-                  updateMutation.isPending ||
-                  uploadUrlMutation.isPending ||
-                  syncMetadataMutation.isPending
-                const disabled = !name.trim() || isSaving
+          <div className="flex items-center justify-end gap-3 border-t bg-muted/30 px-6 py-4">
+            <form.Subscribe selector={(state) => state.isSubmitting}>
+              {(isSubmitting) => {
+                const disabled = isSubmitting || isSaving
 
                 return (
                   <Button
@@ -312,7 +302,7 @@ function GeneralSettingsRoute() {
                     disabled={disabled}
                     type="submit"
                   >
-                    {isSaving ? "Saving..." : "Save changes"}
+                    {disabled ? "Saving..." : "Save changes"}
                   </Button>
                 )
               }}
@@ -320,11 +310,8 @@ function GeneralSettingsRoute() {
           </div>
         </div>
 
-        {(formError ?? updateMutation.error) ? (
-          <InlineAlert variant="danger">
-            Unable to update organization:{" "}
-            {formError ?? updateMutation.error?.message}
-          </InlineAlert>
+        {formError ? (
+          <InlineAlert variant="danger">{formError}</InlineAlert>
         ) : null}
       </form>
     </section>

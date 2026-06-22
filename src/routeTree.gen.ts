@@ -13,8 +13,10 @@ import { Route as UiRouteImport } from './routes/ui'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AccountRouteRouteImport } from './routes/account/route'
 import { Route as AtChar123orgChar125RouteRouteImport } from './routes/@{$org}/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AccountIndexRouteImport } from './routes/account/index'
 import { Route as AtChar123orgChar125IndexRouteImport } from './routes/@{$org}/index'
 import { Route as AtChar123orgChar125SettingsRouteRouteImport } from './routes/@{$org}/settings/route'
 import { Route as AtChar123orgChar125OptionsRouteRouteImport } from './routes/@{$org}/options/route'
@@ -22,6 +24,10 @@ import { Route as AtChar123orgChar125ProjectRouteRouteImport } from './routes/@{
 import { Route as UUsernameIndexRouteImport } from './routes/u/$username/index'
 import { Route as ProfileSettingsIndexRouteImport } from './routes/profile/settings/index'
 import { Route as CreateTeamIndexRouteImport } from './routes/create/team/index'
+import { Route as AccountSecurityIndexRouteImport } from './routes/account/security/index'
+import { Route as AccountProfileIndexRouteImport } from './routes/account/profile/index'
+import { Route as AccountNotificationsIndexRouteImport } from './routes/account/notifications/index'
+import { Route as AccountAppearanceIndexRouteImport } from './routes/account/appearance/index'
 import { Route as AtChar123orgChar125SettingsIndexRouteImport } from './routes/@{$org}/settings/index'
 import { Route as AtChar123orgChar125OptionsIndexRouteImport } from './routes/@{$org}/options/index'
 import { Route as AtChar123orgChar125EditIndexRouteImport } from './routes/@{$org}/edit/index'
@@ -86,6 +92,11 @@ const AdminRoute = AdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AccountRouteRoute = AccountRouteRouteImport.update({
+  id: '/account',
+  path: '/account',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AtChar123orgChar125RouteRoute =
   AtChar123orgChar125RouteRouteImport.update({
     id: '/@{$org}',
@@ -96,6 +107,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AccountIndexRoute = AccountIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AccountRouteRoute,
 } as any)
 const AtChar123orgChar125IndexRoute =
   AtChar123orgChar125IndexRouteImport.update({
@@ -135,6 +151,27 @@ const CreateTeamIndexRoute = CreateTeamIndexRouteImport.update({
   id: '/create/team/',
   path: '/create/team/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AccountSecurityIndexRoute = AccountSecurityIndexRouteImport.update({
+  id: '/security/',
+  path: '/security/',
+  getParentRoute: () => AccountRouteRoute,
+} as any)
+const AccountProfileIndexRoute = AccountProfileIndexRouteImport.update({
+  id: '/profile/',
+  path: '/profile/',
+  getParentRoute: () => AccountRouteRoute,
+} as any)
+const AccountNotificationsIndexRoute =
+  AccountNotificationsIndexRouteImport.update({
+    id: '/notifications/',
+    path: '/notifications/',
+    getParentRoute: () => AccountRouteRoute,
+  } as any)
+const AccountAppearanceIndexRoute = AccountAppearanceIndexRouteImport.update({
+  id: '/appearance/',
+  path: '/appearance/',
+  getParentRoute: () => AccountRouteRoute,
 } as any)
 const AtChar123orgChar125SettingsIndexRoute =
   AtChar123orgChar125SettingsIndexRouteImport.update({
@@ -395,6 +432,7 @@ const AtChar123orgChar125ProjectFeedbackBoardsBoardEditRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/@{$org}': typeof AtChar123orgChar125RouteRouteWithChildren
+  '/account': typeof AccountRouteRouteWithChildren
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
@@ -403,6 +441,7 @@ export interface FileRoutesByFullPath {
   '/@{$org}/options': typeof AtChar123orgChar125OptionsRouteRouteWithChildren
   '/@{$org}/settings': typeof AtChar123orgChar125SettingsRouteRouteWithChildren
   '/@{$org}/': typeof AtChar123orgChar125IndexRoute
+  '/account/': typeof AccountIndexRoute
   '/@{$org}/$project/feedback': typeof AtChar123orgChar125ProjectFeedbackRouteRouteWithChildren
   '/@{$org}/$project/options': typeof AtChar123orgChar125ProjectOptionsRouteRouteWithChildren
   '/@{$org}/$project/settings': typeof AtChar123orgChar125ProjectSettingsRouteRouteWithChildren
@@ -414,6 +453,10 @@ export interface FileRoutesByFullPath {
   '/@{$org}/edit/': typeof AtChar123orgChar125EditIndexRoute
   '/@{$org}/options/': typeof AtChar123orgChar125OptionsIndexRoute
   '/@{$org}/settings/': typeof AtChar123orgChar125SettingsIndexRoute
+  '/account/appearance/': typeof AccountAppearanceIndexRoute
+  '/account/notifications/': typeof AccountNotificationsIndexRoute
+  '/account/profile/': typeof AccountProfileIndexRoute
+  '/account/security/': typeof AccountSecurityIndexRoute
   '/create/team/': typeof CreateTeamIndexRoute
   '/profile/settings/': typeof ProfileSettingsIndexRoute
   '/u/$username/': typeof UUsernameIndexRoute
@@ -457,6 +500,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/ui': typeof UiRoute
   '/@{$org}': typeof AtChar123orgChar125IndexRoute
+  '/account': typeof AccountIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/github/$': typeof ApiGithubSplatRoute
   '/api/github/callback': typeof ApiGithubCallbackRoute
@@ -465,6 +509,10 @@ export interface FileRoutesByTo {
   '/@{$org}/edit': typeof AtChar123orgChar125EditIndexRoute
   '/@{$org}/options': typeof AtChar123orgChar125OptionsIndexRoute
   '/@{$org}/settings': typeof AtChar123orgChar125SettingsIndexRoute
+  '/account/appearance': typeof AccountAppearanceIndexRoute
+  '/account/notifications': typeof AccountNotificationsIndexRoute
+  '/account/profile': typeof AccountProfileIndexRoute
+  '/account/security': typeof AccountSecurityIndexRoute
   '/create/team': typeof CreateTeamIndexRoute
   '/profile/settings': typeof ProfileSettingsIndexRoute
   '/u/$username': typeof UUsernameIndexRoute
@@ -505,6 +553,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/@{$org}': typeof AtChar123orgChar125RouteRouteWithChildren
+  '/account': typeof AccountRouteRouteWithChildren
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
@@ -513,6 +562,7 @@ export interface FileRoutesById {
   '/@{$org}/options': typeof AtChar123orgChar125OptionsRouteRouteWithChildren
   '/@{$org}/settings': typeof AtChar123orgChar125SettingsRouteRouteWithChildren
   '/@{$org}/': typeof AtChar123orgChar125IndexRoute
+  '/account/': typeof AccountIndexRoute
   '/@{$org}/$project/feedback': typeof AtChar123orgChar125ProjectFeedbackRouteRouteWithChildren
   '/@{$org}/$project/options': typeof AtChar123orgChar125ProjectOptionsRouteRouteWithChildren
   '/@{$org}/$project/settings': typeof AtChar123orgChar125ProjectSettingsRouteRouteWithChildren
@@ -524,6 +574,10 @@ export interface FileRoutesById {
   '/@{$org}/edit/': typeof AtChar123orgChar125EditIndexRoute
   '/@{$org}/options/': typeof AtChar123orgChar125OptionsIndexRoute
   '/@{$org}/settings/': typeof AtChar123orgChar125SettingsIndexRoute
+  '/account/appearance/': typeof AccountAppearanceIndexRoute
+  '/account/notifications/': typeof AccountNotificationsIndexRoute
+  '/account/profile/': typeof AccountProfileIndexRoute
+  '/account/security/': typeof AccountSecurityIndexRoute
   '/create/team/': typeof CreateTeamIndexRoute
   '/profile/settings/': typeof ProfileSettingsIndexRoute
   '/u/$username/': typeof UUsernameIndexRoute
@@ -565,6 +619,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/@{$org}'
+    | '/account'
     | '/admin'
     | '/auth'
     | '/dashboard'
@@ -573,6 +628,7 @@ export interface FileRouteTypes {
     | '/@{$org}/options'
     | '/@{$org}/settings'
     | '/@{$org}/'
+    | '/account/'
     | '/@{$org}/$project/feedback'
     | '/@{$org}/$project/options'
     | '/@{$org}/$project/settings'
@@ -584,6 +640,10 @@ export interface FileRouteTypes {
     | '/@{$org}/edit/'
     | '/@{$org}/options/'
     | '/@{$org}/settings/'
+    | '/account/appearance/'
+    | '/account/notifications/'
+    | '/account/profile/'
+    | '/account/security/'
     | '/create/team/'
     | '/profile/settings/'
     | '/u/$username/'
@@ -627,6 +687,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/ui'
     | '/@{$org}'
+    | '/account'
     | '/api/auth/$'
     | '/api/github/$'
     | '/api/github/callback'
@@ -635,6 +696,10 @@ export interface FileRouteTypes {
     | '/@{$org}/edit'
     | '/@{$org}/options'
     | '/@{$org}/settings'
+    | '/account/appearance'
+    | '/account/notifications'
+    | '/account/profile'
+    | '/account/security'
     | '/create/team'
     | '/profile/settings'
     | '/u/$username'
@@ -674,6 +739,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/@{$org}'
+    | '/account'
     | '/admin'
     | '/auth'
     | '/dashboard'
@@ -682,6 +748,7 @@ export interface FileRouteTypes {
     | '/@{$org}/options'
     | '/@{$org}/settings'
     | '/@{$org}/'
+    | '/account/'
     | '/@{$org}/$project/feedback'
     | '/@{$org}/$project/options'
     | '/@{$org}/$project/settings'
@@ -693,6 +760,10 @@ export interface FileRouteTypes {
     | '/@{$org}/edit/'
     | '/@{$org}/options/'
     | '/@{$org}/settings/'
+    | '/account/appearance/'
+    | '/account/notifications/'
+    | '/account/profile/'
+    | '/account/security/'
     | '/create/team/'
     | '/profile/settings/'
     | '/u/$username/'
@@ -733,6 +804,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AtChar123orgChar125RouteRoute: typeof AtChar123orgChar125RouteRouteWithChildren
+  AccountRouteRoute: typeof AccountRouteRouteWithChildren
   AdminRoute: typeof AdminRoute
   AuthRoute: typeof AuthRoute
   DashboardRoute: typeof DashboardRoute
@@ -775,6 +847,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/account': {
+      id: '/account'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof AccountRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/@{$org}': {
       id: '/@{$org}'
       path: '/@{$org}'
@@ -788,6 +867,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/account/': {
+      id: '/account/'
+      path: '/'
+      fullPath: '/account/'
+      preLoaderRoute: typeof AccountIndexRouteImport
+      parentRoute: typeof AccountRouteRoute
     }
     '/@{$org}/': {
       id: '/@{$org}/'
@@ -837,6 +923,34 @@ declare module '@tanstack/react-router' {
       fullPath: '/create/team/'
       preLoaderRoute: typeof CreateTeamIndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/account/security/': {
+      id: '/account/security/'
+      path: '/security'
+      fullPath: '/account/security/'
+      preLoaderRoute: typeof AccountSecurityIndexRouteImport
+      parentRoute: typeof AccountRouteRoute
+    }
+    '/account/profile/': {
+      id: '/account/profile/'
+      path: '/profile'
+      fullPath: '/account/profile/'
+      preLoaderRoute: typeof AccountProfileIndexRouteImport
+      parentRoute: typeof AccountRouteRoute
+    }
+    '/account/notifications/': {
+      id: '/account/notifications/'
+      path: '/notifications'
+      fullPath: '/account/notifications/'
+      preLoaderRoute: typeof AccountNotificationsIndexRouteImport
+      parentRoute: typeof AccountRouteRoute
+    }
+    '/account/appearance/': {
+      id: '/account/appearance/'
+      path: '/appearance'
+      fullPath: '/account/appearance/'
+      preLoaderRoute: typeof AccountAppearanceIndexRouteImport
+      parentRoute: typeof AccountRouteRoute
     }
     '/@{$org}/settings/': {
       id: '/@{$org}/settings/'
@@ -1354,9 +1468,30 @@ const AtChar123orgChar125RouteRouteWithChildren =
     AtChar123orgChar125RouteRouteChildren,
   )
 
+interface AccountRouteRouteChildren {
+  AccountIndexRoute: typeof AccountIndexRoute
+  AccountAppearanceIndexRoute: typeof AccountAppearanceIndexRoute
+  AccountNotificationsIndexRoute: typeof AccountNotificationsIndexRoute
+  AccountProfileIndexRoute: typeof AccountProfileIndexRoute
+  AccountSecurityIndexRoute: typeof AccountSecurityIndexRoute
+}
+
+const AccountRouteRouteChildren: AccountRouteRouteChildren = {
+  AccountIndexRoute: AccountIndexRoute,
+  AccountAppearanceIndexRoute: AccountAppearanceIndexRoute,
+  AccountNotificationsIndexRoute: AccountNotificationsIndexRoute,
+  AccountProfileIndexRoute: AccountProfileIndexRoute,
+  AccountSecurityIndexRoute: AccountSecurityIndexRoute,
+}
+
+const AccountRouteRouteWithChildren = AccountRouteRoute._addFileChildren(
+  AccountRouteRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AtChar123orgChar125RouteRoute: AtChar123orgChar125RouteRouteWithChildren,
+  AccountRouteRoute: AccountRouteRouteWithChildren,
   AdminRoute: AdminRoute,
   AuthRoute: AuthRoute,
   DashboardRoute: DashboardRoute,
