@@ -24,6 +24,23 @@ const dropdownMenuItemSizeVariants = cva("", {
   },
 })
 
+// Labels share the same text/vertical rhythm as items so headings scale with
+// the surrounding menu size, but without the item gap/icon sizing.
+const dropdownMenuLabelSizeVariants = cva("", {
+  variants: {
+    size: {
+      xs: "py-1 text-xs",
+      sm: "py-1 text-sm",
+      default: "py-1.5 text-sm",
+      lg: "py-2 text-base",
+      xl: "py-2.5 text-base",
+    },
+  },
+  defaultVariants: {
+    size: "default",
+  },
+})
+
 const DropdownMenuSizeContext = React.createContext<DropdownMenuSize>("default")
 
 function useDropdownMenuSize(size?: DropdownMenuSize) {
@@ -237,16 +254,21 @@ function DropdownMenuRadioItem({
 function DropdownMenuLabel({
   className,
   inset,
+  size,
   ...props
 }: React.ComponentProps<"div"> & {
   inset?: boolean
+  size?: DropdownMenuSize
 }) {
+  const resolvedSize = useDropdownMenuSize(size)
   return (
     <div
       data-slot="dropdown-menu-label"
       data-inset={inset}
+      data-size={resolvedSize}
       className={cn(
-        "px-2 py-1.5 text-sm font-medium data-[inset]:pl-8",
+        "px-2 font-medium data-[inset]:pl-8",
+        dropdownMenuLabelSizeVariants({ size: resolvedSize }),
         className
       )}
       {...props}

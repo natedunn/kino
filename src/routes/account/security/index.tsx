@@ -14,7 +14,7 @@ import { titleMeta } from "@/lib/seo"
 
 export const Route = createFileRoute("/account/security/")({
   head: () => ({
-    meta: [titleMeta(["Account"])],
+    meta: [titleMeta(["Security", "Account"])],
   }),
   loader: async ({ context }) => {
     if (!context.loaderToken) {
@@ -55,7 +55,7 @@ function AuthenticatedSecurityRoute() {
   return (
     <section className="flex max-w-3xl flex-col gap-6">
       <header className="border-b pb-4">
-        <h2 className="text-xl font-semibold">Account</h2>
+        <h2 className="text-xl font-semibold">Security</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           Manage the email and security settings for your account.
         </p>

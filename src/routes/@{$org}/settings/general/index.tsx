@@ -9,6 +9,7 @@ import { Label, LabelDescription, LabelWrapper } from "@/components/label"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { ALLOWED_AVATAR_TYPES, validateAvatarFile } from "@/lib/avatar"
 import { useCRPC } from "@/lib/convex/crpc"
 import { crpcServer } from "@/lib/convex/crpc-server"
 import { cn } from "@/lib/utils"
@@ -18,39 +19,6 @@ type GeneralSettingsFormValues = {
   avatarFile: File | null
   name: string
   slug: string
-}
-
-// Keep in sync with the server-side allowlist in convex/lib/storage.ts.
-const MAX_AVATAR_BYTES = 5 * 1024 * 1024
-const ALLOWED_AVATAR_TYPES = ["image/jpeg", "image/png", "image/webp"]
-
-// Detect animated WebP without decoding the whole file: a still WebP either has
-// no VP8X chunk, or a VP8X chunk whose animation flag (bit 1) is unset and no
-// ANIM chunk present.
-async function isAnimatedWebp(file: File): Promise<boolean> {
-  const buffer = new Uint8Array(await file.slice(0, 1024).arrayBuffer())
-  const matchesAscii = (offset: number, text: string) =>
-    text.split("").every((char, i) => buffer[offset + i] === char.charCodeAt(0))
-
-  if (!matchesAscii(0, "RIFF") || !matchesAscii(8, "WEBP")) return false
-  if (matchesAscii(12, "VP8X") && ((buffer[20] ?? 0) & 0x02) !== 0) return true
-  for (let i = 12; i < buffer.length - 4; i++) {
-    if (matchesAscii(i, "ANIM")) return true
-  }
-  return false
-}
-
-async function validateAvatarFile(file: File): Promise<string | null> {
-  if (!ALLOWED_AVATAR_TYPES.includes(file.type)) {
-    return "Avatar must be a JPEG, PNG, or WebP image."
-  }
-  if (file.size > MAX_AVATAR_BYTES) {
-    return "Avatar must be 5 MB or smaller."
-  }
-  if (file.type === "image/webp" && (await isAnimatedWebp(file))) {
-    return "Animated images are not supported. Please upload a static image."
-  }
-  return null
 }
 
 // Manages the object URL lifecycle so the preview blob is revoked instead of
@@ -352,7 +320,7 @@ function GeneralSettingsRoute() {
           </div>
         </div>
 
-        {formError ?? updateMutation.error ? (
+        {(formError ?? updateMutation.error) ? (
           <InlineAlert variant="danger">
             Unable to update organization:{" "}
             {formError ?? updateMutation.error?.message}

@@ -12,6 +12,7 @@ import { Label, LabelDescription, LabelWrapper } from "@/components/label"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { ALLOWED_AVATAR_TYPES, validateAvatarFile } from "@/lib/avatar"
 import { useCRPC } from "@/lib/convex/crpc"
 import { crpcServer } from "@/lib/convex/crpc-server"
 import { cn } from "@/lib/utils"
@@ -143,15 +144,14 @@ function AuthenticatedProfileSettingsRoute() {
             username: value.username,
           },
         })
-        const refreshedProfile = (await profileQuery.refetch()).data
 
+        // findMyProfile is a reactive Convex query, so its cache updates on its
+        // own once the mutation commits — reset the form from the mutation
+        // result instead of forcing an extra non-reactive refetch.
         formApi.reset({
           avatarFile: null,
-          name: refreshedProfile?.name ?? updatedProfile.name ?? value.name,
-          username:
-            refreshedProfile?.username ??
-            updatedProfile.username ??
-            value.username,
+          name: updatedProfile.name ?? value.name,
+          username: updatedProfile.username ?? value.username,
         })
       } catch (error) {
         setFormError(
@@ -197,7 +197,8 @@ function AuthenticatedProfileSettingsRoute() {
                   <LabelWrapper>
                     <Label>Avatar</Label>
                     <LabelDescription>
-                      Shown anywhere you appear in Kino.
+                      Shown anywhere you appear in Kino. JPEG, PNG, or WebP, up
+                      to 5 MB.
                     </LabelDescription>
                   </LabelWrapper>
                   <div className="flex items-center gap-4">
@@ -212,9 +213,25 @@ function AuthenticatedProfileSettingsRoute() {
                       file={field.state.value}
                     />
                     <Input
+                      accept={ALLOWED_AVATAR_TYPES.join(",")}
                       className="h-auto! max-w-sm py-4 file:h-auto file:leading-4 hocus:bg-accent/50"
-                      onChange={(event) => {
-                        field.handleChange(event.target.files?.[0] ?? null)
+                      onChange={async (event) => {
+                        const file = event.target.files?.[0] ?? null
+                        if (!file) {
+                          field.handleChange(null)
+                          return
+                        }
+
+                        const validationError = await validateAvatarFile(file)
+                        if (validationError) {
+                          setFormError(validationError)
+                          field.handleChange(null)
+                          event.target.value = ""
+                          return
+                        }
+
+                        setFormError(null)
+                        field.handleChange(file)
                       }}
                       type="file"
                     />
@@ -265,7 +282,7 @@ function AuthenticatedProfileSettingsRoute() {
               <LabelWrapper>
                 <Label>Email</Label>
                 <LabelDescription>
-                  Manage your email from the Account section.
+                  Manage your email from the Security section.
                 </LabelDescription>
               </LabelWrapper>
               <Input disabled value={profile.email ?? ""} />

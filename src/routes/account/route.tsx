@@ -55,7 +55,7 @@ const navItems = [
   },
   {
     icon: ShieldCheck,
-    label: "Account",
+    label: "Security",
     to: "/account/security" as const,
   },
 ]
@@ -75,22 +75,22 @@ function AccountRoute() {
 
 function AuthenticatedAccountShell() {
   const crpc = useCRPC()
-  const { loaderToken } = Route.useRouteContext()
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
   })
+  // Suspense guarantees the profile is resolved by the time we render, so the
+  // nav never needs a pending state here.
   const profileQuery = useSuspenseQuery(
     crpc.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
   )
-  const isUserPending = !!loaderToken && profileQuery.data === undefined
   const activeItem =
     navItems.find((item) => pathname.startsWith(item.to)) ?? navItems[0]
   const ActiveIcon = activeItem.icon
 
   return (
-    <div className="flex min-h-screen w-full flex-col">
+    <div className="flex min-h-dvh w-full flex-col">
       <div className="flex w-full flex-1 flex-col">
-        <MainNav isUserPending={isUserPending} user={profileQuery.data} />
+        <MainNav isUserPending={false} user={profileQuery.data} />
         <div className="container flex flex-1 flex-col overflow-visible">
           {/* Mobile: section navigation collapses into a dropdown. */}
           <div className="py-4 md:hidden">

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useSyncExternalStore } from "react"
 import { createFileRoute } from "@tanstack/react-router"
 import { Check, Moon, Sun } from "lucide-react"
 
@@ -6,7 +6,9 @@ import { cn } from "@/lib/utils"
 import { titleMeta } from "@/lib/seo"
 import {
   getCurrentThemePreference,
+  getServerThemePreference,
   setThemePreference,
+  subscribeThemePreference,
   type ThemePreference,
 } from "@/lib/theme"
 
@@ -38,16 +40,16 @@ const themeOptions: Array<{
 ]
 
 function AppearanceRoute() {
-  const [theme, setTheme] = useState<ThemePreference>("light")
-
-  // Read the active theme after mount to avoid an SSR/client mismatch.
-  useEffect(() => {
-    setTheme(getCurrentThemePreference())
-  }, [])
+  // Read the active theme synchronously via the external store: avoids the
+  // post-mount flash of the wrong active card while staying SSR-safe.
+  const theme = useSyncExternalStore(
+    subscribeThemePreference,
+    getCurrentThemePreference,
+    getServerThemePreference
+  )
 
   const handleSelect = (value: ThemePreference) => {
     setThemePreference(value)
-    setTheme(value)
   }
 
   return (
@@ -68,6 +70,7 @@ function AppearanceRoute() {
             <button
               key={option.value}
               type="button"
+              aria-pressed={isActive}
               onClick={() => handleSelect(option.value)}
               className={cn(
                 "group flex flex-col gap-3 rounded-xl border bg-card p-4 text-left transition-colors hocus:border-foreground/30",
