@@ -14,6 +14,12 @@ import { useCRPC } from "@/lib/convex/crpc"
 import { crpcServer } from "@/lib/convex/crpc-server"
 import { cn } from "@/lib/utils"
 import { titleMeta } from "@/lib/seo"
+import {
+  FORM_LIMITS,
+  SLUG_INPUT_PATTERN,
+  orgFormSchema,
+  validationMessage,
+} from "@/lib/validation"
 
 type GeneralSettingsFormValues = {
   avatarFile: File | null
@@ -61,9 +67,14 @@ export const Route = createFileRoute("/@{$org}/settings/general/")({
     meta: [titleMeta(["General Settings"])],
   }),
   loader: async ({ context, params }) => {
-    await context.queryClient.ensureQueryData(
-      crpcServer.org.getDetails.queryOptions({ slug: params.org })
-    )
+    if (context.loaderToken) {
+      await context.queryClient.ensureQueryData(
+        crpcServer.org.getDetails.queryOptions(
+          { slug: params.org },
+          { skipUnauth: true }
+        )
+      )
+    }
   },
   component: GeneralSettingsRoute,
 })
@@ -81,20 +92,14 @@ function GeneralSettingsRoute() {
     return `${(siteUrl ?? "https://kino.io").replace(/^https?:\/\//, "").replace(/\/$/, "")}/@`
   }, [])
   const orgQuery = useQuery(
-    crpc.org.getDetails.queryOptions({
-      slug: params.org,
-    })
-  )
-  const updateMutation = useMutation(
-    crpc.org.update.mutationOptions({
-      onSuccess: (org) => {
-        navigate({
-          params: { org: org.slug },
-          to: "/@{$org}/settings/general",
-        })
+    crpc.org.getDetails.queryOptions(
+      {
+        slug: params.org,
       },
-    })
+      { skipUnauth: true }
+    )
   )
+  const updateMutation = useMutation(crpc.org.update.mutationOptions())
   const uploadUrlMutation = useMutation(
     crpc.org.generateAvatarUploadUrl.mutationOptions()
   )
@@ -121,6 +126,16 @@ function GeneralSettingsRoute() {
       setFormError(null)
 
       try {
+        const parsed = orgFormSchema.safeParse({
+          name: value.name,
+          slug: value.slug,
+          visibility: org.visibility,
+        })
+        if (!parsed.success) {
+          setFormError(validationMessage(parsed.error))
+          return
+        }
+
         if (value.avatarFile) {
           const { key, url } = await uploadUrlMutation.mutateAsync({
             organizationId: org.id,
@@ -140,16 +155,23 @@ function GeneralSettingsRoute() {
 
         const updatedOrg = await updateMutation.mutateAsync({
           currentSlug: org.slug,
-          name: value.name.trim(),
-          updatedSlug: value.slug.trim(),
+          name: parsed.data.name,
+          updatedSlug: parsed.data.slug || undefined,
         })
-        const refreshedOrg = (await orgQuery.refetch()).data?.org
 
         formApi.reset({
           avatarFile: null,
-          name: refreshedOrg?.name ?? updatedOrg.name ?? value.name,
-          slug: refreshedOrg?.slug ?? updatedOrg.slug ?? value.slug,
+          name: updatedOrg.name ?? value.name,
+          slug: updatedOrg.slug ?? value.slug,
         })
+
+        if (updatedOrg.slug !== params.org) {
+          await navigate({
+            params: { org: updatedOrg.slug },
+            replace: true,
+            to: "/@{$org}/settings/general",
+          })
+        }
       } catch (error) {
         setFormError(
           error instanceof Error
@@ -253,6 +275,7 @@ function GeneralSettingsRoute() {
                   </LabelWrapper>
                   <Input
                     autoFocus
+                    maxLength={FORM_LIMITS.orgName}
                     onChange={(event) => field.handleChange(event.target.value)}
                     value={field.state.value}
                   />
@@ -274,10 +297,14 @@ function GeneralSettingsRoute() {
                       {slugUrlPrefix}
                     </span>
                     <Input
+                      autoCapitalize="none"
                       className="rounded-none border-0 bg-transparent focus-visible:ring-0"
+                      maxLength={FORM_LIMITS.orgSlug}
                       onChange={(event) =>
                         field.handleChange(event.target.value)
                       }
+                      pattern={SLUG_INPUT_PATTERN}
+                      spellCheck={false}
                       value={field.state.value}
                     />
                   </div>

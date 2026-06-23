@@ -22,6 +22,12 @@ import { useCRPC } from "@/lib/convex/crpc"
 import { crpcServer } from "@/lib/convex/crpc-server"
 import { cn } from "@/lib/utils"
 import { titleMeta } from "@/lib/seo"
+import {
+  FORM_LIMITS,
+  SLUG_INPUT_PATTERN,
+  orgFormSchema,
+  validationMessage,
+} from "@/lib/validation"
 
 export const Route = createFileRoute("/create/team/")({
   head: () => ({
@@ -78,11 +84,16 @@ function AuthenticatedCreateTeamRoute() {
     },
     onSubmit: async ({ value }) => {
       setFormError(undefined)
+      const parsed = orgFormSchema.safeParse(value)
+      if (!parsed.success) {
+        setFormError(validationMessage(parsed.error))
+        return
+      }
       await createMutation.mutateAsync({
         ...(value.logo ? { logo: value.logo } : {}),
-        name: value.name,
-        slug: value.slug,
-        visibility: value.visibility,
+        name: parsed.data.name,
+        ...(parsed.data.slug ? { slug: parsed.data.slug } : {}),
+        visibility: parsed.data.visibility,
       })
     },
   })
@@ -120,6 +131,7 @@ function AuthenticatedCreateTeamRoute() {
                   <div className="flex flex-1 flex-col gap-2">
                     <label className="text-sm font-medium">Team name</label>
                     <Input
+                      maxLength={FORM_LIMITS.orgName}
                       onChange={(event) =>
                         field.handleChange(event.target.value)
                       }
@@ -136,9 +148,13 @@ function AuthenticatedCreateTeamRoute() {
                   <div className="flex flex-1 flex-col gap-2">
                     <label className="text-sm font-medium">Slug</label>
                     <Input
+                      autoCapitalize="none"
+                      maxLength={FORM_LIMITS.orgSlug}
                       onChange={(event) =>
                         field.handleChange(event.target.value)
                       }
+                      pattern={SLUG_INPUT_PATTERN}
+                      spellCheck={false}
                       value={field.state.value}
                     />
                   </div>

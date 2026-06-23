@@ -15,8 +15,19 @@ export const Route = createFileRoute("/@{$org}/settings/integrations/")({
   }),
   loader: async ({ context, params }) => {
     if (!context.loaderToken) return
+    const orgData = await context.queryClient.ensureQueryData(
+      crpcServer.org.getDetails.queryOptions(
+        { slug: params.org },
+        { skipUnauth: true }
+      )
+    )
+    if (!orgData?.org) return
+
     await context.queryClient.ensureQueryData(
-      crpcServer.github.getOrgIntegration.queryOptions({ orgSlug: params.org })
+      crpcServer.github.getOrgIntegration.queryOptions(
+        { orgSlug: params.org },
+        { skipUnauth: true }
+      )
     )
   },
   component: IntegrationsSettingsRoute,
@@ -27,10 +38,16 @@ function IntegrationsSettingsRoute() {
   const search = Route.useSearch() as { github?: string }
   const crpc = useCRPC()
 
+  const orgQuery = useQuery(
+    crpc.org.getDetails.queryOptions({ slug: params.org }, { skipUnauth: true })
+  )
   const integrationQuery = useQuery(
-    crpc.github.getOrgIntegration.queryOptions({
-      orgSlug: params.org,
-    })
+    crpc.github.getOrgIntegration.queryOptions(
+      {
+        orgSlug: params.org,
+      },
+      { enabled: !!orgQuery.data?.org, skipUnauth: true }
+    )
   )
   const startConnection = useMutation(
     crpc.github.startOrgConnection.mutationOptions({
@@ -50,8 +67,17 @@ function IntegrationsSettingsRoute() {
   const installations = integrationQuery.data?.installations ?? []
   const hasInstallations = installations.length > 0
 
-  if (integrationQuery.isLoading) {
+  if (orgQuery.isLoading || integrationQuery.isLoading) {
     return <div className="h-64 animate-pulse rounded-xl border bg-muted/30" />
+  }
+
+  if (!orgQuery.data?.org) {
+    return (
+      <EmptyState
+        title="Organization unavailable"
+        description="This organization no longer exists at this URL."
+      />
+    )
   }
 
   if (integrationQuery.error) {

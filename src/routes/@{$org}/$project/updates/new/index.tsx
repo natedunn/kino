@@ -27,6 +27,7 @@ import { authClient } from "@/lib/convex/auth-client"
 import { useCRPC } from "@/lib/convex/crpc"
 import { useSidebarState } from "@/lib/hooks/use-sidebar-state"
 import { cn } from "@/lib/utils"
+import { updateFormSchema, validationMessage } from "@/lib/validation"
 
 import {
   CategoryBadge,
@@ -105,17 +106,26 @@ function NewUpdateRoute() {
       setFormError("")
       const project = projectQuery.data?.project
       if (!project) return
+      const parsed = updateFormSchema.safeParse({
+        content: sanitizeEditorContent(value.content),
+        tags: value.tags,
+        title: value.title,
+      })
+      if (!parsed.success) {
+        setFormError(validationMessage(parsed.error))
+        return
+      }
 
       const data = await createMutation.mutateAsync({
         category: value.category,
-        content: sanitizeEditorContent(value.content),
+        content: parsed.data.content,
         projectId: project.id,
         relatedFeedbackIds:
           value.relatedFeedbackIds.length > 0
             ? value.relatedFeedbackIds
             : undefined,
-        tags: value.tags,
-        title: value.title,
+        tags: parsed.data.tags,
+        title: parsed.data.title,
       })
       form.reset()
       navigate({
@@ -172,16 +182,25 @@ function NewUpdateRoute() {
     if (!value.title.trim() || !sanitizeEditorContent(value.content)) return
 
     try {
+      const parsed = updateFormSchema.safeParse({
+        content: sanitizeEditorContent(value.content),
+        tags: value.tags,
+        title: value.title,
+      })
+      if (!parsed.success) {
+        setFormError(validationMessage(parsed.error))
+        return
+      }
       const created = await createMutation.mutateAsync({
         category: value.category,
-        content: sanitizeEditorContent(value.content),
+        content: parsed.data.content,
         projectId: project.id,
         relatedFeedbackIds:
           value.relatedFeedbackIds.length > 0
             ? value.relatedFeedbackIds
             : undefined,
-        tags: value.tags,
-        title: value.title,
+        tags: parsed.data.tags,
+        title: parsed.data.title,
       })
       pendingPublishRef.current = { id: created.updateId, slug: created.slug }
       await publishMutation.mutateAsync({ id: created.updateId })

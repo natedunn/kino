@@ -13,17 +13,21 @@ import { useCRPC } from "@/lib/convex/crpc"
 import { crpcServer } from "@/lib/convex/crpc-server"
 import { cn } from "@/lib/utils"
 import { titleMeta } from "@/lib/seo"
+import { FORM_LIMITS, emailSchema } from "@/lib/validation"
 
 export const Route = createFileRoute("/@{$org}/settings/members/")({
   head: () => ({
     meta: [titleMeta(["Members"])],
   }),
   loader: async ({ context, params }) => {
-    await context.queryClient.ensureQueryData(
-      crpcServer.org.getDetails.queryOptions({ slug: params.org })
-    )
     if (context.loaderToken) {
       await Promise.all([
+        context.queryClient.ensureQueryData(
+          crpcServer.org.getDetails.queryOptions(
+            { slug: params.org },
+            { skipUnauth: true }
+          )
+        ),
         context.queryClient.ensureQueryData(
           crpcServer.orgMember.listMembers.queryOptions({ slug: params.org })
         ),
@@ -52,7 +56,7 @@ function MembersSettingsRoute() {
   const crpc = useCRPC()
 
   const orgQuery = useQuery(
-    crpc.org.getDetails.queryOptions({ slug: params.org })
+    crpc.org.getDetails.queryOptions({ slug: params.org }, { skipUnauth: true })
   )
   const membersQuery = useQuery(
     crpc.orgMember.listMembers.queryOptions({ slug: params.org })
@@ -74,6 +78,7 @@ function MembersSettingsRoute() {
 
   const [email, setEmail] = useState("")
   const [inviteRole, setInviteRole] = useState<AssignableRole>("editor")
+  const [formError, setFormError] = useState<string | null>(null)
 
   const data = membersQuery.data
   const organizationId = orgQuery.data?.org?.id
@@ -123,10 +128,15 @@ function MembersSettingsRoute() {
         className="mt-6 flex flex-col gap-3 rounded-xl border bg-card p-6 sm:flex-row sm:items-end"
         onSubmit={(event) => {
           event.preventDefault()
-          if (!email.trim()) return
+          setFormError(null)
+          const parsed = emailSchema.safeParse(email)
+          if (!parsed.success) {
+            setFormError(parsed.error.issues[0]?.message ?? "Invalid email")
+            return
+          }
           invite.mutate(
             {
-              email: email.trim(),
+              email: parsed.data,
               organizationId,
               role: inviteRole,
             },
@@ -139,11 +149,14 @@ function MembersSettingsRoute() {
             Invite by email
           </label>
           <Input
+            autoCapitalize="none"
             id="invite-email"
-            type="email"
-            placeholder="teammate@example.com"
-            value={email}
+            maxLength={FORM_LIMITS.email}
             onChange={(event) => setEmail(event.target.value)}
+            placeholder="teammate@example.com"
+            spellCheck={false}
+            type="email"
+            value={email}
           />
         </div>
         <div className="flex flex-col gap-2">
@@ -161,9 +174,9 @@ function MembersSettingsRoute() {
         </Button>
       </form>
 
-      {actionError ? (
+      {(formError ?? actionError) ? (
         <div className="mt-4">
-          <InlineAlert variant="danger">{actionError}</InlineAlert>
+          <InlineAlert variant="danger">{formError ?? actionError}</InlineAlert>
         </div>
       ) : null}
 

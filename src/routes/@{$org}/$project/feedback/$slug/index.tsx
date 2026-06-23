@@ -104,6 +104,7 @@ import {
   formatRelativeDay,
   formatTimestamp,
 } from "@/lib/utils/format-timestamp"
+import { FORM_LIMITS } from "@/lib/validation"
 
 import { UpvoteButton } from "../-components/upvote-button"
 import {
@@ -1586,7 +1587,10 @@ function InlineFeedbackTitleEditor({
   const trimmedDraftTitle = draftTitle.trim()
   const hasEdits = draftTitle !== title
   const canSave =
-    trimmedDraftTitle.length > 0 && trimmedDraftTitle !== title && !isSaving
+    trimmedDraftTitle.length > 0 &&
+    trimmedDraftTitle.length <= FORM_LIMITS.feedbackTitle &&
+    trimmedDraftTitle !== title &&
+    !isSaving
 
   useEffect(() => {
     if (!editing) {
@@ -1661,6 +1665,12 @@ function InlineFeedbackTitleEditor({
     if (!canSave) return
 
     setError("")
+    if (trimmedDraftTitle.length > FORM_LIMITS.feedbackTitle) {
+      setError(
+        `Titles must be ${FORM_LIMITS.feedbackTitle} characters or fewer.`
+      )
+      return
+    }
     try {
       await onSave(trimmedDraftTitle)
       closeEditor()
@@ -1840,6 +1850,7 @@ function GitHubConnectionDialog({
   )
   const [title, setTitle] = useState("")
   const [body, setBody] = useState("")
+  const [localError, setLocalError] = useState("")
 
   const searchMutation = useMutation(
     crpc.feedbackGithub.searchTargets.mutationOptions()
@@ -1874,6 +1885,7 @@ function GitHubConnectionDialog({
       setSelectedTarget(null)
       setTitle("")
       setBody("")
+      setLocalError("")
       searchMutation.reset()
       connectExistingMutation.reset()
       createMutation.reset()
@@ -1885,7 +1897,11 @@ function GitHubConnectionDialog({
     if (availabilityQuery.data && !availabilityQuery.data.issuesEnabled) return
 
     const timeout = window.setTimeout(() => {
-      searchMutation.mutate({ feedbackId, kind: "issue", query })
+      searchMutation.mutate({
+        feedbackId,
+        kind: "issue",
+        query: query.slice(0, FORM_LIMITS.feedbackSearch),
+      })
       setSelectedTarget(null)
     }, 300)
     return () => window.clearTimeout(timeout)
@@ -1898,14 +1914,17 @@ function GitHubConnectionDialog({
     !!availability && availability.connected && !availability.writable
   const repoMissing = !!availability && !availability.connected
   const error =
-    availabilityQuery.error?.message ??
-    connectExistingMutation.error?.message ??
-    createMutation.error?.message ??
-    searchMutation.error?.message
+    localError ||
+    (availabilityQuery.error?.message ??
+      connectExistingMutation.error?.message ??
+      createMutation.error?.message ??
+      searchMutation.error?.message)
   const feedbackUrl =
     typeof window === "undefined" ? "" : window.location.href.split("#")[0]
   const canCreate =
     title.trim().length > 0 &&
+    title.trim().length <= FORM_LIMITS.githubTitle &&
+    body.trim().length <= FORM_LIMITS.githubBody &&
     !createMutation.isPending &&
     !sourceDisabled &&
     !writeDisabled &&
@@ -1919,6 +1938,7 @@ function GitHubConnectionDialog({
     !searchMutation.isPending
 
   function handleConnectExisting() {
+    setLocalError("")
     if (!selectedTarget || !feedbackUrl) return
 
     connectExistingMutation.mutate({
@@ -1930,7 +1950,20 @@ function GitHubConnectionDialog({
   }
 
   function handleCreate() {
+    setLocalError("")
     if (!feedbackUrl) return
+    if (title.trim().length > FORM_LIMITS.githubTitle) {
+      setLocalError(
+        `GitHub issue titles must be ${FORM_LIMITS.githubTitle} characters or fewer.`
+      )
+      return
+    }
+    if (body.trim().length > FORM_LIMITS.githubBody) {
+      setLocalError(
+        `GitHub issue bodies must be ${FORM_LIMITS.githubBody} characters or fewer.`
+      )
+      return
+    }
 
     createMutation.mutate({
       body,

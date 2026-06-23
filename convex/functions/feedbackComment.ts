@@ -11,6 +11,7 @@ import {
   verifyProjectAccess,
 } from "../lib/kino"
 import { resolveProfileImageUrl } from "../lib/storage"
+import { commentContentSchema, idSchema } from "../lib/validation"
 import { feedbackCommentTable } from "./schema"
 
 const TEAM_ROLES = new Set(["org:admin", "org:editor"])
@@ -30,8 +31,8 @@ async function getActiveFeedbackOrThrow(ctx: any, feedbackId: string) {
 export const create = authMutation
   .input(
     z.object({
-      content: z.string().min(1).max(1200),
-      feedbackId: z.string(),
+      content: commentContentSchema,
+      feedbackId: idSchema,
     })
   )
   .mutation(async ({ ctx, input }) => {
@@ -62,8 +63,8 @@ export const create = authMutation
 export const update = authMutation
   .input(
     z.object({
-      _id: z.string(),
-      content: z.string().min(1).max(1200),
+      _id: idSchema,
+      content: commentContentSchema,
     })
   )
   .mutation(async ({ ctx, input }) => {
@@ -89,7 +90,7 @@ export const update = authMutation
 export const remove = authMutation
   .input(
     z.object({
-      _id: z.string(),
+      _id: idSchema,
     })
   )
   .mutation(async ({ ctx, input }) => {
@@ -118,7 +119,7 @@ export const remove = authMutation
 export const listByFeedback = optionalAuthQuery
   .input(
     z.object({
-      feedbackId: z.string(),
+      feedbackId: idSchema,
     })
   )
   .query(async ({ ctx, input }) => {

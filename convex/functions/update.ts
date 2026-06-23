@@ -22,6 +22,17 @@ import {
   updateOrgStorageUsage,
   validateCoverImageMetadata,
 } from "../lib/storage"
+import {
+  cursorSchema,
+  generatedSlugSchema,
+  idArraySchema,
+  idListSchema,
+  idSchema,
+  storageKeySchema,
+  tagListSchema,
+  updateContentSchema,
+  updateTitleSchema,
+} from "../lib/validation"
 import { orgUploadsR2 } from "../lib/r2"
 import { updateTable } from "./schema"
 import { internal } from "./_generated/api"
@@ -29,18 +40,17 @@ import type { Id } from "./_generated/dataModel"
 import { internalMutation } from "./generated/server"
 
 const updateCategorySchema = z.enum(["changelog", "article", "announcement"])
-const updateIdListSchema = z.array(z.string()).min(1).max(100)
 
 export const create = authMutation
   .input(
     z.object({
       category: updateCategorySchema.optional(),
-      content: z.string().min(1),
-      coverImageId: z.string().optional(),
-      projectId: z.string(),
-      relatedFeedbackIds: z.array(z.string()).optional(),
-      tags: z.array(z.string()).max(20).optional(),
-      title: z.string().min(1).max(200),
+      content: updateContentSchema,
+      coverImageId: storageKeySchema.optional(),
+      projectId: idSchema,
+      relatedFeedbackIds: idArraySchema.optional(),
+      tags: tagListSchema.optional(),
+      title: updateTitleSchema,
     })
   )
   .mutation(async ({ ctx, input }) => {
@@ -87,13 +97,13 @@ export const create = authMutation
 export const update = authMutation
   .input(
     z.object({
-      id: z.string(),
+      id: idSchema,
       category: updateCategorySchema.optional(),
-      content: z.string().min(1).optional(),
-      coverImageId: z.string().nullable().optional(),
-      relatedFeedbackIds: z.array(z.string()).optional(),
-      tags: z.array(z.string()).max(20).optional(),
-      title: z.string().min(1).max(200).optional(),
+      content: updateContentSchema.optional(),
+      coverImageId: storageKeySchema.nullable().optional(),
+      relatedFeedbackIds: idArraySchema.optional(),
+      tags: tagListSchema.optional(),
+      title: updateTitleSchema.optional(),
     })
   )
   .mutation(async ({ ctx, input }) => {
@@ -149,7 +159,7 @@ export const update = authMutation
 export const publish = authMutation
   .input(
     z.object({
-      id: z.string(),
+      id: idSchema,
     })
   )
   .mutation(async ({ ctx, input }) => {
@@ -189,7 +199,7 @@ export const publish = authMutation
 export const unpublish = authMutation
   .input(
     z.object({
-      id: z.string(),
+      id: idSchema,
     })
   )
   .mutation(async ({ ctx, input }) => {
@@ -228,7 +238,7 @@ export const unpublish = authMutation
 export const remove = authMutation
   .input(
     z.object({
-      id: z.string(),
+      id: idSchema,
     })
   )
   .mutation(async ({ ctx, input }) => {
@@ -268,8 +278,8 @@ export const remove = authMutation
 export const bulkPublish = authMutation
   .input(
     z.object({
-      ids: updateIdListSchema,
-      projectId: z.string(),
+      ids: idListSchema,
+      projectId: idSchema,
     })
   )
   .mutation(async ({ ctx, input }) => {
@@ -301,14 +311,11 @@ export const bulkPublish = authMutation
         })
       }
 
-      await ctx.orm
-        .update(updateTable)
-        .set({
-          publishedAt: timestamp,
-          status: "published",
-          updatedTime: timestamp,
-        })
-        .where(eq(updateTable.id, existingUpdate._id as any))
+      await ctx.db.patch(existingUpdate._id, {
+        publishedAt: timestamp,
+        status: "published",
+        updatedTime: timestamp,
+      })
     }
 
     return { success: true }
@@ -317,9 +324,9 @@ export const bulkPublish = authMutation
 export const backfillProjectUpdatedTimes = authMutation
   .input(
     z.object({
-      cursor: z.string().optional(),
+      cursor: cursorSchema,
       limit: z.number().int().min(1).max(100).optional(),
-      projectId: z.string(),
+      projectId: idSchema,
     })
   )
   .mutation(async ({ ctx, input }) => {
@@ -368,8 +375,8 @@ export const backfillProjectUpdatedTimes = authMutation
 export const bulkUnpublish = authMutation
   .input(
     z.object({
-      ids: updateIdListSchema,
-      projectId: z.string(),
+      ids: idListSchema,
+      projectId: idSchema,
     })
   )
   .mutation(async ({ ctx, input }) => {
@@ -401,13 +408,10 @@ export const bulkUnpublish = authMutation
         })
       }
 
-      await ctx.orm
-        .update(updateTable)
-        .set({
-          status: "draft",
-          updatedTime: timestamp,
-        })
-        .where(eq(updateTable.id, existingUpdate._id as any))
+      await ctx.db.patch(existingUpdate._id, {
+        status: "draft",
+        updatedTime: timestamp,
+      })
     }
 
     return { success: true }
@@ -416,8 +420,8 @@ export const bulkUnpublish = authMutation
 export const bulkRemove = authMutation
   .input(
     z.object({
-      ids: updateIdListSchema,
-      projectId: z.string(),
+      ids: idListSchema,
+      projectId: idSchema,
     })
   )
   .mutation(async ({ ctx, input }) => {
@@ -453,9 +457,33 @@ export const bulkRemove = authMutation
         orgSlug: project.orgSlug,
       })
 
-      await ctx.orm
-        .delete(updateTable)
-        .where(eq(updateTable.id, existingUpdate._id as any))
+      const [comments, commentEmotes, emotes] = await Promise.all([
+        ctx.db
+          .query("updateComment")
+          .withIndex("by_updateId", (q: any) =>
+            q.eq("updateId", existingUpdate._id)
+          )
+          .collect(),
+        ctx.db
+          .query("updateCommentEmote")
+          .withIndex("by_updateId", (q: any) =>
+            q.eq("updateId", existingUpdate._id)
+          )
+          .collect(),
+        ctx.db
+          .query("updateEmote")
+          .withIndex("by_updateId", (q: any) =>
+            q.eq("updateId", existingUpdate._id)
+          )
+          .collect(),
+      ])
+
+      await Promise.all([
+        ...comments.map((comment: any) => ctx.db.delete(comment._id)),
+        ...commentEmotes.map((emote: any) => ctx.db.delete(emote._id)),
+        ...emotes.map((emote: any) => ctx.db.delete(emote._id)),
+      ])
+      await ctx.db.delete(existingUpdate._id)
     }
 
     return { success: true }
@@ -464,7 +492,7 @@ export const bulkRemove = authMutation
 export const generateCoverImageUploadUrl = authMutation
   .input(
     z.object({
-      updateId: z.string(),
+      updateId: idSchema,
     })
   )
   .mutation(async ({ ctx, input }) => {
@@ -499,7 +527,7 @@ export const generateCoverImageUploadUrl = authMutation
 export const syncMetadata = authMutation
   .input(
     z.object({
-      key: z.string(),
+      key: storageKeySchema,
     })
   )
   .mutation(async ({ ctx, input }) => {
@@ -559,7 +587,7 @@ export const syncMetadata = authMutation
 export const clearCoverImage = authMutation
   .input(
     z.object({
-      updateId: z.string(),
+      updateId: idSchema,
     })
   )
   .mutation(async ({ ctx, input }) => {
@@ -639,7 +667,7 @@ export const onCoverImageMetadataSynced = internalMutation({
 export const getCoverImageUrl = optionalAuthQuery
   .input(
     z.object({
-      key: z.string(),
+      key: storageKeySchema,
     })
   )
   .query(async ({ ctx, input }) => {
@@ -664,8 +692,8 @@ export const getCoverImageUrl = optionalAuthQuery
 export const getBySlug = optionalAuthQuery
   .input(
     z.object({
-      projectId: z.string(),
-      slug: z.string(),
+      projectId: idSchema,
+      slug: generatedSlugSchema,
     })
   )
   .query(async ({ ctx, input }) => {
@@ -760,7 +788,7 @@ export const getBySlug = optionalAuthQuery
 export const listByProject = optionalAuthQuery
   .input(
     z.object({
-      projectId: z.string(),
+      projectId: idSchema,
     })
   )
   .query(async ({ ctx, input }) => {
@@ -838,7 +866,7 @@ export const listByProject = optionalAuthQuery
 export const listProjectDashboard = authQuery
   .input(
     z.object({
-      projectId: z.string(),
+      projectId: idSchema,
     })
   )
   .paginated({ limit: 50, item: z.any() })

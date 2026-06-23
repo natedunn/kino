@@ -17,6 +17,7 @@ import { useCRPC } from "@/lib/convex/crpc"
 import { crpcServer } from "@/lib/convex/crpc-server"
 import { cn } from "@/lib/utils"
 import { titleMeta } from "@/lib/seo"
+import { profileFormSchema, validationMessage } from "@/lib/validation"
 
 type ProfileSettingsFormValues = {
   avatarFile: File | null
@@ -118,6 +119,12 @@ function AuthenticatedProfileSettingsRoute() {
       setFormError(null)
 
       try {
+        const parsed = profileFormSchema.safeParse(value)
+        if (!parsed.success) {
+          setFormError(validationMessage(parsed.error))
+          return
+        }
+
         let imageKey: string | undefined
         if (value.avatarFile) {
           const { key, url } = await uploadUrlMutation.mutateAsync({})
@@ -140,8 +147,8 @@ function AuthenticatedProfileSettingsRoute() {
             ...(imageKey ? { imageKey } : {}),
           },
           user: {
-            name: value.name,
-            username: value.username,
+            name: parsed.data.name,
+            username: parsed.data.username,
           },
         })
 

@@ -125,20 +125,77 @@ export default defineAuth(() => {
         change: async (change: any, ctx: any) => {
           if (change.operation !== "update") return
 
-          const db = (ctx as any).db
           if (change.newDoc.slug !== change.oldDoc.slug) {
-            const projects = await db
-              .query("project")
-              .withIndex("by_orgSlug", (q: any) =>
-                q.eq("orgSlug", change.oldDoc.slug)
-              )
-              .collect()
+            const db = (ctx as any).db
+            const now = Date.now()
+            const [
+              projects,
+              storageRows,
+              connectionStates,
+              installations,
+              repoConnections,
+            ] = await Promise.all([
+              db
+                .query("project")
+                .withIndex("by_orgSlug", (q: any) =>
+                  q.eq("orgSlug", change.oldDoc.slug)
+                )
+                .collect(),
+              db
+                .query("orgStorageUsage")
+                .withIndex("by_orgSlug", (q: any) =>
+                  q.eq("orgSlug", change.oldDoc.slug)
+                )
+                .collect(),
+              db
+                .query("githubConnectionState")
+                .withIndex("by_orgId", (q: any) =>
+                  q.eq("orgId", change.newDoc.id)
+                )
+                .collect(),
+              db
+                .query("githubInstallation")
+                .withIndex("by_orgId", (q: any) =>
+                  q.eq("orgId", change.newDoc.id)
+                )
+                .collect(),
+              db
+                .query("githubRepositoryConnection")
+                .withIndex("by_orgId_repoId", (q: any) =>
+                  q.eq("orgId", change.newDoc.id)
+                )
+                .collect(),
+            ])
 
-            await Promise.all(
-              projects.map((project: any) =>
+            await Promise.all([
+              ...projects.map((project: any) =>
                 db.patch(project._id, { orgSlug: change.newDoc.slug })
-              )
-            )
+              ),
+              ...storageRows.map((row: any) =>
+                db.patch(row._id, {
+                  orgSlug: change.newDoc.slug,
+                  updatedTime: now,
+                })
+              ),
+              ...connectionStates.map((state: any) =>
+                db.patch(state._id, {
+                  orgSlug: change.newDoc.slug,
+                  updatedTime: now,
+                })
+              ),
+              ...installations.map((installation: any) =>
+                db.patch(installation._id, {
+                  orgSlug: change.newDoc.slug,
+                  updatedTime: now,
+                })
+              ),
+              ...repoConnections.map((connection: any) =>
+                db.patch(connection._id, {
+                  orgSlug: change.newDoc.slug,
+                  updatedTime: now,
+                })
+              ),
+            ])
           }
         },
       },

@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 import { formatFullDate, formatRelativeDay } from "@/lib/utils/format-timestamp"
+import { FORM_LIMITS } from "@/lib/validation"
 
 const COLLAPSED_MAX_HEIGHT = 600
 
@@ -458,19 +459,33 @@ export function CommentForm({
   submitLabel?: string
 }) {
   const [content, setContent] = useState("")
+  const [error, setError] = useState("")
   const editorRef = useContext(CommentEditorContext)
 
   async function handleSubmit() {
+    setError("")
     const html = editorRef?.current?.getHTML() ?? content
     const text = editorRef?.current?.getText() ?? ""
     if (!text.trim()) return
 
     const sanitizedContent = sanitizeEditorContent(html)
     if (!sanitizedContent) return
+    if (sanitizedContent.length > FORM_LIMITS.comment) {
+      setError(`Comments must be ${FORM_LIMITS.comment} characters or fewer.`)
+      return
+    }
 
-    await onSubmit(sanitizedContent)
-    setContent("")
-    editorRef?.current?.clear()
+    try {
+      await onSubmit(sanitizedContent)
+      setContent("")
+      editorRef?.current?.clear()
+    } catch (submitError) {
+      setError(
+        submitError instanceof Error
+          ? submitError.message
+          : "Unable to post comment"
+      )
+    }
   }
 
   if (!isAuthenticated) {
@@ -532,6 +547,11 @@ export function CommentForm({
         value={content}
       />
       <div className="flex justify-end gap-2 rounded-b-md border-x border-b bg-muted p-3">
+        {error ? (
+          <p className="mr-auto self-center text-sm text-destructive">
+            {error}
+          </p>
+        ) : null}
         <Button
           disabled={isSubmitting || !hasEditorText(content)}
           onClick={handleSubmit}

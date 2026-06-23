@@ -13,6 +13,7 @@ import {
   textEnum,
   timestamp,
 } from "kitcn/orm"
+import { normalizeSlug, VALIDATION_LIMITS } from "../lib/validation"
 import { targetGranularities } from "../shared/target"
 
 const PROFILE_ROLES = ["system:admin", "system:editor", "user"] as const
@@ -487,10 +488,10 @@ export const projectMemberTable = convexTable(
     updatedTime: integer(),
     profileId: id("profile")
       .notNull()
-      .references(() => profileTable.id),
+      .references(() => profileTable.id, { onDelete: "cascade" }),
     projectId: id("project")
       .notNull()
-      .references(() => projectTable.id),
+      .references(() => projectTable.id, { onDelete: "cascade" }),
     role: textEnum(PROJECT_MEMBER_ROLES).notNull(),
     projectVisibility: textEnum(PROJECT_VISIBILITIES).notNull(),
     projectSlug: text().notNull(),
@@ -540,7 +541,7 @@ export const feedbackBoardTable = convexTable(
     name: text().notNull(),
     projectId: id("project")
       .notNull()
-      .references(() => projectTable.id),
+      .references(() => projectTable.id, { onDelete: "cascade" }),
     description: text(),
     icon: text(),
     slug: text().notNull(),
@@ -561,7 +562,7 @@ export const feedbackCommentTable = convexTable(
     updatedTime: integer(),
     feedbackId: id("feedback")
       .notNull()
-      .references(() => feedbackTable.id),
+      .references(() => feedbackTable.id, { onDelete: "cascade" }),
     authorProfileId: id("profile")
       .notNull()
       .references(() => profileTable.id),
@@ -592,10 +593,12 @@ export const feedbackTable = convexTable(
     upvotes: integer().notNull(),
     boardId: id("feedbackBoard")
       .notNull()
-      .references(() => feedbackBoardTable.id),
+      .references(() => feedbackBoardTable.id, { onDelete: "cascade" }),
     firstCommentId: id("feedbackComment"),
     answerCommentId: id("feedbackComment"),
-    assignedProfileId: id("profile").references(() => profileTable.id),
+    assignedProfileId: id("profile").references(() => profileTable.id, {
+      onDelete: "set null",
+    }),
     status: textEnum(FEEDBACK_STATUSES).notNull(),
     target: text(),
     targetGranularity: textEnum(targetGranularities),
@@ -670,10 +673,10 @@ export const feedbackCommentEmoteTable = convexTable(
       .references(() => profileTable.id),
     feedbackId: id("feedback")
       .notNull()
-      .references(() => feedbackTable.id),
+      .references(() => feedbackTable.id, { onDelete: "cascade" }),
     feedbackCommentId: id("feedbackComment")
       .notNull()
-      .references(() => feedbackCommentTable.id),
+      .references(() => feedbackCommentTable.id, { onDelete: "cascade" }),
     content: textEnum(EMOTE_CONTENTS).notNull(),
   },
   (feedbackCommentEmoteTable) => [
@@ -692,7 +695,7 @@ export const feedbackEventTable = convexTable(
     updatedTime: integer(),
     feedbackId: id("feedback")
       .notNull()
-      .references(() => feedbackTable.id),
+      .references(() => feedbackTable.id, { onDelete: "cascade" }),
     actorProfileId: id("profile")
       .notNull()
       .references(() => profileTable.id),
@@ -711,7 +714,7 @@ export const feedbackUpvoteTable = convexTable(
     updatedTime: integer(),
     feedbackId: id("feedback")
       .notNull()
-      .references(() => feedbackTable.id),
+      .references(() => feedbackTable.id, { onDelete: "cascade" }),
     authorProfileId: id("profile")
       .notNull()
       .references(() => profileTable.id),
@@ -738,7 +741,7 @@ export const updateTable = convexTable(
       .references(() => profileTable.id),
     projectId: id("project")
       .notNull()
-      .references(() => projectTable.id),
+      .references(() => projectTable.id, { onDelete: "cascade" }),
     status: textEnum(UPDATE_STATUSES).notNull(),
     publishedAt: integer(),
     category: textEnum(UPDATE_CATEGORIES).notNull(),
@@ -841,7 +844,9 @@ export const githubConnectionStateTable = convexTable(
       .notNull()
       .references(() => organizationTable.id),
     orgSlug: text().notNull(),
-    projectId: id("project").references(() => projectTable.id),
+    projectId: id("project").references(() => projectTable.id, {
+      onDelete: "cascade",
+    }),
     projectSlug: text(),
     stateHash: text().notNull(),
     status: textEnum(GITHUB_CONNECTION_STATE_STATUSES).notNull(),
@@ -870,7 +875,7 @@ export const githubInstallationTable = convexTable(
     installationId: integer().notNull(),
     orgId: text()
       .notNull()
-      .references(() => organizationTable.id),
+      .references(() => organizationTable.id, { onDelete: "cascade" }),
     orgSlug: text().notNull(),
     permissions: json(),
     repositorySelection: text().notNull(),
@@ -897,7 +902,7 @@ export const githubRepositoryConnectionTable = convexTable(
     enabledSources: arrayOf(text().notNull()),
     githubInstallationId: id("githubInstallation")
       .notNull()
-      .references(() => githubInstallationTable.id),
+      .references(() => githubInstallationTable.id, { onDelete: "cascade" }),
     issuesVerifiedAt: integer(),
     discussionsVerifiedAt: integer(),
     mode: textEnum(GITHUB_SYNC_MODES).notNull(),
@@ -907,7 +912,7 @@ export const githubRepositoryConnectionTable = convexTable(
     orgSlug: text().notNull(),
     projectId: id("project")
       .notNull()
-      .references(() => projectTable.id),
+      .references(() => projectTable.id, { onDelete: "cascade" }),
     projectSlug: text().notNull(),
     repoFullName: text().notNull(),
     repoId: integer().notNull(),
@@ -941,10 +946,12 @@ export const feedbackGithubConnectionTable = convexTable(
       .references(() => profileTable.id),
     feedbackId: id("feedback")
       .notNull()
-      .references(() => feedbackTable.id),
+      .references(() => feedbackTable.id, { onDelete: "cascade" }),
     githubRepositoryConnectionId: id("githubRepositoryConnection")
       .notNull()
-      .references(() => githubRepositoryConnectionTable.id),
+      .references(() => githubRepositoryConnectionTable.id, {
+        onDelete: "cascade",
+      }),
     projectId: id("project")
       .notNull()
       .references(() => projectTable.id),
@@ -1246,7 +1253,7 @@ export default defineSchema(tables)
                       : "lightbulb",
                 name,
                 projectId: change.newDoc.id as any,
-                slug: name.toLowerCase().replace(/\s+/g, "-"),
+                slug: normalizeSlug(name, VALIDATION_LIMITS.projectSlug),
               })
             )
           )
@@ -1254,32 +1261,90 @@ export default defineSchema(tables)
         }
 
         if (change.operation === "update") {
-          const memberships = await ctx.db
-            .query("projectMember")
-            .withIndex("by_projectId", (q: any) =>
-              q.eq("projectId", change.newDoc.id)
-            )
-            .collect()
+          const [memberships, connectionStates, repoConnections] =
+            await Promise.all([
+              ctx.db
+                .query("projectMember")
+                .withIndex("by_projectId", (q: any) =>
+                  q.eq("projectId", change.newDoc.id)
+                )
+                .collect(),
+              ctx.db
+                .query("githubConnectionState")
+                .withIndex("by_projectId", (q: any) =>
+                  q.eq("projectId", change.newDoc.id)
+                )
+                .collect(),
+              ctx.db
+                .query("githubRepositoryConnection")
+                .withIndex("by_projectId", (q: any) =>
+                  q.eq("projectId", change.newDoc.id)
+                )
+                .collect(),
+            ])
+          const now = Date.now()
 
-          await Promise.all(
-            memberships.map((membership: any) =>
+          await Promise.all([
+            ...memberships.map((membership: any) =>
               ctx.db.patch(membership._id, {
                 projectSlug: change.newDoc.slug,
                 projectVisibility: change.newDoc.visibility,
               })
-            )
-          )
+            ),
+            ...connectionStates.map((state: any) =>
+              ctx.db.patch(state._id, {
+                projectSlug: change.newDoc.slug,
+                updatedTime: now,
+              })
+            ),
+            ...repoConnections.map((connection: any) =>
+              ctx.db.patch(connection._id, {
+                projectSlug: change.newDoc.slug,
+                updatedTime: now,
+              })
+            ),
+          ])
           return
         }
 
-        const boards = await ctx.db
-          .query("feedbackBoard")
-          .withIndex("by_projectId", (q: any) =>
-            q.eq("projectId", change.oldDoc.id)
-          )
-          .collect()
+        const [boards, memberships, connectionStates, repoConnections] =
+          await Promise.all([
+            ctx.db
+              .query("feedbackBoard")
+              .withIndex("by_projectId", (q: any) =>
+                q.eq("projectId", change.oldDoc.id)
+              )
+              .collect(),
+            ctx.db
+              .query("projectMember")
+              .withIndex("by_projectId", (q: any) =>
+                q.eq("projectId", change.oldDoc.id)
+              )
+              .collect(),
+            ctx.db
+              .query("githubConnectionState")
+              .withIndex("by_projectId", (q: any) =>
+                q.eq("projectId", change.oldDoc.id)
+              )
+              .collect(),
+            ctx.db
+              .query("githubRepositoryConnection")
+              .withIndex("by_projectId", (q: any) =>
+                q.eq("projectId", change.oldDoc.id)
+              )
+              .collect(),
+          ])
 
-        await Promise.all(boards.map((board: any) => ctx.db.delete(board._id)))
+        await Promise.all([
+          ...boards.map((board: any) => ctx.db.delete(board._id)),
+          ...memberships.map((membership: any) =>
+            ctx.db.delete(membership._id)
+          ),
+          ...connectionStates.map((state: any) => ctx.db.delete(state._id)),
+          ...repoConnections.map((connection: any) =>
+            ctx.db.delete(connection._id)
+          ),
+        ])
       },
     },
     feedbackBoard: {

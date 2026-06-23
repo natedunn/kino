@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { useForm } from "@tanstack/react-form"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
@@ -18,10 +19,13 @@ import { authClient } from "@/lib/convex/auth-client"
 import { useCRPC } from "@/lib/convex/crpc"
 import { cn } from "@/lib/utils"
 import { projectTitle, titleMeta } from "@/lib/seo"
+import { feedbackFormSchema, validationMessage } from "@/lib/validation"
 
 export const Route = createFileRoute("/@{$org}/$project/feedback/new/")({
   head: ({ params }) => ({
-    meta: [titleMeta(["New Feedback", projectTitle(params.org, params.project)])],
+    meta: [
+      titleMeta(["New Feedback", projectTitle(params.org, params.project)]),
+    ],
   }),
   component: NewFeedbackRoute,
 })
@@ -31,6 +35,7 @@ function NewFeedbackRoute() {
   const navigate = useNavigate()
   const crpc = useCRPC()
   const session = authClient.useSession()
+  const [formError, setFormError] = useState<string | null>(null)
 
   const projectQuery = useQuery(
     crpc.project.getDetails.queryOptions({
@@ -66,12 +71,21 @@ function NewFeedbackRoute() {
     onSubmit: async ({ value }) => {
       const project = projectQuery.data?.project
       if (!project) return
+      setFormError(null)
+      const parsed = feedbackFormSchema.safeParse({
+        firstComment: sanitizeEditorContent(value.firstComment),
+        title: value.title,
+      })
+      if (!parsed.success) {
+        setFormError(validationMessage(parsed.error))
+        return
+      }
 
       await createMutation.mutateAsync({
         boardId: value.boardId,
-        firstComment: sanitizeEditorContent(value.firstComment),
+        firstComment: parsed.data.firstComment,
         projectId: project.id,
-        title: value.title,
+        title: parsed.data.title,
       })
     },
   })
@@ -179,9 +193,10 @@ function NewFeedbackRoute() {
             )}
           </form.Field>
 
-          {createMutation.error ? (
+          {(formError ?? createMutation.error) ? (
             <InlineAlert variant="danger">
-              Unable to create feedback: {createMutation.error.message}
+              Unable to create feedback:{" "}
+              {formError ?? createMutation.error?.message}
             </InlineAlert>
           ) : null}
 

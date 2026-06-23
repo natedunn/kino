@@ -1,0 +1,247 @@
+import { z } from "zod"
+
+export const FORM_LIMITS = {
+  boardDescription: 250,
+  boardName: 50,
+  comment: 1200,
+  feedbackTitle: 100,
+  githubBody: 6000,
+  githubTitle: 256,
+  feedbackSearch: 120,
+  email: 254,
+  orgName: 100,
+  orgSlug: 39,
+  projectName: 30,
+  projectSlug: 30,
+  tag: 40,
+  updateContent: 50000,
+  updateTitle: 200,
+  username: 39,
+} as const
+
+export const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
+export const SLUG_INPUT_PATTERN = "[a-z0-9]+(-[a-z0-9]+)*"
+
+export const RESERVED_HANDLES = [
+  "about",
+  "account",
+  "accounts",
+  "activity",
+  "admin",
+  "administrator",
+  "admins",
+  "api",
+  "app",
+  "apps",
+  "archive",
+  "archived",
+  "asset",
+  "assets",
+  "auth",
+  "billing",
+  "board",
+  "boards",
+  "bot",
+  "callback",
+  "changelog",
+  "chat",
+  "create",
+  "create-project",
+  "dashboard",
+  "delete",
+  "deleted",
+  "deleted-feedback",
+  "discussion",
+  "discussions",
+  "doc",
+  "docs",
+  "edit",
+  "email",
+  "error",
+  "feedback",
+  "file",
+  "files",
+  "github",
+  "help",
+  "home",
+  "image",
+  "images",
+  "integration",
+  "integrations",
+  "invite",
+  "invites",
+  "join",
+  "kino",
+  "legal",
+  "login",
+  "logout",
+  "member",
+  "members",
+  "new",
+  "notification",
+  "notifications",
+  "null",
+  "oauth",
+  "option",
+  "options",
+  "org",
+  "organization",
+  "organizations",
+  "orgs",
+  "pricing",
+  "privacy",
+  "private",
+  "profile",
+  "profiles",
+  "project",
+  "projects",
+  "public",
+  "roadmap",
+  "root",
+  "security",
+  "setting",
+  "settings",
+  "signin",
+  "signout",
+  "signup",
+  "status",
+  "support",
+  "system",
+  "team",
+  "teams",
+  "terms",
+  "undefined",
+  "update",
+  "updates",
+  "u",
+  "ui",
+  "user",
+  "users",
+  "webhook",
+  "webhooks",
+] as const
+
+const reservedHandleSet = new Set<string>(RESERVED_HANDLES)
+
+function normalizeReservedHandle(value: string) {
+  return value.trim().toLowerCase().replaceAll("_", "-")
+}
+
+export function isReservedHandle(value: string) {
+  return reservedHandleSet.has(normalizeReservedHandle(value))
+}
+
+export function normalizeSlugInput(value: string, max: number) {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9 -]+/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, max)
+    .replace(/-+$/g, "")
+}
+
+const slug = (max: number) =>
+  z
+    .string()
+    .trim()
+    .toLowerCase()
+    .min(1, "Slug is required")
+    .max(max, `Slug must be ${max} characters or fewer`)
+    .regex(SLUG_PATTERN, {
+      message: "Use lowercase letters, numbers, and single hyphens",
+    })
+    .refine((value) => !isReservedHandle(value), {
+      message: "This slug is reserved",
+    })
+
+export const emailSchema = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .max(FORM_LIMITS.email)
+  .email()
+
+export const orgFormSchema = z.object({
+  name: z.string().trim().min(1, "Name is required").max(FORM_LIMITS.orgName),
+  slug: slug(FORM_LIMITS.orgSlug).optional().or(z.literal("")),
+  visibility: z.enum(["public", "private"]).default("public"),
+})
+
+export const projectFormSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(1, "Project name is required")
+    .max(FORM_LIMITS.projectName),
+  slug: slug(FORM_LIMITS.projectSlug),
+  visibility: z.enum(["public", "private"]).default("public"),
+})
+
+export const profileFormSchema = z.object({
+  name: z.string().trim().min(1, "Name is required").max(FORM_LIMITS.orgName),
+  username: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .min(3, "Username must be at least 3 characters")
+    .max(FORM_LIMITS.username)
+    .regex(/^[a-z0-9_]+$/, {
+      message: "Use lowercase letters, numbers, and underscores",
+    })
+    .refine((value) => !isReservedHandle(value), {
+      message: "This username is reserved",
+    }),
+})
+
+export const feedbackFormSchema = z.object({
+  firstComment: z
+    .string()
+    .trim()
+    .min(1, "Comment is required")
+    .max(FORM_LIMITS.comment),
+  title: z
+    .string()
+    .trim()
+    .min(1, "Title is required")
+    .max(FORM_LIMITS.feedbackTitle),
+})
+
+export const boardFormSchema = z.object({
+  description: z.string().trim().max(FORM_LIMITS.boardDescription).optional(),
+  name: z
+    .string()
+    .trim()
+    .min(1, "Board name is required")
+    .max(FORM_LIMITS.boardName),
+  slug: slug(FORM_LIMITS.projectSlug),
+})
+
+export const updateFormSchema = z.object({
+  content: z
+    .string()
+    .trim()
+    .min(1, "Content is required")
+    .max(FORM_LIMITS.updateContent),
+  tags: z
+    .array(
+      z
+        .string()
+        .trim()
+        .min(1)
+        .max(FORM_LIMITS.tag)
+        .regex(/^[^\s,][^,]*[^\s,]$|^[^\s,]$/)
+    )
+    .max(20),
+  title: z
+    .string()
+    .trim()
+    .min(1, "Title is required")
+    .max(FORM_LIMITS.updateTitle),
+})
+
+export function validationMessage(error: z.ZodError) {
+  return error.issues[0]?.message ?? "Please check the highlighted fields"
+}

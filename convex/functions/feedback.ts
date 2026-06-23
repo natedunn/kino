@@ -22,6 +22,16 @@ import {
   verifyProjectAccess,
 } from "../lib/kino"
 import { resolveProfileImageUrl } from "../lib/storage"
+import {
+  commentContentSchema,
+  feedbackSearchSchema,
+  feedbackTitleSchema,
+  generatedSlugSchema,
+  idArraySchema,
+  idSchema,
+  nullableIdSchema,
+  tagListSchema,
+} from "../lib/validation"
 import { recordFeedbackEvent } from "./feedbackEvent"
 import { feedbackCommentTable, feedbackTable } from "./schema"
 
@@ -75,10 +85,10 @@ function toPublicFeedbackDoc(feedback: Doc<"feedback">) {
 export const create = authMutation
   .input(
     z.object({
-      boardId: z.string(),
-      firstComment: z.string().min(1).max(1200),
-      projectId: z.string(),
-      title: z.string().min(1).max(100),
+      boardId: idSchema,
+      firstComment: commentContentSchema,
+      projectId: idSchema,
+      title: feedbackTitleSchema,
     })
   )
   .mutation(async ({ ctx, input }) => {
@@ -178,7 +188,7 @@ async function verifyFeedbackWriteAccess(
 export const markForDeletion = authMutation
   .input(
     z.object({
-      id: z.string(),
+      id: idSchema,
     })
   )
   .mutation(async ({ ctx, input }) => {
@@ -203,7 +213,7 @@ export const markForDeletion = authMutation
 export const unmarkForDeletion = authMutation
   .input(
     z.object({
-      id: z.string(),
+      id: idSchema,
     })
   )
   .mutation(async ({ ctx, input }) => {
@@ -251,7 +261,7 @@ export const unmarkForDeletion = authMutation
 export const updateStatus = authMutation
   .input(
     z.object({
-      id: z.string(),
+      id: idSchema,
       status: feedbackStatusSchema,
     })
   )
@@ -283,8 +293,8 @@ export const updateStatus = authMutation
 export const updateTitle = authMutation
   .input(
     z.object({
-      id: z.string(),
-      title: z.string().trim().min(1).max(100),
+      id: idSchema,
+      title: feedbackTitleSchema,
     })
   )
   .mutation(async ({ ctx, input }) => {
@@ -324,8 +334,8 @@ export const updateTitle = authMutation
 export const updateBoard = authMutation
   .input(
     z.object({
-      id: z.string(),
-      boardId: z.string(),
+      id: idSchema,
+      boardId: idSchema,
     })
   )
   .mutation(async ({ ctx, input }) => {
@@ -368,8 +378,8 @@ export const updateBoard = authMutation
 export const setAnswerComment = authMutation
   .input(
     z.object({
-      commentId: z.string().nullable(),
-      feedbackId: z.string(),
+      commentId: nullableIdSchema,
+      feedbackId: idSchema,
     })
   )
   .mutation(async ({ ctx, input }) => {
@@ -430,8 +440,8 @@ export const setAnswerComment = authMutation
 export const updateAssigned = authMutation
   .input(
     z.object({
-      assignedProfileId: z.string().nullable(),
-      feedbackId: z.string(),
+      assignedProfileId: nullableIdSchema,
+      feedbackId: idSchema,
     })
   )
   .mutation(async ({ ctx, input }) => {
@@ -508,8 +518,8 @@ export const updateAssigned = authMutation
 export const updateTarget = authMutation
   .input(
     z.object({
-      feedbackId: z.string(),
-      target: z.string().trim().nullable(),
+      feedbackId: idSchema,
+      target: z.string().trim().max(16).nullable(),
       targetGranularity: targetGranularitySchema.nullable(),
     })
   )
@@ -571,8 +581,8 @@ export const updateTarget = authMutation
 export const getBySlug = optionalAuthQuery
   .input(
     z.object({
-      projectId: z.string(),
-      slug: z.string(),
+      projectId: idSchema,
+      slug: generatedSlugSchema,
     })
   )
   .query(async ({ ctx, input }) => {
@@ -652,12 +662,12 @@ export const getBySlug = optionalAuthQuery
 export const listProjectFeedback = optionalAuthQuery
   .input(
     z.object({
-      boardId: z.string().or(z.literal("all")),
+      boardId: idSchema.or(z.literal("all")),
       order: z.enum(["asc", "desc"]).optional(),
-      projectId: z.string(),
-      search: z.string().optional(),
+      projectId: idSchema,
+      search: feedbackSearchSchema.optional(),
       status: feedbackStatusSchema.optional(),
-      tags: z.array(z.string()).optional(),
+      tags: tagListSchema.optional(),
     })
   )
   .paginated({ limit: 50, item: z.any() })
@@ -775,7 +785,7 @@ export const listProjectFeedback = optionalAuthQuery
 export const listPendingDeletion = authQuery
   .input(
     z.object({
-      projectId: z.string(),
+      projectId: idSchema,
     })
   )
   .paginated({ limit: 50, item: z.any() })
@@ -822,8 +832,8 @@ export const listPendingDeletion = authQuery
 export const searchForLinking = optionalAuthQuery
   .input(
     z.object({
-      projectId: z.string(),
-      search: z.string(),
+      projectId: idSchema,
+      search: feedbackSearchSchema,
     })
   )
   .query(async ({ ctx, input }) => {
@@ -878,7 +888,7 @@ export const searchForLinking = optionalAuthQuery
 export const getByIds = optionalAuthQuery
   .input(
     z.object({
-      ids: z.array(z.string()).max(100),
+      ids: idArraySchema,
     })
   )
   .query(async ({ ctx, input }) => {

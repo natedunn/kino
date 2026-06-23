@@ -1,4 +1,4 @@
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { useForm } from "@tanstack/react-form"
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router"
@@ -12,6 +12,12 @@ import ChevronLeft from "@/icons/chevron-left"
 import { useCRPC } from "@/lib/convex/crpc"
 import { crpcServer } from "@/lib/convex/crpc-server"
 import { projectTitle, titleMeta } from "@/lib/seo"
+import {
+  FORM_LIMITS,
+  SLUG_INPUT_PATTERN,
+  boardFormSchema,
+  validationMessage,
+} from "@/lib/validation"
 
 export const Route = createFileRoute(
   "/@{$org}/$project/feedback/boards/$board/edit"
@@ -44,6 +50,7 @@ function EditBoardRoute() {
   const params = Route.useParams()
   const navigate = useNavigate()
   const crpc = useCRPC()
+  const [formError, setFormError] = useState<string | null>(null)
 
   const projectQuery = useQuery(
     crpc.project.getDetails.queryOptions({
@@ -97,14 +104,20 @@ function EditBoardRoute() {
     defaultValues: formDefaultValues,
     onSubmit: async ({ value }) => {
       if (!boardQuery.data) return
+      setFormError(null)
+      const parsed = boardFormSchema.safeParse(value)
+      if (!parsed.success) {
+        setFormError(validationMessage(parsed.error))
+        return
+      }
 
       await updateMutation.mutateAsync({
         id: boardQuery.data.id,
-        description: value.description || undefined,
-        name: value.name,
+        description: parsed.data.description || undefined,
+        name: parsed.data.name,
         orgSlug: params.org,
         projectSlug: params.project,
-        slug: value.slug,
+        slug: parsed.data.slug,
       })
     },
   })
@@ -155,6 +168,7 @@ function EditBoardRoute() {
                     Name of your public board. Must be unique to your project.
                   </p>
                   <Input
+                    maxLength={FORM_LIMITS.boardName}
                     onChange={(event) => field.handleChange(event.target.value)}
                     value={field.state.value}
                   />
@@ -170,7 +184,11 @@ function EditBoardRoute() {
                     permalinks.
                   </p>
                   <Input
+                    autoCapitalize="none"
+                    maxLength={FORM_LIMITS.projectSlug}
                     onChange={(event) => field.handleChange(event.target.value)}
+                    pattern={SLUG_INPUT_PATTERN}
+                    spellCheck={false}
                     value={field.state.value}
                   />
                 </div>
@@ -185,15 +203,17 @@ function EditBoardRoute() {
                     where to add their feedback.
                   </p>
                   <Textarea
+                    maxLength={FORM_LIMITS.boardDescription}
                     onChange={(event) => field.handleChange(event.target.value)}
                     value={field.state.value}
                   />
                 </div>
               )}
             </form.Field>
-            {updateMutation.error ? (
+            {(formError ?? updateMutation.error) ? (
               <InlineAlert variant="danger">
-                Unable to update board: {updateMutation.error.message}
+                Unable to update board:{" "}
+                {formError ?? updateMutation.error?.message}
               </InlineAlert>
             ) : null}
             <div className="flex items-center justify-between gap-4">

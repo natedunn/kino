@@ -36,6 +36,7 @@ import { useCRPC } from "@/lib/convex/crpc"
 import { crpcServer } from "@/lib/convex/crpc-server"
 import { useSidebarState } from "@/lib/hooks/use-sidebar-state"
 import { cn } from "@/lib/utils"
+import { updateFormSchema, validationMessage } from "@/lib/validation"
 
 import {
   CategoryBadge,
@@ -207,14 +208,23 @@ function EditUpdateRoute() {
     onSubmit: async ({ value }) => {
       if (!update) return
       setFormError("")
+      const parsed = updateFormSchema.safeParse({
+        content: sanitizeEditorContent(value.content),
+        tags: value.tags,
+        title: value.title,
+      })
+      if (!parsed.success) {
+        setFormError(validationMessage(parsed.error))
+        return
+      }
       await saveMutation.mutateAsync({
         category: value.category,
-        content: sanitizeEditorContent(value.content),
+        content: parsed.data.content,
         coverImageId: value.coverImageId,
         id: update.id,
         relatedFeedbackIds: value.relatedFeedbackIds,
-        tags: value.tags,
-        title: value.title,
+        tags: parsed.data.tags,
+        title: parsed.data.title,
       })
     },
     validationLogic: revalidateLogic({
