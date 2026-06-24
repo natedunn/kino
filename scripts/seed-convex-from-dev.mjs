@@ -115,10 +115,14 @@ function assertTargetIsSafe() {
   process.exit(1)
 }
 
-function run(command, args, { capture = false, env = process.env } = {}) {
+function run(
+  command,
+  args,
+  { capture = false, cwd = workspaceRoot, env = process.env } = {}
+) {
   console.log(`[seed] ${command} ${args.join(" ")}`)
   const result = spawnSync(command, args, {
-    cwd: workspaceRoot,
+    cwd,
     encoding: "utf8",
     env,
     stdio: capture ? ["ignore", "pipe", "inherit"] : "inherit",
@@ -278,6 +282,58 @@ function timestamp() {
   return new Date().toISOString().replace(/[:.]/g, "-")
 }
 
+function removeJsonlObjectFields(filePath, fields) {
+  if (!fs.existsSync(filePath)) return 0
+
+  const lines = fs.readFileSync(filePath, "utf8").split(/\r?\n/)
+  let changed = 0
+  const sanitizedLines = []
+
+  for (const line of lines) {
+    if (!line.trim()) continue
+    let sanitizedLine = line
+    for (const field of fields) {
+      const quotedField = field.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+      sanitizedLine = sanitizedLine
+        .replace(new RegExp(`,"${quotedField}":[^,}]*`, "g"), "")
+        .replace(new RegExp(`"${quotedField}":[^,}]*,`, "g"), "")
+        .replace(new RegExp(`"${quotedField}":[^,}]*`, "g"), "")
+    }
+    if (sanitizedLine !== line) changed += 1
+    sanitizedLines.push(sanitizedLine)
+  }
+
+  if (changed > 0) {
+    fs.writeFileSync(filePath, `${sanitizedLines.join("\n")}\n`)
+  }
+
+  return changed
+}
+
+function sanitizeExportForCurrentSchema(exportPath) {
+  const tempDir = fs.mkdtempSync(path.join(seedDir, "sanitize-"))
+  const sanitizedPath = exportPath.replace(/\.zip$/, "-sanitized.zip")
+
+  try {
+    run("unzip", ["-q", exportPath, "-d", tempDir])
+
+    const changedFeedbackRows = removeJsonlObjectFields(
+      path.join(tempDir, "feedback", "documents.jsonl"),
+      ["deletedTime", "deletionScheduled"]
+    )
+
+    if (changedFeedbackRows === 0) return exportPath
+
+    console.log(
+      `[seed] removed legacy feedback soft-delete fields from ${changedFeedbackRows} exported row(s)`
+    )
+    run("zip", ["-q", "-r", sanitizedPath, "."], { cwd: tempDir })
+    return sanitizedPath
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true })
+  }
+}
+
 process.on("exit", stopTemporaryLocalBackend)
 process.on("SIGINT", () => {
   stopTemporaryLocalBackend()
@@ -367,6 +423,7 @@ run("pnpm", [
   exportPath,
   ...(options.includeFileStorage ? ["--include-file-storage"] : []),
 ])
+const importPath = sanitizeExportForCurrentSchema(exportPath)
 
 startTemporaryLocalBackend(targetEnv)
 
@@ -376,7 +433,7 @@ run(
     "exec",
     "convex",
     "import",
-    exportPath,
+    importPath,
     "--replace-all",
     "--yes",
     ...targetArgs(),

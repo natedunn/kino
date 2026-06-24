@@ -4,6 +4,7 @@ import {
   Building2,
   ChevronDown,
   FolderKanban,
+  Keyboard,
   LogOut,
   Settings,
   User,
@@ -12,6 +13,7 @@ import type { ComponentType } from "react"
 import type { API } from "@/lib/api"
 
 import { NavButton } from "./nav-button"
+import { useShortcuts } from "@/components/shortcuts"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   DropdownMenu,
@@ -30,6 +32,7 @@ export function UserDropdown({
   user: NonNullable<API["profile"]["findMyProfile"]>
 }) {
   const navigate = useNavigate()
+  const shortcuts = useShortcuts()
   const signOut = useMutation(useSignOutMutationOptions())
 
   return (
@@ -91,6 +94,10 @@ export function UserDropdown({
           }}
         >
           Account
+        </UserDropdownItem>
+        <DropdownMenuSeparator />
+        <UserDropdownItem icon={Keyboard} onClick={() => shortcuts.open()}>
+          Keyboard shortcuts
         </UserDropdownItem>
         <DropdownMenuSeparator />
         <UserDropdownItem

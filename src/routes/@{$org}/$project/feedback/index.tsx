@@ -257,7 +257,7 @@ function FeedbackListRoute() {
                   <CirclePlusOutline size="16px" />
                   Add feedback
                   <kbd className="ml-1 rounded border border-current px-1.5 py-px font-sans text-xs opacity-50">
-                    ⌘O
+                    N
                   </kbd>
                 </Link>
               </Button>
