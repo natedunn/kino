@@ -19,7 +19,11 @@ import { authClient } from "@/lib/convex/auth-client"
 import { useCRPC } from "@/lib/convex/crpc"
 import { cn } from "@/lib/utils"
 import { projectTitle, titleMeta } from "@/lib/seo"
-import { feedbackFormSchema, validationMessage } from "@/lib/validation"
+import {
+  FORM_LIMITS,
+  feedbackFormSchema,
+  validationMessage,
+} from "@/lib/validation"
 
 export const Route = createFileRoute("/@{$org}/$project/feedback/new/")({
   head: ({ params }) => ({
@@ -170,6 +174,7 @@ function NewFeedbackRoute() {
                 <label className="text-sm font-medium">Title</label>
                 <Input
                   disabled={createMutation.isPending}
+                  maxLength={FORM_LIMITS.feedbackTitle}
                   onChange={(event) => field.handleChange(event.target.value)}
                   value={field.state.value}
                 />

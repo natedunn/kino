@@ -311,11 +311,14 @@ export const bulkPublish = authMutation
         })
       }
 
-      await ctx.db.patch(existingUpdate._id, {
-        publishedAt: timestamp,
-        status: "published",
-        updatedTime: timestamp,
-      })
+      await ctx.orm
+        .update(updateTable)
+        .set({
+          publishedAt: timestamp,
+          status: "published",
+          updatedTime: timestamp,
+        })
+        .where(eq(updateTable.id, existingUpdate._id))
     }
 
     return { success: true }
@@ -361,7 +364,10 @@ export const backfillProjectUpdatedTimes = authMutation
     let updatedCount = 0
     for (const item of result.page) {
       if (item.updatedTime !== undefined && item.updatedTime !== null) continue
-      await ctx.db.patch(item._id, { updatedTime: item._creationTime })
+      await ctx.orm
+        .update(updateTable)
+        .set({ updatedTime: item._creationTime })
+        .where(eq(updateTable.id, item._id))
       updatedCount += 1
     }
 
@@ -408,10 +414,13 @@ export const bulkUnpublish = authMutation
         })
       }
 
-      await ctx.db.patch(existingUpdate._id, {
-        status: "draft",
-        updatedTime: timestamp,
-      })
+      await ctx.orm
+        .update(updateTable)
+        .set({
+          status: "draft",
+          updatedTime: timestamp,
+        })
+        .where(eq(updateTable.id, existingUpdate._id))
     }
 
     return { success: true }
@@ -457,33 +466,11 @@ export const bulkRemove = authMutation
         orgSlug: project.orgSlug,
       })
 
-      const [comments, commentEmotes, emotes] = await Promise.all([
-        ctx.db
-          .query("updateComment")
-          .withIndex("by_updateId", (q: any) =>
-            q.eq("updateId", existingUpdate._id)
-          )
-          .collect(),
-        ctx.db
-          .query("updateCommentEmote")
-          .withIndex("by_updateId", (q: any) =>
-            q.eq("updateId", existingUpdate._id)
-          )
-          .collect(),
-        ctx.db
-          .query("updateEmote")
-          .withIndex("by_updateId", (q: any) =>
-            q.eq("updateId", existingUpdate._id)
-          )
-          .collect(),
-      ])
-
-      await Promise.all([
-        ...comments.map((comment: any) => ctx.db.delete(comment._id)),
-        ...commentEmotes.map((emote: any) => ctx.db.delete(emote._id)),
-        ...emotes.map((emote: any) => ctx.db.delete(emote._id)),
-      ])
-      await ctx.db.delete(existingUpdate._id)
+      // ORM delete so comments and all emote tables cascade away via FK
+      // referential actions (matches the single-update remove path above).
+      await ctx.orm
+        .delete(updateTable)
+        .where(eq(updateTable.id, existingUpdate._id))
     }
 
     return { success: true }
@@ -568,10 +555,13 @@ export const syncMetadata = authMutation
       })
     }
 
-    await ctx.db.patch(updateId, {
-      coverImageId: input.key,
-      updatedTime: Date.now(),
-    })
+    await ctx.orm
+      .update(updateTable)
+      .set({
+        coverImageId: input.key,
+        updatedTime: Date.now(),
+      })
+      .where(eq(updateTable.id, updateId))
 
     await ctx.scheduler.runAfter(0, orgUploadsR2.component.lib.syncMetadata, {
       ...orgUploadsR2.config,

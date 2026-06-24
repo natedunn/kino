@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { eq } from "kitcn/orm"
 import { optionalAuthQuery, privateMutation } from "../lib/crpc"
 import { asId, getDoc, getProjectViewAccess, toPublicDoc } from "../lib/kino"
 import { resolveProfileImageUrl } from "../lib/storage"
@@ -57,17 +58,20 @@ async function createOrUpdateFeedbackEvent(
   )
 
   if (recentEvent) {
-    await ctx.db.patch(recentEvent._id, {
-      metadata: {
-        ...recentEvent.metadata,
-        newValue: input.metadata?.newValue ?? recentEvent.metadata?.newValue,
-        oldValue: recentEvent.metadata?.oldValue ?? input.metadata?.oldValue,
-        targetProfileId:
-          input.metadata?.targetProfileId ??
-          recentEvent.metadata?.targetProfileId,
-      },
-      updatedTime: now,
-    })
+    await ctx.orm
+      .update(feedbackEventTable)
+      .set({
+        metadata: {
+          ...recentEvent.metadata,
+          newValue: input.metadata?.newValue ?? recentEvent.metadata?.newValue,
+          oldValue: recentEvent.metadata?.oldValue ?? input.metadata?.oldValue,
+          targetProfileId:
+            input.metadata?.targetProfileId ??
+            recentEvent.metadata?.targetProfileId,
+        },
+        updatedTime: now,
+      })
+      .where(eq(feedbackEventTable.id, recentEvent._id))
     return recentEvent._id
   }
 

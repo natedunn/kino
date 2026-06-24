@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { eq } from "kitcn/orm"
 import { CRPCError } from "kitcn/server"
 import { authMutation, optionalAuthQuery } from "../lib/crpc"
 import {
@@ -80,10 +81,13 @@ export const update = authMutation
       })
     }
 
-    await ctx.db.patch(comment._id, {
-      content: input.content,
-      updatedTime: Date.now(),
-    })
+    await ctx.orm
+      .update(feedbackCommentTable)
+      .set({
+        content: input.content,
+        updatedTime: Date.now(),
+      })
+      .where(eq(feedbackCommentTable.id, comment._id))
     return { updated: true }
   })
 
@@ -112,7 +116,11 @@ export const remove = authMutation
       })
     }
 
-    await ctx.db.delete(comment._id)
+    // ORM delete so the comment's emotes cascade and any feedback answer/first
+    // pointers null out via FK referential actions.
+    await ctx.orm
+      .delete(feedbackCommentTable)
+      .where(eq(feedbackCommentTable.id, comment._id))
     return { deleted: true }
   })
 

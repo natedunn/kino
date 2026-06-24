@@ -22,6 +22,7 @@ import { titleFromSlug, titleMeta } from "@/lib/seo"
 import {
   FORM_LIMITS,
   SLUG_INPUT_PATTERN,
+  filterSlugInput,
   projectFormSchema,
   validationMessage,
 } from "@/lib/validation"
@@ -248,7 +249,12 @@ function CreateProjectRoute() {
                             disabled={!enabled}
                             maxLength={FORM_LIMITS.projectSlug}
                             onChange={(event) =>
-                              field.handleChange(event.target.value)
+                              field.handleChange(
+                                filterSlugInput(
+                                  event.target.value,
+                                  FORM_LIMITS.projectSlug
+                                )
+                              )
                             }
                             pattern={SLUG_INPUT_PATTERN}
                             spellCheck={false}

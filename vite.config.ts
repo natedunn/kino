@@ -58,6 +58,15 @@ const config = defineConfig({
     ...(process.env.HOST ? { host: process.env.HOST } : {}),
     ...(Number.isFinite(port) ? { port, strictPort: true } : {}),
   },
+  test: {
+    // convex-test must be inlined so its module graph runs in the test runtime.
+    // Per-file environment is set via a `// @vitest-environment edge-runtime`
+    // docblock on the convex-test suites (others stay on the default env).
+    server: { deps: { inline: ["convex-test"] } },
+    // convex-test mutation invocations pay a one-time cold-start (better-auth
+    // init + module loading) that can exceed the default 5s on first run.
+    testTimeout: 30_000,
+  },
 })
 
 export default config

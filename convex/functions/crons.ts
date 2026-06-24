@@ -1,6 +1,8 @@
+import { eq } from "kitcn/orm"
 import { cronJobs } from "convex/server"
 import { internal } from "./_generated/api"
-import { internalMutation } from "./generated/server"
+import { internalMutation, withOrm } from "./generated/server"
+import { feedbackTable } from "./schema"
 
 // githubWebhookDelivery rows exist for dedupe (GitHub redelivers within days,
 // the gateway retries within minutes) and debugging. Anything older than the
@@ -47,9 +49,13 @@ export const purgeDueFeedback = internalMutation({
       )
       .take(FEEDBACK_PURGE_BATCH_SIZE)
 
+    // Purge through the ORM so the feedback FK cascades fire (comments, events,
+    // upvotes, emotes, GitHub connections). A raw ctx.db.delete here bypasses
+    // referential actions and would orphan all of those child rows.
+    const octx = withOrm(ctx)
     for (const row of due) {
       if (!row.deletionScheduled) continue
-      await ctx.db.delete(row._id)
+      await octx.orm.delete(feedbackTable).where(eq(feedbackTable.id, row._id))
     }
 
     if (due.length === FEEDBACK_PURGE_BATCH_SIZE) {

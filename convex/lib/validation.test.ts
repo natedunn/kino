@@ -14,13 +14,25 @@ import {
 } from "./validation"
 
 describe("slug validation", () => {
-  it("rejects non-slug characters and malformed hyphen placement", () => {
-    expect(orgSlugSchema.safeParse("valid-slug-123").success).toBe(true)
-    expect(orgSlugSchema.safeParse("has space").success).toBe(false)
-    expect(orgSlugSchema.safeParse("has_underscore").success).toBe(false)
-    expect(orgSlugSchema.safeParse("double--hyphen").success).toBe(false)
-    expect(orgSlugSchema.safeParse("-leading").success).toBe(false)
-    expect(orgSlugSchema.safeParse("trailing-").success).toBe(false)
+  it("rejects non-slug characters and malformed hyphen placement on write schemas", () => {
+    expect(orgSlugWriteSchema.safeParse("valid-slug-123").success).toBe(true)
+    expect(orgSlugWriteSchema.safeParse("has space").success).toBe(false)
+    expect(orgSlugWriteSchema.safeParse("has_underscore").success).toBe(false)
+    expect(orgSlugWriteSchema.safeParse("double--hyphen").success).toBe(false)
+    expect(orgSlugWriteSchema.safeParse("-leading").success).toBe(false)
+    expect(orgSlugWriteSchema.safeParse("trailing-").success).toBe(false)
+  })
+
+  it("accepts loosely-formatted slugs on read schemas so lookups never throw on rule changes", () => {
+    // Read paths validate size only. A stored slug that predates a later rule
+    // change must still resolve (or simply not match) rather than 400 the query.
+    expect(orgSlugSchema.safeParse("Legacy_Mixed-Case").success).toBe(true)
+    expect(orgSlugSchema.safeParse("trailing-").success).toBe(true)
+    expect(projectSlugSchema.safeParse("weird..slug").success).toBe(true)
+    // The size guard still applies.
+    expect(
+      orgSlugSchema.safeParse("a".repeat(VALIDATION_LIMITS.orgSlug + 1)).success
+    ).toBe(false)
   })
 
   it("applies separate caps for org, project, and generated slugs", () => {

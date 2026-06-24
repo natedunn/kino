@@ -23,6 +23,7 @@ import {
   type GitHubRepository,
 } from "../lib/github"
 import {
+  feedbackGithubConnectionTable,
   githubConnectionStateTable,
   githubInstallationTable,
   githubRepositoryConnectionTable,
@@ -524,10 +525,13 @@ export const completeInstallationCallback = privateMutation
       })
     }
     if (stateDoc.expiresAt < Date.now()) {
-      await ctx.db.patch(stateDoc._id, {
-        status: "expired",
-        updatedTime: Date.now(),
-      })
+      await ctx.orm
+        .update(githubConnectionStateTable)
+        .set({
+          status: "expired",
+          updatedTime: Date.now(),
+        })
+        .where(eq(githubConnectionStateTable.id, stateDoc._id))
       throw new CRPCError({
         code: "BAD_REQUEST",
         message: "GitHub connection state expired",
@@ -568,16 +572,22 @@ export const completeInstallationCallback = privateMutation
     }
 
     if (existing) {
-      await ctx.db.patch(existing._id, values)
+      await ctx.orm
+        .update(githubInstallationTable)
+        .set(values)
+        .where(eq(githubInstallationTable.id, existing._id))
     } else {
       await ctx.orm.insert(githubInstallationTable).values(values)
     }
 
-    await ctx.db.patch(stateDoc._id, {
-      consumedAt: Date.now(),
-      status: "consumed",
-      updatedTime: Date.now(),
-    })
+    await ctx.orm
+      .update(githubConnectionStateTable)
+      .set({
+        consumedAt: Date.now(),
+        status: "consumed",
+        updatedTime: Date.now(),
+      })
+      .where(eq(githubConnectionStateTable.id, stateDoc._id))
 
     return {
       mode: stateDoc.mode,
@@ -608,10 +618,13 @@ export const completeUserInstallationsCallback = privateMutation
       })
     }
     if (stateDoc.expiresAt < Date.now()) {
-      await ctx.db.patch(stateDoc._id, {
-        status: "expired",
-        updatedTime: Date.now(),
-      })
+      await ctx.orm
+        .update(githubConnectionStateTable)
+        .set({
+          status: "expired",
+          updatedTime: Date.now(),
+        })
+        .where(eq(githubConnectionStateTable.id, stateDoc._id))
       throw new CRPCError({
         code: "BAD_REQUEST",
         message: "GitHub connection state expired",
@@ -646,7 +659,10 @@ export const completeUserInstallationsCallback = privateMutation
       }
 
       if (existing) {
-        await ctx.db.patch(existing._id, values)
+        await ctx.orm
+          .update(githubInstallationTable)
+          .set(values)
+          .where(eq(githubInstallationTable.id, existing._id))
       } else {
         await ctx.orm.insert(githubInstallationTable).values(values)
       }
@@ -664,18 +680,24 @@ export const completeUserInstallationsCallback = privateMutation
         .unique()
       if (!existing || existing.status === "deleted") continue
 
-      await ctx.db.patch(existing._id, {
-        status: "deleted",
-        updatedTime: now,
-      })
+      await ctx.orm
+        .update(githubInstallationTable)
+        .set({
+          status: "deleted",
+          updatedTime: now,
+        })
+        .where(eq(githubInstallationTable.id, existing._id))
       deletedCount += 1
     }
 
-    await ctx.db.patch(stateDoc._id, {
-      consumedAt: now,
-      status: "consumed",
-      updatedTime: now,
-    })
+    await ctx.orm
+      .update(githubConnectionStateTable)
+      .set({
+        consumedAt: now,
+        status: "consumed",
+        updatedTime: now,
+      })
+      .where(eq(githubConnectionStateTable.id, stateDoc._id))
 
     return {
       deletedInstallationCount: deletedCount,
@@ -779,10 +801,13 @@ export const saveRepositoryConnection = privateMutation
             !connection.deletedTime && connection._id !== existingForRepo?._id
         )
         .map((connection: any) =>
-          ctx.db.patch(connection._id, {
-            deletedTime: now,
-            updatedTime: now,
-          })
+          ctx.orm
+            .update(githubRepositoryConnectionTable)
+            .set({
+              deletedTime: now,
+              updatedTime: now,
+            })
+            .where(eq(githubRepositoryConnectionTable.id, connection._id))
         )
     )
 
@@ -835,10 +860,13 @@ export const disconnectRepository = authMutation
       })
     }
 
-    await ctx.db.patch(connection._id, {
-      deletedTime: Date.now(),
-      updatedTime: Date.now(),
-    })
+    await ctx.orm
+      .update(githubRepositoryConnectionTable)
+      .set({
+        deletedTime: Date.now(),
+        updatedTime: Date.now(),
+      })
+      .where(eq(githubRepositoryConnectionTable.id, connection._id))
 
     return { success: true }
   })
@@ -923,10 +951,13 @@ export const processWebhookEvent = privateMutation
 
       if (updates && installations.length > 0) {
         for (const installation of installations) {
-          await ctx.db.patch(installation._id, {
-            ...updates,
-            updatedTime: now,
-          })
+          await ctx.orm
+            .update(githubInstallationTable)
+            .set({
+              ...updates,
+              updatedTime: now,
+            })
+            .where(eq(githubInstallationTable.id, installation._id))
         }
         result = "processed"
       }
@@ -968,13 +999,16 @@ export const processWebhookEvent = privateMutation
             continue
           }
 
-          await ctx.db.patch(feedbackConnection._id, {
-            githubNumber: input.issue.number,
-            state: input.issue.state,
-            title: input.issue.title,
-            updatedTime: now,
-            url: input.issue.url,
-          })
+          await ctx.orm
+            .update(feedbackGithubConnectionTable)
+            .set({
+              githubNumber: input.issue.number,
+              state: input.issue.state,
+              title: input.issue.title,
+              updatedTime: now,
+              url: input.issue.url,
+            })
+            .where(eq(feedbackGithubConnectionTable.id, feedbackConnection._id))
           updatedCount += 1
         }
       }

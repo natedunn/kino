@@ -143,6 +143,35 @@ export function normalizeSlugInput(value: string, max: number) {
     .replace(/-+$/g, "")
 }
 
+/**
+ * Live filter for a manual slug <input>'s onChange. Lowercases, turns
+ * whitespace runs into a hyphen, and strips characters that can never appear in
+ * a slug — but, unlike `normalizeSlugInput`, does NOT trim trailing hyphens or
+ * collapse repeats, so the user can still type "my-org" one key at a time. The
+ * final shape (no leading/trailing/double hyphen) is enforced by the schema on
+ * submit.
+ */
+export function filterSlugInput(value: string, max: number) {
+  return value
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9-]+/g, "")
+    .slice(0, max)
+}
+
+/**
+ * Live filter for a username <input>'s onChange. Usernames allow underscores
+ * (unlike slugs). Lowercases and drops disallowed characters so mobile users
+ * can't type values the schema will later reject.
+ */
+export function filterUsernameInput(value: string, max: number) {
+  return value
+    .toLowerCase()
+    .replace(/\s+/g, "_")
+    .replace(/[^a-z0-9_]+/g, "")
+    .slice(0, max)
+}
+
 const slug = (max: number) =>
   z
     .string()

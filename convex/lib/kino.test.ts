@@ -6,6 +6,7 @@ import {
   pickPersonalOrganizationId,
   reconcileSystemRole,
   sanitizeSystemRole,
+  verifyOrgAccess,
   verifyProjectAccess,
 } from "./kino"
 
@@ -290,5 +291,55 @@ describe("getProjectViewAccess", () => {
     })
     const access = await getProjectViewAccess(ctx, { id: "p1" })
     expect(access.permissions.canView).toBe(false)
+  })
+})
+
+describe("verifyOrgAccess", () => {
+  function makeOrgCtx(opts: {
+    organization?: { id: string; slug: string; visibility: string } | null
+    profile?: { id: string; role: string; userId: string } | null
+    member?: { id: string; role: string } | null
+  }) {
+    return {
+      orm: {
+        query: {
+          organization: {
+            findMany: async () =>
+              opts.organization ? [opts.organization] : [],
+          },
+          profile: {
+            findMany: async () => (opts.profile ? [opts.profile] : []),
+          },
+          member: {
+            findMany: async () => (opts.member ? [opts.member] : []),
+          },
+        },
+      },
+    } as any
+  }
+
+  it("fails closed (no permissions, no throw) when the org does not exist", async () => {
+    const ctx = makeOrgCtx({ organization: null })
+    const access = await verifyOrgAccess(ctx, {
+      slug: "missing",
+      userId: "u1",
+    })
+    expect(access.organization).toBeNull()
+    expect(access.permissions).toEqual({
+      canCreate: false,
+      canDelete: false,
+      canEdit: false,
+      canView: false,
+    })
+  })
+
+  it("grants an anonymous viewer read access to a public org", async () => {
+    const ctx = makeOrgCtx({
+      organization: { id: "o1", slug: "acme", visibility: "public" },
+    })
+    const access = await verifyOrgAccess(ctx, { slug: "acme" })
+    expect(access.organization).not.toBeNull()
+    expect(access.permissions.canView).toBe(true)
+    expect(access.permissions.canEdit).toBe(false)
   })
 })

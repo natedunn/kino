@@ -27,7 +27,11 @@ import { authClient } from "@/lib/convex/auth-client"
 import { useCRPC } from "@/lib/convex/crpc"
 import { useSidebarState } from "@/lib/hooks/use-sidebar-state"
 import { cn } from "@/lib/utils"
-import { updateFormSchema, validationMessage } from "@/lib/validation"
+import {
+  FORM_LIMITS,
+  updateFormSchema,
+  validationMessage,
+} from "@/lib/validation"
 
 import {
   CategoryBadge,
@@ -442,6 +446,7 @@ function NewUpdateRoute() {
                   autoFocus
                   className="h-auto px-4 py-3 text-xl font-semibold tracking-tight md:text-2xl"
                   id="update-title"
+                  maxLength={FORM_LIMITS.updateTitle}
                   onChange={(event) => field.handleChange(event.target.value)}
                   placeholder="Update title..."
                   value={field.state.value}

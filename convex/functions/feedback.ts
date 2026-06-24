@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { eq } from "kitcn/orm"
+import { eq, unsetToken } from "kitcn/orm"
 import { CRPCError } from "kitcn/server"
 import {
   isValidTarget,
@@ -200,11 +200,14 @@ export const markForDeletion = authMutation
     assertCanAdminFeedback(permissions)
 
     const deletedTime = Date.now() + FEEDBACK_DELETION_DELAY_MS
-    await ctx.db.patch(feedback._id, {
-      deletionScheduled: true,
-      deletedTime,
-      updatedTime: Date.now(),
-    })
+    await ctx.orm
+      .update(feedbackTable)
+      .set({
+        deletionScheduled: true,
+        deletedTime,
+        updatedTime: Date.now(),
+      })
+      .where(eq(feedbackTable.id, feedback._id))
     await ctx.scheduler.runAt(deletedTime, internal.crons.purgeDueFeedback, {})
 
     return { deletedTime }
@@ -247,11 +250,14 @@ export const unmarkForDeletion = authMutation
       })
     }
 
-    await ctx.db.patch(feedback._id, {
-      deletionScheduled: false,
-      deletedTime: null,
-      updatedTime: Date.now(),
-    })
+    await ctx.orm
+      .update(feedbackTable)
+      .set({
+        deletionScheduled: false,
+        deletedTime: unsetToken,
+        updatedTime: Date.now(),
+      })
+      .where(eq(feedbackTable.id, feedback._id))
 
     return {
       restored: true,
@@ -397,10 +403,13 @@ export const setAnswerComment = authMutation
     }
 
     if (input.commentId === null) {
-      await ctx.db.patch(feedback._id, {
-        answerCommentId: undefined,
-        updatedTime: Date.now(),
-      })
+      await ctx.orm
+        .update(feedbackTable)
+        .set({
+          answerCommentId: unsetToken,
+          updatedTime: Date.now(),
+        })
+        .where(eq(feedbackTable.id, feedback._id))
       if (feedback.answerCommentId) {
         await recordFeedbackEvent(ctx, {
           actorProfileId: profile._id,
@@ -425,10 +434,13 @@ export const setAnswerComment = authMutation
       })
     }
 
-    await ctx.db.patch(feedback._id, {
-      answerCommentId: input.commentId as any,
-      updatedTime: Date.now(),
-    })
+    await ctx.orm
+      .update(feedbackTable)
+      .set({
+        answerCommentId: input.commentId as any,
+        updatedTime: Date.now(),
+      })
+      .where(eq(feedbackTable.id, feedback._id))
     await recordFeedbackEvent(ctx, {
       actorProfileId: profile._id,
       eventType: "answer_marked",

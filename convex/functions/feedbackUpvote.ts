@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { eq } from "kitcn/orm"
 import { CRPCError } from "kitcn/server"
 import { authMutation, optionalAuthQuery } from "../lib/crpc"
 import {
@@ -8,7 +9,7 @@ import {
   verifyProjectAccess,
 } from "../lib/kino"
 import { idSchema } from "../lib/validation"
-import { feedbackUpvoteTable } from "./schema"
+import { feedbackTable, feedbackUpvoteTable } from "./schema"
 
 function isMarkedForDeletion(feedback: { deletedTime?: number | null } | null) {
   return feedback?.deletedTime != null
@@ -53,9 +54,14 @@ export const toggle = authMutation
       .unique()
 
     if (existing) {
-      await ctx.db.delete(existing._id)
+      await ctx.orm
+        .delete(feedbackUpvoteTable)
+        .where(eq(feedbackUpvoteTable.id, existing._id))
       const count = Math.max(0, (feedback.upvotes ?? 0) - 1)
-      await ctx.db.patch(feedback._id, { upvotes: count })
+      await ctx.orm
+        .update(feedbackTable)
+        .set({ upvotes: count })
+        .where(eq(feedbackTable.id, feedback._id))
       return { count, upvoted: false }
     }
 
@@ -64,7 +70,10 @@ export const toggle = authMutation
       feedbackId: asId<"feedback">(input.feedbackId),
     })
     const count = (feedback.upvotes ?? 0) + 1
-    await ctx.db.patch(feedback._id, { upvotes: count })
+    await ctx.orm
+      .update(feedbackTable)
+      .set({ upvotes: count })
+      .where(eq(feedbackTable.id, feedback._id))
     return { count, upvoted: true }
   })
 

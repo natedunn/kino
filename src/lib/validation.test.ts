@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest"
 import {
   FORM_LIMITS,
   emailSchema,
+  filterSlugInput,
+  filterUsernameInput,
   normalizeSlugInput,
   orgFormSchema,
   projectFormSchema,
@@ -45,6 +47,22 @@ describe("client slug validation", () => {
       normalizeSlugInput(" New Board ### Name ", FORM_LIMITS.projectSlug)
     ).toBe("new-board-name")
     expect(normalizeSlugInput("Long Board Name", 10)).toBe("long-board")
+  })
+
+  it("filters live slug input without blocking hyphen typing", () => {
+    // A trailing hyphen must survive so the user can keep typing "my-org".
+    expect(filterSlugInput("my-", FORM_LIMITS.orgSlug)).toBe("my-")
+    expect(filterSlugInput("My Org!", FORM_LIMITS.orgSlug)).toBe("my-org")
+    expect(filterSlugInput("a@b#c", FORM_LIMITS.orgSlug)).toBe("abc")
+    expect(filterSlugInput("a".repeat(50), 10)).toBe("a".repeat(10))
+  })
+
+  it("filters live username input, keeping underscores", () => {
+    expect(filterUsernameInput("My_User", FORM_LIMITS.username)).toBe("my_user")
+    expect(filterUsernameInput("a b", FORM_LIMITS.username)).toBe("a_b")
+    expect(filterUsernameInput("bad-name!", FORM_LIMITS.username)).toBe(
+      "badname"
+    )
   })
 
   it("rejects reserved slugs and usernames", () => {

@@ -1,6 +1,7 @@
 import { createFunctionHandle } from "convex/server"
 import { ConvexError, v } from "convex/values"
 import { z } from "zod"
+import { eq } from "kitcn/orm"
 import { CRPCError } from "kitcn/server"
 import { authMutation, authQuery, optionalAuthQuery } from "../lib/crpc"
 import { getCurrentProfile, getDoc, toPublicDoc } from "../lib/kino"
@@ -13,6 +14,7 @@ import { userUploadsR2 } from "../lib/r2"
 import { internal } from "./_generated/api"
 import type { Id } from "./_generated/dataModel"
 import { internalMutation } from "./generated/server"
+import { profileTable } from "./schema"
 import {
   httpUrlSchema,
   orgNameSchema,
@@ -171,9 +173,12 @@ export const syncMetadata = authMutation
       })
     }
 
-    await ctx.db.patch(profile._id, {
-      imageKey: input.key,
-    })
+    await ctx.orm
+      .update(profileTable)
+      .set({
+        imageKey: input.key,
+      })
+      .where(eq(profileTable.id, profile._id))
 
     await ctx.scheduler.runAfter(0, userUploadsR2.component.lib.syncMetadata, {
       ...userUploadsR2.config,
@@ -263,7 +268,10 @@ export const update = authMutation
       Object.entries(input.profile).filter(([, value]) => value !== undefined)
     )
     if (Object.keys(nextProfile).length > 0) {
-      await ctx.db.patch(profile._id as any, nextProfile)
+      await ctx.orm
+        .update(profileTable)
+        .set(nextProfile)
+        .where(eq(profileTable.id, profile._id as any))
     }
 
     const updatedProfile = (await getCurrentProfile(ctx, ctx.userId)) ?? {

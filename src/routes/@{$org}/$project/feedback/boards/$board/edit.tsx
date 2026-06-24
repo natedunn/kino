@@ -16,6 +16,7 @@ import {
   FORM_LIMITS,
   SLUG_INPUT_PATTERN,
   boardFormSchema,
+  filterSlugInput,
   validationMessage,
 } from "@/lib/validation"
 
@@ -186,7 +187,14 @@ function EditBoardRoute() {
                   <Input
                     autoCapitalize="none"
                     maxLength={FORM_LIMITS.projectSlug}
-                    onChange={(event) => field.handleChange(event.target.value)}
+                    onChange={(event) =>
+                      field.handleChange(
+                        filterSlugInput(
+                          event.target.value,
+                          FORM_LIMITS.projectSlug
+                        )
+                      )
+                    }
                     pattern={SLUG_INPUT_PATTERN}
                     spellCheck={false}
                     value={field.state.value}

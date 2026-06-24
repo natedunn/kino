@@ -347,6 +347,18 @@ export async function findProjectMember(
   return null
 }
 
+/**
+ * Org access check that FAILS CLOSED rather than throwing. When the org is
+ * missing it returns `{ organization: null, permissions: all-false }` so read
+ * paths (e.g. listing projects for an org that may not be visible) can degrade
+ * to "no access" instead of surfacing a 404.
+ *
+ * NOTE the deliberate asymmetry with `verifyProjectAccess`, which throws
+ * NOT_FOUND via `getProjectOrThrow`. Projects are always addressed directly and
+ * a missing one is a genuine error; orgs are also probed speculatively on read
+ * paths, so a soft failure is the safer default there. Callers that need a hard
+ * 404 must check `access.organization` themselves.
+ */
 export async function verifyOrgAccess(
   ctx: OrmCtx,
   args: { id?: string; slug?: string; userId?: string | null }
@@ -416,6 +428,12 @@ export async function verifyOrgAccess(
   }
 }
 
+/**
+ * Project access check that THROWS NOT_FOUND when the project is missing (via
+ * `getProjectOrThrow`). This is intentionally stricter than `verifyOrgAccess`,
+ * which fails closed — see the note there. For read paths that must NOT throw on
+ * a missing project, use `getProjectViewAccess` below.
+ */
 export async function verifyProjectAccess(
   ctx: OrmCtx,
   args: { id?: string; slug?: string; userId?: string | null }

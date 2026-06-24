@@ -17,7 +17,12 @@ import { useCRPC } from "@/lib/convex/crpc"
 import { crpcServer } from "@/lib/convex/crpc-server"
 import { cn } from "@/lib/utils"
 import { titleMeta } from "@/lib/seo"
-import { profileFormSchema, validationMessage } from "@/lib/validation"
+import {
+  FORM_LIMITS,
+  filterUsernameInput,
+  profileFormSchema,
+  validationMessage,
+} from "@/lib/validation"
 
 type ProfileSettingsFormValues = {
   avatarFile: File | null
@@ -261,7 +266,18 @@ function AuthenticatedProfileSettingsRoute() {
                     </LabelDescription>
                   </LabelWrapper>
                   <Input
-                    onChange={(event) => field.handleChange(event.target.value)}
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    maxLength={FORM_LIMITS.username}
+                    onChange={(event) =>
+                      field.handleChange(
+                        filterUsernameInput(
+                          event.target.value,
+                          FORM_LIMITS.username
+                        )
+                      )
+                    }
+                    spellCheck={false}
                     value={field.state.value}
                   />
                 </div>
@@ -278,6 +294,7 @@ function AuthenticatedProfileSettingsRoute() {
                     </LabelDescription>
                   </LabelWrapper>
                   <Input
+                    maxLength={FORM_LIMITS.orgName}
                     onChange={(event) => field.handleChange(event.target.value)}
                     value={field.state.value}
                   />

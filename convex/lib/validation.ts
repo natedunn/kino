@@ -165,37 +165,55 @@ export const optionalIdSchema = idSchema.optional()
 export const nullableIdSchema = idSchema.nullable()
 export const cursorSchema = z.string().max(VALIDATION_LIMITS.cursor).optional()
 
-export const slugSchema = z
-  .string()
-  .trim()
-  .toLowerCase()
-  .min(1)
-  .max(VALIDATION_LIMITS.orgSlug)
-  .regex(SLUG_PATTERN, {
-    message: "Use lowercase letters, numbers, and single hyphens",
-  })
+const SLUG_MESSAGE = "Use lowercase letters, numbers, and single hyphens"
 
-export const reservedSlugSchema = slugSchema.refine(
-  (value) => !isReservedHandle(value),
-  {
+// Strict slug used on WRITE paths: enforces the canonical slug format so we
+// never persist a malformed slug.
+//
+// Build each slug schema from its own cap so that the entity's limit is the
+// single source of truth. Previously a base schema baked in `orgSlug` (39) and
+// the project variant chained a second `.max(projectSlug)` (30); zod applied
+// both and the stricter silently won — which would break the moment a project
+// cap was ever raised above the org cap. Per-entity construction avoids that.
+function makeSlugSchema(max: number) {
+  return z
+    .string()
+    .trim()
+    .toLowerCase()
+    .min(1)
+    .max(max)
+    .regex(SLUG_PATTERN, { message: SLUG_MESSAGE })
+}
+
+function makeReservedSlugSchema(max: number) {
+  return makeSlugSchema(max).refine((value) => !isReservedHandle(value), {
     message: "This slug is reserved",
-  }
-)
+  })
+}
 
-export const orgSlugSchema = slugSchema.max(VALIDATION_LIMITS.orgSlug)
-export const projectSlugSchema = slugSchema.max(VALIDATION_LIMITS.projectSlug)
-export const orgSlugWriteSchema = reservedSlugSchema.max(
-  VALIDATION_LIMITS.orgSlug
-)
-export const projectSlugWriteSchema = reservedSlugSchema.max(
+// Lenient slug used on READ/lookup paths: validates size only, never format. A
+// lookup must not start throwing just because a stored slug predates a later
+// rule change — a value that doesn't match simply won't be found. Trim/lowercase
+// keep the lookup key normalized.
+function makeReadSlugSchema(max: number) {
+  return z.string().trim().toLowerCase().max(max)
+}
+
+export const orgSlugSchema = makeReadSlugSchema(VALIDATION_LIMITS.orgSlug)
+export const projectSlugSchema = makeReadSlugSchema(
   VALIDATION_LIMITS.projectSlug
 )
-export const generatedSlugSchema = z
-  .string()
-  .trim()
-  .min(1)
-  .max(VALIDATION_LIMITS.generatedSlug)
-  .regex(SLUG_PATTERN)
+export const orgSlugWriteSchema = makeReservedSlugSchema(
+  VALIDATION_LIMITS.orgSlug
+)
+export const projectSlugWriteSchema = makeReservedSlugSchema(
+  VALIDATION_LIMITS.projectSlug
+)
+// Read/lookup schema for system-generated slugs (feedback/update permalinks).
+// Lenient (size-only) for the same reason as the other read slug schemas.
+export const generatedSlugSchema = makeReadSlugSchema(
+  VALIDATION_LIMITS.generatedSlug
+)
 
 export const usernameSchema = z
   .string()

@@ -346,7 +346,11 @@ export type DataModel = {
     indexes: {
       by_id: ["_id"];
       by_creation_time: ["_creationTime"];
+      by_answerCommentId: ["answerCommentId", "_creationTime"];
+      by_assignedProfileId: ["assignedProfileId", "_creationTime"];
+      by_boardId: ["boardId", "_creationTime"];
       by_deletedTime: ["deletedTime", "_creationTime"];
+      by_firstCommentId: ["firstCommentId", "_creationTime"];
       by_projectId: ["projectId", "_creationTime"];
       by_projectId_boardId: ["projectId", "boardId", "_creationTime"];
       by_projectId_boardId_status: [
@@ -456,6 +460,7 @@ export type DataModel = {
       by_creation_time: ["_creationTime"];
       by_authorProfileId: ["authorProfileId", "_creationTime"];
       by_feedbackId: ["feedbackId", "_creationTime"];
+      by_replyFeedbackCommentId: ["replyFeedbackCommentId", "_creationTime"];
     };
     searchIndexes: {};
     vectorIndexes: {};
