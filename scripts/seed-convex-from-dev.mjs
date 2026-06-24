@@ -289,18 +289,20 @@ function removeJsonlObjectFields(filePath, fields) {
   let changed = 0
   const sanitizedLines = []
 
+  // Each line is a complete JSON object, so parse it rather than rewriting the
+  // text with regexes — that keeps us safe regardless of a field's value type.
   for (const line of lines) {
     if (!line.trim()) continue
-    let sanitizedLine = line
+    const row = JSON.parse(line)
+    let touched = false
     for (const field of fields) {
-      const quotedField = field.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-      sanitizedLine = sanitizedLine
-        .replace(new RegExp(`,"${quotedField}":[^,}]*`, "g"), "")
-        .replace(new RegExp(`"${quotedField}":[^,}]*,`, "g"), "")
-        .replace(new RegExp(`"${quotedField}":[^,}]*`, "g"), "")
+      if (field in row) {
+        delete row[field]
+        touched = true
+      }
     }
-    if (sanitizedLine !== line) changed += 1
-    sanitizedLines.push(sanitizedLine)
+    if (touched) changed += 1
+    sanitizedLines.push(JSON.stringify(row))
   }
 
   if (changed > 0) {
@@ -311,6 +313,12 @@ function removeJsonlObjectFields(filePath, fields) {
 }
 
 function sanitizeExportForCurrentSchema(exportPath) {
+  if (!exportPath.endsWith(".zip")) {
+    throw new Error(
+      `[seed] expected a .zip export path, got: ${exportPath}`
+    )
+  }
+
   const tempDir = fs.mkdtempSync(path.join(seedDir, "sanitize-"))
   const sanitizedPath = exportPath.replace(/\.zip$/, "-sanitized.zip")
 
@@ -327,6 +335,8 @@ function sanitizeExportForCurrentSchema(exportPath) {
     console.log(
       `[seed] removed legacy feedback soft-delete fields from ${changedFeedbackRows} exported row(s)`
     )
+    // Start from a clean file so re-runs don't append to a stale archive.
+    fs.rmSync(sanitizedPath, { force: true })
     run("zip", ["-q", "-r", sanitizedPath, "."], { cwd: tempDir })
     return sanitizedPath
   } finally {
@@ -440,6 +450,12 @@ run(
   ],
   { env: targetEnv }
 )
+
+// Drop the temporary sanitized archive (if one was produced) now that the
+// import has consumed it.
+if (importPath !== exportPath) {
+  fs.rmSync(importPath, { force: true })
+}
 
 stopTemporaryLocalBackend()
 

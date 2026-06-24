@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 
-import { hasReservedModifier, isEditableTarget, normalizeKey } from "./keys"
+import {
+  hasReservedModifier,
+  isEditableTarget,
+  isOverlayOpen,
+  normalizeKey,
+} from "./keys"
 import { ShortcutsContext } from "./shortcuts-context"
 import { ShortcutsDialog } from "./shortcuts-dialog"
 import type { ReactNode } from "react"
@@ -98,6 +103,11 @@ export function ShortcutsProvider({ children }: { children: ReactNode }) {
       // While the modal is open only the toggle key is live; everything else is
       // left to the dialog (Escape, focus trap, etc.).
       if (open && key !== "?") return
+
+      // "?" is the global help toggle and stays live everywhere. Any other
+      // single key is suppressed while a dialog/menu/popover is open so it can't
+      // trigger navigation underneath the open layer.
+      if (key !== "?" && isOverlayOpen()) return
 
       const shortcut = keyMap.get(key)
       if (!shortcut?.run) return

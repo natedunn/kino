@@ -10,7 +10,21 @@ import { cn } from '@/lib/utils';
 // position in the list below (1 = All).
 const BOARD_SELECT_KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9'];
 
-export function BoardsNav({ boards }: { boards: any[] | null }) {
+// Only the fields this nav actually reads. The query returns richer board docs,
+// but a structural subset keeps the synthetic "All" entry valid and gives us
+// type-checked access to `slug`/`name`/`icon`.
+type FeedbackBoardNavItem = {
+  id: string;
+  name: string;
+  slug: string;
+  icon?: string | null;
+};
+
+export function BoardsNav({
+  boards,
+}: {
+  boards: FeedbackBoardNavItem[] | null;
+}) {
   const routePath = '/@{$org}/$project/feedback/';
   const { org, project } = useParams({ from: routePath });
   const { board: boardParam } = useSearch({ from: routePath });
