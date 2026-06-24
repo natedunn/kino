@@ -214,43 +214,52 @@ export const MainNav = ({
                   <span className="sr-only">Search</span>
                 </NavButton>
 
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <NavButton size="icon" className="relative">
-                      <Bell className="h-4 w-4" />
-                      <Badge
-                        variant="destructive"
-                        className="absolute -top-1 -right-1 h-4 w-4 p-0 text-xs"
+                {user ? (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <NavButton
+                        aria-label={`Open notifications (${notifications.length} unread)`}
+                        size="icon"
+                        className="relative"
                       >
-                        {notifications.length}
-                      </Badge>
-                    </NavButton>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="z-20 w-80">
-                    <div className="px-3 py-2 text-sm font-semibold">
-                      Notifications
-                    </div>
-                    <DropdownMenuSeparator />
-                    {notifications.map((notification) => (
-                      <DropdownMenuItem
-                        key={notification.id}
-                        className="flex flex-col items-start p-3"
-                      >
-                        <div className="font-medium">{notification.title}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {notification.description}
-                        </div>
-                        <div className="mt-1 text-xs text-muted-foreground">
-                          {notification.time}
-                        </div>
+                        <Bell className="h-4 w-4" />
+                        <Badge
+                          aria-hidden="true"
+                          variant="destructive"
+                          className="absolute -top-1 -right-1 h-4 w-4 p-0 text-xs"
+                        >
+                          {notifications.length}
+                        </Badge>
+                      </NavButton>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="z-20 w-80">
+                      <div className="px-3 py-2 text-sm font-semibold">
+                        Notifications
+                      </div>
+                      <DropdownMenuSeparator />
+                      {notifications.map((notification) => (
+                        <DropdownMenuItem
+                          key={notification.id}
+                          className="flex flex-col items-start p-3"
+                        >
+                          <div className="font-medium">
+                            {notification.title}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {notification.description}
+                          </div>
+                          <div className="mt-1 text-xs text-muted-foreground">
+                            {notification.time}
+                          </div>
+                        </DropdownMenuItem>
+                      ))}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem className="text-center text-sm text-muted-foreground">
+                        View all notifications
                       </DropdownMenuItem>
-                    ))}
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem className="text-center text-sm text-muted-foreground">
-                      View all notifications
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                ) : null}
 
                 {user ? (
                   <UserDropdown orgSlug={orgSlug} user={user} />

@@ -1,3 +1,4 @@
+import { useMutation } from "@tanstack/react-query"
 import { useNavigate } from "@tanstack/react-router"
 import {
   Building2,
@@ -19,7 +20,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { authClient } from "@/lib/auth/auth-client"
+import { useSignOutMutationOptions } from "@/lib/auth/auth-client"
 
 export function UserDropdown({
   orgSlug,
@@ -29,6 +30,7 @@ export function UserDropdown({
   user: NonNullable<API["profile"]["findMyProfile"]>
 }) {
   const navigate = useNavigate()
+  const signOut = useMutation(useSignOutMutationOptions())
 
   return (
     <DropdownMenu>
@@ -60,8 +62,12 @@ export function UserDropdown({
         >
           Your profile
         </UserDropdownItem>
-        <UserDropdownItem icon={Building2}>Your organizations</UserDropdownItem>
-        <UserDropdownItem icon={FolderKanban}>Your projects</UserDropdownItem>
+        <UserDropdownItem disabled icon={Building2}>
+          Your organizations
+        </UserDropdownItem>
+        <UserDropdownItem disabled icon={FolderKanban}>
+          Your projects
+        </UserDropdownItem>
         <DropdownMenuSeparator />
         {!!orgSlug && (
           <UserDropdownItem
@@ -88,15 +94,19 @@ export function UserDropdown({
         </UserDropdownItem>
         <DropdownMenuSeparator />
         <UserDropdownItem
+          disabled={signOut.isPending}
           icon={LogOut}
           onClick={() => {
-            authClient.signOut()
-            navigate({
-              to: "/auth",
+            signOut.mutate(undefined, {
+              onSuccess: () => {
+                navigate({
+                  to: "/auth",
+                })
+              },
             })
           }}
         >
-          Sign out
+          {signOut.isPending ? "Signing out..." : "Sign out"}
         </UserDropdownItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -105,15 +115,17 @@ export function UserDropdown({
 
 function UserDropdownItem({
   children,
+  disabled,
   icon: Icon,
   onClick,
 }: {
   children: React.ReactNode
+  disabled?: boolean
   icon: ComponentType<{ className?: string }>
   onClick?: () => void
 }) {
   return (
-    <DropdownMenuItem className="gap-2" onClick={onClick}>
+    <DropdownMenuItem className="gap-2" disabled={disabled} onClick={onClick}>
       <Icon className="size-4 text-muted-foreground/65" />
       <span>{children}</span>
     </DropdownMenuItem>
