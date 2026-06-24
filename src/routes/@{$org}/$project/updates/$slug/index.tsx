@@ -502,7 +502,10 @@ function UpdateDetailRoute() {
                 })
               }
               onUpdate={(commentId, content) =>
-                commentUpdateMutation.mutate({ _id: commentId, content })
+                commentUpdateMutation.mutateAsync({
+                  _id: commentId,
+                  content,
+                })
               }
             />
             <CommentForm

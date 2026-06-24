@@ -27,6 +27,11 @@ import { authClient } from "@/lib/convex/auth-client"
 import { useCRPC } from "@/lib/convex/crpc"
 import { useSidebarState } from "@/lib/hooks/use-sidebar-state"
 import { cn } from "@/lib/utils"
+import {
+  FORM_LIMITS,
+  updateFormSchema,
+  validationMessage,
+} from "@/lib/validation"
 
 import {
   CategoryBadge,
@@ -105,17 +110,26 @@ function NewUpdateRoute() {
       setFormError("")
       const project = projectQuery.data?.project
       if (!project) return
+      const parsed = updateFormSchema.safeParse({
+        content: sanitizeEditorContent(value.content),
+        tags: value.tags,
+        title: value.title,
+      })
+      if (!parsed.success) {
+        setFormError(validationMessage(parsed.error))
+        return
+      }
 
       const data = await createMutation.mutateAsync({
         category: value.category,
-        content: sanitizeEditorContent(value.content),
+        content: parsed.data.content,
         projectId: project.id,
         relatedFeedbackIds:
           value.relatedFeedbackIds.length > 0
             ? value.relatedFeedbackIds
             : undefined,
-        tags: value.tags,
-        title: value.title,
+        tags: parsed.data.tags,
+        title: parsed.data.title,
       })
       form.reset()
       navigate({
@@ -172,16 +186,25 @@ function NewUpdateRoute() {
     if (!value.title.trim() || !sanitizeEditorContent(value.content)) return
 
     try {
+      const parsed = updateFormSchema.safeParse({
+        content: sanitizeEditorContent(value.content),
+        tags: value.tags,
+        title: value.title,
+      })
+      if (!parsed.success) {
+        setFormError(validationMessage(parsed.error))
+        return
+      }
       const created = await createMutation.mutateAsync({
         category: value.category,
-        content: sanitizeEditorContent(value.content),
+        content: parsed.data.content,
         projectId: project.id,
         relatedFeedbackIds:
           value.relatedFeedbackIds.length > 0
             ? value.relatedFeedbackIds
             : undefined,
-        tags: value.tags,
-        title: value.title,
+        tags: parsed.data.tags,
+        title: parsed.data.title,
       })
       pendingPublishRef.current = { id: created.updateId, slug: created.slug }
       await publishMutation.mutateAsync({ id: created.updateId })
@@ -423,6 +446,7 @@ function NewUpdateRoute() {
                   autoFocus
                   className="h-auto px-4 py-3 text-xl font-semibold tracking-tight md:text-2xl"
                   id="update-title"
+                  maxLength={FORM_LIMITS.updateTitle}
                   onChange={(event) => field.handleChange(event.target.value)}
                   placeholder="Update title..."
                   value={field.state.value}
@@ -435,6 +459,7 @@ function NewUpdateRoute() {
             {(field) => (
               <div className="flex flex-col gap-2">
                 <MarkdownEditor
+                  ariaLabel="Update content"
                   maxHeight="calc(100vh - 280px)"
                   minHeight="400px"
                   onChange={(html) => field.handleChange(html)}

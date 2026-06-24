@@ -23,11 +23,29 @@ import {
   type GitHubRepository,
 } from "../lib/github"
 import {
+  feedbackGithubConnectionTable,
   githubConnectionStateTable,
   githubInstallationTable,
   githubRepositoryConnectionTable,
   githubWebhookDeliveryTable,
 } from "./schema"
+import {
+  callbackTargetUrlSchema,
+  githubLoginSchema,
+  githubNodeIdSchema,
+  githubRepoFullNameSchema,
+  githubRepoNameSchema,
+  githubStateSchema,
+  githubStateValueSchema,
+  githubTitleSchema,
+  githubUrlSchema,
+  idSchema,
+  orgSlugSchema,
+  projectSlugSchema,
+  webhookActionSchema,
+  webhookDeliveryIdSchema,
+  webhookEventSchema,
+} from "../lib/validation"
 
 const connectionModeSchema = z.enum(["read", "read_write"])
 const sourceSchema = z.enum(["issues", "discussions"])
@@ -36,23 +54,26 @@ const githubInstallationSchema = z.object({
   account: z
     .object({
       id: z.number().int(),
-      login: z.string(),
-      type: z.string(),
+      login: githubLoginSchema,
+      type: z.string().trim().min(1).max(40),
     })
     .nullable(),
-  events: z.array(z.string()),
+  events: z.array(z.string().trim().min(1).max(80)).max(100),
   id: z.number().int(),
-  permissions: z.record(z.string(), z.string()),
-  repository_selection: z.string(),
+  permissions: z.record(
+    z.string().trim().min(1).max(100),
+    z.string().trim().min(1).max(100)
+  ),
+  repository_selection: z.string().trim().min(1).max(40),
 })
 
 const githubRepositorySchema = z.object({
-  full_name: z.string(),
+  full_name: githubRepoFullNameSchema,
   id: z.number().int(),
-  name: z.string(),
-  node_id: z.string(),
+  name: githubRepoNameSchema,
+  node_id: githubNodeIdSchema,
   owner: z.object({
-    login: z.string(),
+    login: githubLoginSchema,
   }),
   private: z.boolean(),
 })
@@ -146,10 +167,10 @@ async function verifyOrgAdmin(
 export const startProjectConnection = authMutation
   .input(
     z.object({
-      callbackTargetUrl: z.string().optional(),
+      callbackTargetUrl: callbackTargetUrlSchema.optional(),
       mode: connectionModeSchema.default("read"),
-      orgSlug: z.string(),
-      projectSlug: z.string(),
+      orgSlug: orgSlugSchema,
+      projectSlug: projectSlugSchema,
     })
   )
   .mutation(async ({ ctx, input }) => {
@@ -193,9 +214,9 @@ export const startProjectConnection = authMutation
 export const startOrgConnection = authMutation
   .input(
     z.object({
-      callbackTargetUrl: z.string().optional(),
+      callbackTargetUrl: callbackTargetUrlSchema.optional(),
       mode: connectionModeSchema.default("read"),
-      orgSlug: z.string(),
+      orgSlug: orgSlugSchema,
     })
   )
   .mutation(async ({ ctx, input }) => {
@@ -233,10 +254,10 @@ export const startOrgConnection = authMutation
 export const startInstallationRefresh = authMutation
   .input(
     z.object({
-      callbackTargetUrl: z.string().optional(),
+      callbackTargetUrl: callbackTargetUrlSchema.optional(),
       mode: connectionModeSchema.default("read"),
-      orgSlug: z.string(),
-      projectSlug: z.string(),
+      orgSlug: orgSlugSchema,
+      projectSlug: projectSlugSchema,
     })
   )
   .mutation(async ({ ctx, input }) => {
@@ -280,9 +301,9 @@ export const startInstallationRefresh = authMutation
 export const startOrgInstallationRefresh = authMutation
   .input(
     z.object({
-      callbackTargetUrl: z.string().optional(),
+      callbackTargetUrl: callbackTargetUrlSchema.optional(),
       mode: connectionModeSchema.default("read"),
-      orgSlug: z.string(),
+      orgSlug: orgSlugSchema,
     })
   )
   .mutation(async ({ ctx, input }) => {
@@ -320,8 +341,8 @@ export const startOrgInstallationRefresh = authMutation
 export const getProjectIntegration = authQuery
   .input(
     z.object({
-      orgSlug: z.string(),
-      projectSlug: z.string(),
+      orgSlug: orgSlugSchema,
+      projectSlug: projectSlugSchema,
     })
   )
   .query(async ({ ctx, input }) => {
@@ -334,7 +355,11 @@ export const getProjectIntegration = authQuery
       slug: input.orgSlug,
       userId: ctx.userId,
     })
-    if (!access.organization || !access.permissions.canCreate) {
+    if (!access.organization) {
+      return { installations: [] }
+    }
+
+    if (!access.permissions.canCreate) {
       throw new CRPCError({
         code: "FORBIDDEN",
         message: "Only organization admins can view GitHub connections",
@@ -368,7 +393,7 @@ export const getProjectIntegration = authQuery
 export const getOrgIntegration = authQuery
   .input(
     z.object({
-      orgSlug: z.string(),
+      orgSlug: orgSlugSchema,
     })
   )
   .query(async ({ ctx, input }) => {
@@ -398,7 +423,7 @@ export const getOrgIntegration = authQuery
 export const getRefreshInstallationsForCallback = privateQuery
   .input(
     z.object({
-      state: z.string(),
+      state: githubStateSchema,
     })
   )
   .query(async ({ ctx, input }) => {
@@ -441,8 +466,8 @@ export const getInstallationForExternal = privateQuery
   .input(
     z.object({
       installationId: z.number().int(),
-      orgSlug: z.string(),
-      userId: z.string(),
+      orgSlug: orgSlugSchema,
+      userId: idSchema,
     })
   )
   .query(async ({ ctx, input }) => {
@@ -482,8 +507,8 @@ export const completeInstallationCallback = privateMutation
   .input(
     z.object({
       installation: githubInstallationSchema,
-      setupAction: z.string().optional(),
-      state: z.string(),
+      setupAction: z.string().trim().max(40).optional(),
+      state: githubStateSchema,
     })
   )
   .mutation(async ({ ctx, input }) => {
@@ -502,8 +527,11 @@ export const completeInstallationCallback = privateMutation
     if (stateDoc.expiresAt < Date.now()) {
       await ctx.orm
         .update(githubConnectionStateTable)
-        .set({ status: "expired", updatedTime: Date.now() })
-        .where(eq(githubConnectionStateTable.id, stateDoc._id as any))
+        .set({
+          status: "expired",
+          updatedTime: Date.now(),
+        })
+        .where(eq(githubConnectionStateTable.id, stateDoc._id))
       throw new CRPCError({
         code: "BAD_REQUEST",
         message: "GitHub connection state expired",
@@ -547,7 +575,7 @@ export const completeInstallationCallback = privateMutation
       await ctx.orm
         .update(githubInstallationTable)
         .set(values)
-        .where(eq(githubInstallationTable.id, existing._id as any))
+        .where(eq(githubInstallationTable.id, existing._id))
     } else {
       await ctx.orm.insert(githubInstallationTable).values(values)
     }
@@ -559,7 +587,7 @@ export const completeInstallationCallback = privateMutation
         status: "consumed",
         updatedTime: Date.now(),
       })
-      .where(eq(githubConnectionStateTable.id, stateDoc._id as any))
+      .where(eq(githubConnectionStateTable.id, stateDoc._id))
 
     return {
       mode: stateDoc.mode,
@@ -571,9 +599,9 @@ export const completeInstallationCallback = privateMutation
 export const completeUserInstallationsCallback = privateMutation
   .input(
     z.object({
-      deletedInstallationIds: z.array(z.number().int()).default([]),
-      installations: z.array(githubInstallationSchema),
-      state: z.string(),
+      deletedInstallationIds: z.array(z.number().int()).max(100).default([]),
+      installations: z.array(githubInstallationSchema).max(100),
+      state: githubStateSchema,
     })
   )
   .mutation(async ({ ctx, input }) => {
@@ -592,8 +620,11 @@ export const completeUserInstallationsCallback = privateMutation
     if (stateDoc.expiresAt < Date.now()) {
       await ctx.orm
         .update(githubConnectionStateTable)
-        .set({ status: "expired", updatedTime: Date.now() })
-        .where(eq(githubConnectionStateTable.id, stateDoc._id as any))
+        .set({
+          status: "expired",
+          updatedTime: Date.now(),
+        })
+        .where(eq(githubConnectionStateTable.id, stateDoc._id))
       throw new CRPCError({
         code: "BAD_REQUEST",
         message: "GitHub connection state expired",
@@ -631,7 +662,7 @@ export const completeUserInstallationsCallback = privateMutation
         await ctx.orm
           .update(githubInstallationTable)
           .set(values)
-          .where(eq(githubInstallationTable.id, existing._id as any))
+          .where(eq(githubInstallationTable.id, existing._id))
       } else {
         await ctx.orm.insert(githubInstallationTable).values(values)
       }
@@ -655,7 +686,7 @@ export const completeUserInstallationsCallback = privateMutation
           status: "deleted",
           updatedTime: now,
         })
-        .where(eq(githubInstallationTable.id, existing._id as any))
+        .where(eq(githubInstallationTable.id, existing._id))
       deletedCount += 1
     }
 
@@ -666,7 +697,7 @@ export const completeUserInstallationsCallback = privateMutation
         status: "consumed",
         updatedTime: now,
       })
-      .where(eq(githubConnectionStateTable.id, stateDoc._id as any))
+      .where(eq(githubConnectionStateTable.id, stateDoc._id))
 
     return {
       deletedInstallationCount: deletedCount,
@@ -680,13 +711,13 @@ export const completeUserInstallationsCallback = privateMutation
 export const saveRepositoryConnection = privateMutation
   .input(
     z.object({
-      enabledSources: z.array(sourceSchema).min(1),
+      enabledSources: z.array(sourceSchema).min(1).max(2),
       installationId: z.number().int(),
       mode: connectionModeSchema,
-      orgSlug: z.string(),
-      projectSlug: z.string(),
+      orgSlug: orgSlugSchema,
+      projectSlug: projectSlugSchema,
       repository: githubRepositorySchema,
-      userId: z.string(),
+      userId: idSchema,
       verificationSummary: verificationSummarySchema,
     })
   )
@@ -770,10 +801,13 @@ export const saveRepositoryConnection = privateMutation
             !connection.deletedTime && connection._id !== existingForRepo?._id
         )
         .map((connection: any) =>
-          ctx.db.patch(connection._id, {
-            deletedTime: now,
-            updatedTime: now,
-          })
+          ctx.orm
+            .update(githubRepositoryConnectionTable)
+            .set({
+              deletedTime: now,
+              updatedTime: now,
+            })
+            .where(eq(githubRepositoryConnectionTable.id, connection._id))
         )
     )
 
@@ -797,9 +831,9 @@ export const saveRepositoryConnection = privateMutation
 export const disconnectRepository = authMutation
   .input(
     z.object({
-      connectionId: z.string(),
-      orgSlug: z.string(),
-      projectSlug: z.string(),
+      connectionId: idSchema,
+      orgSlug: orgSlugSchema,
+      projectSlug: projectSlugSchema,
     })
   )
   .mutation(async ({ ctx, input }) => {
@@ -826,28 +860,36 @@ export const disconnectRepository = authMutation
       })
     }
 
-    await ctx.db.patch(connection._id, {
-      deletedTime: Date.now(),
-      updatedTime: Date.now(),
-    })
+    await ctx.orm
+      .update(githubRepositoryConnectionTable)
+      .set({
+        deletedTime: Date.now(),
+        updatedTime: Date.now(),
+      })
+      .where(eq(githubRepositoryConnectionTable.id, connection._id))
 
     return { success: true }
   })
 
 const webhookInstallationSchema = z.object({
-  events: z.array(z.string()).optional(),
+  events: z.array(z.string().trim().min(1).max(80)).max(100).optional(),
   id: z.number().int(),
-  permissions: z.record(z.string(), z.string()).optional(),
-  repository_selection: z.string().optional(),
+  permissions: z
+    .record(
+      z.string().trim().min(1).max(100),
+      z.string().trim().min(1).max(100)
+    )
+    .optional(),
+  repository_selection: z.string().trim().max(40).optional(),
 })
 
 const webhookIssueSchema = z.object({
-  nodeId: z.string().min(1),
+  nodeId: githubNodeIdSchema,
   number: z.number().int(),
   repositoryId: z.number().int(),
-  state: z.string().min(1),
-  title: z.string(),
-  url: z.string().url(),
+  state: githubStateValueSchema,
+  title: githubTitleSchema,
+  url: githubUrlSchema,
 })
 
 /**
@@ -860,9 +902,9 @@ const webhookIssueSchema = z.object({
 export const processWebhookEvent = privateMutation
   .input(
     z.object({
-      action: z.string().optional(),
-      deliveryId: z.string().min(1),
-      event: z.string().min(1),
+      action: webhookActionSchema,
+      deliveryId: webhookDeliveryIdSchema,
+      event: webhookEventSchema,
       installation: webhookInstallationSchema.optional(),
       issue: webhookIssueSchema.optional(),
     })
@@ -909,10 +951,13 @@ export const processWebhookEvent = privateMutation
 
       if (updates && installations.length > 0) {
         for (const installation of installations) {
-          await ctx.db.patch(installation._id, {
-            ...updates,
-            updatedTime: now,
-          })
+          await ctx.orm
+            .update(githubInstallationTable)
+            .set({
+              ...updates,
+              updatedTime: now,
+            })
+            .where(eq(githubInstallationTable.id, installation._id))
         }
         result = "processed"
       }
@@ -935,12 +980,10 @@ export const processWebhookEvent = privateMutation
 
         const feedbackConnections = await ctx.db
           .query("feedbackGithubConnection")
-          .withIndex(
-            "by_githubRepositoryConnectionId_githubNodeId",
-            (q: any) =>
-              q
-                .eq("githubRepositoryConnectionId", repositoryConnection._id)
-                .eq("githubNodeId", input.issue!.nodeId)
+          .withIndex("by_githubRepositoryConnectionId_githubNodeId", (q: any) =>
+            q
+              .eq("githubRepositoryConnectionId", repositoryConnection._id)
+              .eq("githubNodeId", input.issue!.nodeId)
           )
           .take(50)
 
@@ -956,13 +999,16 @@ export const processWebhookEvent = privateMutation
             continue
           }
 
-          await ctx.db.patch(feedbackConnection._id, {
-            githubNumber: input.issue.number,
-            state: input.issue.state,
-            title: input.issue.title,
-            updatedTime: now,
-            url: input.issue.url,
-          })
+          await ctx.orm
+            .update(feedbackGithubConnectionTable)
+            .set({
+              githubNumber: input.issue.number,
+              state: input.issue.state,
+              title: input.issue.title,
+              updatedTime: now,
+              url: input.issue.url,
+            })
+            .where(eq(feedbackGithubConnectionTable.id, feedbackConnection._id))
           updatedCount += 1
         }
       }

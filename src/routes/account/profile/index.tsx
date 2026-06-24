@@ -17,6 +17,13 @@ import { useCRPC } from "@/lib/convex/crpc"
 import { crpcServer } from "@/lib/convex/crpc-server"
 import { cn } from "@/lib/utils"
 import { titleMeta } from "@/lib/seo"
+import {
+  FORM_LIMITS,
+  USERNAME_MIN_LENGTH,
+  filterUsernameInput,
+  profileFormSchema,
+  validationMessage,
+} from "@/lib/validation"
 
 type ProfileSettingsFormValues = {
   avatarFile: File | null
@@ -118,6 +125,12 @@ function AuthenticatedProfileSettingsRoute() {
       setFormError(null)
 
       try {
+        const parsed = profileFormSchema.safeParse(value)
+        if (!parsed.success) {
+          setFormError(validationMessage(parsed.error))
+          return
+        }
+
         let imageKey: string | undefined
         if (value.avatarFile) {
           const { key, url } = await uploadUrlMutation.mutateAsync({})
@@ -140,8 +153,8 @@ function AuthenticatedProfileSettingsRoute() {
             ...(imageKey ? { imageKey } : {}),
           },
           user: {
-            name: value.name,
-            username: value.username,
+            name: parsed.data.name,
+            username: parsed.data.username,
           },
         })
 
@@ -254,9 +267,28 @@ function AuthenticatedProfileSettingsRoute() {
                     </LabelDescription>
                   </LabelWrapper>
                   <Input
-                    onChange={(event) => field.handleChange(event.target.value)}
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    maxLength={FORM_LIMITS.username}
+                    minLength={USERNAME_MIN_LENGTH}
+                    onChange={(event) =>
+                      field.handleChange(
+                        filterUsernameInput(
+                          event.target.value,
+                          FORM_LIMITS.username
+                        )
+                      )
+                    }
+                    spellCheck={false}
                     value={field.state.value}
                   />
+                  {field.state.value.length > 0 &&
+                  field.state.value.length < USERNAME_MIN_LENGTH ? (
+                    <p className="text-xs text-muted-foreground">
+                      Usernames must be at least {USERNAME_MIN_LENGTH}{" "}
+                      characters.
+                    </p>
+                  ) : null}
                 </div>
               )}
             </form.Field>
@@ -271,6 +303,7 @@ function AuthenticatedProfileSettingsRoute() {
                     </LabelDescription>
                   </LabelWrapper>
                   <Input
+                    maxLength={FORM_LIMITS.orgName}
                     onChange={(event) => field.handleChange(event.target.value)}
                     value={field.state.value}
                   />

@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 import { formatFullDate, formatRelativeDay } from "@/lib/utils/format-timestamp"
+import { FORM_LIMITS } from "@/lib/validation"
 
 const COLLAPSED_MAX_HEIGHT = 600
 
@@ -90,7 +91,7 @@ export function CommentList<TComment extends ThreadComment>({
   isUpdating?: boolean
   onDelete?: (commentId: string) => void
   onToggleEmote?: (commentId: string, content: EmoteContent) => void
-  onUpdate?: (commentId: string, content: string) => void
+  onUpdate?: (commentId: string, content: string) => void | Promise<unknown>
 }) {
   if (comments.length === 0) return null
 
@@ -148,7 +149,7 @@ export function CommentCard({
   isUpdating?: boolean
   onDelete?: (commentId: string) => void
   onToggleEmote?: (commentId: string, content: EmoteContent) => void
-  onUpdate?: (commentId: string, content: string) => void
+  onUpdate?: (commentId: string, content: string) => void | Promise<unknown>
   railClassName?: string
   verb?: string
 }) {
@@ -159,6 +160,7 @@ export function CommentCard({
   const commentHashId = `comment-${comment.id}`
   const [isEditing, setIsEditing] = useState(false)
   const [editContent, setEditContent] = useState(comment.content)
+  const [editError, setEditError] = useState("")
   const [isHighlighted, setIsHighlighted] = useState(false)
   const canEdit =
     comment.canEdit ??
@@ -199,17 +201,33 @@ export function CommentCard({
     }
   }
 
-  function handleSaveEdit() {
+  async function handleSaveEdit() {
     if (!onUpdate) return
+    setEditError("")
     const html = editEditorRef.current?.getHTML() ?? editContent
     const text = editEditorRef.current?.getText() ?? ""
     if (!text.trim()) return
 
     const sanitizedContent = sanitizeEditorContent(html)
     if (!sanitizedContent) return
+    // Count visible text, not HTML markup (see CommentForm.handleSubmit).
+    if (text.length > FORM_LIMITS.comment) {
+      setEditError(
+        `Comments must be ${FORM_LIMITS.comment} characters or fewer.`
+      )
+      return
+    }
 
-    onUpdate(comment.id, sanitizedContent)
-    setIsEditing(false)
+    try {
+      await onUpdate(comment.id, sanitizedContent)
+      setIsEditing(false)
+    } catch (updateError) {
+      setEditError(
+        updateError instanceof Error
+          ? updateError.message
+          : "Failed to save comment. Please try again."
+      )
+    }
   }
 
   const emoteEntries = Object.entries(comment.emoteCounts ?? {}) as [
@@ -236,6 +254,7 @@ export function CommentCard({
             </div>
           </div>
           <MarkdownEditor
+            ariaLabel="Edit comment"
             autoFocus
             className="relative rounded-b-none"
             disabled={isUpdating}
@@ -248,11 +267,17 @@ export function CommentCard({
             value={editContent}
           />
           <div className="flex justify-end gap-2 rounded-b-md border-x border-b bg-background p-3">
+            {editError ? (
+              <p className="mr-auto self-center text-sm text-destructive">
+                {editError}
+              </p>
+            ) : null}
             <Button
               disabled={isUpdating}
               onClick={() => {
                 setIsEditing(false)
                 setEditContent(comment.content)
+                setEditError("")
               }}
               size="sm"
               type="button"
@@ -458,19 +483,36 @@ export function CommentForm({
   submitLabel?: string
 }) {
   const [content, setContent] = useState("")
+  const [error, setError] = useState("")
   const editorRef = useContext(CommentEditorContext)
 
   async function handleSubmit() {
+    setError("")
     const html = editorRef?.current?.getHTML() ?? content
     const text = editorRef?.current?.getText() ?? ""
     if (!text.trim()) return
 
     const sanitizedContent = sanitizeEditorContent(html)
     if (!sanitizedContent) return
+    // Count visible text, not the HTML markup, so the "characters" the user is
+    // told about matches what they actually typed. The server still caps the
+    // stored HTML length as a hard backstop.
+    if (text.length > FORM_LIMITS.comment) {
+      setError(`Comments must be ${FORM_LIMITS.comment} characters or fewer.`)
+      return
+    }
 
-    await onSubmit(sanitizedContent)
-    setContent("")
-    editorRef?.current?.clear()
+    try {
+      await onSubmit(sanitizedContent)
+      setContent("")
+      editorRef?.current?.clear()
+    } catch (submitError) {
+      setError(
+        submitError instanceof Error
+          ? submitError.message
+          : "Unable to post comment"
+      )
+    }
   }
 
   if (!isAuthenticated) {
@@ -521,6 +563,7 @@ export function CommentForm({
   return (
     <div className="mt-6">
       <MarkdownEditor
+        ariaLabel={placeholder ?? "Write a comment"}
         className="rounded-b-none"
         disabled={isSubmitting}
         maxHeight="400px"
@@ -532,6 +575,11 @@ export function CommentForm({
         value={content}
       />
       <div className="flex justify-end gap-2 rounded-b-md border-x border-b bg-muted p-3">
+        {error ? (
+          <p className="mr-auto self-center text-sm text-destructive">
+            {error}
+          </p>
+        ) : null}
         <Button
           disabled={isSubmitting || !hasEditorText(content)}
           onClick={handleSubmit}

@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { eq } from "kitcn/orm"
+import { eq, unsetToken } from "kitcn/orm"
 import { CRPCError } from "kitcn/server"
 import {
   isValidTarget,
@@ -7,9 +7,8 @@ import {
   targetGranularities,
 } from "../shared/target"
 
-import { internal } from "./_generated/api"
 import type { Doc } from "./_generated/dataModel"
-import { authMutation, authQuery, optionalAuthQuery } from "../lib/crpc"
+import { authMutation, optionalAuthQuery } from "../lib/crpc"
 import {
   asId,
   generateRandomSlug,
@@ -22,10 +21,20 @@ import {
   verifyProjectAccess,
 } from "../lib/kino"
 import { resolveProfileImageUrl } from "../lib/storage"
+import {
+  commentContentSchema,
+  feedbackSearchSchema,
+  feedbackTitleSchema,
+  generatedSlugSchema,
+  idArraySchema,
+  idSchema,
+  nullableIdSchema,
+  tagListSchema,
+  targetSchema,
+} from "../lib/validation"
 import { recordFeedbackEvent } from "./feedbackEvent"
 import { feedbackCommentTable, feedbackTable } from "./schema"
 
-const FEEDBACK_DELETION_DELAY_MS = 1000 * 60 * 60 * 48
 const feedbackStatusSchema = z.enum([
   "open",
   "in-progress",
@@ -38,19 +47,6 @@ const EDIT_ROLES = new Set(["org:admin", "org:editor"])
 
 function hasOverlap(left: Array<string>, right: Array<string>) {
   return left.some((value) => right.includes(value))
-}
-
-function isMarkedForDeletion(feedback: { deletedTime?: number | null }) {
-  return feedback.deletedTime != null
-}
-
-function assertFeedbackActive(feedback: { deletedTime?: number | null }) {
-  if (isMarkedForDeletion(feedback)) {
-    throw new CRPCError({
-      code: "NOT_FOUND",
-      message: "Feedback not found",
-    })
-  }
 }
 
 function assertCanAdminFeedback(permissions: { canEdit: boolean }) {
@@ -75,10 +71,10 @@ function toPublicFeedbackDoc(feedback: Doc<"feedback">) {
 export const create = authMutation
   .input(
     z.object({
-      boardId: z.string(),
-      firstComment: z.string().min(1).max(1200),
-      projectId: z.string(),
-      title: z.string().min(1).max(100),
+      boardId: idSchema,
+      firstComment: commentContentSchema,
+      projectId: idSchema,
+      title: feedbackTitleSchema,
     })
   )
   .mutation(async ({ ctx, input }) => {
@@ -158,7 +154,6 @@ async function verifyFeedbackWriteAccess(
     asId<"feedback">(feedbackId),
     "Feedback not found"
   )
-  assertFeedbackActive(feedback)
   const project = await getDocOrThrow(
     ctx,
     feedback.projectId,
@@ -175,10 +170,14 @@ async function verifyFeedbackWriteAccess(
   }
 }
 
-export const markForDeletion = authMutation
+// Permanently deletes a feedback and all of its children via the FK cascade
+// (comments, events, upvotes, emotes, GitHub connections). There is no
+// soft-delete / restore — a future "archive" feature covers the hide-but-keep
+// case. `ctx.orm.delete` (not `ctx.db.delete`) is required so the cascade fires.
+export const remove = authMutation
   .input(
     z.object({
-      id: z.string(),
+      id: idSchema,
     })
   )
   .mutation(async ({ ctx, input }) => {
@@ -189,69 +188,17 @@ export const markForDeletion = authMutation
     )
     assertCanAdminFeedback(permissions)
 
-    const deletedTime = Date.now() + FEEDBACK_DELETION_DELAY_MS
-    await ctx.db.patch(feedback._id, {
-      deletionScheduled: true,
-      deletedTime,
-      updatedTime: Date.now(),
-    })
-    await ctx.scheduler.runAt(deletedTime, internal.crons.purgeDueFeedback, {})
+    await ctx.orm
+      .delete(feedbackTable)
+      .where(eq(feedbackTable.id, feedback._id))
 
-    return { deletedTime }
-  })
-
-export const unmarkForDeletion = authMutation
-  .input(
-    z.object({
-      id: z.string(),
-    })
-  )
-  .mutation(async ({ ctx, input }) => {
-    const feedback = await getDocOrThrow(
-      ctx,
-      asId<"feedback">(input.id),
-      "Feedback not found"
-    )
-    const project = await getDocOrThrow(
-      ctx,
-      feedback.projectId,
-      "Project not found"
-    )
-    const access = await verifyProjectAccess(ctx, {
-      slug: project.slug,
-      userId: ctx.userId,
-    })
-    assertCanAdminFeedback(access.permissions)
-
-    if (!isMarkedForDeletion(feedback)) {
-      throw new CRPCError({
-        code: "BAD_REQUEST",
-        message: "Feedback is not marked for deletion",
-      })
-    }
-    const deletedTime = feedback.deletedTime
-    if (deletedTime == null || deletedTime <= Date.now()) {
-      throw new CRPCError({
-        code: "BAD_REQUEST",
-        message: "Feedback deletion can no longer be restored",
-      })
-    }
-
-    await ctx.db.patch(feedback._id, {
-      deletionScheduled: false,
-      deletedTime: null,
-      updatedTime: Date.now(),
-    })
-
-    return {
-      restored: true,
-    }
+    return { deleted: true }
   })
 
 export const updateStatus = authMutation
   .input(
     z.object({
-      id: z.string(),
+      id: idSchema,
       status: feedbackStatusSchema,
     })
   )
@@ -283,8 +230,8 @@ export const updateStatus = authMutation
 export const updateTitle = authMutation
   .input(
     z.object({
-      id: z.string(),
-      title: z.string().trim().min(1).max(100),
+      id: idSchema,
+      title: feedbackTitleSchema,
     })
   )
   .mutation(async ({ ctx, input }) => {
@@ -324,8 +271,8 @@ export const updateTitle = authMutation
 export const updateBoard = authMutation
   .input(
     z.object({
-      id: z.string(),
-      boardId: z.string(),
+      id: idSchema,
+      boardId: idSchema,
     })
   )
   .mutation(async ({ ctx, input }) => {
@@ -368,8 +315,8 @@ export const updateBoard = authMutation
 export const setAnswerComment = authMutation
   .input(
     z.object({
-      commentId: z.string().nullable(),
-      feedbackId: z.string(),
+      commentId: nullableIdSchema,
+      feedbackId: idSchema,
     })
   )
   .mutation(async ({ ctx, input }) => {
@@ -387,10 +334,13 @@ export const setAnswerComment = authMutation
     }
 
     if (input.commentId === null) {
-      await ctx.db.patch(feedback._id, {
-        answerCommentId: undefined,
-        updatedTime: Date.now(),
-      })
+      await ctx.orm
+        .update(feedbackTable)
+        .set({
+          answerCommentId: unsetToken,
+          updatedTime: Date.now(),
+        })
+        .where(eq(feedbackTable.id, feedback._id))
       if (feedback.answerCommentId) {
         await recordFeedbackEvent(ctx, {
           actorProfileId: profile._id,
@@ -415,10 +365,13 @@ export const setAnswerComment = authMutation
       })
     }
 
-    await ctx.db.patch(feedback._id, {
-      answerCommentId: input.commentId as any,
-      updatedTime: Date.now(),
-    })
+    await ctx.orm
+      .update(feedbackTable)
+      .set({
+        answerCommentId: input.commentId as any,
+        updatedTime: Date.now(),
+      })
+      .where(eq(feedbackTable.id, feedback._id))
     await recordFeedbackEvent(ctx, {
       actorProfileId: profile._id,
       eventType: "answer_marked",
@@ -430,8 +383,8 @@ export const setAnswerComment = authMutation
 export const updateAssigned = authMutation
   .input(
     z.object({
-      assignedProfileId: z.string().nullable(),
-      feedbackId: z.string(),
+      assignedProfileId: nullableIdSchema,
+      feedbackId: idSchema,
     })
   )
   .mutation(async ({ ctx, input }) => {
@@ -508,8 +461,8 @@ export const updateAssigned = authMutation
 export const updateTarget = authMutation
   .input(
     z.object({
-      feedbackId: z.string(),
-      target: z.string().trim().nullable(),
+      feedbackId: idSchema,
+      target: targetSchema.nullable(),
       targetGranularity: targetGranularitySchema.nullable(),
     })
   )
@@ -571,8 +524,8 @@ export const updateTarget = authMutation
 export const getBySlug = optionalAuthQuery
   .input(
     z.object({
-      projectId: z.string(),
-      slug: z.string(),
+      projectId: idSchema,
+      slug: generatedSlugSchema,
     })
   )
   .query(async ({ ctx, input }) => {
@@ -584,7 +537,7 @@ export const getBySlug = optionalAuthQuery
           .eq("slug", input.slug)
       )
       .first()
-    if (!feedback || isMarkedForDeletion(feedback)) return null
+    if (!feedback) return null
 
     const access = await getProjectViewAccess(ctx, {
       id: input.projectId,
@@ -652,12 +605,12 @@ export const getBySlug = optionalAuthQuery
 export const listProjectFeedback = optionalAuthQuery
   .input(
     z.object({
-      boardId: z.string().or(z.literal("all")),
+      boardId: idSchema.or(z.literal("all")),
       order: z.enum(["asc", "desc"]).optional(),
-      projectId: z.string(),
-      search: z.string().optional(),
+      projectId: idSchema,
+      search: feedbackSearchSchema.optional(),
       status: feedbackStatusSchema.optional(),
-      tags: z.array(z.string()).optional(),
+      tags: tagListSchema.optional(),
     })
   )
   .paginated({ limit: 50, item: z.any() })
@@ -728,14 +681,11 @@ export const listProjectFeedback = optionalAuthQuery
       cursor: input.cursor,
       numItems: input.limit,
     })
-    const activePage = result.page.filter(
-      (row: any) => !isMarkedForDeletion(row)
-    )
     const page = input.tags?.length
-      ? activePage.filter((row: any) =>
+      ? result.page.filter((row: any) =>
           row?.tags ? hasOverlap(row.tags, input.tags ?? []) : false
         )
-      : activePage
+      : result.page
 
     const currentProfile = await getCurrentProfile(ctx, ctx.userId)
 
@@ -772,58 +722,11 @@ export const listProjectFeedback = optionalAuthQuery
     }
   })
 
-export const listPendingDeletion = authQuery
-  .input(
-    z.object({
-      projectId: z.string(),
-    })
-  )
-  .paginated({ limit: 50, item: z.any() })
-  .query(async ({ ctx, input }) => {
-    const access = await verifyProjectAccess(ctx, {
-      id: input.projectId,
-      userId: ctx.userId,
-    })
-    assertCanAdminFeedback(access.permissions)
-
-    const result = await ctx.db
-      .query("feedback")
-      .withIndex("by_projectId_deletedTime", (q: any) =>
-        q
-          .eq("projectId", asId<"project">(input.projectId))
-          .gt("deletedTime", Date.now())
-      )
-      .order("desc")
-      .paginate({
-        cursor: input.cursor,
-        numItems: input.limit,
-      })
-
-    return {
-      continueCursor: result.continueCursor,
-      isDone: result.isDone,
-      page: await Promise.all(
-        result.page.map(async (item: any) => {
-          const board = await getDoc<"feedbackBoard">(ctx, item.boardId)
-          const firstComment = await getDoc<"feedbackComment">(
-            ctx,
-            item.firstCommentId
-          )
-          return {
-            ...toPublicFeedbackDoc(item),
-            board: board ? { id: board._id, name: board.name } : null,
-            firstComment: firstComment ? toPublicDoc(firstComment) : null,
-          }
-        })
-      ),
-    }
-  })
-
 export const searchForLinking = optionalAuthQuery
   .input(
     z.object({
-      projectId: z.string(),
-      search: z.string(),
+      projectId: idSchema,
+      search: feedbackSearchSchema,
     })
   )
   .query(async ({ ctx, input }) => {
@@ -853,32 +756,26 @@ export const searchForLinking = optionalAuthQuery
           .take(50)
 
     return await Promise.all(
-      feedback
-        .filter((item: any) => !isMarkedForDeletion(item))
-        .slice(0, 20)
-        .map(async (item: any) => {
-          const board = await getDoc<"feedbackBoard">(ctx, item.boardId)
-          return {
-            id: item._id,
-            board: board ? { id: board._id, name: board.name } : null,
-            slug: item.slug,
-            status: item.status,
-            target: item.target ?? null,
-            targetGranularity: item.targetGranularity ?? null,
-            targetRange: resolveTargetOrNull(
-              item.target,
-              item.targetGranularity
-            ),
-            title: item.title,
-          }
-        })
+      feedback.slice(0, 20).map(async (item: any) => {
+        const board = await getDoc<"feedbackBoard">(ctx, item.boardId)
+        return {
+          id: item._id,
+          board: board ? { id: board._id, name: board.name } : null,
+          slug: item.slug,
+          status: item.status,
+          target: item.target ?? null,
+          targetGranularity: item.targetGranularity ?? null,
+          targetRange: resolveTargetOrNull(item.target, item.targetGranularity),
+          title: item.title,
+        }
+      })
     )
   })
 
 export const getByIds = optionalAuthQuery
   .input(
     z.object({
-      ids: z.array(z.string()).max(100),
+      ids: idArraySchema,
     })
   )
   .query(async ({ ctx, input }) => {
@@ -903,7 +800,7 @@ export const getByIds = optionalAuthQuery
 
     const rows = await Promise.all(
       items.map(async (item) => {
-        if (!item || isMarkedForDeletion(item)) return null
+        if (!item) return null
         if (!projectViewable.get(String(item.projectId))) return null
         const board = await getDoc<"feedbackBoard">(ctx, item.boardId)
         return {

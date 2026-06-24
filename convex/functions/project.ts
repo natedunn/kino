@@ -11,22 +11,26 @@ import {
   verifyOrgAccess,
   verifyProjectAccess,
 } from "../lib/kino"
-
-const urlSchema = z.object({
-  text: z.string().min(1).max(100),
-  url: z.string().url(),
-})
+import {
+  idSchema,
+  orgSlugSchema,
+  projectDescriptionSchema,
+  projectNameSchema,
+  projectSlugSchema,
+  projectSlugWriteSchema,
+  urlListSchema,
+} from "../lib/validation"
 
 const visibilitySchema = z.enum(["public", "private", "archived"])
 
 export const create = authMutation
   .input(
     z.object({
-      description: z.string().max(250).optional(),
-      name: z.string().min(1).max(30),
-      orgSlug: z.string(),
-      slug: z.string().min(1).max(30),
-      urls: z.array(urlSchema).max(10).optional(),
+      description: projectDescriptionSchema.optional(),
+      name: projectNameSchema,
+      orgSlug: orgSlugSchema,
+      slug: projectSlugWriteSchema,
+      urls: urlListSchema.optional(),
       visibility: visibilitySchema,
     })
   )
@@ -96,12 +100,12 @@ export const create = authMutation
 export const update = authMutation
   .input(
     z.object({
-      description: z.string().max(250).optional(),
-      id: z.string(),
-      name: z.string().min(1).max(30).optional(),
-      orgSlug: z.string().optional(),
-      slug: z.string().min(1).max(30).optional(),
-      urls: z.array(urlSchema).max(10).optional(),
+      description: projectDescriptionSchema.optional(),
+      id: idSchema,
+      name: projectNameSchema.optional(),
+      orgSlug: orgSlugSchema.optional(),
+      slug: projectSlugWriteSchema.optional(),
+      urls: urlListSchema.optional(),
       visibility: visibilitySchema.optional(),
     })
   )
@@ -162,7 +166,7 @@ export const getManyByOrg = optionalAuthQuery
   .input(
     z.object({
       limit: z.number().min(1).max(100).optional(),
-      orgSlug: z.string(),
+      orgSlug: orgSlugSchema,
     })
   )
   .query(async ({ ctx, input }) => {
@@ -244,8 +248,8 @@ export const getManyByOrg = optionalAuthQuery
 export const getDetails = optionalAuthQuery
   .input(
     z.object({
-      orgSlug: z.string(),
-      slug: z.string(),
+      orgSlug: orgSlugSchema,
+      slug: projectSlugSchema,
     })
   )
   .query(async ({ ctx, input }) => {

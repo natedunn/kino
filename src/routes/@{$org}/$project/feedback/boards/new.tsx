@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { useForm } from "@tanstack/react-form"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
@@ -9,10 +10,21 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { useCRPC } from "@/lib/convex/crpc"
 import { projectTitle, titleMeta } from "@/lib/seo"
+import {
+  FORM_LIMITS,
+  boardFormSchema,
+  validationMessage,
+} from "@/lib/validation"
 
 export const Route = createFileRoute("/@{$org}/$project/feedback/boards/new")({
   head: ({ params }) => ({
-    meta: [titleMeta(["New Board", "Feedback", projectTitle(params.org, params.project)])],
+    meta: [
+      titleMeta([
+        "New Board",
+        "Feedback",
+        projectTitle(params.org, params.project),
+      ]),
+    ],
   }),
   component: NewBoardRoute,
 })
@@ -21,6 +33,7 @@ function NewBoardRoute() {
   const params = Route.useParams()
   const navigate = useNavigate()
   const crpc = useCRPC()
+  const [formError, setFormError] = useState<string | null>(null)
 
   const projectQuery = useQuery(
     crpc.project.getDetails.queryOptions({
@@ -47,12 +60,22 @@ function NewBoardRoute() {
     onSubmit: async ({ value }) => {
       const project = projectQuery.data?.project
       if (!project) return
+      setFormError(null)
+      const parsed = boardFormSchema.safeParse({
+        description: value.description,
+        name: value.name,
+        slug: slugify(value.name),
+      })
+      if (!parsed.success) {
+        setFormError(validationMessage(parsed.error))
+        return
+      }
 
       await createMutation.mutateAsync({
-        description: value.description || undefined,
-        name: value.name,
+        description: parsed.data.description || undefined,
+        name: parsed.data.name,
         projectId: project.id,
-        slug: slugify(value.name),
+        slug: parsed.data.slug,
       })
     },
   })
@@ -89,6 +112,7 @@ function NewBoardRoute() {
                     Name of your public board. Must be unique to your project.
                   </p>
                   <Input
+                    maxLength={FORM_LIMITS.boardName}
                     onChange={(event) => field.handleChange(event.target.value)}
                     value={field.state.value}
                   />
@@ -103,6 +127,7 @@ function NewBoardRoute() {
                     Describe what feedback should belong in this board.
                   </p>
                   <Textarea
+                    maxLength={FORM_LIMITS.boardDescription}
                     onChange={(event) => field.handleChange(event.target.value)}
                     value={field.state.value}
                   />
@@ -112,13 +137,18 @@ function NewBoardRoute() {
             <form.Subscribe selector={(state) => state.values.name}>
               {(name) => (
                 <div className="hidden">
-                  <Input readOnly value={slugify(name)} />
+                  <Input
+                    maxLength={FORM_LIMITS.projectSlug}
+                    readOnly
+                    value={slugify(name)}
+                  />
                 </div>
               )}
             </form.Subscribe>
-            {createMutation.error ? (
+            {(formError ?? createMutation.error) ? (
               <InlineAlert variant="danger">
-                Unable to create board: {createMutation.error.message}
+                Unable to create board:{" "}
+                {formError ?? createMutation.error?.message}
               </InlineAlert>
             ) : null}
             <div className="flex items-center gap-3">

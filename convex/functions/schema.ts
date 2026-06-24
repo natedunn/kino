@@ -1,4 +1,5 @@
 import {
+  type AnyColumn,
   arrayOf,
   boolean,
   convexTable,
@@ -13,6 +14,7 @@ import {
   textEnum,
   timestamp,
 } from "kitcn/orm"
+import { normalizeSlug, VALIDATION_LIMITS } from "../lib/validation"
 import { targetGranularities } from "../shared/target"
 
 const PROFILE_ROLES = ["system:admin", "system:editor", "user"] as const
@@ -86,6 +88,11 @@ function isSupportedOrgRole(
   return role === "owner" || role === "admin" || role === "editor"
 }
 
+// The `.collect()`s in this file's sync helpers are intentionally unbounded:
+// every query is scoped to a single organization (its projects) or a single
+// (profile, project) pair, so the result set is bounded by one org's size and
+// must be processed in full to keep `projectMember` rows consistent. A `.take()`
+// would silently skip memberships and leave them stale/orphaned.
 async function syncProjectMembershipsForOrgMember(
   ctx: any,
   args: {
@@ -487,10 +494,10 @@ export const projectMemberTable = convexTable(
     updatedTime: integer(),
     profileId: id("profile")
       .notNull()
-      .references(() => profileTable.id),
+      .references(() => profileTable.id, { onDelete: "cascade" }),
     projectId: id("project")
       .notNull()
-      .references(() => projectTable.id),
+      .references(() => projectTable.id, { onDelete: "cascade" }),
     role: textEnum(PROJECT_MEMBER_ROLES).notNull(),
     projectVisibility: textEnum(PROJECT_VISIBILITIES).notNull(),
     projectSlug: text().notNull(),
@@ -540,7 +547,7 @@ export const feedbackBoardTable = convexTable(
     name: text().notNull(),
     projectId: id("project")
       .notNull()
-      .references(() => projectTable.id),
+      .references(() => projectTable.id, { onDelete: "cascade" }),
     description: text(),
     icon: text(),
     slug: text().notNull(),
@@ -561,25 +568,32 @@ export const feedbackCommentTable = convexTable(
     updatedTime: integer(),
     feedbackId: id("feedback")
       .notNull()
-      .references(() => feedbackTable.id),
+      .references(() => feedbackTable.id, { onDelete: "cascade" }),
     authorProfileId: id("profile")
       .notNull()
       .references(() => profileTable.id),
-    replyFeedbackCommentId: id("feedbackComment"),
+    // Self-referential pointer to a parent comment. `id()` is an implicit FK in
+    // kitcn, so it needs an explicit onDelete action + an index for cascade
+    // enforcement; a deleted parent comment nulls the reply pointer.
+    replyFeedbackCommentId: id("feedbackComment").references(
+      (): AnyColumn => feedbackCommentTable.id,
+      { onDelete: "set null" }
+    ),
     content: text().notNull(),
     initial: boolean(),
   },
   (feedbackCommentTable) => [
     index("by_feedbackId").on(feedbackCommentTable.feedbackId),
     index("by_authorProfileId").on(feedbackCommentTable.authorProfileId),
+    index("by_replyFeedbackCommentId").on(
+      feedbackCommentTable.replyFeedbackCommentId
+    ),
   ]
 )
 
 export const feedbackTable = convexTable(
   "feedback",
   {
-    deletedTime: integer(),
-    deletionScheduled: boolean(),
     updatedTime: integer(),
     slug: text().notNull(),
     title: text().notNull(),
@@ -592,10 +606,21 @@ export const feedbackTable = convexTable(
     upvotes: integer().notNull(),
     boardId: id("feedbackBoard")
       .notNull()
-      .references(() => feedbackBoardTable.id),
-    firstCommentId: id("feedbackComment"),
-    answerCommentId: id("feedbackComment"),
-    assignedProfileId: id("profile").references(() => profileTable.id),
+      .references(() => feedbackBoardTable.id, { onDelete: "cascade" }),
+    // Pointers to comments. `id()` is an implicit FK in kitcn, so each needs an
+    // explicit onDelete action + index: deleting a referenced comment nulls the
+    // pointer rather than blocking the delete.
+    firstCommentId: id("feedbackComment").references(
+      (): AnyColumn => feedbackCommentTable.id,
+      { onDelete: "set null" }
+    ),
+    answerCommentId: id("feedbackComment").references(
+      (): AnyColumn => feedbackCommentTable.id,
+      { onDelete: "set null" }
+    ),
+    assignedProfileId: id("profile").references(() => profileTable.id, {
+      onDelete: "set null",
+    }),
     status: textEnum(FEEDBACK_STATUSES).notNull(),
     target: text(),
     targetGranularity: textEnum(targetGranularities),
@@ -605,47 +630,25 @@ export const feedbackTable = convexTable(
   (feedbackTable) => [
     index("by_slug").on(feedbackTable.slug),
     index("by_projectId").on(feedbackTable.projectId),
-    index("by_deletedTime").on(feedbackTable.deletedTime),
-    index("by_projectId_deletedTime").on(
-      feedbackTable.projectId,
-      feedbackTable.deletedTime
-    ),
-    index("by_projectId_deletionScheduled").on(
-      feedbackTable.projectId,
-      feedbackTable.deletionScheduled
-    ),
+    // Indexes required so kitcn can enforce the implicit-FK onDelete actions on
+    // these pointer/assignment columns during cascade deletes.
+    index("by_firstCommentId").on(feedbackTable.firstCommentId),
+    index("by_answerCommentId").on(feedbackTable.answerCommentId),
+    index("by_assignedProfileId").on(feedbackTable.assignedProfileId),
+    // Standalone leading-field index on boardId so the feedbackBoard→feedback
+    // cascade can resolve referencing rows (composite indexes don't qualify).
+    index("by_boardId").on(feedbackTable.boardId),
     index("by_projectId_slug").on(feedbackTable.projectId, feedbackTable.slug),
-    index("by_projectId_slug_deletedTime").on(
-      feedbackTable.projectId,
-      feedbackTable.slug,
-      feedbackTable.deletedTime
-    ),
     index("by_projectId_boardId").on(
       feedbackTable.projectId,
-      feedbackTable.boardId
-    ),
-    index("by_projectId_deletedTime_boardId").on(
-      feedbackTable.projectId,
-      feedbackTable.deletedTime,
       feedbackTable.boardId
     ),
     index("by_projectId_status").on(
       feedbackTable.projectId,
       feedbackTable.status
     ),
-    index("by_projectId_deletedTime_status").on(
-      feedbackTable.projectId,
-      feedbackTable.deletedTime,
-      feedbackTable.status
-    ),
     index("by_projectId_boardId_status").on(
       feedbackTable.projectId,
-      feedbackTable.boardId,
-      feedbackTable.status
-    ),
-    index("by_projectId_deletedTime_boardId_status").on(
-      feedbackTable.projectId,
-      feedbackTable.deletedTime,
       feedbackTable.boardId,
       feedbackTable.status
     ),
@@ -654,8 +657,7 @@ export const feedbackTable = convexTable(
       .filter(
         feedbackTable.projectId,
         feedbackTable.boardId,
-        feedbackTable.status,
-        feedbackTable.deletedTime
+        feedbackTable.status
       ),
   ]
 )
@@ -670,10 +672,10 @@ export const feedbackCommentEmoteTable = convexTable(
       .references(() => profileTable.id),
     feedbackId: id("feedback")
       .notNull()
-      .references(() => feedbackTable.id),
+      .references(() => feedbackTable.id, { onDelete: "cascade" }),
     feedbackCommentId: id("feedbackComment")
       .notNull()
-      .references(() => feedbackCommentTable.id),
+      .references(() => feedbackCommentTable.id, { onDelete: "cascade" }),
     content: textEnum(EMOTE_CONTENTS).notNull(),
   },
   (feedbackCommentEmoteTable) => [
@@ -692,7 +694,7 @@ export const feedbackEventTable = convexTable(
     updatedTime: integer(),
     feedbackId: id("feedback")
       .notNull()
-      .references(() => feedbackTable.id),
+      .references(() => feedbackTable.id, { onDelete: "cascade" }),
     actorProfileId: id("profile")
       .notNull()
       .references(() => profileTable.id),
@@ -711,7 +713,7 @@ export const feedbackUpvoteTable = convexTable(
     updatedTime: integer(),
     feedbackId: id("feedback")
       .notNull()
-      .references(() => feedbackTable.id),
+      .references(() => feedbackTable.id, { onDelete: "cascade" }),
     authorProfileId: id("profile")
       .notNull()
       .references(() => profileTable.id),
@@ -738,7 +740,7 @@ export const updateTable = convexTable(
       .references(() => profileTable.id),
     projectId: id("project")
       .notNull()
-      .references(() => projectTable.id),
+      .references(() => projectTable.id, { onDelete: "cascade" }),
     status: textEnum(UPDATE_STATUSES).notNull(),
     publishedAt: integer(),
     category: textEnum(UPDATE_CATEGORIES).notNull(),
@@ -841,7 +843,9 @@ export const githubConnectionStateTable = convexTable(
       .notNull()
       .references(() => organizationTable.id),
     orgSlug: text().notNull(),
-    projectId: id("project").references(() => projectTable.id),
+    projectId: id("project").references(() => projectTable.id, {
+      onDelete: "cascade",
+    }),
     projectSlug: text(),
     stateHash: text().notNull(),
     status: textEnum(GITHUB_CONNECTION_STATE_STATUSES).notNull(),
@@ -870,7 +874,7 @@ export const githubInstallationTable = convexTable(
     installationId: integer().notNull(),
     orgId: text()
       .notNull()
-      .references(() => organizationTable.id),
+      .references(() => organizationTable.id, { onDelete: "cascade" }),
     orgSlug: text().notNull(),
     permissions: json(),
     repositorySelection: text().notNull(),
@@ -897,7 +901,7 @@ export const githubRepositoryConnectionTable = convexTable(
     enabledSources: arrayOf(text().notNull()),
     githubInstallationId: id("githubInstallation")
       .notNull()
-      .references(() => githubInstallationTable.id),
+      .references(() => githubInstallationTable.id, { onDelete: "cascade" }),
     issuesVerifiedAt: integer(),
     discussionsVerifiedAt: integer(),
     mode: textEnum(GITHUB_SYNC_MODES).notNull(),
@@ -907,7 +911,7 @@ export const githubRepositoryConnectionTable = convexTable(
     orgSlug: text().notNull(),
     projectId: id("project")
       .notNull()
-      .references(() => projectTable.id),
+      .references(() => projectTable.id, { onDelete: "cascade" }),
     projectSlug: text().notNull(),
     repoFullName: text().notNull(),
     repoId: integer().notNull(),
@@ -941,10 +945,12 @@ export const feedbackGithubConnectionTable = convexTable(
       .references(() => profileTable.id),
     feedbackId: id("feedback")
       .notNull()
-      .references(() => feedbackTable.id),
+      .references(() => feedbackTable.id, { onDelete: "cascade" }),
     githubRepositoryConnectionId: id("githubRepositoryConnection")
       .notNull()
-      .references(() => githubRepositoryConnectionTable.id),
+      .references(() => githubRepositoryConnectionTable.id, {
+        onDelete: "cascade",
+      }),
     projectId: id("project")
       .notNull()
       .references(() => projectTable.id),
@@ -1246,7 +1252,7 @@ export default defineSchema(tables)
                       : "lightbulb",
                 name,
                 projectId: change.newDoc.id as any,
-                slug: name.toLowerCase().replace(/\s+/g, "-"),
+                slug: normalizeSlug(name, VALIDATION_LIMITS.projectSlug),
               })
             )
           )
@@ -1254,76 +1260,70 @@ export default defineSchema(tables)
         }
 
         if (change.operation === "update") {
-          const memberships = await ctx.db
-            .query("projectMember")
-            .withIndex("by_projectId", (q: any) =>
-              q.eq("projectId", change.newDoc.id)
-            )
-            .collect()
+          const [memberships, connectionStates, repoConnections] =
+            await Promise.all([
+              ctx.db
+                .query("projectMember")
+                .withIndex("by_projectId", (q: any) =>
+                  q.eq("projectId", change.newDoc.id)
+                )
+                .collect(),
+              ctx.db
+                .query("githubConnectionState")
+                .withIndex("by_projectId", (q: any) =>
+                  q.eq("projectId", change.newDoc.id)
+                )
+                .collect(),
+              ctx.db
+                .query("githubRepositoryConnection")
+                .withIndex("by_projectId", (q: any) =>
+                  q.eq("projectId", change.newDoc.id)
+                )
+                .collect(),
+            ])
+          const now = Date.now()
 
-          await Promise.all(
-            memberships.map((membership: any) =>
+          await Promise.all([
+            ...memberships.map((membership: any) =>
               ctx.db.patch(membership._id, {
                 projectSlug: change.newDoc.slug,
                 projectVisibility: change.newDoc.visibility,
               })
-            )
-          )
+            ),
+            ...connectionStates.map((state: any) =>
+              ctx.db.patch(state._id, {
+                projectSlug: change.newDoc.slug,
+                updatedTime: now,
+              })
+            ),
+            ...repoConnections.map((connection: any) =>
+              ctx.db.patch(connection._id, {
+                projectSlug: change.newDoc.slug,
+                updatedTime: now,
+              })
+            ),
+          ])
           return
         }
 
-        const boards = await ctx.db
-          .query("feedbackBoard")
-          .withIndex("by_projectId", (q: any) =>
-            q.eq("projectId", change.oldDoc.id)
-          )
-          .collect()
-
-        await Promise.all(boards.map((board: any) => ctx.db.delete(board._id)))
+        // Hard-deleting a project is not an app path today. If one is added it
+        // MUST go through ctx.orm.delete(projectTable) so the FK cascades
+        // (feedbackBoard / projectMember / githubConnectionState /
+        // githubRepositoryConnection / update → project, and onward to feedback
+        // via feedbackBoard) clean up children. A raw ctx.db.delete bypasses
+        // referential actions and would orphan rows.
       },
     },
-    feedbackBoard: {
-      change: async (change, ctx) => {
-        if (change.operation !== "delete") return
-
-        const feedbackRows = await ctx.db
-          .query("feedback")
-          .withIndex("by_projectId_boardId", (q: any) =>
-            q
-              .eq("projectId", change.oldDoc.projectId)
-              .eq("boardId", change.oldDoc.id)
-          )
-          .collect()
-
-        await Promise.all(
-          feedbackRows.map((row: any) => ctx.db.delete(row._id))
-        )
-      },
-    },
+    // NOTE: feedbackBoard / feedback / updateComment / update no longer need
+    // delete triggers — child cleanup is handled declaratively by the
+    // `onDelete: "cascade"` foreign keys, which fire on ctx.orm.delete(...).
+    // Only non-cascade business logic remains as triggers below.
     feedbackComment: {
       change: async (change, ctx) => {
-        if (change.operation === "delete") {
-          const emotes = await ctx.db
-            .query("feedbackCommentEmote")
-            .withIndex("by_feedbackCommentId", (q: any) =>
-              q.eq("feedbackCommentId", change.oldDoc.id)
-            )
-            .collect()
-
-          await Promise.all(
-            emotes.map((emote: any) => ctx.db.delete(emote._id))
-          )
-
-          const feedback = await ctx.db.get(change.oldDoc.feedbackId)
-          if (feedback?.answerCommentId === change.oldDoc.id) {
-            await ctx.db.patch(feedback._id, {
-              answerCommentId: undefined,
-              updatedTime: Date.now(),
-            })
-          }
-          return
-        }
-
+        // Deleting a comment is handled declaratively: its emotes cascade away
+        // (FK), and any feedback.answerCommentId / firstCommentId (and reply
+        // pointers) are nulled (FK set null). Only the initial-comment search
+        // denormalization needs a trigger.
         if (change.operation === "update" && change.newDoc.initial) {
           const feedback = await ctx.db.get(change.newDoc.feedbackId)
           if (feedback) {
@@ -1333,94 +1333,6 @@ export default defineSchema(tables)
             })
           }
         }
-      },
-    },
-    feedback: {
-      change: async (change, ctx) => {
-        if (change.operation !== "delete") return
-
-        const [comments, events, upvotes, githubConnections] =
-          await Promise.all([
-            ctx.db
-              .query("feedbackComment")
-              .withIndex("by_feedbackId", (q: any) =>
-                q.eq("feedbackId", change.oldDoc.id)
-              )
-              .collect(),
-            ctx.db
-              .query("feedbackEvent")
-              .withIndex("by_feedbackId", (q: any) =>
-                q.eq("feedbackId", change.oldDoc.id)
-              )
-              .collect(),
-            ctx.db
-              .query("feedbackUpvote")
-              .withIndex("by_feedbackId", (q: any) =>
-                q.eq("feedbackId", change.oldDoc.id)
-              )
-              .collect(),
-            ctx.db
-              .query("feedbackGithubConnection")
-              .withIndex("by_feedbackId", (q: any) =>
-                q.eq("feedbackId", change.oldDoc.id)
-              )
-              .collect(),
-          ])
-
-        await Promise.all([
-          ...comments.map((comment: any) => ctx.db.delete(comment._id)),
-          ...events.map((event: any) => ctx.db.delete(event._id)),
-          ...upvotes.map((upvote: any) => ctx.db.delete(upvote._id)),
-          ...githubConnections.map((connection: any) =>
-            ctx.db.delete(connection._id)
-          ),
-        ])
-      },
-    },
-    updateComment: {
-      change: async (change, ctx) => {
-        if (change.operation !== "delete") return
-
-        const emotes = await ctx.db
-          .query("updateCommentEmote")
-          .withIndex("by_updateCommentId", (q: any) =>
-            q.eq("updateCommentId", change.oldDoc.id)
-          )
-          .collect()
-
-        await Promise.all(emotes.map((emote: any) => ctx.db.delete(emote._id)))
-      },
-    },
-    update: {
-      change: async (change, ctx) => {
-        if (change.operation !== "delete") return
-
-        const [comments, commentEmotes, emotes] = await Promise.all([
-          ctx.db
-            .query("updateComment")
-            .withIndex("by_updateId", (q: any) =>
-              q.eq("updateId", change.oldDoc.id)
-            )
-            .collect(),
-          ctx.db
-            .query("updateCommentEmote")
-            .withIndex("by_updateId", (q: any) =>
-              q.eq("updateId", change.oldDoc.id)
-            )
-            .collect(),
-          ctx.db
-            .query("updateEmote")
-            .withIndex("by_updateId", (q: any) =>
-              q.eq("updateId", change.oldDoc.id)
-            )
-            .collect(),
-        ])
-
-        await Promise.all([
-          ...comments.map((comment: any) => ctx.db.delete(comment._id)),
-          ...commentEmotes.map((emote: any) => ctx.db.delete(emote._id)),
-          ...emotes.map((emote: any) => ctx.db.delete(emote._id)),
-        ])
       },
     },
   })

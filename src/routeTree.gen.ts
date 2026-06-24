@@ -59,7 +59,6 @@ import { Route as AtChar123orgChar125ProjectUpdatesEditIndexRouteImport } from '
 import { Route as AtChar123orgChar125ProjectUpdatesSlugIndexRouteImport } from './routes/@{$org}/$project/updates/$slug/index'
 import { Route as AtChar123orgChar125ProjectSettingsMembersIndexRouteImport } from './routes/@{$org}/$project/settings/members/index'
 import { Route as AtChar123orgChar125ProjectSettingsIntegrationsIndexRouteImport } from './routes/@{$org}/$project/settings/integrations/index'
-import { Route as AtChar123orgChar125ProjectSettingsDeletedFeedbackIndexRouteImport } from './routes/@{$org}/$project/settings/deleted-feedback/index'
 import { Route as AtChar123orgChar125ProjectSettingsBoardsIndexRouteImport } from './routes/@{$org}/$project/settings/boards/index'
 import { Route as AtChar123orgChar125ProjectOptionsIntegrationsIndexRouteImport } from './routes/@{$org}/$project/options/integrations/index'
 import { Route as AtChar123orgChar125ProjectOptionsBoardsIndexRouteImport } from './routes/@{$org}/$project/options/boards/index'
@@ -356,12 +355,6 @@ const AtChar123orgChar125ProjectSettingsIntegrationsIndexRoute =
     path: '/integrations/',
     getParentRoute: () => AtChar123orgChar125ProjectSettingsRouteRoute,
   } as any)
-const AtChar123orgChar125ProjectSettingsDeletedFeedbackIndexRoute =
-  AtChar123orgChar125ProjectSettingsDeletedFeedbackIndexRouteImport.update({
-    id: '/deleted-feedback/',
-    path: '/deleted-feedback/',
-    getParentRoute: () => AtChar123orgChar125ProjectSettingsRouteRoute,
-  } as any)
 const AtChar123orgChar125ProjectSettingsBoardsIndexRoute =
   AtChar123orgChar125ProjectSettingsBoardsIndexRouteImport.update({
     id: '/boards/',
@@ -484,7 +477,6 @@ export interface FileRoutesByFullPath {
   '/@{$org}/$project/options/boards/': typeof AtChar123orgChar125ProjectOptionsBoardsIndexRoute
   '/@{$org}/$project/options/integrations/': typeof AtChar123orgChar125ProjectOptionsIntegrationsIndexRoute
   '/@{$org}/$project/settings/boards/': typeof AtChar123orgChar125ProjectSettingsBoardsIndexRoute
-  '/@{$org}/$project/settings/deleted-feedback/': typeof AtChar123orgChar125ProjectSettingsDeletedFeedbackIndexRoute
   '/@{$org}/$project/settings/integrations/': typeof AtChar123orgChar125ProjectSettingsIntegrationsIndexRoute
   '/@{$org}/$project/settings/members/': typeof AtChar123orgChar125ProjectSettingsMembersIndexRoute
   '/@{$org}/$project/updates/$slug/': typeof AtChar123orgChar125ProjectUpdatesSlugIndexRoute
@@ -540,7 +532,6 @@ export interface FileRoutesByTo {
   '/@{$org}/$project/options/boards': typeof AtChar123orgChar125ProjectOptionsBoardsIndexRoute
   '/@{$org}/$project/options/integrations': typeof AtChar123orgChar125ProjectOptionsIntegrationsIndexRoute
   '/@{$org}/$project/settings/boards': typeof AtChar123orgChar125ProjectSettingsBoardsIndexRoute
-  '/@{$org}/$project/settings/deleted-feedback': typeof AtChar123orgChar125ProjectSettingsDeletedFeedbackIndexRoute
   '/@{$org}/$project/settings/integrations': typeof AtChar123orgChar125ProjectSettingsIntegrationsIndexRoute
   '/@{$org}/$project/settings/members': typeof AtChar123orgChar125ProjectSettingsMembersIndexRoute
   '/@{$org}/$project/updates/$slug': typeof AtChar123orgChar125ProjectUpdatesSlugIndexRoute
@@ -605,7 +596,6 @@ export interface FileRoutesById {
   '/@{$org}/$project/options/boards/': typeof AtChar123orgChar125ProjectOptionsBoardsIndexRoute
   '/@{$org}/$project/options/integrations/': typeof AtChar123orgChar125ProjectOptionsIntegrationsIndexRoute
   '/@{$org}/$project/settings/boards/': typeof AtChar123orgChar125ProjectSettingsBoardsIndexRoute
-  '/@{$org}/$project/settings/deleted-feedback/': typeof AtChar123orgChar125ProjectSettingsDeletedFeedbackIndexRoute
   '/@{$org}/$project/settings/integrations/': typeof AtChar123orgChar125ProjectSettingsIntegrationsIndexRoute
   '/@{$org}/$project/settings/members/': typeof AtChar123orgChar125ProjectSettingsMembersIndexRoute
   '/@{$org}/$project/updates/$slug/': typeof AtChar123orgChar125ProjectUpdatesSlugIndexRoute
@@ -671,7 +661,6 @@ export interface FileRouteTypes {
     | '/@{$org}/$project/options/boards/'
     | '/@{$org}/$project/options/integrations/'
     | '/@{$org}/$project/settings/boards/'
-    | '/@{$org}/$project/settings/deleted-feedback/'
     | '/@{$org}/$project/settings/integrations/'
     | '/@{$org}/$project/settings/members/'
     | '/@{$org}/$project/updates/$slug/'
@@ -727,7 +716,6 @@ export interface FileRouteTypes {
     | '/@{$org}/$project/options/boards'
     | '/@{$org}/$project/options/integrations'
     | '/@{$org}/$project/settings/boards'
-    | '/@{$org}/$project/settings/deleted-feedback'
     | '/@{$org}/$project/settings/integrations'
     | '/@{$org}/$project/settings/members'
     | '/@{$org}/$project/updates/$slug'
@@ -791,7 +779,6 @@ export interface FileRouteTypes {
     | '/@{$org}/$project/options/boards/'
     | '/@{$org}/$project/options/integrations/'
     | '/@{$org}/$project/settings/boards/'
-    | '/@{$org}/$project/settings/deleted-feedback/'
     | '/@{$org}/$project/settings/integrations/'
     | '/@{$org}/$project/settings/members/'
     | '/@{$org}/$project/updates/$slug/'
@@ -1169,13 +1156,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AtChar123orgChar125ProjectSettingsIntegrationsIndexRouteImport
       parentRoute: typeof AtChar123orgChar125ProjectSettingsRouteRoute
     }
-    '/@{$org}/$project/settings/deleted-feedback/': {
-      id: '/@{$org}/$project/settings/deleted-feedback/'
-      path: '/deleted-feedback'
-      fullPath: '/@{$org}/$project/settings/deleted-feedback/'
-      preLoaderRoute: typeof AtChar123orgChar125ProjectSettingsDeletedFeedbackIndexRouteImport
-      parentRoute: typeof AtChar123orgChar125ProjectSettingsRouteRoute
-    }
     '/@{$org}/$project/settings/boards/': {
       id: '/@{$org}/$project/settings/boards/'
       path: '/boards'
@@ -1313,7 +1293,6 @@ const AtChar123orgChar125ProjectOptionsRouteRouteWithChildren =
 interface AtChar123orgChar125ProjectSettingsRouteRouteChildren {
   AtChar123orgChar125ProjectSettingsIndexRoute: typeof AtChar123orgChar125ProjectSettingsIndexRoute
   AtChar123orgChar125ProjectSettingsBoardsIndexRoute: typeof AtChar123orgChar125ProjectSettingsBoardsIndexRoute
-  AtChar123orgChar125ProjectSettingsDeletedFeedbackIndexRoute: typeof AtChar123orgChar125ProjectSettingsDeletedFeedbackIndexRoute
   AtChar123orgChar125ProjectSettingsIntegrationsIndexRoute: typeof AtChar123orgChar125ProjectSettingsIntegrationsIndexRoute
   AtChar123orgChar125ProjectSettingsMembersIndexRoute: typeof AtChar123orgChar125ProjectSettingsMembersIndexRoute
 }
@@ -1324,8 +1303,6 @@ const AtChar123orgChar125ProjectSettingsRouteRouteChildren: AtChar123orgChar125P
       AtChar123orgChar125ProjectSettingsIndexRoute,
     AtChar123orgChar125ProjectSettingsBoardsIndexRoute:
       AtChar123orgChar125ProjectSettingsBoardsIndexRoute,
-    AtChar123orgChar125ProjectSettingsDeletedFeedbackIndexRoute:
-      AtChar123orgChar125ProjectSettingsDeletedFeedbackIndexRoute,
     AtChar123orgChar125ProjectSettingsIntegrationsIndexRoute:
       AtChar123orgChar125ProjectSettingsIntegrationsIndexRoute,
     AtChar123orgChar125ProjectSettingsMembersIndexRoute:

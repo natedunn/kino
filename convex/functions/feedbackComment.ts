@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { eq } from "kitcn/orm"
 import { CRPCError } from "kitcn/server"
 import { authMutation, optionalAuthQuery } from "../lib/crpc"
 import {
@@ -11,17 +12,14 @@ import {
   verifyProjectAccess,
 } from "../lib/kino"
 import { resolveProfileImageUrl } from "../lib/storage"
+import { commentContentSchema, idSchema } from "../lib/validation"
 import { feedbackCommentTable } from "./schema"
 
 const TEAM_ROLES = new Set(["org:admin", "org:editor"])
 
-function isMarkedForDeletion(feedback: { deletedTime?: number | null } | null) {
-  return feedback?.deletedTime != null
-}
-
 async function getActiveFeedbackOrThrow(ctx: any, feedbackId: string) {
   const feedback = await getDoc(ctx, asId<"feedback">(feedbackId))
-  if (!feedback || isMarkedForDeletion(feedback)) {
+  if (!feedback) {
     throw new CRPCError({ code: "NOT_FOUND", message: "Feedback not found" })
   }
   return feedback
@@ -30,8 +28,8 @@ async function getActiveFeedbackOrThrow(ctx: any, feedbackId: string) {
 export const create = authMutation
   .input(
     z.object({
-      content: z.string().min(1).max(1200),
-      feedbackId: z.string(),
+      content: commentContentSchema,
+      feedbackId: idSchema,
     })
   )
   .mutation(async ({ ctx, input }) => {
@@ -62,8 +60,8 @@ export const create = authMutation
 export const update = authMutation
   .input(
     z.object({
-      _id: z.string(),
-      content: z.string().min(1).max(1200),
+      _id: idSchema,
+      content: commentContentSchema,
     })
   )
   .mutation(async ({ ctx, input }) => {
@@ -79,17 +77,20 @@ export const update = authMutation
       })
     }
 
-    await ctx.db.patch(comment._id, {
-      content: input.content,
-      updatedTime: Date.now(),
-    })
+    await ctx.orm
+      .update(feedbackCommentTable)
+      .set({
+        content: input.content,
+        updatedTime: Date.now(),
+      })
+      .where(eq(feedbackCommentTable.id, comment._id))
     return { updated: true }
   })
 
 export const remove = authMutation
   .input(
     z.object({
-      _id: z.string(),
+      _id: idSchema,
     })
   )
   .mutation(async ({ ctx, input }) => {
@@ -111,19 +112,23 @@ export const remove = authMutation
       })
     }
 
-    await ctx.db.delete(comment._id)
+    // ORM delete so the comment's emotes cascade and any feedback answer/first
+    // pointers null out via FK referential actions.
+    await ctx.orm
+      .delete(feedbackCommentTable)
+      .where(eq(feedbackCommentTable.id, comment._id))
     return { deleted: true }
   })
 
 export const listByFeedback = optionalAuthQuery
   .input(
     z.object({
-      feedbackId: z.string(),
+      feedbackId: idSchema,
     })
   )
   .query(async ({ ctx, input }) => {
     const feedback = await getDoc(ctx, asId<"feedback">(input.feedbackId))
-    if (!feedback || isMarkedForDeletion(feedback)) return []
+    if (!feedback) return []
 
     const access = await getProjectViewAccess(ctx, {
       id: feedback.projectId,

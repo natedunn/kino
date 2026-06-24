@@ -11,6 +11,13 @@ import {
 } from "../lib/github"
 import { CRPCError } from "kitcn/server"
 import { createGithubCaller } from "./generated/github.runtime"
+import {
+  githubCodeSchema,
+  githubStateSchema,
+  webhookActionSchema,
+  webhookDeliveryIdSchema,
+  webhookEventSchema,
+} from "../lib/validation"
 
 function projectGitHubSettingsUrl(args: {
   orgSlug: string
@@ -100,10 +107,10 @@ export const callback = publicRoute
   .get("/api/github/callback")
   .searchParams(
     z.object({
-      code: z.string().optional(),
+      code: githubCodeSchema.optional(),
       installation_id: z.coerce.number().int().optional(),
-      setup_action: z.string().optional(),
-      state: z.string().optional(),
+      setup_action: z.string().trim().max(40).optional(),
+      state: githubStateSchema.optional(),
     })
   )
   .query(async ({ ctx, c, searchParams }) => {
@@ -196,9 +203,11 @@ export const webhook = publicRoute
       })
     }
 
-    const deliveryId = c.req.header("x-github-delivery")
-    const event = c.req.header("x-github-event")
-    if (!deliveryId || !event) {
+    const deliveryId = webhookDeliveryIdSchema.safeParse(
+      c.req.header("x-github-delivery")
+    )
+    const event = webhookEventSchema.safeParse(c.req.header("x-github-event"))
+    if (!deliveryId.success || !event.success) {
       throw new CRPCError({
         code: "BAD_REQUEST",
         message: "Missing webhook delivery headers",
@@ -235,9 +244,12 @@ export const webhook = publicRoute
 
     const caller = createGithubCaller(ctx)
     const result = await caller.processWebhookEvent({
-      action: payload.action,
-      deliveryId,
-      event,
+      action:
+        typeof payload.action === "string"
+          ? webhookActionSchema.parse(payload.action)
+          : undefined,
+      deliveryId: deliveryId.data,
+      event: event.data,
       ...(typeof payload.installation?.id === "number"
         ? {
             installation: {

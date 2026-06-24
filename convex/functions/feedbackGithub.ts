@@ -25,6 +25,15 @@ import {
   type GitHubIssueTarget,
   type GitHubRepository,
 } from "../lib/github"
+import {
+  feedbackSearchSchema,
+  githubBodySchema,
+  githubNodeIdSchema,
+  githubStateValueSchema,
+  githubTitleSchema,
+  githubUrlSchema,
+  idSchema,
+} from "../lib/validation"
 import { createFeedbackGithubCaller } from "./generated/feedbackGithub.runtime"
 import { feedbackGithubConnectionTable } from "./schema"
 
@@ -32,10 +41,6 @@ const kindSchema = z.literal("issue")
 
 type ConnectionKind = z.infer<typeof kindSchema>
 type GitHubTarget = GitHubIssueTarget
-
-function isMarkedForDeletion(doc: { deletedTime?: number | null } | null) {
-  return doc?.deletedTime != null
-}
 
 function repositoryFromConnection(connection: {
   repoFullName: string
@@ -104,9 +109,6 @@ async function getVerifiedContext(
     asId<"feedback">(args.feedbackId),
     "Feedback not found"
   )
-  if (isMarkedForDeletion(feedback)) {
-    throw new CRPCError({ code: "NOT_FOUND", message: "Feedback not found" })
-  }
 
   const project = await getDocOrThrow(
     ctx,
@@ -163,10 +165,10 @@ async function getVerifiedContext(
 export const getContextForAction = privateQuery
   .input(
     z.object({
-      feedbackId: z.string(),
+      feedbackId: idSchema,
       kind: kindSchema,
       requireSource: z.boolean().optional(),
-      userId: z.string(),
+      userId: idSchema,
     })
   )
   .query(async ({ ctx, input }) => await getVerifiedContext(ctx, input))
@@ -174,12 +176,12 @@ export const getContextForAction = privateQuery
 export const listByFeedback = optionalAuthQuery
   .input(
     z.object({
-      feedbackId: z.string(),
+      feedbackId: idSchema,
     })
   )
   .query(async ({ ctx, input }) => {
     const feedback = await getDoc(ctx, asId<"feedback">(input.feedbackId))
-    if (!feedback || isMarkedForDeletion(feedback)) return []
+    if (!feedback) return []
 
     const project = await getDoc(ctx, feedback.projectId)
     if (!project) return []
@@ -215,12 +217,12 @@ export const listByFeedback = optionalAuthQuery
 export const getAvailability = authQuery
   .input(
     z.object({
-      feedbackId: z.string(),
+      feedbackId: idSchema,
     })
   )
   .query(async ({ ctx, input }) => {
     const feedback = await getDoc(ctx, asId<"feedback">(input.feedbackId))
-    if (!feedback || isMarkedForDeletion(feedback)) {
+    if (!feedback) {
       throw new CRPCError({ code: "NOT_FOUND", message: "Feedback not found" })
     }
 
@@ -267,8 +269,8 @@ export const getAvailability = authQuery
 export const ensureNotConnected = privateQuery
   .input(
     z.object({
-      feedbackId: z.string(),
-      githubNodeId: z.string(),
+      feedbackId: idSchema,
+      githubNodeId: githubNodeIdSchema,
       kind: kindSchema,
     })
   )
@@ -294,17 +296,17 @@ export const ensureNotConnected = privateQuery
 export const saveConnection = privateMutation
   .input(
     z.object({
-      connectedByProfileId: z.string(),
-      feedbackId: z.string(),
+      connectedByProfileId: idSchema,
+      feedbackId: idSchema,
       githubDatabaseId: z.number().int().optional(),
-      githubNodeId: z.string(),
+      githubNodeId: githubNodeIdSchema,
       githubNumber: z.number().int(),
-      githubRepositoryConnectionId: z.string(),
+      githubRepositoryConnectionId: idSchema,
       kind: kindSchema,
-      projectId: z.string(),
-      state: z.string(),
-      title: z.string(),
-      url: z.string(),
+      projectId: idSchema,
+      state: githubStateValueSchema,
+      title: githubTitleSchema,
+      url: githubUrlSchema,
     })
   )
   .mutation(async ({ ctx, input }) => {
@@ -360,10 +362,10 @@ export const saveConnection = privateMutation
 export const updateConnectionSnapshot = privateMutation
   .input(
     z.object({
-      connectionId: z.string(),
-      state: z.string(),
-      title: z.string(),
-      url: z.string(),
+      connectionId: idSchema,
+      state: githubStateValueSchema,
+      title: githubTitleSchema,
+      url: githubUrlSchema,
     })
   )
   .mutation(async ({ ctx, input }) => {
@@ -405,9 +407,9 @@ async function saveTarget(args: {
 export const searchTargets = authAction
   .input(
     z.object({
-      feedbackId: z.string(),
+      feedbackId: idSchema,
       kind: kindSchema,
-      query: z.string().max(120).default(""),
+      query: feedbackSearchSchema.default(""),
     })
   )
   .action(async ({ ctx, input }) => {
@@ -434,8 +436,8 @@ export const searchTargets = authAction
 export const connectExisting = authAction
   .input(
     z.object({
-      feedbackId: z.string(),
-      feedbackUrl: z.string().url(),
+      feedbackId: idSchema,
+      feedbackUrl: githubUrlSchema,
       githubNumber: z.number().int(),
       kind: kindSchema,
     })
@@ -489,11 +491,11 @@ export const connectExisting = authAction
 export const createAndConnect = authAction
   .input(
     z.object({
-      body: z.string().max(6000).default(""),
-      feedbackId: z.string(),
-      feedbackUrl: z.string().url(),
+      body: githubBodySchema.default(""),
+      feedbackId: idSchema,
+      feedbackUrl: githubUrlSchema,
       kind: kindSchema,
-      title: z.string().min(1).max(256),
+      title: githubTitleSchema,
     })
   )
   .action(async ({ ctx, input }) => {
@@ -531,7 +533,7 @@ export const createAndConnect = authAction
 export const refreshCounts = authAction
   .input(
     z.object({
-      feedbackId: z.string(),
+      feedbackId: idSchema,
     })
   )
   .action(async ({ ctx, input }) => {

@@ -7,6 +7,7 @@ import {
   probeRepository,
   sanitizeGitHubRepository,
 } from "../lib/github"
+import { orgSlugSchema, projectSlugSchema } from "../lib/validation"
 import { createGithubCaller } from "./generated/github.runtime"
 
 const connectionModeSchema = z.enum(["read", "read_write"])
@@ -16,7 +17,7 @@ export const listInstallationRepositoriesForProject = authAction
   .input(
     z.object({
       installationId: z.number().int(),
-      orgSlug: z.string(),
+      orgSlug: orgSlugSchema,
     })
   )
   .action(async ({ ctx, input }) => {
@@ -45,11 +46,11 @@ export const listInstallationRepositoriesForProject = authAction
 export const connectRepository = authAction
   .input(
     z.object({
-      enabledSources: z.array(sourceSchema).min(1).default(["issues"]),
+      enabledSources: z.array(sourceSchema).min(1).max(2).default(["issues"]),
       installationId: z.number().int(),
       mode: connectionModeSchema.default("read"),
-      orgSlug: z.string(),
-      projectSlug: z.string(),
+      orgSlug: orgSlugSchema,
+      projectSlug: projectSlugSchema,
       repoId: z.number().int(),
     })
   )

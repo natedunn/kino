@@ -104,6 +104,7 @@ import {
   formatRelativeDay,
   formatTimestamp,
 } from "@/lib/utils/format-timestamp"
+import { FORM_LIMITS } from "@/lib/validation"
 
 import { UpvoteButton } from "../-components/upvote-button"
 import {
@@ -340,7 +341,6 @@ function FeedbackDetailRoute() {
   const navigate = useNavigate()
   const crpc = useCRPC()
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [deleteAcknowledged, setDeleteAcknowledged] = useState(false)
   const [deleteConfirmText, setDeleteConfirmText] = useState("")
   const [deleteError, setDeleteError] = useState("")
   const [connectionDialogOpen, setConnectionDialogOpen] = useState(false)
@@ -489,8 +489,8 @@ function FeedbackDetailRoute() {
   const refreshGithubConnectionsMutation = useMutation(
     crpc.feedbackGithub.refreshCounts.mutationOptions()
   )
-  const markForDeletionMutation = useMutation(
-    crpc.feedback.markForDeletion.mutationOptions({
+  const deleteMutation = useMutation(
+    crpc.feedback.remove.mutationOptions({
       onError: (error) => setDeleteError(error.message),
       onSuccess: () => {
         setDeleteDialogOpen(false)
@@ -503,9 +503,7 @@ function FeedbackDetailRoute() {
   )
 
   const canSubmitDelete =
-    deleteAcknowledged &&
-    deleteConfirmText === "DELETE" &&
-    !markForDeletionMutation.isPending
+    deleteConfirmText === "DELETE" && !deleteMutation.isPending
   const visibleGithubConnections = githubConnectionsQuery.data ?? []
   const showGithubConnectionsSection =
     projectData.permissions.canEdit || visibleGithubConnections.length > 0
@@ -555,7 +553,6 @@ function FeedbackDetailRoute() {
         onOpenChange={(open) => {
           setDeleteDialogOpen(open)
           if (!open) {
-            setDeleteAcknowledged(false)
             setDeleteConfirmText("")
             setDeleteError("")
           }
@@ -565,27 +562,12 @@ function FeedbackDetailRoute() {
           <DialogHeader>
             <DialogTitle>Delete feedback</DialogTitle>
             <DialogDescription>
-              This marks the Feedback for complete database deletion in 48
-              hours. It will immediately disappear from normal views, feeds,
-              search, and admin/editor lists. After permanent deletion there is
-              no recovery.
+              This permanently deletes the feedback along with all of its
+              comments, events, upvotes, reactions, and GitHub connections. This
+              action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <label className="flex items-start gap-3 rounded-md border p-3 text-sm">
-              <input
-                checked={deleteAcknowledged}
-                className="mt-0.5"
-                onChange={(event) =>
-                  setDeleteAcknowledged(event.target.checked)
-                }
-                type="checkbox"
-              />
-              <span>
-                I understand this Feedback will be permanently deleted after the
-                48-hour recovery window.
-              </span>
-            </label>
             <div className="space-y-2">
               <label className="text-sm font-medium" htmlFor="delete-feedback">
                 Type DELETE to confirm
@@ -612,13 +594,13 @@ function FeedbackDetailRoute() {
               disabled={!canSubmitDelete}
               onClick={() => {
                 setDeleteError("")
-                markForDeletionMutation.mutate({ id: feedback.id })
+                deleteMutation.mutate({ id: feedback.id })
               }}
               type="button"
               variant="destructive"
             >
               <Trash2 className="size-4" />
-              Mark for deletion
+              Delete permanently
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1088,7 +1070,7 @@ function FeedbackDetailRoute() {
                         })
                       }
                       onUpdate={(commentId, content) =>
-                        commentUpdateMutation.mutate({
+                        commentUpdateMutation.mutateAsync({
                           _id: commentId,
                           content,
                         })
@@ -1154,7 +1136,7 @@ function FeedbackDetailRoute() {
                           })
                         }
                         onUpdate={(commentId, content) =>
-                          commentUpdateMutation.mutate({
+                          commentUpdateMutation.mutateAsync({
                             _id: commentId,
                             content,
                           })
@@ -1586,7 +1568,10 @@ function InlineFeedbackTitleEditor({
   const trimmedDraftTitle = draftTitle.trim()
   const hasEdits = draftTitle !== title
   const canSave =
-    trimmedDraftTitle.length > 0 && trimmedDraftTitle !== title && !isSaving
+    trimmedDraftTitle.length > 0 &&
+    trimmedDraftTitle.length <= FORM_LIMITS.feedbackTitle &&
+    trimmedDraftTitle !== title &&
+    !isSaving
 
   useEffect(() => {
     if (!editing) {
@@ -1661,6 +1646,12 @@ function InlineFeedbackTitleEditor({
     if (!canSave) return
 
     setError("")
+    if (trimmedDraftTitle.length > FORM_LIMITS.feedbackTitle) {
+      setError(
+        `Titles must be ${FORM_LIMITS.feedbackTitle} characters or fewer.`
+      )
+      return
+    }
     try {
       await onSave(trimmedDraftTitle)
       closeEditor()
@@ -1840,6 +1831,7 @@ function GitHubConnectionDialog({
   )
   const [title, setTitle] = useState("")
   const [body, setBody] = useState("")
+  const [localError, setLocalError] = useState("")
 
   const searchMutation = useMutation(
     crpc.feedbackGithub.searchTargets.mutationOptions()
@@ -1874,6 +1866,7 @@ function GitHubConnectionDialog({
       setSelectedTarget(null)
       setTitle("")
       setBody("")
+      setLocalError("")
       searchMutation.reset()
       connectExistingMutation.reset()
       createMutation.reset()
@@ -1885,7 +1878,11 @@ function GitHubConnectionDialog({
     if (availabilityQuery.data && !availabilityQuery.data.issuesEnabled) return
 
     const timeout = window.setTimeout(() => {
-      searchMutation.mutate({ feedbackId, kind: "issue", query })
+      searchMutation.mutate({
+        feedbackId,
+        kind: "issue",
+        query: query.slice(0, FORM_LIMITS.feedbackSearch),
+      })
       setSelectedTarget(null)
     }, 300)
     return () => window.clearTimeout(timeout)
@@ -1898,14 +1895,17 @@ function GitHubConnectionDialog({
     !!availability && availability.connected && !availability.writable
   const repoMissing = !!availability && !availability.connected
   const error =
-    availabilityQuery.error?.message ??
-    connectExistingMutation.error?.message ??
-    createMutation.error?.message ??
-    searchMutation.error?.message
+    localError ||
+    (availabilityQuery.error?.message ??
+      connectExistingMutation.error?.message ??
+      createMutation.error?.message ??
+      searchMutation.error?.message)
   const feedbackUrl =
     typeof window === "undefined" ? "" : window.location.href.split("#")[0]
   const canCreate =
     title.trim().length > 0 &&
+    title.trim().length <= FORM_LIMITS.githubTitle &&
+    body.trim().length <= FORM_LIMITS.githubBody &&
     !createMutation.isPending &&
     !sourceDisabled &&
     !writeDisabled &&
@@ -1919,6 +1919,7 @@ function GitHubConnectionDialog({
     !searchMutation.isPending
 
   function handleConnectExisting() {
+    setLocalError("")
     if (!selectedTarget || !feedbackUrl) return
 
     connectExistingMutation.mutate({
@@ -1930,7 +1931,20 @@ function GitHubConnectionDialog({
   }
 
   function handleCreate() {
+    setLocalError("")
     if (!feedbackUrl) return
+    if (title.trim().length > FORM_LIMITS.githubTitle) {
+      setLocalError(
+        `GitHub issue titles must be ${FORM_LIMITS.githubTitle} characters or fewer.`
+      )
+      return
+    }
+    if (body.trim().length > FORM_LIMITS.githubBody) {
+      setLocalError(
+        `GitHub issue bodies must be ${FORM_LIMITS.githubBody} characters or fewer.`
+      )
+      return
+    }
 
     createMutation.mutate({
       body,
@@ -2027,6 +2041,7 @@ function GitHubConnectionDialog({
                 <Search className="absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   className="h-9 pl-9 text-sm"
+                  maxLength={FORM_LIMITS.feedbackSearch}
                   onChange={(event) => setQuery(event.target.value)}
                   placeholder="Search issues..."
                   value={query}
@@ -2092,6 +2107,7 @@ function GitHubConnectionDialog({
                 </label>
                 <Input
                   className="h-9 text-sm"
+                  maxLength={FORM_LIMITS.githubTitle}
                   onChange={(event) => setTitle(event.target.value)}
                   placeholder="Issue title"
                   value={title}
@@ -2106,6 +2122,7 @@ function GitHubConnectionDialog({
                 </label>
                 <Textarea
                   className="min-h-28 resize-none text-sm"
+                  maxLength={FORM_LIMITS.githubBody}
                   onChange={(event) => setBody(event.target.value)}
                   placeholder="Add a description…"
                   value={body}

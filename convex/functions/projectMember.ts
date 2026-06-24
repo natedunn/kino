@@ -4,6 +4,7 @@ import { CRPCError } from "kitcn/server"
 import { authMutation, authQuery } from "../lib/crpc"
 import { asId, getDoc, verifyProjectAccess } from "../lib/kino"
 import { resolveProfileImageUrl } from "../lib/storage"
+import { emailSchema, idSchema } from "../lib/validation"
 import { projectMemberTable } from "./schema"
 
 const EDIT_ROLES = new Set(["org:admin", "org:editor"])
@@ -11,7 +12,7 @@ const EDIT_ROLES = new Set(["org:admin", "org:editor"])
 export const listAssignableMembers = authQuery
   .input(
     z.object({
-      projectId: z.string(),
+      projectId: idSchema,
     })
   )
   .query(async ({ ctx, input }) => {
@@ -64,7 +65,7 @@ export const listAssignableMembers = authQuery
  * private again.
  */
 export const listProjectMembers = authQuery
-  .input(z.object({ projectId: z.string() }))
+  .input(z.object({ projectId: idSchema }))
   .query(async ({ ctx, input }) => {
     const access = await verifyProjectAccess(ctx, {
       id: input.projectId,
@@ -105,7 +106,7 @@ export const listProjectMembers = authQuery
   })
 
 export const inviteProjectMember = authMutation
-  .input(z.object({ email: z.string().email(), projectId: z.string() }))
+  .input(z.object({ email: emailSchema, projectId: idSchema }))
   .mutation(async ({ ctx, input }) => {
     const access = await verifyProjectAccess(ctx, {
       id: input.projectId,
@@ -170,7 +171,7 @@ export const inviteProjectMember = authMutation
   })
 
 export const removeProjectMember = authMutation
-  .input(z.object({ projectMemberId: z.string() }))
+  .input(z.object({ projectMemberId: idSchema }))
   .mutation(async ({ ctx, input }) => {
     const membership = await getDoc<"projectMember">(
       ctx,

@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { useForm } from "@tanstack/react-form"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
@@ -18,6 +19,13 @@ import {
 import { useCRPC } from "@/lib/convex/crpc"
 import { cn } from "@/lib/utils"
 import { titleFromSlug, titleMeta } from "@/lib/seo"
+import {
+  FORM_LIMITS,
+  SLUG_INPUT_PATTERN,
+  filterSlugInput,
+  projectFormSchema,
+  validationMessage,
+} from "@/lib/validation"
 
 export const Route = createFileRoute("/@{$org}/create-project/")({
   head: ({ params }) => ({
@@ -30,6 +38,7 @@ function CreateProjectRoute() {
   const params = Route.useParams()
   const navigate = useNavigate()
   const crpc = useCRPC()
+  const [formError, setFormError] = useState<string | null>(null)
 
   const orgQuery = useQuery(
     crpc.org.getDetails.queryOptions({
@@ -63,11 +72,17 @@ function CreateProjectRoute() {
       visibility: "public" as "public" | "private",
     },
     onSubmit: async ({ value }) => {
+      setFormError(null)
+      const parsed = projectFormSchema.safeParse(value)
+      if (!parsed.success) {
+        setFormError(validationMessage(parsed.error))
+        return
+      }
       await createMutation.mutateAsync({
-        name: value.name,
+        name: parsed.data.name,
         orgSlug: value.orgSlug,
-        slug: value.slug,
-        visibility: value.visibility,
+        slug: parsed.data.slug,
+        visibility: parsed.data.visibility,
       })
     },
   })
@@ -197,6 +212,7 @@ function CreateProjectRoute() {
                         <Input
                           autoFocus
                           disabled={!enabled}
+                          maxLength={FORM_LIMITS.projectName}
                           onChange={(event) =>
                             field.handleChange(event.target.value)
                           }
@@ -228,11 +244,20 @@ function CreateProjectRoute() {
                             </span>
                           </div>
                           <Input
+                            autoCapitalize="none"
                             className="min-w-0 rounded-l-none"
                             disabled={!enabled}
+                            maxLength={FORM_LIMITS.projectSlug}
                             onChange={(event) =>
-                              field.handleChange(event.target.value)
+                              field.handleChange(
+                                filterSlugInput(
+                                  event.target.value,
+                                  FORM_LIMITS.projectSlug
+                                )
+                              )
                             }
+                            pattern={SLUG_INPUT_PATTERN}
+                            spellCheck={false}
                             value={field.state.value}
                           />
                         </div>
@@ -271,9 +296,10 @@ function CreateProjectRoute() {
                   )}
                 </form.Field>
 
-                {createMutation.error ? (
+                {(formError ?? createMutation.error) ? (
                   <InlineAlert variant="danger">
-                    Unable to create project: {createMutation.error.message}
+                    Unable to create project:{" "}
+                    {formError ?? createMutation.error?.message}
                   </InlineAlert>
                 ) : null}
 

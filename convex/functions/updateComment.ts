@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { eq } from "kitcn/orm"
 import { CRPCError } from "kitcn/server"
 import { authMutation, optionalAuthQuery } from "../lib/crpc"
 import {
@@ -11,6 +12,7 @@ import {
   verifyProjectAccess,
 } from "../lib/kino"
 import { resolveProfileImageUrl } from "../lib/storage"
+import { commentContentSchema, idSchema } from "../lib/validation"
 import { updateCommentTable } from "./schema"
 
 const TEAM_ROLES = new Set(["org:admin", "org:editor"])
@@ -47,8 +49,8 @@ async function ensureUpdateCommentAccess(
 export const create = authMutation
   .input(
     z.object({
-      content: z.string().min(1).max(1200),
-      updateId: z.string(),
+      content: commentContentSchema,
+      updateId: idSchema,
     })
   )
   .mutation(async ({ ctx, input }) => {
@@ -72,8 +74,8 @@ export const create = authMutation
 export const update = authMutation
   .input(
     z.object({
-      _id: z.string(),
-      content: z.string().min(1).max(1200),
+      _id: idSchema,
+      content: commentContentSchema,
     })
   )
   .mutation(async ({ ctx, input }) => {
@@ -90,17 +92,20 @@ export const update = authMutation
       })
     }
 
-    await ctx.db.patch(comment._id, {
-      content: input.content,
-      updatedTime: Date.now(),
-    })
+    await ctx.orm
+      .update(updateCommentTable)
+      .set({
+        content: input.content,
+        updatedTime: Date.now(),
+      })
+      .where(eq(updateCommentTable.id, comment._id))
     return { updated: true }
   })
 
 export const remove = authMutation
   .input(
     z.object({
-      _id: z.string(),
+      _id: idSchema,
     })
   )
   .mutation(async ({ ctx, input }) => {
@@ -117,14 +122,18 @@ export const remove = authMutation
       })
     }
 
-    await ctx.db.delete(comment._id)
+    // ORM delete so the comment's emotes cascade away via FK referential
+    // actions.
+    await ctx.orm
+      .delete(updateCommentTable)
+      .where(eq(updateCommentTable.id, comment._id))
     return { deleted: true }
   })
 
 export const listByUpdate = optionalAuthQuery
   .input(
     z.object({
-      updateId: z.string(),
+      updateId: idSchema,
     })
   )
   .query(async ({ ctx, input }) => {

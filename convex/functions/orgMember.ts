@@ -2,6 +2,7 @@ import { z } from "zod"
 import { CRPCError } from "kitcn/server"
 import { authMutation, authQuery } from "../lib/crpc"
 import { getDoc, verifyOrgAccess } from "../lib/kino"
+import { emailSchema, idSchema, orgSlugSchema } from "../lib/validation"
 
 // Org membership is for the team that runs the org (and, by cascade, all its
 // projects). owner/admin manage; editor edits content. There is no plain org
@@ -32,7 +33,7 @@ async function requireOrgManage(
 }
 
 export const listMembers = authQuery
-  .input(z.object({ slug: z.string() }))
+  .input(z.object({ slug: orgSlugSchema }))
   .query(async ({ ctx, input }) => {
     const access = await verifyOrgAccess(ctx, {
       slug: input.slug,
@@ -80,8 +81,8 @@ export const listMembers = authQuery
 export const inviteMember = authMutation
   .input(
     z.object({
-      email: z.string().email(),
-      organizationId: z.string(),
+      email: emailSchema,
+      organizationId: idSchema,
       role: assignableRoleSchema,
     })
   )
@@ -102,7 +103,7 @@ export const inviteMember = authMutation
 export const updateMemberRole = authMutation
   .input(
     z.object({
-      memberId: z.string(),
+      memberId: idSchema,
       role: updatableRoleSchema,
     })
   )
@@ -137,7 +138,7 @@ export const updateMemberRole = authMutation
   })
 
 export const removeMember = authMutation
-  .input(z.object({ memberId: z.string() }))
+  .input(z.object({ memberId: idSchema }))
   .mutation(async ({ ctx, input }) => {
     const member = await ctx.orm.query.member.findFirst({
       where: { id: input.memberId },
@@ -166,7 +167,7 @@ export const removeMember = authMutation
   })
 
 export const leaveOrganization = authMutation
-  .input(z.object({ organizationId: z.string() }))
+  .input(z.object({ organizationId: idSchema }))
   .mutation(async ({ ctx, input }) => {
     const me = await ctx.orm.query.member.findFirst({
       where: { organizationId: input.organizationId, userId: ctx.userId },
@@ -199,7 +200,7 @@ export const leaveOrganization = authMutation
   })
 
 export const listPendingInvitations = authQuery
-  .input(z.object({ slug: z.string() }))
+  .input(z.object({ slug: orgSlugSchema }))
   .query(async ({ ctx, input }) => {
     const access = await verifyOrgAccess(ctx, {
       slug: input.slug,
@@ -222,7 +223,7 @@ export const listPendingInvitations = authQuery
   })
 
 export const cancelInvitation = authMutation
-  .input(z.object({ invitationId: z.string() }))
+  .input(z.object({ invitationId: idSchema }))
   .mutation(async ({ ctx, input }) => {
     const invitation = await ctx.orm.query.invitation.findFirst({
       where: { id: input.invitationId },

@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input"
 import { useCRPC } from "@/lib/convex/crpc"
 import { crpcServer } from "@/lib/convex/crpc-server"
 import { titleMeta } from "@/lib/seo"
+import { FORM_LIMITS, emailSchema } from "@/lib/validation"
 
 export const Route = createFileRoute("/@{$org}/$project/settings/members/")({
   head: () => ({
@@ -70,6 +71,7 @@ function ProjectMembersRoute() {
   )
 
   const [email, setEmail] = useState("")
+  const [formError, setFormError] = useState<string | null>(null)
 
   if (detailsQuery.isLoading) {
     return <div className="h-64 animate-pulse rounded-xl border bg-muted/30" />
@@ -126,9 +128,14 @@ function ProjectMembersRoute() {
         className="mt-6 flex flex-col gap-3 rounded-xl border bg-card p-6 sm:flex-row sm:items-end"
         onSubmit={(event) => {
           event.preventDefault()
-          if (!email.trim()) return
+          setFormError(null)
+          const parsed = emailSchema.safeParse(email)
+          if (!parsed.success) {
+            setFormError(parsed.error.issues[0]?.message ?? "Invalid email")
+            return
+          }
           invite.mutate(
-            { email: email.trim(), projectId },
+            { email: parsed.data, projectId },
             { onSuccess: () => setEmail("") }
           )
         }}
@@ -138,11 +145,16 @@ function ProjectMembersRoute() {
             Add a member by email
           </label>
           <Input
+            autoCapitalize="none"
+            autoComplete="email"
             id="member-email"
-            type="email"
-            placeholder="person@example.com"
-            value={email}
+            inputMode="email"
+            maxLength={FORM_LIMITS.email}
             onChange={(event) => setEmail(event.target.value)}
+            placeholder="person@example.com"
+            spellCheck={false}
+            type="email"
+            value={email}
           />
         </div>
         <Button type="submit" disabled={invite.isPending || !email.trim()}>
@@ -153,9 +165,9 @@ function ProjectMembersRoute() {
         The person must already have a Kino account.
       </p>
 
-      {actionError ? (
+      {(formError ?? actionError) ? (
         <div className="mt-4">
-          <InlineAlert variant="danger">{actionError}</InlineAlert>
+          <InlineAlert variant="danger">{formError ?? actionError}</InlineAlert>
         </div>
       ) : null}
 

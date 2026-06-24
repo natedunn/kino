@@ -1,5 +1,5 @@
 import { useSuspenseQuery } from "@tanstack/react-query"
-import { Outlet, createFileRoute } from "@tanstack/react-router"
+import { Outlet, createFileRoute, notFound } from "@tanstack/react-router"
 
 import { DefaultCatchBoundary } from "@/components/_default-catch-boundary"
 import { NotFound } from "@/components/_not-found"
@@ -15,7 +15,7 @@ export const Route = createFileRoute("/@{$org}")({
     meta: [titleMeta([titleFromSlug(params.org)])],
   }),
   loader: async ({ context, params }) => {
-    await Promise.all([
+    const [, orgDetails] = await Promise.all([
       context.queryClient.ensureQueryData(
         crpcServer.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
       ),
@@ -23,6 +23,10 @@ export const Route = createFileRoute("/@{$org}")({
         crpcServer.org.getDetails.queryOptions({ slug: params.org })
       ),
     ])
+
+    if (!orgDetails?.org) {
+      throw notFound()
+    }
   },
   component: OrganizationShell,
   notFoundComponent: () => <NotFound isContainer />,
@@ -40,6 +44,11 @@ function OrganizationShell() {
   const orgQuery = useSuspenseQuery(
     crpc.org.getDetails.queryOptions({ slug: params.org })
   )
+
+  if (!orgQuery.data?.org) {
+    throw notFound()
+  }
+
   const isUserPending = !!loaderToken && profileQuery.data === undefined
 
   return (
@@ -47,7 +56,7 @@ function OrganizationShell() {
       <div className="flex w-full flex-1 flex-col">
         <MainNav
           isUserPending={isUserPending}
-          org={orgQuery.data?.org ?? undefined}
+          org={orgQuery.data.org}
           user={profileQuery.data}
         />
         <Outlet />
