@@ -53,9 +53,10 @@ function CommandDialog({
       </DialogHeader>
       <DialogContent
         className={cn(
-          "top-1/3 translate-y-0 overflow-hidden rounded-xl! p-0",
+          "top-1/3 translate-y-0 overflow-hidden rounded-xl! p-0 duration-0 data-closed:animate-none data-open:animate-none",
           className
         )}
+        overlayClassName="duration-0 data-closed:animate-none data-open:animate-none"
         showCloseButton={showCloseButton}
       >
         <Command>{children}</Command>
@@ -154,7 +155,7 @@ function CommandItem({
     <CommandPrimitive.Item
       data-slot="command-item"
       className={cn(
-        "group/command-item relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none transition-colors in-data-[slot=dialog-content]:rounded-lg! hocus:bg-primary/10 hocus:text-foreground hocus:ring-1 hocus:ring-primary/25 data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 data-[selected=true]:bg-primary/10 data-[selected=true]:text-foreground data-[selected=true]:ring-1 data-[selected=true]:ring-primary/25 dark:hocus:bg-foreground/12 dark:hocus:ring-foreground/20 dark:data-[selected=true]:bg-foreground/12 dark:data-[selected=true]:ring-foreground/20 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 data-[selected=true]:*:[svg]:text-primary dark:data-[selected=true]:*:[svg]:text-foreground",
+        "group/command-item relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none in-data-[slot=dialog-content]:rounded-lg! hocus:bg-primary/10 hocus:text-foreground hocus:ring-1 hocus:ring-primary/25 data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 data-[selected=true]:bg-primary/10 data-[selected=true]:text-foreground data-[selected=true]:ring-1 data-[selected=true]:ring-primary/25 dark:hocus:bg-foreground/12 dark:hocus:ring-foreground/20 dark:data-[selected=true]:bg-foreground/12 dark:data-[selected=true]:ring-foreground/20 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 data-[selected=true]:*:[svg]:text-primary dark:data-[selected=true]:*:[svg]:text-foreground",
         className
       )}
       {...props}
@@ -173,7 +174,7 @@ function CommandShortcut({
     <span
       data-slot="command-shortcut"
       className={cn(
-        "ml-auto text-xs tracking-widest text-muted-foreground group-data-[selected=true]/command-item:text-foreground",
+        "ml-auto inline-flex min-w-6 items-center justify-center rounded border bg-muted px-1.5 py-0.5 font-sans text-xs font-medium text-muted-foreground/70 group-data-[selected=true]/command-item:text-muted-foreground/80",
         className
       )}
       {...props}

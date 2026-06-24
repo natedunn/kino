@@ -1,7 +1,8 @@
-import { useMemo } from "react"
+import { useCallback, useMemo } from "react"
 import { Outlet, createFileRoute, useNavigate } from "@tanstack/react-router"
 
 import { useRegisterCommands } from "@/components/command"
+import { useRegisterShortcuts } from "@/components/shortcuts"
 import CirclePlusOutline from "@/icons/circle-plus-outline"
 import { projectTitle, titleMeta } from "@/lib/seo"
 
@@ -15,6 +16,16 @@ export const Route = createFileRoute("/@{$org}/$project/feedback")({
 function FeedbackRoute() {
   const navigate = useNavigate()
   const params = Route.useParams()
+
+  const goToNewFeedback = useCallback(
+    () =>
+      navigate({
+        params,
+        to: "/@{$org}/$project/feedback/new",
+      }),
+    [navigate, params]
+  )
+
   const commands = useMemo(
     () => [
       {
@@ -22,18 +33,29 @@ function FeedbackRoute() {
         icon: CirclePlusOutline,
         id: "feedback.add",
         keywords: ["create", "new", "request"],
+        shortcut: "N",
         title: "Add feedback",
-        run: () =>
-          navigate({
-            params,
-            to: "/@{$org}/$project/feedback/new",
-          }),
+        run: goToNewFeedback,
       },
     ],
-    [navigate, params]
+    [goToNewFeedback]
+  )
+
+  const shortcuts = useMemo(
+    () => [
+      {
+        group: "Feedback" as const,
+        id: "feedback.new",
+        keys: ["n"],
+        description: "New feedback",
+        run: goToNewFeedback,
+      },
+    ],
+    [goToNewFeedback]
   )
 
   useRegisterCommands("feedback", commands)
+  useRegisterShortcuts("feedback", shortcuts)
 
   return <Outlet />
 }

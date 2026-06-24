@@ -49,8 +49,6 @@ export function CommandPalette({
     return grouped
   }, [commands])
   const groupOrder = useMemo(() => {
-    if (!query.trim()) return GROUP_ORDER
-
     const contextualGroups = GROUP_ORDER.filter((group) =>
       commandsByGroup.get(group)?.some((command) => command.contextual)
     )
@@ -59,7 +57,7 @@ export function CommandPalette({
     )
 
     return [...contextualGroups, ...remainingGroups]
-  }, [commandsByGroup, query])
+  }, [commandsByGroup])
 
   function handleOpenChange(nextOpen: boolean) {
     if (!nextOpen) {

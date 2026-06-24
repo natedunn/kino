@@ -115,10 +115,14 @@ function assertTargetIsSafe() {
   process.exit(1)
 }
 
-function run(command, args, { capture = false, env = process.env } = {}) {
+function run(
+  command,
+  args,
+  { capture = false, cwd = workspaceRoot, env = process.env } = {}
+) {
   console.log(`[seed] ${command} ${args.join(" ")}`)
   const result = spawnSync(command, args, {
-    cwd: workspaceRoot,
+    cwd,
     encoding: "utf8",
     env,
     stdio: capture ? ["ignore", "pipe", "inherit"] : "inherit",
@@ -278,6 +282,68 @@ function timestamp() {
   return new Date().toISOString().replace(/[:.]/g, "-")
 }
 
+function removeJsonlObjectFields(filePath, fields) {
+  if (!fs.existsSync(filePath)) return 0
+
+  const lines = fs.readFileSync(filePath, "utf8").split(/\r?\n/)
+  let changed = 0
+  const sanitizedLines = []
+
+  // Each line is a complete JSON object, so parse it rather than rewriting the
+  // text with regexes — that keeps us safe regardless of a field's value type.
+  for (const line of lines) {
+    if (!line.trim()) continue
+    const row = JSON.parse(line)
+    let touched = false
+    for (const field of fields) {
+      if (field in row) {
+        delete row[field]
+        touched = true
+      }
+    }
+    if (touched) changed += 1
+    sanitizedLines.push(JSON.stringify(row))
+  }
+
+  if (changed > 0) {
+    fs.writeFileSync(filePath, `${sanitizedLines.join("\n")}\n`)
+  }
+
+  return changed
+}
+
+function sanitizeExportForCurrentSchema(exportPath) {
+  if (!exportPath.endsWith(".zip")) {
+    throw new Error(
+      `[seed] expected a .zip export path, got: ${exportPath}`
+    )
+  }
+
+  const tempDir = fs.mkdtempSync(path.join(seedDir, "sanitize-"))
+  const sanitizedPath = exportPath.replace(/\.zip$/, "-sanitized.zip")
+
+  try {
+    run("unzip", ["-q", exportPath, "-d", tempDir])
+
+    const changedFeedbackRows = removeJsonlObjectFields(
+      path.join(tempDir, "feedback", "documents.jsonl"),
+      ["deletedTime", "deletionScheduled"]
+    )
+
+    if (changedFeedbackRows === 0) return exportPath
+
+    console.log(
+      `[seed] removed legacy feedback soft-delete fields from ${changedFeedbackRows} exported row(s)`
+    )
+    // Start from a clean file so re-runs don't append to a stale archive.
+    fs.rmSync(sanitizedPath, { force: true })
+    run("zip", ["-q", "-r", sanitizedPath, "."], { cwd: tempDir })
+    return sanitizedPath
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true })
+  }
+}
+
 process.on("exit", stopTemporaryLocalBackend)
 process.on("SIGINT", () => {
   stopTemporaryLocalBackend()
@@ -367,6 +433,7 @@ run("pnpm", [
   exportPath,
   ...(options.includeFileStorage ? ["--include-file-storage"] : []),
 ])
+const importPath = sanitizeExportForCurrentSchema(exportPath)
 
 startTemporaryLocalBackend(targetEnv)
 
@@ -376,13 +443,19 @@ run(
     "exec",
     "convex",
     "import",
-    exportPath,
+    importPath,
     "--replace-all",
     "--yes",
     ...targetArgs(),
   ],
   { env: targetEnv }
 )
+
+// Drop the temporary sanitized archive (if one was produced) now that the
+// import has consumed it.
+if (importPath !== exportPath) {
+  fs.rmSync(importPath, { force: true })
+}
 
 stopTemporaryLocalBackend()
 
