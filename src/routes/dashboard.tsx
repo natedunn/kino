@@ -15,6 +15,7 @@ import {
   Settings,
 } from "lucide-react"
 
+import { MainNav } from "@/components/site-nav/main-nav"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -68,43 +69,7 @@ function AuthenticatedDashboard() {
 
   return (
     <div className="flex min-h-svh flex-col">
-      {/* Minimal top bar */}
-      <header className="border-b border-border/50 bg-background dark:bg-absolute">
-        <div className="container flex items-center justify-between py-3">
-          <Link to="/dashboard" className="flex items-center gap-2.5">
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary">
-              <span className="text-xs font-bold text-primary-foreground">
-                K
-              </span>
-            </div>
-            <span className="text-sm font-semibold tracking-tight">Kino</span>
-          </Link>
-          <div className="flex items-center gap-3">
-            <Button asChild variant="ghost" size="sm">
-              <Link to="/create/team">
-                <Plus className="size-3.5" />
-                New team
-              </Link>
-            </Button>
-            {user ? (
-              <Link
-                to="/account/profile"
-                className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-muted"
-              >
-                <Avatar className="size-6 border">
-                  <AvatarImage src={user.imageUrl} />
-                  <AvatarFallback className="text-xs">
-                    {(user.name ?? user.username ?? "U")[0]?.toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="hidden text-sm text-muted-foreground sm:inline">
-                  {user.username ?? user.name}
-                </span>
-              </Link>
-            ) : null}
-          </div>
-        </div>
-      </header>
+      <MainNav context={{ type: "global" }} isUserPending={false} user={user} />
 
       <main className="flex-1">
         <div className="container py-10 md:py-14">

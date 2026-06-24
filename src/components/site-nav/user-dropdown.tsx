@@ -1,9 +1,17 @@
-import { useNavigate, useParams } from "@tanstack/react-router"
-import { ChevronDown, Settings, User } from "lucide-react"
+import { useNavigate } from "@tanstack/react-router"
+import {
+  Building2,
+  ChevronDown,
+  FolderKanban,
+  LogOut,
+  Settings,
+  User,
+} from "lucide-react"
+import type { ComponentType } from "react"
 import type { API } from "@/lib/api"
 
+import { NavButton } from "./nav-button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,21 +22,20 @@ import {
 import { authClient } from "@/lib/auth/auth-client"
 
 export function UserDropdown({
+  orgSlug,
   user,
 }: {
+  orgSlug?: string
   user: NonNullable<API["profile"]["findMyProfile"]>
 }) {
   const navigate = useNavigate()
-  const orgParams = useParams({
-    from: "/@{$org}",
-    shouldThrow: false,
-  })
-  const orgSlug = orgParams?.org
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="flex items-center gap-2">
+        <NavButton
+          className="h-8 w-8 rounded-full px-0 min-[460px]:w-auto min-[460px]:rounded-md min-[460px]:px-2.5"
+        >
           <Avatar className="size-6 border">
             <AvatarImage src={user.imageUrl} />
             <AvatarFallback>
@@ -38,11 +45,12 @@ export function UserDropdown({
           <span className="hidden text-sm font-medium sm:inline">
             {user.username}
           </span>
-          <ChevronDown className="h-3 w-3" />
-        </Button>
+          <ChevronDown className="hidden h-3 w-3 min-[460px]:block" />
+        </NavButton>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem
+      <DropdownMenuContent align="end" className="w-48">
+        <UserDropdownItem
+          icon={User}
           onClick={() => {
             navigate({
               params: { username: user.username },
@@ -51,12 +59,13 @@ export function UserDropdown({
           }}
         >
           Your profile
-        </DropdownMenuItem>
-        <DropdownMenuItem>Your organizations</DropdownMenuItem>
-        <DropdownMenuItem>Your projects</DropdownMenuItem>
+        </UserDropdownItem>
+        <UserDropdownItem icon={Building2}>Your organizations</UserDropdownItem>
+        <UserDropdownItem icon={FolderKanban}>Your projects</UserDropdownItem>
         <DropdownMenuSeparator />
         {!!orgSlug && (
-          <DropdownMenuItem
+          <UserDropdownItem
+            icon={Settings}
             onClick={() => {
               navigate({
                 params: { org: orgSlug },
@@ -64,11 +73,11 @@ export function UserDropdown({
               })
             }}
           >
-            <Settings className="mr-2 h-4 w-4" />
             Org settings
-          </DropdownMenuItem>
+          </UserDropdownItem>
         )}
-        <DropdownMenuItem
+        <UserDropdownItem
+          icon={Settings}
           onClick={() => {
             navigate({
               to: "/account/profile",
@@ -76,9 +85,10 @@ export function UserDropdown({
           }}
         >
           Account
-        </DropdownMenuItem>
+        </UserDropdownItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem
+        <UserDropdownItem
+          icon={LogOut}
           onClick={() => {
             authClient.signOut()
             navigate({
@@ -87,8 +97,25 @@ export function UserDropdown({
           }}
         >
           Sign out
-        </DropdownMenuItem>
+        </UserDropdownItem>
       </DropdownMenuContent>
     </DropdownMenu>
+  )
+}
+
+function UserDropdownItem({
+  children,
+  icon: Icon,
+  onClick,
+}: {
+  children: React.ReactNode
+  icon: ComponentType<{ className?: string }>
+  onClick?: () => void
+}) {
+  return (
+    <DropdownMenuItem className="gap-2" onClick={onClick}>
+      <Icon className="size-4 text-muted-foreground/65" />
+      <span>{children}</span>
+    </DropdownMenuItem>
   )
 }

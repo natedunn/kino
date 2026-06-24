@@ -4,6 +4,7 @@ import { Link, createFileRoute } from "@tanstack/react-router"
 import { Link as LinkIcon, MapPin, User2 } from "lucide-react"
 
 import { NotFound } from "@/components/_not-found"
+import { MainNav } from "@/components/site-nav/main-nav"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useCRPC } from "@/lib/convex/crpc"
 import { crpcServer } from "@/lib/convex/crpc-server"
@@ -71,18 +72,11 @@ function PublicProfileRoute() {
 
   return (
     <div className="min-h-svh bg-background">
-      <header className="border-b border-border/50">
-        <div className="container flex items-center py-4">
-          <Link to="/" className="flex items-center gap-2.5">
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary">
-              <span className="text-xs font-bold text-primary-foreground">
-                K
-              </span>
-            </div>
-            <span className="text-sm font-semibold tracking-tight">Kino</span>
-          </Link>
-        </div>
-      </header>
+      <MainNav
+        context={{ type: "global" }}
+        isUserPending={currentViewerQuery.isLoading}
+        user={currentViewerQuery.data}
+      />
 
       <main className="container py-12">
         <div className="mx-auto max-w-3xl">
@@ -218,7 +212,7 @@ function OrganizationSection({
                   /@{organization.slug}
                 </p>
               </div>
-              <span className="ml-3 shrink-0 rounded-full border px-2.5 py-1 text-xs capitalize text-muted-foreground">
+              <span className="ml-3 shrink-0 rounded-full border px-2.5 py-1 text-xs text-muted-foreground capitalize">
                 {organization.role} · {organization.visibility}
               </span>
             </Link>
