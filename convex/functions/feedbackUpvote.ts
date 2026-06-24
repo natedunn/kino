@@ -11,10 +11,6 @@ import {
 import { idSchema } from "../lib/validation"
 import { feedbackTable, feedbackUpvoteTable } from "./schema"
 
-function isMarkedForDeletion(feedback: { deletedTime?: number | null } | null) {
-  return feedback?.deletedTime != null
-}
-
 export const toggle = authMutation
   .input(
     z.object({
@@ -31,7 +27,7 @@ export const toggle = authMutation
     }
 
     const feedback = await getDoc(ctx, asId<"feedback">(input.feedbackId))
-    if (!feedback || isMarkedForDeletion(feedback)) {
+    if (!feedback) {
       throw new CRPCError({ code: "NOT_FOUND", message: "Feedback not found" })
     }
 
@@ -85,15 +81,12 @@ export const getCount = optionalAuthQuery
   )
   .query(async ({ ctx, input }) => {
     const feedback = await getDoc(ctx, asId<"feedback">(input.feedbackId))
-    if (!feedback || isMarkedForDeletion(feedback)) return 0
+    if (!feedback) return 0
 
-    const rows = await ctx.db
-      .query("feedbackUpvote")
-      .withIndex("by_feedbackId", (q: any) =>
-        q.eq("feedbackId", input.feedbackId)
-      )
-      .collect()
-    return rows.length
+    // Read the denormalized counter kept in sync by `toggle` instead of
+    // `.collect()`-ing every upvote row (which is unbounded and grows with
+    // popularity). `upvotes` is a non-null integer column.
+    return feedback.upvotes
   })
 
 export const hasUpvoted = optionalAuthQuery
@@ -106,7 +99,7 @@ export const hasUpvoted = optionalAuthQuery
     const profile = await getCurrentProfile(ctx, ctx.userId)
     if (!profile) return false
     const feedback = await getDoc(ctx, asId<"feedback">(input.feedbackId))
-    if (!feedback || isMarkedForDeletion(feedback)) return false
+    if (!feedback) return false
 
     const existing = await ctx.db
       .query("feedbackUpvote")
@@ -126,12 +119,10 @@ export const getUpvoteData = optionalAuthQuery
   .query(async ({ ctx, input }) => {
     const profile = await getCurrentProfile(ctx, ctx.userId)
     const feedback = await getDoc(ctx, asId<"feedback">(input.feedbackId))
-    const count =
-      feedback && !isMarkedForDeletion(feedback) ? (feedback.upvotes ?? 0) : 0
+    const count = feedback ? (feedback.upvotes ?? 0) : 0
 
     if (!profile) return { count, hasUpvoted: false }
-    if (!feedback || isMarkedForDeletion(feedback))
-      return { count, hasUpvoted: false }
+    if (!feedback) return { count, hasUpvoted: false }
 
     const existing = await ctx.db
       .query("feedbackUpvote")

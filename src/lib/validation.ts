@@ -22,6 +22,8 @@ export const FORM_LIMITS = {
 export const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 export const SLUG_INPUT_PATTERN = "[a-z0-9]+(-[a-z0-9]+)*"
 
+export const USERNAME_MIN_LENGTH = 3
+
 export const RESERVED_HANDLES = [
   "about",
   "account",
@@ -215,7 +217,10 @@ export const profileFormSchema = z.object({
     .string()
     .trim()
     .toLowerCase()
-    .min(3, "Username must be at least 3 characters")
+    .min(
+      USERNAME_MIN_LENGTH,
+      `Username must be at least ${USERNAME_MIN_LENGTH} characters`
+    )
     .max(FORM_LIMITS.username)
     .regex(/^[a-z0-9_]+$/, {
       message: "Use lowercase letters, numbers, and underscores",

@@ -459,6 +459,7 @@ function NewUpdateRoute() {
             {(field) => (
               <div className="flex flex-col gap-2">
                 <MarkdownEditor
+                  ariaLabel="Update content"
                   maxHeight="calc(100vh - 280px)"
                   minHeight="400px"
                   onChange={(html) => field.handleChange(html)}

@@ -307,8 +307,6 @@ export type DataModel = {
       assignedProfileId?: null | Id<"profile">;
       authorProfileId: Id<"profile">;
       boardId: Id<"feedbackBoard">;
-      deletedTime?: null | number;
-      deletionScheduled?: null | boolean;
       firstCommentId?: null | Id<"feedbackComment">;
       projectId: Id<"project">;
       searchContent?: null | string;
@@ -330,8 +328,6 @@ export type DataModel = {
       | "assignedProfileId"
       | "authorProfileId"
       | "boardId"
-      | "deletedTime"
-      | "deletionScheduled"
       | "firstCommentId"
       | "projectId"
       | "searchContent"
@@ -349,7 +345,6 @@ export type DataModel = {
       by_answerCommentId: ["answerCommentId", "_creationTime"];
       by_assignedProfileId: ["assignedProfileId", "_creationTime"];
       by_boardId: ["boardId", "_creationTime"];
-      by_deletedTime: ["deletedTime", "_creationTime"];
       by_firstCommentId: ["firstCommentId", "_creationTime"];
       by_projectId: ["projectId", "_creationTime"];
       by_projectId_boardId: ["projectId", "boardId", "_creationTime"];
@@ -359,45 +354,14 @@ export type DataModel = {
         "status",
         "_creationTime",
       ];
-      by_projectId_deletedTime: ["projectId", "deletedTime", "_creationTime"];
-      by_projectId_deletedTime_boardId: [
-        "projectId",
-        "deletedTime",
-        "boardId",
-        "_creationTime",
-      ];
-      by_projectId_deletedTime_boardId_status: [
-        "projectId",
-        "deletedTime",
-        "boardId",
-        "status",
-        "_creationTime",
-      ];
-      by_projectId_deletedTime_status: [
-        "projectId",
-        "deletedTime",
-        "status",
-        "_creationTime",
-      ];
-      by_projectId_deletionScheduled: [
-        "projectId",
-        "deletionScheduled",
-        "_creationTime",
-      ];
       by_projectId_slug: ["projectId", "slug", "_creationTime"];
-      by_projectId_slug_deletedTime: [
-        "projectId",
-        "slug",
-        "deletedTime",
-        "_creationTime",
-      ];
       by_projectId_status: ["projectId", "status", "_creationTime"];
       by_slug: ["slug", "_creationTime"];
     };
     searchIndexes: {
       by_projectId_boardId_status_searchContent: {
         searchField: "searchContent";
-        filterFields: "boardId" | "deletedTime" | "projectId" | "status";
+        filterFields: "boardId" | "projectId" | "status";
       };
     };
     vectorIndexes: {};

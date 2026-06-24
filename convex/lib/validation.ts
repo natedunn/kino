@@ -22,6 +22,7 @@ export const VALIDATION_LIMITS = {
   generatedSlug: 64,
   storageKey: 512,
   tag: 40,
+  target: 16,
   updateContent: 50000,
   updateTitle: 200,
   urlLabel: 100,
@@ -279,6 +280,7 @@ export const feedbackSearchSchema = z
   .string()
   .trim()
   .max(VALIDATION_LIMITS.feedbackSearch)
+export const targetSchema = z.string().trim().max(VALIDATION_LIMITS.target)
 export const tagSchema = z
   .string()
   .trim()

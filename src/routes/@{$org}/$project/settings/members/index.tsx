@@ -146,7 +146,9 @@ function ProjectMembersRoute() {
           </label>
           <Input
             autoCapitalize="none"
+            autoComplete="email"
             id="member-email"
+            inputMode="email"
             maxLength={FORM_LIMITS.email}
             onChange={(event) => setEmail(event.target.value)}
             placeholder="person@example.com"

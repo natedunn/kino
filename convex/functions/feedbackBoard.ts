@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { v } from "convex/values"
 import { eq } from "kitcn/orm"
 import { CRPCError } from "kitcn/server"
 import { authMutation, optionalAuthQuery } from "../lib/crpc"
@@ -12,7 +13,16 @@ import {
   projectSlugSchema,
   projectSlugWriteSchema,
 } from "../lib/validation"
-import { feedbackBoardTable } from "./schema"
+import { internal } from "./_generated/api"
+import { internalMutation, withOrm } from "./generated/server"
+import { feedbackBoardTable, feedbackTable } from "./schema"
+
+// A board delete cascades board → feedback → each feedback's comments, events,
+// upvotes, emotes, and GitHub connections. Doing that for a large board in a
+// single `ctx.orm.delete` could exceed Convex's per-mutation document limit, so
+// non-empty boards are soft-hidden and their feedback purged in bounded batches
+// by `purgeBoard` (each feedback delete hard-cascades to its own children).
+const BOARD_FEEDBACK_PURGE_BATCH_SIZE = 50
 
 export const create = authMutation
   .input(
@@ -150,7 +160,12 @@ export const get = optionalAuthQuery
       ctx,
       asId<"feedbackBoard">(input.id)
     )
-    if (!board || !access.project || board.projectId !== access.project._id)
+    if (
+      !board ||
+      board.deletedTime != null ||
+      !access.project ||
+      board.projectId !== access.project._id
+    )
       return null
     return toPublicDoc(board)
   })
@@ -176,7 +191,11 @@ export const listProjectBoards = optionalAuthQuery
         q.eq("projectId", access.project._id)
       )
       .collect()
-    return boards.map((board: any) => toPublicDoc(board))
+    // Hide boards that are mid-deletion (soft-hidden by `_delete` while their
+    // feedback is purged in the background).
+    return boards
+      .filter((board: any) => board.deletedTime == null)
+      .map((board: any) => toPublicDoc(board))
   })
 
 export const _delete = authMutation
@@ -202,14 +221,74 @@ export const _delete = authMutation
       ctx,
       asId<"feedbackBoard">(input.boardId)
     )
-    if (!board || !access.project || board.projectId !== access.project._id) {
+    if (
+      !board ||
+      board.deletedTime != null ||
+      !access.project ||
+      board.projectId !== access.project._id
+    ) {
       throw new CRPCError({ code: "NOT_FOUND", message: "Board not found" })
     }
 
+    // Fast path: an empty board has no cascading children, so delete it inline.
+    const firstFeedback = await ctx.db
+      .query("feedback")
+      .withIndex("by_boardId", (q: any) => q.eq("boardId", board._id))
+      .take(1)
+
+    if (firstFeedback.length === 0) {
+      await ctx.orm
+        .delete(feedbackBoardTable)
+        .where(eq(feedbackBoardTable.id, input.boardId as any))
+      return { success: true }
+    }
+
+    // Non-empty board: soft-hide it now so it disappears from the UI, then purge
+    // its feedback in bounded batches in the background before removing the row.
+    const now = Date.now()
     await ctx.orm
-      .delete(feedbackBoardTable)
+      .update(feedbackBoardTable)
+      .set({ deletedTime: now, updatedTime: now })
       .where(eq(feedbackBoardTable.id, input.boardId as any))
+    await ctx.scheduler.runAfter(0, internal.feedbackBoard.purgeBoard, {
+      boardId: board._id,
+    })
     return { success: true }
   })
 
 export const remove = _delete
+
+// Deletes a soft-hidden board's feedback in bounded batches (each feedback
+// delete cascades to its comments/events/upvotes/emotes/GitHub connections),
+// rescheduling itself until none remain, then removes the board row. Internal
+// only — entered via `_delete`'s scheduler call.
+export const purgeBoard = internalMutation({
+  args: { boardId: v.id("feedbackBoard") },
+  handler: async (ctx, { boardId }) => {
+    const octx = withOrm(ctx)
+
+    const due = await ctx.db
+      .query("feedback")
+      .withIndex("by_boardId", (q: any) => q.eq("boardId", boardId))
+      .take(BOARD_FEEDBACK_PURGE_BATCH_SIZE)
+
+    for (const row of due) {
+      await octx.orm.delete(feedbackTable).where(eq(feedbackTable.id, row._id))
+    }
+
+    if (due.length === BOARD_FEEDBACK_PURGE_BATCH_SIZE) {
+      // A full batch likely means more feedback remain; continue before the
+      // board itself is removed.
+      await ctx.scheduler.runAfter(0, internal.feedbackBoard.purgeBoard, {
+        boardId,
+      })
+      return null
+    }
+
+    // All feedback gone — remove the (already soft-hidden) board row.
+    await octx.orm
+      .delete(feedbackBoardTable)
+      .where(eq(feedbackBoardTable.id, boardId))
+    return null
+  },
+})

@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils"
 import { titleMeta } from "@/lib/seo"
 import {
   FORM_LIMITS,
+  USERNAME_MIN_LENGTH,
   filterUsernameInput,
   profileFormSchema,
   validationMessage,
@@ -269,6 +270,7 @@ function AuthenticatedProfileSettingsRoute() {
                     autoCapitalize="none"
                     autoCorrect="off"
                     maxLength={FORM_LIMITS.username}
+                    minLength={USERNAME_MIN_LENGTH}
                     onChange={(event) =>
                       field.handleChange(
                         filterUsernameInput(
@@ -280,6 +282,13 @@ function AuthenticatedProfileSettingsRoute() {
                     spellCheck={false}
                     value={field.state.value}
                   />
+                  {field.state.value.length > 0 &&
+                  field.state.value.length < USERNAME_MIN_LENGTH ? (
+                    <p className="text-xs text-muted-foreground">
+                      Usernames must be at least {USERNAME_MIN_LENGTH}{" "}
+                      characters.
+                    </p>
+                  ) : null}
                 </div>
               )}
             </form.Field>

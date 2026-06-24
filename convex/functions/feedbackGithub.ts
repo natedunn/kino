@@ -42,10 +42,6 @@ const kindSchema = z.literal("issue")
 type ConnectionKind = z.infer<typeof kindSchema>
 type GitHubTarget = GitHubIssueTarget
 
-function isMarkedForDeletion(doc: { deletedTime?: number | null } | null) {
-  return doc?.deletedTime != null
-}
-
 function repositoryFromConnection(connection: {
   repoFullName: string
   repoId: number
@@ -113,9 +109,6 @@ async function getVerifiedContext(
     asId<"feedback">(args.feedbackId),
     "Feedback not found"
   )
-  if (isMarkedForDeletion(feedback)) {
-    throw new CRPCError({ code: "NOT_FOUND", message: "Feedback not found" })
-  }
 
   const project = await getDocOrThrow(
     ctx,
@@ -188,7 +181,7 @@ export const listByFeedback = optionalAuthQuery
   )
   .query(async ({ ctx, input }) => {
     const feedback = await getDoc(ctx, asId<"feedback">(input.feedbackId))
-    if (!feedback || isMarkedForDeletion(feedback)) return []
+    if (!feedback) return []
 
     const project = await getDoc(ctx, feedback.projectId)
     if (!project) return []
@@ -229,7 +222,7 @@ export const getAvailability = authQuery
   )
   .query(async ({ ctx, input }) => {
     const feedback = await getDoc(ctx, asId<"feedback">(input.feedbackId))
-    if (!feedback || isMarkedForDeletion(feedback)) {
+    if (!feedback) {
       throw new CRPCError({ code: "NOT_FOUND", message: "Feedback not found" })
     }
 

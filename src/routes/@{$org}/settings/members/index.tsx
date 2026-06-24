@@ -150,7 +150,9 @@ function MembersSettingsRoute() {
           </label>
           <Input
             autoCapitalize="none"
+            autoComplete="email"
             id="invite-email"
+            inputMode="email"
             maxLength={FORM_LIMITS.email}
             onChange={(event) => setEmail(event.target.value)}
             placeholder="teammate@example.com"

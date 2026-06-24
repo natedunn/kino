@@ -341,7 +341,6 @@ function FeedbackDetailRoute() {
   const navigate = useNavigate()
   const crpc = useCRPC()
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [deleteAcknowledged, setDeleteAcknowledged] = useState(false)
   const [deleteConfirmText, setDeleteConfirmText] = useState("")
   const [deleteError, setDeleteError] = useState("")
   const [connectionDialogOpen, setConnectionDialogOpen] = useState(false)
@@ -490,8 +489,8 @@ function FeedbackDetailRoute() {
   const refreshGithubConnectionsMutation = useMutation(
     crpc.feedbackGithub.refreshCounts.mutationOptions()
   )
-  const markForDeletionMutation = useMutation(
-    crpc.feedback.markForDeletion.mutationOptions({
+  const deleteMutation = useMutation(
+    crpc.feedback.remove.mutationOptions({
       onError: (error) => setDeleteError(error.message),
       onSuccess: () => {
         setDeleteDialogOpen(false)
@@ -504,9 +503,7 @@ function FeedbackDetailRoute() {
   )
 
   const canSubmitDelete =
-    deleteAcknowledged &&
-    deleteConfirmText === "DELETE" &&
-    !markForDeletionMutation.isPending
+    deleteConfirmText === "DELETE" && !deleteMutation.isPending
   const visibleGithubConnections = githubConnectionsQuery.data ?? []
   const showGithubConnectionsSection =
     projectData.permissions.canEdit || visibleGithubConnections.length > 0
@@ -556,7 +553,6 @@ function FeedbackDetailRoute() {
         onOpenChange={(open) => {
           setDeleteDialogOpen(open)
           if (!open) {
-            setDeleteAcknowledged(false)
             setDeleteConfirmText("")
             setDeleteError("")
           }
@@ -566,27 +562,12 @@ function FeedbackDetailRoute() {
           <DialogHeader>
             <DialogTitle>Delete feedback</DialogTitle>
             <DialogDescription>
-              This marks the Feedback for complete database deletion in 48
-              hours. It will immediately disappear from normal views, feeds,
-              search, and admin/editor lists. After permanent deletion there is
-              no recovery.
+              This permanently deletes the feedback along with all of its
+              comments, events, upvotes, reactions, and GitHub connections. This
+              action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <label className="flex items-start gap-3 rounded-md border p-3 text-sm">
-              <input
-                checked={deleteAcknowledged}
-                className="mt-0.5"
-                onChange={(event) =>
-                  setDeleteAcknowledged(event.target.checked)
-                }
-                type="checkbox"
-              />
-              <span>
-                I understand this Feedback will be permanently deleted after the
-                48-hour recovery window.
-              </span>
-            </label>
             <div className="space-y-2">
               <label className="text-sm font-medium" htmlFor="delete-feedback">
                 Type DELETE to confirm
@@ -613,13 +594,13 @@ function FeedbackDetailRoute() {
               disabled={!canSubmitDelete}
               onClick={() => {
                 setDeleteError("")
-                markForDeletionMutation.mutate({ id: feedback.id })
+                deleteMutation.mutate({ id: feedback.id })
               }}
               type="button"
               variant="destructive"
             >
               <Trash2 className="size-4" />
-              Mark for deletion
+              Delete permanently
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1089,7 +1070,7 @@ function FeedbackDetailRoute() {
                         })
                       }
                       onUpdate={(commentId, content) =>
-                        commentUpdateMutation.mutate({
+                        commentUpdateMutation.mutateAsync({
                           _id: commentId,
                           content,
                         })
@@ -1155,7 +1136,7 @@ function FeedbackDetailRoute() {
                           })
                         }
                         onUpdate={(commentId, content) =>
-                          commentUpdateMutation.mutate({
+                          commentUpdateMutation.mutateAsync({
                             _id: commentId,
                             content,
                           })
@@ -2060,6 +2041,7 @@ function GitHubConnectionDialog({
                 <Search className="absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   className="h-9 pl-9 text-sm"
+                  maxLength={FORM_LIMITS.feedbackSearch}
                   onChange={(event) => setQuery(event.target.value)}
                   placeholder="Search issues..."
                   value={query}
@@ -2125,6 +2107,7 @@ function GitHubConnectionDialog({
                 </label>
                 <Input
                   className="h-9 text-sm"
+                  maxLength={FORM_LIMITS.githubTitle}
                   onChange={(event) => setTitle(event.target.value)}
                   placeholder="Issue title"
                   value={title}
@@ -2139,6 +2122,7 @@ function GitHubConnectionDialog({
                 </label>
                 <Textarea
                   className="min-h-28 resize-none text-sm"
+                  maxLength={FORM_LIMITS.githubBody}
                   onChange={(event) => setBody(event.target.value)}
                   placeholder="Add a description…"
                   value={body}

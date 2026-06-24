@@ -1,6 +1,7 @@
 // @vitest-environment edge-runtime
 import { eq, unsetToken } from "kitcn/orm"
 import { describe, expect, it } from "vitest"
+import { internal } from "./_generated/api"
 import {
   feedbackBoardTable,
   feedbackCommentEmoteTable,
@@ -242,39 +243,76 @@ describe("feedback cascade deletes (ORM layer)", () => {
       expect(row?.answerCommentId ?? null).toBeNull()
     })
   })
+
+  it("purgeBoard removes a board's feedback tree then the board row", async () => {
+    const t = convexTest()
+    let boardId = ""
+    await t.run(async (baseCtx) => {
+      const ctx = await runCtx(baseCtx)
+      const { profile } = await seedAuthor(ctx)
+      const { board, project } = await seedProjectWithBoard(ctx)
+      await seedFeedbackTree(ctx, {
+        boardId: board.id,
+        profileId: profile.id,
+        projectId: project.id,
+      })
+      boardId = board.id
+    })
+
+    // Drives the same scheduled internal mutation that `_delete` enqueues.
+    await t.mutation(internal.feedbackBoard.purgeBoard, {
+      boardId: boardId as never,
+    })
+
+    await t.run(async (baseCtx) => {
+      const ctx = await runCtx(baseCtx)
+      const after = await counts(ctx)
+      expect(after.feedback).toBe(0)
+      expect(after.comments).toBe(0)
+      expect(after.emotes).toBe(0)
+      expect(after.events).toBe(0)
+      expect(after.upvotes).toBe(0)
+
+      const gone = await ctx.orm.query.feedbackBoard.findFirst({
+        where: { id: boardId },
+      })
+      expect(gone ?? null).toBeNull()
+    })
+  })
 })
 
 describe("ctx.orm.update field clearing", () => {
-  it("clears optional fields with unsetToken (feedback unmark-deletion path)", async () => {
+  it("clears an optional field with unsetToken (setAnswerComment null path)", async () => {
     const t = convexTest()
     await t.run(async (baseCtx) => {
       const ctx = await runCtx(baseCtx)
       const { profile } = await seedAuthor(ctx)
       const { board, project } = await seedProjectWithBoard(ctx)
-      const { feedback } = await seedFeedbackTree(ctx, {
+      const { comment, feedback } = await seedFeedbackTree(ctx, {
         boardId: board.id,
         profileId: profile.id,
         projectId: project.id,
       })
 
-      // Mark for deletion, then clear it the way the migrated mutations do.
+      // Set the answer pointer, then clear it the way `setAnswerComment(null)`
+      // does — via unsetToken, which must remove the field entirely.
       await ctx.orm
         .update(feedbackTable)
-        .set({ deletedTime: Date.now(), deletionScheduled: true })
+        .set({ answerCommentId: comment.id })
         .where(eq(feedbackTable.id, feedback.id))
       let row = await ctx.orm.query.feedback.findFirst({
         where: { id: feedback.id },
       })
-      expect(row?.deletedTime).toBeTruthy()
+      expect(row?.answerCommentId).toBeTruthy()
 
       await ctx.orm
         .update(feedbackTable)
-        .set({ deletedTime: unsetToken, deletionScheduled: false })
+        .set({ answerCommentId: unsetToken })
         .where(eq(feedbackTable.id, feedback.id))
       row = await ctx.orm.query.feedback.findFirst({
         where: { id: feedback.id },
       })
-      expect(row?.deletedTime ?? null).toBeNull()
+      expect(row?.answerCommentId ?? null).toBeNull()
     })
   })
 })

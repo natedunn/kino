@@ -17,13 +17,9 @@ import { feedbackCommentTable } from "./schema"
 
 const TEAM_ROLES = new Set(["org:admin", "org:editor"])
 
-function isMarkedForDeletion(feedback: { deletedTime?: number | null } | null) {
-  return feedback?.deletedTime != null
-}
-
 async function getActiveFeedbackOrThrow(ctx: any, feedbackId: string) {
   const feedback = await getDoc(ctx, asId<"feedback">(feedbackId))
-  if (!feedback || isMarkedForDeletion(feedback)) {
+  if (!feedback) {
     throw new CRPCError({ code: "NOT_FOUND", message: "Feedback not found" })
   }
   return feedback
@@ -132,7 +128,7 @@ export const listByFeedback = optionalAuthQuery
   )
   .query(async ({ ctx, input }) => {
     const feedback = await getDoc(ctx, asId<"feedback">(input.feedbackId))
-    if (!feedback || isMarkedForDeletion(feedback)) return []
+    if (!feedback) return []
 
     const access = await getProjectViewAccess(ctx, {
       id: feedback.projectId,

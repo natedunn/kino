@@ -41,6 +41,7 @@ export type MarkdownEditorRef = {
 }
 
 type MarkdownEditorProps = {
+  ariaLabel?: string
   autoFocus?: boolean
   className?: string
   contentClassName?: string
@@ -60,6 +61,7 @@ export const MarkdownEditor = forwardRef<
 >(
   (
     {
+      ariaLabel,
       autoFocus = false,
       className,
       contentClassName,
@@ -90,6 +92,9 @@ export const MarkdownEditor = forwardRef<
       editorProps: {
         attributes: {
           class: cn("markdown-prose px-4 py-3 focus:outline-none"),
+          // Labels the contenteditable for screen readers, which otherwise only
+          // see the placeholder (not exposed as an accessible name).
+          ...(ariaLabel ? { "aria-label": ariaLabel } : {}),
         },
         handleKeyDown: (_view, event) => {
           if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {

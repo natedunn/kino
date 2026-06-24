@@ -1,8 +1,6 @@
-import { eq } from "kitcn/orm"
 import { cronJobs } from "convex/server"
 import { internal } from "./_generated/api"
-import { internalMutation, withOrm } from "./generated/server"
-import { feedbackTable } from "./schema"
+import { internalMutation } from "./generated/server"
 
 // githubWebhookDelivery rows exist for dedupe (GitHub redelivers within days,
 // the gateway retries within minutes) and debugging. Anything older than the
@@ -10,7 +8,6 @@ import { feedbackTable } from "./schema"
 // unbounded with every delivery.
 const WEBHOOK_DELIVERY_RETENTION_MS = 1000 * 60 * 60 * 24 * 30 // 30 days
 const CLEANUP_BATCH_SIZE = 200
-const FEEDBACK_PURGE_BATCH_SIZE = 50
 
 export const cleanupWebhookDeliveries = internalMutation({
   args: {},
@@ -39,46 +36,12 @@ export const cleanupWebhookDeliveries = internalMutation({
   },
 })
 
-export const purgeDueFeedback = internalMutation({
-  args: {},
-  handler: async (ctx) => {
-    const due = await ctx.db
-      .query("feedback")
-      .withIndex("by_deletedTime", (q: any) =>
-        q.gt("deletedTime", 0).lt("deletedTime", Date.now())
-      )
-      .take(FEEDBACK_PURGE_BATCH_SIZE)
-
-    // Purge through the ORM so the feedback FK cascades fire (comments, events,
-    // upvotes, emotes, GitHub connections). A raw ctx.db.delete here bypasses
-    // referential actions and would orphan all of those child rows.
-    const octx = withOrm(ctx)
-    for (const row of due) {
-      if (!row.deletionScheduled) continue
-      await octx.orm.delete(feedbackTable).where(eq(feedbackTable.id, row._id))
-    }
-
-    if (due.length === FEEDBACK_PURGE_BATCH_SIZE) {
-      await ctx.scheduler.runAfter(0, internal.crons.purgeDueFeedback, {})
-    }
-
-    return null
-  },
-})
-
 const crons = cronJobs()
 
 crons.interval(
   "cleanup old github webhook deliveries",
   { hours: 24 },
   internal.crons.cleanupWebhookDeliveries,
-  {}
-)
-
-crons.interval(
-  "purge feedback marked for deletion",
-  { hours: 1 },
-  internal.crons.purgeDueFeedback,
   {}
 )
 

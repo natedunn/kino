@@ -561,6 +561,7 @@ function EditUpdateRoute() {
           <form.Field name="content">
             {(field) => (
               <MarkdownEditor
+                ariaLabel="Update content"
                 maxHeight="calc(100vh - 220px)"
                 minHeight="450px"
                 onChange={(html) => field.handleChange(html)}

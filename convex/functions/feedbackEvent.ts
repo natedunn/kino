@@ -26,10 +26,6 @@ const feedbackEventMetadataSchema = z
 
 const COALESCE_WINDOW_MS = 60 * 1000
 
-function isMarkedForDeletion(feedback: { deletedTime?: number | null } | null) {
-  return feedback?.deletedTime != null
-}
-
 async function createOrUpdateFeedbackEvent(
   ctx: { db: any; orm: any },
   input: {
@@ -121,7 +117,7 @@ export const listByFeedback = optionalAuthQuery
   )
   .query(async ({ ctx, input }) => {
     const feedback = await getDoc(ctx, asId<"feedback">(input.feedbackId))
-    if (!feedback || isMarkedForDeletion(feedback)) return []
+    if (!feedback) return []
 
     const access = await getProjectViewAccess(ctx, {
       id: feedback.projectId,

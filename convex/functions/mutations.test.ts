@@ -98,8 +98,8 @@ async function seedAuthedOrgAdmin(ctx: Ctx) {
   }
 }
 
-describe("feedback mark/unmark deletion (authenticated end-to-end)", () => {
-  it("marks for deletion then restores, clearing deletedTime via unsetToken", async () => {
+describe("feedback remove (authenticated end-to-end)", () => {
+  it("permanently deletes the feedback", async () => {
     const t = convexTest()
     const seed = await t.run((baseCtx) =>
       runCtx(baseCtx).then(seedAuthedOrgAdmin)
@@ -109,33 +109,25 @@ describe("feedback mark/unmark deletion (authenticated end-to-end)", () => {
       subject: seed.userId,
     })
 
-    await asUser.mutation(api.feedback.markForDeletion, { id: seed.feedbackId })
-    let row = await t.run(async (baseCtx) => {
-      const ctx = await runCtx(baseCtx)
-      return ctx.orm.query.feedback.findFirst({ where: { id: seed.feedbackId } })
-    })
-    expect(row?.deletionScheduled).toBe(true)
-    expect(row?.deletedTime).toBeTruthy()
+    await asUser.mutation(api.feedback.remove, { id: seed.feedbackId })
 
-    await asUser.mutation(api.feedback.unmarkForDeletion, {
-      id: seed.feedbackId,
-    })
-    row = await t.run(async (baseCtx) => {
+    const row = await t.run(async (baseCtx) => {
       const ctx = await runCtx(baseCtx)
-      return ctx.orm.query.feedback.findFirst({ where: { id: seed.feedbackId } })
+      return ctx.orm.query.feedback.findFirst({
+        where: { id: seed.feedbackId },
+      })
     })
-    expect(row?.deletionScheduled).toBe(false)
-    // unsetToken must have removed the field, not left a stale timestamp.
-    expect(row?.deletedTime ?? null).toBeNull()
+    // Hard delete — the row is gone, not soft-hidden.
+    expect(row ?? null).toBeNull()
   })
 
-  it("rejects an unauthenticated mark-for-deletion", async () => {
+  it("rejects an unauthenticated remove", async () => {
     const t = convexTest()
     const seed = await t.run((baseCtx) =>
       runCtx(baseCtx).then(seedAuthedOrgAdmin)
     )
     await expect(
-      t.mutation(api.feedback.markForDeletion, { id: seed.feedbackId })
+      t.mutation(api.feedback.remove, { id: seed.feedbackId })
     ).rejects.toThrow(/UNAUTHORIZED|authenticated/i)
   })
 })

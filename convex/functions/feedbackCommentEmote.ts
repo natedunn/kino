@@ -11,10 +11,6 @@ import {
 import { idSchema } from "../lib/validation"
 import { feedbackCommentEmoteTable } from "./schema"
 
-function isMarkedForDeletion(feedback: { deletedTime?: number | null } | null) {
-  return feedback?.deletedTime != null
-}
-
 export const toggle = authMutation
   .input(
     z.object({
@@ -37,7 +33,7 @@ export const toggle = authMutation
   .mutation(async ({ ctx, input }) => {
     const profile = await getCurrentProfileOrThrow(ctx, ctx.userId)
     const feedback = await getDoc(ctx, asId<"feedback">(input.feedbackId))
-    if (!feedback || isMarkedForDeletion(feedback)) {
+    if (!feedback) {
       throw new CRPCError({ code: "NOT_FOUND", message: "Feedback not found" })
     }
     const access = await verifyProjectAccess(ctx, {

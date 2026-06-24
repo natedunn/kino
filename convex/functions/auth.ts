@@ -128,6 +128,12 @@ export default defineAuth(() => {
           if (change.newDoc.slug !== change.oldDoc.slug) {
             const db = (ctx as any).db
             const now = Date.now()
+            // These `.collect()`s are intentionally unbounded: every row is
+            // scoped to this single organization (its projects, storage row,
+            // GitHub connections/installations), so the set is bounded by one
+            // org's resources and we must rewrite all of them to keep the
+            // denormalized `orgSlug` consistent. A `.take()` here would silently
+            // leave rows pointing at the old slug. Org slug renames are rare.
             const [
               projects,
               storageRows,
