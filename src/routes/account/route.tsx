@@ -8,7 +8,7 @@ import {
 } from "@tanstack/react-router"
 import { Bell, ChevronDown, Palette, ShieldCheck, User } from "lucide-react"
 
-import { MainNav } from "@/routes/@{$org}/-components/main-nav"
+import { MainNav } from "@/components/site-nav/main-nav"
 import { buttonVariants } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -90,7 +90,11 @@ function AuthenticatedAccountShell() {
   return (
     <div className="flex min-h-dvh w-full flex-col">
       <div className="flex w-full flex-1 flex-col">
-        <MainNav isUserPending={false} user={profileQuery.data} />
+        <MainNav
+          context={{ type: "global" }}
+          isUserPending={false}
+          user={profileQuery.data}
+        />
         <div className="container flex flex-1 flex-col overflow-visible">
           {/* Mobile: section navigation collapses into a dropdown. */}
           <div className="py-4 md:hidden">

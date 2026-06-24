@@ -214,7 +214,7 @@ export function DynamicNavigation({
   return (
     <div ref={containerRef} className="relative overflow-x-hidden">
       <div className="container">
-        <div className="flex flex-nowrap items-end gap-1 pt-2">
+        <div className="flex flex-nowrap items-end gap-1">
           {visibleItemsList.map((item, index) => {
             const Icon = item.icon
             return (
@@ -228,15 +228,15 @@ export function DynamicNavigation({
                 }}
                 to={item.to}
                 params={item.params}
-                className="group flex shrink-0 items-center gap-2"
+                className="group flex shrink-0 items-center gap-2 rounded-t-md outline-none focus-visible:bg-primary/20 focus-visible:ring-1 focus-visible:ring-primary/80 focus-visible:ring-inset"
               >
                 {({ isActive }) => (
                   <span
                     className={cn(
-                      "inline-flex items-center gap-2 border-b-2 px-3 pb-2 text-xs text-muted-foreground transition-colors md:text-sm",
+                      "inline-flex items-center gap-2 border-b-2 px-3 pt-2 pb-2 text-xs text-muted-foreground transition-colors md:text-sm",
                       isActive
-                        ? "border-blue-500 text-blue-900 dark:border-blue-400 dark:text-blue-100"
-                        : "border-transparent hocus:border-foreground/30 hocus:text-foreground"
+                        ? "border-primary text-foreground"
+                        : "border-transparent hocus:border-primary/35 hocus:text-foreground"
                     )}
                   >
                     {typeof Icon === "string" ? (
@@ -247,7 +247,7 @@ export function DynamicNavigation({
                           className={cn(
                             "size-4",
                             isActive
-                              ? "text-blue-500 dark:text-blue-400"
+                              ? "text-primary"
                               : "text-muted-foreground group-hocus:text-foreground"
                           )}
                         />
@@ -263,7 +263,11 @@ export function DynamicNavigation({
           {hiddenItems.length > 0 && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="shrink-0">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="self-center shrink-0"
+                >
                   <Dots className="size-4 text-muted-foreground" />
                   <span className="sr-only">More features</span>
                 </Button>

@@ -95,3 +95,4 @@ export const StatusIcon = ({
 
 export { default as GithubIcon } from './github';
 export { default as EditIcon } from './edit';
+export { default as SearchSparkleIcon } from './search-sparkle';

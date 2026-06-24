@@ -154,7 +154,7 @@ function CommandItem({
     <CommandPrimitive.Item
       data-slot="command-item"
       className={cn(
-        "group/command-item relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none transition-colors in-data-[slot=dialog-content]:rounded-lg! hocus:bg-primary/10 hocus:text-foreground hocus:ring-1 hocus:ring-primary/25 data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 data-[selected=true]:bg-primary/10 data-[selected=true]:text-foreground data-[selected=true]:ring-1 data-[selected=true]:ring-primary/25 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 data-[selected=true]:*:[svg]:text-primary",
+        "group/command-item relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none transition-colors in-data-[slot=dialog-content]:rounded-lg! hocus:bg-primary/10 hocus:text-foreground hocus:ring-1 hocus:ring-primary/25 data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 data-[selected=true]:bg-primary/10 data-[selected=true]:text-foreground data-[selected=true]:ring-1 data-[selected=true]:ring-primary/25 dark:hocus:bg-foreground/12 dark:hocus:ring-foreground/20 dark:data-[selected=true]:bg-foreground/12 dark:data-[selected=true]:ring-foreground/20 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 data-[selected=true]:*:[svg]:text-primary dark:data-[selected=true]:*:[svg]:text-foreground",
         className
       )}
       {...props}

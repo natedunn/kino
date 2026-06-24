@@ -8,7 +8,7 @@ export function KinoMark(props: SVGProps<SVGSVGElement>) {
       xmlns="http://www.w3.org/2000/svg"
       {...props}
     >
-      <rect width="833" height="833" fill="#0000FF" />
+      <rect width="833" height="833" fill="currentColor" />
       <path
         d="M281 306.318C281 285.156 298.337 268 319.5 268C340.663 268 358 285.156 358 306.318V535.682C358 556.844 340.663 574 319.5 574C298.337 574 281 556.844 281 535.682V306.318Z"
         fill="white"

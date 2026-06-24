@@ -18,6 +18,10 @@ const kitcnCmd = path.join(
   binDir,
   process.platform === "win32" ? "kitcn.cmd" : "kitcn"
 )
+const convexCmd = path.join(
+  binDir,
+  process.platform === "win32" ? "convex.cmd" : "convex"
+)
 const shellCmd = process.platform === "win32" ? "sh.exe" : "sh"
 const logDir = path.join(os.tmpdir(), "kino-dev", path.basename(workspaceRoot))
 const convexMode = process.env.KINO_CONVEX_MODE ?? "anonymous"
@@ -67,11 +71,28 @@ function prepareAnonymousConvex() {
 function convexDevArgs() {
   if (convexMode !== "anonymous") return ["dev"]
 
-  return [
+  const args = [
     "dev",
     "--env-file",
     path.relative(workspaceRoot, anonymousEnvFilePath),
   ]
+
+  if (fs.existsSync(projectLocalConfigPath)) {
+    try {
+      const config = JSON.parse(fs.readFileSync(projectLocalConfigPath, "utf8"))
+      if (typeof config.backendVersion === "string") {
+        args.push("--local-backend-version", config.backendVersion)
+      }
+    } catch {
+      // Fall back to Convex's default latest-version resolution.
+    }
+  }
+
+  return args
+}
+
+function convexDevCommand() {
+  return convexMode === "anonymous" ? convexCmd : kitcnCmd
 }
 
 function killProcessGroup(child, signal) {
@@ -127,7 +148,7 @@ const children = [
   },
   {
     name: "convex",
-    ...startProcess("convex", kitcnCmd, convexDevArgs(), convexEnv),
+    ...startProcess("convex", convexDevCommand(), convexDevArgs(), convexEnv),
   },
 ]
 
