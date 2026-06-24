@@ -5,11 +5,13 @@ import path from "node:path"
 import {
   anonymousConvexEnv,
   anonymousEnvFilePath as getAnonymousEnvFilePath,
+  configuredLocalBackendPort,
   ensureAnonymousEnvFile,
   preserveSharedDevDeployment,
   projectLocalConfigPath as getProjectLocalConfigPath,
   readLocalEnv,
   stopLocalBackendForWorkspace,
+  waitForLocalBackendToStart,
 } from "./lib/local-convex.mjs"
 
 const workspaceRoot = process.cwd()
@@ -136,21 +138,7 @@ spawn(
   }
 )
 
-const children = [
-  {
-    name: "vite",
-    ...startProcess(
-      "vite",
-      shellCmd,
-      [path.join("scripts", "dev-portless.sh"), "pnpm", "run", "dev:vite"],
-      frontendEnv
-    ),
-  },
-  {
-    name: "convex",
-    ...startProcess("convex", convexDevCommand(), convexDevArgs(), convexEnv),
-  },
-]
+const children = []
 
 let shuttingDown = false
 
@@ -177,6 +165,71 @@ process.on("exit", () => {
   if (!shuttingDown) {
     shutdown("SIGTERM")
   }
+})
+
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+
+// Block Vite until Convex has pushed functions and is actually listening.
+// Without this gate the browser connects to a not-yet-ready backend on first
+// load and you have to refresh/restart `pnpm dev` a couple times before it
+// sticks. Returns "ready" | "exited" | "timeout".
+async function waitForConvexReady(logPath, child) {
+  const pattern = /Convex functions ready!|Convex ready/i
+  const port =
+    convexMode === "anonymous" ? configuredLocalBackendPort(workspaceRoot) : null
+  const deadlineMs = 120000
+  const started = Date.now()
+
+  while (Date.now() - started < deadlineMs) {
+    if (child.exitCode !== null || child.signalCode !== null) return "exited"
+    if (fs.existsSync(logPath)) {
+      try {
+        if (pattern.test(fs.readFileSync(logPath, "utf8"))) {
+          // Functions are pushed; for a local backend also confirm the port is
+          // accepting connections before letting the frontend connect.
+          if (port !== null) waitForLocalBackendToStart(port, 5000, workspaceRoot)
+          return "ready"
+        }
+      } catch {
+        // Log not readable yet; retry.
+      }
+    }
+    await delay(300)
+  }
+
+  return "timeout"
+}
+
+// Start Convex first and wait for it, then Vite.
+children.push({
+  name: "convex",
+  ...startProcess("convex", convexDevCommand(), convexDevArgs(), convexEnv),
+})
+
+console.log("[dev] waiting for Convex backend before starting Vite…")
+const convexLogPath = path.join(logDir, "convex.log")
+const readiness = await waitForConvexReady(convexLogPath, children[0].child)
+
+if (readiness === "exited") {
+  console.error(`[convex] exited before becoming ready. See ${convexLogPath}`)
+  shutdown("SIGTERM")
+  process.exit(1)
+} else if (readiness === "timeout") {
+  console.warn(
+    `[dev] Convex not ready after 120s; starting Vite anyway. See ${convexLogPath}`
+  )
+} else {
+  console.log("[dev] Convex backend ready; starting Vite.")
+}
+
+children.push({
+  name: "vite",
+  ...startProcess(
+    "vite",
+    shellCmd,
+    [path.join("scripts", "dev-portless.sh"), "pnpm", "run", "dev:vite"],
+    frontendEnv
+  ),
 })
 
 for (const { name, child } of children) {

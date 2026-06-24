@@ -73,6 +73,30 @@ pnpm convex:seed:from-dev --source <deployment-name>
 Use the deployment name, such as `scrupulous-lemming-700`, not the
 `dev:<name>` value from `.env.local`.
 
+## Schema drift between shared dev and the current branch
+
+The shared dev ("OG") deployment can be schema-ahead or schema-behind the branch
+you're seeding into, and `convex import --replace-all` rejects rows with fields
+the current schema doesn't declare. Before import, the seed script reads
+`convex/functions/_generated/dataModel.d.ts` and strips any exported field not
+present in the current schema (per table), logging what it dropped. This is
+generic — removing a column from `convex/functions/schema.ts` and regenerating
+is enough; there is no hardcoded field list to maintain.
+
+Caveat: this handles *removed/renamed* fields. A newly **required** field that
+the OG data lacks still needs the widen-migrate-narrow discipline (keep it
+optional through the transition) — see the convex-migration-helper skill. If the
+generated data model can't be read, seeding warns and imports unchanged; run
+`pnpm codegen` first.
+
+## Dev startup ordering
+
+`pnpm dev` starts Convex first and waits for it to push functions and listen
+before launching Vite, so the first browser load doesn't hit a not-yet-ready
+backend (which previously required a refresh or a restart or two). If Convex
+isn't ready after 120s, Vite starts anyway and a warning points at the Convex
+log under `$TMPDIR/kino-dev/<workspace>/convex.log`.
+
 ## Notes
 
 Anonymous Convex backends are local-only URLs. The gateway webhook registration

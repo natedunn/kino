@@ -282,41 +282,216 @@ function timestamp() {
   return new Date().toISOString().replace(/[:.]/g, "-")
 }
 
-function removeJsonlObjectFields(filePath, fields) {
-  if (!fs.existsSync(filePath)) return 0
+// Learn each app table's allowed top-level fields from the generated
+// dataModel.d.ts. The generated file is regularly formatted:
+//   <table>: {            // 2-space indent
+//     document: {         // 4-space indent
+//       <field>?: ...;    // 6-space indent = a direct field
+//       <nested>: {       // deeper indent = ignored
+//     };
+// We collect only the direct children of each `document` block, so dropping a
+// column from convex/functions/schema.ts (and regenerating) automatically
+// removes it from the allowed set here — no per-field bookkeeping needed.
+function parseSchemaFields(dataModelPath) {
+  const tables = new Map()
+  if (!fs.existsSync(dataModelPath)) return tables
 
-  const lines = fs.readFileSync(filePath, "utf8").split(/\r?\n/)
-  let changed = 0
-  const sanitizedLines = []
+  const lines = fs.readFileSync(dataModelPath, "utf8").split(/\r?\n/)
+  let currentTable = null
+  let inDocument = false
+  let depth = 0
 
-  // Each line is a complete JSON object, so parse it rather than rewriting the
-  // text with regexes — that keeps us safe regardless of a field's value type.
   for (const line of lines) {
-    if (!line.trim()) continue
-    const row = JSON.parse(line)
-    let touched = false
-    for (const field of fields) {
-      if (field in row) {
-        delete row[field]
-        touched = true
+    if (!inDocument) {
+      const tableMatch = line.match(/^ {2}(\w+): \{$/)
+      if (tableMatch) {
+        currentTable = tableMatch[1]
+      } else if (currentTable && /^ {4}document: \{$/.test(line)) {
+        inDocument = true
+        depth = 1
+        tables.set(currentTable, new Set())
       }
+      continue
     }
-    if (touched) changed += 1
-    sanitizedLines.push(JSON.stringify(row))
+
+    if (depth === 1) {
+      const fieldMatch = line.match(/^ {6}(\w+)\??:/)
+      if (fieldMatch) tables.get(currentTable).add(fieldMatch[1])
+    }
+
+    const opens = (line.match(/\{/g) || []).length
+    const closes = (line.match(/\}/g) || []).length
+    depth += opens - closes
+    if (depth <= 0) {
+      inDocument = false
+      currentTable = null
+    }
   }
 
-  if (changed > 0) {
-    fs.writeFileSync(filePath, `${sanitizedLines.join("\n")}\n`)
-  }
-
-  return changed
+  return tables
 }
 
+// Splice the given top-level keys out of one JSON-object line WITHOUT
+// reparsing the kept values. A JSON.parse/stringify round-trip silently
+// rewrites Convex's export number encoding — a float64 `0.0` becomes `0`, which
+// re-imports as int64 and is then rejected by a v.float64() column. So we walk
+// the raw text, drop the targeted `"key":value` segments, and leave every other
+// byte (numbers especially) exactly as exported.
+function removeTopLevelKeys(line, keysToRemove) {
+  let i = 0
+  const n = line.length
+  const isWs = (ch) => ch === " " || ch === "\t" || ch === "\n" || ch === "\r"
+  const skipWs = () => {
+    while (i < n && isWs(line[i])) i += 1
+  }
+
+  // Advances i past a complete JSON string starting at line[i] === '"'.
+  const readString = () => {
+    const start = i
+    i += 1
+    while (i < n) {
+      const ch = line[i]
+      if (ch === "\\") {
+        i += 2
+        continue
+      }
+      i += 1
+      if (ch === '"') break
+    }
+    return JSON.parse(line.slice(start, i))
+  }
+
+  // Advances i past one complete JSON value (object/array/string/number/literal).
+  const skipValue = () => {
+    skipWs()
+    const ch = line[i]
+    if (ch === '"') {
+      readString()
+      return
+    }
+    if (ch === "{" || ch === "[") {
+      const open = ch
+      const close = ch === "{" ? "}" : "]"
+      let depth = 0
+      while (i < n) {
+        const c = line[i]
+        if (c === '"') {
+          readString()
+          continue
+        }
+        if (c === open) {
+          depth += 1
+          i += 1
+          continue
+        }
+        if (c === close) {
+          depth -= 1
+          i += 1
+          if (depth === 0) return
+          continue
+        }
+        i += 1
+      }
+      return
+    }
+    // number / true / false / null — read until a structural delimiter.
+    while (i < n && !isWs(line[i]) && line[i] !== "," && line[i] !== "}") i += 1
+  }
+
+  skipWs()
+  if (line[i] !== "{") return { result: line, removed: new Set() }
+  i += 1
+
+  const kept = []
+  const removed = new Set()
+  skipWs()
+  if (line[i] === "}") return { result: "{}", removed }
+
+  while (i < n) {
+    skipWs()
+    const keyStart = i
+    const key = readString()
+    skipWs()
+    i += 1 // ':'
+    skipValue()
+    const segment = line.slice(keyStart, i)
+    if (keysToRemove.has(key)) removed.add(key)
+    else kept.push(segment)
+    skipWs()
+    if (line[i] === ",") {
+      i += 1
+      continue
+    }
+    break // closing '}'
+  }
+
+  return { result: `{${kept.join(",")}}`, removed }
+}
+
+function stripUnknownFields(filePath, allowedFields) {
+  if (!fs.existsSync(filePath)) return { rows: 0, removed: new Set() }
+
+  const lines = fs.readFileSync(filePath, "utf8").split(/\r?\n/)
+  const removed = new Set()
+  let changed = 0
+  let fileChanged = false
+  const out = []
+
+  for (const line of lines) {
+    if (!line.trim()) continue
+
+    // Parse only to enumerate keys (read-only); the actual removal is a
+    // text-level splice so kept values stay byte-identical.
+    const row = JSON.parse(line)
+    const toRemove = new Set()
+    for (const key of Object.keys(row)) {
+      // Convex reserved fields are part of every document type, so they pass
+      // the allowed check; guard them anyway so a parser hiccup can't drop them.
+      if (key === "_id" || key === "_creationTime") continue
+      if (!allowedFields.has(key)) toRemove.add(key)
+    }
+
+    if (toRemove.size === 0) {
+      out.push(line)
+      continue
+    }
+
+    const result = removeTopLevelKeys(line, toRemove)
+    result.removed.forEach((key) => removed.add(key))
+    changed += 1
+    fileChanged = true
+    out.push(result.result)
+  }
+
+  if (fileChanged) fs.writeFileSync(filePath, `${out.join("\n")}\n`)
+  return { rows: changed, removed }
+}
+
+// Strip any exported field the current schema no longer declares. The shared
+// dev ("OG") deployment can be schema-ahead or schema-behind the current
+// branch; `convex import --replace-all` rejects unknown fields, so we drop them
+// generically rather than maintaining a hardcoded per-field list.
 function sanitizeExportForCurrentSchema(exportPath) {
   if (!exportPath.endsWith(".zip")) {
-    throw new Error(
-      `[seed] expected a .zip export path, got: ${exportPath}`
+    throw new Error(`[seed] expected a .zip export path, got: ${exportPath}`)
+  }
+
+  const dataModelPath = path.join(
+    workspaceRoot,
+    "convex",
+    "functions",
+    "_generated",
+    "dataModel.d.ts"
+  )
+  const schemaFields = parseSchemaFields(dataModelPath)
+  if (schemaFields.size === 0) {
+    console.warn(
+      `[seed] could not read generated schema at ${path.relative(
+        workspaceRoot,
+        dataModelPath
+      )}; importing export unchanged. Run \`pnpm codegen\` if import fails on a schema mismatch.`
     )
+    return exportPath
   }
 
   const tempDir = fs.mkdtempSync(path.join(seedDir, "sanitize-"))
@@ -325,16 +500,23 @@ function sanitizeExportForCurrentSchema(exportPath) {
   try {
     run("unzip", ["-q", exportPath, "-d", tempDir])
 
-    const changedFeedbackRows = removeJsonlObjectFields(
-      path.join(tempDir, "feedback", "documents.jsonl"),
-      ["deletedTime", "deletionScheduled"]
-    )
+    let totalRows = 0
+    // Only touch tables the app schema owns. Tables present in the export but
+    // not in dataModel (e.g. _storage, _tables) are imported verbatim.
+    for (const [table, allowedFields] of schemaFields) {
+      const docPath = path.join(tempDir, table, "documents.jsonl")
+      const { rows, removed } = stripUnknownFields(docPath, allowedFields)
+      if (rows > 0) {
+        totalRows += rows
+        console.log(
+          `[seed] ${table}: dropped [${[...removed].sort().join(", ")}] from ` +
+            `${rows} row(s) not present in the current schema`
+        )
+      }
+    }
 
-    if (changedFeedbackRows === 0) return exportPath
+    if (totalRows === 0) return exportPath
 
-    console.log(
-      `[seed] removed legacy feedback soft-delete fields from ${changedFeedbackRows} exported row(s)`
-    )
     // Start from a clean file so re-runs don't append to a stale archive.
     fs.rmSync(sanitizedPath, { force: true })
     run("zip", ["-q", "-r", sanitizedPath, "."], { cwd: tempDir })
