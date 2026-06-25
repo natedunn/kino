@@ -1,7 +1,7 @@
 "use client"
 
 import type { Icon } from "@/icons/types"
-import type { ClassValue } from "clsx"
+import type { ClassValue } from "@/lib/utils"
 import type { LinkProps } from "@tanstack/react-router"
 
 import { useEffect, useRef, useState } from "react"
