@@ -1,6 +1,6 @@
 import React from "react"
 import { Link, useRouterState } from "@tanstack/react-router"
-import { Bell, Command, Ellipsis } from "lucide-react"
+import { Command, Ellipsis } from "lucide-react"
 
 import { UserDropdown } from "./user-dropdown"
 import { NavButton } from "./nav-button"
@@ -10,6 +10,7 @@ import { useCommandPalette } from "@/components/command"
 import { KinoMark } from "@/components/kino-mark"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import Bell from "@/icons/bell"
 import SearchSparkle from "@/icons/search-sparkle"
 import {
   DropdownMenu,
@@ -153,7 +154,7 @@ export const MainNav = ({
                       </DropdownMenu>
                       <Link
                         to="/@{$org}"
-                        className="link-text hidden max-w-[7rem] truncate no-underline! hocus:underline! min-[460px]:block md:max-w-[8rem] lg:max-w-[12rem]"
+                        className="link-text hidden max-w-[7rem] truncate no-underline! outline-none hocus:underline! focus-visible:outline-none min-[460px]:block md:max-w-[8rem] lg:max-w-[12rem]"
                         params={{ org: orgSlug }}
                       >
                         {orgSlug}
@@ -161,7 +162,7 @@ export const MainNav = ({
                       <span className="text-muted-foreground">/</span>
                       <Link
                         to="/@{$org}/$project"
-                        className="link-text block min-w-0 flex-1 max-w-[9rem] truncate no-underline! hocus:underline! sm:max-w-[12rem] md:max-w-[18rem] lg:max-w-[24rem]"
+                        className="link-text block min-w-0 max-w-[9rem] truncate no-underline! outline-none hocus:underline! focus-visible:outline-none sm:max-w-[12rem] md:max-w-[18rem] lg:max-w-[24rem]"
                         params={(prev) => ({
                           ...prev,
                           org: orgSlug,
@@ -175,7 +176,7 @@ export const MainNav = ({
                     !!orgSlug && (
                       <Link
                         to="/@{$org}"
-                        className="link-text block max-w-[10rem] truncate no-underline! hocus:underline! sm:max-w-[14rem] md:max-w-[18rem]"
+                        className="link-text block max-w-[10rem] truncate no-underline! outline-none hocus:underline! focus-visible:outline-none sm:max-w-[14rem] md:max-w-[18rem]"
                         params={{ org: orgSlug }}
                       >
                         {orgSlug}
@@ -222,7 +223,7 @@ export const MainNav = ({
                         size="icon"
                         className="relative"
                       >
-                        <Bell className="h-4 w-4" />
+                        <Bell className="size-4" />
                         <Badge
                           aria-hidden="true"
                           variant="destructive"
@@ -283,7 +284,7 @@ export const MainNav = ({
           </div>
         </div>
 
-        {hasSubNav ? <div className="border-b">{subNav}</div> : null}
+        {hasSubNav ? <div className="border-b pt-2">{subNav}</div> : null}
       </nav>
     </>
   )

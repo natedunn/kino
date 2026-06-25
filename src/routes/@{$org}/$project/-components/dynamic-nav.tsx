@@ -17,7 +17,6 @@ import {
 } from "@/components/ui/dropdown-menu"
 import ArchivePencil from "@/icons/archive-pencil"
 import CalendarDays from "@/icons/calendar-days"
-import Chat from "@/icons/chat"
 import Dots from "@/icons/dots"
 import Folder from "@/icons/folder"
 import Home from "@/icons/home"
@@ -93,12 +92,6 @@ export function DynamicNavigation({
       children: "Discussions",
       icon: Interview,
       to: "/@{$org}/$project/discussions",
-      params: (prev) => ({ ...prev, ...params }),
-    },
-    {
-      children: "Chat",
-      icon: Chat,
-      to: "/@{$org}/$project/chat",
       params: (prev) => ({ ...prev, ...params }),
     },
     ...(canManageSettings
