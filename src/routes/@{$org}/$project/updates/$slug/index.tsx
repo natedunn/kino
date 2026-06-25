@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react"
+import { useState } from "react"
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query"
 import { Link, createFileRoute, notFound } from "@tanstack/react-router"
 import {
@@ -41,15 +41,7 @@ import {
 } from "../../-components/comment-thread"
 import { projectTitle, titleFromSlug, titleMeta } from "@/lib/seo"
 
-const heartPopKeyframes = `
-@keyframes heart-pop {
-  0% { transform: scale(1); }
-  15% { transform: scale(1.3); }
-  30% { transform: scale(0.95); }
-  45% { transform: scale(1.15); }
-  60% { transform: scale(1); }
-}
-`
+import { useEmoteToggle } from "../-components/use-emote-toggle"
 
 const SIDEBAR_STORAGE_KEY = "update-detail-sidebar-state"
 
@@ -147,7 +139,6 @@ function UpdateDetailRoute() {
     })
   )
 
-  const toggleEmote = useMutation(crpc.updateEmote.toggle.mutationOptions())
   const commentMutation = useMutation(
     crpc.updateComment.create.mutationOptions()
   )
@@ -167,59 +158,20 @@ function UpdateDetailRoute() {
   const heartData = updateData?.emoteCounts?.heart
   const serverLikeCount = heartData?.count ?? 0
   const serverIsLiked = currentProfile
-    ? heartData?.authorProfileIds?.includes(currentProfile.id)
+    ? Boolean(heartData?.authorProfileIds?.includes(currentProfile.id))
     : false
-  const [optimisticLiked, setOptimisticLiked] = useState<boolean | null>(null)
-  const [optimisticCount, setOptimisticCount] = useState<number | null>(null)
-  const [isAnimating, setIsAnimating] = useState(false)
   const [copied, setCopied] = useState(false)
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const pendingStateRef = useRef<boolean | null>(null)
-  const prevLikedRef = useRef(serverIsLiked)
 
-  const isLiked = optimisticLiked ?? serverIsLiked
-  const likeCount = optimisticCount ?? serverLikeCount
-
-  useEffect(() => {
-    if (optimisticLiked !== null && serverIsLiked === optimisticLiked) {
-      setOptimisticLiked(null)
-      setOptimisticCount(null)
-    }
-  }, [optimisticLiked, serverIsLiked])
-
-  useEffect(() => {
-    if (isLiked && !prevLikedRef.current) {
-      setIsAnimating(true)
-      const timer = setTimeout(() => setIsAnimating(false), 600)
-      return () => clearTimeout(timer)
-    }
-    prevLikedRef.current = isLiked
-  }, [isLiked])
+  const { isLiked, likeCount, isAnimating, toggle } = useEmoteToggle({
+    updateId: update.id,
+    serverIsLiked,
+    serverLikeCount,
+    canInteract: Boolean(currentProfile),
+  })
 
   const hasRelatedFeedback = updateData.relatedFeedback.length > 0
   const isAuthenticated = !!currentProfile
   const rssUrl = `/@${params.org}/${params.project}/updates/rss.xml`
-
-  function handleLike() {
-    if (!currentProfile || !update) return
-
-    const newIsLiked = !isLiked
-    const newCount = newIsLiked ? likeCount + 1 : Math.max(0, likeCount - 1)
-    setOptimisticLiked(newIsLiked)
-    setOptimisticCount(newCount)
-    pendingStateRef.current = newIsLiked
-
-    if (debounceRef.current) clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => {
-      if (pendingStateRef.current !== serverIsLiked) {
-        toggleEmote.mutate({ content: "heart", updateId: update.id })
-      } else {
-        setOptimisticLiked(null)
-        setOptimisticCount(null)
-      }
-      pendingStateRef.current = null
-    }, 300)
-  }
 
   async function handleCopyLink() {
     await navigator.clipboard.writeText(window.location.href)
@@ -304,7 +256,7 @@ function UpdateDetailRoute() {
                   : "text-muted-foreground hover:bg-red-500/10 hover:text-red-500"
               )}
               disabled={!currentProfile}
-              onClick={handleLike}
+              onClick={toggle}
               variant="ghost"
             >
               <Heart
@@ -365,164 +317,171 @@ function UpdateDetailRoute() {
         </div>
       </div>
       <div className="container flex flex-1 flex-col">
-      <div className="flex flex-1 flex-col gap-8 md:grid md:grid-cols-12">
-      <div className="order-last py-8 md:col-span-4 md:border-l md:border-border/75">
-        <div className="sticky top-4 flex flex-col gap-6 md:pl-8">
-          <style>{heartPopKeyframes}</style>
-
-          <SidebarSection
-            icon={<Info className="size-3.5" />}
-            onOpenChange={(open) => setSidebarSection("details", open)}
-            open={sidebarState.details}
-            title="Details"
-          >
-            <div className="flex flex-col">
-              <div className="flex items-center justify-between py-1.5">
-                <span className="text-sm text-muted-foreground">Published</span>
-                <span className="text-sm">
-                  {update.status === "draft" ? (
-                    <span className="text-yellow-600 dark:text-yellow-400">
-                      Draft
+        <div className="flex flex-1 flex-col gap-8 md:grid md:grid-cols-12">
+          <div className="order-last py-8 md:col-span-4 md:border-l md:border-border/75">
+            <div className="sticky top-4 flex flex-col gap-6 md:pl-8">
+              <SidebarSection
+                icon={<Info className="size-3.5" />}
+                onOpenChange={(open) => setSidebarSection("details", open)}
+                open={sidebarState.details}
+                title="Details"
+              >
+                <div className="flex flex-col">
+                  <div className="flex items-center justify-between py-1.5">
+                    <span className="text-sm text-muted-foreground">
+                      Published
                     </span>
-                  ) : update.publishedAt ? (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span
-                          className="cursor-pointer"
-                          suppressHydrationWarning
-                        >
-                          {formatRelativeDay(Number(update.publishedAt))}
+                    <span className="text-sm">
+                      {update.status === "draft" ? (
+                        <span className="text-yellow-600 dark:text-yellow-400">
+                          Draft
                         </span>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <span suppressHydrationWarning>
-                          {formatFullDate(Number(update.publishedAt))}
-                        </span>
-                      </TooltipContent>
-                    </Tooltip>
-                  ) : (
-                    "Not published"
-                  )}
-                </span>
-              </div>
-              <div className="flex items-center justify-between py-1.5">
-                <span className="text-sm text-muted-foreground">Author</span>
-                <ProfileLinkOrUnknown profile={updateData.author} showAt />
-              </div>
-              <div className="flex items-center justify-between py-1.5">
-                <span className="text-sm text-muted-foreground">Category</span>
-                <CategoryBadge category={update.category} />
-              </div>
-            </div>
-          </SidebarSection>
+                      ) : update.publishedAt ? (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span
+                              className="cursor-pointer"
+                              suppressHydrationWarning
+                            >
+                              {formatRelativeDay(Number(update.publishedAt))}
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <span suppressHydrationWarning>
+                              {formatFullDate(Number(update.publishedAt))}
+                            </span>
+                          </TooltipContent>
+                        </Tooltip>
+                      ) : (
+                        "Not published"
+                      )}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between py-1.5">
+                    <span className="text-sm text-muted-foreground">
+                      Author
+                    </span>
+                    <ProfileLinkOrUnknown profile={updateData.author} showAt />
+                  </div>
+                  <div className="flex items-center justify-between py-1.5">
+                    <span className="text-sm text-muted-foreground">
+                      Category
+                    </span>
+                    <CategoryBadge category={update.category} />
+                  </div>
+                </div>
+              </SidebarSection>
 
-          {hasRelatedFeedback ? (
-            <SidebarSection
-              icon={<LinkIcon className="size-3.5" />}
-              onOpenChange={(open) => setSidebarSection("related", open)}
-              open={sidebarState.related}
-              title="Related Feedback"
-            >
-              <div className="flex flex-col">
-                {updateData.relatedFeedback.map((item) => (
+              {hasRelatedFeedback ? (
+                <SidebarSection
+                  icon={<LinkIcon className="size-3.5" />}
+                  onOpenChange={(open) => setSidebarSection("related", open)}
+                  open={sidebarState.related}
+                  title="Related Feedback"
+                >
+                  <div className="flex flex-col">
+                    {updateData.relatedFeedback.map((item) => (
+                      <Link
+                        className="flex cursor-pointer items-center gap-2.5 rounded-md py-2 transition-colors hover:bg-muted/50"
+                        key={item.id}
+                        params={{
+                          org: params.org,
+                          project: params.project,
+                          slug: item.slug,
+                        }}
+                        to="/@{$org}/$project/feedback/$slug"
+                      >
+                        <StatusIcon colored size="14" status={item.status} />
+                        <span className="flex-1 truncate text-sm">
+                          {item.title}
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
+                </SidebarSection>
+              ) : null}
+
+              {updateData.canEdit ? (
+                <Button asChild variant="outline">
                   <Link
-                    className="flex cursor-pointer items-center gap-2.5 rounded-md py-2 transition-colors hover:bg-muted/50"
-                    key={item.id}
-                    params={{
-                      org: params.org,
-                      project: params.project,
-                      slug: item.slug,
-                    }}
-                    to="/@{$org}/$project/feedback/$slug"
+                    params={params}
+                    to="/@{$org}/$project/updates/$slug/edit"
                   >
-                    <StatusIcon colored size="14" status={item.status} />
-                    <span className="flex-1 truncate text-sm">
-                      {item.title}
-                    </span>
+                    <Edit className="h-4 w-4" />
+                    Edit Update
                   </Link>
-                ))}
-              </div>
-            </SidebarSection>
-          ) : null}
-
-          {updateData.canEdit ? (
-            <Button asChild variant="outline">
-              <Link params={params} to="/@{$org}/$project/updates/$slug/edit">
-                <Edit className="h-4 w-4" />
-                Edit Update
-              </Link>
-            </Button>
-          ) : null}
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-4 py-8 md:col-span-8">
-        {updateData.coverImageUrl ? (
-          <img
-            alt={update.title}
-            className="w-full rounded-lg bg-muted object-cover"
-            src={updateData.coverImageUrl}
-          />
-        ) : null}
-
-        <div className="prose-lg">
-          <EditorContentDisplay content={update.content} />
-        </div>
-
-        <div className="mt-8 border-t pt-8">
-          <CommentEditorProvider>
-            <div className="mb-4 flex w-full items-center border-b pb-2">
-              <h2 className="flex items-center gap-1.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                <MessageSquare className="size-3.5" />
-                Discussion
-              </h2>
+                </Button>
+              ) : null}
             </div>
-            <CommentList
-              comments={comments as ThreadComment[]}
-              currentProfileId={currentProfile?.id}
-              getBadges={(comment) =>
-                (comment as ThreadComment & { isTeamMember?: boolean })
-                  .isTeamMember ? (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
-                    <Users className="h-3 w-3" />
-                    Team
-                  </span>
-                ) : null
-              }
-              isDeleting={commentDeleteMutation.isPending}
-              isUpdating={commentUpdateMutation.isPending}
-              onDelete={(commentId) =>
-                commentDeleteMutation.mutate({ _id: commentId })
-              }
-              onToggleEmote={(commentId, content) =>
-                commentEmoteMutation.mutate({
-                  content,
-                  updateCommentId: commentId,
-                  updateId: update.id,
-                })
-              }
-              onUpdate={(commentId, content) =>
-                commentUpdateMutation.mutateAsync({
-                  _id: commentId,
-                  content,
-                })
-              }
-            />
-            <CommentForm
-              isAuthenticated={isAuthenticated}
-              isSubmitting={commentMutation.isPending}
-              onSubmit={async (content) => {
-                await commentMutation.mutateAsync({
-                  content,
-                  updateId: update.id,
-                })
-              }}
-              redirectTo={`/@${params.org}/${params.project}/updates/${params.slug}`}
-            />
-          </CommentEditorProvider>
+          </div>
+
+          <div className="flex flex-col gap-4 py-8 md:col-span-8">
+            {updateData.coverImageUrl ? (
+              <img
+                alt={update.title}
+                className="w-full rounded-lg bg-muted object-cover"
+                src={updateData.coverImageUrl}
+              />
+            ) : null}
+
+            <div className="prose-lg">
+              <EditorContentDisplay content={update.content} />
+            </div>
+
+            <div className="mt-8 border-t pt-8">
+              <CommentEditorProvider>
+                <div className="mb-4 flex w-full items-center border-b pb-2">
+                  <h2 className="flex items-center gap-1.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                    <MessageSquare className="size-3.5" />
+                    Discussion
+                  </h2>
+                </div>
+                <CommentList
+                  comments={comments as ThreadComment[]}
+                  currentProfileId={currentProfile?.id}
+                  getBadges={(comment) =>
+                    (comment as ThreadComment & { isTeamMember?: boolean })
+                      .isTeamMember ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                        <Users className="h-3 w-3" />
+                        Team
+                      </span>
+                    ) : null
+                  }
+                  isDeleting={commentDeleteMutation.isPending}
+                  isUpdating={commentUpdateMutation.isPending}
+                  onDelete={(commentId) =>
+                    commentDeleteMutation.mutate({ _id: commentId })
+                  }
+                  onToggleEmote={(commentId, content) =>
+                    commentEmoteMutation.mutate({
+                      content,
+                      updateCommentId: commentId,
+                      updateId: update.id,
+                    })
+                  }
+                  onUpdate={(commentId, content) =>
+                    commentUpdateMutation.mutateAsync({
+                      _id: commentId,
+                      content,
+                    })
+                  }
+                />
+                <CommentForm
+                  isAuthenticated={isAuthenticated}
+                  isSubmitting={commentMutation.isPending}
+                  onSubmit={async (content) => {
+                    await commentMutation.mutateAsync({
+                      content,
+                      updateId: update.id,
+                    })
+                  }}
+                  redirectTo={`/@${params.org}/${params.project}/updates/${params.slug}`}
+                />
+              </CommentEditorProvider>
+            </div>
+          </div>
         </div>
-      </div>
-      </div>
       </div>
     </div>
   )

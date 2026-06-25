@@ -1,6 +1,7 @@
 import type { ReactNode } from "react"
 
-import { useSuspenseQuery } from "@tanstack/react-query"
+import { useState } from "react"
+import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute, Link, notFound } from "@tanstack/react-router"
 import { z } from "zod"
 
@@ -16,6 +17,30 @@ import { CategoriesNav } from "./-components/categories-nav"
 import { UpdateCard } from "./-components/update-card"
 import { projectTitle, titleMeta } from "@/lib/seo"
 
+const NUM_OF_ITEMS_PER_PAGE = 10
+
+type UpdateCategory = "changelog" | "article" | "announcement"
+
+type UpdateListArgs = {
+  projectId: string
+  category?: UpdateCategory
+  cursor: string | null
+  limit: number
+}
+
+function getUpdateListArgs({
+  projectId,
+  category,
+  cursor,
+}: Omit<UpdateListArgs, "limit">): UpdateListArgs {
+  return {
+    projectId,
+    category,
+    cursor,
+    limit: NUM_OF_ITEMS_PER_PAGE,
+  }
+}
+
 const updatesSearchParams = z.object({
   category: z.optional(
     z
@@ -25,11 +50,9 @@ const updatesSearchParams = z.object({
 })
 
 export const Route = createFileRoute("/@{$org}/$project/updates/")({
-  head: ({ params }) => ({
-    meta: [titleMeta(["Updates", projectTitle(params.org, params.project)])],
-  }),
   component: UpdatesListRoute,
-  loader: async ({ context, params }) => {
+  loaderDeps: ({ search }) => search,
+  loader: async ({ context, deps, params }) => {
     const projectData = await context.queryClient.ensureQueryData(
       crpcServer.project.getDetails.queryOptions({
         orgSlug: params.org,
@@ -43,9 +66,13 @@ export const Route = createFileRoute("/@{$org}/$project/updates/")({
 
     await Promise.all([
       context.queryClient.ensureQueryData(
-        crpcServer.update.listByProject.queryOptions({
-          projectId: projectData.project.id,
-        })
+        crpcServer.update.listByProject.queryOptions(
+          getUpdateListArgs({
+            projectId: projectData.project.id,
+            category: deps.category,
+            cursor: null,
+          })
+        )
       ),
       context.queryClient.ensureQueryData(
         crpcServer.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
@@ -55,6 +82,9 @@ export const Route = createFileRoute("/@{$org}/$project/updates/")({
   pendingComponent: () => <RoutePending variant="page" />,
   pendingMs: 600,
   validateSearch: updatesSearchParams,
+  head: ({ params }) => ({
+    meta: [titleMeta(["Updates", projectTitle(params.org, params.project)])],
+  }),
 })
 
 function Notice({ icon, children }: { icon: ReactNode; children: ReactNode }) {
@@ -70,6 +100,7 @@ function UpdatesListRoute() {
   const { org: orgSlug, project: projectSlug } = Route.useParams()
   const { category: categoryParam } = Route.useSearch()
   const crpc = useCRPC()
+  const queryClient = useQueryClient()
 
   const { data: projectData } = useSuspenseQuery(
     crpc.project.getDetails.queryOptions({
@@ -82,20 +113,86 @@ function UpdatesListRoute() {
     throw notFound()
   }
 
-  const updatesQuery = useSuspenseQuery(
-    crpc.update.listByProject.queryOptions({
-      projectId: projectData.project.id,
-    })
-  )
+  const projectId = projectData.project.id
+  const canEdit = projectData.permissions.canEdit
+
   const currentProfileQuery = useSuspenseQuery(
     crpc.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
   )
 
-  const allUpdates = updatesQuery.data?.updates ?? []
-  const canEdit = updatesQuery.data?.canEdit ?? false
-  const updates = categoryParam
-    ? allUpdates.filter((update) => update.category === categoryParam)
-    : allUpdates
+  // Server-side cursor pagination (mirrors the feedback list). The first page is
+  // SSR-prefetched in the loader; "Load more" appends subsequent pages. The
+  // category filter is applied server-side, so a fresh filter resets the
+  // accumulated pages via the args key.
+  const firstPageArgs = getUpdateListArgs({
+    projectId,
+    category: categoryParam,
+    cursor: null,
+  })
+  const firstPageKey = JSON.stringify(firstPageArgs)
+  const { data: firstPage, isFetching: refreshingUpdates } = useSuspenseQuery(
+    crpc.update.listByProject.queryOptions(firstPageArgs)
+  )
+
+  const [additionalState, setAdditionalState] = useState<{
+    key: string
+    pages: Array<typeof firstPage>
+  }>({ key: firstPageKey, pages: [] })
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [loadMoreErrorState, setLoadMoreErrorState] = useState<{
+    error: Error | null
+    key: string
+  }>({
+    error: null,
+    key: firstPageKey,
+  })
+
+  const additionalPages =
+    additionalState.key === firstPageKey ? additionalState.pages : []
+  const loadMoreError =
+    loadMoreErrorState.key === firstPageKey ? loadMoreErrorState.error : null
+  const pages = [firstPage, ...additionalPages]
+  const lastPage = additionalPages.at(-1) ?? firstPage
+  const updates = pages
+    .flatMap((page) => page.page)
+    .filter(
+      (item, index, items) =>
+        items.findIndex((candidate) => candidate.id === item.id) === index
+    )
+  const canLoadMore = !lastPage.isDone && !!lastPage.continueCursor
+
+  async function loadMoreUpdates() {
+    if (!canLoadMore || loadingMore) return
+
+    setLoadingMore(true)
+    setLoadMoreErrorState({ error: null, key: firstPageKey })
+    try {
+      const nextPage = await queryClient.fetchQuery(
+        crpc.update.listByProject.staticQueryOptions(
+          getUpdateListArgs({
+            projectId,
+            category: categoryParam,
+            cursor: lastPage.continueCursor,
+          })
+        )
+      )
+      setAdditionalState((state) => ({
+        key: firstPageKey,
+        pages:
+          state.key === firstPageKey ? [...state.pages, nextPage] : [nextPage],
+      }))
+    } catch (error) {
+      setLoadMoreErrorState({
+        error:
+          error instanceof Error
+            ? error
+            : new Error("Failed to load more updates"),
+        key: firstPageKey,
+      })
+    } finally {
+      setLoadingMore(false)
+    }
+  }
 
   return (
     <div className="container flex flex-1 flex-col overflow-visible">
@@ -141,7 +238,7 @@ function UpdatesListRoute() {
 
         <div
           className="flex flex-col gap-4 py-8 md:col-span-9"
-          aria-busy={updatesQuery.isFetching}
+          aria-busy={refreshingUpdates || loadingMore}
           aria-live="polite"
         >
           {updates.length === 0 ? (
@@ -150,18 +247,36 @@ function UpdatesListRoute() {
             </Notice>
           ) : null}
           {updates.length > 0 ? (
-            <ul className="flex flex-col">
-              {updates.map((update, index) => (
-                <UpdateCard
-                  key={update.id}
-                  currentProfileId={currentProfileQuery.data?.id}
-                  isLast={index === updates.length - 1}
-                  orgSlug={orgSlug}
-                  projectSlug={projectSlug}
-                  update={update}
-                />
-              ))}
-            </ul>
+            <>
+              <ul className="flex flex-col">
+                {updates.map((update, index) => (
+                  <UpdateCard
+                    key={update.id}
+                    currentProfileId={currentProfileQuery.data?.id}
+                    isLast={!canLoadMore && index === updates.length - 1}
+                    orgSlug={orgSlug}
+                    projectSlug={projectSlug}
+                    update={update}
+                  />
+                ))}
+              </ul>
+              {canLoadMore ? (
+                <div className="flex justify-center pt-2">
+                  <Button
+                    disabled={loadingMore}
+                    onClick={() => void loadMoreUpdates()}
+                    variant="outline"
+                  >
+                    {loadingMore ? "Loading…" : "Load more updates"}
+                  </Button>
+                </div>
+              ) : null}
+              {loadMoreError ? (
+                <p className="text-center text-sm text-destructive">
+                  {loadMoreError.message}
+                </p>
+              ) : null}
+            </>
           ) : null}
         </div>
       </div>

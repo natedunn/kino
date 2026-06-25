@@ -1,4 +1,3 @@
-import { useEffect, useRef } from "react"
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query"
 import { Link, createFileRoute } from "@tanstack/react-router"
 import { Link as LinkIcon, MapPin, User2 } from "lucide-react"
@@ -32,7 +31,6 @@ export const Route = createFileRoute("/u/$username/")({
 function PublicProfileRoute() {
   const { username } = Route.useParams()
   const crpc = useCRPC()
-  const ownProfileRefreshRef = useRef<string | null>(null)
   const profileQuery = useSuspenseQuery(
     crpc.profile.getByUsername.queryOptions({ username })
   )
@@ -40,20 +38,6 @@ function PublicProfileRoute() {
     crpc.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
   )
   const profile = profileQuery.data
-
-  useEffect(() => {
-    if (currentViewerQuery.data?.username !== username) {
-      ownProfileRefreshRef.current = null
-      return
-    }
-
-    if (ownProfileRefreshRef.current === username) {
-      return
-    }
-
-    ownProfileRefreshRef.current = username
-    void profileQuery.refetch()
-  }, [currentViewerQuery.data?.username, profileQuery, username])
 
   if (!profile) {
     return (

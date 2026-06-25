@@ -226,9 +226,11 @@ function UpdatesDashboard({
     setCursorByPage({ 0: null })
   }, [pageSize])
 
+  // Clear row selection whenever the visible page or status filter changes —
+  // selections are page/filter specific, so they shouldn't carry over.
   useEffect(() => {
     setRowSelection({})
-  }, [pagination.pageIndex, pagination.pageSize])
+  }, [pagination.pageIndex, pagination.pageSize, statusFilter])
 
   const currentCursor = cursorByPage[pagination.pageIndex] ?? null
   const dashboardQuery = useSuspenseQuery(
@@ -304,11 +306,6 @@ function UpdatesDashboard({
       }))
     }
   }, [pagination.pageIndex, allRows.length])
-
-  // Clear row selection when status filter changes
-  useEffect(() => {
-    setRowSelection({})
-  }, [statusFilter])
 
   const columns = useMemo(
     () => [

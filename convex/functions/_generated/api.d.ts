@@ -610,8 +610,13 @@ export declare const api: {
     listByProject: FunctionReference<
       "query",
       "public",
-      { projectId: string },
-      any
+      {
+        category?: "changelog" | "article" | "announcement";
+        cursor?: string | null;
+        limit?: number;
+        projectId: string;
+      },
+      { continueCursor: string | null; isDone: boolean; page: Array<any> }
     >;
     listProjectDashboard: FunctionReference<
       "query",

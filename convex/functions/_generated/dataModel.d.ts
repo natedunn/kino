@@ -1206,6 +1206,13 @@ export type DataModel = {
     indexes: {
       by_id: ["_id"];
       by_creation_time: ["_creationTime"];
+      by_projectId_category_status_publishedAt: [
+        "projectId",
+        "category",
+        "status",
+        "publishedAt",
+        "_creationTime",
+      ];
       by_projectId_slug: ["projectId", "slug", "_creationTime"];
       by_projectId_status_publishedAt: [
         "projectId",

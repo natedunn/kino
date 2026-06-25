@@ -1,5 +1,6 @@
 import {
   type AnyColumn,
+  aggregateIndex,
   arrayOf,
   boolean,
   convexTable,
@@ -41,7 +42,11 @@ const FEEDBACK_EVENT_TYPES = [
   "answer_unmarked",
 ] as const
 const UPDATE_STATUSES = ["draft", "published"] as const
-const UPDATE_CATEGORIES = ["changelog", "article", "announcement"] as const
+export const UPDATE_CATEGORIES = [
+  "changelog",
+  "article",
+  "announcement",
+] as const
 const GITHUB_SYNC_MODES = ["read", "read_write"] as const
 const GITHUB_CONNECTION_STATE_STATUSES = [
   "pending",
@@ -760,6 +765,15 @@ export const updateTable = convexTable(
       updateTable.status,
       updateTable.publishedAt
     ),
+    // Supports the public updates list when filtered by category. Ordered so a
+    // category-scoped read can still page by publishedAt (non-editor, published
+    // only) or by status then publishedAt (editor, all statuses).
+    index("by_projectId_category_status_publishedAt").on(
+      updateTable.projectId,
+      updateTable.category,
+      updateTable.status,
+      updateTable.publishedAt
+    ),
   ]
 )
 
@@ -777,6 +791,9 @@ export const updateCommentTable = convexTable(
     content: text().notNull(),
   },
   (updateCommentTable) => [
+    aggregateIndex("by_updateId")
+      .on(updateCommentTable.updateId)
+      .count(updateCommentTable.updateId),
     index("by_updateId").on(updateCommentTable.updateId),
     index("by_authorProfileId").on(updateCommentTable.authorProfileId),
   ]
@@ -796,6 +813,9 @@ export const updateEmoteTable = convexTable(
     content: textEnum(EMOTE_CONTENTS).notNull(),
   },
   (updateEmoteTable) => [
+    aggregateIndex("by_updateId_content")
+      .on(updateEmoteTable.updateId, updateEmoteTable.content)
+      .count(updateEmoteTable.updateId),
     index("by_updateId").on(updateEmoteTable.updateId),
     index("by_updateId_authorProfileId").on(
       updateEmoteTable.updateId,
