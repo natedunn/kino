@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
 import {
-  createColumnHelper,
   flexRender,
   getCoreRowModel,
   useReactTable,
@@ -16,7 +15,6 @@ import {
   useNavigate,
 } from "@tanstack/react-router"
 import {
-  ChevronRight,
   Columns3,
   ExternalLink,
   Globe,
@@ -63,47 +61,24 @@ import {
 import { useCRPC } from "@/lib/convex/crpc"
 import { crpcServer } from "@/lib/convex/crpc-server"
 import { cn } from "@/lib/utils"
-import { formatFullDate, formatTimestamp } from "@/lib/utils/format-timestamp"
+import { formatFullDate } from "@/lib/utils/format-timestamp"
 
-import {
-  CategoryBadge,
-  type UpdateCategory,
-} from "../-components/category-badge"
+import { CategoryBadge } from "../-components/category-badge"
+import { StatusBadge } from "../-components/status-badge"
 import { projectTitle, titleMeta } from "@/lib/seo"
+import { createUpdateColumns } from "./-columns"
+import type { DeleteDialogState, StatusFilter } from "./-types"
 
 const DEFAULT_PAGE_SIZE = 20
 const PAGE_SIZE_OPTIONS = [10, 20, 50] as const
 
 const dashboardSearchParams = z.object({
-  pageSize: z
-    .coerce.number()
+  pageSize: z.coerce
+    .number()
     .pipe(z.union([z.literal(10), z.literal(20), z.literal(50)]))
     .catch(DEFAULT_PAGE_SIZE),
 })
 
-type DashboardUpdate = {
-  author: {
-    id: string
-    imageUrl: string | null
-    name: string | null
-    username: string | null
-  } | null
-  category: UpdateCategory
-  createdAt: number
-  id: string
-  publishedAt?: number | null
-  slug: string
-  status: "draft" | "published"
-  title: string
-  updatedTime?: number | null
-}
-
-type DeleteDialogState = {
-  ids: string[]
-  updates: Array<{ id: string; title: string }>
-} | null
-
-type StatusFilter = "all" | "draft" | "published"
 const UPDATE_STATUS_ITEMS = [
   { label: <StatusBadge status="draft" />, value: "draft" },
   { label: <StatusBadge status="published" />, value: "published" },
@@ -115,8 +90,6 @@ const COLUMN_LABELS: Record<string, string> = {
   activity: "Last Activity",
   status: "Status",
 }
-
-const columnHelper = createColumnHelper<DashboardUpdate>()
 
 export const Route = createFileRoute("/@{$org}/$project/updates/edit/")({
   component: UpdatesDashboardRoute,
@@ -149,7 +122,9 @@ export const Route = createFileRoute("/@{$org}/$project/updates/edit/")({
   pendingMs: 600,
   validateSearch: dashboardSearchParams,
   head: ({ params }) => ({
-    meta: [titleMeta(["Manage Updates", projectTitle(params.org, params.project)])],
+    meta: [
+      titleMeta(["Manage Updates", projectTitle(params.org, params.project)]),
+    ],
   }),
 })
 
@@ -276,7 +251,7 @@ function UpdatesDashboard({
   const sheetUpdate = useMemo(
     () =>
       sheetUpdateId
-        ? allRows.find((row) => row.id === sheetUpdateId) ?? null
+        ? (allRows.find((row) => row.id === sheetUpdateId) ?? null)
         : null,
     [allRows, sheetUpdateId]
   )
@@ -308,113 +283,11 @@ function UpdatesDashboard({
   }, [pagination.pageIndex, allRows.length])
 
   const columns = useMemo(
-    () => [
-      columnHelper.display({
-        cell: ({ row }) => (
-          <Checkbox
-            aria-label={`Select ${row.original.title}`}
-            checked={row.getIsSelected()}
-            onCheckedChange={(checked) => row.toggleSelected(checked === true)}
-          />
-        ),
-        header: ({ table }) => (
-          <Checkbox
-            aria-label="Select all rows on this page"
-            checked={table.getIsAllPageRowsSelected()}
-            onCheckedChange={(checked) =>
-              table.toggleAllPageRowsSelected(checked === true)
-            }
-          />
-        ),
-        id: "select",
-        size: 40,
-        enableHiding: false,
-      }),
-      columnHelper.accessor("title", {
-        cell: ({ row }) => (
-          <div className="flex min-w-0 flex-col gap-0.5">
-            <Link
-              className="truncate font-medium hover:underline"
-              params={{
-                org: params.org,
-                project: params.project,
-                slug: row.original.slug,
-              }}
-              to="/@{$org}/$project/updates/$slug"
-            >
-              {row.original.title}
-            </Link>
-            <span className="truncate text-xs text-muted-foreground">
-              {row.original.slug}
-            </span>
-          </div>
-        ),
-        header: "Title",
-        enableHiding: false,
-      }),
-      columnHelper.display({
-        cell: ({ row }) => (
-          <span className="text-sm text-muted-foreground">
-            {row.original.author?.name ??
-              row.original.author?.username ??
-              "Unknown"}
-          </span>
-        ),
-        header: "Author",
-        id: "author",
-        meta: { headerClassName: "hidden lg:table-cell", cellClassName: "hidden lg:table-cell" },
-      }),
-      columnHelper.accessor("category", {
-        cell: ({ getValue }) => <CategoryBadge category={getValue()} />,
-        header: "Category",
-        meta: { headerClassName: "hidden md:table-cell", cellClassName: "hidden md:table-cell" },
-      }),
-      columnHelper.accessor("status", {
-        cell: ({ getValue }) => <StatusBadge status={getValue()} />,
-        header: "Status",
-        meta: { headerClassName: "hidden sm:table-cell", cellClassName: "hidden sm:table-cell" },
-      }),
-      columnHelper.display({
-        cell: ({ row }) => {
-          const timestamp =
-            row.original.updatedTime ?? row.original.createdAt
-          const label =
-            row.original.status === "published" ? "Published" : "Updated"
-          return (
-            <div className="flex min-w-0 flex-col gap-0.5 text-sm">
-              <span>{formatTimestamp(timestamp, { relative: false })}</span>
-              <span
-                className="text-xs text-muted-foreground"
-                title={formatFullDate(timestamp)}
-              >
-                {label} {formatTimestamp(timestamp)}
-              </span>
-            </div>
-          )
-        },
-        header: "Last Activity",
-        id: "activity",
-        meta: { headerClassName: "hidden lg:table-cell", cellClassName: "hidden lg:table-cell" },
-      }),
-      columnHelper.display({
-        cell: ({ row }) => (
-          <Button
-            className="gap-1.5 text-muted-foreground"
-            onClick={() => setSheetUpdateId(row.original.id)}
-            size="sm"
-            type="button"
-            variant="ghost"
-          >
-            Options
-            <ChevronRight className="size-3.5" />
-          </Button>
-        ),
-        header: () => <span className="sr-only">Actions</span>,
-        id: "actions",
-        size: 100,
-        enableHiding: false,
-      }),
-    ],
+    () =>
+      createUpdateColumns(
+        { org: params.org, project: params.project },
+        setSheetUpdateId
+      ),
     [params.org, params.project]
   )
 
@@ -680,7 +553,9 @@ function UpdatesDashboard({
                       setSheetUpdateId(null)
                       setDeleteDialog({
                         ids: [sheetUpdate.id],
-                        updates: [{ id: sheetUpdate.id, title: sheetUpdate.title }],
+                        updates: [
+                          { id: sheetUpdate.id, title: sheetUpdate.title },
+                        ],
                       })
                     }}
                     type="button"
@@ -702,9 +577,7 @@ function UpdatesDashboard({
         <div className="flex flex-col gap-4 pb-4 md:gap-6 md:pb-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
             <div className="flex flex-col gap-1">
-              <h1 className="text-2xl font-bold md:text-3xl">
-                Manage Updates
-              </h1>
+              <h1 className="text-2xl font-bold md:text-3xl">Manage Updates</h1>
               <p className="text-sm text-muted-foreground">
                 Drafting, publishing, and reviewing project updates.
               </p>
@@ -915,7 +788,7 @@ function UpdatesDashboard({
                           <th
                             key={header.id}
                             className={cn(
-                              "whitespace-nowrap px-3 py-2.5 font-medium sm:px-4",
+                              "px-3 py-2.5 font-medium whitespace-nowrap sm:px-4",
                               meta?.headerClassName
                             )}
                             style={
@@ -941,9 +814,7 @@ function UpdatesDashboard({
                     <tr
                       key={row.id}
                       className="border-t transition-colors hover:bg-muted/20 data-[state=selected]:bg-muted/30"
-                      data-state={
-                        row.getIsSelected() ? "selected" : undefined
-                      }
+                      data-state={row.getIsSelected() ? "selected" : undefined}
                     >
                       {row.getVisibleCells().map((cell) => {
                         const meta = cell.column.columnDef.meta as
@@ -998,27 +869,5 @@ function UpdatesDashboard({
         </div>
       </div>
     </>
-  )
-}
-
-function StatusBadge({ status }: { status: DashboardUpdate["status"] }) {
-  if (status === "published") {
-    return (
-      <Badge
-        className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-        variant="outline"
-      >
-        Published
-      </Badge>
-    )
-  }
-
-  return (
-    <Badge
-      className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
-      variant="outline"
-    >
-      Draft
-    </Badge>
   )
 }

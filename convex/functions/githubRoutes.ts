@@ -8,7 +8,7 @@ import {
   sanitizeGitHubInstallationDetails,
   verifyGitHubAppState,
   verifyGitHubWebhookSignature,
-} from "../lib/github"
+} from "../lib/github-client"
 import { CRPCError } from "kitcn/server"
 import { createGithubCaller } from "./generated/github.runtime"
 import {

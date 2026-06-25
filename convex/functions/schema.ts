@@ -55,7 +55,7 @@ const GITHUB_CONNECTION_STATE_STATUSES = [
 ] as const
 const GITHUB_INSTALLATION_STATUSES = ["active", "suspended", "deleted"] as const
 const FEEDBACK_GITHUB_CONNECTION_KINDS = ["issue"] as const
-const EMOTE_CONTENTS = [
+export const EMOTE_CONTENTS = [
   "thumbsUp",
   "thumbsDown",
   "laugh",

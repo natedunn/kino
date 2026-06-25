@@ -21,7 +21,7 @@ import {
   verifyGitHubAppStateForCurrentTarget,
   type GitHubInstallationDetails,
   type GitHubRepository,
-} from "../lib/github"
+} from "../lib/github-client"
 import {
   feedbackGithubConnectionTable,
   githubConnectionStateTable,

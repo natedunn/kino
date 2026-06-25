@@ -12,7 +12,7 @@ import {
   sha256Hex,
   verifyGitHubAppState,
   verifyGitHubWebhookSignature,
-} from "./github"
+} from "./github-client"
 
 const ORIGINAL_ENV = { ...process.env }
 

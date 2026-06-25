@@ -1,57 +1,10 @@
 import { z } from "zod"
 import { eq } from "kitcn/orm"
-import { CRPCError } from "kitcn/server"
 import { authMutation } from "../lib/crpc"
-import {
-  getCurrentProfileOrThrow,
-  asId,
-  getDocOrThrow,
-  verifyProjectAccess,
-} from "../lib/kino"
+import { emoteContentSchema, ensureUpdateReactionAccess } from "../lib/emote"
+import { getCurrentProfileOrThrow } from "../lib/kino"
 import { idSchema } from "../lib/validation"
 import { updateEmoteTable } from "./schema"
-
-const emoteContentSchema = z.enum([
-  "thumbsUp",
-  "thumbsDown",
-  "laugh",
-  "questionMark",
-  "sad",
-  "tada",
-  "eyes",
-  "heart",
-  "skull",
-  "explodingHead",
-])
-
-async function ensureUpdateReactionAccess(
-  ctx: any,
-  updateId: string,
-  userId: string | null | undefined
-) {
-  const item = await getDocOrThrow(
-    ctx,
-    asId<"update">(updateId),
-    "Update not found"
-  )
-
-  const project = await getDocOrThrow(ctx, item.projectId, "Project not found")
-  const access = await verifyProjectAccess(ctx, { slug: project.slug, userId })
-  if (item.status === "draft") {
-    if (!access.permissions.canEdit) {
-      throw new CRPCError({
-        code: "FORBIDDEN",
-        message: "You cannot react to draft updates",
-      })
-    }
-  } else if (!access.permissions.canView) {
-    throw new CRPCError({
-      code: "FORBIDDEN",
-      message: "You do not have access to this update",
-    })
-  }
-  return item
-}
 
 export const toggle = authMutation
   .input(

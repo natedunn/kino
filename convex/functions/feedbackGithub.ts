@@ -24,7 +24,7 @@ import {
   searchRepositoryIssues,
   type GitHubIssueTarget,
   type GitHubRepository,
-} from "../lib/github"
+} from "../lib/github-client"
 import {
   feedbackSearchSchema,
   githubBodySchema,
