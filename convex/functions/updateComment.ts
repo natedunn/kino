@@ -8,14 +8,13 @@ import {
   getCurrentProfileOrThrow,
   getDoc,
   getDocOrThrow,
+  isProjectEditorRole,
   toPublicDoc,
   verifyProjectAccess,
 } from "../lib/kino"
 import { resolveProfileImageUrl } from "../lib/storage"
 import { commentContentSchema, idSchema } from "../lib/validation"
 import { updateCommentTable } from "./schema"
-
-const TEAM_ROLES = new Set(["org:admin", "org:editor"])
 
 async function ensureUpdateCommentAccess(
   ctx: any,
@@ -168,7 +167,8 @@ export const listByUpdate = optionalAuthQuery
               q.eq("profileId", author._id).eq("projectId", item.projectId)
             )
             .first()
-          isTeamMember = !!projectMember && TEAM_ROLES.has(projectMember.role)
+          isTeamMember =
+            !!projectMember && isProjectEditorRole(projectMember.role)
         }
 
         const emotes = await ctx.db

@@ -21,6 +21,19 @@ export const SYSTEM_ROLES = ["system:admin", "system:editor", "user"] as const
 export type SystemRole = (typeof SYSTEM_ROLES)[number]
 
 /**
+ * Project roles that can edit content (boards, feedback, updates, comments).
+ * Derived from org roles: `org:admin` and `org:editor` can edit; plain
+ * `member` can only view. This is the single source of truth for "is this
+ * member allowed to administer content" — content authorization is enforced
+ * here and in `verifyProjectAccess`, not by better-auth roles.
+ */
+export const PROJECT_EDITOR_ROLES = ["org:admin", "org:editor"] as const
+
+export function isProjectEditorRole(role: string | null | undefined): boolean {
+  return role === "org:admin" || role === "org:editor"
+}
+
+/**
  * The single sanitizer for the system role. `user.role` (better-auth) is the
  * source of truth; `profile.role` is a derived copy. Any code that writes
  * `profile.role` MUST funnel through here so the two never diverge into an
@@ -470,11 +483,10 @@ export async function verifyProjectAccess(
   // org:editor (org editor), member (org member). Only org:admin can delete a
   // project; org:admin and org:editor can edit; all three can view.
   const role = projectMember?.role ?? "_none"
-  const editorRoles = ["org:admin", "org:editor"]
-  const memberRoles = [...editorRoles, "member"]
+  const memberRoles = [...PROJECT_EDITOR_ROLES, "member"] as string[]
 
   if (project.visibility === "public") {
-    const canEdit = editorRoles.includes(role)
+    const canEdit = isProjectEditorRole(role)
 
     return {
       profile,
@@ -486,7 +498,7 @@ export async function verifyProjectAccess(
 
   if (project.visibility === "private") {
     const canView = memberRoles.includes(role)
-    const canEdit = editorRoles.includes(role)
+    const canEdit = isProjectEditorRole(role)
 
     return {
       profile,
@@ -497,7 +509,7 @@ export async function verifyProjectAccess(
   }
 
   if (project.visibility === "archived") {
-    const canView = editorRoles.includes(role)
+    const canView = isProjectEditorRole(role)
 
     return {
       profile,

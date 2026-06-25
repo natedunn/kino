@@ -1,3 +1,14 @@
+/**
+ * Coerce a Date, ISO string, or epoch-ms number to epoch milliseconds.
+ * Use this to normalize the various timestamp shapes coming back from the
+ * backend before passing them to the formatters below.
+ */
+export function toTimestamp(value: number | string | Date): number {
+	if (value instanceof Date) return value.getTime();
+	if (typeof value === 'string') return new Date(value).getTime();
+	return value;
+}
+
 export function formatFullDate(timestamp: number): string {
 	const date = new Date(timestamp);
 	const day = date.getDate();

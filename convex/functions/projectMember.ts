@@ -2,12 +2,15 @@ import { z } from "zod"
 import { eq } from "kitcn/orm"
 import { CRPCError } from "kitcn/server"
 import { authMutation, authQuery } from "../lib/crpc"
-import { asId, getDoc, verifyProjectAccess } from "../lib/kino"
+import {
+  asId,
+  getDoc,
+  isProjectEditorRole,
+  verifyProjectAccess,
+} from "../lib/kino"
 import { resolveProfileImageUrl } from "../lib/storage"
 import { emailSchema, idSchema } from "../lib/validation"
 import { projectMemberTable } from "./schema"
-
-const EDIT_ROLES = new Set(["org:admin", "org:editor"])
 
 export const listAssignableMembers = authQuery
   .input(
@@ -38,7 +41,7 @@ export const listAssignableMembers = authQuery
 
     const rows = await Promise.all(
       membersWithProfiles
-        .filter((member) => EDIT_ROLES.has(member.role))
+        .filter((member) => isProjectEditorRole(member.role))
         .map(async (member) => ({
           profile: member.profile
             ? {
