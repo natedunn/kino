@@ -6,7 +6,7 @@ import {
   listInstallationRepositories,
   probeRepository,
   sanitizeGitHubRepository,
-} from "../lib/github"
+} from "../lib/github-client"
 import { orgSlugSchema, projectSlugSchema } from "../lib/validation"
 import { createGithubCaller } from "./generated/github.runtime"
 
