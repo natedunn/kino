@@ -22,6 +22,10 @@ export const Route = createFileRoute("/@{$org}/$project/settings")({
 
 function ProjectSettingsRoute() {
   const params = Route.useParams()
+  const linkParams = {
+    org: params.org,
+    project: params.project,
+  }
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
   })
@@ -56,10 +60,7 @@ function ProjectSettingsRoute() {
       key: item.to,
       label: item.label,
       renderLink: (children: React.ReactNode) => (
-        <Link
-          params={{ org: params.org, project: params.project }}
-          to={item.to}
-        >
+        <Link params={(prev) => ({ ...prev, ...linkParams })} to={item.to}>
           {children}
         </Link>
       ),
@@ -81,7 +82,7 @@ function ProjectSettingsRoute() {
                 return (
                   <Link
                     key={item.to}
-                    params={{ org: params.org, project: params.project }}
+                    params={(prev) => ({ ...prev, ...linkParams })}
                     to={item.to}
                   >
                     {({ isActive }) => (
