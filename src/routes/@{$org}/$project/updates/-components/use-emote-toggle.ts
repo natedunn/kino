@@ -29,6 +29,14 @@ export function useEmoteToggle({
 }: UseEmoteToggleOptions) {
   const crpc = useCRPC()
   const toggleEmote = useMutation(crpc.updateEmote.toggle.mutationOptions())
+  const latestServerIsLikedRef = useRef(serverIsLiked)
+  useEffect(() => {
+    latestServerIsLikedRef.current = serverIsLiked
+  }, [serverIsLiked])
+  const latestCanInteractRef = useRef(canInteract)
+  useEffect(() => {
+    latestCanInteractRef.current = canInteract
+  }, [canInteract])
 
   const [optimistic, setOptimistic] = useState<{
     liked: boolean
@@ -44,6 +52,7 @@ export function useEmoteToggle({
   const prevLikedRef = useRef(isLiked)
   useEffect(() => {
     if (isLiked && !prevLikedRef.current) {
+      prevLikedRef.current = isLiked
       setIsAnimating(true)
       const timer = setTimeout(() => setIsAnimating(false), 600)
       return () => clearTimeout(timer)
@@ -53,12 +62,32 @@ export function useEmoteToggle({
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pendingStateRef = useRef<boolean | null>(null)
+  const previousUpdateIdRef = useRef(updateId)
   useEffect(
     () => () => {
       if (debounceRef.current) clearTimeout(debounceRef.current)
     },
     []
   )
+  useEffect(() => {
+    if (previousUpdateIdRef.current === updateId) return
+
+    previousUpdateIdRef.current = updateId
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = null
+    pendingStateRef.current = null
+    prevLikedRef.current = serverIsLiked
+    setIsAnimating(false)
+    setOptimistic(null)
+  }, [serverIsLiked, updateId])
+  useEffect(() => {
+    if (canInteract) return
+
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = null
+    pendingStateRef.current = null
+    setOptimistic(null)
+  }, [canInteract])
 
   function toggle() {
     if (!canInteract) return
@@ -70,7 +99,13 @@ export function useEmoteToggle({
 
     if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(() => {
-      if (pendingStateRef.current !== serverIsLiked) {
+      if (!latestCanInteractRef.current) {
+        setOptimistic(null)
+        pendingStateRef.current = null
+        return
+      }
+
+      if (pendingStateRef.current !== latestServerIsLikedRef.current) {
         toggleEmote.mutate({ content: "heart", updateId })
       } else {
         setOptimistic(null)

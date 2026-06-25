@@ -139,9 +139,18 @@ function UpdatesListRoute() {
     pages: Array<typeof firstPage>
   }>({ key: firstPageKey, pages: [] })
   const [loadingMore, setLoadingMore] = useState(false)
+  const [loadMoreErrorState, setLoadMoreErrorState] = useState<{
+    error: Error | null
+    key: string
+  }>({
+    error: null,
+    key: firstPageKey,
+  })
 
   const additionalPages =
     additionalState.key === firstPageKey ? additionalState.pages : []
+  const loadMoreError =
+    loadMoreErrorState.key === firstPageKey ? loadMoreErrorState.error : null
   const pages = [firstPage, ...additionalPages]
   const lastPage = additionalPages.at(-1) ?? firstPage
   const updates = pages
@@ -156,6 +165,7 @@ function UpdatesListRoute() {
     if (!canLoadMore || loadingMore) return
 
     setLoadingMore(true)
+    setLoadMoreErrorState({ error: null, key: firstPageKey })
     try {
       const nextPage = await queryClient.fetchQuery(
         crpc.update.listByProject.staticQueryOptions(
@@ -171,6 +181,14 @@ function UpdatesListRoute() {
         pages:
           state.key === firstPageKey ? [...state.pages, nextPage] : [nextPage],
       }))
+    } catch (error) {
+      setLoadMoreErrorState({
+        error:
+          error instanceof Error
+            ? error
+            : new Error("Failed to load more updates"),
+        key: firstPageKey,
+      })
     } finally {
       setLoadingMore(false)
     }
@@ -246,12 +264,17 @@ function UpdatesListRoute() {
                 <div className="flex justify-center pt-2">
                   <Button
                     disabled={loadingMore}
-                    onClick={loadMoreUpdates}
+                    onClick={() => void loadMoreUpdates()}
                     variant="outline"
                   >
                     {loadingMore ? "Loading…" : "Load more updates"}
                   </Button>
                 </div>
+              ) : null}
+              {loadMoreError ? (
+                <p className="text-center text-sm text-destructive">
+                  {loadMoreError.message}
+                </p>
               ) : null}
             </>
           ) : null}

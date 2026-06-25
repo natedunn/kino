@@ -1,5 +1,6 @@
 import {
   type AnyColumn,
+  aggregateIndex,
   arrayOf,
   boolean,
   convexTable,
@@ -790,6 +791,9 @@ export const updateCommentTable = convexTable(
     content: text().notNull(),
   },
   (updateCommentTable) => [
+    aggregateIndex("by_updateId")
+      .on(updateCommentTable.updateId)
+      .count(updateCommentTable.updateId),
     index("by_updateId").on(updateCommentTable.updateId),
     index("by_authorProfileId").on(updateCommentTable.authorProfileId),
   ]
@@ -809,6 +813,9 @@ export const updateEmoteTable = convexTable(
     content: textEnum(EMOTE_CONTENTS).notNull(),
   },
   (updateEmoteTable) => [
+    aggregateIndex("by_updateId_content")
+      .on(updateEmoteTable.updateId, updateEmoteTable.content)
+      .count(updateEmoteTable.updateId),
     index("by_updateId").on(updateEmoteTable.updateId),
     index("by_updateId_authorProfileId").on(
       updateEmoteTable.updateId,

@@ -6,6 +6,7 @@ import { CRPCError } from "kitcn/server"
 import { authMutation, authQuery, optionalAuthQuery } from "../lib/crpc"
 import {
   asId,
+  getCurrentProfile,
   generateRandomSlug,
   getCurrentProfileOrThrow,
   getDoc,
@@ -798,9 +799,10 @@ export const listByProject = optionalAuthQuery
     if (!access.permissions.canView) {
       return empty
     }
+    const currentProfile = await getCurrentProfile(ctx, ctx.userId)
 
     // A new page is loaded each time the reader scrolls, so the per-item author
-    // / emote / comment reads below are bounded by `input.limit` instead of the
+    // / emote / comment work below is bounded by `input.limit` instead of the
     // whole table (the previous `.collect()` loaded every update at once).
     const query = input.category
       ? ctx.db
@@ -834,27 +836,35 @@ export const listByProject = optionalAuthQuery
       page: await Promise.all(
         result.page.map(async (item) => {
           const author = await getDoc<"profile">(ctx, item.authorProfileId)
-          const emotes = await ctx.db
-            .query("updateEmote")
-            .withIndex("by_updateId", (q: any) => q.eq("updateId", item._id))
-            .collect()
-          const emoteCounts: Record<
-            string,
-            { authorProfileIds: string[]; count: number }
-          > = {}
-          for (const emote of emotes) {
-            if (!emoteCounts[emote.content]) {
-              emoteCounts[emote.content] = { authorProfileIds: [], count: 0 }
-            }
-            emoteCounts[emote.content].count++
-            emoteCounts[emote.content].authorProfileIds.push(
-              emote.authorProfileId
-            )
+          const [heartCount, currentProfileHeart, commentCount] =
+            await Promise.all([
+              ctx.orm.query.updateEmote.count({
+                where: { content: "heart", updateId: item._id },
+              }),
+              currentProfile
+                ? ctx.db
+                    .query("updateEmote")
+                    .withIndex("by_updateId_authorProfileId", (q: any) =>
+                      q
+                        .eq("updateId", item._id)
+                        .eq("authorProfileId", currentProfile._id)
+                    )
+                    .filter((q: any) => q.eq(q.field("content"), "heart"))
+                    .first()
+                : null,
+              ctx.orm.query.updateComment.count({
+                where: { updateId: item._id },
+              }),
+            ])
+          const emoteCounts = {
+            heart: {
+              authorProfileIds:
+                currentProfile && currentProfileHeart
+                  ? [currentProfile._id]
+                  : [],
+              count: heartCount,
+            },
           }
-          const comments = await ctx.db
-            .query("updateComment")
-            .withIndex("by_updateId", (q: any) => q.eq("updateId", item._id))
-            .collect()
 
           // Precompute truncation server-side so list rows don't have to run a
           // regex over the full HTML body on every render.
@@ -870,7 +880,7 @@ export const listByProject = optionalAuthQuery
                   username: author.username,
                 }
               : null,
-            commentCount: comments.length,
+            commentCount,
             coverImageUrl: await resolveCoverImageUrl(
               item.coverImageId ?? null
             ),
