@@ -6,8 +6,11 @@ import {
 } from "@tanstack/react-router"
 import { GitBranch, LayoutDashboard, Users } from "lucide-react"
 
-import { buttonVariants } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
+import {
+  SidebarNavGroup,
+  SidebarNavItem,
+  SidebarNavSelect,
+} from "@/components/sidebar-nav"
 import { titleMeta } from "@/lib/seo"
 
 export const Route = createFileRoute("/@{$org}/$project/settings")({
@@ -19,6 +22,10 @@ export const Route = createFileRoute("/@{$org}/$project/settings")({
 
 function ProjectSettingsRoute() {
   const params = Route.useParams()
+  const linkParams = {
+    org: params.org,
+    project: params.project,
+  }
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
   })
@@ -40,51 +47,56 @@ function ProjectSettingsRoute() {
       to: "/@{$org}/$project/settings/integrations" as const,
     },
   ]
+  const navItems = items.map((item) => {
+    const Icon = item.icon
+    const path = item.to
+      .replace("/@{$org}", `/@${params.org}`)
+      .replace("$project", params.project)
+    const active = pathname === path || pathname.startsWith(`${path}/`)
+
+    return {
+      active,
+      icon: <Icon className="size-4" />,
+      key: item.to,
+      label: item.label,
+      renderLink: (children: React.ReactNode) => (
+        <Link params={(prev) => ({ ...prev, ...linkParams })} to={item.to}>
+          {children}
+        </Link>
+      ),
+    }
+  })
 
   return (
     <div className="container flex flex-1 flex-col overflow-visible">
+      <div className="py-4 md:hidden">
+        <SidebarNavSelect items={navItems} />
+      </div>
       <div className="flex flex-1 flex-col gap-8 md:grid md:grid-cols-12">
-        <div className="order-last py-8 md:order-first md:col-span-3 md:border-r md:border-border/75">
+        <div className="hidden py-8 md:col-span-3 md:block md:border-r md:border-border/75">
           <div className="sticky top-6 flex flex-col overflow-hidden">
-            <div className="border-b pb-6 md:pr-6">
-              <h2 className="mx-2 text-sm font-bold text-muted-foreground">
-                Settings
-              </h2>
-              <div className="mt-2 flex flex-col gap-1">
-                {items.map((item) => {
-                  const Icon = item.icon
-                  const routePath = item.to
-                    .replace("/@{$org}", `/@${params.org}`)
-                    .replace("$project", params.project)
-                  const isActive = pathname.startsWith(routePath)
+            <SidebarNavGroup className="border-b pb-6 md:pr-6" title="Settings">
+              {items.map((item) => {
+                const Icon = item.icon
 
-                  return (
-                    <Link
-                      key={item.to}
-                      params={{ org: params.org, project: params.project }}
-                      to={item.to}
-                    >
-                      <span
-                        className={cn(
-                          isActive
-                            ? buttonVariants({
-                                variant: "outline",
-                                className: "pointer-events-none",
-                              })
-                            : buttonVariants({ variant: "ghost" }),
-                          "group inline-flex! w-full items-center justify-start text-left"
-                        )}
+                return (
+                  <Link
+                    key={item.to}
+                    params={(prev) => ({ ...prev, ...linkParams })}
+                    to={item.to}
+                  >
+                    {({ isActive }) => (
+                      <SidebarNavItem
+                        active={isActive}
+                        icon={<Icon className="size-4" />}
                       >
-                        <span className="mr-auto inline-flex items-center gap-3">
-                          <Icon className="size-4" />
-                          <span>{item.label}</span>
-                        </span>
-                      </span>
-                    </Link>
-                  )
-                })}
-              </div>
-            </div>
+                        {item.label}
+                      </SidebarNavItem>
+                    )}
+                  </Link>
+                )
+              })}
+            </SidebarNavGroup>
           </div>
         </div>
         <div className="flex flex-col gap-4 py-8 md:col-span-9">
