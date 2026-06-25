@@ -6,7 +6,11 @@ import {
 } from "@tanstack/react-router"
 import { GitBranch, LayoutDashboard, Users } from "lucide-react"
 
-import { SidebarNavGroup, SidebarNavItem } from "@/components/sidebar-nav"
+import {
+  SidebarNavGroup,
+  SidebarNavItem,
+  SidebarNavSelect,
+} from "@/components/sidebar-nav"
 import { titleMeta } from "@/lib/seo"
 
 export const Route = createFileRoute("/@{$org}/$project/settings")({
@@ -39,19 +43,40 @@ function ProjectSettingsRoute() {
       to: "/@{$org}/$project/settings/integrations" as const,
     },
   ]
+  const navItems = items.map((item) => {
+    const Icon = item.icon
+    const path = item.to
+      .replace("/@{$org}", `/@${params.org}`)
+      .replace("$project", params.project)
+    const active = pathname === path || pathname.startsWith(`${path}/`)
+
+    return {
+      active,
+      icon: <Icon className="size-4" />,
+      key: item.to,
+      label: item.label,
+      renderLink: (children: React.ReactNode) => (
+        <Link
+          params={{ org: params.org, project: params.project }}
+          to={item.to}
+        >
+          {children}
+        </Link>
+      ),
+    }
+  })
 
   return (
     <div className="container flex flex-1 flex-col overflow-visible">
+      <div className="py-4 md:hidden">
+        <SidebarNavSelect items={navItems} />
+      </div>
       <div className="flex flex-1 flex-col gap-8 md:grid md:grid-cols-12">
-        <div className="order-last py-8 md:order-first md:col-span-3 md:border-r md:border-border/75">
+        <div className="hidden py-8 md:col-span-3 md:block md:border-r md:border-border/75">
           <div className="sticky top-6 flex flex-col overflow-hidden">
             <SidebarNavGroup className="border-b pb-6 md:pr-6" title="Settings">
               {items.map((item) => {
                 const Icon = item.icon
-                const routePath = item.to
-                  .replace("/@{$org}", `/@${params.org}`)
-                  .replace("$project", params.project)
-                const isActive = pathname.startsWith(routePath)
 
                 return (
                   <Link
@@ -59,12 +84,14 @@ function ProjectSettingsRoute() {
                     params={{ org: params.org, project: params.project }}
                     to={item.to}
                   >
-                    <SidebarNavItem
-                      active={isActive}
-                      icon={<Icon className="size-4" />}
-                    >
-                      {item.label}
-                    </SidebarNavItem>
+                    {({ isActive }) => (
+                      <SidebarNavItem
+                        active={isActive}
+                        icon={<Icon className="size-4" />}
+                      >
+                        {item.label}
+                      </SidebarNavItem>
+                    )}
                   </Link>
                 )
               })}

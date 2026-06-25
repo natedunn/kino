@@ -1,6 +1,12 @@
-import { ChevronRight } from "lucide-react"
+import { ChevronDown, ChevronRight } from "lucide-react"
 
 import { buttonVariants } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
 
 type SidebarNavGroupProps = {
@@ -32,7 +38,7 @@ export function SidebarNavGroup({
 }
 
 type SidebarNavItemProps = {
-  /** Marks the item as the active/current selection (filled `bg-muted`). */
+  /** Marks the item as the active/current selection. */
   active?: boolean
   /** Optional leading icon. */
   icon?: React.ReactNode
@@ -43,7 +49,8 @@ type SidebarNavItemProps = {
 /**
  * Ghost-styled sidebar entry. Render it as the child of a TanStack `<Link>`
  * (route nav) or any element — keeping routing/search-param typing at the call
- * site. When `active`, the ghost gradient flattens to a solid `bg-muted` fill.
+ * site. When `active`, it uses the same foreground-alpha gradient family as the
+ * ghost pressed state and exposes the current item to assistive technology.
  */
 export function SidebarNavItem({
   active,
@@ -53,6 +60,7 @@ export function SidebarNavItem({
 }: SidebarNavItemProps) {
   return (
     <span
+      aria-current={active ? "page" : undefined}
       data-active={active || undefined}
       className={cn(
         buttonVariants({ variant: "ghost" }),
@@ -79,5 +87,60 @@ export function SidebarNavItem({
         className="size-3 opacity-0 transition-opacity group-data-[active]:opacity-70"
       />
     </span>
+  )
+}
+
+type SidebarNavSelectItem = {
+  active?: boolean
+  icon?: React.ReactNode
+  key: React.Key
+  label: React.ReactNode
+  renderLink: (children: React.ReactNode) => React.ReactNode
+}
+
+type SidebarNavSelectProps = {
+  items: SidebarNavSelectItem[]
+  className?: string
+}
+
+export function SidebarNavSelect({ items, className }: SidebarNavSelectProps) {
+  const activeItem = items.find((item) => item.active) ?? items[0]
+
+  if (!activeItem) return null
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          className={cn(
+            buttonVariants({ variant: "outline", size: "lg" }),
+            "w-full justify-between",
+            className
+          )}
+        >
+          <span className="inline-flex min-w-0 items-center gap-3">
+            {activeItem.icon}
+            <span className="truncate">{activeItem.label}</span>
+          </span>
+          <ChevronDown className="size-4 text-muted-foreground" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-[var(--anchor-width)]">
+        {items.map((item) => (
+          <DropdownMenuItem key={item.key} asChild>
+            {item.renderLink(
+              <span
+                aria-current={item.active ? "page" : undefined}
+                className="flex min-w-0 items-center gap-3"
+              >
+                {item.icon}
+                <span className="truncate">{item.label}</span>
+              </span>
+            )}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }

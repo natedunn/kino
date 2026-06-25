@@ -6,20 +6,16 @@ import {
   createFileRoute,
   useRouterState,
 } from "@tanstack/react-router"
-import { Bell, ChevronDown, Palette, ShieldCheck, User } from "lucide-react"
+import { Bell, Palette, ShieldCheck, User } from "lucide-react"
 
 import { MainNav } from "@/components/site-nav/main-nav"
-import { SidebarNavGroup, SidebarNavItem } from "@/components/sidebar-nav"
-import { buttonVariants } from "@/components/ui/button"
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+  SidebarNavGroup,
+  SidebarNavItem,
+  SidebarNavSelect,
+} from "@/components/sidebar-nav"
 import { useCRPC } from "@/lib/convex/crpc"
 import { crpcServer } from "@/lib/convex/crpc-server"
-import { cn } from "@/lib/utils"
 import { titleMeta } from "@/lib/seo"
 
 export const Route = createFileRoute("/account")({
@@ -84,9 +80,20 @@ function AuthenticatedAccountShell() {
   const profileQuery = useSuspenseQuery(
     crpc.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
   )
-  const activeItem =
-    navItems.find((item) => pathname.startsWith(item.to)) ?? navItems[0]
-  const ActiveIcon = activeItem.icon
+  const selectItems = navItems.map((item) => {
+    const Icon = item.icon
+    const active = pathname === item.to || pathname.startsWith(`${item.to}/`)
+
+    return {
+      active,
+      icon: <Icon className="size-4" />,
+      key: item.to,
+      label: item.label,
+      renderLink: (children: React.ReactNode) => (
+        <Link to={item.to}>{children}</Link>
+      ),
+    }
+  })
 
   return (
     <div className="flex min-h-dvh w-full flex-col">
@@ -99,59 +106,30 @@ function AuthenticatedAccountShell() {
         <div className="container flex flex-1 flex-col overflow-visible">
           {/* Mobile: section navigation collapses into a dropdown. */}
           <div className="py-4 md:hidden">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  type="button"
-                  className={cn(
-                    buttonVariants({ variant: "outline", size: "lg" }),
-                    "w-full justify-between"
-                  )}
-                >
-                  <span className="inline-flex items-center gap-3">
-                    <ActiveIcon className="size-4" />
-                    {activeItem.label}
-                  </span>
-                  <ChevronDown className="size-4 text-muted-foreground" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                align="start"
-                className="w-[var(--anchor-width)]"
-              >
-                {navItems.map((item) => {
-                  const Icon = item.icon
-
-                  return (
-                    <DropdownMenuItem key={item.to} asChild>
-                      <Link className="flex items-center gap-3" to={item.to}>
-                        <Icon className="size-4" />
-                        {item.label}
-                      </Link>
-                    </DropdownMenuItem>
-                  )
-                })}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <SidebarNavSelect items={selectItems} />
           </div>
 
           <div className="flex flex-1 flex-col gap-8 md:grid md:grid-cols-12">
             {/* Desktop: persistent sidebar. */}
             <div className="hidden py-8 md:col-span-3 md:block md:border-r md:border-border/75">
               <div className="sticky top-6 flex flex-col overflow-hidden">
-                <SidebarNavGroup className="border-b pb-6 md:pr-6" title="Account">
+                <SidebarNavGroup
+                  className="border-b pb-6 md:pr-6"
+                  title="Account"
+                >
                   {navItems.map((item) => {
                     const Icon = item.icon
-                    const isActive = pathname.startsWith(item.to)
 
                     return (
                       <Link key={item.to} to={item.to}>
-                        <SidebarNavItem
-                          active={isActive}
-                          icon={<Icon className="size-4" />}
-                        >
-                          {item.label}
-                        </SidebarNavItem>
+                        {({ isActive }) => (
+                          <SidebarNavItem
+                            active={isActive}
+                            icon={<Icon className="size-4" />}
+                          >
+                            {item.label}
+                          </SidebarNavItem>
+                        )}
                       </Link>
                     )
                   })}
