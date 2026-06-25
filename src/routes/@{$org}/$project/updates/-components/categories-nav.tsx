@@ -1,7 +1,6 @@
 import { Link, useParams, useSearch } from '@tanstack/react-router';
 
-import { buttonVariants } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { SidebarNavGroup, SidebarNavItem } from '@/components/sidebar-nav';
 
 import { CATEGORY_CONFIG } from './category-badge';
 
@@ -18,7 +17,7 @@ export function CategoriesNav() {
   const { category: categoryParam } = useSearch({ from: routePath });
 
   return (
-    <div className="flex flex-col gap-1">
+    <SidebarNavGroup>
       {categories.map((category) => {
         const active = category.slug === (categoryParam ?? 'all');
         return (
@@ -31,19 +30,10 @@ export function CategoriesNav() {
             })}
             to="/@{$org}/$project/updates"
           >
-            <span
-              className={cn(
-                active
-                  ? buttonVariants({ variant: 'outline', className: 'pointer-events-none' })
-                  : buttonVariants({ variant: 'ghost' }),
-                'inline-flex! w-full items-center justify-start text-left'
-              )}
-            >
-              {category.label}
-            </span>
+            <SidebarNavItem active={active}>{category.label}</SidebarNavItem>
           </Link>
         );
       })}
-    </div>
+    </SidebarNavGroup>
   );
 }

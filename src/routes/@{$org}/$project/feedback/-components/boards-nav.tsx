@@ -2,9 +2,8 @@ import { useMemo } from 'react';
 import { Link, useNavigate, useParams, useSearch } from '@tanstack/react-router';
 
 import { useRegisterShortcuts } from '@/components/shortcuts';
-import { buttonVariants } from '@/components/ui/button';
+import { SidebarNavGroup, SidebarNavItem } from '@/components/sidebar-nav';
 import { Icon, type IconName } from '@/icons';
-import { cn } from '@/lib/utils';
 
 // Single shortcut covering 1–9; the digit pressed selects the board at that
 // position in the list below (1 = All).
@@ -62,7 +61,7 @@ export function BoardsNav({
   if (!boards) return <div>No boards</div>;
 
   return (
-    <div className="flex flex-col gap-1">
+    <SidebarNavGroup>
       {allBoards.map((board) => (
         <Link
           key={board.id}
@@ -73,26 +72,16 @@ export function BoardsNav({
           })}
           to="/@{$org}/$project/feedback"
         >
-          {({ isActive }) => {
-            const active = board.slug === boardParam || isActive;
-            return (
-              <span
-                className={cn(
-                  active
-                    ? buttonVariants({ variant: 'outline', className: 'pointer-events-none' })
-                    : buttonVariants({ variant: 'ghost' }),
-                  'group inline-flex! w-full items-center justify-start text-left'
-                )}
-              >
-                <span className="mr-auto inline-flex items-center gap-3">
-                  <Icon fallback="box" name={board?.icon as IconName} size="16px" />
-                  <span>{board.name}</span>
-                </span>
-              </span>
-            );
-          }}
+          {({ isActive }) => (
+            <SidebarNavItem
+              active={board.slug === boardParam || isActive}
+              icon={<Icon fallback="box" name={board?.icon as IconName} size="16px" />}
+            >
+              {board.name}
+            </SidebarNavItem>
+          )}
         </Link>
       ))}
-    </div>
+    </SidebarNavGroup>
   );
 }

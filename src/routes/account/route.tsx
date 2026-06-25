@@ -9,6 +9,7 @@ import {
 import { Bell, ChevronDown, Palette, ShieldCheck, User } from "lucide-react"
 
 import { MainNav } from "@/components/site-nav/main-nav"
+import { SidebarNavGroup, SidebarNavItem } from "@/components/sidebar-nav"
 import { buttonVariants } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -138,38 +139,23 @@ function AuthenticatedAccountShell() {
             {/* Desktop: persistent sidebar. */}
             <div className="hidden py-8 md:col-span-3 md:block md:border-r md:border-border/75">
               <div className="sticky top-6 flex flex-col overflow-hidden">
-                <div className="border-b pb-6 md:pr-6">
-                  <h2 className="mx-2 text-sm font-bold text-muted-foreground">
-                    Account
-                  </h2>
-                  <div className="mt-2 flex flex-col gap-1">
-                    {navItems.map((item) => {
-                      const Icon = item.icon
-                      const isActive = pathname.startsWith(item.to)
+                <SidebarNavGroup className="border-b pb-6 md:pr-6" title="Account">
+                  {navItems.map((item) => {
+                    const Icon = item.icon
+                    const isActive = pathname.startsWith(item.to)
 
-                      return (
-                        <Link key={item.to} to={item.to}>
-                          <span
-                            className={cn(
-                              isActive
-                                ? buttonVariants({
-                                    variant: "outline",
-                                    className: "pointer-events-none",
-                                  })
-                                : buttonVariants({ variant: "ghost" }),
-                              "group inline-flex! w-full items-center justify-start text-left"
-                            )}
-                          >
-                            <span className="mr-auto inline-flex items-center gap-3">
-                              <Icon className="size-4" />
-                              <span>{item.label}</span>
-                            </span>
-                          </span>
-                        </Link>
-                      )
-                    })}
-                  </div>
-                </div>
+                    return (
+                      <Link key={item.to} to={item.to}>
+                        <SidebarNavItem
+                          active={isActive}
+                          icon={<Icon className="size-4" />}
+                        >
+                          {item.label}
+                        </SidebarNavItem>
+                      </Link>
+                    )
+                  })}
+                </SidebarNavGroup>
               </div>
             </div>
             <div className="flex flex-col gap-4 pb-8 md:col-span-9 md:py-8">

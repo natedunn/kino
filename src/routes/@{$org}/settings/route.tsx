@@ -6,8 +6,7 @@ import {
 } from "@tanstack/react-router"
 import { GitBranch, Settings, Users } from "lucide-react"
 
-import { buttonVariants } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
+import { SidebarNavGroup, SidebarNavItem } from "@/components/sidebar-nav"
 import { titleMeta } from "@/lib/seo"
 
 export const Route = createFileRoute("/@{$org}/settings")({
@@ -46,44 +45,25 @@ function OrganizationSettingsRoute() {
       <div className="flex flex-1 flex-col gap-8 md:grid md:grid-cols-12">
         <div className="order-last py-8 md:order-first md:col-span-3 md:border-r md:border-border/75">
           <div className="sticky top-6 flex flex-col overflow-hidden">
-            <div className="border-b pb-6 md:pr-6">
-              <h2 className="mx-2 text-sm font-bold text-muted-foreground">
-                Settings
-              </h2>
-              <div className="mt-2 flex flex-col gap-1">
-                {items.map((item) => {
-                  const Icon = item.icon
-                  const isActive = pathname.startsWith(
-                    item.to.replace("/@{$org}", `/@${params.org}`)
-                  )
+            <SidebarNavGroup className="border-b pb-6 md:pr-6" title="Settings">
+              {items.map((item) => {
+                const Icon = item.icon
+                const isActive = pathname.startsWith(
+                  item.to.replace("/@{$org}", `/@${params.org}`)
+                )
 
-                  return (
-                    <Link
-                      key={item.to}
-                      params={{ org: params.org }}
-                      to={item.to}
+                return (
+                  <Link key={item.to} params={{ org: params.org }} to={item.to}>
+                    <SidebarNavItem
+                      active={isActive}
+                      icon={<Icon className="size-4" />}
                     >
-                      <span
-                        className={cn(
-                          isActive
-                            ? buttonVariants({
-                                variant: "outline",
-                                className: "pointer-events-none",
-                              })
-                            : buttonVariants({ variant: "ghost" }),
-                          "group inline-flex! w-full items-center justify-start text-left"
-                        )}
-                      >
-                        <span className="mr-auto inline-flex items-center gap-3">
-                          <Icon className="size-4" />
-                          <span>{item.label}</span>
-                        </span>
-                      </span>
-                    </Link>
-                  )
-                })}
-              </div>
-            </div>
+                      {item.label}
+                    </SidebarNavItem>
+                  </Link>
+                )
+              })}
+            </SidebarNavGroup>
           </div>
         </div>
         <div className="flex flex-col gap-4 py-8 md:col-span-9">
