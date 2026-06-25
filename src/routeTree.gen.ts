@@ -53,7 +53,6 @@ import { Route as AtChar123orgChar125ProjectOptionsIndexRouteImport } from './ro
 import { Route as AtChar123orgChar125ProjectFilesIndexRouteImport } from './routes/@{$org}/$project/files/index'
 import { Route as AtChar123orgChar125ProjectFeedbackIndexRouteImport } from './routes/@{$org}/$project/feedback/index'
 import { Route as AtChar123orgChar125ProjectDiscussionsIndexRouteImport } from './routes/@{$org}/$project/discussions/index'
-import { Route as AtChar123orgChar125ProjectChatIndexRouteImport } from './routes/@{$org}/$project/chat/index'
 import { Route as AtChar123orgChar125ProjectUpdatesNewIndexRouteImport } from './routes/@{$org}/$project/updates/new/index'
 import { Route as AtChar123orgChar125ProjectUpdatesEditIndexRouteImport } from './routes/@{$org}/$project/updates/edit/index'
 import { Route as AtChar123orgChar125ProjectUpdatesSlugIndexRouteImport } from './routes/@{$org}/$project/updates/$slug/index'
@@ -319,12 +318,6 @@ const AtChar123orgChar125ProjectDiscussionsIndexRoute =
     path: '/discussions/',
     getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
   } as any)
-const AtChar123orgChar125ProjectChatIndexRoute =
-  AtChar123orgChar125ProjectChatIndexRouteImport.update({
-    id: '/chat/',
-    path: '/chat/',
-    getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
-  } as any)
 const AtChar123orgChar125ProjectUpdatesNewIndexRoute =
   AtChar123orgChar125ProjectUpdatesNewIndexRouteImport.update({
     id: '/updates/new/',
@@ -453,7 +446,6 @@ export interface FileRoutesByFullPath {
   '/create/team/': typeof CreateTeamIndexRoute
   '/profile/settings/': typeof ProfileSettingsIndexRoute
   '/u/$username/': typeof UUsernameIndexRoute
-  '/@{$org}/$project/chat/': typeof AtChar123orgChar125ProjectChatIndexRoute
   '/@{$org}/$project/discussions/': typeof AtChar123orgChar125ProjectDiscussionsIndexRoute
   '/@{$org}/$project/feedback/': typeof AtChar123orgChar125ProjectFeedbackIndexRoute
   '/@{$org}/$project/files/': typeof AtChar123orgChar125ProjectFilesIndexRoute
@@ -508,7 +500,6 @@ export interface FileRoutesByTo {
   '/create/team': typeof CreateTeamIndexRoute
   '/profile/settings': typeof ProfileSettingsIndexRoute
   '/u/$username': typeof UUsernameIndexRoute
-  '/@{$org}/$project/chat': typeof AtChar123orgChar125ProjectChatIndexRoute
   '/@{$org}/$project/discussions': typeof AtChar123orgChar125ProjectDiscussionsIndexRoute
   '/@{$org}/$project/feedback': typeof AtChar123orgChar125ProjectFeedbackIndexRoute
   '/@{$org}/$project/files': typeof AtChar123orgChar125ProjectFilesIndexRoute
@@ -572,7 +563,6 @@ export interface FileRoutesById {
   '/create/team/': typeof CreateTeamIndexRoute
   '/profile/settings/': typeof ProfileSettingsIndexRoute
   '/u/$username/': typeof UUsernameIndexRoute
-  '/@{$org}/$project/chat/': typeof AtChar123orgChar125ProjectChatIndexRoute
   '/@{$org}/$project/discussions/': typeof AtChar123orgChar125ProjectDiscussionsIndexRoute
   '/@{$org}/$project/feedback/': typeof AtChar123orgChar125ProjectFeedbackIndexRoute
   '/@{$org}/$project/files/': typeof AtChar123orgChar125ProjectFilesIndexRoute
@@ -637,7 +627,6 @@ export interface FileRouteTypes {
     | '/create/team/'
     | '/profile/settings/'
     | '/u/$username/'
-    | '/@{$org}/$project/chat/'
     | '/@{$org}/$project/discussions/'
     | '/@{$org}/$project/feedback/'
     | '/@{$org}/$project/files/'
@@ -692,7 +681,6 @@ export interface FileRouteTypes {
     | '/create/team'
     | '/profile/settings'
     | '/u/$username'
-    | '/@{$org}/$project/chat'
     | '/@{$org}/$project/discussions'
     | '/@{$org}/$project/feedback'
     | '/@{$org}/$project/files'
@@ -755,7 +743,6 @@ export interface FileRouteTypes {
     | '/create/team/'
     | '/profile/settings/'
     | '/u/$username/'
-    | '/@{$org}/$project/chat/'
     | '/@{$org}/$project/discussions/'
     | '/@{$org}/$project/feedback/'
     | '/@{$org}/$project/files/'
@@ -1114,13 +1101,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AtChar123orgChar125ProjectDiscussionsIndexRouteImport
       parentRoute: typeof AtChar123orgChar125ProjectRouteRoute
     }
-    '/@{$org}/$project/chat/': {
-      id: '/@{$org}/$project/chat/'
-      path: '/chat'
-      fullPath: '/@{$org}/$project/chat/'
-      preLoaderRoute: typeof AtChar123orgChar125ProjectChatIndexRouteImport
-      parentRoute: typeof AtChar123orgChar125ProjectRouteRoute
-    }
     '/@{$org}/$project/updates/new/': {
       id: '/@{$org}/$project/updates/new/'
       path: '/updates/new'
@@ -1319,7 +1299,6 @@ interface AtChar123orgChar125ProjectRouteRouteChildren {
   AtChar123orgChar125ProjectOptionsRouteRoute: typeof AtChar123orgChar125ProjectOptionsRouteRouteWithChildren
   AtChar123orgChar125ProjectSettingsRouteRoute: typeof AtChar123orgChar125ProjectSettingsRouteRouteWithChildren
   AtChar123orgChar125ProjectIndexRoute: typeof AtChar123orgChar125ProjectIndexRoute
-  AtChar123orgChar125ProjectChatIndexRoute: typeof AtChar123orgChar125ProjectChatIndexRoute
   AtChar123orgChar125ProjectDiscussionsIndexRoute: typeof AtChar123orgChar125ProjectDiscussionsIndexRoute
   AtChar123orgChar125ProjectFilesIndexRoute: typeof AtChar123orgChar125ProjectFilesIndexRoute
   AtChar123orgChar125ProjectRoadmapIndexRoute: typeof AtChar123orgChar125ProjectRoadmapIndexRoute
@@ -1340,8 +1319,6 @@ const AtChar123orgChar125ProjectRouteRouteChildren: AtChar123orgChar125ProjectRo
     AtChar123orgChar125ProjectSettingsRouteRoute:
       AtChar123orgChar125ProjectSettingsRouteRouteWithChildren,
     AtChar123orgChar125ProjectIndexRoute: AtChar123orgChar125ProjectIndexRoute,
-    AtChar123orgChar125ProjectChatIndexRoute:
-      AtChar123orgChar125ProjectChatIndexRoute,
     AtChar123orgChar125ProjectDiscussionsIndexRoute:
       AtChar123orgChar125ProjectDiscussionsIndexRoute,
     AtChar123orgChar125ProjectFilesIndexRoute:
