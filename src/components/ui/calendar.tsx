@@ -43,7 +43,7 @@ function Calendar({
         range_start: "rounded-l-md",
         root: cn("relative w-fit", classNames?.root),
         selected:
-          "rounded-md bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
+          "rounded-md bg-primary text-primary-foreground hocus:bg-primary hocus:text-primary-foreground",
         today: "bg-accent text-accent-foreground",
         week: "mt-2 flex w-full",
         weekday:
