@@ -1,5 +1,6 @@
 import { z } from "zod"
 import { CRPCError } from "kitcn/server"
+import type { OrmMutationCtx } from "./kino"
 import { asId, getDocOrThrow, verifyProjectAccess } from "./kino"
 import { EMOTE_CONTENTS } from "../functions/schema"
 
@@ -19,7 +20,7 @@ export const emoteContentSchema = z.enum(EMOTE_CONTENTS)
  * update document so callers can reuse it.
  */
 export async function ensureUpdateReactionAccess(
-  ctx: any,
+  ctx: OrmMutationCtx,
   updateId: string,
   userId: string | null | undefined,
   options?: { draftMessage?: string }

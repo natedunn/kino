@@ -60,7 +60,7 @@ type OrmCtx = {
   orm: any
 }
 
-type OrmMutationCtx = OrmCtx
+export type OrmMutationCtx = OrmCtx
 
 type AuthUserBootstrapDoc = {
   _id?: string
