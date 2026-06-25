@@ -33,7 +33,7 @@ export function CodeBlockComponent({ node, updateAttributes }: NodeViewProps) {
   return (
     <NodeViewWrapper className="code-block-wrapper relative">
       <select
-        className="absolute top-2 right-2 z-10 cursor-pointer rounded border border-border bg-background/80 py-1 pr-2 pl-1 text-[10px] text-muted-foreground outline-none hover:bg-background hover:text-foreground focus:border-ring"
+        className="absolute top-2 right-2 z-10 cursor-pointer rounded border border-border bg-background/80 py-1 pr-2 pl-1 text-[10px] text-muted-foreground outline-none hover:bg-background hover:text-foreground focus-visible:border-ring"
         contentEditable={false}
         onChange={(event) => updateAttributes({ language: event.target.value })}
         value={language}

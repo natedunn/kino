@@ -7,7 +7,7 @@ import { Check } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const checkboxButtonVariants = cva(
-  "inline-flex items-center rounded-lg border border-input transition-all duration-200 hover:bg-muted/50 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:bg-input/30",
+  "inline-flex items-center rounded-lg border border-input transition-all duration-200 hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:bg-input/30",
   {
     variants: {
       size: {

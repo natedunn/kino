@@ -6,13 +6,13 @@ import { FORM_LIMITS, normalizeSlugInput } from "@/lib/validation"
 import { cn } from "@/lib/utils"
 
 export const inputClassName =
-  "w-full rounded-xl border border-border bg-background/80 px-3 py-2.5 text-sm outline-none transition focus:border-foreground/30 focus:ring-2 focus:ring-foreground/10"
+  "w-full rounded-xl border border-border bg-background/80 px-3 py-2.5 text-sm outline-none transition focus-visible:border-foreground/30 focus-visible:ring-2 focus-visible:ring-foreground/10"
 
 export const textareaClassName =
-  "min-h-28 w-full rounded-xl border border-border bg-background/80 px-3 py-2.5 text-sm outline-none transition focus:border-foreground/30 focus:ring-2 focus:ring-foreground/10"
+  "min-h-28 w-full rounded-xl border border-border bg-background/80 px-3 py-2.5 text-sm outline-none transition focus-visible:border-foreground/30 focus-visible:ring-2 focus-visible:ring-foreground/10"
 
 export const selectClassName =
-  "w-full rounded-xl border border-border bg-background/80 px-3 py-2.5 text-sm outline-none transition focus:border-foreground/30 focus:ring-2 focus:ring-foreground/10"
+  "w-full rounded-xl border border-border bg-background/80 px-3 py-2.5 text-sm outline-none transition focus-visible:border-foreground/30 focus-visible:ring-2 focus-visible:ring-foreground/10"
 
 export function PageFrame({
   children,
