@@ -34,7 +34,7 @@ import {
   updateTitleSchema,
 } from "../lib/validation"
 import { orgUploadsR2 } from "../lib/r2"
-import { updateTable } from "./schema"
+import { UPDATE_CATEGORIES, updateTable } from "./schema"
 import { internal } from "./_generated/api"
 import type { Id } from "./_generated/dataModel"
 import { internalMutation } from "./generated/server"
@@ -779,12 +779,16 @@ export const listByProject = optionalAuthQuery
   .input(
     z.object({
       projectId: idSchema,
+      category: z.enum(UPDATE_CATEGORIES).optional(),
     })
   )
+  .paginated({ limit: 10, item: z.any() })
   .query(async ({ ctx, input }) => {
+    const empty = { continueCursor: "", isDone: true, page: [] }
+
     const project = await getDoc(ctx, asId<"project">(input.projectId))
     if (!project) {
-      return { canEdit: false, updates: [] }
+      return empty
     }
 
     const access = await verifyProjectAccess(ctx, {
@@ -792,23 +796,43 @@ export const listByProject = optionalAuthQuery
       userId: ctx.userId,
     })
     if (!access.permissions.canView) {
-      return { canEdit: false, updates: [] }
+      return empty
     }
-    const query = ctx.db
-      .query("update")
-      .withIndex("by_projectId_status_publishedAt", (q: any) =>
-        access.permissions.canEdit
-          ? q.eq("projectId", project._id)
-          : q.eq("projectId", project._id).eq("status", "published")
-      )
-      .order("desc")
 
-    const updates = await query.collect()
+    // A new page is loaded each time the reader scrolls, so the per-item author
+    // / emote / comment reads below are bounded by `input.limit` instead of the
+    // whole table (the previous `.collect()` loaded every update at once).
+    const query = input.category
+      ? ctx.db
+          .query("update")
+          .withIndex("by_projectId_category_status_publishedAt", (q: any) =>
+            access.permissions.canEdit
+              ? q.eq("projectId", project._id).eq("category", input.category)
+              : q
+                  .eq("projectId", project._id)
+                  .eq("category", input.category)
+                  .eq("status", "published")
+          )
+          .order("desc")
+      : ctx.db
+          .query("update")
+          .withIndex("by_projectId_status_publishedAt", (q: any) =>
+            access.permissions.canEdit
+              ? q.eq("projectId", project._id)
+              : q.eq("projectId", project._id).eq("status", "published")
+          )
+          .order("desc")
+
+    const result = await query.paginate({
+      cursor: input.cursor,
+      numItems: input.limit,
+    })
 
     return {
-      canEdit: access.permissions.canEdit,
-      updates: await Promise.all(
-        updates.map(async (item) => {
+      continueCursor: result.continueCursor,
+      isDone: result.isDone,
+      page: await Promise.all(
+        result.page.map(async (item) => {
           const author = await getDoc<"profile">(ctx, item.authorProfileId)
           const emotes = await ctx.db
             .query("updateEmote")
@@ -832,6 +856,10 @@ export const listByProject = optionalAuthQuery
             .withIndex("by_updateId", (q: any) => q.eq("updateId", item._id))
             .collect()
 
+          // Precompute truncation server-side so list rows don't have to run a
+          // regex over the full HTML body on every render.
+          const plainTextLength = item.content.replace(/<[^>]*>/g, "").length
+
           return {
             ...toPublicDoc(item),
             author: author
@@ -847,6 +875,7 @@ export const listByProject = optionalAuthQuery
               item.coverImageId ?? null
             ),
             emoteCounts,
+            isTruncated: plainTextLength > 2000,
           }
         })
       ),

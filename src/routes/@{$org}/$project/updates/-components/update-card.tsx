@@ -1,27 +1,19 @@
-import { useEffect, useRef, useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { memo } from 'react';
 import { Link } from '@tanstack/react-router';
 import { Calendar, Heart, MessageSquare } from 'lucide-react';
 
 import { EditorContentDisplay } from '@/components/editor';
 import { Badge } from '@/components/ui/badge';
-import { useCRPC } from '@/lib/convex/crpc';
 import { cn } from '@/lib/utils';
 import { formatFullDate } from '@/lib/utils/format-timestamp';
 
 import { CategoryBadge } from './category-badge';
+import { useEmoteToggle } from './use-emote-toggle';
 
-const heartPopKeyframes = `
-@keyframes heart-pop {
-  0% { transform: scale(1); }
-  15% { transform: scale(1.3); }
-  30% { transform: scale(0.95); }
-  45% { transform: scale(1.15); }
-  60% { transform: scale(1); }
-}
-`;
-
-export function UpdateCard({
+// Memoized: the updates list re-renders on local state changes (e.g. "Load
+// more") while each row's props stay referentially stable, so memo skips
+// re-rendering the heavy card + markdown body for rows that didn't change.
+function UpdateCardImpl({
   update,
   orgSlug,
   projectSlug,
@@ -36,7 +28,6 @@ export function UpdateCard({
   className?: string;
   isLast?: boolean;
 }) {
-  const crpc = useCRPC();
   const {
     id: updateId,
     title,
@@ -54,62 +45,19 @@ export function UpdateCard({
   const heartData = emoteCounts?.heart;
   const serverLikeCount = heartData?.count ?? 0;
   const serverIsLiked = currentProfileId
-    ? heartData?.authorProfileIds?.includes(currentProfileId)
+    ? Boolean(heartData?.authorProfileIds?.includes(currentProfileId))
     : false;
 
-  const [optimisticLiked, setOptimisticLiked] = useState<boolean | null>(null);
-  const [optimisticCount, setOptimisticCount] = useState<number | null>(null);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const isLiked = optimisticLiked ?? serverIsLiked;
-  const likeCount = optimisticCount ?? serverLikeCount;
-  const prevLikedRef = useRef(isLiked);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const pendingStateRef = useRef<boolean | null>(null);
+  const { isLiked, likeCount, isAnimating, toggle } = useEmoteToggle({
+    updateId,
+    serverIsLiked,
+    serverLikeCount,
+    canInteract: Boolean(currentProfileId),
+  });
 
-  const toggleEmote = useMutation(crpc.updateEmote.toggle.mutationOptions());
-
-  useEffect(() => {
-    if (optimisticLiked !== null && serverIsLiked === optimisticLiked) {
-      setOptimisticLiked(null);
-      setOptimisticCount(null);
-    }
-  }, [serverIsLiked, serverLikeCount, optimisticLiked]);
-
-  useEffect(() => {
-    if (isLiked && !prevLikedRef.current) {
-      setIsAnimating(true);
-      const timer = setTimeout(() => setIsAnimating(false), 600);
-      return () => clearTimeout(timer);
-    }
-    prevLikedRef.current = isLiked;
-  }, [isLiked]);
-
-  const handleLike = () => {
-    if (!currentProfileId) return;
-
-    const newIsLiked = !isLiked;
-    const newCount = newIsLiked ? likeCount + 1 : Math.max(0, likeCount - 1);
-    setOptimisticLiked(newIsLiked);
-    setOptimisticCount(newCount);
-    pendingStateRef.current = newIsLiked;
-
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current);
-    }
-
-    debounceRef.current = setTimeout(() => {
-      if (pendingStateRef.current !== serverIsLiked) {
-        toggleEmote.mutate({ content: 'heart', updateId });
-      } else {
-        setOptimisticLiked(null);
-        setOptimisticCount(null);
-      }
-      pendingStateRef.current = null;
-    }, 300);
-  };
-
-  const plainText = content.replace(/<[^>]*>/g, '');
-  const isTruncated = plainText.length > 2000;
+  // Computed server-side (update.listByProject) so each row doesn't run a regex
+  // over the full HTML body on every render.
+  const isTruncated = Boolean(update.isTruncated);
 
   return (
     <li className={cn('relative flex', className)}>
@@ -165,7 +113,6 @@ export function UpdateCard({
 
         <div className="mt-6 flex items-center justify-between">
           <div className="flex items-center gap-6">
-            <style>{heartPopKeyframes}</style>
             <button
               className={cn(
                 'group flex cursor-pointer items-center gap-2 text-sm transition-colors duration-200',
@@ -173,7 +120,7 @@ export function UpdateCard({
                 !currentProfileId && 'cursor-not-allowed opacity-50'
               )}
               disabled={!currentProfileId}
-              onClick={handleLike}
+              onClick={toggle}
               type="button"
             >
               <Heart
@@ -209,3 +156,5 @@ export function UpdateCard({
     </li>
   );
 }
+
+export const UpdateCard = memo(UpdateCardImpl);

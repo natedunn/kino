@@ -77,18 +77,15 @@ function GitHubIntegrationRoute() {
     crpc.githubExternal.listInstallationRepositoriesForProject.mutationOptions()
   )
   const connectRepository = useMutation(
-    crpc.githubExternal.connectRepository.mutationOptions({
-      onSuccess: () => {
-        void integrationQuery.refetch()
-      },
-    })
+    // No manual refetch: `getProjectIntegration` is a live Convex subscription,
+    // so writing the connection server-side pushes the update automatically.
+    crpc.githubExternal.connectRepository.mutationOptions()
   )
   const disconnectRepository = useMutation(
     crpc.github.disconnectRepository.mutationOptions({
       onSuccess: () => {
         connectRepository.reset()
         setSelectedRepoId(null)
-        void integrationQuery.refetch()
       },
     })
   )

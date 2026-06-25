@@ -26,6 +26,7 @@ import {
   type CSSProperties,
   type FormEvent,
   type KeyboardEvent,
+  memo,
   useEffect,
   useMemo,
   useRef,
@@ -513,14 +514,9 @@ function FeedbackDetailRoute() {
     if (visibleGithubConnections.length === 0) return
     if (refreshGithubConnectionsMutation.isPending) return
 
-    refreshGithubConnectionsMutation.mutate(
-      { feedbackId: feedback.id },
-      {
-        onSuccess: () => {
-          void githubConnectionsQuery.refetch()
-        },
-      }
-    )
+    // `listByFeedback` is a live subscription — refreshing the counts
+    // server-side pushes the new data, so no manual refetch is needed.
+    refreshGithubConnectionsMutation.mutate({ feedbackId: feedback.id })
   }, [
     feedback.id,
     visibleGithubConnections.length,
@@ -606,7 +602,6 @@ function FeedbackDetailRoute() {
         </DialogContent>
       </Dialog>
       <GitHubConnectionDialog
-        connectionsQuery={githubConnectionsQuery}
         feedbackId={feedback.id}
         feedbackTitle={feedback.title}
         open={connectionDialogOpen}
@@ -1807,7 +1802,6 @@ function GithubIssueStateBadge({ state }: { state: string }) {
 }
 
 function GitHubConnectionDialog({
-  connectionsQuery,
   feedbackId,
   feedbackTitle,
   onOpenChange,
@@ -1815,7 +1809,6 @@ function GitHubConnectionDialog({
   orgSlug,
   projectSlug,
 }: {
-  connectionsQuery: { refetch: () => Promise<unknown> }
   feedbackId: string
   feedbackTitle: string
   onOpenChange: (open: boolean) => void
@@ -1843,17 +1836,17 @@ function GitHubConnectionDialog({
     )
   )
   const connectExistingMutation = useMutation(
+    // The connections list is a live subscription, so it updates on its own
+    // once the connection is written server-side — just close the dialog.
     crpc.feedbackGithub.connectExisting.mutationOptions({
-      onSuccess: async () => {
-        await connectionsQuery.refetch()
+      onSuccess: () => {
         onOpenChange(false)
       },
     })
   )
   const createMutation = useMutation(
     crpc.feedbackGithub.createAndConnect.mutationOptions({
-      onSuccess: async () => {
-        await connectionsQuery.refetch()
+      onSuccess: () => {
         onOpenChange(false)
       },
     })
@@ -2213,7 +2206,13 @@ function GitHubConnectionNotice({
   )
 }
 
-function FeedbackEventItem({ event }: { event: FeedbackEventData }) {
+// Memoized: timeline event rows take only the stable `event` prop, so they
+// skip re-rendering when unrelated top-level state (dialogs, sheets) changes.
+const FeedbackEventItem = memo(function FeedbackEventItem({
+  event,
+}: {
+  event: FeedbackEventData
+}) {
   const Icon = getEventIcon(event.eventType)
   const createdAt = getTimestamp(event.createdAt)
 
@@ -2253,7 +2252,7 @@ function FeedbackEventItem({ event }: { event: FeedbackEventData }) {
       </div>
     </li>
   )
-}
+})
 
 function getEventIcon(eventType: FeedbackEventData["eventType"]) {
   switch (eventType) {

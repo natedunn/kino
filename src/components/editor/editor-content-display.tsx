@@ -27,32 +27,26 @@ export function EditorContentDisplay({
     if (hasCodeBlock) return baseContent
     return hasInlineBackticks ? formatInlineCode(baseContent) : baseContent
   }, [baseContent, content, hasCodeBlock, hasInlineBackticks, isHTML])
-  const [processedContent, setProcessedContent] = useState(immediateContent)
+
+  // Only code blocks need async syntax highlighting. Everything else renders
+  // `immediateContent` directly (no state write). `highlighted` holds the
+  // lazily-loaded highlighted HTML once it resolves, and falls back to
+  // `immediateContent` until then.
+  const [highlighted, setHighlighted] = useState<string | null>(null)
 
   useEffect(() => {
+    // Reset to the immediate (unhighlighted) content whenever the source
+    // changes; this is a no-op render when it's already null.
+    setHighlighted(null)
+    if (!isHTML || !hasCodeBlock) return
+
     let isCancelled = false
-
-    if (!isHTML) {
-      setProcessedContent(content)
-      return () => {
-        isCancelled = true
-      }
-    }
-
-    setProcessedContent(immediateContent)
-
-    if (!hasCodeBlock) {
-      return () => {
-        isCancelled = true
-      }
-    }
-
     void import("./format-content-for-display").then(
       ({ formatContentForDisplay }) => {
         if (isCancelled) return
 
         startTransition(() => {
-          setProcessedContent(formatContentForDisplay(baseContent))
+          setHighlighted(formatContentForDisplay(baseContent))
         })
       }
     )
@@ -60,7 +54,7 @@ export function EditorContentDisplay({
     return () => {
       isCancelled = true
     }
-  }, [baseContent, hasCodeBlock, immediateContent, isHTML])
+  }, [baseContent, hasCodeBlock, isHTML])
 
   if (!isHTML) {
     return <div className={cn("whitespace-pre-wrap", className)}>{content}</div>
@@ -69,7 +63,7 @@ export function EditorContentDisplay({
   return (
     <div
       className={cn("markdown-prose pb-1", className)}
-      dangerouslySetInnerHTML={{ __html: processedContent }}
+      dangerouslySetInnerHTML={{ __html: highlighted ?? immediateContent }}
     />
   )
 }
