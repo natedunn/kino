@@ -31,7 +31,11 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
-import { formatFullDate, formatRelativeDay } from "@/lib/utils/format-timestamp"
+import {
+  formatFullDate,
+  formatRelativeDay,
+  toTimestamp,
+} from "@/lib/utils/format-timestamp"
 import { FORM_LIMITS } from "@/lib/validation"
 
 const COLLAPSED_MAX_HEIGHT = 600
@@ -347,12 +351,12 @@ export function CommentCard({
                       className="cursor-pointer border-b border-dotted border-foreground/50 text-foreground/70"
                       suppressHydrationWarning
                     >
-                      {formatRelativeDay(getTimestamp(comment.createdAt))}
+                      {formatRelativeDay(toTimestamp(comment.createdAt))}
                     </span>
                   </TooltipTrigger>
                   <TooltipContent>
                     <span suppressHydrationWarning>
-                      {formatFullDate(getTimestamp(comment.createdAt))}
+                      {formatFullDate(toTimestamp(comment.createdAt))}
                     </span>
                   </TooltipContent>
                 </Tooltip>
@@ -370,7 +374,7 @@ export function CommentCard({
                       </TooltipTrigger>
                       <TooltipContent>
                         <span suppressHydrationWarning>
-                          {formatFullDate(getTimestamp(comment.updatedTime))}
+                          {formatFullDate(toTimestamp(comment.updatedTime))}
                         </span>
                       </TooltipContent>
                     </Tooltip>
@@ -632,12 +636,6 @@ function CollapsibleContent({ children }: { children: ReactNode }) {
       ) : null}
     </div>
   )
-}
-
-function getTimestamp(value: Date | number | string) {
-  if (value instanceof Date) return value.getTime()
-  if (typeof value === "string") return new Date(value).getTime()
-  return value
 }
 
 function hasEditorText(value: string) {

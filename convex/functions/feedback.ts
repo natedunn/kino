@@ -17,6 +17,7 @@ import {
   getDoc,
   getDocOrThrow,
   getProjectViewAccess,
+  isProjectEditorRole,
   toPublicDoc,
   verifyProjectAccess,
 } from "../lib/kino"
@@ -43,7 +44,6 @@ const feedbackStatusSchema = z.enum([
   "paused",
 ])
 const targetGranularitySchema = z.enum(targetGranularities)
-const EDIT_ROLES = new Set(["org:admin", "org:editor"])
 
 function hasOverlap(left: Array<string>, right: Array<string>) {
   return left.some((value) => right.includes(value))
@@ -417,7 +417,7 @@ export const updateAssigned = authMutation
           message: "Assignee must be a project member",
         })
       }
-      if (!EDIT_ROLES.has(assigneeProjectMember.role)) {
+      if (!isProjectEditorRole(assigneeProjectMember.role)) {
         throw new CRPCError({
           code: "BAD_REQUEST",
           message: "Assignee must have edit permissions",

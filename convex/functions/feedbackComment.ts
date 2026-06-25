@@ -8,14 +8,13 @@ import {
   getCurrentProfileOrThrow,
   getDoc,
   getProjectViewAccess,
+  isProjectEditorRole,
   toPublicDoc,
   verifyProjectAccess,
 } from "../lib/kino"
 import { resolveProfileImageUrl } from "../lib/storage"
 import { commentContentSchema, idSchema } from "../lib/validation"
 import { feedbackCommentTable } from "./schema"
-
-const TEAM_ROLES = new Set(["org:admin", "org:editor"])
 
 async function getActiveFeedbackOrThrow(ctx: any, feedbackId: string) {
   const feedback = await getDoc(ctx, asId<"feedback">(feedbackId))
@@ -159,7 +158,8 @@ export const listByFeedback = optionalAuthQuery
               q.eq("profileId", author._id).eq("projectId", projectId)
             )
             .first()
-          isTeamMember = !!projectMember && TEAM_ROLES.has(projectMember.role)
+          isTeamMember =
+            !!projectMember && isProjectEditorRole(projectMember.role)
         }
 
         const emotes = await ctx.db

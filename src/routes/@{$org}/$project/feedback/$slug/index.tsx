@@ -104,6 +104,7 @@ import {
   formatFullDate,
   formatRelativeDay,
   formatTimestamp,
+  toTimestamp,
 } from "@/lib/utils/format-timestamp"
 import { FORM_LIMITS } from "@/lib/validation"
 
@@ -529,12 +530,12 @@ function FeedbackDetailRoute() {
         ...comments
           .filter((comment: FeedbackCommentData) => !comment.initial)
           .map((comment: FeedbackCommentData) => ({
-            createdAt: getTimestamp(comment.createdAt),
+            createdAt: toTimestamp(comment.createdAt),
             data: comment,
             type: "comment" as const,
           })),
         ...events.map((event: FeedbackEventData) => ({
-          createdAt: getTimestamp(event.createdAt),
+          createdAt: toTimestamp(event.createdAt),
           data: event,
           type: "event" as const,
         })),
@@ -642,7 +643,7 @@ function FeedbackDetailRoute() {
             <div className="text-sm text-muted-foreground">
               <span suppressHydrationWarning>
                 {feedback.status === "open" ? "Opened" : "Updated"}{" "}
-                {formatTimestamp(getTimestamp(feedback.createdAt))} ·{" "}
+                {formatTimestamp(toTimestamp(feedback.createdAt))} ·{" "}
                 {feedback.upvotes} upvote
                 {feedback.upvotes !== 1 ? "s" : ""}
               </span>
@@ -2214,7 +2215,7 @@ const FeedbackEventItem = memo(function FeedbackEventItem({
   event: FeedbackEventData
 }) {
   const Icon = getEventIcon(event.eventType)
-  const createdAt = getTimestamp(event.createdAt)
+  const createdAt = toTimestamp(event.createdAt)
 
   return (
     <li className="relative z-10 flex items-start gap-3 py-2 pl-4">
@@ -2360,10 +2361,4 @@ function StatusPill({ status }: { status?: string | null }) {
       <span className="text-xs font-medium">{status ?? "none"}</span>
     </span>
   )
-}
-
-function getTimestamp(value: number | string | Date) {
-  if (value instanceof Date) return value.getTime()
-  if (typeof value === "string") return new Date(value).getTime()
-  return value
 }

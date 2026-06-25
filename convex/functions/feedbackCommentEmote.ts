@@ -2,6 +2,7 @@ import { z } from "zod"
 import { eq } from "kitcn/orm"
 import { CRPCError } from "kitcn/server"
 import { authMutation } from "../lib/crpc"
+import { emoteContentSchema } from "../lib/emote"
 import {
   asId,
   getCurrentProfileOrThrow,
@@ -14,18 +15,7 @@ import { feedbackCommentEmoteTable } from "./schema"
 export const toggle = authMutation
   .input(
     z.object({
-      content: z.enum([
-        "thumbsUp",
-        "thumbsDown",
-        "laugh",
-        "questionMark",
-        "sad",
-        "tada",
-        "eyes",
-        "heart",
-        "skull",
-        "explodingHead",
-      ]),
+      content: emoteContentSchema,
       feedbackCommentId: idSchema,
       feedbackId: idSchema,
     })
