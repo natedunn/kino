@@ -6,7 +6,7 @@ import {
   createFileRoute,
   useRouterState,
 } from "@tanstack/react-router"
-import { Bell, Palette, ShieldCheck, User } from "lucide-react"
+import { Bell, Database, Palette, ShieldCheck, User } from "lucide-react"
 
 import { MainNav } from "@/components/site-nav/main-nav"
 import {
@@ -49,6 +49,11 @@ const navItems = [
     icon: Bell,
     label: "Notifications",
     to: "/account/notifications" as const,
+  },
+  {
+    icon: Database,
+    label: "Data",
+    to: "/account/data" as const,
   },
   {
     icon: ShieldCheck,

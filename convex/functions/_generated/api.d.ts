@@ -707,6 +707,15 @@ export declare const api: {
       any
     >;
   };
+  userDataExport: {
+    exportData: FunctionReference<
+      "query",
+      "public",
+      { sections?: Array<"comments"> },
+      any
+    >;
+    getAvailableSections: FunctionReference<"query", "public", {}, any>;
+  };
 };
 
 /**
