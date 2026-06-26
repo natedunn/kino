@@ -25,6 +25,7 @@ function canUsePostHog(appEnvironment: AppEnvironment) {
 function createPostHogOptions(): Partial<PostHogConfig> {
   return {
     api_host: POSTHOG_HOST,
+    autocapture: false,
     capture_exceptions: true,
     capture_pageleave: true,
     capture_pageview: false,
