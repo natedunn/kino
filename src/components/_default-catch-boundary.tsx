@@ -1,5 +1,3 @@
-import type { ErrorComponentProps } from "@tanstack/react-router"
-
 import { useEffect } from "react"
 import { isCancelledError } from "@tanstack/react-query"
 import {
@@ -9,8 +7,10 @@ import {
   useMatch,
   useRouter,
 } from "@tanstack/react-router"
+import type { ErrorComponentProps } from "@tanstack/react-router"
 
 import { RoutePending } from "@/components/route-pending"
+import { captureAppError } from "@/lib/posthog"
 
 function isTransientQueryCancellation(error: unknown) {
   return (
@@ -32,6 +32,15 @@ export function DefaultCatchBoundary({ error }: ErrorComponentProps) {
 
     void router.invalidate()
   }, [isQueryCancellation, router])
+
+  useEffect(() => {
+    if (isQueryCancellation) return
+
+    captureAppError(error, {
+      routeErrorBoundary: true,
+      routeId: isRoot ? "root" : "route",
+    })
+  }, [error, isQueryCancellation, isRoot])
 
   if (isQueryCancellation) {
     return <RoutePending variant="page" />

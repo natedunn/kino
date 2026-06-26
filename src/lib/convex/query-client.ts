@@ -1,70 +1,120 @@
 import {
-  type DefaultOptions,
-  defaultShouldDehydrateQuery,
-  hashKey,
+  MutationCache,
   QueryCache,
   QueryClient,
-} from '@tanstack/react-query';
-import { isCRPCClientError, isCRPCError } from 'kitcn/crpc';
+  defaultShouldDehydrateQuery,
+  hashKey,
+} from "@tanstack/react-query"
+import { isCRPCClientError, isCRPCError } from "kitcn/crpc"
 import {
   ConvexReactClient,
   getConvexQueryClientSingleton,
   getQueryClientSingleton,
-  type AuthStore,
-} from 'kitcn/react';
-import { type Value, convexToJson } from 'convex/values';
-import SuperJSON from 'superjson';
+} from "kitcn/react"
+import { convexToJson } from "convex/values"
+import SuperJSON from "superjson"
+import type { AuthStore } from "kitcn/react"
+import type { DefaultOptions } from "@tanstack/react-query"
+import type { Value } from "convex/values"
 
-export const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL!);
+import { captureAppError } from "@/lib/posthog"
 
-export const hydrationConfig: Pick<DefaultOptions, 'dehydrate' | 'hydrate'> = {
+export const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL)
+
+export const hydrationConfig: Pick<DefaultOptions, "dehydrate" | "hydrate"> = {
   dehydrate: {
     serializeData: SuperJSON.serialize,
     shouldDehydrateQuery: (query) =>
-      defaultShouldDehydrateQuery(query) || query.state.status === 'pending',
+      defaultShouldDehydrateQuery(query) || query.state.status === "pending",
     shouldRedactErrors: () => false,
   },
   hydrate: {
     deserializeData: SuperJSON.deserialize,
   },
-};
+}
 
 function stableStringify(value: unknown): string {
-  return JSON.stringify(sortObjectKeys(value));
+  return JSON.stringify(sortObjectKeys(value))
 }
 
 function sortObjectKeys(value: unknown): unknown {
   if (Array.isArray(value)) {
-    return value.map(sortObjectKeys);
+    return value.map(sortObjectKeys)
   }
 
-  if (!value || typeof value !== 'object') {
-    return value;
+  if (!value || typeof value !== "object") {
+    return value
   }
 
   return Object.fromEntries(
     Object.entries(value)
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([key, entry]) => [key, sortObjectKeys(entry)])
-  );
+  )
 }
 
-export function convexQueryKeyHashFn(queryKey: readonly unknown[]) {
-  if (queryKey[0] === 'convexQuery' || queryKey[0] === 'convexAction') {
-    const [, functionName, args] = queryKey;
-    return `${queryKey[0]}|${String(functionName)}|${stableStringify(convexToJson(args as Value))}`;
+export function convexQueryKeyHashFn(queryKey: ReadonlyArray<unknown>) {
+  if (queryKey[0] === "convexQuery" || queryKey[0] === "convexAction") {
+    const [, functionName, args] = queryKey
+    return `${queryKey[0]}|${String(functionName)}|${stableStringify(convexToJson(args as Value))}`
   }
 
-  return hashKey(queryKey);
+  return hashKey(queryKey)
+}
+
+function safeOperationName(operationKey: ReadonlyArray<unknown> | undefined) {
+  if (!operationKey?.length) return undefined
+
+  const [kind, functionName] = operationKey
+
+  if (
+    (kind === "convexQuery" ||
+      kind === "convexAction" ||
+      kind === "convexMutation") &&
+    functionName
+  ) {
+    return `${String(kind)}:${String(functionName)}`
+  }
+
+  return String(kind)
+}
+
+function captureTanStackError(
+  error: unknown,
+  properties: Record<string, unknown>
+) {
+  const crpcProperties = isCRPCClientError(error)
+    ? {
+        crpcCode: error.code,
+        crpcFunctionName: error.functionName,
+        source: "crpc",
+      }
+    : {
+        source: "tanstack-query",
+      }
+
+  captureAppError(error, {
+    ...crpcProperties,
+    ...properties,
+  })
 }
 
 export function createQueryClient() {
   return new QueryClient({
+    mutationCache: new MutationCache({
+      onError: (error, _variables, _context, mutation) => {
+        captureTanStackError(error, {
+          operationName: safeOperationName(mutation.options.mutationKey),
+          tanstackOperation: "mutation",
+        })
+      },
+    }),
     queryCache: new QueryCache({
-      onError: (error) => {
-        if (isCRPCClientError(error)) {
-          console.warn(`[CRPC] ${error.code}:`, error.functionName);
-        }
+      onError: (error, query) => {
+        captureTanStackError(error, {
+          operationName: safeOperationName(query.queryKey),
+          tanstackOperation: "query",
+        })
       },
     }),
     defaultOptions: {
@@ -72,16 +122,16 @@ export function createQueryClient() {
       queries: {
         queryKeyHashFn: convexQueryKeyHashFn,
         retry: (failureCount, error) => {
-          if (isCRPCError(error)) return false;
-          return failureCount < 3;
+          if (isCRPCError(error)) return false
+          return failureCount < 3
         },
       },
     },
-  });
+  })
 }
 
 export function getAppQueryClient() {
-  return getQueryClientSingleton(createQueryClient);
+  return getQueryClientSingleton(createQueryClient)
 }
 
 export function getAppConvexQueryClient(
@@ -92,16 +142,16 @@ export function getAppConvexQueryClient(
     authStore,
     convex,
     queryClient,
-  });
+  })
 
-  const options = queryClient.getDefaultOptions();
+  const options = queryClient.getDefaultOptions()
   queryClient.setDefaultOptions({
     ...options,
     queries: {
       ...options.queries,
       queryKeyHashFn: convexQueryKeyHashFn,
     },
-  });
+  })
 
-  return convexQueryClient;
+  return convexQueryClient
 }

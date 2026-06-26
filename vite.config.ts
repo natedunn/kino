@@ -8,6 +8,11 @@ import tailwindcss from "@tailwindcss/vite"
 import { cloudflare } from "@cloudflare/vite-plugin"
 
 const port = process.env.PORT ? Number(process.env.PORT) : undefined
+const uploadPostHogSourcemaps = Boolean(
+  process.env.POSTHOG_CLI_API_KEY &&
+  process.env.POSTHOG_CLI_HOST &&
+  process.env.POSTHOG_CLI_PROJECT_ID
+)
 
 // Stable identifier for the deployed build, baked into both the client and
 // server bundles. Lets a long-lived (stale) tab detect that a newer version has
@@ -40,6 +45,9 @@ function resolveBuildId(): string {
 }
 
 const config = defineConfig({
+  build: {
+    sourcemap: uploadPostHogSourcemaps,
+  },
   define: {
     __KINO_BUILD_ID__: JSON.stringify(resolveBuildId()),
   },

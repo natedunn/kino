@@ -1,7 +1,3 @@
-import type { ReactNode } from "react"
-import type { QueryClient } from "@tanstack/react-query"
-import type { ConvexQueryClient } from "kitcn/react"
-
 import {
   HeadContent,
   Outlet,
@@ -12,13 +8,16 @@ import {
 import { createServerFn } from "@tanstack/react-start"
 import { TanStackDevtools } from "@tanstack/react-devtools"
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools"
+import appCss from "../styles.css?url"
+import type { ReactNode } from "react"
+import type { QueryClient } from "@tanstack/react-query"
+import type { ConvexQueryClient } from "kitcn/react"
 
 import { DefaultCatchBoundary } from "@/components/_default-catch-boundary"
 import { Providers } from "@/components/providers"
 import { StaleBundleWatcher } from "@/components/stale-bundle-watcher"
 import { Toaster } from "@/components/ui/sonner"
 import { getFaviconHref, inferAppEnvironment } from "@/lib/app-env"
-import appCss from "../styles.css?url"
 
 const getLoaderToken = createServerFn({ method: "GET" }).handler(async () => {
   const { getServerAuthToken } = await import("@/lib/convex/auth-start-token")
@@ -149,9 +148,14 @@ function RootDocument({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { convexQueryClient, loaderToken } = Route.useRouteContext()
+  const { appEnvironment } = Route.useLoaderData()
 
   return (
-    <Providers convexQueryClient={convexQueryClient} initialToken={loaderToken}>
+    <Providers
+      appEnvironment={appEnvironment}
+      convexQueryClient={convexQueryClient}
+      initialToken={loaderToken}
+    >
       <Outlet />
     </Providers>
   )
