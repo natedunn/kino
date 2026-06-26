@@ -21,3 +21,13 @@ naming scheme, the per-tier architecture, and a set of invariants (better-auth
 version locking, the load-bearing redirect rewrite, bundler traps, Convex
 schema-vs-prod-data validation) where violations pass local tests but break
 deployed OAuth flows.
+
+## Analytics / PostHog
+
+When adding or changing user-facing product flows, consider whether the change
+should emit a PostHog event. Do not add analytics by default. Track only events
+that help understand activation, conversion, retention, important feature usage,
+or user-visible failures.
+
+Before adding or changing analytics events, read `docs/analytics.md` for naming,
+privacy, and event-shape rules.
