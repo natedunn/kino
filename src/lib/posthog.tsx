@@ -125,6 +125,15 @@ export function capturePostHogException(
   posthog.captureException(error, properties)
 }
 
+export function capturePostHogEvent(
+  eventName: string,
+  properties?: Record<string, unknown>
+) {
+  if (!hasInitializedPostHog) return
+
+  posthog.capture(eventName, properties)
+}
+
 export function captureAppError(
   error: unknown,
   properties?: Record<string, unknown>

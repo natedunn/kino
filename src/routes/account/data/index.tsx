@@ -14,11 +14,13 @@ import { Button } from "@/components/ui/button"
 import { useCRPC, useCRPCClient } from "@/lib/convex/crpc"
 import { crpcServer } from "@/lib/convex/crpc-server"
 import { cn } from "@/lib/utils"
+import { capturePostHogEvent } from "@/lib/posthog"
 import { titleMeta } from "@/lib/seo"
 
 type ExportSection =
   ApiOutputs["userDataExport"]["getAvailableSections"][number]
 type ExportSectionId = ExportSection["id"]
+type ExportDocument = ApiOutputs["userDataExport"]["exportData"]
 
 export const Route = createFileRoute("/account/data/")({
   head: () => ({
@@ -53,6 +55,48 @@ function getErrorMessage(error: unknown) {
   if (error instanceof Error) return error.message
 
   return "Unable to export your data"
+}
+
+function getExportFailureReason(error: unknown) {
+  const message = getErrorMessage(error).toLowerCase()
+
+  if (message.includes("too large")) return "too_large"
+  if (message.includes("not authenticated") || message.includes("unauthorized")) {
+    return "unauthorized"
+  }
+
+  return "unknown"
+}
+
+function getCountBucket(count: number) {
+  if (count === 0) return "0"
+  if (count <= 10) return "1-10"
+  if (count <= 100) return "11-100"
+  return "101+"
+}
+
+function getExportAnalyticsProperties(
+  exportDocument: ExportDocument,
+  sectionIds: ExportSectionId[]
+) {
+  const comments = exportDocument.sections.comments
+  const totalComments =
+    typeof comments === "object" &&
+    comments &&
+    "counts" in comments &&
+    typeof comments.counts === "object" &&
+    comments.counts &&
+    "total" in comments.counts &&
+    typeof comments.counts.total === "number"
+      ? comments.counts.total
+      : 0
+
+  return {
+    comment_count_bucket: getCountBucket(totalComments),
+    export_version: exportDocument.version,
+    section_count: sectionIds.length,
+    sections: sectionIds,
+  }
 }
 
 function createExportFilename() {
@@ -132,9 +176,18 @@ function AuthenticatedDataRoute() {
       const exportDocument = await crpcClient.userDataExport.exportData.query({
         sections: activeSectionIds,
       })
+      capturePostHogEvent(
+        "user_data_export_downloaded",
+        getExportAnalyticsProperties(exportDocument, activeSectionIds)
+      )
       downloadJson(createExportFilename(), exportDocument)
     } catch (error) {
       setExportError(getErrorMessage(error))
+      capturePostHogEvent("user_data_export_failed", {
+        reason: getExportFailureReason(error),
+        section_count: activeSectionIds.length,
+        sections: activeSectionIds,
+      })
     } finally {
       setIsExporting(false)
     }
