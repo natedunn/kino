@@ -144,6 +144,10 @@ export const api = {
   updateEmote: {
     toggle: createApiLeaf<"mutation", typeof import("../functions/updateEmote").toggle>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/updateEmote").toggle>("updateEmote:toggle"), { auth: "required", type: "mutation" }),
   },
+  userDataExport: {
+    exportData: createApiLeaf<"query", typeof import("../functions/userDataExport").exportData>(createGeneratedFunctionReference<"query", "public", typeof import("../functions/userDataExport").exportData>("userDataExport:exportData"), { auth: "required", type: "query" }),
+    getAvailableSections: createApiLeaf<"query", typeof import("../functions/userDataExport").getAvailableSections>(createGeneratedFunctionReference<"query", "public", typeof import("../functions/userDataExport").getAvailableSections>("userDataExport:getAvailableSections"), { auth: "required", type: "query" }),
+  },
   http: undefined as unknown as typeof httpRouter,
   _http: {
   },

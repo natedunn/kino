@@ -26,6 +26,7 @@ import { Route as CreateTeamIndexRouteImport } from './routes/create/team/index'
 import { Route as AccountSecurityIndexRouteImport } from './routes/account/security/index'
 import { Route as AccountProfileIndexRouteImport } from './routes/account/profile/index'
 import { Route as AccountNotificationsIndexRouteImport } from './routes/account/notifications/index'
+import { Route as AccountDataIndexRouteImport } from './routes/account/data/index'
 import { Route as AccountAppearanceIndexRouteImport } from './routes/account/appearance/index'
 import { Route as AtChar123orgChar125SettingsIndexRouteImport } from './routes/@{$org}/settings/index'
 import { Route as AtChar123orgChar125EditIndexRouteImport } from './routes/@{$org}/edit/index'
@@ -151,6 +152,11 @@ const AccountNotificationsIndexRoute =
     path: '/notifications/',
     getParentRoute: () => AccountRouteRoute,
   } as any)
+const AccountDataIndexRoute = AccountDataIndexRouteImport.update({
+  id: '/data/',
+  path: '/data/',
+  getParentRoute: () => AccountRouteRoute,
+} as any)
 const AccountAppearanceIndexRoute = AccountAppearanceIndexRouteImport.update({
   id: '/appearance/',
   path: '/appearance/',
@@ -374,6 +380,7 @@ export interface FileRoutesByFullPath {
   '/@{$org}/edit/': typeof AtChar123orgChar125EditIndexRoute
   '/@{$org}/settings/': typeof AtChar123orgChar125SettingsIndexRoute
   '/account/appearance/': typeof AccountAppearanceIndexRoute
+  '/account/data/': typeof AccountDataIndexRoute
   '/account/notifications/': typeof AccountNotificationsIndexRoute
   '/account/profile/': typeof AccountProfileIndexRoute
   '/account/security/': typeof AccountSecurityIndexRoute
@@ -421,6 +428,7 @@ export interface FileRoutesByTo {
   '/@{$org}/edit': typeof AtChar123orgChar125EditIndexRoute
   '/@{$org}/settings': typeof AtChar123orgChar125SettingsIndexRoute
   '/account/appearance': typeof AccountAppearanceIndexRoute
+  '/account/data': typeof AccountDataIndexRoute
   '/account/notifications': typeof AccountNotificationsIndexRoute
   '/account/profile': typeof AccountProfileIndexRoute
   '/account/security': typeof AccountSecurityIndexRoute
@@ -475,6 +483,7 @@ export interface FileRoutesById {
   '/@{$org}/edit/': typeof AtChar123orgChar125EditIndexRoute
   '/@{$org}/settings/': typeof AtChar123orgChar125SettingsIndexRoute
   '/account/appearance/': typeof AccountAppearanceIndexRoute
+  '/account/data/': typeof AccountDataIndexRoute
   '/account/notifications/': typeof AccountNotificationsIndexRoute
   '/account/profile/': typeof AccountProfileIndexRoute
   '/account/security/': typeof AccountSecurityIndexRoute
@@ -530,6 +539,7 @@ export interface FileRouteTypes {
     | '/@{$org}/edit/'
     | '/@{$org}/settings/'
     | '/account/appearance/'
+    | '/account/data/'
     | '/account/notifications/'
     | '/account/profile/'
     | '/account/security/'
@@ -577,6 +587,7 @@ export interface FileRouteTypes {
     | '/@{$org}/edit'
     | '/@{$org}/settings'
     | '/account/appearance'
+    | '/account/data'
     | '/account/notifications'
     | '/account/profile'
     | '/account/security'
@@ -630,6 +641,7 @@ export interface FileRouteTypes {
     | '/@{$org}/edit/'
     | '/@{$org}/settings/'
     | '/account/appearance/'
+    | '/account/data/'
     | '/account/notifications/'
     | '/account/profile/'
     | '/account/security/'
@@ -797,6 +809,13 @@ declare module '@tanstack/react-router' {
       path: '/notifications'
       fullPath: '/account/notifications/'
       preLoaderRoute: typeof AccountNotificationsIndexRouteImport
+      parentRoute: typeof AccountRouteRoute
+    }
+    '/account/data/': {
+      id: '/account/data/'
+      path: '/data'
+      fullPath: '/account/data/'
+      preLoaderRoute: typeof AccountDataIndexRouteImport
       parentRoute: typeof AccountRouteRoute
     }
     '/account/appearance/': {
@@ -1199,6 +1218,7 @@ const AtChar123orgChar125RouteRouteWithChildren =
 interface AccountRouteRouteChildren {
   AccountIndexRoute: typeof AccountIndexRoute
   AccountAppearanceIndexRoute: typeof AccountAppearanceIndexRoute
+  AccountDataIndexRoute: typeof AccountDataIndexRoute
   AccountNotificationsIndexRoute: typeof AccountNotificationsIndexRoute
   AccountProfileIndexRoute: typeof AccountProfileIndexRoute
   AccountSecurityIndexRoute: typeof AccountSecurityIndexRoute
@@ -1207,6 +1227,7 @@ interface AccountRouteRouteChildren {
 const AccountRouteRouteChildren: AccountRouteRouteChildren = {
   AccountIndexRoute: AccountIndexRoute,
   AccountAppearanceIndexRoute: AccountAppearanceIndexRoute,
+  AccountDataIndexRoute: AccountDataIndexRoute,
   AccountNotificationsIndexRoute: AccountNotificationsIndexRoute,
   AccountProfileIndexRoute: AccountProfileIndexRoute,
   AccountSecurityIndexRoute: AccountSecurityIndexRoute,

@@ -53,6 +53,7 @@ registerProcedureNameLookup(
   "updateComment.ts": [{ column: 3, line: 55, name: "updateComment:create" }, { column: 3, line: 138, name: "updateComment:listByUpdate" }, { column: 3, line: 110, name: "updateComment:remove" }, { column: 3, line: 80, name: "updateComment:update" }],
   "updateCommentEmote.ts": [{ column: 3, line: 18, name: "updateCommentEmote:toggle" }],
   "updateEmote.ts": [{ column: 3, line: 16, name: "updateEmote:toggle" }],
+  "userDataExport.ts": [{ column: 3, line: 299, name: "userDataExport:exportData" }, { column: 3, line: 281, name: "userDataExport:getAvailableSections" }],
 },
   "convex/functions"
 );
