@@ -31,7 +31,12 @@ if [ "$branch" = "$production_branch" ]; then
   fi
 
   export CONVEX_DEPLOY_KEY="$CONVEX_PROD_DEPLOY_KEY"
-  npx convex deploy \
+  # Use `kitcn deploy` (not `convex deploy`) so that, after pushing schema +
+  # functions, kitcn runs pending migrations and the aggregateIndex/rankIndex
+  # backfill against the just-deployed deployment. Plain `convex deploy` skips
+  # this, leaving any newly added aggregate index in BUILDING — which makes
+  # ORM count()/aggregate() reads throw COUNT_INDEX_BUILDING in production.
+  npx kitcn deploy \
     --cmd "$build_cmd" \
     --cmd-url-env-var-name VITE_CONVEX_URL
 else
@@ -41,7 +46,9 @@ else
   fi
 
   export CONVEX_DEPLOY_KEY="$CONVEX_PREVIEW_DEPLOY_KEY"
-  npx convex deploy \
+  # `kitcn deploy` also runs migrations + aggregate backfill against the preview
+  # deployment (targeted via --preview-name) after the convex push.
+  npx kitcn deploy \
     --preview-name "$preview_name" \
     --cmd "$build_cmd" \
     --cmd-url-env-var-name VITE_CONVEX_URL
