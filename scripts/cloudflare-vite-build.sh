@@ -11,3 +11,5 @@ export VITE_CONVEX_SITE_URL
 node scripts/gateway-webhook-target.mjs register "${VITE_CONVEX_SITE_URL}/api/github/webhook" || true
 
 pnpm run build
+
+sh scripts/posthog-sourcemaps.sh

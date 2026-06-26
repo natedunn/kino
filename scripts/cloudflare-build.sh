@@ -19,9 +19,19 @@ preview_name="$(sh scripts/preview-name.sh "$branch" 48)"
 if [ "$branch" = "$production_branch" ]; then
   export GATEWAY_URL="${GATEWAY_URL_PRODUCTION:-}"
   export GATEWAY_ADMIN_TOKEN="${GATEWAY_ADMIN_TOKEN_PRODUCTION:-}"
+  export VITE_POSTHOG_PROJECT_TOKEN="${POSTHOG_PROJECT_TOKEN_PRODUCTION:-}"
+  export VITE_POSTHOG_HOST="${POSTHOG_HOST_PRODUCTION:-}"
+  export POSTHOG_CLI_API_KEY="${POSTHOG_CLI_API_KEY_PRODUCTION:-}"
+  export POSTHOG_CLI_PROJECT_ID="${POSTHOG_CLI_PROJECT_ID_PRODUCTION:-}"
+  export POSTHOG_CLI_HOST="${POSTHOG_CLI_HOST_PRODUCTION:-${POSTHOG_HOST_PRODUCTION:-}}"
 else
   export GATEWAY_URL="${GATEWAY_URL_PREVIEW:-}"
   export GATEWAY_ADMIN_TOKEN="${GATEWAY_ADMIN_TOKEN_PREVIEW:-}"
+  export VITE_POSTHOG_PROJECT_TOKEN=""
+  export VITE_POSTHOG_HOST=""
+  export POSTHOG_CLI_API_KEY=""
+  export POSTHOG_CLI_PROJECT_ID=""
+  export POSTHOG_CLI_HOST=""
 fi
 
 if [ "$branch" = "$production_branch" ]; then
