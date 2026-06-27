@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as UiRouteImport } from './routes/ui'
+import { Route as StackRouteImport } from './routes/stack'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
@@ -65,6 +66,11 @@ import { Route as AtChar123orgChar125ProjectFeedbackBoardsBoardEditRouteImport }
 const UiRoute = UiRouteImport.update({
   id: '/ui',
   path: '/ui',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StackRoute = StackRouteImport.update({
+  id: '/stack',
+  path: '/stack',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardRoute = DashboardRouteImport.update({
@@ -365,6 +371,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
+  '/stack': typeof StackRoute
   '/ui': typeof UiRoute
   '/@{$org}/$project': typeof AtChar123orgChar125ProjectRouteRouteWithChildren
   '/@{$org}/settings': typeof AtChar123orgChar125SettingsRouteRouteWithChildren
@@ -417,6 +424,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
+  '/stack': typeof StackRoute
   '/ui': typeof UiRoute
   '/@{$org}': typeof AtChar123orgChar125IndexRoute
   '/account': typeof AccountIndexRoute
@@ -468,6 +476,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
+  '/stack': typeof StackRoute
   '/ui': typeof UiRoute
   '/@{$org}/$project': typeof AtChar123orgChar125ProjectRouteRouteWithChildren
   '/@{$org}/settings': typeof AtChar123orgChar125SettingsRouteRouteWithChildren
@@ -524,6 +533,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/dashboard'
+    | '/stack'
     | '/ui'
     | '/@{$org}/$project'
     | '/@{$org}/settings'
@@ -576,6 +586,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/dashboard'
+    | '/stack'
     | '/ui'
     | '/@{$org}'
     | '/account'
@@ -626,6 +637,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/dashboard'
+    | '/stack'
     | '/ui'
     | '/@{$org}/$project'
     | '/@{$org}/settings'
@@ -681,6 +693,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   AuthRoute: typeof AuthRoute
   DashboardRoute: typeof DashboardRoute
+  StackRoute: typeof StackRoute
   UiRoute: typeof UiRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiGithubSplatRoute: typeof ApiGithubSplatRoute
@@ -697,6 +710,13 @@ declare module '@tanstack/react-router' {
       path: '/ui'
       fullPath: '/ui'
       preLoaderRoute: typeof UiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stack': {
+      id: '/stack'
+      path: '/stack'
+      fullPath: '/stack'
+      preLoaderRoute: typeof StackRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard': {
@@ -1244,6 +1264,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   AuthRoute: AuthRoute,
   DashboardRoute: DashboardRoute,
+  StackRoute: StackRoute,
   UiRoute: UiRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiGithubSplatRoute: ApiGithubSplatRoute,
