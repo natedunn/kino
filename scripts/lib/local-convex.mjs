@@ -410,3 +410,79 @@ export function stopLocalBackendForWorkspace(
 
   return stopped
 }
+
+// Kill any dev processes left over from a previous `pnpm dev` of THIS worktree.
+//
+// The supervisor spawns Convex (and Vite via portless) detached, so when the
+// shell/Helmor force-stops `pnpm dev` without a clean SIGTERM, the `convex dev`
+// CLI, its local backend, Vite, workerd, and the portless client get reparented
+// to launchd and keep running. Orphaned `convex dev` processes whose backend is
+// gone retry forever ("Retrying request…", "Failed to fetch logs", "Unable to
+// pull deployment config from …<old port>"), which is pure noise. Without this,
+// they accumulate one stack per run.
+//
+// Scoped to this worktree by matching its absolute path (plus a trailing
+// separator so `…/foo` never matches `…/foo-2`) in each process's command line.
+// The supervisor's own command is relative (`node scripts/dev-supervisor.mjs`)
+// and its pnpm/sh parents don't carry the worktree path, so they're never hit;
+// we also skip our own pid and parent for safety.
+export function stopStaleWorktreeProcesses(
+  workspaceRoot,
+  { logPrefix = "[dev]" } = {}
+) {
+  if (process.platform === "win32") return
+
+  const marker = workspaceRoot.endsWith(path.sep)
+    ? workspaceRoot
+    : `${workspaceRoot}${path.sep}`
+  const stateDir = projectLocalStateDir(workspaceRoot)
+  const self = process.pid
+  const parent = process.ppid
+
+  const result = spawnSync("ps", ["-axww", "-o", "pid=,command="], {
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "ignore"],
+  })
+  if (result.status !== 0 || !result.stdout) return
+
+  const victims = []
+  for (const line of result.stdout.split("\n")) {
+    const match = line.match(/^\s*(\d+)\s+(.*)$/)
+    if (!match) continue
+    const pid = Number(match[1])
+    const command = match[2]
+    if (pid === self || pid === parent) continue
+    if (!command.includes(marker)) continue
+
+    const isStaleDevProcess =
+      /\/convex\/bin\/main\.js\b[\s\S]*\bdev\b/.test(command) ||
+      (command.includes("convex-local-backend") &&
+        command.includes(stateDir)) ||
+      /\/vite\/bin\/vite\.js\b/.test(command) ||
+      command.includes("workerd serve") ||
+      /\/portless\/[^\s]*cli\.js\b/.test(command)
+
+    if (isStaleDevProcess) victims.push(pid)
+  }
+
+  if (victims.length === 0) return
+
+  console.log(
+    `${logPrefix} reaping ${victims.length} stale dev process(es) from a previous run: ${victims.join(
+      ", "
+    )}`
+  )
+  terminatePids(victims, "SIGTERM")
+  if (waitForPidsToStop(victims, 5000)) return
+
+  const remaining = victims.filter((pid) => {
+    try {
+      process.kill(pid, 0)
+      return true
+    } catch {
+      return false
+    }
+  })
+  terminatePids(remaining, "SIGKILL")
+  waitForPidsToStop(remaining, 2000)
+}
