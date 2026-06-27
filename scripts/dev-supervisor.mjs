@@ -63,7 +63,14 @@ function prepareAnonymousConvex() {
   // stopped `pnpm dev` of this worktree. Otherwise orphaned `convex dev` CLIs
   // (whose backend is gone) retry forever and spam the console, and they pile up
   // one stack per run.
-  stopStaleWorktreeProcesses(workspaceRoot)
+  const reaped = stopStaleWorktreeProcesses(workspaceRoot)
+  if (reaped.length > 0) {
+    console.log(
+      `[dev] reaped ${reaped.length} stale dev process(es) from a previous run: ${reaped.join(
+        ", "
+      )}`
+    )
+  }
 
   preserveSharedDevDeployment(workspaceRoot, "scripts/dev-supervisor.mjs")
   ensureAnonymousEnvFile(workspaceRoot)
