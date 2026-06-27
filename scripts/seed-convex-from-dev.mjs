@@ -7,6 +7,7 @@ import {
   anonymousConvexEnv,
   anonymousEnvFilePath as getAnonymousEnvFilePath,
   configuredLocalBackendPort,
+  ensureWorktreeLocalBackendPorts,
   ensureAnonymousEnvFile,
   localBackendPidsForWorkspace,
   preserveSharedDevDeployment,
@@ -554,6 +555,13 @@ const targetEnv = options.target ? process.env : anonymousConvexEnv()
 
 if (!options.target) {
   run("pnpm", ["exec", "convex", "init"], { env: targetEnv })
+  stopRunningLocalBackendIfRequested()
+  const ports = ensureWorktreeLocalBackendPorts(workspaceRoot)
+  if (ports) {
+    console.log(
+      `[seed] using worktree-local Convex ports ${ports.cloud}/${ports.site}`
+    )
+  }
 }
 
 if (options.copyEnv) {
