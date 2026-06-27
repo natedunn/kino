@@ -3,9 +3,12 @@
 // config.json is stuck on a clustered port (e.g. many worktrees on 3210-3218),
 // which collide when several run `pnpm dev` at once.
 //
-// Safe to run repeatedly: worktrees that already match their preferred ports are
-// left untouched, and any worktree with a live backend bound on its current port
-// is skipped so we never yank a port out from under a running dev server.
+// Safe to run repeatedly:
+//   - worktrees that already have their preferred ports are left untouched,
+//   - worktrees with a live backend bound on their current port are skipped so
+//     we never yank a port out from under a running dev server,
+//   - worktrees pointed at a shared `dev:` Convex deployment are skipped so the
+//     sweep never silently flips them to anonymous mode.
 //
 // Usage: node scripts/respread-convex-ports.mjs [--dry-run]
 
@@ -18,6 +21,8 @@ import {
   ensureWorktreeLocalBackendPorts,
   localBackendPidsForWorkspace,
   projectLocalConfigPath,
+  readLocalEnv,
+  resolveWorktreeLocalBackendPorts,
 } from "./lib/local-convex.mjs"
 
 const dryRun = process.argv.includes("--dry-run")
@@ -58,17 +63,34 @@ function readConfiguredPorts(workspaceRoot) {
   }
 }
 
+function portsEqual(a, b) {
+  return Boolean(a) && Boolean(b) && a.cloud === b.cloud && a.site === b.site
+}
+
+function fmt(ports) {
+  return ports ? `${ports.cloud}/${ports.site}` : "?/?"
+}
+
 const roots = listWorktreeRoots()
-let rewritten = 0
-let skipped = 0
+let changedCount = 0
 let unchanged = 0
+let skipped = 0
 
 for (const root of roots) {
   const configPath = projectLocalConfigPath(root)
-  if (!fs.existsSync(configPath)) continue // not a seeded anonymous worktree
+  if (!fs.existsSync(configPath)) continue // not a seeded local-backend worktree
 
   const name = path.basename(root)
-  const before = readConfiguredPorts(root)
+
+  // Never touch a worktree that is pointed at a shared `dev:` deployment — the
+  // port rewrite also forces CONVEX_DEPLOYMENT=anonymous, which would silently
+  // switch its Convex mode.
+  const deployment = readLocalEnv(root).CONVEX_DEPLOYMENT ?? ""
+  if (deployment.startsWith("dev:")) {
+    console.log(`[respread] ${name}: skipped — shared deployment (${deployment})`)
+    skipped += 1
+    continue
+  }
 
   const livePort = configuredLocalBackendPort(root)
   if (livePort !== null && localBackendPidsForWorkspace(root).pids.length > 0) {
@@ -79,35 +101,28 @@ for (const root of roots) {
     continue
   }
 
-  if (dryRun) {
-    console.log(
-      `[respread] ${name}: would re-derive (current ${before?.cloud ?? "?"}/${
-        before?.site ?? "?"
-      })`
-    )
-    continue
-  }
-
-  const after = ensureWorktreeLocalBackendPorts(root)
-  if (!after) {
-    console.log(`[respread] ${name}: no usable ports found, left as-is`)
+  const before = readConfiguredPorts(root)
+  const target = resolveWorktreeLocalBackendPorts(root)
+  if (!target) {
+    console.log(`[respread] ${name}: skipped — no usable ports found`)
     skipped += 1
     continue
   }
 
-  if (before && before.cloud === after.cloud && before.site === after.site) {
+  if (portsEqual(before, target)) {
     unchanged += 1
     continue
   }
 
   console.log(
-    `[respread] ${name}: ${before?.cloud ?? "?"}/${before?.site ?? "?"} -> ${
-      after.cloud
-    }/${after.site}`
+    `[respread] ${name}: ${dryRun ? "would re-derive " : ""}${fmt(before)} -> ${fmt(target)}`
   )
-  rewritten += 1
+  changedCount += 1
+
+  if (!dryRun) ensureWorktreeLocalBackendPorts(root)
 }
 
+const verb = dryRun ? "would re-derive" : "rewritten"
 console.log(
-  `[respread] done — ${rewritten} rewritten, ${unchanged} already correct, ${skipped} skipped.`
+  `[respread] done${dryRun ? " (dry run)" : ""} — ${changedCount} ${verb}, ${unchanged} already correct, ${skipped} skipped.`
 )

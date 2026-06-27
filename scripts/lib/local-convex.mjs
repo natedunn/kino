@@ -129,10 +129,13 @@ function* preferredLocalBackendPorts(workspaceRoot) {
   const hash = hashString(workspaceRoot)
   // Keep this band well above portless, which picks its own free Vite backend
   // port in the low thousands (~4000-5000) and force-kills whatever occupies it.
-  // Overlapping ranges let portless evict a worktree's Convex backend. 20000+ is
-  // clear of that band.
+  // Overlapping ranges let portless evict a worktree's Convex backend.
+  //
+  // Stay below 32768 so we also clear the Linux default ephemeral range
+  // (32768-60999): 20000 + (6000-1)*2 = 31998 site 31999, leaving the whole band
+  // free of both portless and OS-assigned outbound ports on macOS and Linux.
   const firstCloudPort = 20000
-  const pairCount = 10000
+  const pairCount = 6000
   const offset = hash % pairCount
 
   for (let attempt = 0; attempt < pairCount; attempt += 1) {
@@ -160,10 +163,13 @@ function portHasWorkspaceBackend(port, workspaceRoot) {
   )
 }
 
+// Returns true when the file was actually rewritten, false when it already had
+// the desired values (idempotent — avoids needless churn on .env.local).
 function updateEnvFileValues(filePath, values) {
-  const lines = fs.existsSync(filePath)
-    ? fs.readFileSync(filePath, "utf8").split(/\r?\n/)
-    : []
+  const original = fs.existsSync(filePath)
+    ? fs.readFileSync(filePath, "utf8")
+    : ""
+  const lines = original === "" ? [] : original.split(/\r?\n/)
   const seen = new Set()
   const updated = lines.map((line) => {
     const match = line.match(/^(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)(=.*)$/)
@@ -178,10 +184,16 @@ function updateEnvFileValues(filePath, values) {
   }
 
   while (updated.length > 0 && updated.at(-1) === "") updated.pop()
-  fs.writeFileSync(filePath, `${updated.join("\n")}\n`)
+  const next = `${updated.join("\n")}\n`
+  if (next === original) return false
+  fs.writeFileSync(filePath, next)
+  return true
 }
 
-export function ensureWorktreeLocalBackendPorts(workspaceRoot) {
+// Decide which local backend ports this worktree should use, WITHOUT writing
+// anything. Returns { cloud, site } or null. Pure/read-only so callers (e.g. a
+// --dry-run sweep) can preview the decision.
+export function resolveWorktreeLocalBackendPorts(workspaceRoot) {
   const configPath = projectLocalConfigPath(workspaceRoot)
   if (!fs.existsSync(configPath)) return null
 
@@ -234,11 +246,31 @@ export function ensureWorktreeLocalBackendPorts(workspaceRoot) {
     }
   }
 
+  return ports ?? null
+}
+
+export function ensureWorktreeLocalBackendPorts(workspaceRoot) {
+  const configPath = projectLocalConfigPath(workspaceRoot)
+  if (!fs.existsSync(configPath)) return null
+
+  let config
+  try {
+    config = JSON.parse(fs.readFileSync(configPath, "utf8"))
+  } catch {
+    return null
+  }
+
+  const ports = resolveWorktreeLocalBackendPorts(workspaceRoot)
   if (!ports) return null
 
-  config.ports = { ...(config.ports ?? {}), ...ports }
-  fs.writeFileSync(configPath, `${JSON.stringify(config)}\n`)
+  // Only rewrite config.json when the ports actually change — avoids reformatting
+  // (and churning git status for) worktrees that are already correct.
+  if (config?.ports?.cloud !== ports.cloud || config?.ports?.site !== ports.site) {
+    config.ports = { ...(config.ports ?? {}), ...ports }
+    fs.writeFileSync(configPath, `${JSON.stringify(config)}\n`)
+  }
 
+  // updateEnvFileValues is idempotent (no write when values already match).
   updateEnvFileValues(path.join(workspaceRoot, ".env.local"), {
     CONVEX_DEPLOYMENT: "anonymous:anonymous-agent",
     VITE_CONVEX_URL: `http://127.0.0.1:${ports.cloud}`,
