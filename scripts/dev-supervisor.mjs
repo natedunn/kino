@@ -6,6 +6,7 @@ import {
   anonymousConvexEnv,
   anonymousEnvFilePath as getAnonymousEnvFilePath,
   configuredLocalBackendPort,
+  ensureWorktreeLocalBackendPorts,
   ensureAnonymousEnvFile,
   preserveSharedDevDeployment,
   projectLocalConfigPath as getProjectLocalConfigPath,
@@ -68,6 +69,12 @@ function prepareAnonymousConvex() {
   }
 
   stopLocalBackendForWorkspace(workspaceRoot)
+  const ports = ensureWorktreeLocalBackendPorts(workspaceRoot)
+  if (ports) {
+    console.log(
+      `[convex] using worktree-local Convex ports ${ports.cloud}/${ports.site}`
+    )
+  }
 }
 
 function convexDevArgs() {

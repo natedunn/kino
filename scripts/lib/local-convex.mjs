@@ -116,6 +116,110 @@ export function configuredLocalBackendPort(workspaceRoot) {
   }
 }
 
+function hashString(value) {
+  let hash = 2166136261
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index)
+    hash = Math.imul(hash, 16777619)
+  }
+  return hash >>> 0
+}
+
+function* preferredLocalBackendPorts(workspaceRoot) {
+  const hash = hashString(workspaceRoot)
+  const firstCloudPort = 3300
+  const pairCount = 10000
+  const offset = hash % pairCount
+
+  for (let attempt = 0; attempt < pairCount; attempt += 1) {
+    const cloud = firstCloudPort + ((offset + attempt) % pairCount) * 2
+    yield {
+      cloud,
+      site: cloud + 1,
+    }
+  }
+}
+
+function portIsAvailableForWorkspace(port, workspaceRoot) {
+  const stateDir = projectLocalStateDir(workspaceRoot)
+  const pids = localBackendPids(port, workspaceRoot)
+  return (
+    pids.length === 0 ||
+    pids.every((pid) => processCommand(pid, workspaceRoot).includes(stateDir))
+  )
+}
+
+function updateEnvFileValues(filePath, values) {
+  const lines = fs.existsSync(filePath)
+    ? fs.readFileSync(filePath, "utf8").split(/\r?\n/)
+    : []
+  const seen = new Set()
+  const updated = lines.map((line) => {
+    const match = line.match(/^(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)(=.*)$/)
+    if (!match || !(match[1] in values)) return line
+
+    seen.add(match[1])
+    return `${match[1]}=${values[match[1]]}`
+  })
+
+  for (const [key, value] of Object.entries(values)) {
+    if (!seen.has(key)) updated.push(`${key}=${value}`)
+  }
+
+  while (updated.length > 0 && updated.at(-1) === "") updated.pop()
+  fs.writeFileSync(filePath, `${updated.join("\n")}\n`)
+}
+
+export function ensureWorktreeLocalBackendPorts(workspaceRoot) {
+  const configPath = projectLocalConfigPath(workspaceRoot)
+  if (!fs.existsSync(configPath)) return null
+
+  let config
+  try {
+    config = JSON.parse(fs.readFileSync(configPath, "utf8"))
+  } catch {
+    return null
+  }
+
+  const configuredCloud = config?.ports?.cloud
+  const configuredSite = config?.ports?.site
+  const configuredPortsAreUsable =
+    Number.isInteger(configuredCloud) &&
+    Number.isInteger(configuredSite) &&
+    portIsAvailableForWorkspace(configuredCloud, workspaceRoot) &&
+    portIsAvailableForWorkspace(configuredSite, workspaceRoot)
+
+  let ports =
+    configuredPortsAreUsable && configuredCloud !== 3210 && configuredSite !== 3211
+      ? { cloud: configuredCloud, site: configuredSite }
+      : null
+
+  if (!ports) {
+    for (const candidate of preferredLocalBackendPorts(workspaceRoot)) {
+      if (
+        portIsAvailableForWorkspace(candidate.cloud, workspaceRoot) &&
+        portIsAvailableForWorkspace(candidate.site, workspaceRoot)
+      ) {
+        ports = { cloud: candidate.cloud, site: candidate.site }
+        break
+      }
+    }
+  }
+
+  if (!ports) return null
+
+  config.ports = { ...(config.ports ?? {}), ...ports }
+  fs.writeFileSync(configPath, `${JSON.stringify(config)}\n`)
+
+  updateEnvFileValues(path.join(workspaceRoot, ".env.local"), {
+    CONVEX_DEPLOYMENT: "anonymous:anonymous-agent",
+    VITE_CONVEX_URL: `http://127.0.0.1:${ports.cloud}`,
+    VITE_CONVEX_SITE_URL: `http://127.0.0.1:${ports.site}`,
+  })
+
+  return ports
+}
+
 export function localBackendPids(port, workspaceRoot = process.cwd()) {
   if (process.platform === "win32") return []
 
