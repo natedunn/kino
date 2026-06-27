@@ -127,7 +127,11 @@ function hashString(value) {
 
 function* preferredLocalBackendPorts(workspaceRoot) {
   const hash = hashString(workspaceRoot)
-  const firstCloudPort = 3300
+  // Keep this band well above portless, which picks its own free Vite backend
+  // port in the low thousands (~4000-5000) and force-kills whatever occupies it.
+  // Overlapping ranges let portless evict a worktree's Convex backend. 20000+ is
+  // clear of that band.
+  const firstCloudPort = 20000
   const pairCount = 10000
   const offset = hash % pairCount
 
@@ -201,10 +205,20 @@ export function ensureWorktreeLocalBackendPorts(workspaceRoot) {
     (portHasWorkspaceBackend(configuredCloud, workspaceRoot) ||
       portHasWorkspaceBackend(configuredSite, workspaceRoot))
 
+  // Only keep the configured ports if a backend for this worktree is already
+  // bound there, or they already equal this worktree's deterministic hashed
+  // pair. Otherwise re-derive. This prevents stale/legacy clustered ports (many
+  // worktrees stuck on 3210-3218) from sticking around and colliding when
+  // several worktrees run `pnpm dev` concurrently.
+  const preferred = preferredLocalBackendPorts(workspaceRoot).next().value
+  const configuredMatchesPreferred =
+    Boolean(preferred) &&
+    configuredCloud === preferred.cloud &&
+    configuredSite === preferred.site
+
   let ports =
     configuredPortsAreUsable &&
-    (configuredPortsHaveRunningWorkspaceBackend ||
-      (configuredCloud !== 3210 && configuredSite !== 3211))
+    (configuredPortsHaveRunningWorkspaceBackend || configuredMatchesPreferred)
       ? { cloud: configuredCloud, site: configuredSite }
       : null
 
