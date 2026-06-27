@@ -11,6 +11,7 @@ import {
   ensureAnonymousEnvFile,
   localBackendPidsForWorkspace,
   preserveSharedDevDeployment,
+  projectLocalConfigPath as getProjectLocalConfigPath,
   readEnvFile,
   sharedDevStatePath as getSharedDevStatePath,
   sleep,
@@ -277,6 +278,34 @@ function stopRunningLocalBackendIfRequested() {
   ) {
     process.exit(1)
   }
+}
+
+// A prior run can leave a local deployment whose name isn't "anonymous-agent" —
+// e.g. the legacy `kitcn dev` flow, or a newer Convex that names anonymous
+// deployments after the directory (anonymous-<dir>). `convex init` then reuses
+// that deployment, and the later `convex env set` (which copies JWKS and other
+// auth vars from shared dev) fails with "Could not find deployment with name
+// anonymous-agent". Reset the local state so init creates a clean anonymous-agent
+// deployment. Only acts on a mismatch, so the normal re-seed path is untouched.
+function resetMismatchedLocalDeployment() {
+  const configPath = getProjectLocalConfigPath(workspaceRoot)
+  if (!fs.existsSync(configPath)) return
+
+  let existingName
+  try {
+    existingName = JSON.parse(fs.readFileSync(configPath, "utf8"))?.deploymentName
+  } catch {
+    return
+  }
+
+  if (typeof existingName !== "string" || !existingName) return
+  if (existingName === "anonymous-agent") return
+
+  const localStateDir = path.dirname(path.dirname(configPath)) // .convex/local
+  console.log(
+    `[seed] local deployment is "${existingName}", not "anonymous-agent"; resetting it for a clean anonymous seed`
+  )
+  fs.rmSync(localStateDir, { recursive: true, force: true })
 }
 
 function timestamp() {
@@ -554,6 +583,7 @@ const sourceDeployment =
 const targetEnv = options.target ? process.env : anonymousConvexEnv()
 
 if (!options.target) {
+  resetMismatchedLocalDeployment()
   run("pnpm", ["exec", "convex", "init"], { env: targetEnv })
   stopRunningLocalBackendIfRequested()
   const ports = ensureWorktreeLocalBackendPorts(workspaceRoot)
