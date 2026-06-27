@@ -14,9 +14,8 @@ function GitHubIntegrationRedirectRoute() {
 
   return (
     <Navigate
-      params={params}
-      search={{ github: search.github }}
-      to="/@{$org}/settings/integrations"
+      search={{ github: search.github, org: params.org }}
+      to="/org/settings/integrations"
     />
   )
 }

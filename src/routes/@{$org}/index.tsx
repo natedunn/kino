@@ -204,7 +204,7 @@ function OrganizationRoute() {
 
             {orgData.permissions.canEdit ? (
               <Button asChild variant="outline" className="shrink-0 self-start">
-                <Link params={params} to="/@{$org}/settings">
+                <Link search={{ org: params.org }} to="/org/settings">
                   <Settings className="size-4" />
                   Settings
                 </Link>
@@ -284,8 +284,8 @@ function OrganizationRoute() {
                   {canManageMembers ? (
                     <Link
                       className="text-sm text-primary underline decoration-primary/40 decoration-2 underline-offset-2 hover:decoration-primary/70"
-                      params={params}
-                      to="/@{$org}/settings/members"
+                      search={{ org: params.org }}
+                      to="/org/settings/members"
                     >
                       Manage
                     </Link>
@@ -330,8 +330,8 @@ function OrganizationRoute() {
                     {members.length > 5 && canManageMembers ? (
                       <Link
                         className="mt-1 text-left text-sm text-muted-foreground transition-colors hover:text-foreground"
-                        params={params}
-                        to="/@{$org}/settings/members"
+                        search={{ org: params.org }}
+                        to="/org/settings/members"
                       >
                         +{members.length - 5} more members
                       </Link>

@@ -10,5 +10,7 @@ export const Route = createFileRoute("/@{$org}/edit/")({
 
 function EditOrganizationRedirectRoute() {
   const params = Route.useParams()
-  return <Navigate params={params} to="/@{$org}/settings/general" />
+  return (
+    <Navigate search={{ org: params.org }} to="/org/settings/general" />
+  )
 }

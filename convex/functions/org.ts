@@ -345,3 +345,38 @@ export const findMyOrgs = authQuery.query(async ({ ctx }) => {
     underLimit: teams.length < maxOrgs,
   }
 })
+
+// Orgs where the caller can edit settings (role owner/admin/editor). Used by the
+// `/org/settings` selector. `listOrganizations` doesn't expose the caller's role,
+// so we read memberships directly. Security is still enforced per-org by
+// `getDetails`/`verifyOrgAccess`; this is only the selector's convenience filter.
+export const findMyEditableOrgs = authQuery.query(async ({ ctx }) => {
+  const memberships = await ctx.orm.query.member.findMany({
+    where: { userId: ctx.userId },
+    limit: 200,
+  })
+
+  const editable = memberships.filter(
+    (m: any) =>
+      m.role === "owner" || m.role === "admin" || m.role === "editor"
+  )
+
+  const orgs = await Promise.all(
+    editable.map(async (m: any) => {
+      const org = await findOrganization(ctx, { id: m.organizationId })
+      if (!org) return null
+      const resolved = await withResolvedLogo(org)
+      return {
+        id: resolved.id,
+        logo: resolved.logo,
+        name: resolved.name,
+        role: m.role as "owner" | "admin" | "editor",
+        slug: resolved.slug,
+      }
+    })
+  )
+
+  return orgs
+    .filter((o): o is NonNullable<typeof o> => o !== null)
+    .sort((a, b) => a.name.localeCompare(b.name))
+})

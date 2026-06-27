@@ -15,28 +15,32 @@ import { cn } from "@/lib/utils"
 import { titleMeta } from "@/lib/seo"
 import { FORM_LIMITS, emailSchema } from "@/lib/validation"
 
-export const Route = createFileRoute("/@{$org}/settings/members/")({
+import { useDelayedFlag } from "../-components/use-delayed-flag"
+import { SettingsSkeleton } from "../-components/settings-skeleton"
+import { useSettingsOrgSlug } from "../-components/use-settings-org"
+
+export const Route = createFileRoute("/org/settings/members/")({
   head: () => ({
     meta: [titleMeta(["Members"])],
   }),
-  loader: async ({ context, params }) => {
-    if (context.loaderToken) {
-      await Promise.all([
-        context.queryClient.ensureQueryData(
-          crpcServer.org.getDetails.queryOptions(
-            { slug: params.org },
-            { skipUnauth: true }
-          )
-        ),
-        context.queryClient.ensureQueryData(
-          crpcServer.orgMember.listMembers.queryOptions({ slug: params.org })
-        ),
-        context.queryClient.ensureQueryData(
-          crpcServer.orgMember.listPendingInvitations.queryOptions({
-            slug: params.org,
-          })
-        ),
-      ])
+  loader: ({ context, location }) => {
+    const orgSlug = (location.search as { org?: string }).org
+    if (context.loaderToken && orgSlug) {
+      // Warm the cache without blocking navigation so the skeleton can show.
+      void context.queryClient.ensureQueryData(
+        crpcServer.org.getDetails.queryOptions(
+          { slug: orgSlug },
+          { skipUnauth: true }
+        )
+      )
+      void context.queryClient.ensureQueryData(
+        crpcServer.orgMember.listMembers.queryOptions({ slug: orgSlug })
+      )
+      void context.queryClient.ensureQueryData(
+        crpcServer.orgMember.listPendingInvitations.queryOptions({
+          slug: orgSlug,
+        })
+      )
     }
   },
   component: MembersSettingsRoute,
@@ -52,17 +56,26 @@ function mutationErrorMessage(error: unknown) {
 }
 
 function MembersSettingsRoute() {
-  const params = Route.useParams()
+  const orgSlug = useSettingsOrgSlug()
   const crpc = useCRPC()
 
   const orgQuery = useQuery(
-    crpc.org.getDetails.queryOptions({ slug: params.org }, { skipUnauth: true })
+    crpc.org.getDetails.queryOptions(
+      { slug: orgSlug ?? "" },
+      { enabled: !!orgSlug, skipUnauth: true }
+    )
   )
   const membersQuery = useQuery(
-    crpc.orgMember.listMembers.queryOptions({ slug: params.org })
+    crpc.orgMember.listMembers.queryOptions(
+      { slug: orgSlug ?? "" },
+      { enabled: !!orgSlug }
+    )
   )
   const pendingQuery = useQuery(
-    crpc.orgMember.listPendingInvitations.queryOptions({ slug: params.org })
+    crpc.orgMember.listPendingInvitations.queryOptions(
+      { slug: orgSlug ?? "" },
+      { enabled: !!orgSlug }
+    )
   )
 
   const invite = useMutation(crpc.orgMember.inviteMember.mutationOptions())
@@ -83,8 +96,10 @@ function MembersSettingsRoute() {
   const data = membersQuery.data
   const organizationId = orgQuery.data?.org?.id
 
-  if (membersQuery.isLoading || orgQuery.isLoading) {
-    return <div className="h-64 animate-pulse rounded-xl border bg-muted/30" />
+  const isLoading = !orgSlug || membersQuery.isLoading || orgQuery.isLoading
+  const showSkeleton = useDelayedFlag(isLoading)
+  if (isLoading) {
+    return showSkeleton ? <SettingsSkeleton /> : null
   }
 
   if (!data || !organizationId) {

@@ -79,6 +79,7 @@ export const api = {
   },
   org: {
     create: createApiLeaf<"mutation", typeof import("../functions/org").create>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/org").create>("org:create"), { auth: "required", type: "mutation" }),
+    findMyEditableOrgs: createApiLeaf<"query", typeof import("../functions/org").findMyEditableOrgs>(createGeneratedFunctionReference<"query", "public", typeof import("../functions/org").findMyEditableOrgs>("org:findMyEditableOrgs"), { auth: "required", type: "query" }),
     findMyOrgs: createApiLeaf<"query", typeof import("../functions/org").findMyOrgs>(createGeneratedFunctionReference<"query", "public", typeof import("../functions/org").findMyOrgs>("org:findMyOrgs"), { auth: "required", type: "query" }),
     generateAvatarUploadUrl: createApiLeaf<"mutation", typeof import("../functions/org").generateAvatarUploadUrl>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/org").generateAvatarUploadUrl>("org:generateAvatarUploadUrl"), { auth: "required", type: "mutation" }),
     getDetails: createApiLeaf<"query", typeof import("../functions/org").getDetails>(createGeneratedFunctionReference<"query", "public", typeof import("../functions/org").getDetails>("org:getDetails"), { auth: "optional", type: "query" }),
