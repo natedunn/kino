@@ -1,0 +1,57 @@
+#!/usr/bin/env sh
+# Git post-checkout hook (wired via core.hooksPath = scripts/git-hooks, set by
+# the package.json "prepare" script on `pnpm install`).
+#
+# `git worktree add` performs an initial checkout in the new worktree, which runs
+# this hook. We use that to auto-run the tool-agnostic workspace setup, so a new
+# worktree is dev-ready no matter what created it (Helmor, Conductor, Cursor,
+# plain `git worktree add`, CI, …) — nothing here is tied to a specific app.
+#
+# Hook args: $1 = previous HEAD, $2 = new HEAD, $3 = 1 for a branch checkout,
+# 0 for a file checkout.
+#
+# NOTE: intentionally no `set -e` — `[ cond ] && cmd` would otherwise abort the
+# whole hook when a guard is false.
+
+old_head="${1:-}"
+checkout_flag="${3:-0}"
+
+# Only branch checkouts (worktree add / clone), not `git checkout -- file`.
+if [ "$checkout_flag" != "1" ]; then
+  exit 0
+fi
+
+# Only the INITIAL checkout of a new worktree/clone: git passes the all-zero SHA
+# as the previous HEAD. Ordinary branch switches pass a real SHA — skip those so
+# we don't re-run setup on every checkout.
+if [ "$old_head" != "0000000000000000000000000000000000000000" ]; then
+  exit 0
+fi
+
+# Escape hatch for anyone who wants to add a worktree without auto-setup.
+if [ "${KINO_SKIP_AUTO_SETUP:-}" = "1" ]; then
+  exit 0
+fi
+
+root="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+main_root="$(git worktree list 2>/dev/null | head -1 | awk '{print $1}')"
+
+# Don't auto-setup the main checkout (that's the developer's primary clone).
+if [ "$root" = "$main_root" ]; then
+  exit 0
+fi
+
+# Idempotent: if this worktree already has a seeded local Convex backend, skip.
+if [ -f "$root/.convex/local/default/config.json" ]; then
+  exit 0
+fi
+
+echo "[post-checkout] new worktree detected — running workspace setup."
+echo "[post-checkout] (set KINO_SKIP_AUTO_SETUP=1 before 'git worktree add' to skip)"
+
+# Never fail the checkout if setup errors; just tell the user how to finish.
+if ! (cd "$root" && pnpm run setup); then
+  echo "[post-checkout] workspace setup did not complete — run 'pnpm run setup' in the new worktree to finish."
+fi
+
+exit 0

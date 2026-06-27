@@ -7,6 +7,8 @@
     "dev:clean": "node scripts/dev-clean.mjs",
     "dev:stop": "node scripts/dev-stop.mjs",
     "dev:respread-ports": "node scripts/respread-convex-ports.mjs",
+    "setup": "bash scripts/setup-workspace.sh",
+    "prepare": "git config core.hooksPath scripts/git-hooks || true",
     "dev:anonymous": "KINO_CONVEX_MODE=anonymous node scripts/dev-supervisor.mjs",
     "dev:shared": "KINO_CONVEX_MODE=shared node scripts/dev-supervisor.mjs",
     "dev:vite": "VITE_PORTLESS_URL=${PORTLESS_URL:-} vite dev",
