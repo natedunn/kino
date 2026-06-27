@@ -12,6 +12,7 @@ import {
   projectLocalConfigPath as getProjectLocalConfigPath,
   readLocalEnv,
   stopLocalBackendForWorkspace,
+  stopStaleWorktreeProcesses,
   waitForLocalBackendToStart,
 } from "./lib/local-convex.mjs"
 
@@ -58,6 +59,12 @@ function startProcess(name, command, args, env = process.env) {
 }
 
 function prepareAnonymousConvex() {
+  // Reap Convex/Vite/portless processes orphaned by a previous, non-gracefully
+  // stopped `pnpm dev` of this worktree. Otherwise orphaned `convex dev` CLIs
+  // (whose backend is gone) retry forever and spam the console, and they pile up
+  // one stack per run.
+  stopStaleWorktreeProcesses(workspaceRoot)
+
   preserveSharedDevDeployment(workspaceRoot, "scripts/dev-supervisor.mjs")
   ensureAnonymousEnvFile(workspaceRoot)
 
