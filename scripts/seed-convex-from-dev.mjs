@@ -555,6 +555,7 @@ const targetEnv = options.target ? process.env : anonymousConvexEnv()
 
 if (!options.target) {
   run("pnpm", ["exec", "convex", "init"], { env: targetEnv })
+  stopRunningLocalBackendIfRequested()
   const ports = ensureWorktreeLocalBackendPorts(workspaceRoot)
   if (ports) {
     console.log(

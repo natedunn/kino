@@ -149,6 +149,13 @@ function portIsAvailableForWorkspace(port, workspaceRoot) {
   )
 }
 
+function portHasWorkspaceBackend(port, workspaceRoot) {
+  const stateDir = projectLocalStateDir(workspaceRoot)
+  return localBackendPids(port, workspaceRoot).some((pid) =>
+    processCommand(pid, workspaceRoot).includes(stateDir)
+  )
+}
+
 function updateEnvFileValues(filePath, values) {
   const lines = fs.existsSync(filePath)
     ? fs.readFileSync(filePath, "utf8").split(/\r?\n/)
@@ -188,9 +195,16 @@ export function ensureWorktreeLocalBackendPorts(workspaceRoot) {
     Number.isInteger(configuredSite) &&
     portIsAvailableForWorkspace(configuredCloud, workspaceRoot) &&
     portIsAvailableForWorkspace(configuredSite, workspaceRoot)
+  const configuredPortsHaveRunningWorkspaceBackend =
+    Number.isInteger(configuredCloud) &&
+    Number.isInteger(configuredSite) &&
+    (portHasWorkspaceBackend(configuredCloud, workspaceRoot) ||
+      portHasWorkspaceBackend(configuredSite, workspaceRoot))
 
   let ports =
-    configuredPortsAreUsable && configuredCloud !== 3210 && configuredSite !== 3211
+    configuredPortsAreUsable &&
+    (configuredPortsHaveRunningWorkspaceBackend ||
+      (configuredCloud !== 3210 && configuredSite !== 3211))
       ? { cloud: configuredCloud, site: configuredSite }
       : null
 
