@@ -426,11 +426,16 @@ export function stopLocalBackendForWorkspace(
 // The supervisor's own command is relative (`node scripts/dev-supervisor.mjs`)
 // and its pnpm/sh parents don't carry the worktree path, so they're never hit;
 // we also skip our own pid and parent for safety.
-export function stopStaleWorktreeProcesses(
-  workspaceRoot,
-  { logPrefix = "[dev]" } = {}
-) {
-  if (process.platform === "win32") return
+//
+// The shared portless proxy daemon (`portless … proxy start`) is deliberately
+// left alone even if it was started from this worktree's node_modules — every
+// other worktree routes through it on :1355, so killing it would drop their
+// tunnels. Only this worktree's portless *client* is stopped.
+//
+// Returns the list of pids it signalled (empty when nothing matched), so callers
+// can decide how to report it.
+export function stopStaleWorktreeProcesses(workspaceRoot) {
+  if (process.platform === "win32") return []
 
   const marker = workspaceRoot.endsWith(path.sep)
     ? workspaceRoot
@@ -443,7 +448,7 @@ export function stopStaleWorktreeProcesses(
     encoding: "utf8",
     stdio: ["ignore", "pipe", "ignore"],
   })
-  if (result.status !== 0 || !result.stdout) return
+  if (result.status !== 0 || !result.stdout) return []
 
   const victims = []
   for (const line of result.stdout.split("\n")) {
@@ -454,7 +459,13 @@ export function stopStaleWorktreeProcesses(
     if (pid === self || pid === parent) continue
     if (!command.includes(marker)) continue
 
-    const isStaleDevProcess =
+    // Never touch the shared portless proxy daemon, even if it was launched from
+    // this worktree — other worktrees depend on it.
+    const isPortlessProxyDaemon =
+      /\/portless\/[^\s]*cli\.js\b[\s\S]*\bproxy\b[\s\S]*\bstart\b/.test(command)
+    if (isPortlessProxyDaemon) continue
+
+    const isWorktreeDevProcess =
       /\/convex\/bin\/main\.js\b[\s\S]*\bdev\b/.test(command) ||
       (command.includes("convex-local-backend") &&
         command.includes(stateDir)) ||
@@ -462,18 +473,13 @@ export function stopStaleWorktreeProcesses(
       command.includes("workerd serve") ||
       /\/portless\/[^\s]*cli\.js\b/.test(command)
 
-    if (isStaleDevProcess) victims.push(pid)
+    if (isWorktreeDevProcess) victims.push(pid)
   }
 
-  if (victims.length === 0) return
+  if (victims.length === 0) return []
 
-  console.log(
-    `${logPrefix} reaping ${victims.length} stale dev process(es) from a previous run: ${victims.join(
-      ", "
-    )}`
-  )
   terminatePids(victims, "SIGTERM")
-  if (waitForPidsToStop(victims, 5000)) return
+  if (waitForPidsToStop(victims, 5000)) return victims
 
   const remaining = victims.filter((pid) => {
     try {
@@ -485,4 +491,5 @@ export function stopStaleWorktreeProcesses(
   })
   terminatePids(remaining, "SIGKILL")
   waitForPidsToStop(remaining, 2000)
+  return victims
 }
