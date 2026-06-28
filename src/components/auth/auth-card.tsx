@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { ReactNode } from "react"
 
 /**
  * Presentational parts for the auth pages. The card *box* (border, radius,
@@ -15,7 +15,7 @@ export function AuthHeader(props: { title: string; description?: ReactNode }) {
         <p className="text-sm text-muted-foreground">{props.description}</p>
       ) : null}
     </div>
-  );
+  )
 }
 
 export function AuthFooter(props: { children: ReactNode }) {
@@ -23,14 +23,14 @@ export function AuthFooter(props: { children: ReactNode }) {
     <div className="mt-6 border-t pt-4 text-sm text-muted-foreground">
       {props.children}
     </div>
-  );
+  )
 }
 
 /** A labeled input row used across the auth forms. */
 export function AuthField(props: {
-  id: string;
-  label: string;
-  children: ReactNode;
+  id: string
+  label: string
+  children: ReactNode
 }) {
   return (
     <div className="flex flex-col gap-1.5">
@@ -39,5 +39,5 @@ export function AuthField(props: {
       </label>
       {props.children}
     </div>
-  );
+  )
 }

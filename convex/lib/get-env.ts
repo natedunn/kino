@@ -91,7 +91,8 @@ export function getGitHubRelayEnv() {
  *   inbound delivery events.
  */
 export function getNuntlyEnv() {
-  const value = (parts: Array<string>) => getRuntimeEnvValue(["NUNTLY", ...parts])
+  const value = (parts: Array<string>) =>
+    getRuntimeEnvValue(["NUNTLY", ...parts])
 
   return {
     apiKey: value(["API", "KEY"]),

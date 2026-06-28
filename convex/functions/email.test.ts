@@ -39,7 +39,10 @@ describe("recordWebhookEvent", () => {
 
   it("dedupes a repeated event id (Nuntly retries non-200s)", async () => {
     const t = convexTest()
-    const first = await t.mutation(internal.email.recordWebhookEvent, makeEvent())
+    const first = await t.mutation(
+      internal.email.recordWebhookEvent,
+      makeEvent()
+    )
     const second = await t.mutation(
       internal.email.recordWebhookEvent,
       makeEvent()
@@ -56,8 +59,14 @@ describe("recordWebhookEvent", () => {
 
   it("stores distinct event ids separately", async () => {
     const t = convexTest()
-    await t.mutation(internal.email.recordWebhookEvent, makeEvent({ eventId: "evt_a" }))
-    await t.mutation(internal.email.recordWebhookEvent, makeEvent({ eventId: "evt_b" }))
+    await t.mutation(
+      internal.email.recordWebhookEvent,
+      makeEvent({ eventId: "evt_a" })
+    )
+    await t.mutation(
+      internal.email.recordWebhookEvent,
+      makeEvent({ eventId: "evt_b" })
+    )
 
     const rows = await t.run(async (baseCtx) => {
       const ctx = await runCtx(baseCtx)

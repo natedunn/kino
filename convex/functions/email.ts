@@ -3,6 +3,7 @@ import { privateAction, privateMutation } from "../lib/crpc"
 import { sendEmail } from "../lib/nuntly"
 import { EMAIL_SENDERS } from "../lib/email-senders"
 import { emailEventTable } from "./schema"
+import type { EmailSender } from "../lib/email-senders"
 
 const recipientsSchema = z.union([
   z.string().email(),
@@ -10,7 +11,7 @@ const recipientsSchema = z.union([
 ])
 
 const senderSchema = z.enum(
-  Object.keys(EMAIL_SENDERS) as [keyof typeof EMAIL_SENDERS]
+  Object.keys(EMAIL_SENDERS) as [EmailSender, ...Array<EmailSender>]
 )
 
 const tagSchema = z.object({

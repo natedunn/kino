@@ -1,16 +1,16 @@
-'use client';
+"use client"
 
-import { Outlet, createFileRoute } from '@tanstack/react-router';
+import { Outlet, createFileRoute } from "@tanstack/react-router"
 
-import { AuthBackground } from '@/components/auth/auth-background';
-import { titleMeta } from '@/lib/seo';
+import { AuthBackground } from "@/components/auth/auth-background"
+import { titleMeta } from "@/lib/seo"
 
-export const Route = createFileRoute('/auth')({
+export const Route = createFileRoute("/auth")({
   head: () => ({
-    meta: [titleMeta(['Sign in'])],
+    meta: [titleMeta(["Sign in"])],
   }),
   component: AuthLayout,
-});
+})
 
 /**
  * Resolve a safe in-app redirect target after authentication. Avoids bouncing
@@ -19,17 +19,17 @@ export const Route = createFileRoute('/auth')({
  */
 export function getSafeRedirectTarget(redirect: string | undefined) {
   if (!redirect) {
-    return '/dashboard';
+    return "/dashboard"
   }
 
   try {
-    const resolved = new URL(redirect, 'https://usekino.com');
-    if (resolved.pathname === '/auth' || resolved.pathname === '/') {
-      return '/dashboard';
+    const resolved = new URL(redirect, "https://usekino.com")
+    if (resolved.pathname === "/auth" || resolved.pathname === "/") {
+      return "/dashboard"
     }
-    return `${resolved.pathname}${resolved.search}${resolved.hash}`;
+    return `${resolved.pathname}${resolved.search}${resolved.hash}`
   } catch {
-    return '/dashboard';
+    return "/dashboard"
   }
 }
 
@@ -43,5 +43,5 @@ function AuthLayout() {
         <Outlet />
       </main>
     </div>
-  );
+  )
 }

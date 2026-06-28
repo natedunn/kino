@@ -37,8 +37,16 @@ export function InlineAlert({
   children: ReactNode
   className?: string
 } & VariantProps<typeof inlineAlertVariants>) {
+  // `danger` alerts are surfaced as assertive live regions so screen readers
+  // announce errors (e.g. failed sign-in, password mismatch) the moment they
+  // render, instead of leaving them silent for non-sighted users.
+  const isError = variant === "danger"
   return (
-    <div className={cn(inlineAlertVariants({ className, size, variant }))}>
+    <div
+      aria-live={isError ? "assertive" : undefined}
+      className={cn(inlineAlertVariants({ className, size, variant }))}
+      role={isError ? "alert" : undefined}
+    >
       {children}
     </div>
   )

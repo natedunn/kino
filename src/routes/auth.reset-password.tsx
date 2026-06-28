@@ -1,66 +1,66 @@
-'use client';
+"use client"
 
-import { useState } from 'react';
-import { Link, createFileRoute, useNavigate } from '@tanstack/react-router';
+import { useState } from "react"
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router"
 
-import { AuthField, AuthFooter, AuthHeader } from '@/components/auth/auth-card';
-import { InlineAlert } from '@/components/inline-alert';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { trackAuthError, trackAuthSuccess } from '@/lib/auth-analytics';
-import { authClient } from '@/lib/convex/auth-client';
-import { titleMeta } from '@/lib/seo';
+import { AuthField, AuthFooter, AuthHeader } from "@/components/auth/auth-card"
+import { InlineAlert } from "@/components/inline-alert"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { trackAuthError, trackAuthSuccess } from "@/lib/auth-analytics"
+import { authClient } from "@/lib/convex/auth-client"
+import { titleMeta } from "@/lib/seo"
 
-export const Route = createFileRoute('/auth/reset-password')({
-  head: () => ({ meta: [titleMeta(['Set a new password'])] }),
+export const Route = createFileRoute("/auth/reset-password")({
+  head: () => ({ meta: [titleMeta(["Set a new password"])] }),
   validateSearch: (
-    search: Record<string, unknown>,
+    search: Record<string, unknown>
   ): { token?: string; error?: string } => ({
-    ...(typeof search.token === 'string' ? { token: search.token } : {}),
-    ...(typeof search.error === 'string' ? { error: search.error } : {}),
+    ...(typeof search.token === "string" ? { token: search.token } : {}),
+    ...(typeof search.error === "string" ? { error: search.error } : {}),
   }),
   component: ResetPasswordPage,
-});
+})
 
 function ResetPasswordPage() {
-  const { token, error: tokenError } = Route.useSearch();
-  const navigate = useNavigate();
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState(false);
+  const { token, error: tokenError } = Route.useSearch()
+  const navigate = useNavigate()
+  const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const [pending, setPending] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [done, setDone] = useState(false)
 
-  const passwordsMatch = password === confirmPassword;
-  const showPasswordMismatch = confirmPassword.length > 0 && !passwordsMatch;
+  const passwordsMatch = password === confirmPassword
+  const showPasswordMismatch = confirmPassword.length > 0 && !passwordsMatch
 
   async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!token) return;
+    e.preventDefault()
+    if (!token) return
     if (!passwordsMatch) {
-      setError('Passwords don’t match.');
-      return;
+      setError("Passwords don’t match.")
+      return
     }
-    setError(null);
-    setPending(true);
+    setError(null)
+    setPending(true)
     try {
       const res = await authClient.resetPassword({
         newPassword: password,
         token,
-      });
+      })
       if (res.error) {
-        trackAuthError('password_reset', res.error);
-        setError(res.error.message ?? 'Could not reset your password.');
+        trackAuthError("password_reset", res.error)
+        setError(res.error.message ?? "Could not reset your password.")
       } else {
-        trackAuthSuccess('password_reset');
-        setDone(true);
-        setTimeout(() => navigate({ to: '/auth' }), 1500);
+        trackAuthSuccess("password_reset")
+        setDone(true)
+        setTimeout(() => navigate({ to: "/auth" }), 1500)
       }
     } catch (err) {
-      trackAuthError('password_reset', err);
-      setError(err instanceof Error ? err.message : 'Something went wrong.');
+      trackAuthError("password_reset", err)
+      setError(err instanceof Error ? err.message : "Something went wrong.")
     } finally {
-      setPending(false);
+      setPending(false)
     }
   }
 
@@ -75,12 +75,15 @@ function ResetPasswordPage() {
           Please request a fresh password reset email and try again.
         </InlineAlert>
         <AuthFooter>
-          <Link className="link-text font-medium text-foreground" to="/auth/forgot-password">
+          <Link
+            className="link-text font-medium text-foreground"
+            to="/auth/forgot-password"
+          >
             Request a new link
           </Link>
         </AuthFooter>
       </>
-    );
+    )
   }
 
   return (
@@ -134,10 +137,10 @@ function ResetPasswordPage() {
             size="lg"
             type="submit"
           >
-            {pending ? 'Updating…' : 'Update password'}
+            {pending ? "Updating…" : "Update password"}
           </Button>
         </form>
       )}
     </>
-  );
+  )
 }

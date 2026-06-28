@@ -65,8 +65,7 @@ export default defineAuth(() => {
   // NUNTLY_EMAIL_DOMAIN, or derived from NUNTLY_FROM). Missing either keeps the
   // app GitHub-only rather than throwing at auth init.
   const emailConfigured =
-    Boolean(nuntly.apiKey) &&
-    Boolean(nuntly.emailDomain || nuntly.fromAddress)
+    Boolean(nuntly.apiKey) && Boolean(nuntly.emailDomain || nuntly.fromAddress)
   if (!emailConfigured) {
     console.warn(
       "[nuntly] Email is DISABLED (auth verification, reset, magic link, OTP, " +
@@ -123,8 +122,16 @@ export default defineAuth(() => {
     emailAndPassword: {
       // sendResetPassword is injected by the betterEmail plugin's init().
       enabled: true,
+      // Require a verified email before a password account can sign in. This
+      // means sign-up does NOT create a session — the user must click the
+      // verification link first. Only enforced when email is actually
+      // configured; otherwise there'd be no way to verify and password users
+      // would be permanently locked out. GitHub OAuth supplies an already-
+      // verified email, so it is unaffected.
+      ...(emailPlugin ? { requireEmailVerification: true } : {}),
     },
-    // When email is configured, send a verification email on sign-up.
+    // When email is configured, send a verification email on sign-up. Combined
+    // with requireEmailVerification above, the link is what unlocks sign-in.
     ...(emailPlugin ? { emailVerification: { sendOnSignUp: true } } : {}),
     baseURL: {
       allowedHosts: getBetterAuthAllowedHosts(),

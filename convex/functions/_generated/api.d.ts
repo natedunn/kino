@@ -728,6 +728,7 @@ export declare const api: {
  */
 export declare const internal: {
   crons: {
+    cleanupEmailEvents: FunctionReference<"mutation", "internal", {}, any>;
     cleanupWebhookDeliveries: FunctionReference<
       "mutation",
       "internal",

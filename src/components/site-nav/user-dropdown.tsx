@@ -39,9 +39,7 @@ export function UserDropdown({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <NavButton
-          className="h-8 w-8 rounded-full px-0 min-[460px]:w-auto min-[460px]:rounded-md min-[460px]:px-2.5"
-        >
+        <NavButton className="h-8 w-8 rounded-full px-0 min-[460px]:w-auto min-[460px]:rounded-md min-[460px]:px-2.5">
           <Avatar className="size-6 border">
             <AvatarImage src={user.imageUrl} />
             <AvatarFallback>

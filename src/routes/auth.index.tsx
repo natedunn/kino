@@ -44,7 +44,34 @@ function SignInPage() {
     null
   )
   const [error, setError] = useState<string | null>(null)
+  // Set when sign-in is rejected because the email isn't verified yet. We then
+  // offer a one-click resend instead of a dead-end error.
+  const [needsVerification, setNeedsVerification] = useState(false)
+  const [resendState, setResendState] = useState<"idle" | "sending" | "sent">(
+    "idle"
+  )
   const busy = submitting !== null
+
+  async function onResendVerification() {
+    setResendState("sending")
+    try {
+      await authClient.sendVerificationEmail({
+        email,
+        callbackURL: new URL(
+          "/auth/verify-email",
+          window.location.origin
+        ).toString(),
+      })
+      trackAuthSuccess("email_verification", { method: "resend" })
+      setResendState("sent")
+    } catch (err) {
+      trackAuthError("email_verification", err, { method: "resend" })
+      setResendState("idle")
+      setError(
+        err instanceof Error ? err.message : "Could not resend the email."
+      )
+    }
+  }
 
   function callbackURL() {
     return new URL(redirectTarget, window.location.origin).toString()
@@ -77,6 +104,8 @@ function SignInPage() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
+    setNeedsVerification(false)
+    setResendState("idle")
     setSubmitting("password")
     try {
       const res = await authClient.signIn.email({
@@ -86,7 +115,17 @@ function SignInPage() {
       })
       if (res.error) {
         trackAuthError("sign_in", res.error, { method: "password" })
-        setError(res.error.message ?? "Could not sign in.")
+        // Email-and-password accounts must verify before they can sign in
+        // (requireEmailVerification). Surface a resend affordance rather than a
+        // dead-end error.
+        if (
+          res.error.code === "EMAIL_NOT_VERIFIED" ||
+          res.error.status === 403
+        ) {
+          setNeedsVerification(true)
+        } else {
+          setError(res.error.message ?? "Could not sign in.")
+        }
         setSubmitting(null)
       } else {
         trackAuthSuccess("sign_in", { method: "password" })
@@ -191,6 +230,35 @@ function SignInPage() {
           </AuthField>
 
           {error ? <InlineAlert variant="danger">{error}</InlineAlert> : null}
+
+          {needsVerification ? (
+            <InlineAlert variant="warning">
+              {resendState === "sent" ? (
+                <>
+                  Verification link sent to {email}. Check your inbox, then sign
+                  in.
+                </>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  <span>
+                    Your email isn’t verified yet. Verify it to finish signing
+                    in.
+                  </span>
+                  <Button
+                    disabled={resendState === "sending"}
+                    onClick={onResendVerification}
+                    size="sm"
+                    type="button"
+                    variant="outline"
+                  >
+                    {resendState === "sending"
+                      ? "Sending…"
+                      : "Resend verification email"}
+                  </Button>
+                </div>
+              )}
+            </InlineAlert>
+          ) : null}
 
           <Button disabled={busy} size="lg" type="submit">
             {submitting === "password" ? (

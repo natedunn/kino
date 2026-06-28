@@ -1,5 +1,5 @@
 import {
-  
+  type AnyColumn,
   aggregateIndex,
   arrayOf,
   boolean,
@@ -13,11 +13,10 @@ import {
   searchIndex,
   text,
   textEnum,
-  timestamp
+  timestamp,
 } from "kitcn/orm"
-import { VALIDATION_LIMITS, normalizeSlug } from "../lib/validation"
+import { normalizeSlug, VALIDATION_LIMITS } from "../lib/validation"
 import { targetGranularities } from "../shared/target"
-import type {AnyColumn} from "kitcn/orm";
 
 const PROFILE_ROLES = ["system:admin", "system:editor", "user"] as const
 const PROJECT_VISIBILITIES = ["public", "private", "archived"] as const

@@ -1,3 +1,4 @@
+import { getEnv } from "../lib/get-env"
 import {
   EmailButton,
   EmailFallbackLink,
@@ -18,7 +19,9 @@ function VerificationEmail({ user, url }: EmailProps<"verification-email">) {
   return (
     <EmailLayout preview="Verify your email address">
       <EmailHeading>Verify your email</EmailHeading>
-      <EmailText>Hi {name}, confirm your email address to finish setting up your account.</EmailText>
+      <EmailText>
+        Hi {name}, confirm your email address to finish setting up your account.
+      </EmailText>
       <EmailButton href={url}>Verify email</EmailButton>
       <EmailFallbackLink url={url} />
     </EmailLayout>
@@ -31,8 +34,8 @@ function ResetPasswordEmail({ user, url }: EmailProps<"reset-password">) {
     <EmailLayout preview="Reset your password">
       <EmailHeading>Reset your password</EmailHeading>
       <EmailText>
-        Hi {name}, we received a request to reset your password. Click below to choose a new one.
-        If you didn’t ask for this, you can ignore this email.
+        Hi {name}, we received a request to reset your password. Click below to
+        choose a new one. If you didn’t ask for this, you can ignore this email.
       </EmailText>
       <EmailButton href={url}>Reset password</EmailButton>
       <EmailFallbackLink url={url} />
@@ -53,8 +56,8 @@ function OrganizationInvitationEmail({
     <EmailLayout preview={`Join ${organization.name} on Kino`}>
       <EmailHeading>Join {organization.name}</EmailHeading>
       <EmailText>
-        {inviterName} invited you to join <strong>{organization.name}</strong> on Kino as{" "}
-        {invitation.role}.
+        {inviterName} invited you to join <strong>{organization.name}</strong>{" "}
+        on Kino as {invitation.role}.
       </EmailText>
       <EmailButton href={acceptUrl}>Accept invitation</EmailButton>
       <EmailFallbackLink url={acceptUrl} />
@@ -63,10 +66,10 @@ function OrganizationInvitationEmail({
 }
 
 function getSiteUrl() {
-  const env = (
-    globalThis as { process?: { env?: Record<string, string | undefined> } }
-  ).process?.env
-  return (env?.SITE_URL ?? "http://localhost:3000").replace(/\/$/, "")
+  // Reuse the validated app env (single source of truth) instead of re-reading
+  // process.env with a hand-rolled localhost fallback — otherwise a missing
+  // SITE_URL would silently point invitation links at localhost.
+  return getEnv().SITE_URL.replace(/\/$/, "")
 }
 
 export const emailTemplates: {
