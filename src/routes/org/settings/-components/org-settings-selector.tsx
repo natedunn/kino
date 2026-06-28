@@ -75,7 +75,7 @@ export function OrgSettingsSelector({
           <ChevronsUpDown className="size-4 shrink-0 text-muted-foreground" />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-[var(--anchor-width)]">
+      <DropdownMenuContent align="start" className="w-(--anchor-width)">
         <DropdownMenuLabel className="text-xs text-muted-foreground">
           Organizations you can edit
         </DropdownMenuLabel>

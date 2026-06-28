@@ -30,7 +30,6 @@ import { Route as AccountProfileIndexRouteImport } from './routes/account/profil
 import { Route as AccountNotificationsIndexRouteImport } from './routes/account/notifications/index'
 import { Route as AccountDataIndexRouteImport } from './routes/account/data/index'
 import { Route as AccountAppearanceIndexRouteImport } from './routes/account/appearance/index'
-import { Route as AtChar123orgChar125EditIndexRouteImport } from './routes/@{$org}/edit/index'
 import { Route as AtChar123orgChar125CreateProjectIndexRouteImport } from './routes/@{$org}/create-project/index'
 import { Route as AtChar123orgChar125ProjectIndexRouteImport } from './routes/@{$org}/$project/index'
 import { Route as ApiGithubCallbackRouteImport } from './routes/api/github/callback'
@@ -172,12 +171,6 @@ const AccountAppearanceIndexRoute = AccountAppearanceIndexRouteImport.update({
   path: '/appearance/',
   getParentRoute: () => AccountRouteRoute,
 } as any)
-const AtChar123orgChar125EditIndexRoute =
-  AtChar123orgChar125EditIndexRouteImport.update({
-    id: '/edit/',
-    path: '/edit/',
-    getParentRoute: () => AtChar123orgChar125RouteRoute,
-  } as any)
 const AtChar123orgChar125CreateProjectIndexRoute =
   AtChar123orgChar125CreateProjectIndexRouteImport.update({
     id: '/create-project/',
@@ -380,7 +373,6 @@ export interface FileRoutesByFullPath {
   '/api/github/callback': typeof ApiGithubCallbackRoute
   '/@{$org}/$project/': typeof AtChar123orgChar125ProjectIndexRoute
   '/@{$org}/create-project/': typeof AtChar123orgChar125CreateProjectIndexRoute
-  '/@{$org}/edit/': typeof AtChar123orgChar125EditIndexRoute
   '/account/appearance/': typeof AccountAppearanceIndexRoute
   '/account/data/': typeof AccountDataIndexRoute
   '/account/notifications/': typeof AccountNotificationsIndexRoute
@@ -429,7 +421,6 @@ export interface FileRoutesByTo {
   '/api/github/callback': typeof ApiGithubCallbackRoute
   '/@{$org}/$project': typeof AtChar123orgChar125ProjectIndexRoute
   '/@{$org}/create-project': typeof AtChar123orgChar125CreateProjectIndexRoute
-  '/@{$org}/edit': typeof AtChar123orgChar125EditIndexRoute
   '/account/appearance': typeof AccountAppearanceIndexRoute
   '/account/data': typeof AccountDataIndexRoute
   '/account/notifications': typeof AccountNotificationsIndexRoute
@@ -485,7 +476,6 @@ export interface FileRoutesById {
   '/api/github/callback': typeof ApiGithubCallbackRoute
   '/@{$org}/$project/': typeof AtChar123orgChar125ProjectIndexRoute
   '/@{$org}/create-project/': typeof AtChar123orgChar125CreateProjectIndexRoute
-  '/@{$org}/edit/': typeof AtChar123orgChar125EditIndexRoute
   '/account/appearance/': typeof AccountAppearanceIndexRoute
   '/account/data/': typeof AccountDataIndexRoute
   '/account/notifications/': typeof AccountNotificationsIndexRoute
@@ -542,7 +532,6 @@ export interface FileRouteTypes {
     | '/api/github/callback'
     | '/@{$org}/$project/'
     | '/@{$org}/create-project/'
-    | '/@{$org}/edit/'
     | '/account/appearance/'
     | '/account/data/'
     | '/account/notifications/'
@@ -591,7 +580,6 @@ export interface FileRouteTypes {
     | '/api/github/callback'
     | '/@{$org}/$project'
     | '/@{$org}/create-project'
-    | '/@{$org}/edit'
     | '/account/appearance'
     | '/account/data'
     | '/account/notifications'
@@ -646,7 +634,6 @@ export interface FileRouteTypes {
     | '/api/github/callback'
     | '/@{$org}/$project/'
     | '/@{$org}/create-project/'
-    | '/@{$org}/edit/'
     | '/account/appearance/'
     | '/account/data/'
     | '/account/notifications/'
@@ -848,13 +835,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/account/appearance/'
       preLoaderRoute: typeof AccountAppearanceIndexRouteImport
       parentRoute: typeof AccountRouteRoute
-    }
-    '/@{$org}/edit/': {
-      id: '/@{$org}/edit/'
-      path: '/edit'
-      fullPath: '/@{$org}/edit/'
-      preLoaderRoute: typeof AtChar123orgChar125EditIndexRouteImport
-      parentRoute: typeof AtChar123orgChar125RouteRoute
     }
     '/@{$org}/create-project/': {
       id: '/@{$org}/create-project/'
@@ -1184,7 +1164,6 @@ interface AtChar123orgChar125RouteRouteChildren {
   AtChar123orgChar125ProjectRouteRoute: typeof AtChar123orgChar125ProjectRouteRouteWithChildren
   AtChar123orgChar125IndexRoute: typeof AtChar123orgChar125IndexRoute
   AtChar123orgChar125CreateProjectIndexRoute: typeof AtChar123orgChar125CreateProjectIndexRoute
-  AtChar123orgChar125EditIndexRoute: typeof AtChar123orgChar125EditIndexRoute
   AtChar123orgChar125IntegrationsGithubIndexRoute: typeof AtChar123orgChar125IntegrationsGithubIndexRoute
 }
 
@@ -1195,7 +1174,6 @@ const AtChar123orgChar125RouteRouteChildren: AtChar123orgChar125RouteRouteChildr
     AtChar123orgChar125IndexRoute: AtChar123orgChar125IndexRoute,
     AtChar123orgChar125CreateProjectIndexRoute:
       AtChar123orgChar125CreateProjectIndexRoute,
-    AtChar123orgChar125EditIndexRoute: AtChar123orgChar125EditIndexRoute,
     AtChar123orgChar125IntegrationsGithubIndexRoute:
       AtChar123orgChar125IntegrationsGithubIndexRoute,
   }

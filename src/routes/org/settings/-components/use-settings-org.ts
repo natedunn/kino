@@ -88,6 +88,9 @@ export function useSettingsOrgController() {
     if (slug === searchOrg) return
     writeStoredOrg(slug)
     void navigate({
+      // Replace rather than push so switching orgs doesn't stack history
+      // entries the Back button would have to walk through.
+      replace: true,
       search: (prev) => ({ ...prev, org: slug }),
       to: pathname,
     })
