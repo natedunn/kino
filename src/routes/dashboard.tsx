@@ -171,7 +171,7 @@ function OrgSection({
             />
           </Button>
           <Button asChild variant="ghost" size="sm">
-            <Link to="/@{$org}/edit" params={{ org: org.slug }}>
+            <Link to="/org/settings/general" search={{ org: org.slug }}>
               <Settings className="size-3.5" />
               <span className="sr-only sm:not-sr-only">Settings</span>
             </Link>

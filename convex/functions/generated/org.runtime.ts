@@ -15,6 +15,7 @@ import type { OrmTriggerContext } from 'kitcn/orm';
 
 const procedureRegistry = {
   "create": ["mutation", typedProcedureResolver(createGeneratedFunctionReference<"mutation", "public", typeof import("../org").create>("org:create"), () => (require("../org") as Record<string, unknown>)["create"])],
+  "findMyEditableOrgs": ["query", typedProcedureResolver(createGeneratedFunctionReference<"query", "public", typeof import("../org").findMyEditableOrgs>("org:findMyEditableOrgs"), () => (require("../org") as Record<string, unknown>)["findMyEditableOrgs"])],
   "findMyOrgs": ["query", typedProcedureResolver(createGeneratedFunctionReference<"query", "public", typeof import("../org").findMyOrgs>("org:findMyOrgs"), () => (require("../org") as Record<string, unknown>)["findMyOrgs"])],
   "generateAvatarUploadUrl": ["mutation", typedProcedureResolver(createGeneratedFunctionReference<"mutation", "public", typeof import("../org").generateAvatarUploadUrl>("org:generateAvatarUploadUrl"), () => (require("../org") as Record<string, unknown>)["generateAvatarUploadUrl"])],
   "getDetails": ["query", typedProcedureResolver(createGeneratedFunctionReference<"query", "public", typeof import("../org").getDetails>("org:getDetails"), () => (require("../org") as Record<string, unknown>)["getDetails"])],

@@ -5,6 +5,7 @@ import { CRPCError } from "kitcn/server"
 import { authMutation, authQuery, optionalAuthQuery } from "../lib/crpc"
 import {
   LIMITS,
+  canEditOrgRole,
   ensureUniqueOrgSlug,
   findOrganization,
   getCurrentProfile,
@@ -344,4 +345,40 @@ export const findMyOrgs = authQuery.query(async ({ ctx }) => {
     teams: await Promise.all(teams.map((team: any) => withResolvedLogo(team))),
     underLimit: teams.length < maxOrgs,
   }
+})
+
+// Orgs where the caller can edit settings (role owner/admin/editor). Used by the
+// `/org/settings` selector. `listOrganizations` doesn't expose the caller's role,
+// so we read memberships directly. Security is still enforced per-org by
+// `getDetails`/`verifyOrgAccess`; this is only the selector's convenience filter.
+export const findMyEditableOrgs = authQuery.query(async ({ ctx }) => {
+  const memberships = await ctx.orm.query.member.findMany({
+    where: { userId: ctx.userId },
+    // Bound by the highest org tier so this can never read an unbounded list;
+    // mirrors the cap used by `create`/`findMyOrgs`.
+    limit: LIMITS.ADMIN.MAX_ORGS,
+  })
+
+  const editable = memberships.filter((m) => canEditOrgRole(m.role))
+
+  // One indexed lookup per editable org, run in parallel and capped by the
+  // membership limit above.
+  const orgs = await Promise.all(
+    editable.map(async (m) => {
+      const org = await findOrganization(ctx, { id: m.organizationId })
+      if (!org) return null
+      const resolved = await withResolvedLogo(org)
+      return {
+        id: resolved.id,
+        logo: resolved.logo,
+        name: resolved.name,
+        role: m.role as "owner" | "admin" | "editor",
+        slug: resolved.slug,
+      }
+    })
+  )
+
+  return orgs
+    .filter((o): o is NonNullable<typeof o> => o !== null)
+    .sort((a, b) => a.name.localeCompare(b.name))
 })

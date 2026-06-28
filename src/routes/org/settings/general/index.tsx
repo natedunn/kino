@@ -22,6 +22,13 @@ import {
   validationMessage,
 } from "@/lib/validation"
 
+import { useDelayedFlag } from "../-components/use-delayed-flag"
+import { SettingsSkeleton } from "../-components/settings-skeleton"
+import {
+  persistSettingsOrg,
+  useSettingsOrgSlug,
+} from "../-components/use-settings-org"
+
 type GeneralSettingsFormValues = {
   avatarFile: File | null
   name: string
@@ -63,15 +70,18 @@ function AvatarPreview({
   )
 }
 
-export const Route = createFileRoute("/@{$org}/settings/general/")({
+export const Route = createFileRoute("/org/settings/general/")({
   head: () => ({
     meta: [titleMeta(["General Settings"])],
   }),
-  loader: async ({ context, params }) => {
-    if (context.loaderToken) {
-      await context.queryClient.ensureQueryData(
+  loader: ({ context, location }) => {
+    const orgSlug = (location.search as { org?: string }).org
+    if (context.loaderToken && orgSlug) {
+      // Warm the cache without blocking navigation, so switching orgs renders
+      // the page immediately and its skeleton animates until data is ready.
+      void context.queryClient.ensureQueryData(
         crpcServer.org.getDetails.queryOptions(
-          { slug: params.org },
+          { slug: orgSlug },
           { skipUnauth: true }
         )
       )
@@ -81,23 +91,27 @@ export const Route = createFileRoute("/@{$org}/settings/general/")({
 })
 
 function GeneralSettingsRoute() {
-  const params = Route.useParams()
+  const orgSlug = useSettingsOrgSlug()
   const navigate = useNavigate()
   const crpc = useCRPC()
-  const slugUrlPrefix = useMemo(() => {
-    const siteUrl =
-      typeof window === "undefined"
-        ? (import.meta.env.VITE_SITE_URL as string | undefined)
-        : window.location.origin
-
-    return `${(siteUrl ?? "https://kino.io").replace(/^https?:\/\//, "").replace(/\/$/, "")}/@`
+  // Start from the SSR-safe value so the first client render matches the server,
+  // then swap to the live origin after mount to avoid a hydration mismatch.
+  const [originHost, setOriginHost] = useState<string>(
+    () => (import.meta.env.VITE_SITE_URL as string | undefined) ?? "https://kino.io"
+  )
+  useEffect(() => {
+    setOriginHost(window.location.origin)
   }, [])
+  const slugUrlPrefix = useMemo(
+    () => `${originHost.replace(/^https?:\/\//, "").replace(/\/$/, "")}/@`,
+    [originHost]
+  )
   const orgQuery = useQuery(
     crpc.org.getDetails.queryOptions(
       {
-        slug: params.org,
+        slug: orgSlug ?? "",
       },
-      { skipUnauth: true }
+      { enabled: !!orgSlug, skipUnauth: true }
     )
   )
   const updateMutation = useMutation(crpc.org.update.mutationOptions())
@@ -166,11 +180,12 @@ function GeneralSettingsRoute() {
           slug: updatedOrg.slug ?? value.slug,
         })
 
-        if (updatedOrg.slug !== params.org) {
+        if (updatedOrg.slug && updatedOrg.slug !== orgSlug) {
+          persistSettingsOrg(updatedOrg.slug)
           await navigate({
-            params: { org: updatedOrg.slug },
             replace: true,
-            to: "/@{$org}/settings/general",
+            search: (prev) => ({ ...prev, org: updatedOrg.slug }),
+            to: "/org/settings/general",
           })
         }
       } catch (error) {
@@ -183,8 +198,10 @@ function GeneralSettingsRoute() {
     },
   })
 
-  if (orgQuery.isLoading) {
-    return <div className="h-64 animate-pulse rounded-xl border bg-muted/30" />
+  const isLoading = !orgSlug || orgQuery.isLoading
+  const showSkeleton = useDelayedFlag(isLoading)
+  if (isLoading) {
+    return showSkeleton ? <SettingsSkeleton /> : null
   }
 
   if (!orgQuery.data?.org || !orgQuery.data.permissions.canEdit) {

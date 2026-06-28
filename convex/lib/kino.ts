@@ -34,6 +34,18 @@ export function isProjectEditorRole(role: string | null | undefined): boolean {
 }
 
 /**
+ * Org membership roles that grant edit access to the organization itself
+ * (general settings, content). Single source of truth for "can this member edit
+ * the org" — used by `verifyOrgAccess` and the `/org/settings` selector. Note
+ * member management (members page) is stricter and limited to owner/admin.
+ */
+export const ORG_EDIT_ROLES = ["owner", "admin", "editor"] as const
+
+export function canEditOrgRole(role: string | null | undefined): boolean {
+  return role === "owner" || role === "admin" || role === "editor"
+}
+
+/**
  * The single sanitizer for the system role. `user.role` (better-auth) is the
  * source of truth; `profile.role` is a derived copy. Any code that writes
  * `profile.role` MUST funnel through here so the two never diverge into an
@@ -429,7 +441,7 @@ export async function verifyOrgAccess(
 
   const role = member?.role ?? null
   const canView = organization.visibility === "public" || !!role
-  const canEdit = role === "admin" || role === "owner" || role === "editor"
+  const canEdit = canEditOrgRole(role)
   const canDelete = role === "admin" || role === "owner"
   const canCreate = role === "admin" || role === "owner"
 
