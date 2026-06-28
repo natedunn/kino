@@ -4,6 +4,10 @@
   "compatibility_date": "2026-05-22",
   "compatibility_flags": ["nodejs_compat"],
   "main": "@tanstack/react-start/server-entry",
+  "routes": [
+    { "pattern": "usekino.com", "custom_domain": true },
+    { "pattern": "www.usekino.com", "custom_domain": true },
+  ],
   "preview_urls": true,
   "observability": { "enabled": true },
 }
