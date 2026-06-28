@@ -76,8 +76,8 @@ export function UserDropdown({
             icon={Settings}
             onClick={() => {
               navigate({
-                params: { org: orgSlug },
-                to: "/@{$org}/settings",
+                search: { org: orgSlug },
+                to: "/org/settings",
               })
             }}
           >

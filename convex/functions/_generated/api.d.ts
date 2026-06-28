@@ -376,6 +376,7 @@ export declare const api: {
       },
       any
     >;
+    findMyEditableOrgs: FunctionReference<"query", "public", {}, any>;
     findMyOrgs: FunctionReference<"query", "public", {}, any>;
     generateAvatarUploadUrl: FunctionReference<
       "mutation",

@@ -9,23 +9,33 @@ import { useCRPC } from "@/lib/convex/crpc"
 import { crpcServer } from "@/lib/convex/crpc-server"
 import { titleMeta } from "@/lib/seo"
 
-export const Route = createFileRoute("/@{$org}/settings/integrations/")({
+import { useDelayedFlag } from "../-components/use-delayed-flag"
+import { SettingsSkeleton } from "../-components/settings-skeleton"
+import { useSettingsOrgSlug } from "../-components/use-settings-org"
+
+type IntegrationsSearch = { github?: string }
+
+export const Route = createFileRoute("/org/settings/integrations/")({
   head: () => ({
     meta: [titleMeta(["Integrations"])],
   }),
-  loader: async ({ context, params }) => {
-    if (!context.loaderToken) return
-    const orgData = await context.queryClient.ensureQueryData(
+  validateSearch: (search: Record<string, unknown>): IntegrationsSearch => ({
+    github: typeof search.github === "string" ? search.github : undefined,
+  }),
+  loader: ({ context, location }) => {
+    const orgSlug = (location.search as { org?: string }).org
+    if (!context.loaderToken || !orgSlug) return
+    // Warm the caches without blocking navigation so the skeleton can show.
+    // The component's integration query stays gated on the org loading first.
+    void context.queryClient.ensureQueryData(
       crpcServer.org.getDetails.queryOptions(
-        { slug: params.org },
+        { slug: orgSlug },
         { skipUnauth: true }
       )
     )
-    if (!orgData?.org) return
-
-    await context.queryClient.ensureQueryData(
+    void context.queryClient.ensureQueryData(
       crpcServer.github.getOrgIntegration.queryOptions(
-        { orgSlug: params.org },
+        { orgSlug },
         { skipUnauth: true }
       )
     )
@@ -34,19 +44,22 @@ export const Route = createFileRoute("/@{$org}/settings/integrations/")({
 })
 
 function IntegrationsSettingsRoute() {
-  const params = Route.useParams()
+  const orgSlug = useSettingsOrgSlug()
   const search = Route.useSearch() as { github?: string }
   const crpc = useCRPC()
 
   const orgQuery = useQuery(
-    crpc.org.getDetails.queryOptions({ slug: params.org }, { skipUnauth: true })
+    crpc.org.getDetails.queryOptions(
+      { slug: orgSlug ?? "" },
+      { enabled: !!orgSlug, skipUnauth: true }
+    )
   )
   const integrationQuery = useQuery(
     crpc.github.getOrgIntegration.queryOptions(
       {
-        orgSlug: params.org,
+        orgSlug: orgSlug ?? "",
       },
-      { enabled: !!orgQuery.data?.org, skipUnauth: true }
+      { enabled: !!orgSlug && !!orgQuery.data?.org, skipUnauth: true }
     )
   )
   const startConnection = useMutation(
@@ -67,8 +80,10 @@ function IntegrationsSettingsRoute() {
   const installations = integrationQuery.data?.installations ?? []
   const hasInstallations = installations.length > 0
 
-  if (orgQuery.isLoading || integrationQuery.isLoading) {
-    return <div className="h-64 animate-pulse rounded-xl border bg-muted/30" />
+  const isLoading = !orgSlug || orgQuery.isLoading || integrationQuery.isLoading
+  const showSkeleton = useDelayedFlag(isLoading)
+  if (isLoading) {
+    return showSkeleton ? <SettingsSkeleton /> : null
   }
 
   if (!orgQuery.data?.org) {
@@ -146,7 +161,7 @@ function IntegrationsSettingsRoute() {
                 onClick={() =>
                   startConnection.mutate({
                     callbackTargetUrl: `${window.location.origin}/api/github/callback`,
-                    orgSlug: params.org,
+                    orgSlug,
                   })
                 }
                 type="button"
@@ -162,7 +177,7 @@ function IntegrationsSettingsRoute() {
                   onClick={() =>
                     refreshInstallations.mutate({
                       callbackTargetUrl: `${window.location.origin}/api/github/callback`,
-                      orgSlug: params.org,
+                      orgSlug,
                     })
                   }
                   type="button"

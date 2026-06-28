@@ -104,7 +104,7 @@ export function CommandProvider({ children }: { children: ReactNode }) {
           keywords: ["organization", "team", "settings"],
           title: "Go to organization settings",
           run: () =>
-            navigate({ params: { org: orgSlug }, to: "/@{$org}/settings" }),
+            navigate({ search: { org: orgSlug }, to: "/org/settings" }),
         }
       )
     }
