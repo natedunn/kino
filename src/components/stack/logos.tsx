@@ -137,6 +137,30 @@ export function CloudflareLogo(props: IconProps) {
   )
 }
 
+// Nuntly has no published Simple Icons mark; use a monochrome monogram echoing
+// its brand "N" in a rounded square.
+export function NuntlyLogo({ size = "1em", ...props }: IconProps) {
+  return (
+    <svg
+      fill="none"
+      height={size}
+      role="img"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      viewBox="0 0 24 24"
+      width={size}
+      xmlns="http://www.w3.org/2000/svg"
+      {...props}
+    >
+      <title>Nuntly</title>
+      <rect x="2" y="2" width="20" height="20" rx="5" />
+      <path d="M8 17V7l8 10V7" />
+    </svg>
+  )
+}
+
 export function PostHogLogo(props: IconProps) {
   return (
     <BrandSvg

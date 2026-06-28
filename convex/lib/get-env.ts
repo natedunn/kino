@@ -39,7 +39,7 @@ export function getEnv() {
   })()
 }
 
-function getRuntimeEnvValue(parts: string[]) {
+function getRuntimeEnvValue(parts: Array<string>) {
   return getRuntimeEnv()[parts.join("_")]
 }
 
@@ -60,7 +60,7 @@ export function getGitHubAuthEnv() {
 
 /** GitHub App used for org/repo sync ("Kino Relay"). */
 export function getGitHubRelayEnv() {
-  const value = (parts: string[]) =>
+  const value = (parts: Array<string>) =>
     getRuntimeEnvValue(["GITHUB", "RELAY", ...parts])
 
   return {
@@ -71,6 +71,33 @@ export function getGitHubRelayEnv() {
     privateKey: value(["PRIVATE", "KEY"]),
     slug: value(["SLUG"]),
     stateSecret: value(["STATE", "SECRET"]),
+    webhookSecret: value(["WEBHOOK", "SECRET"]),
+  }
+}
+
+/**
+ * Nuntly transactional email service.
+ * - apiKey: send permission key (used by the SDK and Better Auth provider).
+ * - emailDomain: the verified Nuntly *sending* domain, e.g. "mail.usekino.com".
+ *   Every `from` address is built as `<local-part>@<emailDomain>`. Optional —
+ *   when unset it's derived from `fromAddress` (see resolveSender).
+ * - replyTo: a real inbox for human replies, e.g. "hello@usekino.com". Can live
+ *   on a different domain than emailDomain (it isn't validated for sending).
+ *   Used by the "friendly" senders (billing/support).
+ * - fromAddress: legacy/explicit default sender, e.g.
+ *   "Kino <auth@mail.usekino.com>". Still honored, and its domain seeds
+ *   emailDomain when the latter isn't set.
+ * - webhookSecret: Standard Webhooks signing secret (`whsec_…`) used to verify
+ *   inbound delivery events.
+ */
+export function getNuntlyEnv() {
+  const value = (parts: Array<string>) => getRuntimeEnvValue(["NUNTLY", ...parts])
+
+  return {
+    apiKey: value(["API", "KEY"]),
+    emailDomain: value(["EMAIL", "DOMAIN"]),
+    replyTo: value(["REPLY", "TO"]),
+    fromAddress: value(["FROM"]),
     webhookSecret: value(["WEBHOOK", "SECRET"]),
   }
 }

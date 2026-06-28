@@ -735,6 +735,38 @@ export declare const internal: {
       any
     >;
   };
+  email: {
+    recordWebhookEvent: FunctionReference<
+      "mutation",
+      "internal",
+      {
+        emailId?: string;
+        eventId: string;
+        occurredAt: number;
+        payload: any;
+        recipient?: string;
+        type: string;
+      },
+      any
+    >;
+    sendTransactionalEmail: FunctionReference<
+      "action",
+      "internal",
+      {
+        bcc?: string | Array<string>;
+        cc?: string | Array<string>;
+        from?: string;
+        html?: string;
+        replyTo?: string | Array<string>;
+        sender?: "auth" | "billing" | "support" | "noreply";
+        subject: string;
+        tags?: Array<{ name: string; value: string }>;
+        text?: string;
+        to: string | Array<string>;
+      },
+      any
+    >;
+  };
   feedbackBoard: {
     purgeBoard: FunctionReference<
       "mutation",

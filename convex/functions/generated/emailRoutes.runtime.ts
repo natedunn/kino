@@ -14,8 +14,7 @@ import type { ActionCtx, MutationCtx, QueryCtx } from './server';
 import type { OrmTriggerContext } from 'kitcn/orm';
 
 const procedureRegistry = {
-  "exportData": ["query", typedProcedureResolver(createGeneratedFunctionReference<"query", "public", typeof import("../userDataExport").exportData>("userDataExport:exportData"), () => (require("../userDataExport") as Record<string, unknown>)["exportData"])],
-  "getAvailableSections": ["query", typedProcedureResolver(createGeneratedFunctionReference<"query", "public", typeof import("../userDataExport").getAvailableSections>("userDataExport:getAvailableSections"), () => (require("../userDataExport") as Record<string, unknown>)["getAvailableSections"])],
+  "webhook": ["mutation", typedProcedureResolver(createGeneratedFunctionReference<"mutation", "public", typeof import("../emailRoutes").webhook>("emailRoutes:webhook"), () => (require("../emailRoutes") as Record<string, unknown>)["webhook"])],
 } as const;
 
   const handlerRegistry = procedureRegistry;
@@ -58,7 +57,7 @@ type GeneratedProcedureHandler<
 >;
 
 
-export function createUserDataExportCaller<TCtx extends ProcedureCallerContext>(
+export function createEmailRoutesCaller<TCtx extends ProcedureCallerContext>(
   ctx: TCtx
 ): GeneratedProcedureCaller<TCtx> {
   return generatedRuntime.getCallerFactory()(
@@ -66,7 +65,7 @@ export function createUserDataExportCaller<TCtx extends ProcedureCallerContext>(
   ) as GeneratedProcedureCaller<TCtx>;
 }
 
-export function createUserDataExportHandler<TCtx extends ProcedureHandlerContext>(
+export function createEmailRoutesHandler<TCtx extends ProcedureHandlerContext>(
   ctx: TCtx
 ): GeneratedProcedureHandler<TCtx> {
   return generatedRuntime.getHandlerFactory()(ctx) as GeneratedProcedureHandler<TCtx>;

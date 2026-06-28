@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { useNavigate, useParams } from "@tanstack/react-router"
+import { useNavigate, useParams, useRouterState } from "@tanstack/react-router"
 import { Home, MoonStar, Settings, User } from "lucide-react"
 
 import { CommandContext } from "./command-context"
@@ -21,6 +21,9 @@ export function CommandProvider({ children }: { children: ReactNode }) {
     Array<CommandRegistration>
   >([])
   const navigate = useNavigate()
+  const pathname = useRouterState({ select: (s) => s.location.pathname })
+  // The command palette (and its ⌘K shortcut) is disabled on the auth pages.
+  const isAuthRoute = pathname === "/auth" || pathname.startsWith("/auth/")
   const session = authClient.useSession()
   const orgParams = useParams({
     from: "/@{$org}",
@@ -169,7 +172,12 @@ export function CommandProvider({ children }: { children: ReactNode }) {
     [globalCommands, registrations]
   )
 
+  // Subscribing to a document event genuinely needs an effect; the auth-route
+  // guard just skips binding the ⌘K listener there. (The palette's *visibility*
+  // on auth routes is handled by deriving `isOpen` below — no state sync here.)
   useEffect(() => {
+    if (isAuthRoute) return
+
     const handleKeyDown = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
         event.preventDefault()
@@ -179,7 +187,10 @@ export function CommandProvider({ children }: { children: ReactNode }) {
 
     document.addEventListener("keydown", handleKeyDown)
     return () => document.removeEventListener("keydown", handleKeyDown)
-  }, [])
+  }, [isAuthRoute])
+
+  // Force the palette closed on auth routes without writing state in an effect.
+  const isOpen = open && !isAuthRoute
 
   const runCommand = useCallback((command: AppCommand) => {
     setOpen(false)
@@ -204,7 +215,7 @@ export function CommandProvider({ children }: { children: ReactNode }) {
         commands={commands}
         onOpenChange={setOpen}
         onRunCommand={runCommand}
-        open={open}
+        open={isOpen}
       />
     </CommandContext.Provider>
   )

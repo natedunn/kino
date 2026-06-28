@@ -346,7 +346,11 @@
 }
 
 .link-text {
-  @apply underline decoration-current/50 decoration-2 underline-offset-2 hover:underline hover:decoration-current/75;
+  @apply decoration-1 decoration-current/50 underline-offset-2 hover:underline hover:decoration-current/75;
+}
+
+.link-text-underline {
+  @apply underline;
 }
 
 @utility text-gradient-primary {
