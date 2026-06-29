@@ -19,6 +19,7 @@ import { MainNav } from "@/components/site-nav/main-nav"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useAuthLost } from "@/lib/auth/use-auth-lost"
 import { useCRPC } from "@/lib/convex/crpc"
 import { crpcServer } from "@/lib/convex/crpc-server"
 import { titleMeta } from "@/lib/seo"
@@ -50,7 +51,9 @@ function DashboardPage() {
     select: (state) => state.location.pathname,
   })
 
-  if (!loaderToken) {
+  const authLost = useAuthLost()
+
+  if (!loaderToken || authLost) {
     return <Navigate search={{ redirect: pathname }} to="/auth" />
   }
 
