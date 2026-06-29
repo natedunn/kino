@@ -23,6 +23,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useSignOutMutationOptions } from "@/lib/auth/auth-client"
+import { beginSignOut, endSignOut } from "@/lib/auth/sign-out-state"
 import { trackAuthError, trackAuthSuccess } from "@/lib/auth-analytics"
 
 export function UserDropdown({
@@ -103,6 +104,16 @@ export function UserDropdown({
           disabled={signOut.isPending}
           icon={LogOut}
           onClick={() => {
+            // Mark sign-out in progress so /auth doesn't bounce us back into the
+            // app on the transient "still looks authenticated" state while the
+            // sign-out network round-trip settles (~1–3s). Cleared once auth
+            // genuinely settles (in /auth's redirect effect) or on error below.
+            beginSignOut()
+            // The authed route guards redirect to /auth the instant `signOut`
+            // flips client auth state to `false` (synchronously, before the
+            // network round-trip), so we don't depend on this `onSuccess` to
+            // leave the page — it's a fallback for any view not behind an
+            // auth-loss guard.
             signOut.mutate(undefined, {
               onSuccess: () => {
                 trackAuthSuccess("sign_out")
@@ -111,6 +122,7 @@ export function UserDropdown({
                 })
               },
               onError: (error) => {
+                endSignOut()
                 trackAuthError("sign_out", error)
               },
             })

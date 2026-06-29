@@ -14,6 +14,7 @@ import {
   SidebarNavItem,
   SidebarNavSelect,
 } from "@/components/sidebar-nav"
+import { useAuthLost } from "@/lib/auth/use-auth-lost"
 import { useCRPC } from "@/lib/convex/crpc"
 import { crpcServer } from "@/lib/convex/crpc-server"
 import { titleMeta } from "@/lib/seo"
@@ -68,7 +69,9 @@ function AccountRoute() {
     select: (state) => state.location.pathname,
   })
 
-  if (!loaderToken) {
+  const authLost = useAuthLost()
+
+  if (!loaderToken || authLost) {
     return <Navigate search={{ redirect: pathname }} to="/auth" />
   }
 

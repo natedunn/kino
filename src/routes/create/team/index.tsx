@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { useAuthLost } from "@/lib/auth/use-auth-lost"
 import { useCRPC } from "@/lib/convex/crpc"
 import { crpcServer } from "@/lib/convex/crpc-server"
 import { cn } from "@/lib/utils"
@@ -52,7 +53,9 @@ function CreateTeamRoute() {
     select: (state) => state.location.pathname,
   })
 
-  if (!loaderToken) {
+  const authLost = useAuthLost()
+
+  if (!loaderToken || authLost) {
     return <Navigate search={{ redirect: pathname }} to="/auth" />
   }
 
