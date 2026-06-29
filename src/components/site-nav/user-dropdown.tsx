@@ -9,10 +9,10 @@ import {
   Settings,
   User,
 } from "lucide-react"
+import { NavButton } from "./nav-button"
 import type { ComponentType } from "react"
 import type { API } from "@/lib/api"
 
-import { NavButton } from "./nav-button"
 import { useShortcuts } from "@/components/shortcuts"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -23,6 +23,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useSignOutMutationOptions } from "@/lib/auth/auth-client"
+import { trackAuthError, trackAuthSuccess } from "@/lib/auth-analytics"
 
 export function UserDropdown({
   orgSlug,
@@ -38,9 +39,7 @@ export function UserDropdown({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <NavButton
-          className="h-8 w-8 rounded-full px-0 min-[460px]:w-auto min-[460px]:rounded-md min-[460px]:px-2.5"
-        >
+        <NavButton className="h-8 w-8 rounded-full px-0 min-[460px]:w-auto min-[460px]:rounded-md min-[460px]:px-2.5">
           <Avatar className="size-6 border">
             <AvatarImage src={user.imageUrl} />
             <AvatarFallback>
@@ -106,9 +105,13 @@ export function UserDropdown({
           onClick={() => {
             signOut.mutate(undefined, {
               onSuccess: () => {
+                trackAuthSuccess("sign_out")
                 navigate({
                   to: "/auth",
                 })
+              },
+              onError: (error) => {
+                trackAuthError("sign_out", error)
               },
             })
           }}

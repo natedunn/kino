@@ -1,22 +1,32 @@
 import { convex } from "kitcn/auth"
 import { oAuthProxy, organization, username } from "better-auth/plugins"
 import {
+  NuntlyProvider,
+  ReactEmailRenderer,
+  betterEmail,
+} from "@nuntly/better-email"
+import { render } from "@react-email/render"
+import { createElement } from "react"
+import { emailSubjects, emailTemplates } from "../emails"
+import { resolveSender } from "../lib/email-senders"
+import {
   getBetterAuthAllowedHosts,
   getEnv,
   getGitHubAuthEnv,
   getJwksEnv,
+  getNuntlyEnv,
   getOAuthProxyProductionUrlEnv,
   getOAuthProxySecretEnv,
   getTrustedOrigins,
 } from "../lib/get-env"
-import authConfig from "./auth.config"
 import { ac, roles } from "../shared/auth-roles"
-import { defineAuth } from "./generated/auth"
 import {
-  ensureUserBootstrap,
   ensureUniqueUsername,
+  ensureUserBootstrap,
   sanitizeSystemRole,
 } from "../lib/kino"
+import authConfig from "./auth.config"
+import { defineAuth } from "./generated/auth"
 
 function isSuperAdminEmail(email: string) {
   const configured = (
@@ -44,6 +54,57 @@ export default defineAuth(() => {
     )
   }
   const trustedOrigins = getTrustedOrigins()
+
+  // Nuntly email is wired only when an API key is configured. Without it we keep
+  // the GitHub-only behavior rather than breaking sign-up (sendOnSignUp would
+  // throw with no provider). `betterEmail`'s init() auto-supplies
+  // emailVerification.sendVerificationEmail + emailAndPassword.sendResetPassword;
+  // its helpers wire magic-link / OTP / org-invitation.
+  const nuntly = getNuntlyEnv()
+  // Email needs both a key and a resolvable sending domain (explicit
+  // NUNTLY_EMAIL_DOMAIN, or derived from NUNTLY_FROM). Missing either keeps the
+  // app GitHub-only rather than throwing at auth init.
+  const emailConfigured =
+    Boolean(nuntly.apiKey) && Boolean(nuntly.emailDomain || nuntly.fromAddress)
+  if (!emailConfigured) {
+    console.warn(
+      "[nuntly] Email is DISABLED (auth verification, reset, magic link, OTP, " +
+        "invitations). Set NUNTLY_API_KEY and NUNTLY_EMAIL_DOMAIN (or " +
+        "NUNTLY_FROM) in the Convex deployment env (`npx convex env set …`, " +
+        "not just .env.local) and restart."
+    )
+  }
+  const authSender = emailConfigured ? resolveSender("auth") : null
+  const emailPlugin = authSender
+    ? betterEmail({
+        provider: new NuntlyProvider({
+          apiKey: nuntly.apiKey!,
+          from: authSender.from,
+        }),
+        templateRenderer: new ReactEmailRenderer({
+          render,
+          createElement,
+          templates: emailTemplates,
+          subjects: emailSubjects,
+        }),
+        // Surface delivery outcomes in the Convex logs so a bad key / unverified
+        // domain is visible instead of silently swallowed.
+        onAfterSend: (context, message) => {
+          console.log(
+            `[nuntly] sent ${context.type} to ${message.to} from ${authSender.from}`
+          )
+          return Promise.resolve()
+        },
+        onSendError: (context, message, error) => {
+          console.error(
+            `[nuntly] FAILED to send ${context.type} to ${message.to}: ` +
+              (error instanceof Error ? error.message : String(error))
+          )
+          return Promise.resolve()
+        },
+      })
+    : null
+
   const isLocalHttp = env.SITE_URL.startsWith("http://")
   const baseURLProtocol: "auto" | "https" = env.SITE_URL.startsWith("http://")
     ? "auto"
@@ -59,8 +120,19 @@ export default defineAuth(() => {
       useSecureCookies: !isLocalHttp,
     },
     emailAndPassword: {
+      // sendResetPassword is injected by the betterEmail plugin's init().
       enabled: true,
+      // Require a verified email before a password account can sign in. This
+      // means sign-up does NOT create a session — the user must click the
+      // verification link first. Only enforced when email is actually
+      // configured; otherwise there'd be no way to verify and password users
+      // would be permanently locked out. GitHub OAuth supplies an already-
+      // verified email, so it is unaffected.
+      ...(emailPlugin ? { requireEmailVerification: true } : {}),
     },
+    // When email is configured, send a verification email on sign-up. Combined
+    // with requireEmailVerification above, the link is what unlocks sign-in.
+    ...(emailPlugin ? { emailVerification: { sendOnSignUp: true } } : {}),
     baseURL: {
       allowedHosts: getBetterAuthAllowedHosts(),
       fallback: env.SITE_URL,
@@ -84,7 +156,11 @@ export default defineAuth(() => {
             },
           },
         },
+        ...(emailPlugin
+          ? { sendInvitationEmail: emailPlugin.helpers.invitation }
+          : {}),
       }),
+      ...(emailPlugin ? [emailPlugin] : []),
       ...(oauthProxySecret && oauthProxyProductionUrl
         ? [
             oAuthProxy({
@@ -126,7 +202,7 @@ export default defineAuth(() => {
           if (change.operation !== "update") return
 
           if (change.newDoc.slug !== change.oldDoc.slug) {
-            const db = (ctx as any).db
+            const db = (ctx).db
             const now = Date.now()
             // These `.collect()`s are intentionally unbounded: every row is
             // scoped to this single organization (its projects, storage row,
@@ -208,14 +284,14 @@ export default defineAuth(() => {
       user: {
         create: {
           before: async (data: any, ctx: any) => {
-            const orm = (ctx as any).orm
+            const orm = (ctx).orm
             const usernameValue =
               data.username ??
               data.email.split("@")[0] ??
               data.name ??
               `user_${crypto.randomUUID().slice(0, 8)}`
             const resolvedUsername = await ensureUniqueUsername(
-              { db: (ctx as any).db, orm },
+              { db: (ctx).db, orm },
               usernameValue
             )
             return {
@@ -229,15 +305,15 @@ export default defineAuth(() => {
             }
           },
           after: async (user: any, ctx: any) => {
-            await ensureUserBootstrap(ctx as any, user)
+            await ensureUserBootstrap(ctx, user)
           },
         },
         change: async (change: any, ctx: any) => {
           if (change.operation === "delete") {
             const profileId = change.oldDoc.profileId
             if (!profileId) return
-            const db = (ctx as any).db
-            const profile = await db.get(profileId as any)
+            const db = (ctx).db
+            const profile = await db.get(profileId)
             if (!profile) return
             await db.delete(profile._id)
             return
@@ -248,8 +324,8 @@ export default defineAuth(() => {
 
           const role = sanitizeSystemRole(change.newDoc.role)
 
-          const db = (ctx as any).db
-          const profile = await db.get(profileId as any)
+          const db = (ctx).db
+          const profile = await db.get(profileId)
           if (!profile) return
           await db.patch(profile._id, {
             email: change.newDoc.email,
@@ -263,12 +339,12 @@ export default defineAuth(() => {
       session: {
         create: {
           after: async (session: any, ctx: any) => {
-            const user = await (ctx as any).orm.query.user.findFirst({
+            const user = await (ctx).orm.query.user.findFirst({
               where: { id: session.userId },
             })
             if (!user) return
 
-            await ensureUserBootstrap(ctx as any, user)
+            await ensureUserBootstrap(ctx, user)
           },
         },
       },

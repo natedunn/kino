@@ -34,6 +34,8 @@ const ormSchema = schema;
 registerProcedureNameLookup(
   {
   "admin.ts": [{ column: 42, line: 17, name: "admin:getSystemMetrics" }],
+  "email.ts": [{ column: 3, line: 70, name: "email:recordWebhookEvent" }, { column: 3, line: 47, name: "email:sendTransactionalEmail" }],
+  "emailRoutes.ts": [{ column: 3, line: 24, name: "emailRoutes:webhook" }],
   "feedback.ts": [{ column: 3, line: 80, name: "feedback:create" }, { column: 3, line: 781, name: "feedback:getByIds" }, { column: 3, line: 531, name: "feedback:getBySlug" }, { column: 3, line: 617, name: "feedback:listProjectFeedback" }, { column: 3, line: 183, name: "feedback:remove" }, { column: 3, line: 732, name: "feedback:searchForLinking" }, { column: 3, line: 322, name: "feedback:setAnswerComment" }, { column: 3, line: 390, name: "feedback:updateAssigned" }, { column: 3, line: 278, name: "feedback:updateBoard" }, { column: 3, line: 205, name: "feedback:updateStatus" }, { column: 3, line: 469, name: "feedback:updateTarget" }, { column: 3, line: 237, name: "feedback:updateTitle" }],
   "feedbackBoard.ts": [{ column: 3, line: 37, name: "feedbackBoard:create" }, { column: 3, line: 153, name: "feedbackBoard:get" }, { column: 3, line: 180, name: "feedbackBoard:listProjectBoards" }, { column: 3, line: 87, name: "feedbackBoard:update" }],
   "feedbackComment.ts": [{ column: 3, line: 34, name: "feedbackComment:create" }, { column: 3, line: 128, name: "feedbackComment:listByFeedback" }, { column: 3, line: 95, name: "feedbackComment:remove" }, { column: 3, line: 66, name: "feedbackComment:update" }],

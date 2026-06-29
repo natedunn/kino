@@ -17,8 +17,14 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AccountRouteRouteImport } from './routes/account/route'
 import { Route as AtChar123orgChar125RouteRouteImport } from './routes/@{$org}/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthIndexRouteImport } from './routes/auth.index'
 import { Route as AccountIndexRouteImport } from './routes/account/index'
 import { Route as AtChar123orgChar125IndexRouteImport } from './routes/@{$org}/index'
+import { Route as AuthVerifyEmailRouteImport } from './routes/auth.verify-email'
+import { Route as AuthSignUpRouteImport } from './routes/auth.sign-up'
+import { Route as AuthResetPasswordRouteImport } from './routes/auth.reset-password'
+import { Route as AuthForgotPasswordRouteImport } from './routes/auth.forgot-password'
+import { Route as AuthAcceptInvitationRouteImport } from './routes/auth.accept-invitation'
 import { Route as OrgSettingsRouteRouteImport } from './routes/org/settings/route'
 import { Route as AtChar123orgChar125ProjectRouteRouteImport } from './routes/@{$org}/$project/route'
 import { Route as UUsernameIndexRouteImport } from './routes/u/$username/index'
@@ -103,6 +109,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthIndexRoute = AuthIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthRoute,
+} as any)
 const AccountIndexRoute = AccountIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -114,6 +125,31 @@ const AtChar123orgChar125IndexRoute =
     path: '/',
     getParentRoute: () => AtChar123orgChar125RouteRoute,
   } as any)
+const AuthVerifyEmailRoute = AuthVerifyEmailRouteImport.update({
+  id: '/verify-email',
+  path: '/verify-email',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthSignUpRoute = AuthSignUpRouteImport.update({
+  id: '/sign-up',
+  path: '/sign-up',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthResetPasswordRoute = AuthResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthForgotPasswordRoute = AuthForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthAcceptInvitationRoute = AuthAcceptInvitationRouteImport.update({
+  id: '/accept-invitation',
+  path: '/accept-invitation',
+  getParentRoute: () => AuthRoute,
+} as any)
 const OrgSettingsRouteRoute = OrgSettingsRouteRouteImport.update({
   id: '/org/settings',
   path: '/org/settings',
@@ -358,14 +394,20 @@ export interface FileRoutesByFullPath {
   '/@{$org}': typeof AtChar123orgChar125RouteRouteWithChildren
   '/account': typeof AccountRouteRouteWithChildren
   '/admin': typeof AdminRoute
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/stack': typeof StackRoute
   '/ui': typeof UiRoute
   '/@{$org}/$project': typeof AtChar123orgChar125ProjectRouteRouteWithChildren
   '/org/settings': typeof OrgSettingsRouteRouteWithChildren
+  '/auth/accept-invitation': typeof AuthAcceptInvitationRoute
+  '/auth/forgot-password': typeof AuthForgotPasswordRoute
+  '/auth/reset-password': typeof AuthResetPasswordRoute
+  '/auth/sign-up': typeof AuthSignUpRoute
+  '/auth/verify-email': typeof AuthVerifyEmailRoute
   '/@{$org}/': typeof AtChar123orgChar125IndexRoute
   '/account/': typeof AccountIndexRoute
+  '/auth/': typeof AuthIndexRoute
   '/@{$org}/$project/feedback': typeof AtChar123orgChar125ProjectFeedbackRouteRouteWithChildren
   '/@{$org}/$project/settings': typeof AtChar123orgChar125ProjectSettingsRouteRouteWithChildren
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -410,12 +452,17 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
-  '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
   '/stack': typeof StackRoute
   '/ui': typeof UiRoute
+  '/auth/accept-invitation': typeof AuthAcceptInvitationRoute
+  '/auth/forgot-password': typeof AuthForgotPasswordRoute
+  '/auth/reset-password': typeof AuthResetPasswordRoute
+  '/auth/sign-up': typeof AuthSignUpRoute
+  '/auth/verify-email': typeof AuthVerifyEmailRoute
   '/@{$org}': typeof AtChar123orgChar125IndexRoute
   '/account': typeof AccountIndexRoute
+  '/auth': typeof AuthIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/github/$': typeof ApiGithubSplatRoute
   '/api/github/callback': typeof ApiGithubCallbackRoute
@@ -461,14 +508,20 @@ export interface FileRoutesById {
   '/@{$org}': typeof AtChar123orgChar125RouteRouteWithChildren
   '/account': typeof AccountRouteRouteWithChildren
   '/admin': typeof AdminRoute
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/stack': typeof StackRoute
   '/ui': typeof UiRoute
   '/@{$org}/$project': typeof AtChar123orgChar125ProjectRouteRouteWithChildren
   '/org/settings': typeof OrgSettingsRouteRouteWithChildren
+  '/auth/accept-invitation': typeof AuthAcceptInvitationRoute
+  '/auth/forgot-password': typeof AuthForgotPasswordRoute
+  '/auth/reset-password': typeof AuthResetPasswordRoute
+  '/auth/sign-up': typeof AuthSignUpRoute
+  '/auth/verify-email': typeof AuthVerifyEmailRoute
   '/@{$org}/': typeof AtChar123orgChar125IndexRoute
   '/account/': typeof AccountIndexRoute
+  '/auth/': typeof AuthIndexRoute
   '/@{$org}/$project/feedback': typeof AtChar123orgChar125ProjectFeedbackRouteRouteWithChildren
   '/@{$org}/$project/settings': typeof AtChar123orgChar125ProjectSettingsRouteRouteWithChildren
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -523,8 +576,14 @@ export interface FileRouteTypes {
     | '/ui'
     | '/@{$org}/$project'
     | '/org/settings'
+    | '/auth/accept-invitation'
+    | '/auth/forgot-password'
+    | '/auth/reset-password'
+    | '/auth/sign-up'
+    | '/auth/verify-email'
     | '/@{$org}/'
     | '/account/'
+    | '/auth/'
     | '/@{$org}/$project/feedback'
     | '/@{$org}/$project/settings'
     | '/api/auth/$'
@@ -569,12 +628,17 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/admin'
-    | '/auth'
     | '/dashboard'
     | '/stack'
     | '/ui'
+    | '/auth/accept-invitation'
+    | '/auth/forgot-password'
+    | '/auth/reset-password'
+    | '/auth/sign-up'
+    | '/auth/verify-email'
     | '/@{$org}'
     | '/account'
+    | '/auth'
     | '/api/auth/$'
     | '/api/github/$'
     | '/api/github/callback'
@@ -625,8 +689,14 @@ export interface FileRouteTypes {
     | '/ui'
     | '/@{$org}/$project'
     | '/org/settings'
+    | '/auth/accept-invitation'
+    | '/auth/forgot-password'
+    | '/auth/reset-password'
+    | '/auth/sign-up'
+    | '/auth/verify-email'
     | '/@{$org}/'
     | '/account/'
+    | '/auth/'
     | '/@{$org}/$project/feedback'
     | '/@{$org}/$project/settings'
     | '/api/auth/$'
@@ -674,7 +744,7 @@ export interface RootRouteChildren {
   AtChar123orgChar125RouteRoute: typeof AtChar123orgChar125RouteRouteWithChildren
   AccountRouteRoute: typeof AccountRouteRouteWithChildren
   AdminRoute: typeof AdminRoute
-  AuthRoute: typeof AuthRoute
+  AuthRoute: typeof AuthRouteWithChildren
   DashboardRoute: typeof DashboardRoute
   StackRoute: typeof StackRoute
   UiRoute: typeof UiRoute
@@ -745,6 +815,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth/': {
+      id: '/auth/'
+      path: '/'
+      fullPath: '/auth/'
+      preLoaderRoute: typeof AuthIndexRouteImport
+      parentRoute: typeof AuthRoute
+    }
     '/account/': {
       id: '/account/'
       path: '/'
@@ -758,6 +835,41 @@ declare module '@tanstack/react-router' {
       fullPath: '/@{$org}/'
       preLoaderRoute: typeof AtChar123orgChar125IndexRouteImport
       parentRoute: typeof AtChar123orgChar125RouteRoute
+    }
+    '/auth/verify-email': {
+      id: '/auth/verify-email'
+      path: '/verify-email'
+      fullPath: '/auth/verify-email'
+      preLoaderRoute: typeof AuthVerifyEmailRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/auth/sign-up': {
+      id: '/auth/sign-up'
+      path: '/sign-up'
+      fullPath: '/auth/sign-up'
+      preLoaderRoute: typeof AuthSignUpRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/auth/reset-password': {
+      id: '/auth/reset-password'
+      path: '/reset-password'
+      fullPath: '/auth/reset-password'
+      preLoaderRoute: typeof AuthResetPasswordRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/auth/forgot-password': {
+      id: '/auth/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/auth/forgot-password'
+      preLoaderRoute: typeof AuthForgotPasswordRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/auth/accept-invitation': {
+      id: '/auth/accept-invitation'
+      path: '/accept-invitation'
+      fullPath: '/auth/accept-invitation'
+      preLoaderRoute: typeof AuthAcceptInvitationRouteImport
+      parentRoute: typeof AuthRoute
     }
     '/org/settings': {
       id: '/org/settings'
@@ -1205,6 +1317,26 @@ const AccountRouteRouteWithChildren = AccountRouteRoute._addFileChildren(
   AccountRouteRouteChildren,
 )
 
+interface AuthRouteChildren {
+  AuthAcceptInvitationRoute: typeof AuthAcceptInvitationRoute
+  AuthForgotPasswordRoute: typeof AuthForgotPasswordRoute
+  AuthResetPasswordRoute: typeof AuthResetPasswordRoute
+  AuthSignUpRoute: typeof AuthSignUpRoute
+  AuthVerifyEmailRoute: typeof AuthVerifyEmailRoute
+  AuthIndexRoute: typeof AuthIndexRoute
+}
+
+const AuthRouteChildren: AuthRouteChildren = {
+  AuthAcceptInvitationRoute: AuthAcceptInvitationRoute,
+  AuthForgotPasswordRoute: AuthForgotPasswordRoute,
+  AuthResetPasswordRoute: AuthResetPasswordRoute,
+  AuthSignUpRoute: AuthSignUpRoute,
+  AuthVerifyEmailRoute: AuthVerifyEmailRoute,
+  AuthIndexRoute: AuthIndexRoute,
+}
+
+const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
+
 interface OrgSettingsRouteRouteChildren {
   OrgSettingsIndexRoute: typeof OrgSettingsIndexRoute
   OrgSettingsGeneralIndexRoute: typeof OrgSettingsGeneralIndexRoute
@@ -1227,7 +1359,7 @@ const rootRouteChildren: RootRouteChildren = {
   AtChar123orgChar125RouteRoute: AtChar123orgChar125RouteRouteWithChildren,
   AccountRouteRoute: AccountRouteRouteWithChildren,
   AdminRoute: AdminRoute,
-  AuthRoute: AuthRoute,
+  AuthRoute: AuthRouteWithChildren,
   DashboardRoute: DashboardRoute,
   StackRoute: StackRoute,
   UiRoute: UiRoute,

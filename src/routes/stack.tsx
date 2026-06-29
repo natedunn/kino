@@ -1,7 +1,8 @@
-import type { ComponentType } from "react"
 import { Link, createFileRoute } from "@tanstack/react-router"
 import { ArrowUpRight } from "lucide-react"
+import type { ComponentType } from "react"
 
+import type { IconProps } from "@/icons/types"
 import { ClickableContainer } from "@/components/clickable-container"
 import {
   BaseUiLogo,
@@ -9,13 +10,13 @@ import {
   CloudflareLogo,
   ConvexLogo,
   KitcnLogo,
+  NuntlyLogo,
   PostHogLogo,
   ReactLogo,
   ShadcnLogo,
   TailwindLogo,
   TanStackLogo,
 } from "@/components/stack/logos"
-import type { IconProps } from "@/icons/types"
 import { titleMeta } from "@/lib/seo"
 
 export const Route = createFileRoute("/stack")({
@@ -35,10 +36,10 @@ type TechItem = {
 type TechSection = {
   title: string
   description: string
-  items: TechItem[]
+  items: Array<TechItem>
 }
 
-const SECTIONS: TechSection[] = [
+const SECTIONS: Array<TechSection> = [
   {
     title: "Core",
     description: "The framework, data layer, and auth that make the app run.",
@@ -116,6 +117,13 @@ const SECTIONS: TechSection[] = [
         blurb: "Product analytics for understanding how the app is used.",
         href: "https://posthog.com",
         Logo: PostHogLogo,
+      },
+      {
+        name: "Nuntly",
+        blurb:
+          "Developer-first email for our transactional sends — verification, password resets, and invites.",
+        href: "https://nuntly.com",
+        Logo: NuntlyLogo,
       },
     ],
   },

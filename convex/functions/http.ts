@@ -1,14 +1,15 @@
+import { cors } from "hono/cors"
+import { createHttpRouter } from "kitcn/server"
+import { Hono } from "hono"
 import {
   getEnv,
   getTrustedForwardedAuthOrigin,
   isTrustedOrigin,
 } from "../lib/get-env"
-import { getAuth } from "./generated/auth"
-import { cors } from "hono/cors"
-import { createHttpRouter } from "kitcn/server"
-import { Hono } from "hono"
 import { router } from "../lib/crpc"
+import { getAuth } from "./generated/auth"
 import { githubRoutes } from "./githubRoutes"
+import { emailRoutes } from "./emailRoutes"
 // __KITCN_HTTP_IMPORTS__
 
 const app = new Hono()
@@ -62,6 +63,7 @@ app.use(async (c, next) => {
 
 export const httpRouter = router({
   github: githubRoutes,
+  email: emailRoutes,
   // __KITCN_HTTP_ROUTES__
 })
 

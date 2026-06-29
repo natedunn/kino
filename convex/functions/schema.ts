@@ -1016,6 +1016,37 @@ export const githubWebhookDeliveryTable = convexTable(
   ]
 )
 
+// Append-only backup/audit log of Nuntly email webhook events. Mirrors
+// githubWebhookDelivery: deduped by the Nuntly event id, stores the raw payload
+// so events stay replayable. We DON'T derive "current status" from insert order
+// (events can arrive out of order) — rank by `occurredAt` when needed.
+export const emailEventTable = convexTable(
+  "emailEvent",
+  {
+    // Nuntly event id (`evt_…`) — unique per event, used for idempotency.
+    eventId: text().notNull(),
+    // Event type, e.g. "email.delivered", "email.bounced".
+    type: text().notNull(),
+    // Nuntly email id (`em_…`) the event refers to, when present. Correlates
+    // with the `id` returned by `emails.send`.
+    emailId: text(),
+    // Primary recipient (first `to`), denormalized for lookups.
+    recipient: text(),
+    // When the event occurred at Nuntly (ms), from the event `createdAt`.
+    occurredAt: integer().notNull(),
+    // When we received/stored it (ms).
+    receivedTime: integer().notNull(),
+    // The full verified event payload, for replay/debugging.
+    payload: json().notNull(),
+  },
+  (emailEventTable) => [
+    index("by_eventId").on(emailEventTable.eventId),
+    index("by_emailId").on(emailEventTable.emailId),
+    index("by_recipient").on(emailEventTable.recipient),
+    index("by_receivedTime").on(emailEventTable.receivedTime),
+  ]
+)
+
 export const tables = {
   user: userTable,
   session: sessionTable,
@@ -1044,6 +1075,7 @@ export const tables = {
   githubRepositoryConnection: githubRepositoryConnectionTable,
   feedbackGithubConnection: feedbackGithubConnectionTable,
   githubWebhookDelivery: githubWebhookDeliveryTable,
+  emailEvent: emailEventTable,
 }
 
 export default defineSchema(tables)
