@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router"
+import { requireAuth } from "@/lib/auth/require-auth"
 import { crpcServer } from "@/lib/convex/crpc-server"
 import { titleMeta } from "@/lib/seo"
 
@@ -6,6 +7,7 @@ export const Route = createFileRoute("/dashboard")({
   head: () => ({
     meta: [titleMeta(["Dashboard"])],
   }),
+  beforeLoad: ({ context, location }) => requireAuth(context, location),
   loader: async ({ context }) => {
     if (!context.loaderToken) {
       return

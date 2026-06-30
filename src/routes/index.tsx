@@ -1,5 +1,5 @@
 import type { ReactNode } from "react"
-import { Link, Navigate, createFileRoute } from "@tanstack/react-router"
+import { Link, createFileRoute, redirect } from "@tanstack/react-router"
 import {
   ArrowRight,
   MessageSquare,
@@ -14,18 +14,16 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [titleMeta([])],
   }),
-  component: IndexPage,
+  // Authenticated visitors go straight to the app. Gated in `beforeLoad` (real
+  // redirect, server + client) — `context.isAuthenticated` comes from the root
+  // `beforeLoad` (loaderToken on the server, the auth snapshot on the client).
+  beforeLoad: ({ context }) => {
+    if (context.isAuthenticated) {
+      throw redirect({ to: "/dashboard" })
+    }
+  },
+  component: LandingPage,
 })
-
-function IndexPage() {
-  const { loaderToken } = Route.useRouteContext()
-
-  if (loaderToken) {
-    return <Navigate to="/dashboard" />
-  }
-
-  return <LandingPage />
-}
 
 function LandingPage() {
   return (
@@ -124,7 +122,8 @@ function LandingPage() {
               Ready to get started?
             </h2>
             <p className="mt-3 text-muted-foreground">
-              Free for small teams. Set up in under a minute and start collecting feedback fast.
+              Free for small teams. Set up in under a minute and start
+              collecting feedback fast.
             </p>
             <div className="mt-6">
               <Button asChild>

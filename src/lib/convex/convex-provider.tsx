@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query"
 import { ConvexAuthProvider } from "kitcn/auth/client"
 import {
   type ConvexQueryClient,
+  useAuth,
   useAuthStore,
   useFetchAccessToken,
 } from "kitcn/react"
@@ -11,6 +12,7 @@ import { useEffect } from "react"
 import type { ReactNode } from "react"
 
 import { authClient } from "@/lib/convex/auth-client"
+import { setAuthSnapshot } from "@/lib/auth/auth-snapshot"
 import { CRPCProvider } from "@/lib/convex/crpc"
 
 export function AppConvexProvider({
@@ -52,11 +54,25 @@ function QueryProvider({
       convexClient={convexQueryClient.convexClient}
       convexQueryClient={convexQueryClient}
     >
+      <AuthSnapshotSync />
       <ConvexTokenBootstrap />
       <ConvexAuthWakeRefresher />
       {children}
     </CRPCProvider>
   )
+}
+
+// Mirror the React-bound auth bridge into a module-level snapshot so route
+// `beforeLoad` (which runs outside React) can read auth state synchronously on
+// the client. See `@/lib/auth/auth-snapshot` and `requireAuth`.
+function AuthSnapshotSync() {
+  const { isAuthenticated, isLoading } = useAuth()
+
+  useEffect(() => {
+    setAuthSnapshot({ isAuthenticated, isLoading })
+  }, [isAuthenticated, isLoading])
+
+  return null
 }
 
 function decodeJwtExp(token: string) {

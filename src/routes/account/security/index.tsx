@@ -1,14 +1,9 @@
 import { useSuspenseQuery } from "@tanstack/react-query"
-import {
-  Navigate,
-  createFileRoute,
-  useRouterState,
-} from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
 
 import { Label, LabelDescription, LabelWrapper } from "@/components/label"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { useAuthLost } from "@/lib/auth/use-auth-lost"
 import { useCRPC } from "@/lib/convex/crpc"
 import { crpcServer } from "@/lib/convex/crpc-server"
 import { titleMeta } from "@/lib/seo"
@@ -26,23 +21,10 @@ export const Route = createFileRoute("/account/security/")({
       crpcServer.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
     )
   },
-  component: SecurityRoute,
+  // Auth entry is gated by the parent `/account` route's `beforeLoad`, and
+  // in-place sign-out by its `AccountRoute` guard — no child guard needed.
+  component: AuthenticatedSecurityRoute,
 })
-
-function SecurityRoute() {
-  const { loaderToken } = Route.useRouteContext()
-  const pathname = useRouterState({
-    select: (state) => state.location.pathname,
-  })
-
-  const authLost = useAuthLost()
-
-  if (!loaderToken || authLost) {
-    return <Navigate search={{ redirect: pathname }} to="/auth" />
-  }
-
-  return <AuthenticatedSecurityRoute />
-}
 
 function AuthenticatedSecurityRoute() {
   const crpc = useCRPC()

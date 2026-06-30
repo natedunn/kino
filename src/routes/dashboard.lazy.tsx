@@ -27,13 +27,13 @@ export const Route = createLazyFileRoute("/dashboard")({
 })
 
 function DashboardPage() {
-  const { loaderToken } = Route.useRouteContext()
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
   })
-  const authLost = useAuthLost()
 
-  if (!loaderToken || authLost) {
+  // Entry is gated in `beforeLoad` (requireAuth); this only catches auth lost
+  // in place (sign-out), which `beforeLoad` can't see.
+  if (useAuthLost()) {
     return <Navigate search={{ redirect: pathname }} to="/auth" />
   }
 

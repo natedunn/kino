@@ -16,37 +16,37 @@ import { DefaultCatchBoundary } from "@/components/_default-catch-boundary"
 import { Providers } from "@/components/providers"
 import { StaleBundleWatcher } from "@/components/stale-bundle-watcher"
 import { getServerAuthToken } from "@/lib/convex/auth-start-token"
+import { isClientAuthed } from "@/lib/auth/auth-snapshot"
 import { crpcServer } from "@/lib/convex/crpc-server"
 import { getFaviconHref, inferAppEnvironment } from "@/lib/app-env"
 
-const Devtools =
-  import.meta.env.DEV
-    ? lazy(async () => {
-        const [{ TanStackDevtools }, { TanStackRouterDevtoolsPanel }] =
-          await Promise.all([
-            import("@tanstack/react-devtools"),
-            import("@tanstack/react-router-devtools"),
-          ])
+const Devtools = import.meta.env.DEV
+  ? lazy(async () => {
+      const [{ TanStackDevtools }, { TanStackRouterDevtoolsPanel }] =
+        await Promise.all([
+          import("@tanstack/react-devtools"),
+          import("@tanstack/react-router-devtools"),
+        ])
 
-        return {
-          default: function DevtoolsPanel() {
-            return (
-              <TanStackDevtools
-                config={{
-                  position: "bottom-right",
-                }}
-                plugins={[
-                  {
-                    name: "Tanstack Router",
-                    render: <TanStackRouterDevtoolsPanel />,
-                  },
-                ]}
-              />
-            )
-          },
-        }
-      })
-    : null
+      return {
+        default: function DevtoolsPanel() {
+          return (
+            <TanStackDevtools
+              config={{
+                position: "bottom-right",
+              }}
+              plugins={[
+                {
+                  name: "Tanstack Router",
+                  render: <TanStackRouterDevtoolsPanel />,
+                },
+              ]}
+            />
+          )
+        },
+      }
+    })
+  : null
 
 const Toaster = lazy(async () => {
   const { Toaster } = await import("@/components/ui/sonner")
@@ -79,12 +79,18 @@ function getClientAppEnvironment() {
 
 export const Route = createRootRouteWithContext<{
   loaderToken?: string | null
+  isAuthenticated?: boolean
   convexQueryClient: ConvexQueryClient
   queryClient: QueryClient
 }>()({
   beforeLoad: async ({ context }) => {
     if (typeof window !== "undefined") {
-      return {}
+      // On the client `beforeLoad` runs on every navigation but can't read the
+      // request cookie. Derive the auth signal from the client auth snapshot
+      // (kept in sync by `<AuthSnapshotSync>`) so child `beforeLoad` gates
+      // (`requireAuth`) work on client navigations too. We intentionally do NOT
+      // refresh `loaderToken` here — it's an SSR-only value.
+      return { isAuthenticated: isClientAuthed() }
     }
 
     const loaderToken = await getLoaderToken()
@@ -103,6 +109,7 @@ export const Route = createRootRouteWithContext<{
 
     return {
       loaderToken,
+      isAuthenticated: Boolean(loaderToken),
     }
   },
   loader: async ({ context }) => {

@@ -1,18 +1,13 @@
 import { useEffect, useMemo, useState } from "react"
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query"
 import { useForm } from "@tanstack/react-form"
-import {
-  Navigate,
-  createLazyFileRoute,
-  useRouterState,
-} from "@tanstack/react-router"
+import { createLazyFileRoute } from "@tanstack/react-router"
 
 import { InlineAlert } from "@/components/inline-alert"
 import { Label, LabelDescription, LabelWrapper } from "@/components/label"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { useAuthLost } from "@/lib/auth/use-auth-lost"
 import { ALLOWED_AVATAR_TYPES, validateAvatarFile } from "@/lib/avatar"
 import { useCRPC } from "@/lib/convex/crpc"
 import { cn } from "@/lib/utils"
@@ -31,7 +26,8 @@ type ProfileSettingsFormValues = {
 }
 
 export const Route = createLazyFileRoute("/account/profile/")({
-  component: ProfileSettingsRoute,
+  // Auth is gated by the parent `/account` route (beforeLoad + AccountRoute).
+  component: AuthenticatedProfileSettingsRoute,
 })
 
 // Manages the object URL lifecycle so the preview blob is revoked instead of
@@ -67,20 +63,6 @@ function AvatarPreview({
       </AvatarFallback>
     </Avatar>
   )
-}
-
-function ProfileSettingsRoute() {
-  const { loaderToken } = Route.useRouteContext()
-  const pathname = useRouterState({
-    select: (state) => state.location.pathname,
-  })
-  const authLost = useAuthLost()
-
-  if (!loaderToken || authLost) {
-    return <Navigate search={{ redirect: pathname }} to="/auth" />
-  }
-
-  return <AuthenticatedProfileSettingsRoute />
 }
 
 function AuthenticatedProfileSettingsRoute() {
