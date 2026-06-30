@@ -1,10 +1,10 @@
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
 import { ReactNodeViewRenderer } from '@tiptap/react';
-import { common, createLowlight } from 'lowlight';
 
+import { createEditorLowlight } from '../create-lowlight';
 import { CodeBlockComponent } from './code-block-component';
 
-const lowlight = createLowlight(common);
+const lowlight = createEditorLowlight();
 
 export function createShikiCodeBlock() {
   return CodeBlockLowlight.extend({

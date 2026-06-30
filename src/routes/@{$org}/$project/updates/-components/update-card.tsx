@@ -2,7 +2,6 @@ import { memo } from 'react';
 import { Link } from '@tanstack/react-router';
 import { Calendar, Heart, MessageSquare } from 'lucide-react';
 
-import { EditorContentDisplay } from '@/components/editor';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { formatFullDate } from '@/lib/utils/format-timestamp';
@@ -12,7 +11,7 @@ import { useEmoteToggle } from './use-emote-toggle';
 
 // Memoized: the updates list re-renders on local state changes (e.g. "Load
 // more") while each row's props stay referentially stable, so memo skips
-// re-rendering the heavy card + markdown body for rows that didn't change.
+// re-rendering unchanged rows.
 function UpdateCardImpl({
   update,
   orgSlug,
@@ -31,7 +30,7 @@ function UpdateCardImpl({
   const {
     id: updateId,
     title,
-    content,
+    contentPreview,
     slug,
     author,
     category,
@@ -54,10 +53,6 @@ function UpdateCardImpl({
     serverLikeCount,
     canInteract: Boolean(currentProfileId),
   });
-
-  // Computed server-side (update.listByProject) so each row doesn't run a regex
-  // over the full HTML body on every render.
-  const isTruncated = Boolean(update.isTruncated);
 
   return (
     <li className={cn('relative flex', className)}>
@@ -106,10 +101,11 @@ function UpdateCardImpl({
           </div>
         ) : null}
 
-        <div className={cn('mt-4', isTruncated && 'relative max-h-[64rem] overflow-hidden')}>
-          <EditorContentDisplay content={content} />
-          {isTruncated ? <div className="absolute inset-x-0 bottom-0 h-24 bg-linear-to-t from-background to-transparent" /> : null}
-        </div>
+        {contentPreview ? (
+          <p className="mt-4 line-clamp-5 whitespace-pre-line text-base leading-7 text-muted-foreground">
+            {contentPreview}
+          </p>
+        ) : null}
 
         <div className="mt-6 flex items-center justify-between">
           <div className="flex items-center gap-6">

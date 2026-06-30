@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { ChevronUp } from 'lucide-react';
 
@@ -20,6 +20,13 @@ export function UpvoteButton({
   const crpc = useCRPC();
   const [count, setCount] = useState(initialCount);
   const [hasUpvoted, setHasUpvoted] = useState(initialHasUpvoted);
+  useEffect(() => {
+    setCount(initialCount);
+  }, [initialCount]);
+  useEffect(() => {
+    setHasUpvoted(initialHasUpvoted);
+  }, [initialHasUpvoted]);
+
   const mutation = useMutation(
     crpc.feedbackUpvote.toggle.mutationOptions({
       onSuccess: (result) => {

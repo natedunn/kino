@@ -190,7 +190,7 @@ export const MainNav = ({
                 <div className="hidden md:block">
                   <NavButton
                     aria-keyshortcuts="Meta+K Control+K"
-                    className="max-w-xs justify-start px-3 text-muted-foreground"
+                    className="w-64 max-w-xs justify-start px-3 text-muted-foreground"
                     onClick={commandPalette.open}
                   >
                     <SearchSparkle className="mr-2 size-4 shrink-0" />
@@ -260,12 +260,17 @@ export const MainNav = ({
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
+                ) : isUserPending ? (
+                  <div
+                    aria-hidden="true"
+                    className="size-8 shrink-0 rounded-md border border-transparent"
+                  />
                 ) : null}
 
                 {user ? (
                   <UserDropdown orgSlug={orgSlug} user={user} />
                 ) : isUserPending ? (
-                  <div className="flex h-9 w-28 animate-pulse items-center gap-2 rounded-md px-3">
+                  <div className="flex h-8 w-28 shrink-0 animate-pulse items-center gap-2 rounded-md px-2.5">
                     <div className="size-6 rounded-full bg-muted" />
                     <div className="hidden h-4 w-12 rounded bg-muted sm:block" />
                   </div>

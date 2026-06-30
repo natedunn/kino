@@ -1,9 +1,15 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
+import {
+  Suspense,
+  lazy,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react"
 import { useNavigate, useParams, useRouterState } from "@tanstack/react-router"
 import { Home, MoonStar, Settings, User } from "lucide-react"
 
 import { CommandContext } from "./command-context"
-import { CommandPalette } from "./command-palette"
 import type { ReactNode } from "react"
 import type { AppCommand, CommandRegistration } from "./types"
 
@@ -14,6 +20,11 @@ import Interview from "@/icons/interview"
 import Roadmap from "@/icons/roadmap"
 import { authClient } from "@/lib/auth/auth-client"
 import { toggleThemePreference } from "@/lib/theme"
+
+const CommandPalette = lazy(async () => {
+  const { CommandPalette } = await import("./command-palette")
+  return { default: CommandPalette }
+})
 
 export function CommandProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false)
@@ -211,12 +222,16 @@ export function CommandProvider({ children }: { children: ReactNode }) {
   return (
     <CommandContext.Provider value={contextValue}>
       {children}
-      <CommandPalette
-        commands={commands}
-        onOpenChange={setOpen}
-        onRunCommand={runCommand}
-        open={isOpen}
-      />
+      {isOpen ? (
+        <Suspense fallback={null}>
+          <CommandPalette
+            commands={commands}
+            onOpenChange={setOpen}
+            onRunCommand={runCommand}
+            open={isOpen}
+          />
+        </Suspense>
+      ) : null}
     </CommandContext.Provider>
   )
 }

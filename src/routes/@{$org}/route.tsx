@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { useSuspenseQuery } from "@tanstack/react-query"
+import { useQuery } from "@tanstack/react-query"
 import {
   Outlet,
   createFileRoute,
@@ -9,7 +9,6 @@ import {
 
 import { DefaultCatchBoundary } from "@/components/_default-catch-boundary"
 import { NotFound } from "@/components/_not-found"
-import { RoutePending } from "@/components/route-pending"
 import { useCRPC } from "@/lib/convex/crpc"
 import { crpcServer } from "@/lib/convex/crpc-server"
 import { cn } from "@/lib/utils"
@@ -23,14 +22,9 @@ export const Route = createFileRoute("/@{$org}")({
     meta: [titleMeta([titleFromSlug(params.org)])],
   }),
   loader: async ({ context, params }) => {
-    const [, orgDetails] = await Promise.all([
-      context.queryClient.ensureQueryData(
-        crpcServer.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
-      ),
-      context.queryClient.ensureQueryData(
-        crpcServer.org.getDetails.queryOptions({ slug: params.org })
-      ),
-    ])
+    const orgDetails = await context.queryClient.ensureQueryData(
+      crpcServer.org.getDetails.queryOptions({ slug: params.org })
+    )
 
     if (!orgDetails?.org) {
       throw notFound()
@@ -38,7 +32,6 @@ export const Route = createFileRoute("/@{$org}")({
   },
   component: OrganizationShell,
   notFoundComponent: () => <NotFound isContainer />,
-  pendingComponent: () => <RoutePending variant="page" />,
   errorComponent: DefaultCatchBoundary,
 })
 
@@ -51,18 +44,22 @@ function OrganizationShell() {
     shouldThrow: false,
   })
   const [isProjectNavCalculating, setIsProjectNavCalculating] = useState(false)
-  const profileQuery = useSuspenseQuery(
-    crpc.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
+  const profileQuery = useQuery(
+    crpc.profile.findMyProfile.queryOptions(
+      {},
+      { skipUnauth: true, subscribe: false }
+    )
   )
-  const orgQuery = useSuspenseQuery(
-    crpc.org.getDetails.queryOptions({ slug: params.org })
+  const orgQuery = useQuery(
+    crpc.org.getDetails.queryOptions({ slug: params.org }, { subscribe: false })
   )
 
-  if (!orgQuery.data?.org) {
+  if (orgQuery.isSuccess && !orgQuery.data?.org) {
     throw notFound()
   }
 
-  const isUserPending = !!loaderToken && profileQuery.data === undefined
+  const isUserPending =
+    !!loaderToken && (profileQuery.isPending || profileQuery.data === undefined)
   const projectSlug = projectParams?.project
   const hasProjectNav = !!projectSlug
   const org =
