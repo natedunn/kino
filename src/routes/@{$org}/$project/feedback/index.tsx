@@ -80,7 +80,12 @@ function validateFeedbackSearch(search: Record<string, unknown>): FeedbackSearch
 
 export const Route = createFileRoute("/@{$org}/$project/feedback/")({
   component: FeedbackListRoute,
-  loader: async ({ context, params }) => {
+  loaderDeps: ({ search }) => ({
+    board: search.board,
+    search: search.search,
+    status: search.status,
+  }),
+  loader: async ({ context, deps, params }) => {
     const projectData = await context.queryClient.ensureQueryData(
       crpcServer.project.getDetails.queryOptions({
         orgSlug: params.org,
@@ -92,10 +97,30 @@ export const Route = createFileRoute("/@{$org}/$project/feedback/")({
       throw notFound()
     }
 
-    await context.queryClient.ensureQueryData(
+    const boards = await context.queryClient.ensureQueryData(
       crpcServer.feedbackBoard.listProjectBoards.queryOptions({
         projectId: projectData.project.id,
       })
+    )
+
+    // Non-blocking warm-up: `intent` preload runs this loader on hover/focus, so
+    // the first page (and current profile) is usually cached by the time the
+    // user clicks — the list paints without a skeleton. We intentionally do not
+    // await: a cold navigation still renders the shell immediately and falls
+    // back to the skeleton while these resolve.
+    void context.queryClient.prefetchQuery(
+      crpcServer.feedback.listProjectFeedback.queryOptions(
+        getFeedbackListArgs({
+          boardId: getBoardId(boards, deps.board),
+          cursor: null,
+          projectId: projectData.project.id,
+          search: deps.search,
+          status: deps.status,
+        })
+      )
+    )
+    void context.queryClient.prefetchQuery(
+      crpcServer.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
     )
   },
   pendingComponent: () => <RoutePending variant="sidebar" />,

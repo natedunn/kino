@@ -63,7 +63,8 @@ function validateUpdatesSearch(search: Record<string, unknown>): {
 
 export const Route = createFileRoute("/@{$org}/$project/updates/")({
   component: UpdatesListRoute,
-  loader: async ({ context, params }) => {
+  loaderDeps: ({ search }) => ({ category: search.category }),
+  loader: async ({ context, deps, params }) => {
     const projectData = await context.queryClient.ensureQueryData(
       crpcServer.project.getDetails.queryOptions({
         orgSlug: params.org,
@@ -74,6 +75,24 @@ export const Route = createFileRoute("/@{$org}/$project/updates/")({
     if (!projectData?.project) {
       throw notFound()
     }
+
+    // Non-blocking warm-up: `intent` preload runs this loader on hover/focus, so
+    // the first page (and current profile) is usually cached by the time the
+    // user clicks — the list paints without a skeleton. We intentionally do not
+    // await: a cold navigation still renders the shell immediately and falls
+    // back to the skeleton while these resolve.
+    void context.queryClient.prefetchQuery(
+      crpcServer.update.listByProject.queryOptions(
+        getUpdateListArgs({
+          projectId: projectData.project.id,
+          category: deps.category,
+          cursor: null,
+        })
+      )
+    )
+    void context.queryClient.prefetchQuery(
+      crpcServer.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
+    )
   },
   pendingComponent: () => <RoutePending variant="page" />,
   pendingMs: 600,
