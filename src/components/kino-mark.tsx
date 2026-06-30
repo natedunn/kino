@@ -11,7 +11,7 @@ export function KinoMark(props: SVGProps<SVGSVGElement>) {
       <rect width="833" height="833" fill="currentColor" />
       <path
         d="M281 306.318C281 285.156 298.337 268 319.5 268C340.663 268 358 285.156 358 306.318V535.682C358 556.844 340.663 574 319.5 574C298.337 574 281 556.844 281 535.682V306.318Z"
-        fill="white"
+        fill="var(--color-foreground)"
       />
       <rect
         x="462.594"
@@ -19,7 +19,7 @@ export function KinoMark(props: SVGProps<SVGSVGElement>) {
         width="76.6365"
         height="218.518"
         rx="38.3183"
-        fill="white"
+        fill="var(--color-foreground)"
       />
       <rect
         x="515.125"
@@ -28,11 +28,11 @@ export function KinoMark(props: SVGProps<SVGSVGElement>) {
         height="157.183"
         rx="38.3183"
         transform="rotate(60 515.125 352)"
-        fill="white"
+        fill="var(--color-foreground)"
       />
       <path
         d="M452.159 553.503C441.578 535.176 447.857 511.741 466.185 501.159C484.512 490.578 507.947 496.857 518.528 515.185L533.446 541.022C544.027 559.35 537.748 582.785 519.42 593.366C501.093 603.947 477.658 597.668 467.077 579.341L452.159 553.503Z"
-        fill="white"
+        fill="var(--color-foreground)"
       />
     </svg>
   )
