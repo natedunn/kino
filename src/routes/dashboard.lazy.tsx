@@ -19,6 +19,7 @@ import { MainNav } from "@/components/site-nav/main-nav"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useAuthLost } from "@/lib/auth/use-auth-lost"
 import { useCRPC } from "@/lib/convex/crpc"
 
 export const Route = createLazyFileRoute("/dashboard")({
@@ -30,8 +31,9 @@ function DashboardPage() {
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
   })
+  const authLost = useAuthLost()
 
-  if (!loaderToken) {
+  if (!loaderToken || authLost) {
     return <Navigate search={{ redirect: pathname }} to="/auth" />
   }
 

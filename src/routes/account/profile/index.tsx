@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router"
-
 import { crpcServer } from "@/lib/convex/crpc-server"
 import { titleMeta } from "@/lib/seo"
 

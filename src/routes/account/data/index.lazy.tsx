@@ -11,6 +11,7 @@ import { Check, Database, Download } from "lucide-react"
 import { InlineAlert } from "@/components/inline-alert"
 import { Label, LabelDescription, LabelWrapper } from "@/components/label"
 import { Button } from "@/components/ui/button"
+import { useAuthLost } from "@/lib/auth/use-auth-lost"
 import { useCRPC, useCRPCClient } from "@/lib/convex/crpc"
 import { cn } from "@/lib/utils"
 import { capturePostHogEvent } from "@/lib/posthog"
@@ -101,8 +102,9 @@ function DataRoute() {
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
   })
+  const authLost = useAuthLost()
 
-  if (!loaderToken) {
+  if (!loaderToken || authLost) {
     return <Navigate search={{ redirect: pathname }} to="/auth" />
   }
 

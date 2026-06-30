@@ -8,6 +8,7 @@ import {
 import { Label, LabelDescription, LabelWrapper } from "@/components/label"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { useAuthLost } from "@/lib/auth/use-auth-lost"
 import { useCRPC } from "@/lib/convex/crpc"
 import { crpcServer } from "@/lib/convex/crpc-server"
 import { titleMeta } from "@/lib/seo"
@@ -34,7 +35,9 @@ function SecurityRoute() {
     select: (state) => state.location.pathname,
   })
 
-  if (!loaderToken) {
+  const authLost = useAuthLost()
+
+  if (!loaderToken || authLost) {
     return <Navigate search={{ redirect: pathname }} to="/auth" />
   }
 

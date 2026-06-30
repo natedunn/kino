@@ -1,9 +1,16 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { Link, createFileRoute } from "@tanstack/react-router"
+import { useEffect, useRef, useState } from "react"
+import {
+  Link,
+  createFileRoute,
+  useNavigate,
+  useRouter,
+} from "@tanstack/react-router"
+import { useIsAuth } from "kitcn/react"
 
 import { getSafeRedirectTarget } from "./auth"
+import { endSignOut, isSigningOut } from "@/lib/auth/sign-out-state"
 import { AuthField, AuthFooter, AuthHeader } from "@/components/auth/auth-card"
 import { InlineAlert } from "@/components/inline-alert"
 import { Button } from "@/components/ui/button"
@@ -28,13 +35,46 @@ export const Route = createFileRoute("/auth/")({
 function SignInPage() {
   const { redirect } = Route.useSearch()
   const session = authClient.useSession()
+  const router = useRouter()
+  const navigate = useNavigate()
+  // Server-verified auth. This flips to `false` synchronously the moment a
+  // sign-out begins (kitcn clears the auth store before the network round-trip),
+  // so gating the redirect on it — rather than the longer-lived Better Auth
+  // session — keeps a just-signed-out user on /auth instead of bouncing them
+  // back into the app while the session cookie is still being cleared.
+  const isAuthed = useIsAuth()
   const redirectTarget = getSafeRedirectTarget(redirect)
+  // The redirect navigates away; guard so it only ever fires once even if the
+  // effect re-runs or an explicit sign-in success also triggers it.
+  const redirectingRef = useRef(false)
 
+  async function goToRedirect() {
+    if (redirectingRef.current) return
+    redirectingRef.current = true
+    // Re-run the root `beforeLoad` so it re-reads the (now-present) auth cookie
+    // and refreshes `loaderToken`, then SPA-navigate. This replaces a full
+    // `window.location.replace`, avoiding a whole-document reload (re-running
+    // SSR, re-downloading the JS/CSS/font bundles, white flash).
+    await router.invalidate()
+    // `redirectTarget` is a validated same-origin path from
+    // `getSafeRedirectTarget`; the typed router can't express an arbitrary
+    // runtime path, so assert the route type here.
+    await navigate({ replace: true, to: redirectTarget as never })
+  }
+
+  // Already-authenticated visitor landed on /auth — bounce them into the app.
+  // While a sign-out is settling, client auth state transiently still reads as
+  // authenticated, so suppress the redirect until the Better Auth session is
+  // genuinely gone (at which point we also lift the sign-out suppression).
   useEffect(() => {
-    if (session.data?.user) {
-      window.location.replace(redirectTarget)
+    if (!session.data?.user) {
+      endSignOut()
+      return
     }
-  }, [redirectTarget, session.data?.user])
+    if (isAuthed && !isSigningOut()) {
+      void goToRedirect()
+    }
+  }, [isAuthed, session.data?.user])
 
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -129,8 +169,9 @@ function SignInPage() {
         setSubmitting(null)
       } else {
         trackAuthSuccess("sign_in", { method: "password" })
-        // Navigating away — keep the spinner up through the transition.
-        window.location.replace(redirectTarget)
+        // SPA-navigate (keep the spinner up through the transition) instead of
+        // a full-page reload — see `goToRedirect`.
+        await goToRedirect()
       }
     } catch (err) {
       trackAuthError("sign_in", err, { method: "password" })
@@ -139,10 +180,15 @@ function SignInPage() {
     }
   }
 
-  // Session is live but the redirect hasn't completed yet — show a spinner
-  // instead of an empty card. Copy reflects whether a sign-in is actually in
-  // flight (just signed in) vs. an already-authenticated visitor being bounced.
-  if (session.data?.user) {
+  // Session is live and we're authenticated (or mid sign-in) but the redirect
+  // hasn't completed yet — show a spinner instead of an empty card. Copy
+  // reflects whether a sign-in is actually in flight (just signed in) vs. an
+  // already-authenticated visitor being bounced. The `isAuthed || busy` gate
+  // means a *just-signed-out* visitor (whose Better Auth session lingers for a
+  // moment while the cookie clears) sees the sign-in form, not a stuck spinner —
+  // as does `!isSigningOut()`, which covers the window where auth state
+  // transiently re-reads as authenticated mid sign-out.
+  if (session.data?.user && (isAuthed || busy) && !isSigningOut()) {
     return (
       <div className="flex flex-col items-center justify-center gap-3 py-6 text-muted-foreground">
         <LoaderQuarter className="size-6 animate-spin" />

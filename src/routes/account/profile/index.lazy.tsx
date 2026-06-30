@@ -12,6 +12,7 @@ import { Label, LabelDescription, LabelWrapper } from "@/components/label"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { useAuthLost } from "@/lib/auth/use-auth-lost"
 import { ALLOWED_AVATAR_TYPES, validateAvatarFile } from "@/lib/avatar"
 import { useCRPC } from "@/lib/convex/crpc"
 import { cn } from "@/lib/utils"
@@ -73,8 +74,9 @@ function ProfileSettingsRoute() {
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
   })
+  const authLost = useAuthLost()
 
-  if (!loaderToken) {
+  if (!loaderToken || authLost) {
     return <Navigate search={{ redirect: pathname }} to="/auth" />
   }
 
