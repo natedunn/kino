@@ -36,18 +36,6 @@ export declare const api: {
       any
     >;
     getByIds: FunctionReference<"query", "public", { ids: Array<string> }, any>;
-    getBySlug: FunctionReference<
-      "query",
-      "public",
-      { projectId: string; slug: string },
-      any
-    >;
-    getBySlugMeta: FunctionReference<
-      "query",
-      "public",
-      { projectId: string; slug: string },
-      any
-    >;
     getDetailCritical: FunctionReference<
       "query",
       "public",

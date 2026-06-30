@@ -67,25 +67,81 @@ function dedupeComments<T extends { id: string }>(comments: T[]) {
   })
 }
 
+function dedupeDocsById<T extends { _id: string }>(docs: T[]) {
+  const seen = new Set<string>()
+  return docs.filter((doc) => {
+    if (seen.has(doc._id)) return false
+    seen.add(doc._id)
+    return true
+  })
+}
+
+// Request-scoped memoization so a comment window (head + tail, or a paged batch)
+// doesn't re-run the same author/projectMember lookups once per comment. Promises
+// are cached so concurrent enrichment of comments by the same author dedupes too.
+type CommentEnrichCache = {
+  author: Map<string, Promise<Doc<"profile"> | null>>
+  teamMember: Map<string, Promise<boolean>>
+}
+
+function createCommentEnrichCache(): CommentEnrichCache {
+  return { author: new Map(), teamMember: new Map() }
+}
+
+function getCachedAuthor(
+  ctx: any,
+  authorProfileId: any,
+  cache: CommentEnrichCache
+) {
+  const key = String(authorProfileId)
+  let cached = cache.author.get(key)
+  if (!cached) {
+    cached = getDoc<"profile">(ctx, authorProfileId)
+    cache.author.set(key, cached)
+  }
+  return cached
+}
+
+function getCachedIsTeamMember(
+  ctx: any,
+  author: Doc<"profile"> | null,
+  projectId: string,
+  cache: CommentEnrichCache
+) {
+  if (!author) return Promise.resolve(false)
+  const key = String(author._id)
+  let cached = cache.teamMember.get(key)
+  if (!cached) {
+    cached = (async () => {
+      const projectMember = await ctx.db
+        .query("projectMember")
+        .withIndex("by_profileId_projectId", (q: any) =>
+          q
+            .eq("profileId", author._id)
+            .eq("projectId", asId<"project">(projectId))
+        )
+        .first()
+      return !!projectMember && isProjectEditorRole(projectMember.role)
+    })()
+    cache.teamMember.set(key, cached)
+  }
+  return cached
+}
+
 async function toPublicUpdateComment(
   ctx: any,
   comment: Doc<"updateComment">,
   projectId: string,
-  currentProfile?: Doc<"profile"> | null
+  currentProfile?: Doc<"profile"> | null,
+  cache: CommentEnrichCache = createCommentEnrichCache()
 ) {
-  const author = await getDoc<"profile">(ctx, comment.authorProfileId)
-  let isTeamMember = false
-
-  if (author) {
-    const projectMember = await ctx.db
-      .query("projectMember")
-      .withIndex("by_profileId_projectId", (q: any) =>
-        q.eq("profileId", author._id).eq("projectId", asId<"project">(projectId))
-      )
-      .first()
-    isTeamMember =
-      !!projectMember && isProjectEditorRole(projectMember.role)
-  }
+  const author = await getCachedAuthor(ctx, comment.authorProfileId, cache)
+  const isTeamMember = await getCachedIsTeamMember(
+    ctx,
+    author,
+    projectId,
+    cache
+  )
 
   const emotes = await ctx.db
     .query("updateCommentEmote")
@@ -137,12 +193,17 @@ async function getUpdateCommentWindow(ctx: any, args: { updateId: string }) {
 
   let middleCursor: string | null = null
   if (!headPage.isDone) {
-    const probePage = await ctx.db
+    // Probe the first comment after the head to decide whether a middle gap
+    // exists. This must use `.take()`, not a second `.paginate()` — Convex
+    // allows only one paginated query per function, and the head page above is
+    // it. (A second `.paginate()` here throws once a thread exceeds the head
+    // count.)
+    const headPlusOne = await ctx.db
       .query("updateComment")
       .withIndex("by_updateId", (q: any) => q.eq("updateId", updateId))
       .order("asc")
-      .paginate({ cursor: headPage.continueCursor, numItems: 1 })
-    const probeComment = probePage.page[0]
+      .take(CRITICAL_COMMENT_HEAD_COUNT + 1)
+    const probeComment = headPlusOne[CRITICAL_COMMENT_HEAD_COUNT]
     if (probeComment && !tailIds.has(probeComment._id)) {
       middleCursor = headPage.continueCursor
     }
@@ -971,16 +1032,35 @@ export const getDetailCritical = optionalAuthQuery
           where: { content: "heart", updateId: item._id },
         }),
       ])
-    const head = await Promise.all(
-      commentWindow.head.map((comment: Doc<"updateComment">) =>
-        toPublicUpdateComment(ctx, comment, input.projectId, access.profile)
+    // Head and tail overlap for short threads, so enrich each unique comment
+    // once (sharing author/team-member lookups) instead of twice.
+    const cache = createCommentEnrichCache()
+    const enrichedById = new Map<
+      string,
+      Awaited<ReturnType<typeof toPublicUpdateComment>>
+    >()
+    await Promise.all(
+      dedupeDocsById([...commentWindow.head, ...commentWindow.tail]).map(
+        async (comment: Doc<"updateComment">) => {
+          enrichedById.set(
+            comment._id,
+            await toPublicUpdateComment(
+              ctx,
+              comment,
+              input.projectId,
+              access.profile,
+              cache
+            )
+          )
+        }
       )
     )
-    const tail = await Promise.all(
-      commentWindow.tail.map((comment: Doc<"updateComment">) =>
-        toPublicUpdateComment(ctx, comment, input.projectId, access.profile)
-      )
-    )
+    const head = commentWindow.head
+      .map((comment: Doc<"updateComment">) => enrichedById.get(comment._id))
+      .filter(Boolean)
+    const tail = commentWindow.tail
+      .map((comment: Doc<"updateComment">) => enrichedById.get(comment._id))
+      .filter(Boolean)
 
     return {
       author: await toProfileSummary(author),
@@ -1120,9 +1200,16 @@ export const getMiddleComments = optionalAuthQuery
     const visibleComments = page.page.filter(
       (comment: Doc<"updateComment">) => !tailIds.has(comment._id)
     )
+    const cache = createCommentEnrichCache()
     const comments = await Promise.all(
       visibleComments.map((comment: Doc<"updateComment">) =>
-        toPublicUpdateComment(ctx, comment, item.projectId, access.profile)
+        toPublicUpdateComment(
+          ctx,
+          comment,
+          item.projectId,
+          access.profile,
+          cache
+        )
       )
     )
 
