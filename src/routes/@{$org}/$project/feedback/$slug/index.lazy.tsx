@@ -285,6 +285,13 @@ function FeedbackDetailContent({
   const [middleCursor, setMiddleCursor] = useState<string | null>(
     feedbackData.commentWindow.middleCursor
   )
+  // How many middle pages the viewer has expanded. Middle pages are a snapshot
+  // (not a live subscription) to avoid holding a subscription open over a long
+  // thread; we track the count so we can re-fetch exactly the expanded range
+  // when the viewer mutates a comment. A hard refresh or navigating away and
+  // back remounts this component, which re-initializes the snapshot (collapsed)
+  // and re-reads the live head/tail — so those paths are always fresh.
+  const [middlePageCount, setMiddlePageCount] = useState(0)
   const [isLoadingMiddleComments, setIsLoadingMiddleComments] = useState(false)
   const { state: sidebarState, setSection: setSidebarSection } =
     useSidebarState(SIDEBAR_STORAGE_KEY, DEFAULT_SIDEBAR_STATE)
@@ -293,6 +300,7 @@ function FeedbackDetailContent({
   useEffect(() => {
     setMiddleComments([])
     setMiddleCursor(feedbackData.commentWindow.middleCursor)
+    setMiddlePageCount(0)
   }, [feedback.id, feedbackData.commentWindow.middleCursor])
 
   const interactiveQuery = useQuery(
@@ -425,13 +433,25 @@ function FeedbackDetailContent({
     crpc.feedbackComment.create.mutationOptions()
   )
   const commentUpdateMutation = useMutation(
-    crpc.feedbackComment.update.mutationOptions()
+    crpc.feedbackComment.update.mutationOptions({
+      onSuccess: () => {
+        void revalidateMiddleComments()
+      },
+    })
   )
   const commentDeleteMutation = useMutation(
-    crpc.feedbackComment.remove.mutationOptions()
+    crpc.feedbackComment.remove.mutationOptions({
+      onSuccess: () => {
+        void revalidateMiddleComments()
+      },
+    })
   )
   const commentEmoteMutation = useMutation(
-    crpc.feedbackCommentEmote.toggle.mutationOptions()
+    crpc.feedbackCommentEmote.toggle.mutationOptions({
+      onSuccess: () => {
+        void revalidateMiddleComments()
+      },
+    })
   )
   const refreshGithubConnectionsMutation = useMutation(
     crpc.feedbackGithub.refreshCounts.mutationOptions()
@@ -461,7 +481,7 @@ function FeedbackDetailContent({
     try {
       setIsLoadingMiddleComments(true)
       const result = await queryClient.fetchQuery(
-        crpc.feedback.getMiddleComments.queryOptions({
+        crpc.feedback.getMiddleComments.staticQueryOptions({
           cursor: middleCursor,
           feedbackId: feedback.id,
           tailCommentIds: feedbackData.commentWindow.tailCommentIds,
@@ -471,9 +491,38 @@ function FeedbackDetailContent({
         dedupeFeedbackComments([...current, ...(result?.comments ?? [])])
       )
       setMiddleCursor(result?.nextCursor ?? null)
+      setMiddlePageCount((count) => count + 1)
     } finally {
       setIsLoadingMiddleComments(false)
     }
+  }
+
+  // Re-fetch exactly the middle pages the viewer has expanded, forcing a fresh
+  // network read so a comment they just edited/deleted/reacted to is reflected.
+  // No-op when nothing in the middle is expanded.
+  async function revalidateMiddleComments() {
+    const startCursor = feedbackData.commentWindow.middleCursor
+    if (!startCursor || middlePageCount === 0) return
+
+    let cursor: string | null = startCursor
+    let nextCursor: string | null = null
+    const refreshed: FeedbackCommentData[] = []
+
+    for (let page = 0; page < middlePageCount && cursor; page++) {
+      const options = crpc.feedback.getMiddleComments.staticQueryOptions({
+        cursor,
+        feedbackId: feedback.id,
+        tailCommentIds: feedbackData.commentWindow.tailCommentIds,
+      })
+      await queryClient.invalidateQueries({ queryKey: options.queryKey })
+      const result = await queryClient.fetchQuery(options)
+      refreshed.push(...(result?.comments ?? []))
+      nextCursor = result?.nextCursor ?? null
+      cursor = nextCursor
+    }
+
+    setMiddleComments(dedupeFeedbackComments(refreshed))
+    setMiddleCursor(nextCursor)
   }
 
   async function handleCreateComment(content: string) {
@@ -481,6 +530,7 @@ function FeedbackDetailContent({
       content,
       feedbackId: feedback.id,
     })
+    await revalidateMiddleComments()
   }
 
   useEffect(() => {
@@ -515,10 +565,20 @@ function FeedbackDetailContent({
       ].sort((a, b) => a.createdAt - b.createdAt),
     [comments, events]
   )
-  const lastHeadTimelineCommentId =
-    [...feedbackData.commentWindow.head]
-      .reverse()
-      .find((comment: FeedbackCommentData) => !comment.initial)?.id ?? null
+  // Anchor the "Show more comments" button after the last currently-loaded
+  // non-tail comment, so it sits just above the tail and moves down as more
+  // middle pages load. Anchoring to a fixed head comment leaves the button
+  // stranded above freshly-loaded middle comments.
+  const middleButtonAnchorCommentId = useMemo(() => {
+    const tailIds = new Set(feedbackData.commentWindow.tailCommentIds)
+    for (let index = timelineItems.length - 1; index >= 0; index--) {
+      const item = timelineItems[index]
+      if (item.type === "comment" && !tailIds.has(item.data.id)) {
+        return item.data.id
+      }
+    }
+    return null
+  }, [timelineItems, feedbackData.commentWindow.tailCommentIds])
   const middleCommentsButton = middleCursor ? (
     <li className="relative z-10 flex justify-center">
       <Button
@@ -1064,7 +1124,7 @@ function FeedbackDetailContent({
                       verb="opened this feedback"
                     />
                   ) : null}
-                  {!lastHeadTimelineCommentId ? middleCommentsButton : null}
+                  {!middleButtonAnchorCommentId ? middleCommentsButton : null}
                   {timelineItems.map((item) => (
                     <Fragment key={`${item.type}:${item.data.id}`}>
                       {item.type === "comment" ? (
@@ -1138,7 +1198,7 @@ function FeedbackDetailContent({
                         <FeedbackEventItem event={item.data} />
                       )}
                       {item.type === "comment" &&
-                      item.data.id === lastHeadTimelineCommentId
+                      item.data.id === middleButtonAnchorCommentId
                         ? middleCommentsButton
                         : null}
                     </Fragment>

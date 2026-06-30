@@ -84,6 +84,13 @@ function UpdateDetailRoute() {
   const queryClient = useQueryClient()
   const [middleComments, setMiddleComments] = useState<UpdateCommentData[]>([])
   const [middleCursor, setMiddleCursor] = useState<string | null>(null)
+  // How many middle pages the viewer has expanded. Middle pages are a snapshot
+  // (not a live subscription) to avoid holding a subscription open over a long
+  // thread; we track the count so we can re-fetch exactly the expanded range
+  // when the viewer mutates a comment. A hard refresh or navigating away and
+  // back remounts this component, which re-initializes the snapshot (collapsed)
+  // and re-reads the live head/tail — so those paths are always fresh.
+  const [middlePageCount, setMiddlePageCount] = useState(0)
   const [isLoadingMiddleComments, setIsLoadingMiddleComments] =
     useState(false)
   const { state: sidebarState, setSection: setSidebarSection } =
@@ -125,13 +132,25 @@ function UpdateDetailRoute() {
     crpc.updateComment.create.mutationOptions()
   )
   const commentUpdateMutation = useMutation(
-    crpc.updateComment.update.mutationOptions()
+    crpc.updateComment.update.mutationOptions({
+      onSuccess: () => {
+        void revalidateMiddleComments()
+      },
+    })
   )
   const commentDeleteMutation = useMutation(
-    crpc.updateComment.remove.mutationOptions()
+    crpc.updateComment.remove.mutationOptions({
+      onSuccess: () => {
+        void revalidateMiddleComments()
+      },
+    })
   )
   const commentEmoteMutation = useMutation(
-    crpc.updateCommentEmote.toggle.mutationOptions()
+    crpc.updateCommentEmote.toggle.mutationOptions({
+      onSuccess: () => {
+        void revalidateMiddleComments()
+      },
+    })
   )
 
   const update = updateData.update
@@ -155,6 +174,7 @@ function UpdateDetailRoute() {
   useEffect(() => {
     setMiddleComments([])
     setMiddleCursor(updateData.commentWindow.middleCursor)
+    setMiddlePageCount(0)
   }, [update.id, updateData.commentWindow.middleCursor])
 
   const heartData =
@@ -199,7 +219,7 @@ function UpdateDetailRoute() {
     try {
       setIsLoadingMiddleComments(true)
       const result = await queryClient.fetchQuery(
-        crpc.update.getMiddleComments.queryOptions({
+        crpc.update.getMiddleComments.staticQueryOptions({
           cursor: middleCursor,
           tailCommentIds,
           updateId: update.id,
@@ -212,9 +232,38 @@ function UpdateDetailRoute() {
         ])
       )
       setMiddleCursor(result?.nextCursor ?? null)
+      setMiddlePageCount((count) => count + 1)
     } finally {
       setIsLoadingMiddleComments(false)
     }
+  }
+
+  // Re-fetch exactly the middle pages the viewer has expanded, forcing a fresh
+  // network read so a comment they just edited/deleted/reacted to is reflected.
+  // No-op when nothing in the middle is expanded.
+  async function revalidateMiddleComments() {
+    const startCursor = updateData?.commentWindow.middleCursor
+    if (!startCursor || middlePageCount === 0) return
+
+    let cursor: string | null = startCursor
+    let nextCursor: string | null = null
+    const refreshed: UpdateCommentData[] = []
+
+    for (let page = 0; page < middlePageCount && cursor; page++) {
+      const options = crpc.update.getMiddleComments.staticQueryOptions({
+        cursor,
+        tailCommentIds,
+        updateId: update.id,
+      })
+      await queryClient.invalidateQueries({ queryKey: options.queryKey })
+      const result = await queryClient.fetchQuery(options)
+      refreshed.push(...((result?.comments ?? []) as UpdateCommentData[]))
+      nextCursor = result?.nextCursor ?? null
+      cursor = nextCursor
+    }
+
+    setMiddleComments(dedupeUpdateComments(refreshed))
+    setMiddleCursor(nextCursor)
   }
 
   return (
@@ -519,6 +568,7 @@ function UpdateDetailRoute() {
                       content,
                       updateId: update.id,
                     })
+                    await revalidateMiddleComments()
                   }}
                   redirectTo={`/@${params.org}/${params.project}/updates/${params.slug}`}
                 />
