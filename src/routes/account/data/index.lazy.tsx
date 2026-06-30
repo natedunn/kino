@@ -1,17 +1,12 @@
 import { useMemo, useState } from "react"
 import { useSuspenseQuery } from "@tanstack/react-query"
-import {
-  Navigate,
-  createLazyFileRoute,
-  useRouterState,
-} from "@tanstack/react-router"
+import { createLazyFileRoute } from "@tanstack/react-router"
 import type { ApiOutputs } from "@convex/api"
 import { Check, Database, Download } from "lucide-react"
 
 import { InlineAlert } from "@/components/inline-alert"
 import { Label, LabelDescription, LabelWrapper } from "@/components/label"
 import { Button } from "@/components/ui/button"
-import { useAuthLost } from "@/lib/auth/use-auth-lost"
 import { useCRPC, useCRPCClient } from "@/lib/convex/crpc"
 import { cn } from "@/lib/utils"
 import { capturePostHogEvent } from "@/lib/posthog"
@@ -22,7 +17,8 @@ type ExportSectionId = ExportSection["id"]
 type ExportDocument = ApiOutputs["userDataExport"]["exportData"]
 
 export const Route = createLazyFileRoute("/account/data/")({
-  component: DataRoute,
+  // Auth is gated by the parent `/account` route (beforeLoad + AccountRoute).
+  component: AuthenticatedDataRoute,
 })
 
 function getErrorMessage(error: unknown) {
@@ -40,7 +36,10 @@ function getExportFailureReason(error: unknown) {
   const message = getErrorMessage(error).toLowerCase()
 
   if (message.includes("too large")) return "too_large"
-  if (message.includes("not authenticated") || message.includes("unauthorized")) {
+  if (
+    message.includes("not authenticated") ||
+    message.includes("unauthorized")
+  ) {
     return "unauthorized"
   }
 
@@ -95,20 +94,6 @@ function downloadJson(filename: string, data: unknown) {
   link.click()
   link.remove()
   URL.revokeObjectURL(url)
-}
-
-function DataRoute() {
-  const { loaderToken } = Route.useRouteContext()
-  const pathname = useRouterState({
-    select: (state) => state.location.pathname,
-  })
-  const authLost = useAuthLost()
-
-  if (!loaderToken || authLost) {
-    return <Navigate search={{ redirect: pathname }} to="/auth" />
-  }
-
-  return <AuthenticatedDataRoute />
 }
 
 function AuthenticatedDataRoute() {

@@ -51,10 +51,17 @@ function SignInPage() {
   async function goToRedirect() {
     if (redirectingRef.current) return
     redirectingRef.current = true
-    // Re-run the root `beforeLoad` so it re-reads the (now-present) auth cookie
-    // and refreshes `loaderToken`, then SPA-navigate. This replaces a full
+    // Re-run loaders so the destination's auth-bound queries refetch under the
+    // now-authenticated client, then SPA-navigate. This replaces a full
     // `window.location.replace`, avoiding a whole-document reload (re-running
     // SSR, re-downloading the JS/CSS/font bundles, white flash).
+    //
+    // NOTE: this does NOT refresh the server `loaderToken` (an SSR-only value).
+    // On the client, re-running the root `beforeLoad` re-derives auth from the
+    // client snapshot (see `__root.tsx` + `auth-snapshot.ts`), so the
+    // destination's `requireAuth` gate sees the now-authenticated state. Gating
+    // protected routes on the absence of `loaderToken` instead caused an
+    // infinite /auth ↔ destination redirect loop.
     await router.invalidate()
     // `redirectTarget` is a validated same-origin path from
     // `getSafeRedirectTarget`; the typed router can't express an arbitrary

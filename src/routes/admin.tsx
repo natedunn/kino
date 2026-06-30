@@ -1,15 +1,11 @@
 import { Suspense } from "react"
 import { useSuspenseQuery } from "@tanstack/react-query"
-import {
-  Link,
-  Navigate,
-  createFileRoute,
-  useRouterState,
-} from "@tanstack/react-router"
+import { Link, Navigate, createFileRoute } from "@tanstack/react-router"
 import { ArrowLeft } from "lucide-react"
 
 import { Skeleton } from "@/components/ui/skeleton"
-import { useAuthLost } from "@/lib/auth/use-auth-lost"
+import { useAuthLostRedirect } from "@/lib/auth/use-auth-lost"
+import { requireAuth } from "@/lib/auth/require-auth"
 import { useCRPC } from "@/lib/convex/crpc"
 import { crpcServer } from "@/lib/convex/crpc-server"
 import { titleMeta } from "@/lib/seo"
@@ -18,6 +14,7 @@ export const Route = createFileRoute("/admin")({
   head: () => ({
     meta: [titleMeta(["Admin"])],
   }),
+  beforeLoad: ({ context, location }) => requireAuth(context, location),
   loader: async ({ context }) => {
     if (!context.loaderToken) {
       return
@@ -30,16 +27,10 @@ export const Route = createFileRoute("/admin")({
 })
 
 function AdminPage() {
-  const { loaderToken } = Route.useRouteContext()
-  const pathname = useRouterState({
-    select: (state) => state.location.pathname,
-  })
-
-  const authLost = useAuthLost()
-
-  if (!loaderToken || authLost) {
-    return <Navigate search={{ redirect: pathname }} to="/auth" />
-  }
+  // Entry is gated in `beforeLoad` (requireAuth); this only catches auth lost
+  // in place (sign-out), which `beforeLoad` can't see.
+  const lost = useAuthLostRedirect()
+  if (lost) return lost
 
   return <AuthedAdmin />
 }

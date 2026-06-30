@@ -1,5 +1,5 @@
 import type { ReactNode } from "react"
-import { Link, Navigate, createFileRoute } from "@tanstack/react-router"
+import { Link, createFileRoute, redirect } from "@tanstack/react-router"
 import {
   ArrowRight,
   MessageSquare,
@@ -8,24 +8,30 @@ import {
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { isClientDefinitelyAuthed } from "@/lib/auth/auth-snapshot"
 import { titleMeta } from "@/lib/seo"
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [titleMeta([])],
   }),
-  component: IndexPage,
+  // Authenticated visitors go straight to the app — a real redirect, server and
+  // client. This inverse gate must fail CLOSED (unlike `requireAuth`): the
+  // server uses `context.isAuthenticated` (definitive from `loaderToken`), and
+  // the client uses `isClientDefinitelyAuthed()` (settled-and-authed only). The
+  // fail-open client signal would flash a just-loaded anonymous visitor to
+  // /dashboard → /auth instead of showing the public landing page.
+  beforeLoad: ({ context }) => {
+    const authed =
+      typeof window === "undefined"
+        ? context.isAuthenticated
+        : isClientDefinitelyAuthed()
+    if (authed) {
+      throw redirect({ to: "/dashboard", replace: true })
+    }
+  },
+  component: LandingPage,
 })
-
-function IndexPage() {
-  const { loaderToken } = Route.useRouteContext()
-
-  if (loaderToken) {
-    return <Navigate to="/dashboard" />
-  }
-
-  return <LandingPage />
-}
 
 function LandingPage() {
   return (
@@ -124,7 +130,8 @@ function LandingPage() {
               Ready to get started?
             </h2>
             <p className="mt-3 text-muted-foreground">
-              Free for small teams. Set up in under a minute and start collecting feedback fast.
+              Free for small teams. Set up in under a minute and start
+              collecting feedback fast.
             </p>
             <div className="mt-6">
               <Button asChild>
