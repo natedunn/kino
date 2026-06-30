@@ -7,6 +7,8 @@ export type ProfileSummary = {
 
 export type FeedbackCommentData = {
   author: ProfileSummary | null
+  canDelete?: boolean
+  canEdit?: boolean
   content: string
   createdAt: number | string | Date
   emoteCounts?: Record<string, { authorProfileIds: string[]; count: number }>

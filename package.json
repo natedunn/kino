@@ -73,6 +73,7 @@
     "cnfast": "^0.0.8",
     "convex": "1.41.0",
     "hono": "4.12.9",
+    "highlight.js": "^11.11.1",
     "kitcn": "0.15.0",
     "lowlight": "^3.3.0",
     "lucide-react": "^1.16.0",

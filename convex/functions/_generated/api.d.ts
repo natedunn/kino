@@ -42,6 +42,35 @@ export declare const api: {
       { projectId: string; slug: string },
       any
     >;
+    getBySlugMeta: FunctionReference<
+      "query",
+      "public",
+      { projectId: string; slug: string },
+      any
+    >;
+    getDetailCritical: FunctionReference<
+      "query",
+      "public",
+      { projectId: string; slug: string },
+      any
+    >;
+    getDetailInteractive: FunctionReference<
+      "query",
+      "public",
+      { feedbackId: string; projectId: string },
+      any
+    >;
+    getMiddleComments: FunctionReference<
+      "query",
+      "public",
+      {
+        cursor: string;
+        feedbackId: string;
+        limit?: number;
+        tailCommentIds?: Array<string>;
+      },
+      any
+    >;
     listProjectFeedback: FunctionReference<
       "query",
       "public",
@@ -606,6 +635,29 @@ export declare const api: {
       "query",
       "public",
       { key: string },
+      any
+    >;
+    getDetailCritical: FunctionReference<
+      "query",
+      "public",
+      { projectId: string; slug: string },
+      any
+    >;
+    getDetailInteractive: FunctionReference<
+      "query",
+      "public",
+      { projectId: string; updateId: string },
+      any
+    >;
+    getMiddleComments: FunctionReference<
+      "query",
+      "public",
+      {
+        cursor: string;
+        limit?: number;
+        tailCommentIds?: Array<string>;
+        updateId: string;
+      },
       any
     >;
     listByProject: FunctionReference<

@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
+import {
+  Suspense,
+  lazy,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react"
 
 import {
   hasReservedModifier,
@@ -7,9 +14,13 @@ import {
   normalizeKey,
 } from "./keys"
 import { ShortcutsContext } from "./shortcuts-context"
-import { ShortcutsDialog } from "./shortcuts-dialog"
 import type { ReactNode } from "react"
 import type { Shortcut, ShortcutRegistration } from "./types"
+
+const ShortcutsDialog = lazy(async () => {
+  const { ShortcutsDialog } = await import("./shortcuts-dialog")
+  return { default: ShortcutsDialog }
+})
 
 export function ShortcutsProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false)
@@ -125,11 +136,15 @@ export function ShortcutsProvider({ children }: { children: ReactNode }) {
   return (
     <ShortcutsContext.Provider value={contextValue}>
       {children}
-      <ShortcutsDialog
-        open={open}
-        onOpenChange={setOpen}
-        shortcuts={shortcuts}
-      />
+      {open ? (
+        <Suspense fallback={null}>
+          <ShortcutsDialog
+            open={open}
+            onOpenChange={setOpen}
+            shortcuts={shortcuts}
+          />
+        </Suspense>
+      ) : null}
     </ShortcutsContext.Provider>
   )
 }

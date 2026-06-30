@@ -44,6 +44,9 @@ const feedbackStatusSchema = z.enum([
   "paused",
 ])
 const targetGranularitySchema = z.enum(targetGranularities)
+const CRITICAL_COMMENT_HEAD_COUNT = 5
+const CRITICAL_COMMENT_TAIL_COUNT = 10
+const MIDDLE_COMMENT_PAGE_SIZE = 20
 
 function hasOverlap(left: Array<string>, right: Array<string>) {
   return left.some((value) => right.includes(value))
@@ -65,6 +68,115 @@ function toPublicFeedbackDoc(feedback: Doc<"feedback">) {
       feedback.target,
       feedback.targetGranularity
     ),
+  }
+}
+
+async function toProfileSummary(profile: Doc<"profile"> | null) {
+  return profile
+    ? {
+        id: profile._id,
+        imageUrl: await resolveProfileImageUrl(profile),
+        name: profile.name,
+        username: profile.username,
+      }
+    : null
+}
+
+async function toPublicFeedbackComment(
+  ctx: any,
+  comment: Doc<"feedbackComment">,
+  projectId: string,
+  currentProfile?: Doc<"profile"> | null
+) {
+  const author = await getDoc<"profile">(ctx, comment.authorProfileId)
+  let isTeamMember = false
+
+  if (author) {
+    const projectMember = await ctx.db
+      .query("projectMember")
+      .withIndex("by_profileId_projectId", (q: any) =>
+        q.eq("profileId", author._id).eq("projectId", asId<"project">(projectId))
+      )
+      .first()
+    isTeamMember =
+      !!projectMember && isProjectEditorRole(projectMember.role)
+  }
+
+  const emotes = await ctx.db
+    .query("feedbackCommentEmote")
+    .withIndex("by_feedbackCommentId", (q: any) =>
+      q.eq("feedbackCommentId", comment._id)
+    )
+    .collect()
+  const emoteCounts: Record<
+    string,
+    { authorProfileIds: string[]; count: number }
+  > = {}
+  for (const emote of emotes) {
+    if (!emoteCounts[emote.content]) {
+      emoteCounts[emote.content] = { authorProfileIds: [], count: 0 }
+    }
+    emoteCounts[emote.content].count++
+    emoteCounts[emote.content].authorProfileIds.push(emote.authorProfileId)
+  }
+
+  return {
+    ...toPublicDoc(comment),
+    author: await toProfileSummary(author),
+    canDelete:
+      !!currentProfile &&
+      !comment.initial &&
+      comment.authorProfileId === currentProfile._id,
+    canEdit: !!currentProfile && comment.authorProfileId === currentProfile._id,
+    content: comment.content,
+    emoteCounts,
+    initial: comment.initial,
+    isTeamMember,
+    updatedTime: comment.updatedTime,
+  }
+}
+
+function dedupeComments<T extends { id: string }>(comments: T[]) {
+  const seen = new Set<string>()
+  return comments.filter((comment) => {
+    if (seen.has(comment.id)) return false
+    seen.add(comment.id)
+    return true
+  })
+}
+
+async function getFeedbackCommentWindow(ctx: any, args: { feedbackId: string }) {
+  const feedbackId = asId<"feedback">(args.feedbackId)
+  const headPage = await ctx.db
+    .query("feedbackComment")
+    .withIndex("by_feedbackId", (q: any) => q.eq("feedbackId", feedbackId))
+    .order("asc")
+    .paginate({ cursor: null, numItems: CRITICAL_COMMENT_HEAD_COUNT })
+  const tailDocs = await ctx.db
+    .query("feedbackComment")
+    .withIndex("by_feedbackId", (q: any) => q.eq("feedbackId", feedbackId))
+    .order("desc")
+    .take(CRITICAL_COMMENT_TAIL_COUNT)
+  const tailIds = new Set(tailDocs.map((comment: Doc<"feedbackComment">) => comment._id))
+
+  let middleCursor: string | null = null
+  if (!headPage.isDone) {
+    const probePage = await ctx.db
+      .query("feedbackComment")
+      .withIndex("by_feedbackId", (q: any) => q.eq("feedbackId", feedbackId))
+      .order("asc")
+      .paginate({ cursor: headPage.continueCursor, numItems: 1 })
+    const probeComment = probePage.page[0]
+    if (probeComment && !tailIds.has(probeComment._id)) {
+      middleCursor = headPage.continueCursor
+    }
+  }
+
+  return {
+    head: headPage.page,
+    middleCursor,
+    tail: tailDocs.reverse(),
+    tailCommentIds: Array.from(tailIds),
   }
 }
 
@@ -550,7 +662,7 @@ export const getBySlug = optionalAuthQuery
     const firstComment = await getDoc(ctx, feedback.firstCommentId)
     const assignedProfile = await getDoc(ctx, feedback.assignedProfileId)
 
-    const currentProfile = await getCurrentProfile(ctx, ctx.userId)
+    const currentProfile = access.profile
     let hasUpvoted = false
     if (currentProfile) {
       const existing = await ctx.db
@@ -599,6 +711,215 @@ export const getBySlug = optionalAuthQuery
             updatedTime: firstComment.updatedTime,
           }
         : null,
+    }
+  })
+
+export const getDetailCritical = optionalAuthQuery
+  .input(
+    z.object({
+      projectId: idSchema,
+      slug: generatedSlugSchema,
+    })
+  )
+  .query(async ({ ctx, input }) => {
+    const feedback = await ctx.db
+      .query("feedback")
+      .withIndex("by_projectId_slug", (q: any) =>
+        q
+          .eq("projectId", asId<"project">(input.projectId))
+          .eq("slug", input.slug)
+      )
+      .first()
+    if (!feedback) return null
+
+    const access = await getProjectViewAccess(ctx, {
+      id: input.projectId,
+      userId: ctx.userId,
+    })
+    if (!access.permissions.canView) return null
+
+    const [author, board, firstComment] = await Promise.all([
+      getDoc<"profile">(ctx, feedback.authorProfileId),
+      getDoc<"feedbackBoard">(ctx, feedback.boardId),
+      getDoc<"feedbackComment">(ctx, feedback.firstCommentId),
+    ])
+    const commentWindow = await getFeedbackCommentWindow(ctx, {
+      feedbackId: feedback._id,
+    })
+    const head = await Promise.all(
+      commentWindow.head.map((comment: Doc<"feedbackComment">) =>
+        toPublicFeedbackComment(ctx, comment, input.projectId, access.profile)
+      )
+    )
+    const tail = await Promise.all(
+      commentWindow.tail.map((comment: Doc<"feedbackComment">) =>
+        toPublicFeedbackComment(ctx, comment, input.projectId, access.profile)
+      )
+    )
+
+    return {
+      author: await toProfileSummary(author),
+      board: board
+        ? {
+            id: board._id,
+            icon: board.icon,
+            name: board.name,
+            slug: board.slug,
+          }
+        : null,
+      commentWindow: {
+        head: dedupeComments(head),
+        middleCursor: commentWindow.middleCursor,
+        tail: dedupeComments(tail),
+        tailCommentIds: commentWindow.tailCommentIds,
+      },
+      feedback: toPublicFeedbackDoc(feedback),
+      firstComment: firstComment
+        ? {
+            ...toPublicDoc(firstComment),
+            authorProfileId: firstComment.authorProfileId,
+            content: firstComment.content,
+            initial: firstComment.initial,
+            updatedTime: firstComment.updatedTime,
+          }
+        : null,
+    }
+  })
+
+export const getDetailInteractive = optionalAuthQuery
+  .input(
+    z.object({
+      feedbackId: idSchema,
+      projectId: idSchema,
+    })
+  )
+  .query(async ({ ctx, input }) => {
+    const feedback = await getDoc<"feedback">(
+      ctx,
+      asId<"feedback">(input.feedbackId)
+    )
+    if (!feedback || feedback.projectId !== asId<"project">(input.projectId)) {
+      return null
+    }
+
+    const access = await getProjectViewAccess(ctx, {
+      id: input.projectId,
+      userId: ctx.userId,
+    })
+    if (!access.permissions.canView) return null
+
+    const currentProfile = access.profile
+    const [assignedProfile, existingUpvote] = await Promise.all([
+      getDoc<"profile">(ctx, feedback.assignedProfileId),
+      currentProfile
+        ? ctx.db
+            .query("feedbackUpvote")
+            .withIndex("by_feedbackId_authorProfileId", (q: any) =>
+              q
+                .eq("feedbackId", feedback._id)
+                .eq("authorProfileId", currentProfile._id)
+            )
+            .unique()
+        : Promise.resolve(null),
+    ])
+
+    return {
+      assignedProfile: await toProfileSummary(assignedProfile),
+      canMarkAnswer:
+        feedback.authorProfileId === currentProfile?._id ||
+        access.projectMember?.role === "org:admin",
+      currentProfile: await toProfileSummary(currentProfile),
+      hasUpvoted: !!existingUpvote,
+    }
+  })
+
+export const getMiddleComments = optionalAuthQuery
+  .input(
+    z.object({
+      cursor: z.string(),
+      feedbackId: idSchema,
+      limit: z.number().min(1).max(50).optional(),
+      tailCommentIds: idArraySchema.optional(),
+    })
+  )
+  .query(async ({ ctx, input }) => {
+    const feedback = await getDoc<"feedback">(
+      ctx,
+      asId<"feedback">(input.feedbackId)
+    )
+    if (!feedback) {
+      return { comments: [], nextCursor: null }
+    }
+
+    const access = await getProjectViewAccess(ctx, {
+      id: feedback.projectId,
+      userId: ctx.userId,
+    })
+    if (!access.permissions.canView) {
+      return { comments: [], nextCursor: null }
+    }
+
+    const tailIds = new Set(input.tailCommentIds ?? [])
+    const page = await ctx.db
+      .query("feedbackComment")
+      .withIndex("by_feedbackId", (q: any) =>
+        q.eq("feedbackId", asId<"feedback">(input.feedbackId))
+      )
+      .order("asc")
+      .paginate({
+        cursor: input.cursor,
+        numItems: input.limit ?? MIDDLE_COMMENT_PAGE_SIZE,
+      })
+    const hitTail = page.page.some((comment: Doc<"feedbackComment">) =>
+      tailIds.has(comment._id)
+    )
+    const visibleComments = page.page.filter(
+      (comment: Doc<"feedbackComment">) => !tailIds.has(comment._id)
+    )
+    const comments = await Promise.all(
+      visibleComments.map((comment: Doc<"feedbackComment">) =>
+        toPublicFeedbackComment(ctx, comment, feedback.projectId, access.profile)
+      )
+    )
+
+    return {
+      comments,
+      nextCursor: page.isDone || hitTail ? null : page.continueCursor,
+    }
+  })
+
+export const getBySlugMeta = optionalAuthQuery
+  .input(
+    z.object({
+      projectId: idSchema,
+      slug: generatedSlugSchema,
+    })
+  )
+  .query(async ({ ctx, input }) => {
+    const feedback = await ctx.db
+      .query("feedback")
+      .withIndex("by_projectId_slug", (q: any) =>
+        q
+          .eq("projectId", asId<"project">(input.projectId))
+          .eq("slug", input.slug)
+      )
+      .first()
+    if (!feedback) return null
+
+    const access = await getProjectViewAccess(ctx, {
+      id: input.projectId,
+      userId: ctx.userId,
+    })
+    if (!access.permissions.canView) return null
+
+    return {
+      feedback: {
+        createdAt: feedback._creationTime,
+        id: feedback._id,
+        status: feedback.status,
+        title: feedback.title,
+        upvotes: feedback.upvotes,
+      },
     }
   })
 

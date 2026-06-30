@@ -1,8 +1,7 @@
-import { common, createLowlight } from "lowlight"
-
+import { createEditorLowlight } from "./create-lowlight"
 import { formatInlineCode } from "./format-inline-code"
 
-const lowlight = createLowlight(common)
+const lowlight = createEditorLowlight()
 
 const CODE_BLOCK_REGEX =
   /<pre([^>]*)>\s*<code([^>]*)>([\s\S]*?)<\/code>\s*<\/pre>/gi

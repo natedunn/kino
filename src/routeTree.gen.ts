@@ -72,7 +72,7 @@ const UiRoute = UiRouteImport.update({
   id: '/ui',
   path: '/ui',
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any).lazy(() => import('./routes/ui.lazy').then((d) => d.Route))
 const StackRoute = StackRouteImport.update({
   id: '/stack',
   path: '/stack',
@@ -82,7 +82,7 @@ const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any).lazy(() => import('./routes/dashboard.lazy').then((d) => d.Route))
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -124,7 +124,9 @@ const AtChar123orgChar125IndexRoute =
     id: '/',
     path: '/',
     getParentRoute: () => AtChar123orgChar125RouteRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/@{$org}/index.lazy').then((d) => d.Route),
+  )
 const AuthVerifyEmailRoute = AuthVerifyEmailRouteImport.update({
   id: '/verify-email',
   path: '/verify-email',
@@ -190,7 +192,9 @@ const AccountProfileIndexRoute = AccountProfileIndexRouteImport.update({
   id: '/profile/',
   path: '/profile/',
   getParentRoute: () => AccountRouteRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/account/profile/index.lazy').then((d) => d.Route),
+)
 const AccountNotificationsIndexRoute =
   AccountNotificationsIndexRouteImport.update({
     id: '/notifications/',
@@ -201,7 +205,9 @@ const AccountDataIndexRoute = AccountDataIndexRouteImport.update({
   id: '/data/',
   path: '/data/',
   getParentRoute: () => AccountRouteRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/account/data/index.lazy').then((d) => d.Route),
+)
 const AccountAppearanceIndexRoute = AccountAppearanceIndexRouteImport.update({
   id: '/appearance/',
   path: '/appearance/',
@@ -212,7 +218,9 @@ const AtChar123orgChar125CreateProjectIndexRoute =
     id: '/create-project/',
     path: '/create-project/',
     getParentRoute: () => AtChar123orgChar125RouteRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/@{$org}/create-project/index.lazy').then((d) => d.Route),
+  )
 const AtChar123orgChar125ProjectIndexRoute =
   AtChar123orgChar125ProjectIndexRouteImport.update({
     id: '/',
@@ -291,7 +299,9 @@ const AtChar123orgChar125ProjectFilesIndexRoute =
     id: '/files/',
     path: '/files/',
     getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/@{$org}/$project/files/index.lazy').then((d) => d.Route),
+  )
 const AtChar123orgChar125ProjectFeedbackIndexRoute =
   AtChar123orgChar125ProjectFeedbackIndexRouteImport.update({
     id: '/',
@@ -309,19 +319,31 @@ const AtChar123orgChar125ProjectUpdatesNewIndexRoute =
     id: '/updates/new/',
     path: '/updates/new/',
     getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/@{$org}/$project/updates/new/index.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AtChar123orgChar125ProjectUpdatesEditIndexRoute =
   AtChar123orgChar125ProjectUpdatesEditIndexRouteImport.update({
     id: '/updates/edit/',
     path: '/updates/edit/',
     getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/@{$org}/$project/updates/edit/index.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AtChar123orgChar125ProjectUpdatesSlugIndexRoute =
   AtChar123orgChar125ProjectUpdatesSlugIndexRouteImport.update({
     id: '/updates/$slug/',
     path: '/updates/$slug/',
     getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/@{$org}/$project/updates/$slug/index.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AtChar123orgChar125ProjectSettingsMembersIndexRoute =
   AtChar123orgChar125ProjectSettingsMembersIndexRouteImport.update({
     id: '/members/',
@@ -333,7 +355,11 @@ const AtChar123orgChar125ProjectSettingsIntegrationsIndexRoute =
     id: '/integrations/',
     path: '/integrations/',
     getParentRoute: () => AtChar123orgChar125ProjectSettingsRouteRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/@{$org}/$project/settings/integrations/index.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AtChar123orgChar125ProjectSettingsBoardsIndexRoute =
   AtChar123orgChar125ProjectSettingsBoardsIndexRouteImport.update({
     id: '/boards/',
@@ -363,13 +389,21 @@ const AtChar123orgChar125ProjectFeedbackSlugIndexRoute =
     id: '/$slug/',
     path: '/$slug/',
     getParentRoute: () => AtChar123orgChar125ProjectFeedbackRouteRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/@{$org}/$project/feedback/$slug/index.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AtChar123orgChar125ProjectUpdatesSlugEditRoute =
   AtChar123orgChar125ProjectUpdatesSlugEditRouteImport.update({
     id: '/updates/$slug/edit',
     path: '/updates/$slug/edit',
     getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/@{$org}/$project/updates/$slug/edit.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AtChar123orgChar125ProjectFeedbackBoardsNewRoute =
   AtChar123orgChar125ProjectFeedbackBoardsNewRouteImport.update({
     id: '/boards/new',

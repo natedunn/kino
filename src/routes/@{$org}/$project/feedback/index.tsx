@@ -1,16 +1,20 @@
 import { useState, type ReactNode } from "react"
 
-import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query"
+import {
+  useQuery,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query"
 import {
   createFileRoute,
   Link,
   notFound,
   useRouter,
 } from "@tanstack/react-router"
-import { z } from "zod"
 
 import { RoutePending } from "@/components/route-pending"
 import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
 import CirclePlusOutline from "@/icons/circle-plus-outline"
 import Missing from "@/icons/missing"
 import { useCRPC } from "@/lib/convex/crpc"
@@ -38,22 +42,45 @@ type FeedbackListArgs = {
   status?: "open" | "in-progress" | "closed" | "completed" | "paused"
 }
 
-const feedbackSearchParams = z.object({
-  board: z.optional(z.string()).default("all"),
-  search: z.optional(
-    z.string().transform((value) => (value?.trim() === "" ? undefined : value))
-  ),
-  status: z.optional(
-    z
-      .enum(["open", "in-progress", "closed", "completed", "paused"])
-      .transform((value) => (value?.trim() === "" ? undefined : value))
-  ),
-})
+type FeedbackStatus = NonNullable<FeedbackListArgs["status"]>
+type FeedbackSearch = {
+  board?: string
+  search?: string
+  status?: FeedbackStatus
+}
+
+const FEEDBACK_STATUSES = new Set<FeedbackStatus>([
+  "open",
+  "in-progress",
+  "closed",
+  "completed",
+  "paused",
+])
+
+function parseOptionalString(value: unknown) {
+  if (typeof value !== "string") return undefined
+  const trimmed = value.trim()
+  return trimmed === "" ? undefined : trimmed
+}
+
+function validateFeedbackSearch(search: Record<string, unknown>): FeedbackSearch {
+  const status = parseOptionalString(search.status)
+  const board = parseOptionalString(search.board)
+  const query = parseOptionalString(search.search)
+
+  return {
+    ...(board ? { board } : {}),
+    ...(query ? { search: query } : {}),
+    status:
+      status && FEEDBACK_STATUSES.has(status as FeedbackStatus)
+        ? (status as FeedbackStatus)
+        : undefined,
+  }
+}
 
 export const Route = createFileRoute("/@{$org}/$project/feedback/")({
   component: FeedbackListRoute,
-  loaderDeps: ({ search }) => search,
-  loader: async ({ context, deps, params }) => {
+  loader: async ({ context, params }) => {
     const projectData = await context.queryClient.ensureQueryData(
       crpcServer.project.getDetails.queryOptions({
         orgSlug: params.org,
@@ -65,33 +92,15 @@ export const Route = createFileRoute("/@{$org}/$project/feedback/")({
       throw notFound()
     }
 
-    const boards = await context.queryClient.ensureQueryData(
+    await context.queryClient.ensureQueryData(
       crpcServer.feedbackBoard.listProjectBoards.queryOptions({
         projectId: projectData.project.id,
       })
     )
-    const boardId = getBoardId(boards, deps.board)
-
-    await Promise.all([
-      context.queryClient.ensureQueryData(
-        crpcServer.feedback.listProjectFeedback.queryOptions(
-          getFeedbackListArgs({
-            boardId,
-            cursor: null,
-            projectId: projectData.project.id,
-            search: deps.search,
-            status: deps.status,
-          })
-        )
-      ),
-      context.queryClient.ensureQueryData(
-        crpcServer.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
-      ),
-    ])
   },
   pendingComponent: () => <RoutePending variant="sidebar" />,
   pendingMs: 600,
-  validateSearch: feedbackSearchParams,
+  validateSearch: validateFeedbackSearch,
   head: ({ params }) => ({
     meta: [titleMeta(["Feedback", projectTitle(params.org, params.project)])],
   }),
@@ -130,6 +139,29 @@ function Notice({ icon, children }: { icon: ReactNode; children: ReactNode }) {
   )
 }
 
+function FeedbackListSkeleton() {
+  return (
+    <div className="flex flex-col gap-4" aria-hidden="true">
+      {Array.from({ length: 5 }).map((_, index) => (
+        <div key={index} className="rounded-lg border p-5">
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0 flex-1">
+              <Skeleton className="h-5 w-3/5" />
+              <Skeleton className="mt-3 h-4 w-full" />
+              <Skeleton className="mt-2 h-4 w-2/3" />
+            </div>
+            <Skeleton className="size-10 shrink-0 rounded-md" />
+          </div>
+          <div className="mt-5 flex gap-2">
+            <Skeleton className="h-6 w-20" />
+            <Skeleton className="h-6 w-24" />
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 function FeedbackListRoute() {
   const router = useRouter()
   const queryClient = useQueryClient()
@@ -155,8 +187,11 @@ function FeedbackListRoute() {
       projectId,
     })
   )
-  const profileQuery = useSuspenseQuery(
-    crpc.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
+  const profileQuery = useQuery(
+    crpc.profile.findMyProfile.queryOptions(
+      {},
+      { skipUnauth: true, subscribe: false }
+    )
   )
   const boardId = getBoardId(boards, board)
   const firstFeedbackPageArgs = getFeedbackListArgs({
@@ -167,13 +202,22 @@ function FeedbackListRoute() {
     status,
   })
   const firstFeedbackPageKey = JSON.stringify(firstFeedbackPageArgs)
-  const { data: firstFeedbackPage, isFetching: refreshingFeedback } =
-    useSuspenseQuery(
-      crpc.feedback.listProjectFeedback.queryOptions(firstFeedbackPageArgs)
-    )
+  const firstFeedbackPageQuery = useQuery(
+    crpc.feedback.listProjectFeedback.queryOptions(firstFeedbackPageArgs)
+  )
+  const firstFeedbackPage = firstFeedbackPageQuery.data
+  const isInitialFeedbackLoading =
+    firstFeedbackPageQuery.isPending && !firstFeedbackPage
+  const refreshingFeedback =
+    firstFeedbackPageQuery.isFetching && !isInitialFeedbackLoading
+
+  if (firstFeedbackPageQuery.isError && !firstFeedbackPage) {
+    throw firstFeedbackPageQuery.error
+  }
+
   const [additionalFeedbackState, setAdditionalFeedbackState] = useState<{
     key: string
-    pages: Array<typeof firstFeedbackPage>
+    pages: Array<NonNullable<typeof firstFeedbackPage>>
   }>({
     key: firstFeedbackPageKey,
     pages: [],
@@ -195,7 +239,9 @@ function FeedbackListRoute() {
     loadMoreErrorState.key === firstFeedbackPageKey
       ? loadMoreErrorState.error
       : null
-  const feedbackPages = [firstFeedbackPage, ...additionalFeedbackPages]
+  const feedbackPages = firstFeedbackPage
+    ? [firstFeedbackPage, ...additionalFeedbackPages]
+    : additionalFeedbackPages
   const lastFeedbackPage = additionalFeedbackPages.at(-1) ?? firstFeedbackPage
   const feedback = feedbackPages
     .flatMap((page) => page.page)
@@ -203,7 +249,9 @@ function FeedbackListRoute() {
       return items.findIndex((candidate) => candidate.id === item.id) === index
     })
   const canLoadMoreFeedback =
-    !lastFeedbackPage.isDone && !!lastFeedbackPage.continueCursor
+    !!lastFeedbackPage &&
+    !lastFeedbackPage.isDone &&
+    !!lastFeedbackPage.continueCursor
 
   async function loadMoreFeedback() {
     if (!canLoadMoreFeedback || loadingMoreFeedback) return
@@ -284,10 +332,18 @@ function FeedbackListRoute() {
         <div className="flex flex-col gap-4 py-8 md:col-span-9">
           <FeedbackToolbar />
           <div
-            aria-busy={refreshingFeedback || loadingMoreFeedback}
+            aria-busy={
+              isInitialFeedbackLoading || refreshingFeedback || loadingMoreFeedback
+            }
             aria-live="polite"
           >
-            {feedback.length === 0 ? (
+            {isInitialFeedbackLoading ? (
+              <>
+                <span className="sr-only">Loading feedback...</span>
+                <FeedbackListSkeleton />
+              </>
+            ) : null}
+            {!isInitialFeedbackLoading && feedback.length === 0 ? (
               <Notice icon={<Missing aria-hidden="true" size="32px" />}>
                 No feedback found.
               </Notice>
@@ -319,6 +375,7 @@ function FeedbackListRoute() {
                       onNavigationClick={() =>
                         router.navigate(feedbackLinkOptions)
                       }
+                      onPreload={() => router.preloadRoute(feedbackLinkOptions)}
                     />
                   )
                 })}

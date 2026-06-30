@@ -4,7 +4,7 @@ import type { Icon } from "@/icons/types"
 import type { ClassValue } from "@/lib/utils"
 import type { LinkProps } from "@tanstack/react-router"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useLayoutEffect, useRef, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { Link } from "@tanstack/react-router"
 
@@ -25,6 +25,9 @@ import Roadmap from "@/icons/roadmap"
 import SettingsSliders from "@/icons/settings-sliders"
 import { useCRPC } from "@/lib/convex/crpc"
 import { cn } from "@/lib/utils"
+
+const useIsomorphicLayoutEffect =
+  typeof window === "undefined" ? useEffect : useLayoutEffect
 
 export interface NavigationItem extends Omit<LinkProps, "children"> {
   className?: ClassValue
@@ -50,10 +53,13 @@ export function DynamicNavigation({
     project: projectSlug,
   }
   const projectQuery = useQuery(
-    crpc.project.getDetails.queryOptions({
-      orgSlug,
-      slug: projectSlug,
-    })
+    crpc.project.getDetails.queryOptions(
+      {
+        orgSlug,
+        slug: projectSlug,
+      },
+      { subscribe: false }
+    )
   )
   const canManageSettings = projectQuery.data?.permissions.canEdit ?? false
 
@@ -119,7 +125,7 @@ export function DynamicNavigation({
     onStateChange?.({ isCalculating })
   }, [isCalculating, onStateChange])
 
-  useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     const calculateVisibleItems = () => {
       if (!containerRef.current) {
         setIsCalculating(false)
@@ -169,8 +175,7 @@ export function DynamicNavigation({
       setIsCalculating(false)
     }
 
-    // Initial calculation with a delay to ensure DOM is ready
-    const initialTimeout = setTimeout(calculateVisibleItems, 50)
+    calculateVisibleItems()
 
     // Debounced resize handler to prevent excessive calculations
     let resizeTimeout: ReturnType<typeof setTimeout>
@@ -194,7 +199,6 @@ export function DynamicNavigation({
     }
 
     return () => {
-      clearTimeout(initialTimeout)
       clearTimeout(resizeTimeout)
       window.removeEventListener("resize", handleResize)
       observer.disconnect()
@@ -259,7 +263,7 @@ export function DynamicNavigation({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="self-center shrink-0"
+                  className="shrink-0 self-center"
                 >
                   <Dots className="size-4 text-muted-foreground" />
                   <span className="sr-only">More features</span>

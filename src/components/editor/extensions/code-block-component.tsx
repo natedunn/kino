@@ -17,14 +17,6 @@ const LANGUAGES = [
   { label: 'YAML', value: 'yaml' },
   { label: 'Go', value: 'go' },
   { label: 'Rust', value: 'rust' },
-  { label: 'Java', value: 'java' },
-  { label: 'C', value: 'c' },
-  { label: 'C++', value: 'cpp' },
-  { label: 'C#', value: 'csharp' },
-  { label: 'PHP', value: 'php' },
-  { label: 'Ruby', value: 'ruby' },
-  { label: 'Swift', value: 'swift' },
-  { label: 'Kotlin', value: 'kotlin' },
 ];
 
 export function CodeBlockComponent({ node, updateAttributes }: NodeViewProps) {
