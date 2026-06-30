@@ -97,18 +97,19 @@ export const MainNav = ({
                 <div className="flex shrink-0 items-center gap-2">
                   <Link
                     aria-label="Go to dashboard"
-                    className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-md transition-shadow hocus:ring-2 hocus:ring-ring hocus:ring-offset-2 hocus:ring-offset-background"
+                    className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-md border border-foreground/15 transition-shadow dark:border-foreground/25 hocus:ring-2 hocus:ring-ring/50 hocus:ring-offset-2 hocus:ring-offset-background"
                     to="/dashboard"
                   >
                     <KinoMark
                       aria-hidden="true"
-                      className="h-full w-full text-primary"
+                      className="h-full w-full text-background dark:text-card"
                     />
                   </Link>
                   {!!orgSlug && (
                     <div
                       className={cn(
-                        "-ml-3 flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-foreground ring-2 ring-background",
+                        "-ml-3 flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-foreground/15 ring-2 ring-muted select-none dark:border-foreground/25 dark:ring-black",
+                        org?.logo ? "bg-background" : "bg-foreground",
                         projectSlug && "max-[459px]:hidden"
                       )}
                     >
@@ -154,7 +155,7 @@ export const MainNav = ({
                       </DropdownMenu>
                       <Link
                         to="/@{$org}"
-                        className="link-text hidden max-w-[7rem] truncate no-underline! outline-none hocus:underline! focus-visible:outline-none min-[460px]:block md:max-w-[8rem] lg:max-w-[12rem]"
+                        className="link-text hidden max-w-[7rem] truncate no-underline! outline-none focus-visible:outline-none min-[460px]:block md:max-w-[8rem] lg:max-w-[12rem] hocus:underline!"
                         params={{ org: orgSlug }}
                       >
                         {orgSlug}
@@ -162,7 +163,7 @@ export const MainNav = ({
                       <span className="text-muted-foreground">/</span>
                       <Link
                         to="/@{$org}/$project"
-                        className="link-text block min-w-0 max-w-[9rem] truncate no-underline! outline-none hocus:underline! focus-visible:outline-none sm:max-w-[12rem] md:max-w-[18rem] lg:max-w-[24rem]"
+                        className="link-text block max-w-[9rem] min-w-0 truncate no-underline! outline-none focus-visible:outline-none sm:max-w-[12rem] md:max-w-[18rem] lg:max-w-[24rem] hocus:underline!"
                         params={(prev) => ({
                           ...prev,
                           org: orgSlug,
@@ -176,7 +177,7 @@ export const MainNav = ({
                     !!orgSlug && (
                       <Link
                         to="/@{$org}"
-                        className="link-text block max-w-[10rem] truncate no-underline! outline-none hocus:underline! focus-visible:outline-none sm:max-w-[14rem] md:max-w-[18rem]"
+                        className="link-text block max-w-[10rem] truncate no-underline! outline-none focus-visible:outline-none sm:max-w-[14rem] md:max-w-[18rem] hocus:underline!"
                         params={{ org: orgSlug }}
                       >
                         {orgSlug}
