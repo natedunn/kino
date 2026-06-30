@@ -36,10 +36,27 @@ export declare const api: {
       any
     >;
     getByIds: FunctionReference<"query", "public", { ids: Array<string> }, any>;
-    getBySlug: FunctionReference<
+    getDetailCritical: FunctionReference<
       "query",
       "public",
       { projectId: string; slug: string },
+      any
+    >;
+    getDetailInteractive: FunctionReference<
+      "query",
+      "public",
+      { feedbackId: string; projectId: string },
+      any
+    >;
+    getMiddleComments: FunctionReference<
+      "query",
+      "public",
+      {
+        cursor: string;
+        feedbackId: string;
+        limit?: number;
+        tailCommentIds?: Array<string>;
+      },
       any
     >;
     listProjectFeedback: FunctionReference<
@@ -606,6 +623,29 @@ export declare const api: {
       "query",
       "public",
       { key: string },
+      any
+    >;
+    getDetailCritical: FunctionReference<
+      "query",
+      "public",
+      { projectId: string; slug: string },
+      any
+    >;
+    getDetailInteractive: FunctionReference<
+      "query",
+      "public",
+      { projectId: string; updateId: string },
+      any
+    >;
+    getMiddleComments: FunctionReference<
+      "query",
+      "public",
+      {
+        cursor: string;
+        limit?: number;
+        tailCommentIds?: Array<string>;
+        updateId: string;
+      },
       any
     >;
     listByProject: FunctionReference<

@@ -1,9 +1,7 @@
 "use client"
 
-import { PostHogProvider as ReactPostHogProvider } from "@posthog/react"
 import { useRouterState } from "@tanstack/react-router"
-import posthog from "posthog-js"
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import type { PostHogConfig } from "posthog-js"
 import type { ReactNode } from "react"
 
@@ -12,6 +10,7 @@ import { authClient } from "@/lib/convex/auth-client"
 
 const POSTHOG_TOKEN = import.meta.env.VITE_POSTHOG_PROJECT_TOKEN
 const POSTHOG_HOST = import.meta.env.VITE_POSTHOG_HOST
+type PostHogClient = typeof import("posthog-js").default
 
 function canUsePostHog(appEnvironment: AppEnvironment) {
   return (
@@ -62,21 +61,55 @@ function createPostHogOptions(): Partial<PostHogConfig> {
   }
 }
 
-let hasInitializedPostHog = false
+let postHogClient: PostHogClient | null = null
+let postHogLoadPromise: Promise<PostHogClient | null> | null = null
 
-function ensurePostHog(appEnvironment: AppEnvironment) {
+function hasInitializedPostHog() {
+  return postHogClient !== null
+}
+
+async function ensurePostHog(appEnvironment: AppEnvironment) {
   if (!canUsePostHog(appEnvironment)) return null
 
-  if (!hasInitializedPostHog) {
-    const token = POSTHOG_TOKEN
+  if (postHogClient) return postHogClient
+  if (postHogLoadPromise) return postHogLoadPromise
 
-    if (!token) return null
+  postHogLoadPromise = import("posthog-js")
+    .then(({ default: posthog }) => {
+      if (postHogClient) return postHogClient
 
-    posthog.init(token, createPostHogOptions())
-    hasInitializedPostHog = true
-  }
+      const token = POSTHOG_TOKEN
+      if (!token) return null
 
-  return posthog
+      posthog.init(token, createPostHogOptions())
+      postHogClient = posthog
+      return posthog
+    })
+    .catch(() => null)
+
+  return postHogLoadPromise
+}
+
+function usePostHogClient(appEnvironment: AppEnvironment) {
+  const [client, setClient] = useState<PostHogClient | null>(() =>
+    canUsePostHog(appEnvironment) ? postHogClient : null
+  )
+
+  useEffect(() => {
+    let cancelled = false
+
+    void ensurePostHog(appEnvironment).then((nextClient) => {
+      if (!cancelled) {
+        setClient(nextClient)
+      }
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [appEnvironment])
+
+  return client
 }
 
 export function PostHogProvider({
@@ -86,32 +119,36 @@ export function PostHogProvider({
   appEnvironment: AppEnvironment
   children: ReactNode
 }) {
-  const client = ensurePostHog(appEnvironment)
-
-  if (!client) {
-    return children
-  }
+  const client = usePostHogClient(appEnvironment)
 
   return (
-    <ReactPostHogProvider client={client}>
-      <PostHogPageviewTracker />
-      <PostHogIdentitySync />
+    <>
+      {client ? <PostHogRuntime client={client} /> : null}
       {children}
-    </ReactPostHogProvider>
+    </>
   )
 }
 
-function PostHogPageviewTracker() {
+function PostHogRuntime({ client }: { client: PostHogClient }) {
+  return (
+    <>
+      <PostHogPageviewTracker client={client} />
+      <PostHogIdentitySync client={client} />
+    </>
+  )
+}
+
+function PostHogPageviewTracker({ client }: { client: PostHogClient }) {
   const location = useRouterState({ select: (state) => state.location })
 
   useEffect(() => {
     const url = new URL(window.location.href)
 
-    posthog.capture("$pageview", {
+    client.capture("$pageview", {
       $current_url: `${url.origin}${location.pathname}`,
       path: location.pathname,
     })
-  }, [location.pathname, location.searchStr])
+  }, [client, location.pathname, location.searchStr])
 
   return null
 }
@@ -120,18 +157,18 @@ export function capturePostHogException(
   error: unknown,
   properties?: Record<string, unknown>
 ) {
-  if (!hasInitializedPostHog) return
+  if (!hasInitializedPostHog()) return
 
-  posthog.captureException(error, properties)
+  postHogClient?.captureException(error, properties)
 }
 
 export function capturePostHogEvent(
   eventName: string,
   properties?: Record<string, unknown>
 ) {
-  if (!hasInitializedPostHog) return
+  if (!hasInitializedPostHog()) return
 
-  posthog.capture(eventName, properties)
+  postHogClient?.capture(eventName, properties)
 }
 
 export function captureAppError(
@@ -144,7 +181,7 @@ export function captureAppError(
   })
 }
 
-function PostHogIdentitySync() {
+function PostHogIdentitySync({ client }: { client: PostHogClient }) {
   const session = authClient.useSession()
   const identifiedUserId = useRef<string | null>(null)
 
@@ -155,7 +192,7 @@ function PostHogIdentitySync() {
 
     if (!user) {
       if (identifiedUserId.current) {
-        posthog.reset()
+        client.reset()
         identifiedUserId.current = null
       }
       return
@@ -163,12 +200,12 @@ function PostHogIdentitySync() {
 
     if (identifiedUserId.current === user.id) return
 
-    posthog.identify(user.id, {
+    client.identify(user.id, {
       email: user.email,
       name: user.name,
     })
     identifiedUserId.current = user.id
-  }, [session.data?.user, session.isPending])
+  }, [client, session.data?.user, session.isPending])
 
   return null
 }

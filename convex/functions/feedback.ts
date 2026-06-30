@@ -44,6 +44,9 @@ const feedbackStatusSchema = z.enum([
   "paused",
 ])
 const targetGranularitySchema = z.enum(targetGranularities)
+const CRITICAL_COMMENT_HEAD_COUNT = 5
+const CRITICAL_COMMENT_TAIL_COUNT = 10
+const MIDDLE_COMMENT_PAGE_SIZE = 20
 
 function hasOverlap(left: Array<string>, right: Array<string>) {
   return left.some((value) => right.includes(value))
@@ -65,6 +68,176 @@ function toPublicFeedbackDoc(feedback: Doc<"feedback">) {
       feedback.target,
       feedback.targetGranularity
     ),
+  }
+}
+
+async function toProfileSummary(profile: Doc<"profile"> | null) {
+  return profile
+    ? {
+        id: profile._id,
+        imageUrl: await resolveProfileImageUrl(profile),
+        name: profile.name,
+        username: profile.username,
+      }
+    : null
+}
+
+// Request-scoped memoization so a comment window (head + tail, or a paged batch)
+// doesn't re-run the same author/projectMember lookups once per comment. Promises
+// are cached so concurrent enrichment of comments by the same author dedupes too.
+type CommentEnrichCache = {
+  author: Map<string, Promise<Doc<"profile"> | null>>
+  teamMember: Map<string, Promise<boolean>>
+}
+
+function createCommentEnrichCache(): CommentEnrichCache {
+  return { author: new Map(), teamMember: new Map() }
+}
+
+function getCachedAuthor(
+  ctx: any,
+  authorProfileId: any,
+  cache: CommentEnrichCache
+) {
+  const key = String(authorProfileId)
+  let cached = cache.author.get(key)
+  if (!cached) {
+    cached = getDoc<"profile">(ctx, authorProfileId)
+    cache.author.set(key, cached)
+  }
+  return cached
+}
+
+function getCachedIsTeamMember(
+  ctx: any,
+  author: Doc<"profile"> | null,
+  projectId: string,
+  cache: CommentEnrichCache
+) {
+  if (!author) return Promise.resolve(false)
+  const key = String(author._id)
+  let cached = cache.teamMember.get(key)
+  if (!cached) {
+    cached = (async () => {
+      const projectMember = await ctx.db
+        .query("projectMember")
+        .withIndex("by_profileId_projectId", (q: any) =>
+          q
+            .eq("profileId", author._id)
+            .eq("projectId", asId<"project">(projectId))
+        )
+        .first()
+      return !!projectMember && isProjectEditorRole(projectMember.role)
+    })()
+    cache.teamMember.set(key, cached)
+  }
+  return cached
+}
+
+async function toPublicFeedbackComment(
+  ctx: any,
+  comment: Doc<"feedbackComment">,
+  projectId: string,
+  currentProfile?: Doc<"profile"> | null,
+  cache: CommentEnrichCache = createCommentEnrichCache()
+) {
+  const author = await getCachedAuthor(ctx, comment.authorProfileId, cache)
+  const isTeamMember = await getCachedIsTeamMember(
+    ctx,
+    author,
+    projectId,
+    cache
+  )
+
+  const emotes = await ctx.db
+    .query("feedbackCommentEmote")
+    .withIndex("by_feedbackCommentId", (q: any) =>
+      q.eq("feedbackCommentId", comment._id)
+    )
+    .collect()
+  const emoteCounts: Record<
+    string,
+    { authorProfileIds: string[]; count: number }
+  > = {}
+  for (const emote of emotes) {
+    if (!emoteCounts[emote.content]) {
+      emoteCounts[emote.content] = { authorProfileIds: [], count: 0 }
+    }
+    emoteCounts[emote.content].count++
+    emoteCounts[emote.content].authorProfileIds.push(emote.authorProfileId)
+  }
+
+  return {
+    ...toPublicDoc(comment),
+    author: await toProfileSummary(author),
+    canDelete:
+      !!currentProfile &&
+      !comment.initial &&
+      comment.authorProfileId === currentProfile._id,
+    canEdit: !!currentProfile && comment.authorProfileId === currentProfile._id,
+    content: comment.content,
+    emoteCounts,
+    initial: comment.initial,
+    isTeamMember,
+    updatedTime: comment.updatedTime,
+  }
+}
+
+function dedupeComments<T extends { id: string }>(comments: T[]) {
+  const seen = new Set<string>()
+  return comments.filter((comment) => {
+    if (seen.has(comment.id)) return false
+    seen.add(comment.id)
+    return true
+  })
+}
+
+function dedupeDocsById<T extends { _id: string }>(docs: T[]) {
+  const seen = new Set<string>()
+  return docs.filter((doc) => {
+    if (seen.has(doc._id)) return false
+    seen.add(doc._id)
+    return true
+  })
+}
+
+async function getFeedbackCommentWindow(ctx: any, args: { feedbackId: string }) {
+  const feedbackId = asId<"feedback">(args.feedbackId)
+  const headPage = await ctx.db
+    .query("feedbackComment")
+    .withIndex("by_feedbackId", (q: any) => q.eq("feedbackId", feedbackId))
+    .order("asc")
+    .paginate({ cursor: null, numItems: CRITICAL_COMMENT_HEAD_COUNT })
+  const tailDocs = await ctx.db
+    .query("feedbackComment")
+    .withIndex("by_feedbackId", (q: any) => q.eq("feedbackId", feedbackId))
+    .order("desc")
+    .take(CRITICAL_COMMENT_TAIL_COUNT)
+  const tailIds = new Set(tailDocs.map((comment: Doc<"feedbackComment">) => comment._id))
+
+  let middleCursor: string | null = null
+  if (!headPage.isDone) {
+    // Probe the first comment after the head to decide whether a middle gap
+    // exists. This must use `.take()`, not a second `.paginate()` — Convex
+    // allows only one paginated query per function, and the head page above is
+    // it. (A second `.paginate()` here throws once a thread exceeds the head
+    // count.)
+    const headPlusOne = await ctx.db
+      .query("feedbackComment")
+      .withIndex("by_feedbackId", (q: any) => q.eq("feedbackId", feedbackId))
+      .order("asc")
+      .take(CRITICAL_COMMENT_HEAD_COUNT + 1)
+    const probeComment = headPlusOne[CRITICAL_COMMENT_HEAD_COUNT]
+    if (probeComment && !tailIds.has(probeComment._id)) {
+      middleCursor = headPage.continueCursor
+    }
+  }
+
+  return {
+    head: headPage.page,
+    middleCursor,
+    tail: tailDocs.reverse(),
+    tailCommentIds: Array.from(tailIds),
   }
 }
 
@@ -521,7 +694,7 @@ export const updateTarget = authMutation
     return { success: true }
   })
 
-export const getBySlug = optionalAuthQuery
+export const getDetailCritical = optionalAuthQuery
   .input(
     z.object({
       projectId: idSchema,
@@ -545,44 +718,46 @@ export const getBySlug = optionalAuthQuery
     })
     if (!access.permissions.canView) return null
 
-    const author = await getDoc(ctx, feedback.authorProfileId)
-    const board = await getDoc(ctx, feedback.boardId)
-    const firstComment = await getDoc(ctx, feedback.firstCommentId)
-    const assignedProfile = await getDoc(ctx, feedback.assignedProfileId)
-
-    const currentProfile = await getCurrentProfile(ctx, ctx.userId)
-    let hasUpvoted = false
-    if (currentProfile) {
-      const existing = await ctx.db
-        .query("feedbackUpvote")
-        .withIndex("by_feedbackId_authorProfileId", (q: any) =>
-          q
-            .eq("feedbackId", feedback._id)
-            .eq("authorProfileId", currentProfile._id)
-        )
-        .unique()
-      hasUpvoted = !!existing
-    }
+    const [author, board, firstComment] = await Promise.all([
+      getDoc<"profile">(ctx, feedback.authorProfileId),
+      getDoc<"feedbackBoard">(ctx, feedback.boardId),
+      getDoc<"feedbackComment">(ctx, feedback.firstCommentId),
+    ])
+    const commentWindow = await getFeedbackCommentWindow(ctx, {
+      feedbackId: feedback._id,
+    })
+    // Head and tail overlap for short threads, so enrich each unique comment
+    // once (sharing author/team-member lookups) instead of twice.
+    const cache = createCommentEnrichCache()
+    const enrichedById = new Map<
+      string,
+      Awaited<ReturnType<typeof toPublicFeedbackComment>>
+    >()
+    await Promise.all(
+      dedupeDocsById([...commentWindow.head, ...commentWindow.tail]).map(
+        async (comment: Doc<"feedbackComment">) => {
+          enrichedById.set(
+            comment._id,
+            await toPublicFeedbackComment(
+              ctx,
+              comment,
+              input.projectId,
+              access.profile,
+              cache
+            )
+          )
+        }
+      )
+    )
+    const head = commentWindow.head
+      .map((comment: Doc<"feedbackComment">) => enrichedById.get(comment._id))
+      .filter(Boolean)
+    const tail = commentWindow.tail
+      .map((comment: Doc<"feedbackComment">) => enrichedById.get(comment._id))
+      .filter(Boolean)
 
     return {
-      feedback: toPublicFeedbackDoc(feedback),
-      hasUpvoted,
-      author: author
-        ? {
-            id: author._id,
-            imageUrl: await resolveProfileImageUrl(author),
-            name: author.name,
-            username: author.username,
-          }
-        : null,
-      assignedProfile: assignedProfile
-        ? {
-            id: assignedProfile._id,
-            imageUrl: await resolveProfileImageUrl(assignedProfile),
-            name: assignedProfile.name,
-            username: assignedProfile.username,
-          }
-        : null,
+      author: await toProfileSummary(author),
       board: board
         ? {
             id: board._id,
@@ -591,14 +766,131 @@ export const getBySlug = optionalAuthQuery
             slug: board.slug,
           }
         : null,
+      commentWindow: {
+        head: dedupeComments(head),
+        middleCursor: commentWindow.middleCursor,
+        tail: dedupeComments(tail),
+        tailCommentIds: commentWindow.tailCommentIds,
+      },
+      feedback: toPublicFeedbackDoc(feedback),
       firstComment: firstComment
         ? {
             ...toPublicDoc(firstComment),
             authorProfileId: firstComment.authorProfileId,
             content: firstComment.content,
+            initial: firstComment.initial,
             updatedTime: firstComment.updatedTime,
           }
         : null,
+    }
+  })
+
+export const getDetailInteractive = optionalAuthQuery
+  .input(
+    z.object({
+      feedbackId: idSchema,
+      projectId: idSchema,
+    })
+  )
+  .query(async ({ ctx, input }) => {
+    const feedback = await getDoc<"feedback">(
+      ctx,
+      asId<"feedback">(input.feedbackId)
+    )
+    if (!feedback || feedback.projectId !== asId<"project">(input.projectId)) {
+      return null
+    }
+
+    const access = await getProjectViewAccess(ctx, {
+      id: input.projectId,
+      userId: ctx.userId,
+    })
+    if (!access.permissions.canView) return null
+
+    const currentProfile = access.profile
+    const [assignedProfile, existingUpvote] = await Promise.all([
+      getDoc<"profile">(ctx, feedback.assignedProfileId),
+      currentProfile
+        ? ctx.db
+            .query("feedbackUpvote")
+            .withIndex("by_feedbackId_authorProfileId", (q: any) =>
+              q
+                .eq("feedbackId", feedback._id)
+                .eq("authorProfileId", currentProfile._id)
+            )
+            .unique()
+        : Promise.resolve(null),
+    ])
+
+    return {
+      assignedProfile: await toProfileSummary(assignedProfile),
+      canMarkAnswer:
+        feedback.authorProfileId === currentProfile?._id ||
+        access.projectMember?.role === "org:admin",
+      currentProfile: await toProfileSummary(currentProfile),
+      hasUpvoted: !!existingUpvote,
+    }
+  })
+
+export const getMiddleComments = optionalAuthQuery
+  .input(
+    z.object({
+      cursor: z.string(),
+      feedbackId: idSchema,
+      limit: z.number().min(1).max(50).optional(),
+      tailCommentIds: idArraySchema.optional(),
+    })
+  )
+  .query(async ({ ctx, input }) => {
+    const feedback = await getDoc<"feedback">(
+      ctx,
+      asId<"feedback">(input.feedbackId)
+    )
+    if (!feedback) {
+      return { comments: [], nextCursor: null }
+    }
+
+    const access = await getProjectViewAccess(ctx, {
+      id: feedback.projectId,
+      userId: ctx.userId,
+    })
+    if (!access.permissions.canView) {
+      return { comments: [], nextCursor: null }
+    }
+
+    const tailIds = new Set(input.tailCommentIds ?? [])
+    const page = await ctx.db
+      .query("feedbackComment")
+      .withIndex("by_feedbackId", (q: any) =>
+        q.eq("feedbackId", asId<"feedback">(input.feedbackId))
+      )
+      .order("asc")
+      .paginate({
+        cursor: input.cursor,
+        numItems: input.limit ?? MIDDLE_COMMENT_PAGE_SIZE,
+      })
+    const hitTail = page.page.some((comment: Doc<"feedbackComment">) =>
+      tailIds.has(comment._id)
+    )
+    const visibleComments = page.page.filter(
+      (comment: Doc<"feedbackComment">) => !tailIds.has(comment._id)
+    )
+    const cache = createCommentEnrichCache()
+    const comments = await Promise.all(
+      visibleComments.map((comment: Doc<"feedbackComment">) =>
+        toPublicFeedbackComment(
+          ctx,
+          comment,
+          feedback.projectId,
+          access.profile,
+          cache
+        )
+      )
+    )
+
+    return {
+      comments,
+      nextCursor: page.isDone || hitTail ? null : page.continueCursor,
     }
   })
 

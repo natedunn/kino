@@ -12,6 +12,7 @@ import {
   getDoc,
   getDocOrThrow,
   getProjectViewAccess,
+  isProjectEditorRole,
   toPublicDoc,
   verifyProjectAccess,
 } from "../lib/kino"
@@ -37,10 +38,231 @@ import {
 import { orgUploadsR2 } from "../lib/r2"
 import { UPDATE_CATEGORIES, updateTable } from "./schema"
 import { internal } from "./_generated/api"
-import type { Id } from "./_generated/dataModel"
+import type { Doc, Id } from "./_generated/dataModel"
 import { internalMutation } from "./generated/server"
 
 const updateCategorySchema = z.enum(["changelog", "article", "announcement"])
+const UPDATE_LIST_PREVIEW_CHARS = 420
+const CRITICAL_COMMENT_HEAD_COUNT = 5
+const CRITICAL_COMMENT_TAIL_COUNT = 10
+const MIDDLE_COMMENT_PAGE_SIZE = 20
+
+async function toProfileSummary(profile: Doc<"profile"> | null) {
+  return profile
+    ? {
+        id: profile._id,
+        imageUrl: await resolveProfileImageUrl(profile),
+        name: profile.name,
+        username: profile.username,
+      }
+    : null
+}
+
+function dedupeComments<T extends { id: string }>(comments: T[]) {
+  const seen = new Set<string>()
+  return comments.filter((comment) => {
+    if (seen.has(comment.id)) return false
+    seen.add(comment.id)
+    return true
+  })
+}
+
+function dedupeDocsById<T extends { _id: string }>(docs: T[]) {
+  const seen = new Set<string>()
+  return docs.filter((doc) => {
+    if (seen.has(doc._id)) return false
+    seen.add(doc._id)
+    return true
+  })
+}
+
+// Request-scoped memoization so a comment window (head + tail, or a paged batch)
+// doesn't re-run the same author/projectMember lookups once per comment. Promises
+// are cached so concurrent enrichment of comments by the same author dedupes too.
+type CommentEnrichCache = {
+  author: Map<string, Promise<Doc<"profile"> | null>>
+  teamMember: Map<string, Promise<boolean>>
+}
+
+function createCommentEnrichCache(): CommentEnrichCache {
+  return { author: new Map(), teamMember: new Map() }
+}
+
+function getCachedAuthor(
+  ctx: any,
+  authorProfileId: any,
+  cache: CommentEnrichCache
+) {
+  const key = String(authorProfileId)
+  let cached = cache.author.get(key)
+  if (!cached) {
+    cached = getDoc<"profile">(ctx, authorProfileId)
+    cache.author.set(key, cached)
+  }
+  return cached
+}
+
+function getCachedIsTeamMember(
+  ctx: any,
+  author: Doc<"profile"> | null,
+  projectId: string,
+  cache: CommentEnrichCache
+) {
+  if (!author) return Promise.resolve(false)
+  const key = String(author._id)
+  let cached = cache.teamMember.get(key)
+  if (!cached) {
+    cached = (async () => {
+      const projectMember = await ctx.db
+        .query("projectMember")
+        .withIndex("by_profileId_projectId", (q: any) =>
+          q
+            .eq("profileId", author._id)
+            .eq("projectId", asId<"project">(projectId))
+        )
+        .first()
+      return !!projectMember && isProjectEditorRole(projectMember.role)
+    })()
+    cache.teamMember.set(key, cached)
+  }
+  return cached
+}
+
+async function toPublicUpdateComment(
+  ctx: any,
+  comment: Doc<"updateComment">,
+  projectId: string,
+  currentProfile?: Doc<"profile"> | null,
+  cache: CommentEnrichCache = createCommentEnrichCache()
+) {
+  const author = await getCachedAuthor(ctx, comment.authorProfileId, cache)
+  const isTeamMember = await getCachedIsTeamMember(
+    ctx,
+    author,
+    projectId,
+    cache
+  )
+
+  const emotes = await ctx.db
+    .query("updateCommentEmote")
+    .withIndex("by_updateCommentId", (q: any) =>
+      q.eq("updateCommentId", comment._id)
+    )
+    .collect()
+  const emoteCounts: Record<
+    string,
+    { authorProfileIds: string[]; count: number }
+  > = {}
+  for (const emote of emotes) {
+    if (!emoteCounts[emote.content]) {
+      emoteCounts[emote.content] = { authorProfileIds: [], count: 0 }
+    }
+    emoteCounts[emote.content].count++
+    emoteCounts[emote.content].authorProfileIds.push(emote.authorProfileId)
+  }
+
+  return {
+    ...toPublicDoc(comment),
+    author: await toProfileSummary(author),
+    canDelete:
+      !!currentProfile && comment.authorProfileId === currentProfile._id,
+    canEdit:
+      !!currentProfile && comment.authorProfileId === currentProfile._id,
+    content: comment.content,
+    emoteCounts,
+    isTeamMember,
+    updatedTime: comment.updatedTime,
+  }
+}
+
+async function getUpdateCommentWindow(ctx: any, args: { updateId: string }) {
+  const updateId = asId<"update">(args.updateId)
+  const headPage = await ctx.db
+    .query("updateComment")
+    .withIndex("by_updateId", (q: any) => q.eq("updateId", updateId))
+    .order("asc")
+    .paginate({ cursor: null, numItems: CRITICAL_COMMENT_HEAD_COUNT })
+  const tailDocs = await ctx.db
+    .query("updateComment")
+    .withIndex("by_updateId", (q: any) => q.eq("updateId", updateId))
+    .order("desc")
+    .take(CRITICAL_COMMENT_TAIL_COUNT)
+  const tailIds = new Set(
+    tailDocs.map((comment: Doc<"updateComment">) => comment._id)
+  )
+
+  let middleCursor: string | null = null
+  if (!headPage.isDone) {
+    // Probe the first comment after the head to decide whether a middle gap
+    // exists. This must use `.take()`, not a second `.paginate()` — Convex
+    // allows only one paginated query per function, and the head page above is
+    // it. (A second `.paginate()` here throws once a thread exceeds the head
+    // count.)
+    const headPlusOne = await ctx.db
+      .query("updateComment")
+      .withIndex("by_updateId", (q: any) => q.eq("updateId", updateId))
+      .order("asc")
+      .take(CRITICAL_COMMENT_HEAD_COUNT + 1)
+    const probeComment = headPlusOne[CRITICAL_COMMENT_HEAD_COUNT]
+    if (probeComment && !tailIds.has(probeComment._id)) {
+      middleCursor = headPage.continueCursor
+    }
+  }
+
+  return {
+    head: headPage.page,
+    middleCursor,
+    tail: tailDocs.reverse(),
+    tailCommentIds: Array.from(tailIds),
+  }
+}
+
+function decodeBasicHtmlEntities(value: string) {
+  const namedEntities: Record<string, string> = {
+    amp: "&",
+    apos: "'",
+    gt: ">",
+    lt: "<",
+    nbsp: " ",
+    quot: '"',
+  }
+
+  return value.replace(
+    /&(#(\d+)|#x([\da-f]+)|[a-z]+);/gi,
+    (match, entity, decimal, hex) => {
+      const codePoint = decimal
+        ? Number(decimal)
+        : hex
+          ? Number.parseInt(hex, 16)
+          : null
+
+      if (codePoint !== null) {
+        return Number.isInteger(codePoint) &&
+          codePoint >= 0 &&
+          codePoint <= 0x10ffff
+          ? String.fromCodePoint(codePoint)
+          : match
+      }
+
+      return namedEntities[String(entity).toLowerCase()] ?? match
+    }
+  )
+}
+
+function getUpdateListPreview(content: string) {
+  const plainText = decodeBasicHtmlEntities(
+    content
+      .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, " ")
+      .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, " ")
+      .replace(/<[^>]*>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+  )
+  const isTruncated = plainText.length > UPDATE_LIST_PREVIEW_CHARS
+  return isTruncated
+    ? `${plainText.slice(0, UPDATE_LIST_PREVIEW_CHARS).trimEnd()}...`
+    : plainText
+}
 
 export const create = authMutation
   .input(
@@ -776,6 +998,227 @@ export const getBySlug = optionalAuthQuery
     }
   })
 
+export const getDetailCritical = optionalAuthQuery
+  .input(
+    z.object({
+      projectId: idSchema,
+      slug: generatedSlugSchema,
+    })
+  )
+  .query(async ({ ctx, input }) => {
+    const item = await ctx.db
+      .query("update")
+      .withIndex("by_projectId_slug", (q: any) =>
+        q
+          .eq("projectId", asId<"project">(input.projectId))
+          .eq("slug", input.slug)
+      )
+      .first()
+    if (!item) return null
+
+    const access = await getProjectViewAccess(ctx, {
+      id: input.projectId,
+      userId: ctx.userId,
+    })
+    if (!access.permissions.canView) return null
+    if (item.status === "draft" && !access.permissions.canEdit) return null
+
+    const [author, coverImageUrl, commentWindow, heartCount] =
+      await Promise.all([
+        getDoc<"profile">(ctx, item.authorProfileId),
+        resolveCoverImageUrl(item.coverImageId ?? null),
+        getUpdateCommentWindow(ctx, { updateId: item._id }),
+        ctx.orm.query.updateEmote.count({
+          where: { content: "heart", updateId: item._id },
+        }),
+      ])
+    // Head and tail overlap for short threads, so enrich each unique comment
+    // once (sharing author/team-member lookups) instead of twice.
+    const cache = createCommentEnrichCache()
+    const enrichedById = new Map<
+      string,
+      Awaited<ReturnType<typeof toPublicUpdateComment>>
+    >()
+    await Promise.all(
+      dedupeDocsById([...commentWindow.head, ...commentWindow.tail]).map(
+        async (comment: Doc<"updateComment">) => {
+          enrichedById.set(
+            comment._id,
+            await toPublicUpdateComment(
+              ctx,
+              comment,
+              input.projectId,
+              access.profile,
+              cache
+            )
+          )
+        }
+      )
+    )
+    const head = commentWindow.head
+      .map((comment: Doc<"updateComment">) => enrichedById.get(comment._id))
+      .filter(Boolean)
+    const tail = commentWindow.tail
+      .map((comment: Doc<"updateComment">) => enrichedById.get(comment._id))
+      .filter(Boolean)
+
+    return {
+      author: await toProfileSummary(author),
+      commentWindow: {
+        head: dedupeComments(head),
+        middleCursor: commentWindow.middleCursor,
+        tail: dedupeComments(tail),
+        tailCommentIds: commentWindow.tailCommentIds,
+      },
+      coverImageUrl,
+      emoteCounts: {
+        heart: {
+          authorProfileIds: [],
+          count: heartCount,
+        },
+      },
+      update: toPublicDoc(item),
+    }
+  })
+
+export const getDetailInteractive = optionalAuthQuery
+  .input(
+    z.object({
+      projectId: idSchema,
+      updateId: idSchema,
+    })
+  )
+  .query(async ({ ctx, input }) => {
+    const item = await getDoc<"update">(ctx, asId<"update">(input.updateId))
+    if (!item || item.projectId !== asId<"project">(input.projectId)) {
+      return null
+    }
+
+    const access = await getProjectViewAccess(ctx, {
+      id: input.projectId,
+      userId: ctx.userId,
+    })
+    if (!access.permissions.canView) return null
+    if (item.status === "draft" && !access.permissions.canEdit) return null
+
+    const currentProfile = access.profile
+    const [heartCount, currentProfileHeart, relatedFeedback] =
+      await Promise.all([
+        ctx.orm.query.updateEmote.count({
+          where: { content: "heart", updateId: item._id },
+        }),
+        currentProfile
+          ? ctx.db
+              .query("updateEmote")
+              .withIndex("by_updateId_authorProfileId", (q: any) =>
+                q
+                  .eq("updateId", item._id)
+                  .eq("authorProfileId", currentProfile._id)
+              )
+              .filter((q: any) => q.eq(q.field("content"), "heart"))
+              .first()
+          : Promise.resolve(null),
+        Promise.all(
+          (item.relatedFeedbackIds ?? []).map(async (feedbackId) => {
+            const feedback = await getDoc<"feedback">(ctx, feedbackId)
+            if (!feedback) return null
+            const board = await getDoc<"feedbackBoard">(ctx, feedback.boardId)
+            return {
+              id: feedback._id,
+              board: board
+                ? {
+                    id: board._id,
+                    icon: board.icon,
+                    name: board.name,
+                    slug: board.slug,
+                  }
+                : null,
+              slug: feedback.slug,
+              status: feedback.status,
+              title: feedback.title,
+            }
+          })
+        ),
+      ])
+
+    return {
+      canEdit: access.permissions.canEdit,
+      currentProfile: await toProfileSummary(currentProfile),
+      emoteCounts: {
+        heart: {
+          authorProfileIds:
+            currentProfile && currentProfileHeart ? [currentProfile._id] : [],
+          count: heartCount,
+        },
+      },
+      relatedFeedback: relatedFeedback.filter(
+        (value): value is NonNullable<typeof value> => value !== null
+      ),
+    }
+  })
+
+export const getMiddleComments = optionalAuthQuery
+  .input(
+    z.object({
+      cursor: z.string(),
+      limit: z.number().min(1).max(50).optional(),
+      tailCommentIds: idArraySchema.optional(),
+      updateId: idSchema,
+    })
+  )
+  .query(async ({ ctx, input }) => {
+    const item = await getDoc<"update">(ctx, asId<"update">(input.updateId))
+    if (!item) {
+      return { comments: [], nextCursor: null }
+    }
+
+    const access = await getProjectViewAccess(ctx, {
+      id: item.projectId,
+      userId: ctx.userId,
+    })
+    if (!access.permissions.canView) {
+      return { comments: [], nextCursor: null }
+    }
+    if (item.status === "draft" && !access.permissions.canEdit) {
+      return { comments: [], nextCursor: null }
+    }
+
+    const tailIds = new Set(input.tailCommentIds ?? [])
+    const page = await ctx.db
+      .query("updateComment")
+      .withIndex("by_updateId", (q: any) =>
+        q.eq("updateId", asId<"update">(input.updateId))
+      )
+      .order("asc")
+      .paginate({
+        cursor: input.cursor,
+        numItems: input.limit ?? MIDDLE_COMMENT_PAGE_SIZE,
+      })
+    const hitTail = page.page.some((comment: Doc<"updateComment">) =>
+      tailIds.has(comment._id)
+    )
+    const visibleComments = page.page.filter(
+      (comment: Doc<"updateComment">) => !tailIds.has(comment._id)
+    )
+    const cache = createCommentEnrichCache()
+    const comments = await Promise.all(
+      visibleComments.map((comment: Doc<"updateComment">) =>
+        toPublicUpdateComment(
+          ctx,
+          comment,
+          item.projectId,
+          access.profile,
+          cache
+        )
+      )
+    )
+
+    return {
+      comments: dedupeComments(comments),
+      nextCursor: hitTail || page.isDone ? null : page.continueCursor,
+    }
+  })
+
 export const listByProject = optionalAuthQuery
   .input(
     z.object({
@@ -866,12 +1309,11 @@ export const listByProject = optionalAuthQuery
             },
           }
 
-          // Precompute truncation server-side so list rows don't have to run a
-          // regex over the full HTML body on every render.
-          const plainTextLength = item.content.replace(/<[^>]*>/g, "").length
+          // Keep the list payload and client bundle light: detail pages render
+          // the rich HTML body, list pages only need bounded plain text.
+          const contentPreview = getUpdateListPreview(item.content)
 
           return {
-            ...toPublicDoc(item),
             author: author
               ? {
                   id: author._id,
@@ -880,12 +1322,18 @@ export const listByProject = optionalAuthQuery
                   username: author.username,
                 }
               : null,
+            category: item.category,
             commentCount,
+            contentPreview,
             coverImageUrl: await resolveCoverImageUrl(
               item.coverImageId ?? null
             ),
             emoteCounts,
-            isTruncated: plainTextLength > 2000,
+            id: item._id,
+            publishedAt: item.publishedAt,
+            slug: item.slug,
+            status: item.status,
+            title: item.title,
           }
         })
       ),

@@ -4,6 +4,7 @@ import { flushSync } from "react-dom"
 
 interface ClickableContainerProps {
   onClick: () => void
+  onPreload?: () => void
   children: React.ReactNode
   className?: string
   href?: string
@@ -39,6 +40,7 @@ export const ClickableContainer = forwardRef<
       "aria-labelledby": ariaLabelledBy,
       "aria-describedby": ariaDescribedBy,
       disabled = false,
+      onPreload,
       ...props
     },
     ref
@@ -142,6 +144,11 @@ export const ClickableContainer = forwardRef<
       setTimeout(hideContextLink, 0)
     }
 
+    const handlePreload = () => {
+      if (disabled) return
+      onPreload?.()
+    }
+
     return (
       <div
         ref={ref}
@@ -157,7 +164,9 @@ export const ClickableContainer = forwardRef<
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
+        onFocus={handlePreload}
         onPointerDownCapture={handlePointerDownCapture}
+        onPointerEnter={handlePreload}
         className={`relative ${disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"} focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 ${className} `}
         {...props}
       >

@@ -17,11 +17,13 @@ function isPlainLeftClick(event: React.MouseEvent<HTMLAnchorElement>) {
 export function FeedbackCard({
   href,
   onNavigationClick,
+  onPreload,
   feedback,
   isAuthenticated,
 }: {
   href: string
   onNavigationClick: () => void
+  onPreload?: () => void
   feedback: any
   isAuthenticated: boolean
 }) {
@@ -55,6 +57,7 @@ export function FeedbackCard({
         href={href}
         keyboardInteractive={false}
         onClick={() => onNavigationClick?.()}
+        onPreload={onPreload}
       >
         <div className="flex items-start gap-4">
           <div className="mt-1">

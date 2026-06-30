@@ -1,12 +1,16 @@
 import type { ReactNode } from "react"
 
 import { useState } from "react"
-import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query"
+import {
+  useQuery,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query"
 import { createFileRoute, Link, notFound } from "@tanstack/react-router"
-import { z } from "zod"
 
 import { RoutePending } from "@/components/route-pending"
 import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
 import CirclePlusOutline from "@/icons/circle-plus-outline"
 import Missing from "@/icons/missing"
 import { Settings2 } from "lucide-react"
@@ -41,17 +45,25 @@ function getUpdateListArgs({
   }
 }
 
-const updatesSearchParams = z.object({
-  category: z.optional(
-    z
-      .enum(["changelog", "article", "announcement"])
-      .transform((value) => (value?.trim() === "" ? undefined : value))
-  ),
-})
+const UPDATE_CATEGORIES = new Set<UpdateCategory>([
+  "changelog",
+  "article",
+  "announcement",
+])
+
+function validateUpdatesSearch(search: Record<string, unknown>): {
+  category?: UpdateCategory
+} {
+  if (typeof search.category !== "string") return {}
+  const category = search.category.trim()
+  return UPDATE_CATEGORIES.has(category as UpdateCategory)
+    ? { category: category as UpdateCategory }
+    : {}
+}
 
 export const Route = createFileRoute("/@{$org}/$project/updates/")({
   component: UpdatesListRoute,
-  loaderDeps: ({ search }) => search,
+  loaderDeps: ({ search }) => ({ category: search.category }),
   loader: async ({ context, deps, params }) => {
     const projectData = await context.queryClient.ensureQueryData(
       crpcServer.project.getDetails.queryOptions({
@@ -64,24 +76,27 @@ export const Route = createFileRoute("/@{$org}/$project/updates/")({
       throw notFound()
     }
 
-    await Promise.all([
-      context.queryClient.ensureQueryData(
-        crpcServer.update.listByProject.queryOptions(
-          getUpdateListArgs({
-            projectId: projectData.project.id,
-            category: deps.category,
-            cursor: null,
-          })
-        )
-      ),
-      context.queryClient.ensureQueryData(
-        crpcServer.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
-      ),
-    ])
+    // Non-blocking warm-up: `intent` preload runs this loader on hover/focus, so
+    // the first page (and current profile) is usually cached by the time the
+    // user clicks — the list paints without a skeleton. We intentionally do not
+    // await: a cold navigation still renders the shell immediately and falls
+    // back to the skeleton while these resolve.
+    void context.queryClient.prefetchQuery(
+      crpcServer.update.listByProject.queryOptions(
+        getUpdateListArgs({
+          projectId: projectData.project.id,
+          category: deps.category,
+          cursor: null,
+        })
+      )
+    )
+    void context.queryClient.prefetchQuery(
+      crpcServer.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
+    )
   },
   pendingComponent: () => <RoutePending variant="page" />,
   pendingMs: 600,
-  validateSearch: updatesSearchParams,
+  validateSearch: validateUpdatesSearch,
   head: ({ params }) => ({
     meta: [titleMeta(["Updates", projectTitle(params.org, params.project)])],
   }),
@@ -92,6 +107,28 @@ function Notice({ icon, children }: { icon: ReactNode; children: ReactNode }) {
     <div className="text-bold flex items-center justify-center gap-3 rounded-lg border bg-muted p-4 text-xl text-muted-foreground md:p-10">
       <div>{icon}</div>
       <div>{children}</div>
+    </div>
+  )
+}
+
+function UpdatesListSkeleton() {
+  return (
+    <div className="flex flex-col" aria-hidden="true">
+      {Array.from({ length: 4 }).map((_, index) => (
+        <div
+          key={index}
+          className="border-b border-border/75 py-6 first:pt-0"
+        >
+          <Skeleton className="h-4 w-28" />
+          <Skeleton className="mt-3 h-6 w-3/5" />
+          <Skeleton className="mt-4 h-4 w-full" />
+          <Skeleton className="mt-2 h-4 w-4/5" />
+          <div className="mt-5 flex gap-2">
+            <Skeleton className="h-6 w-20" />
+            <Skeleton className="h-6 w-24" />
+          </div>
+        </div>
+      ))}
     </div>
   )
 }
@@ -116,27 +153,38 @@ function UpdatesListRoute() {
   const projectId = projectData.project.id
   const canEdit = projectData.permissions.canEdit
 
-  const currentProfileQuery = useSuspenseQuery(
-    crpc.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
+  const currentProfileQuery = useQuery(
+    crpc.profile.findMyProfile.queryOptions(
+      {},
+      { skipUnauth: true, subscribe: false }
+    )
   )
 
-  // Server-side cursor pagination (mirrors the feedback list). The first page is
-  // SSR-prefetched in the loader; "Load more" appends subsequent pages. The
-  // category filter is applied server-side, so a fresh filter resets the
-  // accumulated pages via the args key.
+  // Server-side cursor pagination. The first page loads after the route shell
+  // mounts; "Load more" appends subsequent pages. The category filter is
+  // applied server-side, so a fresh filter resets the accumulated pages via the
+  // args key.
   const firstPageArgs = getUpdateListArgs({
     projectId,
     category: categoryParam,
     cursor: null,
   })
   const firstPageKey = JSON.stringify(firstPageArgs)
-  const { data: firstPage, isFetching: refreshingUpdates } = useSuspenseQuery(
+  const firstPageQuery = useQuery(
     crpc.update.listByProject.queryOptions(firstPageArgs)
   )
+  const firstPage = firstPageQuery.data
+  const isInitialUpdatesLoading = firstPageQuery.isPending && !firstPage
+  const refreshingUpdates =
+    firstPageQuery.isFetching && !isInitialUpdatesLoading
+
+  if (firstPageQuery.isError && !firstPage) {
+    throw firstPageQuery.error
+  }
 
   const [additionalState, setAdditionalState] = useState<{
     key: string
-    pages: Array<typeof firstPage>
+    pages: Array<NonNullable<typeof firstPage>>
   }>({ key: firstPageKey, pages: [] })
   const [loadingMore, setLoadingMore] = useState(false)
   const [loadMoreErrorState, setLoadMoreErrorState] = useState<{
@@ -151,7 +199,7 @@ function UpdatesListRoute() {
     additionalState.key === firstPageKey ? additionalState.pages : []
   const loadMoreError =
     loadMoreErrorState.key === firstPageKey ? loadMoreErrorState.error : null
-  const pages = [firstPage, ...additionalPages]
+  const pages = firstPage ? [firstPage, ...additionalPages] : additionalPages
   const lastPage = additionalPages.at(-1) ?? firstPage
   const updates = pages
     .flatMap((page) => page.page)
@@ -159,7 +207,8 @@ function UpdatesListRoute() {
       (item, index, items) =>
         items.findIndex((candidate) => candidate.id === item.id) === index
     )
-  const canLoadMore = !lastPage.isDone && !!lastPage.continueCursor
+  const canLoadMore =
+    !!lastPage && !lastPage.isDone && !!lastPage.continueCursor
 
   async function loadMoreUpdates() {
     if (!canLoadMore || loadingMore) return
@@ -238,10 +287,16 @@ function UpdatesListRoute() {
 
         <div
           className="flex flex-col gap-4 py-8 md:col-span-9"
-          aria-busy={refreshingUpdates || loadingMore}
+          aria-busy={isInitialUpdatesLoading || refreshingUpdates || loadingMore}
           aria-live="polite"
         >
-          {updates.length === 0 ? (
+          {isInitialUpdatesLoading ? (
+            <>
+              <span className="sr-only">Loading updates...</span>
+              <UpdatesListSkeleton />
+            </>
+          ) : null}
+          {!isInitialUpdatesLoading && updates.length === 0 ? (
             <Notice icon={<Missing aria-hidden="true" size="32px" />}>
               No updates yet.
             </Notice>
