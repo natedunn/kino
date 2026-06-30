@@ -1,7 +1,6 @@
 import { useSuspenseQuery } from "@tanstack/react-query"
 import {
   Link,
-  Navigate,
   Outlet,
   createFileRoute,
   useRouterState,
@@ -14,7 +13,7 @@ import {
   SidebarNavItem,
   SidebarNavSelect,
 } from "@/components/sidebar-nav"
-import { useAuthLost } from "@/lib/auth/use-auth-lost"
+import { useAuthLostRedirect } from "@/lib/auth/use-auth-lost"
 import { requireAuth } from "@/lib/auth/require-auth"
 import { useCRPC } from "@/lib/convex/crpc"
 import { crpcServer } from "@/lib/convex/crpc-server"
@@ -66,15 +65,10 @@ const navItems = [
 ]
 
 function AccountRoute() {
-  const pathname = useRouterState({
-    select: (state) => state.location.pathname,
-  })
-
   // Entry is gated in `beforeLoad` (requireAuth); this only catches auth lost
   // in place (sign-out), which `beforeLoad` can't see.
-  if (useAuthLost()) {
-    return <Navigate search={{ redirect: pathname }} to="/auth" />
-  }
+  const lost = useAuthLostRedirect()
+  if (lost) return lost
 
   return <AuthenticatedAccountShell />
 }

@@ -1,12 +1,7 @@
 import { useState } from "react"
 import { useForm } from "@tanstack/react-form"
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query"
-import {
-  Navigate,
-  createFileRoute,
-  useNavigate,
-  useRouterState,
-} from "@tanstack/react-router"
+import { createFileRoute, useNavigate } from "@tanstack/react-router"
 
 import { InlineAlert } from "@/components/inline-alert"
 import { Button } from "@/components/ui/button"
@@ -18,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { useAuthLost } from "@/lib/auth/use-auth-lost"
+import { useAuthLostRedirect } from "@/lib/auth/use-auth-lost"
 import { requireAuth } from "@/lib/auth/require-auth"
 import { useCRPC } from "@/lib/convex/crpc"
 import { crpcServer } from "@/lib/convex/crpc-server"
@@ -50,15 +45,10 @@ export const Route = createFileRoute("/create/team/")({
 })
 
 function CreateTeamRoute() {
-  const pathname = useRouterState({
-    select: (state) => state.location.pathname,
-  })
-
   // Entry is gated in `beforeLoad` (requireAuth); this only catches auth lost
   // in place (sign-out), which `beforeLoad` can't see.
-  if (useAuthLost()) {
-    return <Navigate search={{ redirect: pathname }} to="/auth" />
-  }
+  const lost = useAuthLostRedirect()
+  if (lost) return lost
 
   return <AuthenticatedCreateTeamRoute />
 }

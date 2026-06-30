@@ -15,12 +15,16 @@ import { redirect } from "@tanstack/react-router"
  */
 export function requireAuth(
   context: { isAuthenticated?: boolean },
-  location: { pathname: string }
+  location: { href: string }
 ) {
   if (!context.isAuthenticated) {
     throw redirect({
       to: "/auth",
-      search: { redirect: location.pathname },
+      // `href` is the relative path + search + hash, so deep links like
+      // `/org/settings?org=acme` survive the round-trip through /auth.
+      // `getSafeRedirectTarget` rejects `/auth` and `/` targets, so this can't
+      // loop back here.
+      search: { redirect: location.href },
     })
   }
 }

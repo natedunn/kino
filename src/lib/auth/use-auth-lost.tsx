@@ -1,3 +1,4 @@
+import { Navigate, useRouterState } from "@tanstack/react-router"
 import { useAuth } from "kitcn/react"
 
 /**
@@ -26,4 +27,28 @@ import { useAuth } from "kitcn/react"
 export function useAuthLost() {
   const { isAuthenticated, isLoading } = useAuth()
   return !isLoading && !isAuthenticated
+}
+
+/**
+ * Protected-route guard for auth lost *in place* (sign-out). Returns a
+ * `<Navigate to="/auth">` element (preserving the current path as `redirect`)
+ * when auth has been lost, else `null`. Use with an early return so the
+ * protected subtree (and its `useSuspenseQuery`s) stops rendering:
+ *
+ *     const lost = useAuthLostRedirect()
+ *     if (lost) return lost
+ *
+ * Entry is already gated server- and client-side by `requireAuth` in
+ * `beforeLoad`; this is only the in-place fallback.
+ */
+export function useAuthLostRedirect() {
+  const pathname = useRouterState({
+    select: (state) => state.location.pathname,
+  })
+
+  if (useAuthLost()) {
+    return <Navigate search={{ redirect: pathname }} to="/auth" />
+  }
+
+  return null
 }

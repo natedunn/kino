@@ -8,18 +8,26 @@ import {
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { isClientDefinitelyAuthed } from "@/lib/auth/auth-snapshot"
 import { titleMeta } from "@/lib/seo"
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [titleMeta([])],
   }),
-  // Authenticated visitors go straight to the app. Gated in `beforeLoad` (real
-  // redirect, server + client) — `context.isAuthenticated` comes from the root
-  // `beforeLoad` (loaderToken on the server, the auth snapshot on the client).
+  // Authenticated visitors go straight to the app — a real redirect, server and
+  // client. This inverse gate must fail CLOSED (unlike `requireAuth`): the
+  // server uses `context.isAuthenticated` (definitive from `loaderToken`), and
+  // the client uses `isClientDefinitelyAuthed()` (settled-and-authed only). The
+  // fail-open client signal would flash a just-loaded anonymous visitor to
+  // /dashboard → /auth instead of showing the public landing page.
   beforeLoad: ({ context }) => {
-    if (context.isAuthenticated) {
-      throw redirect({ to: "/dashboard" })
+    const authed =
+      typeof window === "undefined"
+        ? context.isAuthenticated
+        : isClientDefinitelyAuthed()
+    if (authed) {
+      throw redirect({ to: "/dashboard", replace: true })
     }
   },
   component: LandingPage,
