@@ -35,7 +35,9 @@ function orgGitHubSettingsUrl(args: {
   status: "connected" | "error"
 }) {
   const siteUrl = (args.siteUrl ?? getEnv().SITE_URL).replace(/\/$/, "")
-  return `${siteUrl}/@${args.orgSlug}/settings/integrations?github=${args.status}`
+  return `${siteUrl}/org/settings/integrations?org=${encodeURIComponent(
+    args.orgSlug
+  )}&github=${args.status}`
 }
 
 function githubSettingsUrl(args: {
