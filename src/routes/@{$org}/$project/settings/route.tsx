@@ -49,10 +49,17 @@ function ProjectSettingsRoute() {
       { subscribe: false }
     )
   )
-  const editingRole = projectQuery.data?.permissions.canEdit
-    ? roleLabel(
-        projectQuery.data.projectMember?.role ?? projectQuery.data.profile?.role
-      )
+  const projectData = projectQuery.data
+  // Label mirrors `verifyProjectAccess`'s precedence: it grants edit via the
+  // system role first (system:admin/editor), then the project membership. So
+  // prefer the system role when present, else fall back to the member role.
+  const systemRole = projectData?.profile?.role
+  const effectiveRole =
+    systemRole === "system:admin" || systemRole === "system:editor"
+      ? systemRole
+      : projectData?.projectMember?.role
+  const editingRole = projectData?.permissions.canEdit
+    ? roleLabel(effectiveRole)
     : null
 
   const items = [
