@@ -469,10 +469,16 @@ describe("project purge (scheduled cascade)", () => {
         title: "Update 1",
         updatedTime: Date.now(),
       })
+      // Soft-delete first, as `remove` does before scheduling the purge —
+      // `purgeProject` refuses to run on a project that isn't marked deleted.
+      await ctx.orm
+        .update(projectTable)
+        .set({ deletedTime: Date.now(), updatedTime: Date.now() })
+        .where(eq(projectTable.id, project.id as never))
       projectId = project.id
     })
 
-    // Drives the same scheduled internal mutation that `_delete` enqueues. The
+    // Drives the same scheduled internal mutation that `remove` enqueues. The
     // seed is well under one batch, so a single pass clears every child table
     // and then removes the project row.
     await t.mutation(internal.project.purgeProject, {

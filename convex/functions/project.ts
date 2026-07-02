@@ -188,6 +188,9 @@ export const update = authMutation
         .withIndex("by_projectId", (q: any) =>
           q.eq("projectId", access.project._id)
         )
+        // Newest-first so an active connection isn't paged out by stale
+        // (disconnected) history and legitimate github links don't get downgraded.
+        .order("desc")
         .take(20)
       const verifiableUrls = new Set(
         connections
@@ -349,10 +352,13 @@ export const getDetails = optionalAuthQuery
   })
 
 // Finds the project's single active (non-deleted) connected GitHub repo, if any.
+// Newest-first so the active connection surfaces even for projects that have
+// churned through many historical (disconnected) connections.
 async function getActiveRepoConnection(ctx: any, projectId: any) {
   const connections = await ctx.db
     .query("githubRepositoryConnection")
     .withIndex("by_projectId", (q: any) => q.eq("projectId", projectId))
+    .order("desc")
     .take(20)
   return connections.find((connection: any) => !connection.deletedTime) ?? null
 }
@@ -466,6 +472,12 @@ export const purgeProject = internalMutation({
   args: { projectId: v.id("project") },
   handler: async (ctx, { projectId }) => {
     const octx = withOrm(ctx)
+
+    // Safety: only purge projects `remove` has soft-deleted. If the row is gone
+    // (already purged) or was never soft-deleted, do nothing — this internal
+    // mutation must never irreversibly wipe an active project.
+    const project: any = await ctx.db.get(projectId)
+    if (!project || project.deletedTime == null) return null
 
     // Each entry: a table + its ORM delete, purged before the project row.
     // Order matters only in that heavy trees (boards, updates) go first.
