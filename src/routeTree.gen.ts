@@ -58,6 +58,8 @@ import { Route as AtChar123orgChar125ProjectUpdatesEditIndexRouteImport } from '
 import { Route as AtChar123orgChar125ProjectUpdatesSlugIndexRouteImport } from './routes/@{$org}/$project/updates/$slug/index'
 import { Route as AtChar123orgChar125ProjectSettingsMembersIndexRouteImport } from './routes/@{$org}/$project/settings/members/index'
 import { Route as AtChar123orgChar125ProjectSettingsIntegrationsIndexRouteImport } from './routes/@{$org}/$project/settings/integrations/index'
+import { Route as AtChar123orgChar125ProjectSettingsGeneralIndexRouteImport } from './routes/@{$org}/$project/settings/general/index'
+import { Route as AtChar123orgChar125ProjectSettingsDangerIndexRouteImport } from './routes/@{$org}/$project/settings/danger/index'
 import { Route as AtChar123orgChar125ProjectSettingsBoardsIndexRouteImport } from './routes/@{$org}/$project/settings/boards/index'
 import { Route as AtChar123orgChar125ProjectIntegrationsGithubIndexRouteImport } from './routes/@{$org}/$project/integrations/github/index'
 import { Route as AtChar123orgChar125ProjectFeedbackNewIndexRouteImport } from './routes/@{$org}/$project/feedback/new/index'
@@ -360,6 +362,18 @@ const AtChar123orgChar125ProjectSettingsIntegrationsIndexRoute =
       (d) => d.Route,
     ),
   )
+const AtChar123orgChar125ProjectSettingsGeneralIndexRoute =
+  AtChar123orgChar125ProjectSettingsGeneralIndexRouteImport.update({
+    id: '/general/',
+    path: '/general/',
+    getParentRoute: () => AtChar123orgChar125ProjectSettingsRouteRoute,
+  } as any)
+const AtChar123orgChar125ProjectSettingsDangerIndexRoute =
+  AtChar123orgChar125ProjectSettingsDangerIndexRouteImport.update({
+    id: '/danger/',
+    path: '/danger/',
+    getParentRoute: () => AtChar123orgChar125ProjectSettingsRouteRoute,
+  } as any)
 const AtChar123orgChar125ProjectSettingsBoardsIndexRoute =
   AtChar123orgChar125ProjectSettingsBoardsIndexRouteImport.update({
     id: '/boards/',
@@ -475,6 +489,8 @@ export interface FileRoutesByFullPath {
   '/@{$org}/$project/feedback/new/': typeof AtChar123orgChar125ProjectFeedbackNewIndexRoute
   '/@{$org}/$project/integrations/github/': typeof AtChar123orgChar125ProjectIntegrationsGithubIndexRoute
   '/@{$org}/$project/settings/boards/': typeof AtChar123orgChar125ProjectSettingsBoardsIndexRoute
+  '/@{$org}/$project/settings/danger/': typeof AtChar123orgChar125ProjectSettingsDangerIndexRoute
+  '/@{$org}/$project/settings/general/': typeof AtChar123orgChar125ProjectSettingsGeneralIndexRoute
   '/@{$org}/$project/settings/integrations/': typeof AtChar123orgChar125ProjectSettingsIntegrationsIndexRoute
   '/@{$org}/$project/settings/members/': typeof AtChar123orgChar125ProjectSettingsMembersIndexRoute
   '/@{$org}/$project/updates/$slug/': typeof AtChar123orgChar125ProjectUpdatesSlugIndexRoute
@@ -528,6 +544,8 @@ export interface FileRoutesByTo {
   '/@{$org}/$project/feedback/new': typeof AtChar123orgChar125ProjectFeedbackNewIndexRoute
   '/@{$org}/$project/integrations/github': typeof AtChar123orgChar125ProjectIntegrationsGithubIndexRoute
   '/@{$org}/$project/settings/boards': typeof AtChar123orgChar125ProjectSettingsBoardsIndexRoute
+  '/@{$org}/$project/settings/danger': typeof AtChar123orgChar125ProjectSettingsDangerIndexRoute
+  '/@{$org}/$project/settings/general': typeof AtChar123orgChar125ProjectSettingsGeneralIndexRoute
   '/@{$org}/$project/settings/integrations': typeof AtChar123orgChar125ProjectSettingsIntegrationsIndexRoute
   '/@{$org}/$project/settings/members': typeof AtChar123orgChar125ProjectSettingsMembersIndexRoute
   '/@{$org}/$project/updates/$slug': typeof AtChar123orgChar125ProjectUpdatesSlugIndexRoute
@@ -589,6 +607,8 @@ export interface FileRoutesById {
   '/@{$org}/$project/feedback/new/': typeof AtChar123orgChar125ProjectFeedbackNewIndexRoute
   '/@{$org}/$project/integrations/github/': typeof AtChar123orgChar125ProjectIntegrationsGithubIndexRoute
   '/@{$org}/$project/settings/boards/': typeof AtChar123orgChar125ProjectSettingsBoardsIndexRoute
+  '/@{$org}/$project/settings/danger/': typeof AtChar123orgChar125ProjectSettingsDangerIndexRoute
+  '/@{$org}/$project/settings/general/': typeof AtChar123orgChar125ProjectSettingsGeneralIndexRoute
   '/@{$org}/$project/settings/integrations/': typeof AtChar123orgChar125ProjectSettingsIntegrationsIndexRoute
   '/@{$org}/$project/settings/members/': typeof AtChar123orgChar125ProjectSettingsMembersIndexRoute
   '/@{$org}/$project/updates/$slug/': typeof AtChar123orgChar125ProjectUpdatesSlugIndexRoute
@@ -651,6 +671,8 @@ export interface FileRouteTypes {
     | '/@{$org}/$project/feedback/new/'
     | '/@{$org}/$project/integrations/github/'
     | '/@{$org}/$project/settings/boards/'
+    | '/@{$org}/$project/settings/danger/'
+    | '/@{$org}/$project/settings/general/'
     | '/@{$org}/$project/settings/integrations/'
     | '/@{$org}/$project/settings/members/'
     | '/@{$org}/$project/updates/$slug/'
@@ -704,6 +726,8 @@ export interface FileRouteTypes {
     | '/@{$org}/$project/feedback/new'
     | '/@{$org}/$project/integrations/github'
     | '/@{$org}/$project/settings/boards'
+    | '/@{$org}/$project/settings/danger'
+    | '/@{$org}/$project/settings/general'
     | '/@{$org}/$project/settings/integrations'
     | '/@{$org}/$project/settings/members'
     | '/@{$org}/$project/updates/$slug'
@@ -764,6 +788,8 @@ export interface FileRouteTypes {
     | '/@{$org}/$project/feedback/new/'
     | '/@{$org}/$project/integrations/github/'
     | '/@{$org}/$project/settings/boards/'
+    | '/@{$org}/$project/settings/danger/'
+    | '/@{$org}/$project/settings/general/'
     | '/@{$org}/$project/settings/integrations/'
     | '/@{$org}/$project/settings/members/'
     | '/@{$org}/$project/updates/$slug/'
@@ -1136,6 +1162,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AtChar123orgChar125ProjectSettingsIntegrationsIndexRouteImport
       parentRoute: typeof AtChar123orgChar125ProjectSettingsRouteRoute
     }
+    '/@{$org}/$project/settings/general/': {
+      id: '/@{$org}/$project/settings/general/'
+      path: '/general'
+      fullPath: '/@{$org}/$project/settings/general/'
+      preLoaderRoute: typeof AtChar123orgChar125ProjectSettingsGeneralIndexRouteImport
+      parentRoute: typeof AtChar123orgChar125ProjectSettingsRouteRoute
+    }
+    '/@{$org}/$project/settings/danger/': {
+      id: '/@{$org}/$project/settings/danger/'
+      path: '/danger'
+      fullPath: '/@{$org}/$project/settings/danger/'
+      preLoaderRoute: typeof AtChar123orgChar125ProjectSettingsDangerIndexRouteImport
+      parentRoute: typeof AtChar123orgChar125ProjectSettingsRouteRoute
+    }
     '/@{$org}/$project/settings/boards/': {
       id: '/@{$org}/$project/settings/boards/'
       path: '/boards'
@@ -1238,6 +1278,8 @@ const AtChar123orgChar125ProjectFeedbackRouteRouteWithChildren =
 interface AtChar123orgChar125ProjectSettingsRouteRouteChildren {
   AtChar123orgChar125ProjectSettingsIndexRoute: typeof AtChar123orgChar125ProjectSettingsIndexRoute
   AtChar123orgChar125ProjectSettingsBoardsIndexRoute: typeof AtChar123orgChar125ProjectSettingsBoardsIndexRoute
+  AtChar123orgChar125ProjectSettingsDangerIndexRoute: typeof AtChar123orgChar125ProjectSettingsDangerIndexRoute
+  AtChar123orgChar125ProjectSettingsGeneralIndexRoute: typeof AtChar123orgChar125ProjectSettingsGeneralIndexRoute
   AtChar123orgChar125ProjectSettingsIntegrationsIndexRoute: typeof AtChar123orgChar125ProjectSettingsIntegrationsIndexRoute
   AtChar123orgChar125ProjectSettingsMembersIndexRoute: typeof AtChar123orgChar125ProjectSettingsMembersIndexRoute
 }
@@ -1248,6 +1290,10 @@ const AtChar123orgChar125ProjectSettingsRouteRouteChildren: AtChar123orgChar125P
       AtChar123orgChar125ProjectSettingsIndexRoute,
     AtChar123orgChar125ProjectSettingsBoardsIndexRoute:
       AtChar123orgChar125ProjectSettingsBoardsIndexRoute,
+    AtChar123orgChar125ProjectSettingsDangerIndexRoute:
+      AtChar123orgChar125ProjectSettingsDangerIndexRoute,
+    AtChar123orgChar125ProjectSettingsGeneralIndexRoute:
+      AtChar123orgChar125ProjectSettingsGeneralIndexRoute,
     AtChar123orgChar125ProjectSettingsIntegrationsIndexRoute:
       AtChar123orgChar125ProjectSettingsIntegrationsIndexRoute,
     AtChar123orgChar125ProjectSettingsMembersIndexRoute:

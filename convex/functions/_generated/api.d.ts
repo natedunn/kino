@@ -484,7 +484,11 @@ export declare const api: {
           bio?: string | null;
           imageKey?: string | null;
           location?: string | null;
-          urls?: Array<{ text: string; url: string }> | null;
+          urls?: Array<{
+            source?: "manual" | "github";
+            text: string;
+            url: string;
+          }> | null;
         };
         user: {
           image?: string | null;
@@ -504,7 +508,11 @@ export declare const api: {
         name: string;
         orgSlug: string;
         slug: string;
-        urls?: Array<{ text: string; url: string }>;
+        urls?: Array<{
+          source?: "manual" | "github";
+          text: string;
+          url: string;
+        }>;
         visibility: "public" | "private" | "archived";
       },
       any
@@ -515,12 +523,19 @@ export declare const api: {
       { orgSlug: string; slug: string },
       any
     >;
+    getGithubImportInfo: FunctionReference<
+      "query",
+      "public",
+      { id: string },
+      any
+    >;
     getManyByOrg: FunctionReference<
       "query",
       "public",
       { limit?: number; orgSlug: string },
       any
     >;
+    remove: FunctionReference<"mutation", "public", { id: string }, any>;
     update: FunctionReference<
       "mutation",
       "public",
@@ -530,9 +545,21 @@ export declare const api: {
         name?: string;
         orgSlug?: string;
         slug?: string;
-        urls?: Array<{ text: string; url: string }>;
+        urls?: Array<{
+          source?: "manual" | "github";
+          text: string;
+          url: string;
+        }>;
         visibility?: "public" | "private" | "archived";
       },
+      any
+    >;
+  };
+  projectExternal: {
+    importGithubUrls: FunctionReference<
+      "action",
+      "public",
+      { id: string },
       any
     >;
   };
@@ -1159,6 +1186,20 @@ export declare const internal: {
       "mutation",
       "internal",
       { bucket: string; isNew: boolean; key: string },
+      any
+    >;
+  };
+  project: {
+    prepareGithubUrlImport: FunctionReference<
+      "query",
+      "internal",
+      { id: string; userId: string },
+      any
+    >;
+    purgeProject: FunctionReference<
+      "mutation",
+      "internal",
+      { projectId: Id<"project"> },
       any
     >;
   };

@@ -25,6 +25,7 @@ export const VALIDATION_LIMITS = {
   target: 16,
   updateContent: 50000,
   updateTitle: 200,
+  url: 2048,
   urlLabel: 100,
   username: 39,
   webhookAction: 80,
@@ -342,7 +343,7 @@ export const httpUrlSchema = z
   .string()
   .trim()
   .url()
-  .max(2048)
+  .max(VALIDATION_LIMITS.url)
   .refine(
     (value) => {
       try {
@@ -356,6 +357,9 @@ export const httpUrlSchema = z
   )
 
 export const urlSchema = z.object({
+  // `source` is a client hint only. "github" links are re-verified server-side
+  // against the connected repo before `verifiedAt` is trusted (see project.update).
+  source: z.enum(["manual", "github"]).optional(),
   text: z.string().trim().min(1).max(VALIDATION_LIMITS.urlLabel),
   url: httpUrlSchema,
 })

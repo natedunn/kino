@@ -24,3 +24,6 @@ yalc.lock
 .claude/settings.local.json
 .agent-contexts/
 *.pem
+# Editor
+.vscode/
+.idea/

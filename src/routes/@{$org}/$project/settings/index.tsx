@@ -10,5 +10,5 @@ export const Route = createFileRoute("/@{$org}/$project/settings/")({
 
 function ProjectSettingsIndexRoute() {
   const params = Route.useParams()
-  return <Navigate params={params} to="/@{$org}/$project/settings/boards" />
+  return <Navigate params={params} to="/@{$org}/$project/settings/general" />
 }

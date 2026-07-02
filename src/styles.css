@@ -68,7 +68,7 @@
   --absolute: oklch(0 0 0);
   --background: oklch(0.14 0 0);
   --foreground: oklch(1 0 0);
-  --card: oklch(0.19 0 0);
+  --card: oklch(0.17 0 0);
   --card-foreground: oklch(0.9842 0.0034 247.8575);
   --popover: oklch(0 0 0);
   --popover-foreground: oklch(0.9842 0.0034 247.8575);
@@ -346,7 +346,7 @@
 }
 
 .link-text {
-  @apply decoration-1 decoration-current/50 underline-offset-2 hover:underline hover:decoration-current/75;
+  @apply decoration-current/50 decoration-1 underline-offset-2 hover:underline hover:decoration-current/75;
 }
 
 .link-text-underline {

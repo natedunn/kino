@@ -111,8 +111,13 @@ export const api = {
   project: {
     create: createApiLeaf<"mutation", typeof import("../functions/project").create>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/project").create>("project:create"), { auth: "required", type: "mutation" }),
     getDetails: createApiLeaf<"query", typeof import("../functions/project").getDetails>(createGeneratedFunctionReference<"query", "public", typeof import("../functions/project").getDetails>("project:getDetails"), { auth: "optional", type: "query" }),
+    getGithubImportInfo: createApiLeaf<"query", typeof import("../functions/project").getGithubImportInfo>(createGeneratedFunctionReference<"query", "public", typeof import("../functions/project").getGithubImportInfo>("project:getGithubImportInfo"), { auth: "required", type: "query" }),
     getManyByOrg: createApiLeaf<"query", typeof import("../functions/project").getManyByOrg>(createGeneratedFunctionReference<"query", "public", typeof import("../functions/project").getManyByOrg>("project:getManyByOrg"), { auth: "optional", type: "query" }),
+    remove: createApiLeaf<"mutation", typeof import("../functions/project").remove>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/project").remove>("project:remove"), { auth: "required", type: "mutation" }),
     update: createApiLeaf<"mutation", typeof import("../functions/project").update>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/project").update>("project:update"), { auth: "required", type: "mutation" }),
+  },
+  projectExternal: {
+    importGithubUrls: createApiLeaf<"action", typeof import("../functions/projectExternal").importGithubUrls>(createGeneratedFunctionReference<"action", "public", typeof import("../functions/projectExternal").importGithubUrls>("projectExternal:importGithubUrls"), { auth: "required", type: "action" }),
   },
   projectMember: {
     inviteProjectMember: createApiLeaf<"mutation", typeof import("../functions/projectMember").inviteProjectMember>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/projectMember").inviteProjectMember>("projectMember:inviteProjectMember"), { auth: "required", type: "mutation" }),
