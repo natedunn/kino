@@ -14,13 +14,7 @@ import type { ActionCtx, MutationCtx, QueryCtx } from './server';
 import type { OrmTriggerContext } from 'kitcn/orm';
 
 const procedureRegistry = {
-  "create": ["mutation", typedProcedureResolver(createGeneratedFunctionReference<"mutation", "public", typeof import("../project").create>("project:create"), () => (require("../project") as Record<string, unknown>)["create"])],
-  "getDetails": ["query", typedProcedureResolver(createGeneratedFunctionReference<"query", "public", typeof import("../project").getDetails>("project:getDetails"), () => (require("../project") as Record<string, unknown>)["getDetails"])],
-  "getGithubImportInfo": ["query", typedProcedureResolver(createGeneratedFunctionReference<"query", "public", typeof import("../project").getGithubImportInfo>("project:getGithubImportInfo"), () => (require("../project") as Record<string, unknown>)["getGithubImportInfo"])],
-  "getManyByOrg": ["query", typedProcedureResolver(createGeneratedFunctionReference<"query", "public", typeof import("../project").getManyByOrg>("project:getManyByOrg"), () => (require("../project") as Record<string, unknown>)["getManyByOrg"])],
-  "prepareGithubUrlImport": ["query", typedProcedureResolver(createGeneratedFunctionReference<"query", "internal", typeof import("../project").prepareGithubUrlImport>("project:prepareGithubUrlImport"), () => (require("../project") as Record<string, unknown>)["prepareGithubUrlImport"])],
-  "remove": ["mutation", typedProcedureResolver(createGeneratedFunctionReference<"mutation", "public", typeof import("../project").remove>("project:remove"), () => (require("../project") as Record<string, unknown>)["remove"])],
-  "update": ["mutation", typedProcedureResolver(createGeneratedFunctionReference<"mutation", "public", typeof import("../project").update>("project:update"), () => (require("../project") as Record<string, unknown>)["update"])],
+  "importGithubUrls": ["action", typedProcedureResolver(createGeneratedFunctionReference<"action", "public", typeof import("../projectExternal").importGithubUrls>("projectExternal:importGithubUrls"), () => (require("../projectExternal") as Record<string, unknown>)["importGithubUrls"])],
 } as const;
 
   const handlerRegistry = procedureRegistry;
@@ -63,7 +57,7 @@ type GeneratedProcedureHandler<
 >;
 
 
-export function createProjectCaller<TCtx extends ProcedureCallerContext>(
+export function createProjectExternalCaller<TCtx extends ProcedureCallerContext>(
   ctx: TCtx
 ): GeneratedProcedureCaller<TCtx> {
   return generatedRuntime.getCallerFactory()(
@@ -71,7 +65,7 @@ export function createProjectCaller<TCtx extends ProcedureCallerContext>(
   ) as GeneratedProcedureCaller<TCtx>;
 }
 
-export function createProjectHandler<TCtx extends ProcedureHandlerContext>(
+export function createProjectExternalHandler<TCtx extends ProcedureHandlerContext>(
   ctx: TCtx
 ): GeneratedProcedureHandler<TCtx> {
   return generatedRuntime.getHandlerFactory()(ctx) as GeneratedProcedureHandler<TCtx>;

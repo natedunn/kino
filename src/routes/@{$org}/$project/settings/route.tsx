@@ -4,7 +4,13 @@ import {
   createFileRoute,
   useRouterState,
 } from "@tanstack/react-router"
-import { GitBranch, LayoutDashboard, Users } from "lucide-react"
+import {
+  GitBranch,
+  LayoutDashboard,
+  Settings,
+  TriangleAlert,
+  Users,
+} from "lucide-react"
 
 import {
   SidebarNavGroup,
@@ -32,6 +38,11 @@ function ProjectSettingsRoute() {
 
   const items = [
     {
+      icon: Settings,
+      label: "General",
+      to: "/@{$org}/$project/settings/general" as const,
+    },
+    {
       icon: LayoutDashboard,
       label: "Boards",
       to: "/@{$org}/$project/settings/boards" as const,
@@ -45,6 +56,11 @@ function ProjectSettingsRoute() {
       icon: GitBranch,
       label: "Integrations",
       to: "/@{$org}/$project/settings/integrations" as const,
+    },
+    {
+      icon: TriangleAlert,
+      label: "Danger",
+      to: "/@{$org}/$project/settings/danger" as const,
     },
   ]
   const navItems = items.map((item) => {

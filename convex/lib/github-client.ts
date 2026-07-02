@@ -511,6 +511,22 @@ export async function listInstallationRepositories(token: string) {
   return result.repositories
 }
 
+// Fetches the canonical repo URL and its "homepage" (project website) field, the
+// two links surfaced by the project-links GitHub import.
+export async function fetchRepository(args: { fullName: string; token: string }) {
+  const repository = await githubFetch<{
+    homepage: string | null
+    html_url: string
+  }>(`${GITHUB_API_URL}/repos/${args.fullName}`, {
+    method: "GET",
+    token: args.token,
+  })
+  return {
+    homepage: repository.homepage,
+    htmlUrl: repository.html_url,
+  }
+}
+
 type GitHubIssueApiItem = {
   html_url: string
   id: number

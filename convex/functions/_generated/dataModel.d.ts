@@ -1085,7 +1085,7 @@ export type DataModel = {
       orgSlug: string;
       slug: string;
       updatedTime?: null | number;
-      urls?: null | Array<{ text: string; url: string }>;
+      urls?: null | Array<null | any>;
       visibility: "public" | "private" | "archived";
       _id: Id<"project">;
       _creationTime: number;

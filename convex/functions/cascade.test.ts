@@ -18,6 +18,7 @@ import {
   userTable,
 } from "./schema"
 import { convexTest, runCtx } from "./setup.testing"
+import { findProject } from "../lib/kino"
 
 type Ctx = Awaited<ReturnType<typeof runCtx>>
 
@@ -441,6 +442,92 @@ describe("update cascade deletes (ORM layer)", () => {
       expect(after.comments).toBe(0)
       expect(after.emotes).toBe(1)
       expect(after.commentEmotes).toBe(0)
+    })
+  })
+})
+
+describe("project purge (scheduled cascade)", () => {
+  it("purgeProject removes a project's boards, feedback, and the project row", async () => {
+    const t = convexTest()
+    let projectId = ""
+    await t.run(async (baseCtx) => {
+      const ctx = await runCtx(baseCtx)
+      const { profile } = await seedAuthor(ctx)
+      const { board, project } = await seedProjectWithBoard(ctx)
+      await seedFeedbackTree(ctx, {
+        boardId: board.id,
+        profileId: profile.id,
+        projectId: project.id,
+      })
+      await ctx.orm.insert(updateTable).values({
+        authorProfileId: profile.id,
+        category: "changelog",
+        content: "Body",
+        projectId: project.id,
+        slug: "update-1",
+        status: "published",
+        title: "Update 1",
+        updatedTime: Date.now(),
+      })
+      projectId = project.id
+    })
+
+    // Drives the same scheduled internal mutation that `_delete` enqueues. The
+    // seed is well under one batch, so a single pass clears every child table
+    // and then removes the project row.
+    await t.mutation(internal.project.purgeProject, {
+      projectId: projectId as never,
+    })
+
+    await t.run(async (baseCtx) => {
+      const ctx = await runCtx(baseCtx)
+      const after = await counts(ctx)
+      expect(after.boards).toBe(0)
+      expect(after.feedback).toBe(0)
+      expect(after.comments).toBe(0)
+      expect(after.upvotes).toBe(0)
+
+      const [remainingUpdates, gone] = await Promise.all([
+        ctx.orm.query.update.findMany({ limit: 10 }),
+        ctx.orm.query.project.findFirst({ where: { id: projectId } }),
+      ])
+      expect(remainingUpdates.length).toBe(0)
+      expect(gone ?? null).toBeNull()
+    })
+  })
+})
+
+describe("soft-deleted project visibility", () => {
+  it("findProject ignores a soft-deleted project (by id and slug)", async () => {
+    const t = convexTest()
+    let projectId = ""
+    await t.run(async (baseCtx) => {
+      const ctx = await runCtx(baseCtx)
+      const [project] = await ctx.orm
+        .insert(projectTable)
+        .values({
+          name: "Acme",
+          orgSlug: "acme",
+          slug: "acme",
+          visibility: "public",
+        })
+        .returning()
+      projectId = project.id
+
+      // Visible before deletion.
+      expect(await findProject(ctx, { id: projectId })).not.toBeNull()
+
+      // Soft-delete (what `project.remove` does before scheduling the purge).
+      await ctx.orm
+        .update(projectTable)
+        .set({ deletedTime: Date.now(), updatedTime: Date.now() })
+        .where(eq(projectTable.id, projectId as never))
+    })
+
+    await t.run(async (baseCtx) => {
+      const ctx = await runCtx(baseCtx)
+      expect((await findProject(ctx, { id: projectId })) ?? null).toBeNull()
+      expect((await findProject(ctx, { slug: "acme" })) ?? null).toBeNull()
     })
   })
 })

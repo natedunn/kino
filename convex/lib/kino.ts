@@ -322,14 +322,19 @@ export async function findProject(
       where: { id: args.id },
       limit: 1,
     })
-    return withLegacyAliases(projects[0] as any)
+    const raw = projects[0]
+    // Soft-deleted projects (awaiting purge) are treated as gone everywhere.
+    if (!raw || raw.deletedTime != null) return null
+    return withLegacyAliases(raw)
   }
   if (args.slug) {
     const projects = await ctx.orm.query.project.findMany({
       where: { slug: args.slug },
       limit: 1,
     })
-    return withLegacyAliases(projects[0] as any)
+    const raw = projects[0]
+    if (!raw || raw.deletedTime != null) return null
+    return withLegacyAliases(raw)
   }
   return null
 }

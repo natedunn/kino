@@ -74,6 +74,17 @@ const urlField = arrayOf(
   })
 )
 
+// Project links carry provenance for the "verified" badge on top of the base
+// url/label: `{ url, text, source?, verifiedAt? }`. `source` absent/"manual" =
+// user-entered; "github" = imported from a connected GitHub repo (server-owned,
+// read-only). `verifiedAt` is the import timestamp, only set for github links.
+//
+// Stored as `v.any()` elements on purpose: `objectOf` forces every declared
+// field to a required key, which would reject the pre-existing `{ url, text }`
+// rows on schema push. `v.any()` keeps old and new shapes valid; the write
+// shape is enforced by the mutations + `urlListSchema` instead.
+const projectUrlField = arrayOf(json())
+
 // Org roles are owner/admin/editor only (no plain org "member"). They cascade
 // to projects as org:admin/org:editor. The project "member" role is NEVER
 // produced here — it is exclusively a DIRECT per-project grant (see
@@ -474,7 +485,7 @@ export const projectTable = convexTable(
     orgSlug: text().notNull(),
     name: text().notNull(),
     description: text(),
-    urls: urlField,
+    urls: projectUrlField,
     visibility: textEnum(PROJECT_VISIBILITIES).notNull(),
     logoUrl: text(),
     slug: text().notNull(),

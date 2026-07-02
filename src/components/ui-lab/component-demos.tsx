@@ -396,6 +396,10 @@ function InputDemo() {
         <Input placeholder="Invalid" aria-invalid defaultValue="not-an-email" />
         <Input type="password" defaultValue="hunter2" />
       </Demo>
+      <Demo title="Read-only" className="flex-col items-stretch sm:max-w-sm">
+        <Input readOnly defaultValue="Read-only value" />
+        <Input readOnly defaultValue="https://github.com/natedunn/kino" />
+      </Demo>
     </>
   )
 }
@@ -406,12 +410,17 @@ function InputDemo() {
 
 function TextareaDemo() {
   return (
-    <Demo title="Sizes" className="flex-col items-stretch sm:max-w-md">
-      <Textarea size="sm" placeholder="Small textarea" />
-      <Textarea placeholder="Default textarea" />
-      <Textarea size="lg" placeholder="Large textarea" />
-      <Textarea size="xl" placeholder="Extra large textarea" />
-    </Demo>
+    <>
+      <Demo title="Sizes" className="flex-col items-stretch sm:max-w-md">
+        <Textarea size="sm" placeholder="Small textarea" />
+        <Textarea placeholder="Default textarea" />
+        <Textarea size="lg" placeholder="Large textarea" />
+        <Textarea size="xl" placeholder="Extra large textarea" />
+      </Demo>
+      <Demo title="Read-only" className="flex-col items-stretch sm:max-w-md">
+        <Textarea readOnly defaultValue="Read-only textarea content" />
+      </Demo>
+    </>
   )
 }
 

@@ -11,13 +11,18 @@ export const FORM_LIMITS = {
   email: 254,
   orgName: 100,
   orgSlug: 39,
+  projectDescription: 250,
   projectName: 30,
   projectSlug: 30,
   tag: 40,
   updateContent: 50000,
   updateTitle: 200,
+  url: 2048,
+  urlLabel: 100,
   username: 39,
 } as const
+
+export const MAX_PROJECT_URLS = 10
 
 export const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 export const SLUG_INPUT_PATTERN = "[a-z0-9]+(-[a-z0-9]+)*"
@@ -241,14 +246,50 @@ export const orgFormSchema = z.object({
   visibility: z.enum(["public", "private"]).default("public"),
 })
 
+export const httpUrlSchema = z
+  .string()
+  .trim()
+  .url("Enter a valid URL")
+  .max(FORM_LIMITS.url)
+  .refine(
+    (value) => {
+      try {
+        const protocol = new URL(value).protocol
+        return protocol === "http:" || protocol === "https:"
+      } catch {
+        return false
+      }
+    },
+    { message: "URL must start with http:// or https://" }
+  )
+
+export const projectUrlSchema = z.object({
+  // Client hint; the server re-verifies "github" links before trusting them.
+  source: z.enum(["manual", "github"]).optional(),
+  text: z
+    .string()
+    .trim()
+    .min(1, "Link label is required")
+    .max(FORM_LIMITS.urlLabel),
+  url: httpUrlSchema,
+})
+
+export const projectUrlListSchema = z.array(projectUrlSchema).max(MAX_PROJECT_URLS)
+
 export const projectFormSchema = z.object({
+  description: z
+    .string()
+    .trim()
+    .max(FORM_LIMITS.projectDescription)
+    .optional(),
   name: z
     .string()
     .trim()
     .min(1, "Project name is required")
     .max(FORM_LIMITS.projectName),
   slug: slug(FORM_LIMITS.projectSlug),
-  visibility: z.enum(["public", "private"]).default("public"),
+  urls: projectUrlListSchema.optional(),
+  visibility: z.enum(["public", "private", "archived"]).default("public"),
 })
 
 export const profileFormSchema = z.object({
