@@ -126,12 +126,16 @@ export const create = authMutation
   })
 
 export const update = authMutation
+  // NOTE: `orgSlug` is intentionally NOT updatable here. Allowing it would let
+  // an editor re-parent a project into another org's slug namespace without any
+  // permission check on the destination org. A project's org is fixed at
+  // creation; the org slug only ever changes via the org-rename trigger, which
+  // re-denormalizes every project's `orgSlug` server-side.
   .input(
     z.object({
       description: projectDescriptionSchema.optional(),
       id: idSchema,
       name: projectNameSchema.optional(),
-      orgSlug: orgSlugSchema.optional(),
       slug: projectSlugWriteSchema.optional(),
       urls: urlListSchema.optional(),
       visibility: visibilitySchema.optional(),
@@ -156,9 +160,7 @@ export const update = authMutation
       const existing = await ctx.db
         .query("project")
         .withIndex("by_orgSlug_slug", (q: any) =>
-          q
-            .eq("orgSlug", input.orgSlug ?? access.project.orgSlug)
-            .eq("slug", input.slug)
+          q.eq("orgSlug", access.project.orgSlug).eq("slug", input.slug)
         )
         .unique()
       if (existing && existing._id !== access.project._id) {
@@ -173,7 +175,6 @@ export const update = authMutation
       Object.entries({
         description: input.description,
         name: input.name,
-        orgSlug: input.orgSlug,
         slug: input.slug,
         visibility: input.visibility,
       }).filter(([, value]) => value !== undefined)

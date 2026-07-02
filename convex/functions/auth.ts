@@ -182,17 +182,31 @@ export default defineAuth(() => {
     trustedOrigins,
     user: {
       additionalFields: {
+        // `input: false` is a SECURITY REQUIREMENT, not a nicety. Better-auth
+        // additional fields default to client-writable: without this, the
+        // public `/api/auth/sign-up/email` and `/api/auth/update-user` routes
+        // would accept these fields straight from the request body
+        // (`parseInputData` in better-auth only rejects a field when
+        // `input === false`). `profileId` and `role` are set exclusively
+        // server-side (the `user.create.before` / `user.change` triggers and
+        // `ensureUserBootstrap`), so the client must never be able to supply
+        // them — a self-assigned `role: "system:admin"` would grant full
+        // access via verifyOrgAccess/verifyProjectAccess.
         profileId: {
           type: "string" as const,
           required: false,
+          input: false,
         },
         // `role` previously came from the better-auth admin plugin. With that
         // plugin removed we declare it here so better-auth keeps persisting it
         // on create/update and returning it on the session. `user.role` remains
-        // the source of truth; `profile.role` is the derived copy.
+        // the source of truth; `profile.role` is the derived copy. Writes only
+        // ever happen server-side (super-admin bootstrap), never from client
+        // input — hence `input: false`.
         role: {
           type: "string" as const,
           required: false,
+          input: false,
         },
       },
     },

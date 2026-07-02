@@ -126,6 +126,23 @@ export const updateMemberRole = authMutation
       })
     }
 
+    // Never let the last owner be demoted — that would strand the org with no
+    // one able to manage membership. Mirrors the guard in `leaveOrganization`
+    // and `removeMember`. Ownership must be transferred (promote another member
+    // to owner) before the sole owner steps down.
+    if (member.role === "owner" && input.role !== "owner") {
+      const owners = await ctx.orm.query.member.findMany({
+        where: { organizationId: member.organizationId, role: "owner" },
+        limit: 2,
+      })
+      if (owners.length <= 1) {
+        throw new CRPCError({
+          code: "FORBIDDEN",
+          message: "Promote another owner before demoting the only owner",
+        })
+      }
+    }
+
     await ctx.auth.api.updateMemberRole({
       body: {
         memberId: input.memberId,
