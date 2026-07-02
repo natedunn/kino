@@ -1,3 +1,7 @@
+// @vitest-environment node
+// This suite reads the auth source with node:fs; pin the Node environment so it
+// stays correct even if the default test environment changes. (It does NOT use
+// convex-test, so it must not run under edge-runtime.)
 import { readFileSync } from "node:fs"
 import { fileURLToPath } from "node:url"
 import { describe, expect, test } from "vitest"

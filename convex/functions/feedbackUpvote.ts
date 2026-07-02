@@ -106,8 +106,6 @@ export const hasUpvoted = optionalAuthQuery
     })
   )
   .query(async ({ ctx, input }) => {
-    const profile = await getCurrentProfile(ctx, ctx.userId)
-    if (!profile) return false
     const feedback = await getDoc(ctx, asId<"feedback">(input.feedbackId))
     if (!feedback) return false
 
@@ -116,6 +114,11 @@ export const hasUpvoted = optionalAuthQuery
       userId: ctx.userId,
     })
     if (!access.permissions.canView) return false
+
+    // Reuse the profile resolved by the access check instead of a second
+    // getCurrentProfile lookup on this hot read path.
+    const profile = access.profile
+    if (!profile) return false
 
     const existing = await ctx.db
       .query("feedbackUpvote")
@@ -133,9 +136,7 @@ export const getUpvoteData = optionalAuthQuery
     })
   )
   .query(async ({ ctx, input }) => {
-    const profile = await getCurrentProfile(ctx, ctx.userId)
     const feedback = await getDoc(ctx, asId<"feedback">(input.feedbackId))
-
     if (!feedback) return { count: 0, hasUpvoted: false }
 
     // Gate the count behind project visibility (private/archived).
@@ -147,6 +148,8 @@ export const getUpvoteData = optionalAuthQuery
 
     const count = feedback.upvotes ?? 0
 
+    // Reuse the profile resolved by the access check.
+    const profile = access.profile
     if (!profile) return { count, hasUpvoted: false }
 
     const existing = await ctx.db
