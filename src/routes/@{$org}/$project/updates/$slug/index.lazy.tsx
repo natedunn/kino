@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 import {
   useMutation,
   useQuery,
@@ -64,6 +64,13 @@ type UpdateCommentData = ThreadComment & {
   isTeamMember?: boolean
 }
 
+type MiddleCommentState<TComment> = {
+  comments: TComment[]
+  cursor: string | null
+  key: string
+  pageCount: number
+}
+
 function dedupeUpdateComments(comments: UpdateCommentData[]) {
   const seen = new Set<string>()
   return comments.filter((comment) => {
@@ -71,6 +78,18 @@ function dedupeUpdateComments(comments: UpdateCommentData[]) {
     seen.add(comment.id)
     return true
   })
+}
+
+function createMiddleCommentState<TComment>(
+  key: string,
+  cursor: string | null
+): MiddleCommentState<TComment> {
+  return {
+    comments: [],
+    cursor,
+    key,
+    pageCount: 0,
+  }
 }
 
 export const Route = createLazyFileRoute("/@{$org}/$project/updates/$slug/")({
@@ -82,17 +101,7 @@ function UpdateDetailRoute() {
   const crpc = useCRPC()
   const auth = useAuth()
   const queryClient = useQueryClient()
-  const [middleComments, setMiddleComments] = useState<UpdateCommentData[]>([])
-  const [middleCursor, setMiddleCursor] = useState<string | null>(null)
-  // How many middle pages the viewer has expanded. Middle pages are a snapshot
-  // (not a live subscription) to avoid holding a subscription open over a long
-  // thread; we track the count so we can re-fetch exactly the expanded range
-  // when the viewer mutates a comment. A hard refresh or navigating away and
-  // back remounts this component, which re-initializes the snapshot (collapsed)
-  // and re-reads the live head/tail — so those paths are always fresh.
-  const [middlePageCount, setMiddlePageCount] = useState(0)
-  const [isLoadingMiddleComments, setIsLoadingMiddleComments] =
-    useState(false)
+  const [isLoadingMiddleComments, setIsLoadingMiddleComments] = useState(false)
   const { state: sidebarState, setSection: setSidebarSection } =
     useSidebarState(SIDEBAR_STORAGE_KEY, DEFAULT_SIDEBAR_STATE)
 
@@ -154,6 +163,34 @@ function UpdateDetailRoute() {
   )
 
   const update = updateData.update
+  const middleStateKey = `${update.id}:${updateData.commentWindow.middleCursor ?? ""}`
+  const initialMiddleState = () =>
+    createMiddleCommentState<UpdateCommentData>(
+      middleStateKey,
+      updateData.commentWindow.middleCursor
+    )
+  const [middleState, setMiddleState] =
+    useState<MiddleCommentState<UpdateCommentData>>(initialMiddleState)
+  const activeMiddleState =
+    middleState.key === middleStateKey ? middleState : initialMiddleState()
+  const middleComments = activeMiddleState.comments
+  const middleCursor = activeMiddleState.cursor
+  // How many middle pages the viewer has expanded. Middle pages are a snapshot
+  // (not a live subscription) to avoid holding a subscription open over a long
+  // thread; we track the count so we can re-fetch exactly the expanded range
+  // when the viewer mutates a comment. A hard refresh or navigating away and
+  // back remounts this component, which re-initializes the snapshot (collapsed)
+  // and re-reads the live head/tail — so those paths are always fresh.
+  const middlePageCount = activeMiddleState.pageCount
+  const updateMiddleState = (
+    updater: (
+      current: MiddleCommentState<UpdateCommentData>
+    ) => MiddleCommentState<UpdateCommentData>
+  ) => {
+    setMiddleState((current) =>
+      updater(current.key === middleStateKey ? current : initialMiddleState())
+    )
+  }
   const tailCommentIds = updateData.commentWindow.tailCommentIds.map(String)
   const interactiveData = interactiveQuery.data
   const currentProfile = interactiveData?.currentProfile
@@ -170,12 +207,6 @@ function UpdateDetailRoute() {
       updateData.commentWindow.tail,
     ]
   )
-
-  useEffect(() => {
-    setMiddleComments([])
-    setMiddleCursor(updateData.commentWindow.middleCursor)
-    setMiddlePageCount(0)
-  }, [update.id, updateData.commentWindow.middleCursor])
 
   const heartData =
     interactiveData?.emoteCounts?.heart ?? updateData.emoteCounts?.heart
@@ -225,14 +256,15 @@ function UpdateDetailRoute() {
           updateId: update.id,
         })
       )
-      setMiddleComments((current) =>
-        dedupeUpdateComments([
-          ...current,
+      updateMiddleState((current) => ({
+        ...current,
+        comments: dedupeUpdateComments([
+          ...current.comments,
           ...((result?.comments ?? []) as UpdateCommentData[]),
-        ])
-      )
-      setMiddleCursor(result?.nextCursor ?? null)
-      setMiddlePageCount((count) => count + 1)
+        ]),
+        cursor: result?.nextCursor ?? null,
+        pageCount: current.pageCount + 1,
+      }))
     } finally {
       setIsLoadingMiddleComments(false)
     }
@@ -262,8 +294,11 @@ function UpdateDetailRoute() {
       cursor = nextCursor
     }
 
-    setMiddleComments(dedupeUpdateComments(refreshed))
-    setMiddleCursor(nextCursor)
+    updateMiddleState((current) => ({
+      ...current,
+      comments: dedupeUpdateComments(refreshed),
+      cursor: nextCursor,
+    }))
   }
 
   return (

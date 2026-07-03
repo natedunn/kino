@@ -30,13 +30,9 @@ export function useEmoteToggle({
   const crpc = useCRPC()
   const toggleEmote = useMutation(crpc.updateEmote.toggle.mutationOptions())
   const latestServerIsLikedRef = useRef(serverIsLiked)
-  useEffect(() => {
-    latestServerIsLikedRef.current = serverIsLiked
-  }, [serverIsLiked])
+  latestServerIsLikedRef.current = serverIsLiked
   const latestCanInteractRef = useRef(canInteract)
-  useEffect(() => {
-    latestCanInteractRef.current = canInteract
-  }, [canInteract])
+  latestCanInteractRef.current = canInteract
 
   const [optimistic, setOptimistic] = useState<{
     liked: boolean

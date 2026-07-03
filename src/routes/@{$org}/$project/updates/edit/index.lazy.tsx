@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 import {
   flexRender,
   getCoreRowModel,
@@ -112,6 +112,7 @@ function UpdatesDashboardRoute() {
 
   return (
     <UpdatesDashboard
+      key={pageSize}
       canDelete={projectData.permissions.canDelete}
       pageSize={pageSize}
     />
@@ -154,17 +155,6 @@ function UpdatesDashboard({
   const [actionError, setActionError] = useState("")
   const [sheetUpdateId, setSheetUpdateId] = useState<string | null>(null)
 
-  useEffect(() => {
-    setPagination({ pageIndex: 0, pageSize })
-    setCursorByPage({ 0: null })
-  }, [pageSize])
-
-  // Clear row selection whenever the visible page or status filter changes —
-  // selections are page/filter specific, so they shouldn't carry over.
-  useEffect(() => {
-    setRowSelection({})
-  }, [pagination.pageIndex, pagination.pageSize, statusFilter])
-
   const currentCursor = cursorByPage[pagination.pageIndex] ?? null
   const dashboardQuery = useSuspenseQuery(
     crpc.update.listProjectDashboard.queryOptions({
@@ -173,6 +163,7 @@ function UpdatesDashboard({
       projectId,
     })
   )
+  const allRows = dashboardQuery.data.page
 
   const publishMutation = useMutation(
     crpc.update.bulkPublish.mutationOptions({
@@ -199,11 +190,18 @@ function UpdatesDashboard({
         setActionError("")
         setDeleteDialog(null)
         setRowSelection({})
+        if (
+          pagination.pageIndex > 0 &&
+          (deleteDialog?.ids.length ?? 0) >= allRows.length
+        ) {
+          setPagination((current) => ({
+            ...current,
+            pageIndex: Math.max(0, current.pageIndex - 1),
+          }))
+        }
       },
     })
   )
-
-  const allRows = dashboardQuery.data.page
 
   // Derive sheet data from live query — stays reactive when Convex pushes updates
   const sheetUpdate = useMemo(
@@ -230,15 +228,6 @@ function UpdatesDashboard({
     [rowSelection]
   )
   const selectedCount = selectedIds.length
-
-  useEffect(() => {
-    if (allRows.length === 0 && pagination.pageIndex > 0) {
-      setPagination((current) => ({
-        ...current,
-        pageIndex: current.pageIndex - 1,
-      }))
-    }
-  }, [pagination.pageIndex, allRows.length])
 
   const columns = useMemo(
     () =>
@@ -289,6 +278,7 @@ function UpdatesDashboard({
       ...current,
       [pagination.pageIndex + 1]: dashboardQuery.data.continueCursor,
     }))
+    setRowSelection({})
     setPagination((current) => ({
       ...current,
       pageIndex: current.pageIndex + 1,
@@ -298,10 +288,16 @@ function UpdatesDashboard({
   function handlePreviousPage() {
     if (pagination.pageIndex === 0) return
 
+    setRowSelection({})
     setPagination((current) => ({
       ...current,
       pageIndex: current.pageIndex - 1,
     }))
+  }
+
+  function handleStatusFilterChange(nextStatusFilter: StatusFilter) {
+    setRowSelection({})
+    setStatusFilter(nextStatusFilter)
   }
 
   function handleBulkPublish() {
@@ -574,7 +570,7 @@ function UpdatesDashboard({
                       ? "bg-background text-foreground shadow-xs"
                       : "text-muted-foreground hover:text-foreground"
                   )}
-                  onClick={() => setStatusFilter("all")}
+                  onClick={() => handleStatusFilterChange("all")}
                   type="button"
                 >
                   All{" "}
@@ -589,7 +585,7 @@ function UpdatesDashboard({
                       ? "bg-background text-foreground shadow-xs"
                       : "text-muted-foreground hover:text-foreground"
                   )}
-                  onClick={() => setStatusFilter("published")}
+                  onClick={() => handleStatusFilterChange("published")}
                   type="button"
                 >
                   Published{" "}
@@ -604,7 +600,7 @@ function UpdatesDashboard({
                       ? "bg-background text-foreground shadow-xs"
                       : "text-muted-foreground hover:text-foreground"
                   )}
-                  onClick={() => setStatusFilter("draft")}
+                  onClick={() => handleStatusFilterChange("draft")}
                   type="button"
                 >
                   Draft{" "}
