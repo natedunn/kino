@@ -543,7 +543,6 @@ export declare const api: {
         description?: string;
         id: string;
         name?: string;
-        orgSlug?: string;
         slug?: string;
         urls?: Array<{
           source?: "manual" | "github";
