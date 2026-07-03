@@ -1,23 +1,8 @@
 import { z } from "zod"
 import { privateAction, privateMutation } from "../lib/crpc"
 import { sendEmail } from "../lib/nuntly"
-import { EMAIL_SENDERS } from "../lib/email-senders"
 import { emailEventTable } from "./schema"
-import type { EmailSender } from "../lib/email-senders"
-
-const recipientsSchema = z.union([
-  z.string().email(),
-  z.array(z.string().email()).min(1),
-])
-
-const senderSchema = z.enum(
-  Object.keys(EMAIL_SENDERS) as [EmailSender, ...Array<EmailSender>]
-)
-
-const tagSchema = z.object({
-  name: z.string(),
-  value: z.string(),
-})
+import { recipientsSchema, senderSchema, tagSchema } from "./email.lib"
 
 /**
  * General-purpose transactional email send via Nuntly. Internal (private) so it

@@ -9,9 +9,7 @@ import {
 } from "../lib/github-client"
 import { orgSlugSchema, projectSlugSchema } from "../lib/validation"
 import { createGithubCaller } from "./generated/github.runtime"
-
-const connectionModeSchema = z.enum(["read", "read_write"])
-const sourceSchema = z.enum(["issues", "discussions"])
+import { connectionModeSchema, sourceSchema } from "./githubExternal.lib"
 
 export const listInstallationRepositoriesForProject = authAction
   .input(

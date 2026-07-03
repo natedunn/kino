@@ -1,5 +1,5 @@
 import { createFunctionHandle } from "convex/server"
-import { ConvexError, v } from "convex/values"
+import { v } from "convex/values"
 import { z } from "zod"
 import { CRPCError } from "kitcn/server"
 import { authMutation, authQuery, optionalAuthQuery } from "../lib/crpc"
@@ -21,8 +21,6 @@ import {
 } from "../lib/validation"
 import {
   getOrgUploadR2Metadata,
-  getOrganizationLogoObjectKey,
-  resolveOrganizationLogoUrl,
   updateOrgStorageUsage,
   validateOrganizationLogoMetadata,
 } from "../lib/storage"
@@ -30,30 +28,11 @@ import { orgUploadsR2 } from "../lib/r2"
 import { internal } from "./_generated/api"
 import type { Id } from "./_generated/dataModel"
 import { internalMutation } from "./generated/server"
-
-const visibilitySchema = z.enum(["public", "private"])
-
-function parseOrgAvatarKey(key: string) {
-  const objectKey = getOrganizationLogoObjectKey(key) ?? key
-  const [type, organizationId] = objectKey.split(".")
-  if (type !== "ORG_AVATAR" || !organizationId) {
-    throw new ConvexError({
-      code: "400",
-      message: "Invalid key format for organization avatar upload",
-    })
-  }
-
-  return organizationId as Id<"organization">
-}
-
-async function withResolvedLogo<T extends { logo?: string | null }>(
-  organization: T
-) {
-  return {
-    ...organization,
-    logo: await resolveOrganizationLogoUrl(organization),
-  }
-}
+import {
+  parseOrgAvatarKey,
+  visibilitySchema,
+  withResolvedLogo,
+} from "./org.lib"
 
 export const create = authMutation
   .input(
