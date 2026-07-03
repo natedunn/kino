@@ -8,8 +8,28 @@ import type { ReactNode } from "react"
 import type { AppEnvironment } from "@/lib/app-env"
 import { authClient } from "@/lib/convex/auth-client"
 
-const POSTHOG_TOKEN = import.meta.env.VITE_POSTHOG_PROJECT_TOKEN
-const POSTHOG_HOST = import.meta.env.VITE_POSTHOG_HOST
+// NOTE: `phc_...` is PostHog's *public* project API key — it's a client-side,
+// write-only token designed to be shipped in the browser bundle (like a GA
+// measurement ID). It is NOT a secret and exposes nothing; it only ingests
+// events and cannot read data. These hardcoded values are safe fallbacks so
+// production analytics keep working even if the VITE_ env vars are missing at
+// build time. Do NOT copy this "hardcoded fallback" pattern for real secrets
+// (e.g. a `phx_...` personal key, DB URLs, or any server-side credential).
+const DEFAULT_POSTHOG_TOKEN = "phc_B9p4kmKAZEUCmiSPULzu8m3FYr4CWVyANuS5iqAeeoB"
+const DEFAULT_POSTHOG_HOST = "https://j.usekino.com"
+
+function fromEnvOrDefault(value: string | undefined, fallback: string) {
+  return value?.trim() ? value : fallback
+}
+
+const POSTHOG_TOKEN = fromEnvOrDefault(
+  import.meta.env.VITE_POSTHOG_PROJECT_TOKEN,
+  DEFAULT_POSTHOG_TOKEN
+)
+const POSTHOG_HOST = fromEnvOrDefault(
+  import.meta.env.VITE_POSTHOG_HOST,
+  DEFAULT_POSTHOG_HOST
+)
 type PostHogClient = typeof import("posthog-js").default
 
 function canUsePostHog(appEnvironment: AppEnvironment) {
