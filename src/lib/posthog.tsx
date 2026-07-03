@@ -19,7 +19,8 @@ const DEFAULT_POSTHOG_TOKEN = "phc_B9p4kmKAZEUCmiSPULzu8m3FYr4CWVyANuS5iqAeeoB"
 const DEFAULT_POSTHOG_HOST = "https://j.usekino.com"
 
 function fromEnvOrDefault(value: string | undefined, fallback: string) {
-  return value?.trim() ? value : fallback
+  const trimmed = value?.trim()
+  return trimmed ? trimmed : fallback
 }
 
 const POSTHOG_TOKEN = fromEnvOrDefault(
