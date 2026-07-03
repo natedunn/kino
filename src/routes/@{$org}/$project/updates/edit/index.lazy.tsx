@@ -159,6 +159,10 @@ function UpdatesDashboard({
       current.pageSize === pageSize ? current : { pageIndex: 0, pageSize }
     )
     setCursorByPage({ 0: null })
+    // Selections are page-specific; a page-size change reshuffles the visible
+    // rows (and doesn't remount this component), so drop any stale selection to
+    // avoid bulk actions targeting rows the viewer can no longer see.
+    setRowSelection({})
   }, [pageSize])
 
   const currentCursor = cursorByPage[pagination.pageIndex] ?? null
@@ -206,15 +210,8 @@ function UpdatesDashboard({
         setActionError("")
         setDeleteDialog(null)
         setRowSelection({})
-        if (
-          pagination.pageIndex > 0 &&
-          (deleteDialog?.ids.length ?? 0) >= allRows.length
-        ) {
-          setPagination((current) => ({
-            ...current,
-            pageIndex: Math.max(0, current.pageIndex - 1),
-          }))
-        }
+        // If the current page is now empty, the effect on `allRows.length`
+        // steps back a page — no need to also adjust pagination here.
       },
     })
   )

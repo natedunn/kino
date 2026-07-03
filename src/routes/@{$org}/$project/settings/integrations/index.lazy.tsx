@@ -112,7 +112,16 @@ function GitHubIntegrationRoute() {
     repositoriesInstallationId === activeInstallationId
       ? (repositoriesQuery.data ?? [])
       : []
-  const effectiveSelectedRepoId = selectedRepoId ?? connectionRepoId
+  // Only honor an explicit selection when it actually exists in the loaded
+  // repository list; otherwise (e.g. the repo was removed on GitHub, or the
+  // list just changed) fall back to the connected repo instead of showing an
+  // empty Select.
+  const selectionInList =
+    selectedRepoId !== null &&
+    repositories.some((repository) => repository.id === selectedRepoId)
+      ? selectedRepoId
+      : null
+  const effectiveSelectedRepoId = selectionInList ?? connectionRepoId
   const selectedRepository = repositories.find(
     (repository) => repository.id === effectiveSelectedRepoId
   )

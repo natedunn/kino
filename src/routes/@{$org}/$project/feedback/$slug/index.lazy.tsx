@@ -307,6 +307,13 @@ function FeedbackDetailContent({
     )
   const [middleState, setMiddleState] =
     useState<MiddleCommentState<FeedbackCommentData>>(initialMiddleState)
+  // When the feedback or server middle-cursor changes, `middleStateKey` changes
+  // and this render derives a fresh (collapsed) snapshot instead of resetting
+  // via an effect. The STORED `middleState` is not rewritten here — it keeps its
+  // old key/comments until the next `updateMiddleState`, which re-bases onto a
+  // fresh initial when it sees a stale key. Always read the snapshot through
+  // `activeMiddleState`; reading `middleState` directly can surface a previous
+  // feedback's comments after navigation.
   const activeMiddleState =
     middleState.key === middleStateKey ? middleState : initialMiddleState()
   const middleComments = activeMiddleState.comments

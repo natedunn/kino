@@ -18,14 +18,33 @@ export function UpvoteButton({
 }) {
   const crpc = useCRPC()
   const mutation = useMutation(crpc.feedbackUpvote.toggle.mutationOptions())
-  const showOptimistic =
-    mutation.isPending && mutation.variables?.feedbackId === feedbackId
+  const isThisFeedback = mutation.variables?.feedbackId === feedbackId
+  const showOptimistic = mutation.isPending && isThisFeedback
   const optimisticHasUpvoted = !initialHasUpvoted
   const optimisticCount = optimisticHasUpvoted
     ? initialCount + 1
     : Math.max(0, initialCount - 1)
-  const count = showOptimistic ? optimisticCount : initialCount
-  const hasUpvoted = showOptimistic ? optimisticHasUpvoted : initialHasUpvoted
+  // After the mutation settles there's a brief window before the live query
+  // subscription pushes the new value back down through props. Prefer the
+  // server-confirmed result during that window so the button doesn't flicker
+  // back to the pre-toggle value. The result only "wins" while it still
+  // disagrees with props; once props catch up we fall back to them, so a later
+  // count change from another viewer isn't masked by a stale result.
+  const showResult =
+    mutation.isSuccess &&
+    isThisFeedback &&
+    !!mutation.data &&
+    mutation.data.upvoted !== initialHasUpvoted
+  const count = showOptimistic
+    ? optimisticCount
+    : showResult
+      ? mutation.data.count
+      : initialCount
+  const hasUpvoted = showOptimistic
+    ? optimisticHasUpvoted
+    : showResult
+      ? mutation.data.upvoted
+      : initialHasUpvoted
 
   return (
     <Button
