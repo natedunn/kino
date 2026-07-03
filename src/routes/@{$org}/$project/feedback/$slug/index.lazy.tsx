@@ -215,6 +215,13 @@ export const Route = createLazyFileRoute("/@{$org}/$project/feedback/$slug/")({
   component: FeedbackDetailRoute,
 })
 
+type MiddleCommentState<TComment> = {
+  comments: TComment[]
+  cursor: string | null
+  key: string
+  pageCount: number
+}
+
 function dedupeFeedbackComments(comments: FeedbackCommentData[]) {
   const seen = new Set<string>()
   return comments.filter((comment) => {
@@ -222,6 +229,18 @@ function dedupeFeedbackComments(comments: FeedbackCommentData[]) {
     seen.add(comment.id)
     return true
   })
+}
+
+function createMiddleCommentState<TComment>(
+  key: string,
+  cursor: string | null
+): MiddleCommentState<TComment> {
+  return {
+    comments: [],
+    cursor,
+    key,
+    pageCount: 0,
+  }
 }
 
 function FeedbackDetailRoute() {
@@ -279,29 +298,46 @@ function FeedbackDetailContent({
   const [deleteError, setDeleteError] = useState("")
   const [connectionDialogOpen, setConnectionDialogOpen] = useState(false)
   const [targetSheetOpen, setTargetSheetOpen] = useState(false)
-  const [middleComments, setMiddleComments] = useState<FeedbackCommentData[]>(
-    []
-  )
-  const [middleCursor, setMiddleCursor] = useState<string | null>(
-    feedbackData.commentWindow.middleCursor
-  )
+  const feedback = feedbackData.feedback
+  const middleStateKey = `${feedback.id}:${feedbackData.commentWindow.middleCursor ?? ""}`
+  const initialMiddleState = () =>
+    createMiddleCommentState<FeedbackCommentData>(
+      middleStateKey,
+      feedbackData.commentWindow.middleCursor
+    )
+  const [middleState, setMiddleState] =
+    useState<MiddleCommentState<FeedbackCommentData>>(initialMiddleState)
+  // When the feedback or server middle-cursor changes, `middleStateKey` changes
+  // and this render derives a fresh (collapsed) snapshot instead of resetting
+  // via an effect. The STORED `middleState` is not rewritten here — it keeps its
+  // old key/comments until the next `updateMiddleState`, which re-bases onto a
+  // fresh initial when it sees a stale key. Always read the snapshot through
+  // `activeMiddleState`; reading `middleState` directly can surface a previous
+  // feedback's comments after navigation.
+  const activeMiddleState =
+    middleState.key === middleStateKey ? middleState : initialMiddleState()
+  const middleComments = activeMiddleState.comments
+  const middleCursor = activeMiddleState.cursor
   // How many middle pages the viewer has expanded. Middle pages are a snapshot
   // (not a live subscription) to avoid holding a subscription open over a long
   // thread; we track the count so we can re-fetch exactly the expanded range
   // when the viewer mutates a comment. A hard refresh or navigating away and
   // back remounts this component, which re-initializes the snapshot (collapsed)
   // and re-reads the live head/tail — so those paths are always fresh.
-  const [middlePageCount, setMiddlePageCount] = useState(0)
+  const middlePageCount = activeMiddleState.pageCount
   const [isLoadingMiddleComments, setIsLoadingMiddleComments] = useState(false)
   const { state: sidebarState, setSection: setSidebarSection } =
     useSidebarState(SIDEBAR_STORAGE_KEY, DEFAULT_SIDEBAR_STATE)
 
-  const feedback = feedbackData.feedback
-  useEffect(() => {
-    setMiddleComments([])
-    setMiddleCursor(feedbackData.commentWindow.middleCursor)
-    setMiddlePageCount(0)
-  }, [feedback.id, feedbackData.commentWindow.middleCursor])
+  const updateMiddleState = (
+    updater: (
+      current: MiddleCommentState<FeedbackCommentData>
+    ) => MiddleCommentState<FeedbackCommentData>
+  ) => {
+    setMiddleState((current) =>
+      updater(current.key === middleStateKey ? current : initialMiddleState())
+    )
+  }
 
   const interactiveQuery = useQuery(
     crpc.feedback.getDetailInteractive.queryOptions(
@@ -487,11 +523,15 @@ function FeedbackDetailContent({
           tailCommentIds: feedbackData.commentWindow.tailCommentIds,
         })
       )
-      setMiddleComments((current) =>
-        dedupeFeedbackComments([...current, ...(result?.comments ?? [])])
-      )
-      setMiddleCursor(result?.nextCursor ?? null)
-      setMiddlePageCount((count) => count + 1)
+      updateMiddleState((current) => ({
+        ...current,
+        comments: dedupeFeedbackComments([
+          ...current.comments,
+          ...(result?.comments ?? []),
+        ]),
+        cursor: result?.nextCursor ?? null,
+        pageCount: current.pageCount + 1,
+      }))
     } finally {
       setIsLoadingMiddleComments(false)
     }
@@ -521,8 +561,11 @@ function FeedbackDetailContent({
       cursor = nextCursor
     }
 
-    setMiddleComments(dedupeFeedbackComments(refreshed))
-    setMiddleCursor(nextCursor)
+    updateMiddleState((current) => ({
+      ...current,
+      comments: dedupeFeedbackComments(refreshed),
+      cursor: nextCursor,
+    }))
   }
 
   async function handleCreateComment(content: string) {
@@ -1655,12 +1698,6 @@ function InlineFeedbackTitleEditor({
     trimmedDraftTitle.length <= FORM_LIMITS.feedbackTitle &&
     trimmedDraftTitle !== title &&
     !isSaving
-
-  useEffect(() => {
-    if (!editing) {
-      setDraftTitle(title)
-    }
-  }, [editing, title])
 
   useEffect(() => {
     if (!editing) return

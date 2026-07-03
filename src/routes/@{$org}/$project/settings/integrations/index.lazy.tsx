@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useState } from "react"
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { createLazyFileRoute, Link } from "@tanstack/react-router"
 import { GitBranch, ShieldCheck, Unplug } from "lucide-react"
@@ -43,7 +43,7 @@ function GitHubIntegrationRoute() {
   const params = Route.useParams()
   const search = Route.useSearch() as { github?: string }
   const crpc = useCRPC()
-  const [mode, setMode] = useState<ConnectionMode>("read")
+  const [modeOverride, setModeOverride] = useState<ConnectionMode | null>(null)
   const [selectedInstallationId, setSelectedInstallationId] = useState<
     number | null
   >(null)
@@ -51,7 +51,7 @@ function GitHubIntegrationRoute() {
   const [repositoriesInstallationId, setRepositoriesInstallationId] = useState<
     number | null
   >(null)
-  const [sources, setSources] = useState<Source[]>(["issues"])
+  const [sourcesOverride, setSourcesOverride] = useState<Source[] | null>(null)
 
   const integrationQuery = useQuery(
     crpc.github.getProjectIntegration.queryOptions({
@@ -71,16 +71,20 @@ function GitHubIntegrationRoute() {
     crpc.github.disconnectRepository.mutationOptions({
       onSuccess: () => {
         connectRepository.reset()
+        setModeOverride(null)
         setSelectedRepoId(null)
+        setSelectedInstallationId(null)
+        setSourcesOverride(null)
       },
     })
   )
 
   const installations = integrationQuery.data?.installations ?? []
   const connections = integrationQuery.data?.connections ?? []
-  const connectedInstallation = connections[0]
+  const activeConnection = connections[0] ?? null
+  const connectedInstallation = activeConnection
     ? installations.find(
-        (item) => item.id === connections[0].githubInstallationId
+        (item) => item.id === activeConnection.githubInstallationId
       )
     : null
   const selectedInstallation =
@@ -90,40 +94,41 @@ function GitHubIntegrationRoute() {
     connectedInstallation ??
     installations[0]
   const activeInstallationId = selectedInstallation?.installationId ?? null
+  const connectionRepoId =
+    activeConnection &&
+    connectedInstallation?.installationId === activeInstallationId
+      ? activeConnection.repoId
+      : null
+  const mode =
+    modeOverride ??
+    (activeConnection?.mode as ConnectionMode | undefined) ??
+    "read"
+  const sources =
+    sourcesOverride ??
+    (activeConnection && activeConnection.enabledSources.length > 0
+      ? (activeConnection.enabledSources as Source[])
+      : ["issues"])
   const repositories =
     repositoriesInstallationId === activeInstallationId
       ? (repositoriesQuery.data ?? [])
       : []
-  const selectedRepository = useMemo(
-    () => repositories.find((repository) => repository.id === selectedRepoId),
-    [repositories, selectedRepoId]
+  // Only honor an explicit selection when it actually exists in the loaded
+  // repository list; otherwise (e.g. the repo was removed on GitHub, or the
+  // list just changed) fall back to the connected repo instead of showing an
+  // empty Select.
+  const selectionInList =
+    selectedRepoId !== null &&
+    repositories.some((repository) => repository.id === selectedRepoId)
+      ? selectedRepoId
+      : null
+  const effectiveSelectedRepoId = selectionInList ?? connectionRepoId
+  const selectedRepository = repositories.find(
+    (repository) => repository.id === effectiveSelectedRepoId
   )
   const selectedRepositoryValue = selectedRepository
     ? String(selectedRepository.id)
     : ""
   const hasInstallations = installations.length > 0
-  const activeConnection = connections[0] ?? null
-
-  useEffect(() => {
-    if (selectedInstallationId !== null) return
-
-    const connection = connections[0]
-    if (!connection) return
-
-    const installation = installations.find(
-      (item) => item.id === connection.githubInstallationId
-    )
-    if (!installation) return
-
-    setSelectedInstallationId(installation.installationId)
-    setSelectedRepoId(connection.repoId)
-    setMode(connection.mode as ConnectionMode)
-    setSources(
-      connection.enabledSources.length > 0
-        ? (connection.enabledSources as Source[])
-        : ["issues"]
-    )
-  }, [connections, installations, selectedInstallationId])
 
   useEffect(() => {
     if (!activeInstallationId) {
@@ -141,52 +146,9 @@ function GitHubIntegrationRoute() {
     })
   }, [activeInstallationId, params.org])
 
-  useEffect(() => {
-    if (
-      !repositoriesQuery.data ||
-      repositoriesInstallationId !== activeInstallationId
-    ) {
-      return
-    }
-
-    setSelectedRepoId((currentRepoId) => {
-      if (
-        currentRepoId &&
-        repositoriesQuery.data.some(
-          (repository) => repository.id === currentRepoId
-        )
-      ) {
-        return currentRepoId
-      }
-
-      const connectedRepoId = connections.find((connection) => {
-        const installation = installations.find(
-          (item) => item.id === connection.githubInstallationId
-        )
-        return installation?.installationId === activeInstallationId
-      })?.repoId
-
-      if (
-        connectedRepoId &&
-        repositoriesQuery.data.some(
-          (repository) => repository.id === connectedRepoId
-        )
-      ) {
-        return connectedRepoId
-      }
-
-      return null
-    })
-  }, [
-    activeInstallationId,
-    connections,
-    installations,
-    repositoriesInstallationId,
-    repositoriesQuery.data,
-  ])
-
   function toggleSource(source: Source) {
-    setSources((current) => {
+    setSourcesOverride((currentSources) => {
+      const current = currentSources ?? sources
       if (current.includes(source)) {
         return current.length === 1
           ? current
@@ -410,7 +372,9 @@ function GitHubIntegrationRoute() {
                 </LabelDescription>
               </LabelWrapper>
               <Select
-                onValueChange={(value) => setMode(value as ConnectionMode)}
+                onValueChange={(value) =>
+                  setModeOverride(value as ConnectionMode)
+                }
                 value={mode}
               >
                 <SelectTrigger className="w-full sm:w-48">
