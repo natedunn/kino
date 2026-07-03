@@ -18,10 +18,14 @@ export function UpvoteButton({
 }) {
   const crpc = useCRPC()
   const mutation = useMutation(crpc.feedbackUpvote.toggle.mutationOptions())
-  const mutationResult =
-    mutation.variables?.feedbackId === feedbackId ? mutation.data : undefined
-  const count = mutationResult?.count ?? initialCount
-  const hasUpvoted = mutationResult?.upvoted ?? initialHasUpvoted
+  const showOptimistic =
+    mutation.isPending && mutation.variables?.feedbackId === feedbackId
+  const optimisticHasUpvoted = !initialHasUpvoted
+  const optimisticCount = optimisticHasUpvoted
+    ? initialCount + 1
+    : Math.max(0, initialCount - 1)
+  const count = showOptimistic ? optimisticCount : initialCount
+  const hasUpvoted = showOptimistic ? optimisticHasUpvoted : initialHasUpvoted
 
   return (
     <Button

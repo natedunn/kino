@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import {
   flexRender,
   getCoreRowModel,
@@ -112,7 +112,6 @@ function UpdatesDashboardRoute() {
 
   return (
     <UpdatesDashboard
-      key={pageSize}
       canDelete={projectData.permissions.canDelete}
       pageSize={pageSize}
     />
@@ -155,6 +154,13 @@ function UpdatesDashboard({
   const [actionError, setActionError] = useState("")
   const [sheetUpdateId, setSheetUpdateId] = useState<string | null>(null)
 
+  useEffect(() => {
+    setPagination((current) =>
+      current.pageSize === pageSize ? current : { pageIndex: 0, pageSize }
+    )
+    setCursorByPage({ 0: null })
+  }, [pageSize])
+
   const currentCursor = cursorByPage[pagination.pageIndex] ?? null
   const dashboardQuery = useSuspenseQuery(
     crpc.update.listProjectDashboard.queryOptions({
@@ -164,6 +170,16 @@ function UpdatesDashboard({
     })
   )
   const allRows = dashboardQuery.data.page
+
+  useEffect(() => {
+    if (allRows.length > 0 || pagination.pageIndex === 0) return
+
+    setRowSelection({})
+    setPagination((current) => ({
+      ...current,
+      pageIndex: Math.max(0, current.pageIndex - 1),
+    }))
+  }, [allRows.length, pagination.pageIndex])
 
   const publishMutation = useMutation(
     crpc.update.bulkPublish.mutationOptions({

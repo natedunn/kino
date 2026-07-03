@@ -1,4 +1,4 @@
-import { useDeferredValue, useState } from "react"
+import { useEffect, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { Check, Plus, Search, X } from "lucide-react"
 
@@ -28,11 +28,16 @@ export function FeedbackSelector({
   const crpc = useCRPC()
   const [open, setOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
-  const deferredSearchTerm = useDeferredValue(searchTerm)
+  const [debouncedSearch, setDebouncedSearch] = useState("")
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchTerm), 300)
+    return () => clearTimeout(timer)
+  }, [searchTerm])
 
   const { data: searchResults, isLoading: isSearching } = useQuery(
     crpc.feedback.searchForLinking.queryOptions(
-      { projectId, search: deferredSearchTerm },
+      { projectId, search: debouncedSearch },
       { enabled: open }
     )
   )
@@ -56,6 +61,7 @@ export function FeedbackSelector({
     setOpen(isOpen)
     if (!isOpen) {
       setSearchTerm("")
+      setDebouncedSearch("")
     }
   }
 
@@ -165,7 +171,7 @@ export function FeedbackSelector({
               </div>
             ) : (
               <div className="py-8 text-center text-sm text-muted-foreground">
-                {deferredSearchTerm
+                {debouncedSearch
                   ? "No feedback found."
                   : "Type to search feedback..."}
               </div>
