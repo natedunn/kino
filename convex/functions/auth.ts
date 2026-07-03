@@ -26,14 +26,8 @@ import {
   sanitizeSystemRole,
 } from "../lib/kino"
 import authConfig from "./auth.config"
+import { isSuperAdminEmail } from "./auth.lib"
 import { defineAuth } from "./generated/auth"
-
-function isSuperAdminEmail(email: string) {
-  const configured = (
-    globalThis as { process?: { env?: Record<string, string | undefined> } }
-  ).process?.env?.SUPER_ADMIN_EMAIL
-  return !!configured && configured.toLowerCase() === email.toLowerCase()
-}
 
 export default defineAuth(() => {
   const env = getEnv()

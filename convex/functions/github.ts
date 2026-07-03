@@ -7,11 +7,7 @@ import {
   privateMutation,
   privateQuery,
 } from "../lib/crpc"
-import {
-  getCurrentProfileOrThrow,
-  toPublicDoc,
-  verifyOrgAccess,
-} from "../lib/kino"
+import { toPublicDoc, verifyOrgAccess } from "../lib/kino"
 import {
   createGitHubAppState,
   githubAppInstallationUrl,
@@ -19,8 +15,6 @@ import {
   resolveGitHubCallbackTargetUrl,
   sha256Hex,
   verifyGitHubAppStateForCurrentTarget,
-  type GitHubInstallationDetails,
-  type GitHubRepository,
 } from "../lib/github-client"
 import {
   feedbackGithubConnectionTable,
@@ -31,14 +25,7 @@ import {
 } from "./schema"
 import {
   callbackTargetUrlSchema,
-  githubLoginSchema,
-  githubNodeIdSchema,
-  githubRepoFullNameSchema,
-  githubRepoNameSchema,
   githubStateSchema,
-  githubStateValueSchema,
-  githubTitleSchema,
-  githubUrlSchema,
   idSchema,
   orgSlugSchema,
   projectSlugSchema,
@@ -46,123 +33,18 @@ import {
   webhookDeliveryIdSchema,
   webhookEventSchema,
 } from "../lib/validation"
-
-const connectionModeSchema = z.enum(["read", "read_write"])
-const sourceSchema = z.enum(["issues", "discussions"])
-
-const githubInstallationSchema = z.object({
-  account: z
-    .object({
-      id: z.number().int(),
-      login: githubLoginSchema,
-      type: z.string().trim().min(1).max(40),
-    })
-    .nullable(),
-  events: z.array(z.string().trim().min(1).max(80)).max(100),
-  id: z.number().int(),
-  permissions: z.record(
-    z.string().trim().min(1).max(100),
-    z.string().trim().min(1).max(100)
-  ),
-  repository_selection: z.string().trim().min(1).max(40),
-})
-
-const githubRepositorySchema = z.object({
-  full_name: githubRepoFullNameSchema,
-  id: z.number().int(),
-  name: githubRepoNameSchema,
-  node_id: githubNodeIdSchema,
-  owner: z.object({
-    login: githubLoginSchema,
-  }),
-  private: z.boolean(),
-})
-
-const verificationSummarySchema = z.object({
-  discussions: z.object({
-    enabled: z.boolean(),
-    ok: z.boolean(),
-  }),
-  issues: z.object({
-    ok: z.boolean(),
-  }),
-})
-
-async function getProjectBySlugs(
-  ctx: any,
-  args: { orgSlug: string; projectSlug: string }
-) {
-  return await ctx.db
-    .query("project")
-    .withIndex("by_orgSlug_slug", (q: any) =>
-      q.eq("orgSlug", args.orgSlug).eq("slug", args.projectSlug)
-    )
-    .unique()
-}
-
-async function verifyOrgAdminForProject(
-  ctx: any,
-  args: { orgSlug: string; projectSlug: string; userId: string }
-) {
-  const project = await getProjectBySlugs(ctx, args)
-  if (!project) {
-    throw new CRPCError({ code: "NOT_FOUND", message: "Project not found" })
-  }
-
-  const access = await verifyOrgAccess(ctx, {
-    slug: args.orgSlug,
-    userId: args.userId,
-  })
-  if (!access.organization) {
-    throw new CRPCError({
-      code: "NOT_FOUND",
-      message: "Organization not found",
-    })
-  }
-  if (!access.permissions.canCreate) {
-    throw new CRPCError({
-      code: "FORBIDDEN",
-      message: "Only organization admins can manage GitHub connections",
-    })
-  }
-
-  const profile = await getCurrentProfileOrThrow(ctx, args.userId)
-
-  return {
-    organization: access.organization,
-    profile,
-    project,
-  }
-}
-
-async function verifyOrgAdmin(
-  ctx: any,
-  args: { orgSlug: string; userId: string }
-) {
-  const access = await verifyOrgAccess(ctx, {
-    slug: args.orgSlug,
-    userId: args.userId,
-  })
-  if (!access.organization) {
-    throw new CRPCError({
-      code: "NOT_FOUND",
-      message: "Organization not found",
-    })
-  }
-  if (!access.permissions.canCreate) {
-    throw new CRPCError({
-      code: "FORBIDDEN",
-      message: "Only organization admins can manage GitHub connections",
-    })
-  }
-
-  const profile = await getCurrentProfileOrThrow(ctx, args.userId)
-
-  return {
-    organization: access.organization,
-    profile,
-  }
-}
+import {
+  connectionModeSchema,
+  getProjectBySlugs,
+  githubInstallationSchema,
+  githubRepositorySchema,
+  sourceSchema,
+  verificationSummarySchema,
+  verifyOrgAdmin,
+  verifyOrgAdminForProject,
+  webhookInstallationSchema,
+  webhookIssueSchema,
+} from "./github.lib"
 
 export const startProjectConnection = authMutation
   .input(
@@ -871,27 +753,6 @@ export const disconnectRepository = authMutation
     return { success: true }
   })
 
-const webhookInstallationSchema = z.object({
-  events: z.array(z.string().trim().min(1).max(80)).max(100).optional(),
-  id: z.number().int(),
-  permissions: z
-    .record(
-      z.string().trim().min(1).max(100),
-      z.string().trim().min(1).max(100)
-    )
-    .optional(),
-  repository_selection: z.string().trim().max(40).optional(),
-})
-
-const webhookIssueSchema = z.object({
-  nodeId: githubNodeIdSchema,
-  number: z.number().int(),
-  repositoryId: z.number().int(),
-  state: githubStateValueSchema,
-  title: githubTitleSchema,
-  url: githubUrlSchema,
-})
-
 /**
  * Webhook deliveries arrive via the relay broadcast, so this env may receive
  * events for installations it has never seen — that is normal, not an error.
@@ -1029,6 +890,3 @@ export const processWebhookEvent = privateMutation
 
     return { duplicate: false, result }
   })
-
-export type GithubInstallationForExternal = GitHubInstallationDetails
-export type GithubRepositoryForExternal = GitHubRepository

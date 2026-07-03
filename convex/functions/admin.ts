@@ -1,18 +1,6 @@
-import { CRPCError } from "kitcn/server"
 import { authQuery } from "../lib/crpc"
-import { getCurrentProfileOrThrow } from "../lib/kino"
 import { resolveProfileImageUrl } from "../lib/storage"
-
-async function requireSystemAdmin(ctx: any) {
-  const profile = await getCurrentProfileOrThrow(ctx, ctx.userId)
-  if (profile.role !== "system:admin") {
-    throw new CRPCError({
-      code: "FORBIDDEN",
-      message: "System admin access required",
-    })
-  }
-  return profile
-}
+import { requireSystemAdmin } from "./admin.lib"
 
 export const getSystemMetrics = authQuery.query(async ({ ctx }) => {
   await requireSystemAdmin(ctx)

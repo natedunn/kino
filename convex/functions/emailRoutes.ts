@@ -2,12 +2,7 @@ import { CRPCError } from "kitcn/server"
 import { publicRoute, router } from "../lib/crpc"
 import { verifyNuntlyWebhook } from "../lib/nuntly"
 import { createEmailCaller } from "./generated/email.runtime"
-
-function firstRecipient(to: unknown): string | undefined {
-  if (typeof to === "string") return to
-  if (Array.isArray(to) && typeof to[0] === "string") return to[0]
-  return undefined
-}
+import { firstRecipient } from "./emailRoutes.lib"
 
 /**
  * Inbound Nuntly webhook → append-only backup log.

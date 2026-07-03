@@ -14,15 +14,8 @@ import {
 } from "../lib/kino"
 import { resolveProfileImageUrl } from "../lib/storage"
 import { commentContentSchema, idSchema } from "../lib/validation"
+import { getActiveFeedbackOrThrow } from "./feedbackComment.lib"
 import { feedbackCommentTable } from "./schema"
-
-async function getActiveFeedbackOrThrow(ctx: any, feedbackId: string) {
-  const feedback = await getDoc(ctx, asId<"feedback">(feedbackId))
-  if (!feedback) {
-    throw new CRPCError({ code: "NOT_FOUND", message: "Feedback not found" })
-  }
-  return feedback
-}
 
 export const create = authMutation
   .input(
