@@ -221,6 +221,40 @@ async function waitForConvexReady(logPath, child) {
   return "timeout"
 }
 
+// Run a one-shot command to completion (unlike startProcess, which manages a
+// long-lived, detached child). Best-effort: resolves with the exit code and
+// never rejects, so callers can treat failures as non-fatal.
+function runToCompletion(command, args, env) {
+  return new Promise((resolve) => {
+    const child = spawn(command, args, {
+      stdio: "inherit",
+      env,
+      cwd: workspaceRoot,
+    })
+    child.on("error", () => resolve(1))
+    child.on("exit", (code) => resolve(code ?? 1))
+  })
+}
+
+// A freshly-seeded anonymous worktree imports a shared-dev snapshot, which
+// loads table rows but leaves kitcn's aggregate/count indexes in a BUILDING
+// state — so the first count()/aggregate() read (e.g. an update's heart count)
+// throws COUNT_INDEX_BUILDING until a backfill runs. `kitcn deploy` handles
+// this for prod/preview; local anonymous dev has to do it itself. Runs on every
+// boot (idempotent and fast — a no-op once indexes are READY) and is
+// best-effort, so a hiccup never blocks Vite from starting.
+async function ensureAggregatesBackfilled() {
+  if (convexMode !== "anonymous") return
+  console.log("[dev] backfilling aggregate indexes (kitcn aggregate backfill)…")
+  const code = await runToCompletion(kitcnCmd, ["aggregate", "backfill"], convexEnv)
+  if (code !== 0) {
+    console.warn(
+      "[dev] aggregate backfill did not complete; continuing. If a page throws " +
+        "COUNT_INDEX_BUILDING, run `kitcn aggregate backfill` manually."
+    )
+  }
+}
+
 // Start Convex first and wait for it, then Vite.
 children.push({
   name: "convex",
@@ -241,6 +275,7 @@ if (readiness === "exited") {
   )
 } else {
   console.log("[dev] Convex backend ready; starting Vite.")
+  await ensureAggregatesBackfilled()
 }
 
 children.push({
