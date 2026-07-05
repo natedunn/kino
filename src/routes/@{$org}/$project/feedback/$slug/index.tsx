@@ -63,9 +63,9 @@ import {
   GithubConnectionIcon,
   GithubIssueStateBadge,
 } from "./-components/github-connection-dialog"
-import type {CSSProperties, FormEvent, KeyboardEvent} from "react";
+import type { CSSProperties, FormEvent, KeyboardEvent } from "react"
 
-import type {ThreadComment} from "../../-components/comment-thread";
+import type { ThreadComment } from "../../-components/comment-thread"
 import type { TargetGranularity } from "@convex/target"
 
 import type {

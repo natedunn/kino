@@ -29,7 +29,7 @@ import {
   X,
 } from "lucide-react"
 import { useMemo, useState } from "react"
-import type {ColumnDef, SortingState} from "@tanstack/react-table";
+import type { ColumnDef, SortingState } from "@tanstack/react-table"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"

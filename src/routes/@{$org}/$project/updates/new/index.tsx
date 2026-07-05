@@ -15,7 +15,7 @@ import {
   
 } from "../-components/category-badge"
 import { FeedbackSelector } from "../-components/feedback-selector"
-import type {UpdateCategory} from "../-components/category-badge";
+import type { UpdateCategory } from "../-components/category-badge"
 import { MarkdownEditor, sanitizeEditorContent } from "@/components/editor"
 import { InlineAlert } from "@/components/inline-alert"
 import { SidebarSection } from "@/components/sidebar-section"

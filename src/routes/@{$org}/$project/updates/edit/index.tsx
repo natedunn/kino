@@ -27,7 +27,7 @@ import {
 import { CategoryBadge } from "../-components/category-badge"
 import { StatusBadge } from "../-components/status-badge"
 import { createUpdateColumns } from "./-columns"
-import type {RowSelectionState, VisibilityState} from "@tanstack/react-table";
+import type { RowSelectionState, VisibilityState } from "@tanstack/react-table"
 
 import type { DeleteDialogState, StatusFilter } from "./-types"
 import { InlineAlert } from "@/components/inline-alert"

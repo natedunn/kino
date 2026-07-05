@@ -33,7 +33,7 @@ import {
   
 } from "../../-components/comment-thread"
 import { useEmoteToggle } from "../-components/use-emote-toggle"
-import type {ThreadComment} from "../../-components/comment-thread";
+import type { ThreadComment } from "../../-components/comment-thread"
 import { EditorContentDisplay } from "@/components/editor"
 import { ProfileLinkOrUnknown } from "@/components/profile-link"
 import { SidebarSection } from "@/components/sidebar-section"
