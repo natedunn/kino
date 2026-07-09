@@ -9,7 +9,6 @@
     "dev:respread-ports": "node scripts/respread-convex-ports.mjs",
     "setup": "bash scripts/setup-workspace.sh",
     "init": "pnpm run setup && pnpm run dev",
-    "prepare": "git config core.hooksPath scripts/git-hooks || true",
     "dev:anonymous": "KINO_CONVEX_MODE=anonymous node scripts/dev-supervisor.mjs",
     "dev:shared": "KINO_CONVEX_MODE=shared node scripts/dev-supervisor.mjs",
     "dev:vite": "VITE_PORTLESS_URL=${PORTLESS_URL:-} vite dev",
