@@ -14,6 +14,7 @@ import {
   Tag,
   Trash2,
   Users,
+  X as XIcon,
 } from "lucide-react"
 import {
   
@@ -88,6 +89,15 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer"
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -102,14 +112,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet"
 import { Textarea } from "@/components/ui/textarea"
 import {
   Tooltip,
@@ -119,6 +121,7 @@ import {
 import { EditIcon, StatusIcon } from "@/icons"
 import { useCRPC } from "@/lib/convex/crpc"
 import { crpcServer } from "@/lib/convex/crpc-server"
+import { useIsMobile } from "@/lib/hooks/use-mobile"
 import { useSidebarState } from "@/lib/hooks/use-sidebar-state"
 import { projectTitle, titleFromSlug, titleMeta } from "@/lib/seo"
 import { cn } from "@/lib/utils"
@@ -341,7 +344,7 @@ function FeedbackDetailContent({
   const [deleteConfirmText, setDeleteConfirmText] = useState("")
   const [deleteError, setDeleteError] = useState("")
   const [connectionDialogOpen, setConnectionDialogOpen] = useState(false)
-  const [targetSheetOpen, setTargetSheetOpen] = useState(false)
+  const [targetDrawerOpen, setTargetDrawerOpen] = useState(false)
   const feedback = feedbackData.feedback
   const middleStateKey = `${feedback.id}:${feedbackData.commentWindow.middleCursor ?? ""}`
   const initialMiddleState = () =>
@@ -747,13 +750,13 @@ function FeedbackDetailContent({
         orgSlug={params.org}
         projectSlug={params.project}
       />
-      <FeedbackTargetSheet
+      <FeedbackTargetDrawer
         currentGranularity={feedback.targetGranularity ?? null}
         currentTarget={feedback.target ?? null}
         feedbackId={feedback.id}
         feedbackTitle={feedback.title}
         isSaving={targetMutation.isPending}
-        onOpenChange={setTargetSheetOpen}
+        onOpenChange={setTargetDrawerOpen}
         onSave={(value) =>
           targetMutation.mutateAsync({
             feedbackId: feedback.id,
@@ -761,7 +764,7 @@ function FeedbackDetailContent({
             targetGranularity: value?.targetGranularity ?? null,
           })
         }
-        open={targetSheetOpen}
+        open={targetDrawerOpen}
       />
       <div className="border-b">
         <div className="container flex items-start gap-4 pt-10 pb-6">
@@ -936,7 +939,7 @@ function FeedbackDetailContent({
                     {projectData.permissions.canEdit ? (
                       <Button
                         className="h-auto max-w-52 justify-end gap-1.5 px-2 py-1 text-xs"
-                        onClick={() => setTargetSheetOpen(true)}
+                        onClick={() => setTargetDrawerOpen(true)}
                         size="sm"
                         type="button"
                         variant="ghost"
@@ -1367,7 +1370,7 @@ function CommentAuthPending() {
   )
 }
 
-function FeedbackTargetSheet({
+function FeedbackTargetDrawer({
   currentGranularity,
   currentTarget,
   feedbackId,
@@ -1406,6 +1409,10 @@ function FeedbackTargetSheet({
         : defaultTargetForGranularity(granularity)
     return { granularity, target }
   }
+
+  const isMobile = useIsMobile()
+  // Slide up from the bottom on mobile, in from the right on larger screens.
+  const swipeDirection = isMobile ? "down" : "right"
 
   const initialState = resolveInitialState()
   const [granularity, setGranularity] = useState<TargetGranularity>(
@@ -1478,13 +1485,15 @@ function FeedbackTargetSheet({
   }
 
   return (
-    <Sheet onOpenChange={onOpenChange} open={open}>
-      <SheetContent
-        className="gap-0 overflow-hidden sm:max-w-[28rem]"
-        side="right"
-      >
-        <SheetHeader className="border-b bg-muted/40 px-5 py-5">
-          <div className="flex items-start gap-3 pr-8">
+    <Drawer
+      onOpenChange={onOpenChange}
+      open={open}
+      showSwipeHandle={isMobile}
+      swipeDirection={swipeDirection}
+    >
+      <DrawerContent className="rounded-xl border bg-card [--bleed:0px] [--drawer-bleed-background:var(--color-card)] [--drawer-inset:0.5rem] data-[swipe-axis=x]:sm:[--drawer-content-width:28rem]">
+        <DrawerHeader className="border-b bg-muted/40 px-5 py-5">
+          <div className="flex items-start gap-3 pr-8 text-left">
             <span className="flex size-9 shrink-0 items-center justify-center rounded-lg border bg-background text-primary shadow-xs">
               <CalendarIcon className="size-4" />
             </span>
@@ -1492,15 +1501,19 @@ function FeedbackTargetSheet({
               <div className="text-xs font-medium text-muted-foreground uppercase">
                 Target
               </div>
-              <SheetTitle className="line-clamp-2 text-base leading-snug">
+              <DrawerTitle className="line-clamp-2 text-base leading-snug">
                 {feedbackTitle}
-              </SheetTitle>
+              </DrawerTitle>
             </div>
           </div>
-          <SheetDescription className="sr-only">
+          <DrawerDescription className="sr-only">
             Target options for feedback {feedbackId}
-          </SheetDescription>
-        </SheetHeader>
+          </DrawerDescription>
+          <DrawerClose className="absolute top-4 right-4 rounded-xs opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-hidden disabled:pointer-events-none">
+            <XIcon className="size-4" />
+            <span className="sr-only">Close</span>
+          </DrawerClose>
+        </DrawerHeader>
 
         <form className="flex min-h-0 flex-1 flex-col" onSubmit={handleSave}>
           <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-5 py-6">
@@ -1523,14 +1536,14 @@ function FeedbackTargetSheet({
               <span className="text-xs font-medium text-muted-foreground">
                 Resolution
               </span>
-              <div className="grid grid-cols-4 gap-1 rounded-lg bg-muted p-1">
+              <div className="grid grid-cols-4 gap-1 rounded-lg border bg-muted p-1">
                 {TARGET_GRANULARITY_OPTIONS.map((option) => (
                   <button
                     aria-pressed={granularity === option.value}
                     className={cn(
                       "h-8 rounded-md text-xs font-medium transition-all",
                       granularity === option.value
-                        ? "bg-background text-foreground shadow-xs"
+                        ? "bg-foreground text-background shadow-xs"
                         : "text-muted-foreground hover:text-foreground"
                     )}
                     key={option.value}
@@ -1683,7 +1696,7 @@ function FeedbackTargetSheet({
             ) : null}
           </div>
 
-          <SheetFooter className="border-t bg-muted/40 px-5 py-4">
+          <DrawerFooter className="border-t bg-muted/40 px-5 py-4">
             <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
               <Button
                 className="sm:mr-auto"
@@ -1708,10 +1721,10 @@ function FeedbackTargetSheet({
                 </Button>
               </div>
             </div>
-          </SheetFooter>
+          </DrawerFooter>
         </form>
-      </SheetContent>
-    </Sheet>
+      </DrawerContent>
+    </Drawer>
   )
 }
 
