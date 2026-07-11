@@ -233,7 +233,7 @@ export function DynamicNavigation({
                       "inline-flex items-center gap-2 border-b-2 px-3 pt-2 pb-2 text-xs text-muted-foreground transition-colors md:text-sm",
                       isActive
                         ? "border-primary text-foreground"
-                        : "border-transparent hocus:border-primary/35 hocus:text-foreground"
+                        : "border-transparent hocus:border-foreground/35 hocus:text-foreground"
                     )}
                   >
                     {typeof Icon === "string" ? (
