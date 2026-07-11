@@ -2,9 +2,14 @@
 set -euo pipefail
 
 # Tool-agnostic workspace setup: prepares a freshly-created git worktree so that
-# `pnpm run dev` works. Safe to run by hand (`pnpm run setup`), from the
-# post-checkout git hook (scripts/git-hooks/post-checkout), or from any external
-# tool's bootstrap. Nothing here assumes a particular AI/dev app.
+# `pnpm run dev` works. Run it explicitly in a new worktree — either on its own
+# (`pnpm run setup`) or via `pnpm run init`, which runs setup and then starts the
+# dev server in one shot. Nothing here assumes a particular AI/dev app.
+#
+# NOTE: this is intentionally NOT wired to a git hook. Auto-running it from
+# post-checkout made `git worktree add` block for minutes (deps install + Convex
+# seed), which tripped the worktree-creation timeouts in tools like T3 Code /
+# Conductor. Worktree creation is now instant; setup is a deliberate manual step.
 #
 # Steps: sync env files from the main worktree, install deps, refresh Convex AI
 # files, and seed a worktree-local anonymous Convex backend from shared dev.
