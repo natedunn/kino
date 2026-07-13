@@ -11,6 +11,9 @@ importers:
       '@base-ui/react':
         specifier: ^1.4.1
         version: 1.4.1(@date-fns/tz@1.5.0)(@types/react@19.2.14)(date-fns@4.4.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+      '@bentonow/bento-node-sdk':
+        specifier: ^2.0.0
+        version: 2.0.0
       '@convex-dev/r2':
         specifier: ^0.10.1
         version: 0.10.1(@standard-schema/spec@1.1.0)(convex@1.41.0(react@19.2.6))(hono@4.12.9)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3)(zod@4.4.3)
@@ -541,6 +544,10 @@ packages:
     peerDependenciesMeta:
       '@types/react':
         optional: true
+
+  '@bentonow/bento-node-sdk@2.0.0':
+    resolution: {integrity: sha512-uFqyos3IZ5ITK0g3cdeRpGtC3B23UJQdwspqgIiSXcN5isVqSLa2cNUvOWClE24GOtlNhas5nNx5EWk3q7sx9A==}
+    engines: {node: '>=18'}
 
   '@better-auth/core@1.6.9':
     resolution: {integrity: sha512-ADFk5pwmLybmc+LvYvXJ6M1x2oY/EyYLkwLuH0x28FUq12DfjL0wnE7g+WRDf3yozDO+qIxTpFGXDGwLKbfz0w==}
@@ -6320,6 +6327,8 @@ snapshots:
       use-sync-external-store: 1.6.0(react@19.2.6)
     optionalDependencies:
       '@types/react': 19.2.14
+
+  '@bentonow/bento-node-sdk@2.0.0': {}
 
   '@better-auth/core@1.6.9(@better-auth/utils@0.4.0)(@better-fetch/fetch@1.1.21)(@opentelemetry/api@1.9.0)(better-call@1.3.5(zod@4.4.3))(jose@6.2.3)(kysely@0.28.17)(nanostores@1.3.0)':
     dependencies:

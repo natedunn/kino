@@ -46,10 +46,12 @@ export default defineAuth(() => {
   const trustedOrigins = getTrustedOrigins()
 
   // Bento email is wired only when the full credential set + a verified sender
-  // are configured. Without them we keep the GitHub-only behavior rather than
-  // breaking sign-up (sendOnSignUp would throw with no way to send). The send
-  // callbacks below render our React Email templates and dispatch via Bento
-  // (see convex/emails/send.ts).
+  // are configured. Without them, email/password auth still works — but with no
+  // verification, reset, or invitation mail, so requireEmailVerification and the
+  // send callbacks below are omitted (leaving sendOnSignUp on with no way to
+  // send would throw, and requiring verification with no way to verify would
+  // lock password users out permanently). The send callbacks render our React
+  // Email templates and dispatch via Bento (see convex/emails/send.ts).
   const bento = getBentoEnv()
   const emailConfigured = Boolean(
     bento.publishableKey && bento.secretKey && bento.siteUuid && bento.from

@@ -39,6 +39,7 @@
   },
   "dependencies": {
     "@base-ui/react": "^1.4.1",
+    "@bentonow/bento-node-sdk": "^2.0.0",
     "@convex-dev/r2": "^0.10.1",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/utilities": "^3.2.2",

@@ -1,3 +1,4 @@
+import { Analytics } from "@bentonow/bento-node-sdk"
 import { getBentoEnv } from "./get-env"
 
 /**
@@ -11,13 +12,11 @@ import { getBentoEnv } from "./get-env"
  * Do NOT call `sendEmail` from a query or mutation — only actions and HTTP
  * actions may make outbound requests.
  *
- * We talk to Bento's REST batch endpoint directly with `fetch` rather than the
- * Node SDK: `fetch` + `btoa` are native to Convex's default V8 runtime, so
- * there's no dependency that might reach for Node built-ins, and it's trivially
- * testable by stubbing `fetch`.
+ * The official SDK runs fine in Convex's default V8 runtime: it has zero
+ * dependencies, imports no Node built-ins, calls global `fetch`, and base64s
+ * via `btoa` (its `Buffer` branch is a guarded fallback Convex never reaches,
+ * since Convex provides `btoa`).
  */
-
-const BENTO_BATCH_EMAILS_URL = "https://app.bentonow.com/api/v1/batch/emails"
 
 type BentoCredentials = {
   publishableKey: string
@@ -38,7 +37,8 @@ function requireCredentials(): BentoCredentials {
   if (!publishableKey || !secretKey || !siteUuid || !from) {
     throw new Error(
       `${missing.join(", ")} ${missing.length === 1 ? "is" : "are"} not set. ` +
-        "Add to .env.local (local) and the Convex dashboard (deployed)."
+        "Add to convex/.env and run `npx kitcn env push` (the Convex backend " +
+        "reads these, not the root .env.local)."
     )
   }
 
@@ -56,46 +56,53 @@ export type SendEmailArgs = {
 /**
  * Send a transactional email through Bento. Reusable building block — call it
  * from Better Auth callbacks, scheduled jobs, or the send action. Resolves to
- * the count of emails Bento accepted for delivery (`results`).
+ * the count of emails Bento accepted for delivery.
  *
- * The `from` is fixed to `BENTO_FROM` (a verified Bento Author). Bento's batch
- * API accepts one recipient per email object, so an array of `to` fans out to
+ * The `from` is fixed to `BENTO_FROM`, which must exactly match a verified
+ * Author in Bento — Bento rejects any other sender. `transactional: true` tells
+ * Bento to deliver even to unsubscribed recipients (that flag is *only* an
+ * unsubscribe bypass; it is not what classifies the send).
+ *
+ * Bento accepts one recipient per email object, so an array of `to` fans out to
  * one entry each.
  */
 export async function sendEmail(args: SendEmailArgs): Promise<number> {
   const { publishableKey, secretKey, siteUuid, from } = requireCredentials()
   const recipients = Array.isArray(args.to) ? args.to : [args.to]
+  const to = recipients.join(", ")
 
-  const url = `${BENTO_BATCH_EMAILS_URL}?site_uuid=${encodeURIComponent(siteUuid)}`
-  const authorization = `Basic ${btoa(`${publishableKey}:${secretKey}`)}`
+  const bento = new Analytics({
+    authentication: { publishableKey, secretKey },
+    siteUuid,
+  })
 
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      Authorization: authorization,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      emails: recipients.map((to) => ({
-        to,
+  let accepted: number
+  try {
+    accepted = await bento.V1.Batch.sendTransactionalEmails({
+      emails: recipients.map((recipient) => ({
+        to: recipient,
         from,
         subject: args.subject,
         html_body: args.html,
         transactional: true,
       })),
-    }),
-  })
-
-  if (!response.ok) {
-    const detail = await response.text().catch(() => "")
-    throw new Error(
-      `Bento email send failed (${response.status})${detail ? `: ${detail}` : ""}`
+    })
+  } catch (error) {
+    // Log before rethrowing: the caller is usually a Better Auth background
+    // task, which reports the failure without recipient/subject context.
+    const detail = error instanceof Error ? error.message : String(error)
+    console.error(
+      `[bento] FAILED to send "${args.subject}" to ${to}: ${detail}`
     )
+    throw error
   }
 
-  // Bento returns `{ results: <number of emails queued> }`.
-  const body = (await response.json().catch(() => ({}))) as {
-    results?: number
-  }
-  return typeof body.results === "number" ? body.results : recipients.length
+  // Log successes too. Bento accepting a send says nothing about whether it
+  // landed (it may still be queued, junked, or dropped) — without this line a
+  // delivered mail and a never-sent one look identical in the Convex logs.
+  console.log(
+    `[bento] sent "${args.subject}" to ${to} (accepted ${accepted}) from ${from}`
+  )
+
+  return accepted
 }
