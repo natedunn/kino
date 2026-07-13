@@ -14,7 +14,6 @@ import type { ActionCtx, MutationCtx, QueryCtx } from './server';
 import type { OrmTriggerContext } from 'kitcn/orm';
 
 const procedureRegistry = {
-  "recordWebhookEvent": ["mutation", typedProcedureResolver(createGeneratedFunctionReference<"mutation", "internal", typeof import("../email").recordWebhookEvent>("email:recordWebhookEvent"), () => (require("../email") as Record<string, unknown>)["recordWebhookEvent"])],
   "sendTransactionalEmail": ["action", typedProcedureResolver(createGeneratedFunctionReference<"action", "internal", typeof import("../email").sendTransactionalEmail>("email:sendTransactionalEmail"), () => (require("../email") as Record<string, unknown>)["sendTransactionalEmail"])],
 } as const;
 

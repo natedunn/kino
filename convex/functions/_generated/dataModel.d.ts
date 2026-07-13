@@ -301,39 +301,6 @@ export type DataModel = {
     searchIndexes: {};
     vectorIndexes: {};
   };
-  emailEvent: {
-    document: {
-      emailId?: null | string;
-      eventId: string;
-      occurredAt: number;
-      payload: any;
-      receivedTime: number;
-      recipient?: null | string;
-      type: string;
-      _id: Id<"emailEvent">;
-      _creationTime: number;
-    };
-    fieldPaths:
-      | "_creationTime"
-      | "_id"
-      | "emailId"
-      | "eventId"
-      | "occurredAt"
-      | "payload"
-      | "receivedTime"
-      | "recipient"
-      | "type";
-    indexes: {
-      by_id: ["_id"];
-      by_creation_time: ["_creationTime"];
-      by_emailId: ["emailId", "_creationTime"];
-      by_eventId: ["eventId", "_creationTime"];
-      by_receivedTime: ["receivedTime", "_creationTime"];
-      by_recipient: ["recipient", "_creationTime"];
-    };
-    searchIndexes: {};
-    vectorIndexes: {};
-  };
   feedback: {
     document: {
       answerCommentId?: null | Id<"feedbackComment">;

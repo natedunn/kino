@@ -1,20 +1,16 @@
 import { convex } from "kitcn/auth"
 import { oAuthProxy, organization, username } from "better-auth/plugins"
 import {
-  NuntlyProvider,
-  ReactEmailRenderer,
-  betterEmail,
-} from "@nuntly/better-email"
-import { render } from "@react-email/render"
-import { createElement } from "react"
-import { emailSubjects, emailTemplates } from "../emails"
-import { resolveSender } from "../lib/email-senders"
+  sendOrganizationInvitationEmail,
+  sendResetPasswordEmail,
+  sendVerificationEmail,
+} from "../emails/send"
 import {
+  getBentoEnv,
   getBetterAuthAllowedHosts,
   getEnv,
   getGitHubAuthEnv,
   getJwksEnv,
-  getNuntlyEnv,
   getOAuthProxyProductionUrlEnv,
   getOAuthProxySecretEnv,
   getTrustedOrigins,
@@ -49,55 +45,23 @@ export default defineAuth(() => {
   }
   const trustedOrigins = getTrustedOrigins()
 
-  // Nuntly email is wired only when an API key is configured. Without it we keep
-  // the GitHub-only behavior rather than breaking sign-up (sendOnSignUp would
-  // throw with no provider). `betterEmail`'s init() auto-supplies
-  // emailVerification.sendVerificationEmail + emailAndPassword.sendResetPassword;
-  // its helpers wire magic-link / OTP / org-invitation.
-  const nuntly = getNuntlyEnv()
-  // Email needs both a key and a resolvable sending domain (explicit
-  // NUNTLY_EMAIL_DOMAIN, or derived from NUNTLY_FROM). Missing either keeps the
-  // app GitHub-only rather than throwing at auth init.
-  const emailConfigured =
-    Boolean(nuntly.apiKey) && Boolean(nuntly.emailDomain || nuntly.fromAddress)
+  // Bento email is wired only when the full credential set + a verified sender
+  // are configured. Without them we keep the GitHub-only behavior rather than
+  // breaking sign-up (sendOnSignUp would throw with no way to send). The send
+  // callbacks below render our React Email templates and dispatch via Bento
+  // (see convex/emails/send.ts).
+  const bento = getBentoEnv()
+  const emailConfigured = Boolean(
+    bento.publishableKey && bento.secretKey && bento.siteUuid && bento.from
+  )
   if (!emailConfigured) {
     console.warn(
-      "[nuntly] Email is DISABLED (auth verification, reset, magic link, OTP, " +
-        "invitations). Set NUNTLY_API_KEY and NUNTLY_EMAIL_DOMAIN (or " +
-        "NUNTLY_FROM) in the Convex deployment env (`npx convex env set …`, " +
-        "not just .env.local) and restart."
+      "[bento] Email is DISABLED (auth verification, reset, invitations). Add " +
+        "BENTO_PUBLISHABLE_KEY, BENTO_SECRET_KEY, BENTO_SITE_UUID and " +
+        "BENTO_FROM to convex/.env and run `npx kitcn env push` (these are read " +
+        "by the Convex backend, NOT the root .env.local), then restart."
     )
   }
-  const authSender = emailConfigured ? resolveSender("auth") : null
-  const emailPlugin = authSender
-    ? betterEmail({
-        provider: new NuntlyProvider({
-          apiKey: nuntly.apiKey!,
-          from: authSender.from,
-        }),
-        templateRenderer: new ReactEmailRenderer({
-          render,
-          createElement,
-          templates: emailTemplates,
-          subjects: emailSubjects,
-        }),
-        // Surface delivery outcomes in the Convex logs so a bad key / unverified
-        // domain is visible instead of silently swallowed.
-        onAfterSend: (context, message) => {
-          console.log(
-            `[nuntly] sent ${context.type} to ${message.to} from ${authSender.from}`
-          )
-          return Promise.resolve()
-        },
-        onSendError: (context, message, error) => {
-          console.error(
-            `[nuntly] FAILED to send ${context.type} to ${message.to}: ` +
-              (error instanceof Error ? error.message : String(error))
-          )
-          return Promise.resolve()
-        },
-      })
-    : null
 
   const isLocalHttp = env.SITE_URL.startsWith("http://")
   const baseURLProtocol: "auto" | "https" = env.SITE_URL.startsWith("http://")
@@ -114,7 +78,6 @@ export default defineAuth(() => {
       useSecureCookies: !isLocalHttp,
     },
     emailAndPassword: {
-      // sendResetPassword is injected by the betterEmail plugin's init().
       enabled: true,
       // Require a verified email before a password account can sign in. This
       // means sign-up does NOT create a session — the user must click the
@@ -122,11 +85,39 @@ export default defineAuth(() => {
       // configured; otherwise there'd be no way to verify and password users
       // would be permanently locked out. GitHub OAuth supplies an already-
       // verified email, so it is unaffected.
-      ...(emailPlugin ? { requireEmailVerification: true } : {}),
+      ...(emailConfigured
+        ? {
+            requireEmailVerification: true,
+            sendResetPassword: async ({
+              user,
+              url,
+            }: {
+              user: { name?: string | null; email: string }
+              url: string
+            }) => {
+              await sendResetPasswordEmail({ user, url })
+            },
+          }
+        : {}),
     },
     // When email is configured, send a verification email on sign-up. Combined
     // with requireEmailVerification above, the link is what unlocks sign-in.
-    ...(emailPlugin ? { emailVerification: { sendOnSignUp: true } } : {}),
+    ...(emailConfigured
+      ? {
+          emailVerification: {
+            sendOnSignUp: true,
+            sendVerificationEmail: async ({
+              user,
+              url,
+            }: {
+              user: { name?: string | null; email: string }
+              url: string
+            }) => {
+              await sendVerificationEmail({ user, url })
+            },
+          },
+        }
+      : {}),
     baseURL: {
       allowedHosts: getBetterAuthAllowedHosts(),
       fallback: env.SITE_URL,
@@ -150,11 +141,24 @@ export default defineAuth(() => {
             },
           },
         },
-        ...(emailPlugin
-          ? { sendInvitationEmail: emailPlugin.helpers.invitation }
+        ...(emailConfigured
+          ? {
+              sendInvitationEmail: async (data: {
+                email: string
+                organization: { name: string }
+                inviter: { user: { name?: string | null; email: string } }
+                invitation: { id: string; role: string }
+              }) => {
+                await sendOrganizationInvitationEmail({
+                  email: data.email,
+                  organization: data.organization,
+                  inviter: data.inviter,
+                  invitation: data.invitation,
+                })
+              },
+            }
           : {}),
       }),
-      ...(emailPlugin ? [emailPlugin] : []),
       ...(oauthProxySecret && oauthProxyProductionUrl
         ? [
             oAuthProxy({

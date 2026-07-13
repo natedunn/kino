@@ -1,106 +1,93 @@
 // @vitest-environment edge-runtime
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
-import { internal } from "./_generated/api"
-import { verifyNuntlyWebhook } from "../lib/nuntly"
-import { convexTest, runCtx } from "./setup.testing"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { sendEmail } from "../lib/bento"
 
-function makeEvent(overrides: Partial<{ eventId: string }> = {}) {
-  return {
-    eventId: overrides.eventId ?? "evt_test_1",
-    type: "email.delivered",
-    emailId: "em_abc",
-    recipient: "user@example.com",
-    occurredAt: 1_700_000_000_000,
-    payload: { id: overrides.eventId ?? "evt_test_1", type: "email.delivered" },
-  }
+const CREDS: Record<string, string> = {
+  BENTO_PUBLISHABLE_KEY: "pub_test",
+  BENTO_SECRET_KEY: "sec_test",
+  BENTO_SITE_UUID: "site_test",
+  BENTO_FROM: "Kino <noreply@mail.usekino.com>",
 }
 
-describe("recordWebhookEvent", () => {
-  it("inserts a new event", async () => {
-    const t = convexTest()
-    const result = await t.mutation(
-      internal.email.recordWebhookEvent,
-      makeEvent()
-    )
-    expect(result).toEqual({ duplicate: false })
-
-    const rows = await t.run(async (baseCtx) => {
-      const ctx = await runCtx(baseCtx)
-      return ctx.db.query("emailEvent").collect()
-    })
-    expect(rows).toHaveLength(1)
-    expect(rows[0]).toMatchObject({
-      eventId: "evt_test_1",
-      type: "email.delivered",
-      emailId: "em_abc",
-      recipient: "user@example.com",
-    })
-  })
-
-  it("dedupes a repeated event id (Nuntly retries non-200s)", async () => {
-    const t = convexTest()
-    const first = await t.mutation(
-      internal.email.recordWebhookEvent,
-      makeEvent()
-    )
-    const second = await t.mutation(
-      internal.email.recordWebhookEvent,
-      makeEvent()
-    )
-    expect(first).toEqual({ duplicate: false })
-    expect(second).toEqual({ duplicate: true })
-
-    const rows = await t.run(async (baseCtx) => {
-      const ctx = await runCtx(baseCtx)
-      return ctx.db.query("emailEvent").collect()
-    })
-    expect(rows).toHaveLength(1)
-  })
-
-  it("stores distinct event ids separately", async () => {
-    const t = convexTest()
-    await t.mutation(
-      internal.email.recordWebhookEvent,
-      makeEvent({ eventId: "evt_a" })
-    )
-    await t.mutation(
-      internal.email.recordWebhookEvent,
-      makeEvent({ eventId: "evt_b" })
-    )
-
-    const rows = await t.run(async (baseCtx) => {
-      const ctx = await runCtx(baseCtx)
-      return ctx.db.query("emailEvent").collect()
-    })
-    expect(rows).toHaveLength(2)
-  })
-})
-
-describe("verifyNuntlyWebhook", () => {
-  const original = process.env.NUNTLY_WEBHOOK_SECRET
+describe("sendEmail (Bento)", () => {
+  const original: Record<string, string | undefined> = {}
+  let fetchMock: ReturnType<typeof vi.fn>
 
   beforeEach(() => {
-    process.env.NUNTLY_WEBHOOK_SECRET = "whsec_dGVzdHNlY3JldA"
+    for (const [key, value] of Object.entries(CREDS)) {
+      original[key] = process.env[key]
+      process.env[key] = value
+    }
+    fetchMock = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ results: 1 }), { status: 200 })
+    )
+    vi.stubGlobal("fetch", fetchMock)
   })
+
   afterEach(() => {
-    if (original === undefined) delete process.env.NUNTLY_WEBHOOK_SECRET
-    else process.env.NUNTLY_WEBHOOK_SECRET = original
+    for (const key of Object.keys(CREDS)) {
+      if (original[key] === undefined) delete process.env[key]
+      else process.env[key] = original[key]
+    }
+    vi.unstubAllGlobals()
   })
 
-  it("rejects a missing signature header", async () => {
-    await expect(verifyNuntlyWebhook("{}", null)).rejects.toThrow()
+  it("maps args to the Bento batch payload", async () => {
+    const count = await sendEmail({
+      to: "user@example.com",
+      subject: "Hi",
+      html: "<p>Hi</p>",
+    })
+
+    expect(count).toBe(1)
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit]
+    expect(url).toContain("site_uuid=site_test")
+    expect((init.headers as Record<string, string>).Authorization).toBe(
+      `Basic ${btoa("pub_test:sec_test")}`
+    )
+
+    const body = JSON.parse(init.body as string)
+    expect(body.emails).toEqual([
+      {
+        to: "user@example.com",
+        from: "Kino <noreply@mail.usekino.com>",
+        subject: "Hi",
+        html_body: "<p>Hi</p>",
+        transactional: true,
+      },
+    ])
   })
 
-  it("rejects a malformed/invalid signature", async () => {
+  it("fans out an array of recipients to one entry each", async () => {
+    await sendEmail({
+      to: ["a@example.com", "b@example.com"],
+      subject: "S",
+      html: "<p>S</p>",
+    })
+
+    const init = fetchMock.mock.calls[0][1] as RequestInit
+    const body = JSON.parse(init.body as string)
+    expect(body.emails).toHaveLength(2)
+    expect(body.emails.map((e: { to: string }) => e.to)).toEqual([
+      "a@example.com",
+      "b@example.com",
+    ])
+  })
+
+  it("throws naming the missing credential", async () => {
+    delete process.env.BENTO_SECRET_KEY
     await expect(
-      verifyNuntlyWebhook('{"id":"evt_x"}', "t=123,v0=deadbeef")
-    ).rejects.toThrow()
+      sendEmail({ to: "user@example.com", subject: "Hi", html: "<p>Hi</p>" })
+    ).rejects.toThrow(/BENTO_SECRET_KEY/)
   })
 
-  it("throws when the secret is not configured", async () => {
-    delete process.env.NUNTLY_WEBHOOK_SECRET
+  it("throws when Bento returns a non-2xx", async () => {
+    fetchMock.mockResolvedValueOnce(new Response("bad request", { status: 422 }))
     await expect(
-      verifyNuntlyWebhook("{}", "t=123,v0=deadbeef")
-    ).rejects.toThrow(/NUNTLY_WEBHOOK_SECRET/)
+      sendEmail({ to: "user@example.com", subject: "Hi", html: "<p>Hi</p>" })
+    ).rejects.toThrow(/422/)
   })
 })

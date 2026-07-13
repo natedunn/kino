@@ -76,30 +76,27 @@ export function getGitHubRelayEnv() {
 }
 
 /**
- * Nuntly transactional email service.
- * - apiKey: send permission key (used by the SDK and Better Auth provider).
- * - emailDomain: the verified Nuntly *sending* domain, e.g. "mail.usekino.com".
- *   Every `from` address is built as `<local-part>@<emailDomain>`. Optional —
- *   when unset it's derived from `fromAddress` (see resolveSender).
- * - replyTo: a real inbox for human replies, e.g. "hello@usekino.com". Can live
- *   on a different domain than emailDomain (it isn't validated for sending).
- *   Used by the "friendly" senders (billing/support).
- * - fromAddress: legacy/explicit default sender, e.g.
- *   "Kino <auth@mail.usekino.com>". Still honored, and its domain seeds
- *   emailDomain when the latter isn't set.
- * - webhookSecret: Standard Webhooks signing secret (`whsec_…`) used to verify
- *   inbound delivery events.
+ * Bento transactional email service.
+ * - publishableKey / secretKey: the API credential pair, combined into HTTP
+ *   Basic auth for every request to the Bento API.
+ * - siteUuid: the Bento site identifier, sent with every request.
+ * - from: the verified sender address. MUST match an Author configured in
+ *   Bento (Bento only sends from configured Authors). Accepts a bare address
+ *   ("noreply@mail.usekino.com") or a display-name form
+ *   ("Kino <noreply@mail.usekino.com>").
+ *
+ * Note: Bento's transactional API has no per-message reply-to/cc/bcc and no
+ * plain-text body — reply-to is a global Bento setting, and we send HTML only.
  */
-export function getNuntlyEnv() {
+export function getBentoEnv() {
   const value = (parts: Array<string>) =>
-    getRuntimeEnvValue(["NUNTLY", ...parts])
+    getRuntimeEnvValue(["BENTO", ...parts])
 
   return {
-    apiKey: value(["API", "KEY"]),
-    emailDomain: value(["EMAIL", "DOMAIN"]),
-    replyTo: value(["REPLY", "TO"]),
-    fromAddress: value(["FROM"]),
-    webhookSecret: value(["WEBHOOK", "SECRET"]),
+    publishableKey: value(["PUBLISHABLE", "KEY"]),
+    secretKey: value(["SECRET", "KEY"]),
+    siteUuid: value(["SITE", "UUID"]),
+    from: value(["FROM"]),
   }
 }
 

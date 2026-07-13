@@ -6,11 +6,11 @@ import type { IconProps } from "@/icons/types"
 import { ClickableContainer } from "@/components/clickable-container"
 import {
   BaseUiLogo,
+  BentoLogo,
   BetterAuthLogo,
   CloudflareLogo,
   ConvexLogo,
   KitcnLogo,
-  NuntlyLogo,
   PostHogLogo,
   ReactLogo,
   ShadcnLogo,
@@ -119,11 +119,11 @@ const SECTIONS: Array<TechSection> = [
         Logo: PostHogLogo,
       },
       {
-        name: "Nuntly",
+        name: "Bento",
         blurb:
-          "Developer-first email for our transactional sends — verification, password resets, and invites.",
-        href: "https://nuntly.com",
-        Logo: NuntlyLogo,
+          "Email platform for our transactional sends — verification, password resets, and invites.",
+        href: "https://bentonow.com",
+        Logo: BentoLogo,
       },
     ],
   },

@@ -9,7 +9,6 @@ import {
 import { router } from "../lib/crpc"
 import { getAuth } from "./generated/auth"
 import { githubRoutes } from "./githubRoutes"
-import { emailRoutes } from "./emailRoutes"
 // __KITCN_HTTP_IMPORTS__
 
 const app = new Hono()
@@ -63,7 +62,6 @@ app.use(async (c, next) => {
 
 export const httpRouter = router({
   github: githubRoutes,
-  email: emailRoutes,
   // __KITCN_HTTP_ROUTES__
 })
 

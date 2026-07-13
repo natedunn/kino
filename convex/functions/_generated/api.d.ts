@@ -795,7 +795,6 @@ export declare const api: {
  */
 export declare const internal: {
   crons: {
-    cleanupEmailEvents: FunctionReference<"mutation", "internal", {}, any>;
     cleanupWebhookDeliveries: FunctionReference<
       "mutation",
       "internal",
@@ -804,34 +803,10 @@ export declare const internal: {
     >;
   };
   email: {
-    recordWebhookEvent: FunctionReference<
-      "mutation",
-      "internal",
-      {
-        emailId?: string;
-        eventId: string;
-        occurredAt: number;
-        payload: any;
-        recipient?: string;
-        type: string;
-      },
-      any
-    >;
     sendTransactionalEmail: FunctionReference<
       "action",
       "internal",
-      {
-        bcc?: string | Array<string>;
-        cc?: string | Array<string>;
-        from?: string;
-        html?: string;
-        replyTo?: string | Array<string>;
-        sender?: "auth" | "billing" | "support" | "noreply";
-        subject: string;
-        tags?: Array<{ name: string; value: string }>;
-        text?: string;
-        to: string | Array<string>;
-      },
+      { html: string; subject: string; to: string | Array<string> },
       any
     >;
   };
