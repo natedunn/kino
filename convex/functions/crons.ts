@@ -36,48 +36,12 @@ export const cleanupWebhookDeliveries = internalMutation({
   },
 })
 
-// emailEvent rows are an append-only audit/backup log of Nuntly delivery events
-// (deduped by event id). Like githubWebhookDelivery, without a sweep the table
-// grows unbounded with every delivery/open/click event. Replay/debugging value
-// is recent, so we keep the same 30-day window.
-const EMAIL_EVENT_RETENTION_MS = 1000 * 60 * 60 * 24 * 30 // 30 days
-
-export const cleanupEmailEvents = internalMutation({
-  args: {},
-  handler: async (ctx) => {
-    const cutoff = Date.now() - EMAIL_EVENT_RETENTION_MS
-    const stale = await ctx.db
-      .query("emailEvent")
-      .withIndex("by_receivedTime", (q: any) => q.lt("receivedTime", cutoff))
-      .take(CLEANUP_BATCH_SIZE)
-
-    for (const row of stale) {
-      await ctx.db.delete(row._id)
-    }
-
-    // Stay within transaction limits: if a full batch was deleted there may
-    // be more, so reschedule immediately to continue.
-    if (stale.length === CLEANUP_BATCH_SIZE) {
-      await ctx.scheduler.runAfter(0, internal.crons.cleanupEmailEvents, {})
-    }
-
-    return null
-  },
-})
-
 const crons = cronJobs()
 
 crons.interval(
   "cleanup old github webhook deliveries",
   { hours: 24 },
   internal.crons.cleanupWebhookDeliveries,
-  {}
-)
-
-crons.interval(
-  "cleanup old email events",
-  { hours: 24 },
-  internal.crons.cleanupEmailEvents,
   {}
 )
 

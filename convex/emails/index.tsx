@@ -6,15 +6,25 @@ import {
   EmailLayout,
   EmailText,
 } from "./layout"
-import type { EmailProps, EmailType } from "@nuntly/better-email"
 
 /**
- * React Email templates for Better Auth + general transactional mail.
- * Keyed by `@nuntly/better-email`'s EmailType; each receives its typed context.
- * Wired into the auth provider in convex/functions/auth.ts via ReactEmailRenderer.
+ * React Email templates for Better Auth transactional mail. Each component takes
+ * the props the matching Better Auth callback provides (mapped in
+ * convex/functions/auth.ts) and is rendered to HTML + sent via Bento by
+ * convex/emails/send.ts.
  */
 
-function VerificationEmail({ user, url }: EmailProps<"verification-email">) {
+type EmailUser = { name?: string | null; email: string }
+
+export type VerificationEmailProps = { user: EmailUser; url: string }
+export type ResetPasswordEmailProps = { user: EmailUser; url: string }
+export type OrganizationInvitationEmailProps = {
+  organization: { name: string }
+  inviter: { user: EmailUser }
+  invitation: { id: string; role: string }
+}
+
+export function VerificationEmail({ user, url }: VerificationEmailProps) {
   const name = user.name || user.email
   return (
     <EmailLayout preview="Verify your email address">
@@ -28,7 +38,7 @@ function VerificationEmail({ user, url }: EmailProps<"verification-email">) {
   )
 }
 
-function ResetPasswordEmail({ user, url }: EmailProps<"reset-password">) {
+export function ResetPasswordEmail({ user, url }: ResetPasswordEmailProps) {
   const name = user.name || user.email
   return (
     <EmailLayout preview="Reset your password">
@@ -43,11 +53,11 @@ function ResetPasswordEmail({ user, url }: EmailProps<"reset-password">) {
   )
 }
 
-function OrganizationInvitationEmail({
+export function OrganizationInvitationEmail({
   organization,
   inviter,
   invitation,
-}: EmailProps<"organization-invitation">) {
+}: OrganizationInvitationEmailProps) {
   const inviterName = inviter.user.name || inviter.user.email || "Someone"
   // Better Auth's acceptInvitation is keyed by the invitation id; the frontend
   // route reads it from the URL.
@@ -72,18 +82,9 @@ function getSiteUrl() {
   return getEnv().SITE_URL.replace(/\/$/, "")
 }
 
-export const emailTemplates: {
-  [K in EmailType]?: (props: EmailProps<K>) => React.ReactElement
-} = {
-  "verification-email": VerificationEmail,
-  "reset-password": ResetPasswordEmail,
-  "organization-invitation": OrganizationInvitationEmail,
-}
-
-export const emailSubjects: {
-  [K in EmailType]?: string | ((ctx: { type: K } & EmailProps<K>) => string)
-} = {
-  "verification-email": "Verify your email",
-  "reset-password": "Reset your password",
-  "organization-invitation": (ctx) => `Join ${ctx.organization.name} on Kino`,
+export const emailSubjects = {
+  verification: "Verify your email",
+  resetPassword: "Reset your password",
+  organizationInvitation: (organizationName: string) =>
+    `Join ${organizationName} on Kino`,
 }

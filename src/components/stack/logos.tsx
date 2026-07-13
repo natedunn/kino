@@ -137,9 +137,9 @@ export function CloudflareLogo(props: IconProps) {
   )
 }
 
-// Nuntly has no published Simple Icons mark; use a monochrome monogram echoing
-// its brand "N" in a rounded square.
-export function NuntlyLogo({ size = "1em", ...props }: IconProps) {
+// Bento has no published Simple Icons mark; use a monochrome monogram echoing a
+// bento box — a rounded square divided into compartments.
+export function BentoLogo({ size = "1em", ...props }: IconProps) {
   return (
     <svg
       fill="none"
@@ -154,9 +154,9 @@ export function NuntlyLogo({ size = "1em", ...props }: IconProps) {
       xmlns="http://www.w3.org/2000/svg"
       {...props}
     >
-      <title>Nuntly</title>
+      <title>Bento</title>
       <rect x="2" y="2" width="20" height="20" rx="5" />
-      <path d="M8 17V7l8 10V7" />
+      <path d="M12 2v20M12 12H2M22 12h-10" />
     </svg>
   )
 }
