@@ -4,7 +4,8 @@ import { useForm } from "@tanstack/react-form"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 
 import { EmptyState } from "@/components/kino/common"
-import { MarkdownEditor, sanitizeEditorContent } from "@/components/editor"
+import { LazyMarkdownEditor } from "@/components/editor/markdown-editor.lazy"
+import { sanitizeEditorContent } from "@/components/editor/sanitize-content"
 import { InlineAlert } from "@/components/inline-alert"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -186,7 +187,7 @@ function NewFeedbackRoute() {
             {(field) => (
               <div className="flex flex-col gap-2">
                 <label className="text-sm font-medium">Content</label>
-                <MarkdownEditor
+                <LazyMarkdownEditor
                   ariaLabel="Feedback description"
                   disabled={createMutation.isPending}
                   minHeight="120px"

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import type { Editor } from "@tiptap/react"
+import { useEditorState } from "@tiptap/react"
 import {
   Bold,
   Check,
@@ -15,6 +15,7 @@ import {
   Strikethrough,
   Underline,
 } from "lucide-react"
+import type { Editor } from "@tiptap/react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -35,18 +36,38 @@ type ToolbarItem = {
   group: number
   icon: React.ReactNode
   id: string
-  isActive?: () => boolean
   label: string
   width?: number
 }
 
+// Active-state flags the toolbar cares about. Kept as a flat, plain-boolean
+// shape so useEditorState's default deep-equality check can cheaply decide
+// whether anything the toolbar renders actually changed.
+const EMPTY_FLAGS = {
+  blockquote: false,
+  bold: false,
+  bulletList: false,
+  code: false,
+  codeBlock: false,
+  heading: false,
+  heading1: false,
+  heading2: false,
+  heading3: false,
+  italic: false,
+  link: false,
+  orderedList: false,
+  strike: false,
+  underline: false,
+}
+
+type FlagKey = keyof typeof EMPTY_FLAGS
+
 export function EditorToolbar({ editor }: { editor: Editor | null }) {
   const toolbarRef = useRef<HTMLDivElement>(null)
-  const [overflowItems, setOverflowItems] = useState<ToolbarItem[]>([])
-  const [visibleItems, setVisibleItems] = useState<ToolbarItem[]>([])
+  const [overflowItems, setOverflowItems] = useState<Array<ToolbarItem>>([])
+  const [visibleItems, setVisibleItems] = useState<Array<ToolbarItem>>([])
   const [linkUrl, setLinkUrl] = useState("")
   const [linkPopoverOpen, setLinkPopoverOpen] = useState(false)
-  const [, setEditorStateVersion] = useState(0)
   const toggleButtonIds = new Set([
     "bold",
     "italic",
@@ -59,30 +80,75 @@ export function EditorToolbar({ editor }: { editor: Editor | null }) {
     "orderedList",
   ])
 
+  // Reactive active-state, scoped to just the flags above. useEditorState only
+  // re-renders the toolbar when this object changes (deep-equal), so typing
+  // plain text that doesn't cross a formatting boundary costs nothing here —
+  // while still updating the moment the cursor enters/leaves bold, a heading,
+  // a list, etc.
+  const flags =
+    useEditorState({
+      editor,
+      selector: ({ editor }) =>
+        editor
+          ? {
+              blockquote: editor.isActive("blockquote"),
+              bold: editor.isActive("bold"),
+              bulletList: editor.isActive("bulletList"),
+              code: editor.isActive("code"),
+              codeBlock: editor.isActive("codeBlock"),
+              heading: editor.isActive("heading"),
+              heading1: editor.isActive("heading", { level: 1 }),
+              heading2: editor.isActive("heading", { level: 2 }),
+              heading3: editor.isActive("heading", { level: 3 }),
+              italic: editor.isActive("italic"),
+              link: editor.isActive("link"),
+              orderedList: editor.isActive("orderedList"),
+              strike: editor.isActive("strike"),
+              underline: editor.isActive("underline"),
+            }
+          : EMPTY_FLAGS,
+    }) ?? EMPTY_FLAGS
+
+  // Focus/blur don't always dispatch a transaction, so useEditorState won't
+  // catch them — track them separately to keep the "dim when unfocused"
+  // behavior. These fire rarely (not per keystroke), so the extra render is
+  // negligible.
+  const [, setFocusTick] = useState(0)
+  useEffect(() => {
+    if (!editor) return
+    const handleFocusChange = () => setFocusTick((tick) => tick + 1)
+    editor.on("focus", handleFocusChange)
+    editor.on("blur", handleFocusChange)
+    return () => {
+      editor.off("focus", handleFocusChange)
+      editor.off("blur", handleFocusChange)
+    }
+  }, [editor])
+
+  const isFocused = editor?.isFocused ?? false
+  const isFlagActive = (key: FlagKey) => isFocused && flags[key]
+
   const chain = () => editor?.chain().focus() as any
-  const isEditorActive = (name: string, attributes?: Record<string, unknown>) =>
-    Boolean(
-      editor?.isFocused &&
-      (attributes ? editor.isActive(name, attributes) : editor.isActive(name))
-    )
+
   const getCurrentBlockLabel = () => {
-    if (!editor?.isFocused) return "H"
-    if (editor.isActive("heading", { level: 1 })) return "H1"
-    if (editor.isActive("heading", { level: 2 })) return "H2"
-    if (editor.isActive("heading", { level: 3 })) return "H3"
+    if (!isFocused) return "H"
+    if (flags.heading1) return "H1"
+    if (flags.heading2) return "H2"
+    if (flags.heading3) return "H3"
     return "Body"
   }
   const isBodyActive = () =>
-    Boolean(
-      editor?.isFocused &&
-      !editor.isActive("heading") &&
-      !editor.isActive("blockquote") &&
-      !editor.isActive("bulletList") &&
-      !editor.isActive("orderedList") &&
-      !editor.isActive("codeBlock")
-    )
+    isFocused &&
+    !flags.heading &&
+    !flags.blockquote &&
+    !flags.bulletList &&
+    !flags.orderedList &&
+    !flags.codeBlock
 
-  const items: ToolbarItem[] = useMemo(
+  // Only structural data lives in the memo (actions/icons/labels). Active state
+  // is read live from `flags` at render time — never captured here, or the
+  // memo would freeze it at first render.
+  const items: Array<ToolbarItem> = useMemo(
     () =>
       editor
         ? [
@@ -91,7 +157,6 @@ export function EditorToolbar({ editor }: { editor: Editor | null }) {
               group: 1,
               icon: <Bold size={16} />,
               id: "bold",
-              isActive: () => isEditorActive("bold"),
               label: "Bold",
             },
             {
@@ -99,7 +164,6 @@ export function EditorToolbar({ editor }: { editor: Editor | null }) {
               group: 1,
               icon: <Italic size={16} />,
               id: "italic",
-              isActive: () => isEditorActive("italic"),
               label: "Italic",
             },
             {
@@ -107,7 +171,6 @@ export function EditorToolbar({ editor }: { editor: Editor | null }) {
               group: 1,
               icon: <Underline size={16} />,
               id: "underline",
-              isActive: () => isEditorActive("underline"),
               label: "Underline",
             },
             {
@@ -115,7 +178,6 @@ export function EditorToolbar({ editor }: { editor: Editor | null }) {
               group: 1,
               icon: <Strikethrough size={16} />,
               id: "strike",
-              isActive: () => isEditorActive("strike"),
               label: "Strikethrough",
             },
             {
@@ -127,7 +189,6 @@ export function EditorToolbar({ editor }: { editor: Editor | null }) {
               group: 2,
               icon: <Link size={16} />,
               id: "link",
-              isActive: () => isEditorActive("link"),
               label: "Link",
             },
             {
@@ -135,7 +196,6 @@ export function EditorToolbar({ editor }: { editor: Editor | null }) {
               group: 3,
               icon: <Code size={16} />,
               id: "code",
-              isActive: () => isEditorActive("code"),
               label: "Inline Code",
             },
             {
@@ -143,7 +203,6 @@ export function EditorToolbar({ editor }: { editor: Editor | null }) {
               group: 3,
               icon: <Code2 size={16} />,
               id: "codeBlock",
-              isActive: () => isEditorActive("codeBlock"),
               label: "Code Block",
             },
             {
@@ -151,7 +210,6 @@ export function EditorToolbar({ editor }: { editor: Editor | null }) {
               group: 4,
               icon: <Quote size={16} />,
               id: "blockquote",
-              isActive: () => isEditorActive("blockquote"),
               label: "Quote",
             },
             {
@@ -159,7 +217,6 @@ export function EditorToolbar({ editor }: { editor: Editor | null }) {
               group: 5,
               icon: <List size={16} />,
               id: "bulletList",
-              isActive: () => isEditorActive("bulletList"),
               label: "Bullet List",
             },
             {
@@ -167,7 +224,6 @@ export function EditorToolbar({ editor }: { editor: Editor | null }) {
               group: 5,
               icon: <ListOrdered size={16} />,
               id: "orderedList",
-              isActive: () => isEditorActive("orderedList"),
               label: "Numbered List",
             },
             {
@@ -175,7 +231,6 @@ export function EditorToolbar({ editor }: { editor: Editor | null }) {
               group: 6,
               icon: <Heading size={16} />,
               id: "heading",
-              isActive: () => isEditorActive("heading"),
               label: "Heading",
               width: 56,
             },
@@ -194,8 +249,8 @@ export function EditorToolbar({ editor }: { editor: Editor | null }) {
 
     let usedWidth = padding + overflowButtonWidth
     let lastGroup = 0
-    const visible: ToolbarItem[] = []
-    const overflow: ToolbarItem[] = []
+    const visible: Array<ToolbarItem> = []
+    const overflow: Array<ToolbarItem> = []
 
     for (const item of items) {
       if (item.group !== lastGroup && lastGroup !== 0) usedWidth += dividerWidth
@@ -212,26 +267,6 @@ export function EditorToolbar({ editor }: { editor: Editor | null }) {
     setVisibleItems(visible)
     setOverflowItems(overflow)
   }, [items])
-
-  useEffect(() => {
-    if (!editor) return
-
-    const rerenderToolbar = () => {
-      setEditorStateVersion((version) => version + 1)
-    }
-
-    editor.on("transaction", rerenderToolbar)
-    editor.on("selectionUpdate", rerenderToolbar)
-    editor.on("focus", rerenderToolbar)
-    editor.on("blur", rerenderToolbar)
-
-    return () => {
-      editor.off("transaction", rerenderToolbar)
-      editor.off("selectionUpdate", rerenderToolbar)
-      editor.off("focus", rerenderToolbar)
-      editor.off("blur", rerenderToolbar)
-    }
-  }, [editor])
 
   useEffect(() => {
     calculateOverflow()
@@ -267,7 +302,7 @@ export function EditorToolbar({ editor }: { editor: Editor | null }) {
               aria-label={`Text style: ${getCurrentBlockLabel()}`}
               className={cn(
                 "h-8 min-w-14 gap-1.5 px-2",
-                item.isActive?.() && activeButtonClass
+                isFlagActive("heading") && activeButtonClass
               )}
               size="sm"
               type="button"
@@ -293,49 +328,37 @@ export function EditorToolbar({ editor }: { editor: Editor | null }) {
               Body
             </DropdownMenuItem>
             <DropdownMenuItem
-              className={cn(
-                isEditorActive("heading", { level: 1 }) && "font-medium"
-              )}
+              className={cn(isFlagActive("heading1") && "font-medium")}
               onClick={() => chain()?.toggleHeading({ level: 1 }).run()}
             >
               <Check
                 className={cn(
                   "mr-2 size-4",
-                  isEditorActive("heading", { level: 1 })
-                    ? "opacity-100"
-                    : "opacity-0"
+                  isFlagActive("heading1") ? "opacity-100" : "opacity-0"
                 )}
               />
               Heading 1
             </DropdownMenuItem>
             <DropdownMenuItem
-              className={cn(
-                isEditorActive("heading", { level: 2 }) && "font-medium"
-              )}
+              className={cn(isFlagActive("heading2") && "font-medium")}
               onClick={() => chain()?.toggleHeading({ level: 2 }).run()}
             >
               <Check
                 className={cn(
                   "mr-2 size-4",
-                  isEditorActive("heading", { level: 2 })
-                    ? "opacity-100"
-                    : "opacity-0"
+                  isFlagActive("heading2") ? "opacity-100" : "opacity-0"
                 )}
               />
               Heading 2
             </DropdownMenuItem>
             <DropdownMenuItem
-              className={cn(
-                isEditorActive("heading", { level: 3 }) && "font-medium"
-              )}
+              className={cn(isFlagActive("heading3") && "font-medium")}
               onClick={() => chain()?.toggleHeading({ level: 3 }).run()}
             >
               <Check
                 className={cn(
                   "mr-2 size-4",
-                  isEditorActive("heading", { level: 3 })
-                    ? "opacity-100"
-                    : "opacity-0"
+                  isFlagActive("heading3") ? "opacity-100" : "opacity-0"
                 )}
               />
               Heading 3
@@ -357,7 +380,7 @@ export function EditorToolbar({ editor }: { editor: Editor | null }) {
               aria-label={item.label}
               className={cn(
                 "h-8 w-8 p-0",
-                item.isActive?.() && activeButtonClass
+                isFlagActive("link") && activeButtonClass
               )}
               onClick={item.action}
               size="sm"
@@ -399,14 +422,13 @@ export function EditorToolbar({ editor }: { editor: Editor | null }) {
       )
     }
 
+    const active = isFlagActive(item.id as FlagKey)
     return (
       <Button
         aria-label={item.label}
-        aria-pressed={
-          toggleButtonIds.has(item.id) ? item.isActive?.() : undefined
-        }
+        aria-pressed={toggleButtonIds.has(item.id) ? active : undefined}
         key={item.id}
-        className={cn("h-8 w-8 p-0", item.isActive?.() && activeButtonClass)}
+        className={cn("h-8 w-8 p-0", active && activeButtonClass)}
         onClick={item.action}
         size="sm"
         title={item.label}
@@ -418,7 +440,7 @@ export function EditorToolbar({ editor }: { editor: Editor | null }) {
     )
   }
 
-  const groupedVisible: React.ReactNode[] = []
+  const groupedVisible: Array<React.ReactNode> = []
   let lastGroup = 0
   visibleItems.forEach((item, index) => {
     if (item.group !== lastGroup && lastGroup !== 0) {
@@ -447,24 +469,27 @@ export function EditorToolbar({ editor }: { editor: Editor | null }) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              {overflowItems.map((item) => (
-                <DropdownMenuItem
-                  className={cn(item.isActive?.() && "font-medium")}
-                  key={item.id}
-                  onClick={item.action}
-                >
-                  {item.id !== "heading" ? (
-                    <Check
-                      className={cn(
-                        "mr-2 size-4",
-                        item.isActive?.() ? "opacity-100" : "opacity-0"
-                      )}
-                    />
-                  ) : null}
-                  {item.icon}
-                  {item.label}
-                </DropdownMenuItem>
-              ))}
+              {overflowItems.map((item) => {
+                const active = isFlagActive(item.id as FlagKey)
+                return (
+                  <DropdownMenuItem
+                    className={cn(active && "font-medium")}
+                    key={item.id}
+                    onClick={item.action}
+                  >
+                    {item.id !== "heading" ? (
+                      <Check
+                        className={cn(
+                          "mr-2 size-4",
+                          active ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                    ) : null}
+                    {item.icon}
+                    {item.label}
+                  </DropdownMenuItem>
+                )
+              })}
             </DropdownMenuContent>
           </DropdownMenu>
         ) : null}

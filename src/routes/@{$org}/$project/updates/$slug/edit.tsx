@@ -8,36 +8,23 @@ import {
   notFound,
   useNavigate,
 } from "@tanstack/react-router"
-import {
-  ArrowLeft,
-  Image,
-  LinkIcon,
-  Settings2,
-  Tag,
-  Trash2,
-  X,
-} from "lucide-react"
+import { ArrowLeft, Image, LinkIcon, Settings2, Tag, Trash2 } from "lucide-react"
 
-import {
-  CategoryBadge
-  
-} from "../-components/category-badge"
 import { CoverImageUpload } from "../-components/cover-image-upload"
-import { FeedbackSelector } from "../-components/feedback-selector"
+import {
+  CategoryField,
+  RelatedFeedbackField,
+  TagsField,
+  UpdateEditorCard,
+  UpdateTitleInput,
+} from "../-components/update-editor-fields"
 import type { UpdateCategory } from "../-components/category-badge"
-import { MarkdownEditor, sanitizeEditorContent } from "@/components/editor"
+import { LazyMarkdownEditor } from "@/components/editor/markdown-editor.lazy"
+import { sanitizeEditorContent } from "@/components/editor/sanitize-content"
 import { InlineAlert } from "@/components/inline-alert"
 import { SidebarSection } from "@/components/sidebar-section"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 import { authClient } from "@/lib/convex/auth-client"
 import { useCRPC } from "@/lib/convex/crpc"
@@ -48,11 +35,6 @@ import { cn } from "@/lib/utils"
 import { updateFormSchema, validationMessage } from "@/lib/validation"
 
 
-const UPDATE_CATEGORIES = ["changelog", "article", "announcement"] as const
-const UPDATE_CATEGORY_ITEMS = UPDATE_CATEGORIES.map((category) => ({
-  label: <CategoryBadge category={category} />,
-  value: category,
-}))
 type UpdateFormValues = {
   category: UpdateCategory
   content: string
@@ -117,7 +99,6 @@ function EditUpdateRoute() {
   const navigate = useNavigate()
   const crpc = useCRPC()
   const session = authClient.useSession()
-  const [tagInput, setTagInput] = useState("")
   const [formError, setFormError] = useState("")
   const { state: sidebarState, setSection: setSidebarSection } =
     useSidebarState(SIDEBAR_STORAGE_KEY, DEFAULT_SIDEBAR_STATE)
@@ -258,16 +239,6 @@ function EditUpdateRoute() {
 
   const project = projectQuery.data.project
 
-  const addTag = () => {
-    const trimmed = tagInput.trim()
-    if (!trimmed) return
-    const currentTags = form.getFieldValue("tags") || []
-    if (!currentTags.includes(trimmed)) {
-      form.setFieldValue("tags", [...currentTags, trimmed])
-    }
-    setTagInput("")
-  }
-
   const isPublished = update.status === "published"
 
   return (
@@ -389,29 +360,10 @@ function EditUpdateRoute() {
             >
               <form.Field name="category">
                 {(field) => (
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs text-muted-foreground">
-                      Category
-                    </label>
-                    <Select
-                      items={UPDATE_CATEGORY_ITEMS}
-                      onValueChange={(value) =>
-                        field.handleChange(value as UpdateCategory)
-                      }
-                      value={field.state.value}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {UPDATE_CATEGORIES.map((category) => (
-                          <SelectItem key={category} value={category}>
-                            <CategoryBadge category={category} />
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  <CategoryField
+                    onValueChange={(value) => field.handleChange(value)}
+                    value={field.state.value}
+                  />
                 )}
               </form.Field>
             </SidebarSection>
@@ -442,57 +394,10 @@ function EditUpdateRoute() {
             >
               <form.Field name="tags">
                 {(field) => (
-                  <div className="flex flex-col gap-3">
-                    {(field.state.value || []).length > 0 ? (
-                      <div className="flex flex-wrap gap-1.5">
-                        {(field.state.value || []).map((tag) => (
-                          <Badge
-                            className="gap-1 pr-1"
-                            key={tag}
-                            variant="secondary"
-                          >
-                            {tag}
-                            <button
-                              aria-label={`Remove tag ${tag}`}
-                              className="ml-0.5 rounded-sm p-0.5 hover:bg-muted hover:text-destructive"
-                              onClick={() =>
-                                field.handleChange(
-                                  (field.state.value || []).filter(
-                                    (value) => value !== tag
-                                  )
-                                )
-                              }
-                              type="button"
-                            >
-                              <X className="h-3 w-3" />
-                            </button>
-                          </Badge>
-                        ))}
-                      </div>
-                    ) : null}
-                    <div className="flex items-center gap-2">
-                      <Input
-                        className="flex-1"
-                        onChange={(event) => setTagInput(event.target.value)}
-                        onKeyDown={(event) => {
-                          if (event.key === "Enter") {
-                            event.preventDefault()
-                            addTag()
-                          }
-                        }}
-                        placeholder="Add tag..."
-                        value={tagInput}
-                      />
-                      <Button
-                        onClick={addTag}
-                        size="sm"
-                        type="button"
-                        variant="outline"
-                      >
-                        Add
-                      </Button>
-                    </div>
-                  </div>
+                  <TagsField
+                    onChange={(tags) => field.handleChange(tags)}
+                    value={field.state.value}
+                  />
                 )}
               </form.Field>
             </SidebarSection>
@@ -507,16 +412,11 @@ function EditUpdateRoute() {
             >
               <form.Field name="relatedFeedbackIds">
                 {(field) => (
-                  <div className="flex flex-col gap-2">
-                    <FeedbackSelector
-                      onChange={(ids) => field.handleChange(ids)}
-                      projectId={project.id}
-                      selectedIds={field.state.value}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Link feedback items addressed by this update.
-                    </p>
-                  </div>
+                  <RelatedFeedbackField
+                    onChange={(ids) => field.handleChange(ids)}
+                    projectId={project.id}
+                    selectedIds={field.state.value}
+                  />
                 )}
               </form.Field>
             </SidebarSection>
@@ -550,30 +450,32 @@ function EditUpdateRoute() {
 
         {/* Main content area */}
         <div className="flex flex-col gap-6 py-8 md:col-span-8">
-          <form.Field name="title">
-            {(field) => (
-              <Input
-                className="h-auto border-none bg-transparent px-0 py-2 text-2xl font-bold tracking-tight shadow-none ring-0 placeholder:text-muted-foreground/50 focus-visible:ring-0 md:text-3xl"
-                id="update-title"
-                onChange={(event) => field.handleChange(event.target.value)}
-                placeholder="Update title..."
-                value={field.state.value}
-              />
-            )}
-          </form.Field>
-
-          <form.Field name="content">
-            {(field) => (
-              <MarkdownEditor
-                ariaLabel="Update content"
-                maxHeight="calc(100vh - 220px)"
-                minHeight="450px"
-                onChange={(html) => field.handleChange(html)}
-                placeholder="Write your update content..."
-                value={field.state.value}
-              />
-            )}
-          </form.Field>
+          <UpdateEditorCard
+            editor={
+              <form.Field name="content">
+                {(field) => (
+                  <LazyMarkdownEditor
+                    ariaLabel="Update content"
+                    minHeight="200px"
+                    onChange={(html) => field.handleChange(html)}
+                    placeholder="Write your update content..."
+                    value={field.state.value}
+                    variant="borderless"
+                  />
+                )}
+              </form.Field>
+            }
+            title={
+              <form.Field name="title">
+                {(field) => (
+                  <UpdateTitleInput
+                    onChange={(value) => field.handleChange(value)}
+                    value={field.state.value}
+                  />
+                )}
+              </form.Field>
+            }
+          />
         </div>
       </div>
     </form>
