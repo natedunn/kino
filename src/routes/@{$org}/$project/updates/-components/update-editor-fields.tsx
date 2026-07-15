@@ -69,6 +69,7 @@ export function UpdateTitleInput({
 }) {
   return (
     <Input
+      aria-label="Update title"
       autoFocus={autoFocus}
       className="h-auto border-none bg-transparent p-4 text-lg font-semibold tracking-tight shadow-none ring-0 focus-visible:ring-0 md:text-xl dark:bg-transparent"
       id="update-title"
