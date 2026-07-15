@@ -5,12 +5,12 @@ import { Underline } from "@tiptap/extension-underline"
 import { EditorContent, useEditor } from "@tiptap/react"
 import StarterKit from "@tiptap/starter-kit"
 
-import { cn } from "@/lib/utils"
 
 import { EditorToolbar } from "./editor-toolbar"
-import { createShikiCodeBlock } from "./extensions/shiki-code-block"
+import { createLowlightCodeBlock } from "./extensions/lowlight-code-block"
+import { cn } from "@/lib/utils"
 
-function createExtensions(placeholder: string) {
+function createExtensions(getPlaceholder: () => string) {
   return [
     StarterKit.configure({
       codeBlock: false,
@@ -26,8 +26,10 @@ function createExtensions(placeholder: string) {
       },
       openOnClick: false,
     }),
-    Placeholder.configure({ placeholder }),
-    createShikiCodeBlock(),
+    // Read the placeholder lazily so it can change without recreating the
+    // editor (see the placeholder-sync effect below).
+    Placeholder.configure({ placeholder: () => getPlaceholder() }),
+    createLowlightCodeBlock(),
   ]
 }
 
@@ -76,15 +78,27 @@ export const MarkdownEditor = forwardRef<
     },
     ref
   ) => {
+    // Keep callbacks and the placeholder in refs so the editor instance never
+    // has to be recreated when they change (recreating would discard editor
+    // state, selection, and undo history).
+    const onChangeRef = useRef(onChange)
+    onChangeRef.current = onChange
+    const onSubmitShortcutRef = useRef(onSubmitShortcut)
+    onSubmitShortcutRef.current = onSubmitShortcut
+    const placeholderRef = useRef(placeholder)
+    placeholderRef.current = placeholder
+
+    // Tracks the last HTML we emitted via onChange. Lets the value-sync effect
+    // recognize its own echo and skip a second full getHTML() serialization on
+    // every keystroke.
+    const lastHTMLRef = useRef(value)
+
     const extensionsRef = useRef<ReturnType<typeof createExtensions> | null>(
       null
     )
     if (!extensionsRef.current) {
-      extensionsRef.current = createExtensions(placeholder)
+      extensionsRef.current = createExtensions(() => placeholderRef.current)
     }
-
-    const onSubmitShortcutRef = useRef(onSubmitShortcut)
-    onSubmitShortcutRef.current = onSubmitShortcut
 
     const editor = useEditor({
       content: value,
@@ -107,7 +121,11 @@ export const MarkdownEditor = forwardRef<
       },
       extensions: extensionsRef.current,
       immediatelyRender: false,
-      onUpdate: ({ editor }) => onChange?.(editor.getHTML()),
+      onUpdate: ({ editor }) => {
+        const html = editor.getHTML()
+        lastHTMLRef.current = html
+        onChangeRef.current?.(html)
+      },
     })
 
     useEffect(() => {
@@ -116,13 +134,26 @@ export const MarkdownEditor = forwardRef<
       }
     }, [autoFocus, editor])
 
+    // Sync external value changes (initial async load, form reset) into the
+    // editor. Skip our own echoes so typing doesn't pay a second full
+    // getHTML() serialization on every keystroke.
     useEffect(() => {
       if (!editor) return
-      const current = editor.getHTML()
-      if (value !== current) {
+      if (value === lastHTMLRef.current) return
+      if (value !== editor.getHTML()) {
         editor.commands.setContent(value, { emitUpdate: false })
       }
+      lastHTMLRef.current = value
     }, [editor, value])
+
+    // Refresh the placeholder decoration when the placeholder prop changes. The
+    // Placeholder extension reads the latest value through the ref getter; an
+    // empty transaction forces ProseMirror to recompute its decorations without
+    // mutating the document (so it never fires onChange).
+    useEffect(() => {
+      if (!editor) return
+      editor.view.dispatch(editor.state.tr)
+    }, [editor, placeholder])
 
     useImperativeHandle(ref, () => ({
       clear: () => editor?.commands.clearContent(),
@@ -161,6 +192,10 @@ export const MarkdownEditor = forwardRef<
         <EditorContent
           className={cn(
             "[&_.ProseMirror]:min-h-[inherit]",
+            // Isolate the editable region's layout from the rest of the page so
+            // a growing document doesn't reflow ancestors (and vice-versa).
+            // `layout` only — not `paint` — so the focus ring is never clipped.
+            "[contain:layout]",
             maxHeight && "overflow-y-auto",
             contentClassName
           )}

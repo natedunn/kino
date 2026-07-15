@@ -11,7 +11,7 @@
   --absolute: oklch(1 0 0);
   --background: oklch(1 0 0);
   --foreground: oklch(0.1448 0 0);
-  --card: oklch(0.99 0 0);
+  --card: oklch(0.98 0 0);
   --card-foreground: oklch(0.1448 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.1448 0 0);
@@ -357,9 +357,24 @@
   @apply inline-block bg-linear-to-r from-blue-300 to-blue-400 bg-clip-text text-transparent dark:to-primary;
 }
 
+/* Layered, soft shadow used by cards.
+   Uses box-shadow (not filter: drop-shadow) on purpose: a filter forces the
+   browser to re-rasterize the whole element on every paint, which makes typing
+   inside a card-wrapped editor lag. box-shadow is geometry-based and cached. */
+@utility shadow-layered {
+  box-shadow:
+    0 1px 1px 0 hsl(0deg 0% 40% / 0.03),
+    0 2px 2px 0 hsl(0deg 0% 40% / 0.03),
+    0 4px 4px 0 hsl(0deg 0% 40% / 0.03),
+    0 8px 8px 0 hsl(0deg 0% 40% / 0.03),
+    0 16px 16px 0 hsl(0deg 0% 40% / 0.03);
+}
+
 /* Tiptap editor placeholder */
 .ProseMirror p.is-editor-empty:first-child::before {
-  color: var(--muted-foreground);
+  /* Match the app's input placeholder color: muted-foreground at 50%
+     (same as Tailwind's `text-muted-foreground/50`). */
+  color: color-mix(in oklab, var(--muted-foreground) 50%, transparent);
   content: attr(data-placeholder);
   float: left;
   height: 0;

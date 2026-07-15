@@ -82,7 +82,7 @@ function RoadmapPage() {
               placeholder="Search roadmap…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-md border bg-muted/50 py-1.5 pr-3 pl-8 text-xs transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
+              className="w-full rounded-md border bg-muted/50 py-1.5 pr-3 pl-8 text-xs transition-colors placeholder:text-muted-foreground/50 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
             />
           </div>
         </div>
