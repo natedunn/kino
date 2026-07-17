@@ -20,35 +20,35 @@
  * auth state.
  */
 type AuthSnapshot = {
-  isAuthenticated: boolean
-  isLoading: boolean
-}
+	isAuthenticated: boolean;
+	isLoading: boolean;
+};
 
 let snapshot: AuthSnapshot = {
-  isAuthenticated: false,
-  isLoading: true,
-}
+	isAuthenticated: false,
+	isLoading: true,
+};
 
-const isServer = () => typeof window === "undefined"
+const isServer = () => typeof window === 'undefined';
 
 export function setAuthSnapshot(next: AuthSnapshot) {
-  // Only ever written from a client effect; never persist state on the server.
-  if (isServer()) return
-  snapshot = next
+	// Only ever written from a client effect; never persist state on the server.
+	if (isServer()) return;
+	snapshot = next;
 }
 
 export function getAuthSnapshot(): AuthSnapshot {
-  return snapshot
+	return snapshot;
 }
 
 /** Pure derivation: authed *or still loading* (fails open). Exported for tests. */
 export function deriveClientAuthed(snap: AuthSnapshot): boolean {
-  return snap.isLoading || snap.isAuthenticated
+	return snap.isLoading || snap.isAuthenticated;
 }
 
 /** Pure derivation: settled *and* authenticated (fails closed). Exported for tests. */
 export function deriveClientDefinitelyAuthed(snap: AuthSnapshot): boolean {
-  return !snap.isLoading && snap.isAuthenticated
+	return !snap.isLoading && snap.isAuthenticated;
 }
 
 /**
@@ -59,7 +59,7 @@ export function deriveClientDefinitelyAuthed(snap: AuthSnapshot): boolean {
  * Always `false` on the server (see file header).
  */
 export function isClientAuthed(): boolean {
-  return !isServer() && deriveClientAuthed(snapshot)
+	return !isServer() && deriveClientAuthed(snapshot);
 }
 
 /**
@@ -70,5 +70,5 @@ export function isClientAuthed(): boolean {
  * showing the public landing page. Always `false` on the server.
  */
 export function isClientDefinitelyAuthed(): boolean {
-  return !isServer() && deriveClientDefinitelyAuthed(snapshot)
+	return !isServer() && deriveClientDefinitelyAuthed(snapshot);
 }

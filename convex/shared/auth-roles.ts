@@ -1,10 +1,10 @@
-import { createAccessControl } from "better-auth/plugins/access"
+import { createAccessControl } from 'better-auth/plugins/access';
 import {
-  adminAc,
-  defaultStatements,
-  memberAc,
-  ownerAc,
-} from "better-auth/plugins/organization/access"
+	adminAc,
+	defaultStatements,
+	memberAc,
+	ownerAc,
+} from 'better-auth/plugins/organization/access';
 
 /**
  * Organization access-control roles, shared by the better-auth server config
@@ -18,15 +18,15 @@ import {
  *
  * Role set (below system admin): owner / admin / editor / member.
  */
-const statement = { ...defaultStatements } as const
+const statement = { ...defaultStatements } as const;
 
-export const ac = createAccessControl(statement)
+export const ac = createAccessControl(statement);
 
-export const owner = ac.newRole({ ...ownerAc.statements })
-export const admin = ac.newRole({ ...adminAc.statements })
+export const owner = ac.newRole({ ...ownerAc.statements });
+export const admin = ac.newRole({ ...adminAc.statements });
 // `editor` sits between admin and member: it can edit project content (enforced
 // by verify*Access), but has no org-management rights beyond a plain member.
-export const editor = ac.newRole({ ...memberAc.statements })
-export const member = ac.newRole({ ...memberAc.statements })
+export const editor = ac.newRole({ ...memberAc.statements });
+export const member = ac.newRole({ ...memberAc.statements });
 
-export const roles = { admin, editor, member, owner }
+export const roles = { admin, editor, member, owner };

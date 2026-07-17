@@ -1,7 +1,8 @@
-import { z } from "zod"
-import { privateAction } from "../lib/crpc"
-import { sendEmail } from "../lib/bento"
-import { recipientsSchema } from "./email.lib"
+import { z } from 'zod';
+
+import { sendEmail } from '../lib/bento';
+import { privateAction } from '../lib/crpc';
+import { recipientsSchema } from './email.lib';
 
 /**
  * General-purpose transactional email send via Bento. Internal (private) so it
@@ -15,14 +16,14 @@ import { recipientsSchema } from "./email.lib"
  * of emails Bento accepted for delivery.
  */
 export const sendTransactionalEmail = privateAction
-  .input(
-    z.object({
-      to: recipientsSchema,
-      subject: z.string().min(1),
-      html: z.string().min(1),
-    })
-  )
-  .action(async ({ input }) => {
-    const count = await sendEmail(input)
-    return { count }
-  })
+	.input(
+		z.object({
+			to: recipientsSchema,
+			subject: z.string().min(1),
+			html: z.string().min(1),
+		})
+	)
+	.action(async ({ input }) => {
+		const count = await sendEmail(input);
+		return { count };
+	});

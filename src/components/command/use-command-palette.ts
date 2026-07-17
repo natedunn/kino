@@ -1,19 +1,20 @@
-import { useContext, useEffect } from "react"
+import type { AppCommand } from './types';
 
-import { CommandContext } from "./command-context"
-import type { AppCommand } from "./types"
+import { useContext, useEffect } from 'react';
+
+import { CommandContext } from './command-context';
 
 export function useCommandPalette() {
-  const context = useContext(CommandContext)
+	const context = useContext(CommandContext);
 
-  if (!context) {
-    throw new Error("useCommandPalette must be used within CommandProvider")
-  }
+	if (!context) {
+		throw new Error('useCommandPalette must be used within CommandProvider');
+	}
 
-  return {
-    close: context.close,
-    open: context.open,
-  }
+	return {
+		close: context.close,
+		open: context.open,
+	};
 }
 
 /**
@@ -24,17 +25,14 @@ export function useCommandPalette() {
  * (e.g. `useMemo`) — an inline array re-registers on every render, which loops
  * provider state updates and re-renders the whole tree.
  */
-export function useRegisterCommands(
-  scopeId: string,
-  commands: Array<AppCommand>
-) {
-  const context = useContext(CommandContext)
+export function useRegisterCommands(scopeId: string, commands: Array<AppCommand>) {
+	const context = useContext(CommandContext);
 
-  if (!context) {
-    throw new Error("useRegisterCommands must be used within CommandProvider")
-  }
+	if (!context) {
+		throw new Error('useRegisterCommands must be used within CommandProvider');
+	}
 
-  useEffect(() => {
-    return context.registerCommands(scopeId, commands)
-  }, [commands, context.registerCommands, scopeId])
+	useEffect(() => {
+		return context.registerCommands(scopeId, commands);
+	}, [commands, context.registerCommands, scopeId]);
 }

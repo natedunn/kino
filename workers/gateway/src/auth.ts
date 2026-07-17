@@ -1,7 +1,7 @@
-import { betterAuth } from "better-auth"
-import { oAuthProxy } from "better-auth/plugins"
+import type { GatewayEnv } from './env';
 
-import type { GatewayEnv } from "./env"
+import { betterAuth } from 'better-auth';
+import { oAuthProxy } from 'better-auth/plugins';
 
 /**
  * A deliberately minimal better-auth instance whose only job is the
@@ -25,22 +25,22 @@ import type { GatewayEnv } from "./env"
  * are symmetric-encrypted and the formats must match across both sides.
  */
 export function createGatewayAuth(env: GatewayEnv) {
-  return betterAuth({
-    baseURL: env.GATEWAY_ORIGIN,
-    basePath: "/api/auth",
-    secret: env.BETTER_AUTH_SECRET ?? env.OAUTH_PROXY_SECRET,
-    socialProviders: {
-      github: {
-        clientId: env.GITHUB_AUTH_CLIENT_ID,
-        clientSecret: env.GITHUB_AUTH_CLIENT_SECRET,
-      },
-    },
-    plugins: [
-      oAuthProxy({
-        productionURL: env.GATEWAY_ORIGIN,
-        secret: env.OAUTH_PROXY_SECRET,
-      }),
-    ],
-    telemetry: { enabled: false },
-  })
+	return betterAuth({
+		baseURL: env.GATEWAY_ORIGIN,
+		basePath: '/api/auth',
+		secret: env.BETTER_AUTH_SECRET ?? env.OAUTH_PROXY_SECRET,
+		socialProviders: {
+			github: {
+				clientId: env.GITHUB_AUTH_CLIENT_ID,
+				clientSecret: env.GITHUB_AUTH_CLIENT_SECRET,
+			},
+		},
+		plugins: [
+			oAuthProxy({
+				productionURL: env.GATEWAY_ORIGIN,
+				secret: env.OAUTH_PROXY_SECRET,
+			}),
+		],
+		telemetry: { enabled: false },
+	});
 }

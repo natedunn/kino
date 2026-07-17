@@ -1,4 +1,1 @@
-export {
-  authClient,
-  useSignOutMutationOptions,
-} from '@/lib/convex/auth-client';
+export { authClient, useSignOutMutationOptions } from '@/lib/convex/auth-client';

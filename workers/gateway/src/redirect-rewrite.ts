@@ -1,4 +1,6 @@
-import { isTrustedTargetOrigin, type GatewayEnv } from "./env"
+import type { GatewayEnv } from './env';
+
+import { isTrustedTargetOrigin } from './env';
 
 /**
  * Rewrites the oAuthProxy callback redirect to the originating app origin.
@@ -21,54 +23,51 @@ import { isTrustedTargetOrigin, type GatewayEnv } from "./env"
  * proxies the request to its Convex deployment itself, and the cookies land
  * on the app origin.
  */
-export function rewriteProxyCallbackRedirect(
-  env: GatewayEnv,
-  response: Response
-) {
-  if (response.status < 300 || response.status >= 400) return response
+export function rewriteProxyCallbackRedirect(env: GatewayEnv, response: Response) {
+	if (response.status < 300 || response.status >= 400) return response;
 
-  const location = response.headers.get("location")
-  if (!location) return response
+	const location = response.headers.get('location');
+	if (!location) return response;
 
-  let target: URL
-  try {
-    target = new URL(location)
-  } catch {
-    return response
-  }
+	let target: URL;
+	try {
+		target = new URL(location);
+	} catch {
+		return response;
+	}
 
-  if (
-    !target.hostname.endsWith(".convex.site") ||
-    !target.pathname.startsWith("/api/auth/oauth-proxy-callback")
-  ) {
-    return response
-  }
+	if (
+		!target.hostname.endsWith('.convex.site') ||
+		!target.pathname.startsWith('/api/auth/oauth-proxy-callback')
+	) {
+		return response;
+	}
 
-  const callbackURL = target.searchParams.get("callbackURL")
-  if (!callbackURL) return response
+	const callbackURL = target.searchParams.get('callbackURL');
+	if (!callbackURL) return response;
 
-  let appOrigin: URL
-  try {
-    appOrigin = new URL(callbackURL)
-  } catch {
-    return response
-  }
+	let appOrigin: URL;
+	try {
+		appOrigin = new URL(callbackURL);
+	} catch {
+		return response;
+	}
 
-  const origin = `${appOrigin.protocol}//${appOrigin.host}`
-  if (!isTrustedTargetOrigin(env, origin)) {
-    console.warn(`proxy callback rewrite refused for untrusted origin ${origin}`)
-    return response
-  }
+	const origin = `${appOrigin.protocol}//${appOrigin.host}`;
+	if (!isTrustedTargetOrigin(env, origin)) {
+		console.warn(`proxy callback rewrite refused for untrusted origin ${origin}`);
+		return response;
+	}
 
-  target.protocol = appOrigin.protocol
-  target.host = appOrigin.host
+	target.protocol = appOrigin.protocol;
+	target.host = appOrigin.host;
 
-  const headers = new Headers(response.headers)
-  headers.set("location", target.toString())
+	const headers = new Headers(response.headers);
+	headers.set('location', target.toString());
 
-  return new Response(response.body, {
-    headers,
-    status: response.status,
-    statusText: response.statusText,
-  })
+	return new Response(response.body, {
+		headers,
+		status: response.status,
+		statusText: response.statusText,
+	});
 }

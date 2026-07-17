@@ -14,16 +14,16 @@
  * settled (the Better Auth session is gone — see /auth's redirect effect) or if
  * the sign-out errors.
  */
-let signingOut = false
+let signingOut = false;
 
 export function beginSignOut() {
-  signingOut = true
+	signingOut = true;
 }
 
 export function endSignOut() {
-  signingOut = false
+	signingOut = false;
 }
 
 export function isSigningOut() {
-  return signingOut
+	return signingOut;
 }

@@ -1,20 +1,21 @@
-import { useContext, useEffect, useRef } from "react"
+import type { Shortcut } from './types';
 
-import { ShortcutsContext } from "./shortcuts-context"
-import type { Shortcut } from "./types"
+import { useContext, useEffect, useRef } from 'react';
+
+import { ShortcutsContext } from './shortcuts-context';
 
 export function useShortcuts() {
-  const context = useContext(ShortcutsContext)
+	const context = useContext(ShortcutsContext);
 
-  if (!context) {
-    throw new Error("useShortcuts must be used within ShortcutsProvider")
-  }
+	if (!context) {
+		throw new Error('useShortcuts must be used within ShortcutsProvider');
+	}
 
-  return {
-    close: context.close,
-    open: context.open,
-    toggle: context.toggle,
-  }
+	return {
+		close: context.close,
+		open: context.open,
+		toggle: context.toggle,
+	};
 }
 
 /**
@@ -30,35 +31,32 @@ export function useShortcuts() {
  * (keys, label, description) are captured at registration time, so keep those
  * static per scope; only `run`/`enabled` are expected to change over time.
  */
-export function useRegisterShortcuts(
-  scopeId: string,
-  shortcuts: Array<Shortcut>
-) {
-  const context = useContext(ShortcutsContext)
+export function useRegisterShortcuts(scopeId: string, shortcuts: Array<Shortcut>) {
+	const context = useContext(ShortcutsContext);
 
-  if (!context) {
-    throw new Error("useRegisterShortcuts must be used within ShortcutsProvider")
-  }
+	if (!context) {
+		throw new Error('useRegisterShortcuts must be used within ShortcutsProvider');
+	}
 
-  const shortcutsRef = useRef(shortcuts)
-  shortcutsRef.current = shortcuts
+	const shortcutsRef = useRef(shortcuts);
+	shortcutsRef.current = shortcuts;
 
-  const { registerShortcuts } = context
+	const { registerShortcuts } = context;
 
-  useEffect(() => {
-    const proxies = shortcutsRef.current.map((shortcut, index) => ({
-      ...shortcut,
-      run: shortcut.run
-        ? (ctx: Parameters<NonNullable<Shortcut["run"]>>[0]) =>
-            shortcutsRef.current[index]?.run?.(ctx)
-        : undefined,
-      enabled: shortcut.enabled
-        ? () => shortcutsRef.current[index]?.enabled?.() ?? true
-        : undefined,
-    }))
-    return registerShortcuts(scopeId, proxies)
-    // Intentionally register once per scope; `run`/`enabled` stay fresh via the
-    // ref, so `shortcuts` is deliberately excluded from the deps.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [registerShortcuts, scopeId])
+	useEffect(() => {
+		const proxies = shortcutsRef.current.map((shortcut, index) => ({
+			...shortcut,
+			run: shortcut.run
+				? (ctx: Parameters<NonNullable<Shortcut['run']>>[0]) =>
+						shortcutsRef.current[index]?.run?.(ctx)
+				: undefined,
+			enabled: shortcut.enabled
+				? () => shortcutsRef.current[index]?.enabled?.() ?? true
+				: undefined,
+		}));
+		return registerShortcuts(scopeId, proxies);
+		// Intentionally register once per scope; `run`/`enabled` stay fresh via the
+		// ref, so `shortcuts` is deliberately excluded from the deps.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [registerShortcuts, scopeId]);
 }

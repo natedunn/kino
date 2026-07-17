@@ -1,5 +1,5 @@
-import { Navigate, useRouterState } from "@tanstack/react-router"
-import { useAuth } from "kitcn/react"
+import { Navigate, useRouterState } from '@tanstack/react-router';
+import { useAuth } from 'kitcn/react';
 
 /**
  * Returns `true` once client auth has been *lost* — the auth bridge has settled
@@ -25,8 +25,8 @@ import { useAuth } from "kitcn/react"
  * hydration, so this stays `false` until auth genuinely resolves.
  */
 export function useAuthLost() {
-  const { isAuthenticated, isLoading } = useAuth()
-  return !isLoading && !isAuthenticated
+	const { isAuthenticated, isLoading } = useAuth();
+	return !isLoading && !isAuthenticated;
 }
 
 /**
@@ -42,13 +42,13 @@ export function useAuthLost() {
  * `beforeLoad`; this is only the in-place fallback.
  */
 export function useAuthLostRedirect() {
-  const pathname = useRouterState({
-    select: (state) => state.location.pathname,
-  })
+	const pathname = useRouterState({
+		select: (state) => state.location.pathname,
+	});
 
-  if (useAuthLost()) {
-    return <Navigate search={{ redirect: pathname }} to="/auth" />
-  }
+	if (useAuthLost()) {
+		return <Navigate search={{ redirect: pathname }} to='/auth' />;
+	}
 
-  return null
+	return null;
 }

@@ -2,9 +2,10 @@
 // This suite reads the auth source with node:fs; pin the Node environment so it
 // stays correct even if the default test environment changes. (It does NOT use
 // convex-test, so it must not run under edge-runtime.)
-import { readFileSync } from "node:fs"
-import { fileURLToPath } from "node:url"
-import { describe, expect, test } from "vitest"
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+
+import { describe, expect, test } from 'vitest';
 
 /**
  * Security regression guard for privilege escalation via better-auth
@@ -26,26 +27,18 @@ import { describe, expect, test } from "vitest"
  * HTTP route parsing, which the convex-test harness (mocked identity via
  * `t.withIdentity`) does not exercise.
  */
-describe("auth additionalFields lock down client-writable role/profileId", () => {
-  const authSource = readFileSync(
-    fileURLToPath(new URL("./auth.ts", import.meta.url)),
-    "utf8"
-  )
+describe('auth additionalFields lock down client-writable role/profileId', () => {
+	const authSource = readFileSync(fileURLToPath(new URL('./auth.ts', import.meta.url)), 'utf8');
 
-  // Grab the object body for a given additionalField key, up to its closing
-  // brace, so we can assert `input: false` belongs to THAT field.
-  function fieldBody(field: string) {
-    const match = authSource.match(
-      new RegExp(`${field}:\\s*\\{([\\s\\S]*?)\\}`, "m")
-    )
-    expect(match, `${field} additionalField declaration not found`).toBeTruthy()
-    return match![1]
-  }
+	// Grab the object body for a given additionalField key, up to its closing
+	// brace, so we can assert `input: false` belongs to THAT field.
+	function fieldBody(field: string) {
+		const match = authSource.match(new RegExp(`${field}:\\s*\\{([\\s\\S]*?)\\}`, 'm'));
+		expect(match, `${field} additionalField declaration not found`).toBeTruthy();
+		return match![1];
+	}
 
-  test.each(["role", "profileId"])(
-    "%s additionalField sets input: false",
-    (field) => {
-      expect(fieldBody(field)).toMatch(/input:\s*false/)
-    }
-  )
-})
+	test.each(['role', 'profileId'])('%s additionalField sets input: false', (field) => {
+		expect(fieldBody(field)).toMatch(/input:\s*false/);
+	});
+});

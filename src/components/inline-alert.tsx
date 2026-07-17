@@ -1,53 +1,55 @@
-import type { ReactNode } from "react"
-import { cva, type VariantProps } from "class-variance-authority"
+import type { VariantProps } from 'class-variance-authority';
+import type { ReactNode } from 'react';
 
-import { cn } from "@/lib/utils"
+import { cva } from 'class-variance-authority';
 
-const inlineAlertVariants = cva("rounded-lg border bg-gradient-to-bl", {
-  variants: {
-    size: {
-      default: "p-3 text-sm",
-      lg: "p-4 text-base",
-      xl: "p-5 text-base",
-      sm: "p-2 text-xs",
-    },
-    variant: {
-      danger:
-        "border-red-500 from-red-500/10 to-red-500/5 to-red-500/10 text-red-600 dark:border-red-400 dark:from-red-500/20 dark:text-red-400",
-      default: "from-muted to-accent/10 to-muted/50 dark:from-accent/50",
-      info: "border-blue-500 from-blue-500/10 to-blue-500/5 to-blue-500/10 text-blue-600 dark:border-blue-400 dark:from-blue-500/20 dark:text-blue-400",
-      success:
-        "border-green-500 from-green-500/10 to-green-500/5 to-green-500/10 text-green-600 dark:border-green-400 dark:from-green-500/20 dark:text-green-400",
-      warning:
-        "border-yellow-500 from-yellow-500/10 to-yellow-500/5 to-yellow-500/10 text-yellow-600 dark:border-yellow-400 dark:from-yellow-500/20 dark:text-yellow-400",
-    },
-  },
-  defaultVariants: {
-    size: "default",
-    variant: "default",
-  },
-})
+import { cn } from '@/lib/utils';
+
+const inlineAlertVariants = cva('rounded-lg border bg-gradient-to-bl', {
+	variants: {
+		size: {
+			default: 'p-3 text-sm',
+			lg: 'p-4 text-base',
+			xl: 'p-5 text-base',
+			sm: 'p-2 text-xs',
+		},
+		variant: {
+			danger:
+				'border-red-500 from-red-500/10 to-red-500/5 to-red-500/10 text-red-600 dark:border-red-400 dark:from-red-500/20 dark:text-red-400',
+			default: 'from-muted to-accent/10 to-muted/50 dark:from-accent/50',
+			info: 'border-blue-500 from-blue-500/10 to-blue-500/5 to-blue-500/10 text-blue-600 dark:border-blue-400 dark:from-blue-500/20 dark:text-blue-400',
+			success:
+				'border-green-500 from-green-500/10 to-green-500/5 to-green-500/10 text-green-600 dark:border-green-400 dark:from-green-500/20 dark:text-green-400',
+			warning:
+				'border-yellow-500 from-yellow-500/10 to-yellow-500/5 to-yellow-500/10 text-yellow-600 dark:border-yellow-400 dark:from-yellow-500/20 dark:text-yellow-400',
+		},
+	},
+	defaultVariants: {
+		size: 'default',
+		variant: 'default',
+	},
+});
 
 export function InlineAlert({
-  children,
-  className,
-  size,
-  variant,
+	children,
+	className,
+	size,
+	variant,
 }: {
-  children: ReactNode
-  className?: string
+	children: ReactNode;
+	className?: string;
 } & VariantProps<typeof inlineAlertVariants>) {
-  // `danger` alerts are surfaced as assertive live regions so screen readers
-  // announce errors (e.g. failed sign-in, password mismatch) the moment they
-  // render, instead of leaving them silent for non-sighted users.
-  const isError = variant === "danger"
-  return (
-    <div
-      aria-live={isError ? "assertive" : undefined}
-      className={cn(inlineAlertVariants({ className, size, variant }))}
-      role={isError ? "alert" : undefined}
-    >
-      {children}
-    </div>
-  )
+	// `danger` alerts are surfaced as assertive live regions so screen readers
+	// announce errors (e.g. failed sign-in, password mismatch) the moment they
+	// render, instead of leaving them silent for non-sighted users.
+	const isError = variant === 'danger';
+	return (
+		<div
+			aria-live={isError ? 'assertive' : undefined}
+			className={cn(inlineAlertVariants({ className, size, variant }))}
+			role={isError ? 'alert' : undefined}
+		>
+			{children}
+		</div>
+	);
 }
