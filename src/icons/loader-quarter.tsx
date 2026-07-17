@@ -18,7 +18,7 @@ function IconLoader6FillDuo18({ size = '18px', ...props }: IconProps) {
 			<path
 				d='m9,17c-4.4111,0-8-3.5889-8-8S4.5889,1,9,1s8,3.5889,8,8-3.5889,8-8,8Zm0-14.5c-3.584,0-6.5,2.916-6.5,6.5s2.916,6.5,6.5,6.5,6.5-2.916,6.5-6.5-2.916-6.5-6.5-6.5Z'
 				fill='currentColor'
-				opacity='.4'
+				opacity='var(--icon-secondary-opacity)'
 				strokeWidth='0'
 				data-color='color-2'
 			></path>

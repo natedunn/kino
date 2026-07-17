@@ -20,7 +20,7 @@ function IconChartTrendUpFillDuo18({ size = '18px', ...props }: IconProps) {
 				clipRule='evenodd'
 				d='M2.75 2C3.16421 2 3.5 2.33579 3.5 2.75V12.75C3.5 13.4408 4.05921 14 4.75 14H15.25C15.6642 14 16 14.3358 16 14.75C16 15.1642 15.6642 15.5 15.25 15.5H4.75C3.23079 15.5 2 14.2692 2 12.75V2.75C2 2.33579 2.33579 2 2.75 2Z'
 				fill='currentColor'
-				fillOpacity='0.4'
+				opacity='var(--icon-secondary-opacity)'
 				data-color='color-2'
 			></path>
 			<path

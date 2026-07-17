@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { useForm } from "@tanstack/react-form"
-import { createFileRoute, useNavigate } from "@tanstack/react-router"
+import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router"
 import { Eye, EyeClosed } from "lucide-react"
 
 import { EmptyState } from "@/components/kino/common"
@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useCRPC } from "@/lib/convex/crpc"
+import { crpcServer } from "@/lib/convex/crpc-server"
 import { titleFromSlug, titleMeta } from "@/lib/seo"
 import { cn } from "@/lib/utils"
 import {
@@ -31,6 +32,17 @@ export const Route = createFileRoute("/@{$org}/create-project/")({
   head: ({ params }) => ({
     meta: [titleMeta(["Create Project", titleFromSlug(params.org)])],
   }),
+  loader: async ({ context, params }) => {
+    const orgData = await context.queryClient.ensureQueryData(
+      crpcServer.org.getDetails.queryOptions(
+        { slug: params.org },
+        { skipUnauth: true }
+      )
+    )
+    if (!orgData?.permissions.canCreate) {
+      throw redirect({ to: "/@{$org}", params: { org: params.org } })
+    }
+  },
   component: CreateProjectRoute,
 })
 

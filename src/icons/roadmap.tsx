@@ -23,7 +23,7 @@ function IconRoadmap2FillDuo18({ size = '18px', ...props }: IconProps) {
 				rx='2.75'
 				ry='2.75'
 				fill='currentColor'
-				opacity='.4'
+				opacity='var(--icon-secondary-opacity)'
 				strokeWidth='0'
 				data-color='color-2'
 			></rect>

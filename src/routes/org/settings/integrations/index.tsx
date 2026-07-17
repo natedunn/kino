@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from "@tanstack/react-query"
-import { createFileRoute } from "@tanstack/react-router"
+import { createFileRoute, redirect } from "@tanstack/react-router"
 import { CheckCircle2, GitBranch, RefreshCw } from "lucide-react"
 
 import { InlineAlert } from "@/components/inline-alert"
@@ -22,17 +22,17 @@ export const Route = createFileRoute("/org/settings/integrations/")({
   validateSearch: (search: Record<string, unknown>): IntegrationsSearch => ({
     github: typeof search.github === "string" ? search.github : undefined,
   }),
-  loader: ({ context, location }) => {
+  loader: async ({ context, location }) => {
     const orgSlug = (location.search as { org?: string }).org
     if (!context.loaderToken || !orgSlug) return
-    // Warm the caches without blocking navigation so the skeleton can show.
-    // The component's integration query stays gated on the org loading first.
-    void context.queryClient.ensureQueryData(
-      crpcServer.org.getDetails.queryOptions(
-        { slug: orgSlug },
-        { skipUnauth: true }
-      )
+    const orgData = await context.queryClient.ensureQueryData(
+      crpcServer.org.getDetails.queryOptions({ slug: orgSlug }, { skipUnauth: true })
     )
+    // Org integrations is edit-only. Bounce non-editors before render.
+    if (!orgData?.permissions.canEdit) {
+      throw redirect({ to: "/dashboard" })
+    }
+    // Warm the integration cache without blocking navigation.
     void context.queryClient.ensureQueryData(
       crpcServer.github.getOrgIntegration.queryOptions(
         { orgSlug },
@@ -86,7 +86,7 @@ function IntegrationsSettingsRoute() {
     return showSkeleton ? <SettingsSkeleton /> : null
   }
 
-  if (!orgQuery.data?.org) {
+  if (!orgQuery.data?.org || !orgQuery.data.permissions.canEdit) {
     return (
       <EmptyState
         title="Organization unavailable"

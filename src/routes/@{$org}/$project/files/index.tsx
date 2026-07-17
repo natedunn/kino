@@ -545,12 +545,16 @@ function FilesPage() {
               className="h-8 pl-8 pr-8 text-sm"
             />
             {globalSearch && (
-              <button
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-xs"
+                aria-label="Clear search"
                 onClick={() => setGlobalSearch("")}
-                className="absolute top-1/2 right-2.5 -translate-y-1/2 text-muted-foreground/60 transition-colors hover:text-foreground"
+                className="absolute top-1/2 right-1 size-6 -translate-y-1/2 text-muted-foreground/60"
               >
                 <X className="size-3.5" />
-              </button>
+              </Button>
             )}
           </div>
 

@@ -1,6 +1,6 @@
 import { Suspense } from "react"
 import { useSuspenseQuery } from "@tanstack/react-query"
-import { Link, Navigate, createFileRoute } from "@tanstack/react-router"
+import { Link, Navigate, createFileRoute, redirect } from "@tanstack/react-router"
 import { ArrowLeft } from "lucide-react"
 
 import { Skeleton } from "@/components/ui/skeleton"
@@ -14,14 +14,19 @@ export const Route = createFileRoute("/admin")({
   head: () => ({
     meta: [titleMeta(["Admin"])],
   }),
-  beforeLoad: ({ context, location }) => requireAuth(context, location),
-  loader: async ({ context }) => {
-    if (!context.loaderToken) {
-      return
-    }
-    await context.queryClient.ensureQueryData(
+  beforeLoad: async ({ context, location }) => {
+    requireAuth(context, location)
+    // System-admin only. On the server we can resolve the role up front and
+    // bounce non-admins before anything renders. On client navigations
+    // (no `loaderToken`) this falls open and the component's `<Navigate>` guard
+    // handles it. Server procedures remain the real boundary regardless.
+    if (!context.loaderToken) return
+    const profile = await context.queryClient.ensureQueryData(
       crpcServer.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
     )
+    if (profile?.role !== "system:admin") {
+      throw redirect({ to: "/dashboard" })
+    }
   },
   component: AdminPage,
 })

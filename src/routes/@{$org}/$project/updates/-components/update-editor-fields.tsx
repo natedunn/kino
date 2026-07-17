@@ -141,14 +141,16 @@ export function TagsField({
           {tags.map((tag) => (
             <Badge className="gap-1 pr-1" key={tag} variant="secondary">
               {tag}
-              <button
+              <Button
                 aria-label={`Remove tag ${tag}`}
-                className="ml-0.5 rounded-sm p-0.5 hover:bg-muted hover:text-destructive"
+                variant="ghost"
+                size="icon-xs"
+                className="ml-0.5 size-4 hover:text-destructive"
                 onClick={() => onChange(tags.filter((value) => value !== tag))}
                 type="button"
               >
                 <X className="h-3 w-3" />
-              </button>
+              </Button>
             </Badge>
           ))}
         </div>

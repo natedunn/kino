@@ -6,7 +6,7 @@ import ChevronLeft from '@/icons/chevron-left';
 import Home from '@/icons/home';
 import { cn } from '@/lib/utils';
 
-import { buttonVariants } from './ui/button';
+import { Button, buttonVariants } from './ui/button';
 
 export function NotFound({
 	className,
@@ -27,15 +27,13 @@ export function NotFound({
 					</h2>
 				</div>
 				<p className='mt-4 flex flex-wrap items-center gap-2'>
-					<button
+					<Button
+						variant='outline'
 						onClick={() => window.history.back()}
-						className={buttonVariants({
-							variant: 'outline',
-						})}
 					>
 						<ChevronLeft size='14px' />
 						Back
-					</button>
+					</Button>
 					<Link
 						to='/'
 						className={buttonVariants({

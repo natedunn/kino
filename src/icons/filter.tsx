@@ -18,7 +18,7 @@ function IconFilter2FillDuo18({ size = '18px', ...props }: IconProps) {
 			<path
 				d='M2.75 1.99999C2.336 1.99999 2 2.33599 2 2.74999V4.53499C2 5.05299 2.227 5.53999 2.622 5.87299L7 9.56799V16.25C7 16.664 7.336 17 7.75 17H10.25C10.664 17 11 16.664 11 16.25V9.56799L15.377 5.87299C15.773 5.53999 16 5.05199 16 4.53399V2.74899C16 2.33499 15.664 1.99899 15.25 1.99899L2.75 1.99999Z'
 				fill='currentColor'
-				fillOpacity='0.4'
+				opacity='var(--icon-secondary-opacity)'
 				data-color='color-2'
 			></path>
 		</svg>

@@ -8,7 +8,7 @@ import { GitBranch, Settings, Users } from "lucide-react"
 
 import { EmptyState } from "@/components/kino/common"
 import { MainNav } from "@/components/site-nav/main-nav"
-import { EditingBar, roleLabel } from "@/components/site-nav/editing-bar"
+import { EditingBar } from "@/components/site-nav/editing-bar"
 import {
   SidebarNavGroup,
   SidebarNavItem,
@@ -85,9 +85,7 @@ function AuthenticatedOrgSettingsShell() {
     useSettingsOrgController()
   // Whole settings area is an org editing surface. `findMyEditableOrgs` (backing
   // `activeOrg`) is filtered by the same `canEditOrgRole` helper that
-  // `verifyOrgAccess` uses, so an org appearing here already means edit access —
-  // the role is just for the display label.
-  const editingRole = activeOrg ? roleLabel(activeOrg.role) : null
+  // `verifyOrgAccess` uses, so an org appearing here already means edit access.
 
   const selectItems = navItems.map((item) => {
     const Icon = item.icon
@@ -114,7 +112,7 @@ function AuthenticatedOrgSettingsShell() {
           isUserPending={false}
           user={profileQuery.data}
         />
-        {editingRole ? <EditingBar role={editingRole} /> : null}
+        {activeOrg ? <EditingBar /> : null}
         <div className="container flex flex-1 flex-col overflow-visible">
           {isEmpty ? (
             <div className="py-12">

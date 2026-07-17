@@ -1,7 +1,12 @@
 import { useMemo, useState } from "react"
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { useForm } from "@tanstack/react-form"
-import { Link, createFileRoute, useNavigate } from "@tanstack/react-router"
+import {
+  Link,
+  createFileRoute,
+  redirect,
+  useNavigate,
+} from "@tanstack/react-router"
 
 import { EmptyState } from "@/components/kino/common"
 import { InlineAlert } from "@/components/inline-alert"
@@ -24,6 +29,18 @@ export const Route = createFileRoute(
   "/@{$org}/$project/feedback/boards/$board/edit"
 )({
   loader: async ({ context, params }) => {
+    const projectData = await context.queryClient.ensureQueryData(
+      crpcServer.project.getDetails.queryOptions({
+        orgSlug: params.org,
+        slug: params.project,
+      })
+    )
+    if (!projectData?.permissions.canEdit) {
+      throw redirect({
+        to: "/@{$org}/$project/feedback",
+        params: { org: params.org, project: params.project },
+      })
+    }
     const board = await context.queryClient.ensureQueryData(
       crpcServer.feedbackBoard.get.queryOptions({
         id: params.board,

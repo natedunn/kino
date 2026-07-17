@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { useForm } from "@tanstack/react-form"
-import { createFileRoute, useNavigate } from "@tanstack/react-router"
+import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router"
 
 import { EmptyState, slugify } from "@/components/kino/common"
 import { InlineAlert } from "@/components/inline-alert"
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { useCRPC } from "@/lib/convex/crpc"
+import { crpcServer } from "@/lib/convex/crpc-server"
 import { projectTitle, titleMeta } from "@/lib/seo"
 import {
   FORM_LIMITS,
@@ -17,6 +18,20 @@ import {
 } from "@/lib/validation"
 
 export const Route = createFileRoute("/@{$org}/$project/feedback/boards/new")({
+  loader: async ({ context, params }) => {
+    const projectData = await context.queryClient.ensureQueryData(
+      crpcServer.project.getDetails.queryOptions({
+        orgSlug: params.org,
+        slug: params.project,
+      })
+    )
+    if (!projectData?.permissions.canEdit) {
+      throw redirect({
+        to: "/@{$org}/$project/feedback",
+        params: { org: params.org, project: params.project },
+      })
+    }
+  },
   head: ({ params }) => ({
     meta: [
       titleMeta([

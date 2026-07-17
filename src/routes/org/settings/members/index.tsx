@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { useMutation, useQuery } from "@tanstack/react-query"
-import { createFileRoute } from "@tanstack/react-router"
+import { createFileRoute, redirect } from "@tanstack/react-router"
 import { Trash2 } from "lucide-react"
 
 import { InlineAlert } from "@/components/inline-alert"
@@ -23,25 +23,25 @@ export const Route = createFileRoute("/org/settings/members/")({
   head: () => ({
     meta: [titleMeta(["Members"])],
   }),
-  loader: ({ context, location }) => {
+  loader: async ({ context, location }) => {
     const orgSlug = (location.search as { org?: string }).org
-    if (context.loaderToken && orgSlug) {
-      // Warm the cache without blocking navigation so the skeleton can show.
-      void context.queryClient.ensureQueryData(
-        crpcServer.org.getDetails.queryOptions(
-          { slug: orgSlug },
-          { skipUnauth: true }
-        )
-      )
-      void context.queryClient.ensureQueryData(
-        crpcServer.orgMember.listMembers.queryOptions({ slug: orgSlug })
-      )
-      void context.queryClient.ensureQueryData(
-        crpcServer.orgMember.listPendingInvitations.queryOptions({
-          slug: orgSlug,
-        })
-      )
+    if (!context.loaderToken || !orgSlug) return
+    const orgData = await context.queryClient.ensureQueryData(
+      crpcServer.org.getDetails.queryOptions({ slug: orgSlug }, { skipUnauth: true })
+    )
+    // Managing members is edit-only. Bounce non-editors before render; the
+    // component still enforces the finer `canManage` distinction.
+    if (!orgData?.permissions.canEdit) {
+      throw redirect({ to: "/dashboard" })
     }
+    void context.queryClient.ensureQueryData(
+      crpcServer.orgMember.listMembers.queryOptions({ slug: orgSlug })
+    )
+    void context.queryClient.ensureQueryData(
+      crpcServer.orgMember.listPendingInvitations.queryOptions({
+        slug: orgSlug,
+      })
+    )
   },
   component: MembersSettingsRoute,
 })

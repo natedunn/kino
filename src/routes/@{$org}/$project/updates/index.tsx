@@ -6,10 +6,11 @@ import {
   useQueryClient,
   useSuspenseQuery,
 } from "@tanstack/react-query"
-import { createFileRoute, Link, notFound } from "@tanstack/react-router"
+import { createFileRoute, Link, notFound, redirect } from "@tanstack/react-router"
 
 import { RoutePending } from "@/components/route-pending"
 import { Button } from "@/components/ui/button"
+import { EditingBar } from "@/components/site-nav/editing-bar"
 import { Skeleton } from "@/components/ui/skeleton"
 import CirclePlusOutline from "@/icons/circle-plus-outline"
 import Missing from "@/icons/missing"
@@ -74,6 +75,15 @@ export const Route = createFileRoute("/@{$org}/$project/updates/")({
 
     if (!projectData?.project) {
       throw notFound()
+    }
+
+    // Manage Updates is an edit-only surface. Bounce non-editors to the project
+    // overview before any list data loads. Server procedures still enforce this.
+    if (!projectData.permissions.canEdit) {
+      throw redirect({
+        to: "/@{$org}/$project",
+        params: { org: params.org, project: params.project },
+      })
     }
 
     // Non-blocking warm-up: `intent` preload runs this loader on hover/focus, so
@@ -244,6 +254,8 @@ function UpdatesListRoute() {
   }
 
   return (
+    <>
+      <EditingBar />
     <div className="container flex flex-1 flex-col overflow-visible">
       <div className="flex flex-1 flex-col gap-8 md:grid md:grid-cols-12">
         <div className="order-last py-6 md:order-first md:col-span-3 md:border-r md:border-border/75">
@@ -336,5 +348,6 @@ function UpdatesListRoute() {
         </div>
       </div>
     </div>
+    </>
   )
 }
