@@ -18,7 +18,7 @@ function IconLightbulb2FillDuo18({ size = '18px', ...props }: IconProps) {
 			<path
 				d='M7.76863 1.12885C11.4751 0.354749 14.75 3.16999 14.75 6.74999C14.75 8.82737 13.6463 10.6414 12 11.6506V13L5.99996 13V11.6505C4.0676 10.4651 2.89153 8.17058 3.35019 5.66114L3.35049 5.65951C3.76531 3.41782 5.59416 1.58298 7.76863 1.12885Z'
 				fill='currentColor'
-				fillOpacity='0.4'
+				opacity='var(--icon-secondary-opacity)'
 				data-color='color-2'
 			></path>
 			<path

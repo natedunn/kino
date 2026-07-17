@@ -44,9 +44,9 @@ function IconBugFillDuo18({ size = '18px', ...props }: IconProps) {
 				fill='currentColor'
 			></path>
 			<path
-				opacity='0.4'
 				d='M11.25 5H6.75C5.2334 5 4 6.2334 4 7.75V11C4 13.7568 6.2432 16 9 16C11.7568 16 14 13.7568 14 11V7.75C14 6.2334 12.7666 5 11.25 5Z'
 				fill='currentColor'
+				opacity='var(--icon-secondary-opacity)'
 				data-color='color-2'
 			></path>
 			<path

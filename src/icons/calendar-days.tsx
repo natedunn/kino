@@ -20,7 +20,7 @@ function IconCalendarDaysFillDuo18({ size = '18px', ...props }: IconProps) {
 				clipRule='evenodd'
 				d='M1.5 4.75C1.5 3.23069 2.73128 2 4.25 2H13.75C15.2687 2 16.5 3.23069 16.5 4.75V13.25C16.5 14.7693 15.2687 16 13.75 16H4.25C2.73128 16 1.5 14.7693 1.5 13.25V4.75Z'
 				fill='currentColor'
-				fillOpacity='0.4'
+				opacity='var(--icon-secondary-opacity)'
 				data-color='color-2'
 			></path>
 			<path

@@ -18,7 +18,7 @@ function IconHouse4FillDuo18({ size = '18px', ...props }: IconProps) {
 			<path
 				d='M10.059 1.5L15.309 5.489C15.741 5.818 16 6.339 16 6.883L16 14.25C16 15.767 14.767 17 13.25 17H4.75001C3.23301 17 2.00001 15.767 2.00001 14.25L2 6.883C2 6.339 2.258 5.818 2.691 5.489L7.941 1.5C8.564 1.026 9.435 1.025 10.059 1.5Z'
 				fill='currentColor'
-				fillOpacity='0.4'
+				opacity='var(--icon-secondary-opacity)'
 				data-color='color-2'
 			></path>
 			<path

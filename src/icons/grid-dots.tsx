@@ -16,27 +16,27 @@ function IconGridDotsFillDuo18({ size = '18px', ...props }: IconProps) {
 			{...props}
 		>
 			<path
-				opacity='0.4'
 				d='M9.00012 4C9.55241 4 10.0001 3.55228 10.0001 3C10.0001 2.44772 9.55241 2 9.00012 2C8.44784 2 8.00012 2.44772 8.00012 3C8.00012 3.55228 8.44784 4 9.00012 4Z'
 				fill='currentColor'
+				opacity='var(--icon-secondary-opacity)'
 				data-color='color-2'
 			></path>
 			<path
-				opacity='0.4'
 				d='M3.00012 10C3.55241 10 4.00012 9.55228 4.00012 9C4.00012 8.44772 3.55241 8 3.00012 8C2.44784 8 2.00012 8.44772 2.00012 9C2.00012 9.55228 2.44784 10 3.00012 10Z'
 				fill='currentColor'
+				opacity='var(--icon-secondary-opacity)'
 				data-color='color-2'
 			></path>
 			<path
-				opacity='0.4'
 				d='M15.0001 10C15.5524 10 16.0001 9.55228 16.0001 9C16.0001 8.44772 15.5524 8 15.0001 8C14.4478 8 14.0001 8.44772 14.0001 9C14.0001 9.55228 14.4478 10 15.0001 10Z'
 				fill='currentColor'
+				opacity='var(--icon-secondary-opacity)'
 				data-color='color-2'
 			></path>
 			<path
-				opacity='0.4'
 				d='M9.00012 16C9.55241 16 10.0001 15.5523 10.0001 15C10.0001 14.4477 9.55241 14 9.00012 14C8.44784 14 8.00012 14.4477 8.00012 15C8.00012 15.5523 8.44784 16 9.00012 16Z'
 				fill='currentColor'
+				opacity='var(--icon-secondary-opacity)'
 				data-color='color-2'
 			></path>
 			<path

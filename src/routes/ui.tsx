@@ -10,6 +10,7 @@ import {
 } from "lucide-react"
 
 import type { LabItem } from "@/components/ui-lab/types"
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { COMPONENT_ITEMS } from "@/components/ui-lab/component-demos"
 import { EXAMPLE_ITEMS } from "@/components/ui-lab/example-demos"
@@ -94,15 +95,17 @@ function UiLibraryPage() {
               </p>
             </div>
           </div>
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="icon"
             onClick={toggleThemePreference}
             aria-label="Toggle theme"
-            className="relative flex size-8 items-center justify-center rounded-md border bg-background text-muted-foreground transition-colors hover:text-foreground"
+            className="relative"
           >
             <SunIcon className="size-4 scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
             <MoonIcon className="absolute size-4 scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
-          </button>
+          </Button>
         </div>
 
         <div className="px-3 py-3">

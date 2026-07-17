@@ -18,7 +18,7 @@ function IconFolder5OpenFillDuo18({ size = '18px', ...props }: IconProps) {
 			<path
 				d='M14.251 16H3.75C2.23079 16 1 14.7692 1 13.25V3.75C1 2.78379 1.78379 2 2.75 2H6.547C7.05184 2 7.53228 2.21878 7.86426 2.59794L9.9654 5H14.251C15.2175 5 16.001 5.7835 16.001 6.75V9.5L14.251 16Z'
 				fill='currentColor'
-				fillOpacity='0.4'
+				opacity='var(--icon-secondary-opacity)'
 				data-color='color-2'
 			></path>
 			<path

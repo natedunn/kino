@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { useForm } from "@tanstack/react-form"
-import { createFileRoute, useNavigate } from "@tanstack/react-router"
+import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router"
 
 import { InlineAlert } from "@/components/inline-alert"
 import { EmptyState } from "@/components/kino/common"
@@ -74,17 +74,15 @@ export const Route = createFileRoute("/org/settings/general/")({
   head: () => ({
     meta: [titleMeta(["General Settings"])],
   }),
-  loader: ({ context, location }) => {
+  loader: async ({ context, location }) => {
     const orgSlug = (location.search as { org?: string }).org
-    if (context.loaderToken && orgSlug) {
-      // Warm the cache without blocking navigation, so switching orgs renders
-      // the page immediately and its skeleton animates until data is ready.
-      void context.queryClient.ensureQueryData(
-        crpcServer.org.getDetails.queryOptions(
-          { slug: orgSlug },
-          { skipUnauth: true }
-        )
-      )
+    if (!context.loaderToken || !orgSlug) return
+    const orgData = await context.queryClient.ensureQueryData(
+      crpcServer.org.getDetails.queryOptions({ slug: orgSlug }, { skipUnauth: true })
+    )
+    // Org general settings is edit-only. Bounce non-editors before render.
+    if (!orgData?.permissions.canEdit) {
+      throw redirect({ to: "/dashboard" })
     }
   },
   component: GeneralSettingsRoute,

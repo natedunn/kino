@@ -6,6 +6,7 @@ import {
   createFileRoute,
   getRouteApi,
   notFound,
+  redirect,
   useNavigate,
 } from "@tanstack/react-router"
 import { ArrowLeft, Image, LinkIcon, Settings2, Tag, Trash2 } from "lucide-react"
@@ -67,6 +68,17 @@ export const Route = createFileRoute("/@{$org}/$project/updates/$slug/edit")({
 
     if (!projectData?.project?.id) {
       throw notFound()
+    }
+
+    if (!projectData.permissions.canEdit) {
+      throw redirect({
+        to: "/@{$org}/$project/updates/$slug",
+        params: {
+          org: params.org,
+          project: params.project,
+          slug: params.slug,
+        },
+      })
     }
 
     const updateData = await context.queryClient.ensureQueryData(

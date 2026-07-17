@@ -21,7 +21,7 @@ function IconPen2OutlineDuo18({ strokeWidth = 1.5, size = '18px', ...props }: Ic
 				clipRule='evenodd'
 				d='M13.5606 7.47042L10.5306 4.44042L4.266 10.705C3.32896 11.642 2.76299 15.1756 2.75119 15.2498C2.7504 15.2499 2.75 15.25 2.75 15.25L2.751 15.251C2.751 15.251 2.75106 15.2506 2.75119 15.2498C2.82545 15.238 6.35897 14.672 7.296 13.735L13.5606 7.47042Z'
 				fill='currentColor'
-				fillOpacity='0.3'
+				opacity='var(--icon-secondary-opacity)'
 				data-color='color-2'
 				data-stroke='none'
 			></path>

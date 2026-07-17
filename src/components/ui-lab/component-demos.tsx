@@ -118,7 +118,7 @@ import {
 } from "@/components/ui/tooltip"
 
 import type { LabItem } from "./types"
-import { Cell, Demo } from "./parts"
+import { Cell, CopySnippet, Demo } from "./parts"
 
 /* ------------------------------------------------------------------ */
 /* Buttons                                                            */
@@ -1004,6 +1004,37 @@ function ToggleRowDemo() {
   )
 }
 
+/* ------------------------------------------------------------------ */
+/* Copy Snippet                                                       */
+/* ------------------------------------------------------------------ */
+
+function CopySnippetDemo() {
+  return (
+    <>
+      <Demo
+        title="Single line"
+        description="Click to copy the snippet to the clipboard."
+      >
+        <CopySnippet
+          code={`import { Button } from "@/components/ui/button"`}
+          className="w-full"
+        />
+      </Demo>
+      <Demo title="Multi-line">
+        <CopySnippet
+          code={`import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"`}
+          className="w-full"
+        />
+      </Demo>
+    </>
+  )
+}
+
 export const COMPONENT_ITEMS: LabItem[] = [
   {
     id: "button",
@@ -1257,5 +1288,13 @@ export const COMPONENT_ITEMS: LabItem[] = [
     importCode: `import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"`,
     render: () => <ToggleRowDemo />,
+  },
+  {
+    id: "copy-snippet",
+    name: "Copy Snippet",
+    description:
+      "A copy-to-clipboard code snippet — used for the import block at the top of each page.",
+    importCode: `import { CopySnippet } from "@/components/ui-lab/parts"`,
+    render: () => <CopySnippetDemo />,
   },
 ]

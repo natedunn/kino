@@ -3,9 +3,9 @@ import { revalidateLogic, useForm } from "@tanstack/react-form"
 import { useMutation, useQuery } from "@tanstack/react-query"
 import {
   Link,
-  Navigate,
   createFileRoute,
   getRouteApi,
+  redirect,
   useNavigate,
 } from "@tanstack/react-router"
 import { ArrowLeft, LinkIcon, Settings2, Tag } from "lucide-react"
@@ -24,9 +24,11 @@ import { InlineAlert } from "@/components/inline-alert"
 import { SidebarSection } from "@/components/sidebar-section"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { EditingBar } from "@/components/site-nav/editing-bar"
 import { Separator } from "@/components/ui/separator"
 import { authClient } from "@/lib/convex/auth-client"
 import { useCRPC } from "@/lib/convex/crpc"
+import { crpcServer } from "@/lib/convex/crpc-server"
 import { useSidebarState } from "@/lib/hooks/use-sidebar-state"
 import { projectTitle, titleMeta } from "@/lib/seo"
 import { cn } from "@/lib/utils"
@@ -48,6 +50,21 @@ const routeApi = getRouteApi("/@{$org}/$project/updates/new/")
 
 export const Route = createFileRoute("/@{$org}/$project/updates/new/")({
   component: NewUpdateRoute,
+  loader: async ({ context, params }) => {
+    const projectData = await context.queryClient.ensureQueryData(
+      crpcServer.project.getDetails.queryOptions({
+        orgSlug: params.org,
+        slug: params.project,
+      })
+    )
+
+    if (!projectData?.permissions.canEdit) {
+      throw redirect({
+        to: "/@{$org}/$project/updates",
+        params: { org: params.org, project: params.project },
+      })
+    }
+  },
   head: ({ params }) => ({
     meta: [titleMeta(["New Update", projectTitle(params.org, params.project)])],
   }),
@@ -140,17 +157,8 @@ function NewUpdateRoute() {
     )
   }
 
-  if (projectQuery.isLoading) {
+  if (!projectQuery.data) {
     return <div className="h-48 animate-pulse rounded-lg bg-muted/40" />
-  }
-
-  if (!projectQuery.data?.permissions?.canEdit) {
-    return (
-      <Navigate
-        params={{ org: params.org, project: params.project }}
-        to="/@{$org}/$project/updates"
-      />
-    )
   }
 
   const project = projectQuery.data.project
@@ -193,6 +201,8 @@ function NewUpdateRoute() {
   }
 
   return (
+    <>
+      <EditingBar />
     <form
       onSubmit={(event) => {
         event.preventDefault()
@@ -377,5 +387,6 @@ function NewUpdateRoute() {
         </div>
       </div>
     </form>
+    </>
   )
 }

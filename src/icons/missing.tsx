@@ -23,21 +23,21 @@ function IconGridEmptyObjBottomLeftOutlineDuo18({
 			<path
 				d='M11.75 7.25L14.75 7.25C15.3023 7.25 15.75 6.80228 15.75 6.25V3.25C15.75 2.69772 15.3023 2.25 14.75 2.25L11.75 2.25C11.1977 2.25 10.75 2.69772 10.75 3.25V6.25C10.75 6.80228 11.1977 7.25 11.75 7.25Z'
 				fill='currentColor'
-				fillOpacity='0.3'
+				opacity='var(--icon-secondary-opacity)'
 				data-color='color-2'
 				data-stroke='none'
 			></path>
 			<path
 				d='M11.75 15.75H14.75C15.3023 15.75 15.75 15.3023 15.75 14.75V11.75C15.75 11.1977 15.3023 10.75 14.75 10.75H11.75C11.1977 10.75 10.75 11.1977 10.75 11.75V14.75C10.75 15.3023 11.1977 15.75 11.75 15.75Z'
 				fill='currentColor'
-				fillOpacity='0.3'
+				opacity='var(--icon-secondary-opacity)'
 				data-color='color-2'
 				data-stroke='none'
 			></path>
 			<path
 				d='M3.25 7.25L6.25 7.25C6.80228 7.25 7.25 6.80228 7.25 6.25L7.25 3.25C7.25 2.69772 6.80228 2.25 6.25 2.25L3.25 2.25C2.69772 2.25 2.25 2.69772 2.25 3.25L2.25 6.25C2.25 6.80228 2.69772 7.25 3.25 7.25Z'
 				fill='currentColor'
-				fillOpacity='0.3'
+				opacity='var(--icon-secondary-opacity)'
 				data-color='color-2'
 				data-stroke='none'
 			></path>

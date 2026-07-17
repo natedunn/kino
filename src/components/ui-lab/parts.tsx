@@ -3,6 +3,7 @@ import { useState } from "react"
 import { CheckIcon, CopyIcon } from "lucide-react"
 import { toast } from "sonner"
 
+import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
 /**
@@ -100,25 +101,27 @@ export function CopySnippet({
   return (
     <div
       className={cn(
-        "group relative flex items-start gap-3 rounded-lg border bg-muted/40 py-2.5 pr-2 pl-3.5",
+        "group relative flex items-start gap-3 rounded-lg border bg-accent py-2.5 pr-2 pl-3.5",
         className
       )}
     >
       <pre className="flex-1 overflow-x-auto py-0.5 font-mono text-xs leading-relaxed text-muted-foreground">
         {code}
       </pre>
-      <button
+      <Button
         type="button"
+        variant="outline"
+        size="icon-sm"
         onClick={handleCopy}
         aria-label="Copy code"
-        className="sticky right-0 flex size-7 shrink-0 items-center justify-center rounded-md border bg-background text-muted-foreground transition-colors hover:text-foreground"
+        className="sticky right-0 shrink-0"
       >
         {copied ? (
           <CheckIcon className="size-3.5 text-green-500" />
         ) : (
           <CopyIcon className="size-3.5" />
         )}
-      </button>
+      </Button>
     </div>
   )
 }

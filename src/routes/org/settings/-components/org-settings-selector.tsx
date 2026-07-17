@@ -1,6 +1,6 @@
 import { Check, ChevronsUpDown } from "lucide-react"
 
-import { buttonVariants } from "@/components/ui/button"
+import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -53,12 +53,10 @@ export function OrgSettingsSelector({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button
-          type="button"
-          className={cn(
-            buttonVariants({ size: "lg", variant: "outline" }),
-            "w-full justify-between"
-          )}
+        <Button
+          variant="outline"
+          size="lg"
+          className="w-full justify-between"
         >
           <span className="inline-flex min-w-0 items-center gap-2">
             {active ? (
@@ -73,7 +71,7 @@ export function OrgSettingsSelector({
             )}
           </span>
           <ChevronsUpDown className="size-4 shrink-0 text-muted-foreground" />
-        </button>
+        </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-(--anchor-width)">
         <DropdownMenuLabel className="text-xs text-muted-foreground">

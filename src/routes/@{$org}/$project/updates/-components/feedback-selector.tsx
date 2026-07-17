@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { Check, Plus, Search, X } from "lucide-react"
 
+import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -83,16 +84,18 @@ export function FeedbackSelector({
                   </div>
                 ) : null}
               </div>
-              <button
+              <Button
                 aria-label={`Remove ${item.title}`}
-                className="rounded p-1 hover:bg-muted"
+                variant="ghost"
+                size="icon-xs"
+                className="text-muted-foreground hover:text-destructive"
                 onClick={() =>
                   onChange(selectedIds.filter((id) => id !== item.id))
                 }
                 type="button"
               >
-                <X className="h-4 w-4 text-muted-foreground hover:text-destructive" />
-              </button>
+                <X className="h-4 w-4" />
+              </Button>
             </div>
           ))}
         </div>

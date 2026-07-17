@@ -9,10 +9,10 @@ import {
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query"
 import {
   Link,
-  Navigate,
   createFileRoute,
   getRouteApi,
   notFound,
+  redirect,
   useNavigate,
 } from "@tanstack/react-router"
 import {
@@ -34,6 +34,7 @@ import { InlineAlert } from "@/components/inline-alert"
 import { RoutePending } from "@/components/route-pending"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { EditingBar } from "@/components/site-nav/editing-bar"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
   Dialog,
@@ -100,7 +101,10 @@ export const Route = createFileRoute("/@{$org}/$project/updates/edit/")({
     }
 
     if (!projectData.permissions.canEdit) {
-      return
+      throw redirect({
+        to: "/@{$org}/$project/updates",
+        params: { org: params.org, project: params.project },
+      })
     }
 
     await context.queryClient.ensureQueryData(
@@ -152,20 +156,14 @@ function UpdatesDashboardRoute() {
     throw notFound()
   }
 
-  if (!projectData.permissions.canEdit) {
-    return (
-      <Navigate
-        params={{ org: params.org, project: params.project }}
-        to="/@{$org}/$project/updates"
-      />
-    )
-  }
-
   return (
-    <UpdatesDashboard
-      canDelete={projectData.permissions.canDelete}
-      pageSize={pageSize}
-    />
+    <>
+      <EditingBar />
+      <UpdatesDashboard
+        canDelete={projectData.permissions.canDelete}
+        pageSize={pageSize}
+      />
+    </>
   )
 }
 

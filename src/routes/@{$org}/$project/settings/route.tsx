@@ -2,6 +2,8 @@ import {
   Link,
   Outlet,
   createFileRoute,
+  notFound,
+  redirect,
   useRouterState,
 } from "@tanstack/react-router"
 import {
@@ -12,26 +14,46 @@ import {
   Users,
 } from "lucide-react"
 
-import { useQuery } from "@tanstack/react-query"
-
-import { EditingBar, roleLabel } from "@/components/site-nav/editing-bar"
+import { EditingBar } from "@/components/site-nav/editing-bar"
 import {
   SidebarNavGroup,
   SidebarNavItem,
   SidebarNavSelect,
 } from "@/components/sidebar-nav"
-import { useCRPC } from "@/lib/convex/crpc"
+import { crpcServer } from "@/lib/convex/crpc-server"
 import { titleMeta } from "@/lib/seo"
 
 export const Route = createFileRoute("/@{$org}/$project/settings")({
   head: () => ({
     meta: [titleMeta(["Settings"])],
   }),
+  // The entire project settings area is edit-only. Gate the whole layout here
+  // so every child page (general/boards/members/integrations/danger) is
+  // protected in one explicit place. `getDetails` is cached by the `$project`
+  // loader, so this is a free read. Server procedures remain the real boundary.
+  loader: async ({ context, params }) => {
+    const projectData = await context.queryClient.ensureQueryData(
+      crpcServer.project.getDetails.queryOptions({
+        orgSlug: params.org,
+        slug: params.project,
+      })
+    )
+
+    if (!projectData?.project) {
+      throw notFound()
+    }
+
+    if (!projectData.permissions.canEdit) {
+      throw redirect({
+        to: "/@{$org}/$project",
+        params: { org: params.org, project: params.project },
+      })
+    }
+  },
   component: ProjectSettingsRoute,
 })
 
 function ProjectSettingsRoute() {
-  const crpc = useCRPC()
   const params = Route.useParams()
   const linkParams = {
     org: params.org,
@@ -40,27 +62,6 @@ function ProjectSettingsRoute() {
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
   })
-  // Whole settings area is a project editing surface. Gate on the canonical
-  // `permissions.canEdit` from `verifyProjectAccess` (cached by the `$project`
-  // loader, so this is a free read); role is only for the display label.
-  const projectQuery = useQuery(
-    crpc.project.getDetails.queryOptions(
-      { orgSlug: params.org, slug: params.project },
-      { subscribe: false }
-    )
-  )
-  const projectData = projectQuery.data
-  // Label mirrors `verifyProjectAccess`'s precedence: it grants edit via the
-  // system role first (system:admin/editor), then the project membership. So
-  // prefer the system role when present, else fall back to the member role.
-  const systemRole = projectData?.profile?.role
-  const effectiveRole =
-    systemRole === "system:admin" || systemRole === "system:editor"
-      ? systemRole
-      : projectData?.projectMember?.role
-  const editingRole = projectData?.permissions.canEdit
-    ? roleLabel(effectiveRole)
-    : null
 
   const items = [
     {
@@ -111,7 +112,7 @@ function ProjectSettingsRoute() {
 
   return (
     <>
-      {editingRole ? <EditingBar role={editingRole} /> : null}
+      <EditingBar />
       <div className="container flex flex-1 flex-col overflow-visible">
         <div className="py-4 md:hidden">
           <SidebarNavSelect items={navItems} />

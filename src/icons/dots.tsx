@@ -21,6 +21,7 @@ function IconDotsOutline18({ strokeWidth = 1.5, size = '18px', ...props }: IconP
 				cy='9'
 				r='.5'
 				fill='currentColor'
+				opacity='var(--icon-secondary-opacity)'
 				stroke='currentColor'
 				strokeLinecap='round'
 				strokeLinejoin='round'

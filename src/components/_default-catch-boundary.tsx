@@ -9,6 +9,7 @@ import {
 } from "@tanstack/react-router"
 import type { ErrorComponentProps } from "@tanstack/react-router"
 
+import { Button } from "@/components/ui/button"
 import { RoutePending } from "@/components/route-pending"
 import { captureAppError } from "@/lib/posthog"
 
@@ -54,32 +55,29 @@ export function DefaultCatchBoundary({ error }: ErrorComponentProps) {
         <ErrorComponent error={error} />
       </div>
       <div className="flex w-full flex-wrap items-start gap-2">
-        <button
+        <Button
           onClick={() => {
             router.invalidate()
           }}
-          className={`rounded bg-gray-600 px-2 py-1 font-extrabold text-white uppercase dark:bg-gray-700`}
         >
           Try Again
-        </button>
+        </Button>
         {isRoot ? (
-          <Link
-            to="/"
-            className={`rounded bg-gray-600 px-2 py-1 font-extrabold text-white uppercase dark:bg-gray-700`}
-          >
-            Home
-          </Link>
+          <Button asChild variant="outline">
+            <Link to="/">Home</Link>
+          </Button>
         ) : (
-          <Link
-            to="/"
-            className={`rounded bg-gray-600 px-2 py-1 font-extrabold text-white uppercase dark:bg-gray-700`}
-            onClick={(e) => {
-              e.preventDefault()
-              window.history.back()
-            }}
-          >
-            Go Back
-          </Link>
+          <Button asChild variant="outline">
+            <Link
+              to="/"
+              onClick={(e) => {
+                e.preventDefault()
+                window.history.back()
+              }}
+            >
+              Go Back
+            </Link>
+          </Button>
         )}
       </div>
     </div>

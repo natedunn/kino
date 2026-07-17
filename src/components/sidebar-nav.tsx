@@ -1,6 +1,6 @@
 import { ChevronDown, ChevronRight } from "lucide-react"
 
-import { buttonVariants } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -67,7 +67,7 @@ export function SidebarNavItem({
         "group inline-flex! w-full items-center justify-start text-left",
         // Active = a contrasty foreground-alpha gradient (deepens on light,
         // lifts on dark), with a soft same-tone border that blends into the fill.
-        "data-[active]:pointer-events-none data-[active]:border-foreground/10 data-[active]:from-foreground/8 data-[active]:via-foreground/12 data-[active]:to-foreground/12 data-[active]:text-accent-foreground",
+        "data-[active]:pointer-events-none data-[active]:border-foreground/10 data-[active]:from-foreground/5 data-[active]:via-foreground/8 data-[active]:to-foreground/8 data-[active]:text-accent-foreground dark:data-[active]:from-foreground/8 dark:data-[active]:via-foreground/12 dark:data-[active]:to-foreground/12",
         className
       )}
     >
@@ -111,20 +111,17 @@ export function SidebarNavSelect({ items, className }: SidebarNavSelectProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button
-          type="button"
-          className={cn(
-            buttonVariants({ variant: "outline", size: "lg" }),
-            "w-full justify-between",
-            className
-          )}
+        <Button
+          variant="outline"
+          size="lg"
+          className={cn("w-full justify-between", className)}
         >
           <span className="inline-flex min-w-0 items-center gap-3">
             {activeItem.icon}
             <span className="truncate">{activeItem.label}</span>
           </span>
           <ChevronDown className="size-4 text-muted-foreground" />
-        </button>
+        </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-[var(--anchor-width)]">
         {items.map((item) => (
