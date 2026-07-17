@@ -1,5 +1,6 @@
-import { Link } from '@tanstack/react-router';
 import type { ClassValue } from '@/lib/utils';
+
+import { Link } from '@tanstack/react-router';
 
 // import { ChevronLeft, Home } from 'lucide-react';
 import ChevronLeft from '@/icons/chevron-left';
@@ -27,10 +28,7 @@ export function NotFound({
 					</h2>
 				</div>
 				<p className='mt-4 flex flex-wrap items-center gap-2'>
-					<Button
-						variant='outline'
-						onClick={() => window.history.back()}
-					>
+					<Button variant='outline' onClick={() => window.history.back()}>
 						<ChevronLeft size='14px' />
 						Back
 					</Button>

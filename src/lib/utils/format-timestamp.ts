@@ -92,7 +92,13 @@ export function formatTimestamp(
 	const HOURS = 60 * MINUTES;
 	const DAYS = 24 * HOURS;
 
-	opts = { ordinal: false, alwaysIncludeYear: false, yearComma: true, relative: true, ...opts };
+	opts = {
+		ordinal: false,
+		alwaysIncludeYear: false,
+		yearComma: true,
+		relative: true,
+		...opts,
+	};
 
 	const date = new Date(timestamp);
 	const now = new Date();

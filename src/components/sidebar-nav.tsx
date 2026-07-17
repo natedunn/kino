@@ -1,50 +1,44 @@
-import { ChevronDown, ChevronRight } from "lucide-react"
+import { ChevronDown, ChevronRight } from 'lucide-react';
 
-import { Button, buttonVariants } from "@/components/ui/button"
+import { Button, buttonVariants } from '@/components/ui/button';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { cn } from "@/lib/utils"
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { cn } from '@/lib/utils';
 
 type SidebarNavGroupProps = {
-  /** Optional heading rendered above the list (e.g. "Settings", "Categories"). */
-  title?: React.ReactNode
-  children: React.ReactNode
-  className?: string
-}
+	/** Optional heading rendered above the list (e.g. "Settings", "Categories"). */
+	title?: React.ReactNode;
+	children: React.ReactNode;
+	className?: string;
+};
 
 /**
  * Heading + vertical list container shared by every left-side sidebar nav.
  * Pair with {@link SidebarNavItem} for the individual links/buttons.
  */
-export function SidebarNavGroup({
-  title,
-  children,
-  className,
-}: SidebarNavGroupProps) {
-  return (
-    <div className={className}>
-      {title ? (
-        <h2 className="mx-2 mb-2 text-sm font-bold text-muted-foreground">
-          {title}
-        </h2>
-      ) : null}
-      <div className="flex flex-col gap-1">{children}</div>
-    </div>
-  )
+export function SidebarNavGroup({ title, children, className }: SidebarNavGroupProps) {
+	return (
+		<div className={className}>
+			{title ? (
+				<h2 className='mx-2 mb-2 text-sm font-bold text-muted-foreground'>{title}</h2>
+			) : null}
+			<div className='flex flex-col gap-1'>{children}</div>
+		</div>
+	);
 }
 
 type SidebarNavItemProps = {
-  /** Marks the item as the active/current selection. */
-  active?: boolean
-  /** Optional leading icon. */
-  icon?: React.ReactNode
-  children: React.ReactNode
-  className?: string
-}
+	/** Marks the item as the active/current selection. */
+	active?: boolean;
+	/** Optional leading icon. */
+	icon?: React.ReactNode;
+	children: React.ReactNode;
+	className?: string;
+};
 
 /**
  * Ghost-styled sidebar entry. Render it as the child of a TanStack `<Link>`
@@ -52,92 +46,83 @@ type SidebarNavItemProps = {
  * site. When `active`, it uses the same foreground-alpha gradient family as the
  * ghost pressed state and exposes the current item to assistive technology.
  */
-export function SidebarNavItem({
-  active,
-  icon,
-  children,
-  className,
-}: SidebarNavItemProps) {
-  return (
-    <span
-      aria-current={active ? "page" : undefined}
-      data-active={active || undefined}
-      className={cn(
-        buttonVariants({ variant: "ghost" }),
-        "group inline-flex! w-full items-center justify-start text-left",
-        // Active = a contrasty foreground-alpha gradient (deepens on light,
-        // lifts on dark), with a soft same-tone border that blends into the fill.
-        "data-[active]:pointer-events-none data-[active]:border-foreground/10 data-[active]:from-foreground/5 data-[active]:via-foreground/8 data-[active]:to-foreground/8 data-[active]:text-accent-foreground dark:data-[active]:from-foreground/8 dark:data-[active]:via-foreground/12 dark:data-[active]:to-foreground/12",
-        className
-      )}
-    >
-      {icon ? (
-        <span className="mr-auto inline-flex items-center gap-3">
-          <span className="opacity-60 transition-opacity group-hover:opacity-100 group-data-[active]:opacity-100">
-            {icon}
-          </span>
-          <span>{children}</span>
-        </span>
-      ) : (
-        <span className="mr-auto">{children}</span>
-      )}
-      {/* Right-aligned arrow: only visible when active (not on hover). */}
-      <ChevronRight
-        aria-hidden="true"
-        className="size-3 opacity-0 transition-opacity group-data-[active]:opacity-70"
-      />
-    </span>
-  )
+export function SidebarNavItem({ active, icon, children, className }: SidebarNavItemProps) {
+	return (
+		<span
+			aria-current={active ? 'page' : undefined}
+			data-active={active || undefined}
+			className={cn(
+				buttonVariants({ variant: 'ghost' }),
+				'group inline-flex! w-full items-center justify-start text-left',
+				// Active = a contrasty foreground-alpha gradient (deepens on light,
+				// lifts on dark), with a soft same-tone border that blends into the fill.
+				'data-[active]:pointer-events-none data-[active]:border-foreground/10 data-[active]:from-foreground/5 data-[active]:via-foreground/8 data-[active]:to-foreground/8 data-[active]:text-accent-foreground dark:data-[active]:from-foreground/8 dark:data-[active]:via-foreground/12 dark:data-[active]:to-foreground/12',
+				className
+			)}
+		>
+			{icon ? (
+				<span className='mr-auto inline-flex items-center gap-3'>
+					<span className='opacity-60 transition-opacity group-hover:opacity-100 group-data-[active]:opacity-100'>
+						{icon}
+					</span>
+					<span>{children}</span>
+				</span>
+			) : (
+				<span className='mr-auto'>{children}</span>
+			)}
+			{/* Right-aligned arrow: only visible when active (not on hover). */}
+			<ChevronRight
+				aria-hidden='true'
+				className='size-3 opacity-0 transition-opacity group-data-[active]:opacity-70'
+			/>
+		</span>
+	);
 }
 
 type SidebarNavSelectItem = {
-  active?: boolean
-  icon?: React.ReactNode
-  key: React.Key
-  label: React.ReactNode
-  renderLink: (children: React.ReactNode) => React.ReactNode
-}
+	active?: boolean;
+	icon?: React.ReactNode;
+	key: React.Key;
+	label: React.ReactNode;
+	renderLink: (children: React.ReactNode) => React.ReactNode;
+};
 
 type SidebarNavSelectProps = {
-  items: SidebarNavSelectItem[]
-  className?: string
-}
+	items: SidebarNavSelectItem[];
+	className?: string;
+};
 
 export function SidebarNavSelect({ items, className }: SidebarNavSelectProps) {
-  const activeItem = items.find((item) => item.active) ?? items[0]
+	const activeItem = items.find((item) => item.active) ?? items[0];
 
-  if (!activeItem) return null
+	if (!activeItem) return null;
 
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="outline"
-          size="lg"
-          className={cn("w-full justify-between", className)}
-        >
-          <span className="inline-flex min-w-0 items-center gap-3">
-            {activeItem.icon}
-            <span className="truncate">{activeItem.label}</span>
-          </span>
-          <ChevronDown className="size-4 text-muted-foreground" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-[var(--anchor-width)]">
-        {items.map((item) => (
-          <DropdownMenuItem key={item.key} asChild>
-            {item.renderLink(
-              <span
-                aria-current={item.active ? "page" : undefined}
-                className="flex min-w-0 items-center gap-3"
-              >
-                {item.icon}
-                <span className="truncate">{item.label}</span>
-              </span>
-            )}
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  )
+	return (
+		<DropdownMenu>
+			<DropdownMenuTrigger asChild>
+				<Button variant='outline' size='lg' className={cn('w-full justify-between', className)}>
+					<span className='inline-flex min-w-0 items-center gap-3'>
+						{activeItem.icon}
+						<span className='truncate'>{activeItem.label}</span>
+					</span>
+					<ChevronDown className='size-4 text-muted-foreground' />
+				</Button>
+			</DropdownMenuTrigger>
+			<DropdownMenuContent align='start' className='w-[var(--anchor-width)]'>
+				{items.map((item) => (
+					<DropdownMenuItem key={item.key} asChild>
+						{item.renderLink(
+							<span
+								aria-current={item.active ? 'page' : undefined}
+								className='flex min-w-0 items-center gap-3'
+							>
+								{item.icon}
+								<span className='truncate'>{item.label}</span>
+							</span>
+						)}
+					</DropdownMenuItem>
+				))}
+			</DropdownMenuContent>
+		</DropdownMenu>
+	);
 }

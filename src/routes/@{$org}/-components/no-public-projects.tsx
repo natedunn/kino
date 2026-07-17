@@ -3,7 +3,11 @@ import { FolderOpen } from 'lucide-react';
 
 import { buttonVariants } from '@/components/ui/button';
 
-type NoPublicProjectsProps = { orgName: string; orgSlug: string; canCreate: boolean };
+type NoPublicProjectsProps = {
+	orgName: string;
+	orgSlug: string;
+	canCreate: boolean;
+};
 
 export const NoPublicProjects = ({ orgName, orgSlug, canCreate }: NoPublicProjectsProps) => {
 	return (

@@ -1,11 +1,11 @@
-import { createContext } from "react"
+import type { AppCommand } from './types';
 
-import type { AppCommand } from "./types"
+import { createContext } from 'react';
 
 export type CommandContextValue = {
-  close: () => void
-  open: () => void
-  registerCommands: (scopeId: string, commands: Array<AppCommand>) => () => void
-}
+	close: () => void;
+	open: () => void;
+	registerCommands: (scopeId: string, commands: Array<AppCommand>) => () => void;
+};
 
-export const CommandContext = createContext<CommandContextValue | null>(null)
+export const CommandContext = createContext<CommandContextValue | null>(null);

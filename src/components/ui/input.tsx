@@ -1,41 +1,41 @@
-import * as React from "react"
-import { Input as InputPrimitive } from "@base-ui/react/input"
-import { cva } from "class-variance-authority"
-import type { VariantProps } from "class-variance-authority"
+import type { VariantProps } from 'class-variance-authority';
 
-import { cn } from "@/lib/utils"
+import * as React from 'react';
+import { Input as InputPrimitive } from '@base-ui/react/input';
+import { cva } from 'class-variance-authority';
+
+import { cn } from '@/lib/utils';
 
 const inputVariants = cva(
-  "w-full min-w-0 rounded-lg border border-input bg-absolute transition-colors outline-none file:inline-flex file:border-0 file:bg-transparent file:font-medium file:text-foreground placeholder:text-muted-foreground/50 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring-accent/20 dark:focus-visible:ring-ring-accent/40 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 read-only:cursor-default read-only:bg-input-readonly-background read-only:text-muted-foreground read-only:focus-visible:border-input read-only:focus-visible:ring-0 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:bg-input-background dark:read-only:bg-input-readonly-background dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40",
-  {
-    variants: {
-      size: {
-        xs: "h-6 rounded-[min(var(--radius-md),10px)] px-2 py-0 text-xs file:h-4 file:text-xs",
-        sm: "h-7 rounded-[min(var(--radius-md),12px)] px-2.5 py-1 text-sm file:h-5 file:text-xs",
-        default: "h-8 px-2.5 py-1 text-base file:h-6 file:text-sm md:text-sm",
-        lg: "h-10 px-3.5 py-2 text-base file:h-7 file:text-sm md:text-sm",
-        xl: "h-11 px-4 py-2.5 text-base file:h-8 file:text-sm md:text-base",
-      },
-    },
-    defaultVariants: {
-      size: "default",
-    },
-  }
-)
+	'w-full min-w-0 rounded-lg border border-input bg-absolute transition-colors outline-none file:inline-flex file:border-0 file:bg-transparent file:font-medium file:text-foreground placeholder:text-muted-foreground/50 read-only:cursor-default read-only:bg-input-readonly-background read-only:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring-accent/20 read-only:focus-visible:border-input read-only:focus-visible:ring-0 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:bg-input-background dark:read-only:bg-input-readonly-background dark:focus-visible:ring-ring-accent/40 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40',
+	{
+		variants: {
+			size: {
+				xs: 'h-6 rounded-[min(var(--radius-md),10px)] px-2 py-0 text-xs file:h-4 file:text-xs',
+				sm: 'h-7 rounded-[min(var(--radius-md),12px)] px-2.5 py-1 text-sm file:h-5 file:text-xs',
+				default: 'h-8 px-2.5 py-1 text-base file:h-6 file:text-sm md:text-sm',
+				lg: 'h-10 px-3.5 py-2 text-base file:h-7 file:text-sm md:text-sm',
+				xl: 'h-11 px-4 py-2.5 text-base file:h-8 file:text-sm md:text-base',
+			},
+		},
+		defaultVariants: {
+			size: 'default',
+		},
+	}
+);
 
-type InputProps = Omit<React.ComponentProps<"input">, "size"> &
-  VariantProps<typeof inputVariants>
+type InputProps = Omit<React.ComponentProps<'input'>, 'size'> & VariantProps<typeof inputVariants>;
 
 function Input({ className, type, size, ...props }: InputProps) {
-  return (
-    <InputPrimitive
-      type={type}
-      data-slot="input"
-      data-size={size}
-      className={cn(inputVariants({ size, className }))}
-      {...props}
-    />
-  )
+	return (
+		<InputPrimitive
+			type={type}
+			data-slot='input'
+			data-size={size}
+			className={cn(inputVariants({ size, className }))}
+			{...props}
+		/>
+	);
 }
 
-export { Input, inputVariants }
+export { Input, inputVariants };

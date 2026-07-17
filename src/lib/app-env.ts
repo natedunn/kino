@@ -1,42 +1,45 @@
-export type AppEnvironment = "local" | "preview" | "production"
+export type AppEnvironment = 'local' | 'preview' | 'production';
 
-const PRODUCTION_HOSTNAMES = new Set(["usekino.com", "www.usekino.com"])
+const PRODUCTION_HOSTNAMES = new Set(['usekino.com', 'www.usekino.com']);
 
 function normalizeHostname(hostname: string) {
-  return hostname.trim().toLowerCase().replace(/^\[|\]$/g, "")
+	return hostname
+		.trim()
+		.toLowerCase()
+		.replace(/^\[|\]$/g, '');
 }
 
 export function isLocalAppHostname(hostname: string) {
-  const normalized = normalizeHostname(hostname)
+	const normalized = normalizeHostname(hostname);
 
-  return (
-    normalized === "localhost" ||
-    normalized === "127.0.0.1" ||
-    normalized === "::1" ||
-    normalized.endsWith(".localhost")
-  )
+	return (
+		normalized === 'localhost' ||
+		normalized === '127.0.0.1' ||
+		normalized === '::1' ||
+		normalized.endsWith('.localhost')
+	);
 }
 
 export function inferAppEnvironment({
-  hostname,
-  isDev = false,
+	hostname,
+	isDev = false,
 }: {
-  hostname: string
-  isDev?: boolean
+	hostname: string;
+	isDev?: boolean;
 }): AppEnvironment {
-  const normalized = normalizeHostname(hostname)
+	const normalized = normalizeHostname(hostname);
 
-  if (isDev || isLocalAppHostname(normalized)) {
-    return "local"
-  }
+	if (isDev || isLocalAppHostname(normalized)) {
+		return 'local';
+	}
 
-  if (PRODUCTION_HOSTNAMES.has(normalized)) {
-    return "production"
-  }
+	if (PRODUCTION_HOSTNAMES.has(normalized)) {
+		return 'production';
+	}
 
-  return "preview"
+	return 'preview';
 }
 
 export function getFaviconHref(appEnvironment: AppEnvironment) {
-  return `/favicons/kino-${appEnvironment}.svg?v=2`
+	return `/favicons/kino-${appEnvironment}.svg?v=2`;
 }

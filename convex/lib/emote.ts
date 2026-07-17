@@ -1,8 +1,10 @@
-import { z } from "zod"
-import { CRPCError } from "kitcn/server"
-import type { OrmMutationCtx } from "./kino"
-import { asId, getDocOrThrow, verifyProjectAccess } from "./kino"
-import { EMOTE_CONTENTS } from "../functions/schema"
+import type { OrmMutationCtx } from './kino';
+
+import { CRPCError } from 'kitcn/server';
+import { z } from 'zod';
+
+import { EMOTE_CONTENTS } from '../functions/schema';
+import { asId, getDocOrThrow, verifyProjectAccess } from './kino';
 
 /**
  * The single source of truth for emote reaction contents on the server.
@@ -11,7 +13,7 @@ import { EMOTE_CONTENTS } from "../functions/schema"
  * drift. The client keeps its own copy in `src/components/emote/types.ts`
  * because it lives in a separate build context.
  */
-export const emoteContentSchema = z.enum(EMOTE_CONTENTS)
+export const emoteContentSchema = z.enum(EMOTE_CONTENTS);
 
 /**
  * Shared access guard for reacting to an update (or its comments). Draft
@@ -20,33 +22,29 @@ export const emoteContentSchema = z.enum(EMOTE_CONTENTS)
  * update document so callers can reuse it.
  */
 export async function ensureUpdateReactionAccess(
-  ctx: OrmMutationCtx,
-  updateId: string,
-  userId: string | null | undefined,
-  options?: { draftMessage?: string }
+	ctx: OrmMutationCtx,
+	updateId: string,
+	userId: string | null | undefined,
+	options?: { draftMessage?: string }
 ) {
-  const item = await getDocOrThrow(
-    ctx,
-    asId<"update">(updateId),
-    "Update not found"
-  )
+	const item = await getDocOrThrow(ctx, asId<'update'>(updateId), 'Update not found');
 
-  const project = await getDocOrThrow(ctx, item.projectId, "Project not found")
-  const access = await verifyProjectAccess(ctx, { slug: project.slug, userId })
+	const project = await getDocOrThrow(ctx, item.projectId, 'Project not found');
+	const access = await verifyProjectAccess(ctx, { slug: project.slug, userId });
 
-  if (item.status === "draft") {
-    if (!access.permissions.canEdit) {
-      throw new CRPCError({
-        code: "FORBIDDEN",
-        message: options?.draftMessage ?? "You cannot react to draft updates",
-      })
-    }
-  } else if (!access.permissions.canView) {
-    throw new CRPCError({
-      code: "FORBIDDEN",
-      message: "You do not have access to this update",
-    })
-  }
+	if (item.status === 'draft') {
+		if (!access.permissions.canEdit) {
+			throw new CRPCError({
+				code: 'FORBIDDEN',
+				message: options?.draftMessage ?? 'You cannot react to draft updates',
+			});
+		}
+	} else if (!access.permissions.canView) {
+		throw new CRPCError({
+			code: 'FORBIDDEN',
+			message: 'You do not have access to this update',
+		});
+	}
 
-  return item
+	return item;
 }
