@@ -1,4 +1,4 @@
-import { createFileRoute, Navigate } from '@tanstack/react-router';
+import { Navigate, createFileRoute } from '@tanstack/react-router';
 
 import { titleMeta } from '@/lib/seo';
 
@@ -10,6 +10,6 @@ export const Route = createFileRoute('/org/settings/')({
 });
 
 function OrgSettingsIndexRoute() {
-	const search = Route.useSearch() as { org?: string };
+	const search = Route.useSearch();
 	return <Navigate replace search={{ org: search.org }} to='/org/settings/general' />;
 }

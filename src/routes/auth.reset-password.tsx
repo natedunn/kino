@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
+import { Link, createFileRoute, useNavigate } from '@tanstack/react-router';
 
 import { AuthField, AuthFooter, AuthHeader } from '@/components/auth/auth-card';
 import { InlineAlert } from '@/components/inline-alert';

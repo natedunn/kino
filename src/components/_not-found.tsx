@@ -1,13 +1,13 @@
+import { Link } from '@tanstack/react-router';
+import { Button, buttonVariants } from './ui/button';
 import type { ClassValue } from '@/lib/utils';
 
-import { Link } from '@tanstack/react-router';
 
 // import { ChevronLeft, Home } from 'lucide-react';
 import ChevronLeft from '@/icons/chevron-left';
 import Home from '@/icons/home';
 import { cn } from '@/lib/utils';
 
-import { Button, buttonVariants } from './ui/button';
 
 export function NotFound({
 	className,

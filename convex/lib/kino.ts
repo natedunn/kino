@@ -1,9 +1,9 @@
-import type { Doc, Id, TableNames } from '../functions/_generated/dataModel';
 
 import { CRPCError } from 'kitcn/server';
 
 import { memberTable, organizationTable, profileTable } from '../functions/schema';
-import { isReservedHandle, normalizeSlug, VALIDATION_LIMITS } from './validation';
+import { VALIDATION_LIMITS, isReservedHandle, normalizeSlug } from './validation';
+import type { Doc, Id, TableNames } from '../functions/_generated/dataModel';
 
 export const DEFAULT_FEEDBACK_BOARDS = ['Bugs', 'Feature Requests', 'Improvements'] as const;
 
@@ -113,24 +113,27 @@ export function generateRandomSlug() {
 	return crypto.randomUUID().replace(/-/g, '').slice(0, 15);
 }
 
-export function asId<TableName extends TableNames>(value: string) {
-	return value as Id<TableName>;
+export function asId<TTableName extends TableNames>(value: string) {
+	return value as Id<TTableName>;
 }
 
-export async function getDoc<TableName extends TableNames>(
+export async function getDoc<TTableName extends TableNames>(
 	ctx: Pick<OrmCtx, 'db'>,
-	id: Id<TableName> | string | null | undefined
+	id: Id<TTableName> | string | null | undefined
 ) {
 	if (!id) return null;
-	return (await ctx.db?.get(id as Id<TableName>)) as Doc<TableName> | null;
+	// Generic table-agnostic helper: the table is a type parameter, not a runtime
+	// value, so an explicit table-name literal can't be supplied here.
+	// eslint-disable-next-line @convex-dev/explicit-table-ids
+	return (await ctx.db?.get(id)) as Doc<TTableName> | null;
 }
 
-export async function getDocOrThrow<TableName extends TableNames>(
+export async function getDocOrThrow<TTableName extends TableNames>(
 	ctx: Pick<OrmCtx, 'db'>,
-	id: Id<TableName> | string | null | undefined,
+	id: Id<TTableName> | string | null | undefined,
 	message: string
 ) {
-	const doc = await getDoc<TableName>(ctx, id);
+	const doc = await getDoc<TTableName>(ctx, id);
 	if (!doc) {
 		throw new CRPCError({ code: 'NOT_FOUND', message });
 	}
@@ -149,7 +152,7 @@ export function toPublicDoc(doc: any): any {
 }
 
 export function pickPersonalOrganizationId(args: {
-	memberships: PersonalOrganizationMembershipCandidate[];
+	memberships: Array<PersonalOrganizationMembershipCandidate>;
 	profileUsername: string | null | undefined;
 }) {
 	const adminMemberships = args.memberships.filter(
@@ -221,7 +224,7 @@ export async function getCurrentProfile(ctx: OrmCtx, userId: string | null | und
 		where: { userId },
 		limit: 1,
 	});
-	return withLegacyAliases(profiles[0] as any);
+	return withLegacyAliases(profiles[0]);
 }
 
 export async function getCurrentProfileOrThrow(ctx: OrmCtx, userId: string | null | undefined) {
@@ -248,14 +251,14 @@ export async function findOrganization(ctx: OrmCtx, args: { id?: string; slug?: 
 			where: { id: args.id },
 			limit: 1,
 		});
-		return withLegacyAliases(organizations[0] as any);
+		return withLegacyAliases(organizations[0]);
 	}
 	if (args.slug) {
 		const organizations = await ctx.orm.query.organization.findMany({
 			where: { slug: args.slug },
 			limit: 1,
 		});
-		return withLegacyAliases(organizations[0] as any);
+		return withLegacyAliases(organizations[0]);
 	}
 	return null;
 }
@@ -279,7 +282,7 @@ export async function findMember(ctx: OrmCtx, args: { organizationId: string; us
 		},
 		limit: 1,
 	});
-	return withLegacyAliases(members[0] as any);
+	return withLegacyAliases(members[0]);
 }
 
 export async function findProject(ctx: OrmCtx, args: { id?: string; slug?: string }) {
@@ -325,7 +328,7 @@ export async function findProjectMember(
 			},
 			limit: 1,
 		});
-		return withLegacyAliases(members[0] as any);
+		return withLegacyAliases(members[0]);
 	}
 	if (args.projectSlug) {
 		const members = await ctx.orm.query.projectMember.findMany({
@@ -335,7 +338,7 @@ export async function findProjectMember(
 			},
 			limit: 1,
 		});
-		return withLegacyAliases(members[0] as any);
+		return withLegacyAliases(members[0]);
 	}
 	return null;
 }
@@ -463,7 +466,7 @@ export async function verifyProjectAccess(
 	// org:editor (org editor), member (org member). Only org:admin can delete a
 	// project; org:admin and org:editor can edit; all three can view.
 	const role = projectMember?.role ?? '_none';
-	const memberRoles = [...PROJECT_EDITOR_ROLES, 'member'] as string[];
+	const memberRoles = [...PROJECT_EDITOR_ROLES, 'member'] as Array<string>;
 
 	if (project.visibility === 'public') {
 		const canEdit = isProjectEditorRole(role);
@@ -534,7 +537,7 @@ export async function getProjectViewAccess(
 }
 
 export async function setUserProfileId(ctx: OrmMutationCtx, userId: string, profileId: string) {
-	await ctx.db.patch(userId as any, { profileId });
+	await ctx.db.patch('user', userId as any, { profileId });
 }
 
 export async function createDefaultPersonalOrganization(
@@ -584,7 +587,7 @@ async function setProfilePersonalOrganizationId(
 	organizationId: string | null | undefined
 ) {
 	if (!profileId || !organizationId) return;
-	await ctx.db.patch(profileId as any, {
+	await ctx.db.patch('profile', profileId as any, {
 		personalOrganizationId: organizationId,
 	});
 }
@@ -628,11 +631,7 @@ async function inferPersonalOrganizationId(
 export async function ensureUserBootstrap(ctx: OrmMutationCtx, user: AuthUserBootstrapDoc) {
 	const publicUserId = user.id;
 	const legacyUserId = user._id && user._id !== publicUserId ? user._id : null;
-	const username =
-		user.username ??
-		user.email.split('@')[0] ??
-		user.name ??
-		`user_${crypto.randomUUID().slice(0, 8)}`;
+	const username = user.username ?? user.email.split('@')[0];
 
 	let profile = await ctx.orm.query.profile.findFirst({
 		where: { userId: publicUserId },
@@ -645,7 +644,7 @@ export async function ensureUserBootstrap(ctx: OrmMutationCtx, user: AuthUserBoo
 
 		const profileId = getWritableId(profile);
 		if (profileId) {
-			await ctx.db.patch(profileId as any, { userId: publicUserId });
+			await ctx.db.patch('profile', profileId, { userId: publicUserId });
 		}
 	}
 
@@ -681,7 +680,7 @@ export async function ensureUserBootstrap(ctx: OrmMutationCtx, user: AuthUserBoo
 		await Promise.all(
 			legacyMemberships.flatMap((membership: any) => {
 				const membershipId = getWritableId(membership);
-				return membershipId ? [ctx.db.patch(membershipId as any, { userId: publicUserId })] : [];
+				return membershipId ? [ctx.db.patch('member', membershipId, { userId: publicUserId })] : [];
 			})
 		);
 	}
@@ -712,7 +711,7 @@ export async function ensureUserBootstrap(ctx: OrmMutationCtx, user: AuthUserBoo
 	// source-of-truth user.role in case the user.change trigger ever missed one.
 	const desiredRole = sanitizeSystemRole(user.role);
 	if (profileId && profile && profile.role !== desiredRole) {
-		await ctx.db.patch(profileId as any, { role: desiredRole });
+		await ctx.db.patch('profile', profileId, { role: desiredRole });
 		profile = { ...profile, role: desiredRole };
 	}
 
@@ -734,7 +733,7 @@ export async function reconcileSystemRole(
 	if (!profile) return null;
 	const desired = sanitizeSystemRole(user.role);
 	if (profile.role !== desired) {
-		await ctx.db.patch((profile._id ?? profile.id) as any, { role: desired });
+		await ctx.db.patch('profile', profile._id ?? profile.id, { role: desired });
 	}
 	return desired;
 }

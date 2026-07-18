@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { createFileRoute, Link, useNavigate, useRouter } from '@tanstack/react-router';
+import { Link, createFileRoute, useNavigate, useRouter } from '@tanstack/react-router';
 import { useIsAuth } from 'kitcn/react';
 
+import { getSafeRedirectTarget } from './auth';
 import { AuthField, AuthFooter, AuthHeader } from '@/components/auth/auth-card';
 import { InlineAlert } from '@/components/inline-alert';
 import { Button } from '@/components/ui/button';
@@ -16,7 +17,6 @@ import { trackAuthError, trackAuthStarted, trackAuthSuccess } from '@/lib/auth-a
 import { endSignOut, isSigningOut } from '@/lib/auth/sign-out-state';
 import { authClient } from '@/lib/convex/auth-client';
 
-import { getSafeRedirectTarget } from './auth';
 
 export const Route = createFileRoute('/auth/')({
 	validateSearch: (search: Record<string, unknown>): { redirect?: string } =>
@@ -73,6 +73,9 @@ function SignInPage() {
 		if (isAuthed && !isSigningOut()) {
 			void goToRedirect();
 		}
+		// `goToRedirect` is re-created each render; the redirect intent depends on
+		// auth state only (see comment above), so it's deliberately excluded.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [isAuthed, session.data?.user]);
 
 	const [email, setEmail] = useState('');

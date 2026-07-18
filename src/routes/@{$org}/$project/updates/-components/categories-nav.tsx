@@ -1,8 +1,8 @@
 import { Link, useParams, useSearch } from '@tanstack/react-router';
 
+import { CATEGORY_CONFIG } from './category-badge';
 import { SidebarNavGroup, SidebarNavItem } from '@/components/sidebar-nav';
 
-import { CATEGORY_CONFIG } from './category-badge';
 
 const categories = [
 	{ label: 'All', slug: 'all' },

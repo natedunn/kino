@@ -1,6 +1,6 @@
+import { isAuthorizedAdmin, isTrustedTargetUrl, timingSafeEqualString } from './env';
 import type { GatewayEnv } from './env';
 
-import { isAuthorizedAdmin, isTrustedTargetUrl, timingSafeEqualString } from './env';
 
 /**
  * GitHub App webhook fan-out.
@@ -66,7 +66,7 @@ async function verifyGitHubSignature(
 }
 
 async function listTargets(env: GatewayEnv) {
-	const targets: RegisteredTarget[] = [];
+	const targets: Array<RegisteredTarget> = [];
 	let cursor: string | undefined;
 	do {
 		const page = await env.TARGETS.list({

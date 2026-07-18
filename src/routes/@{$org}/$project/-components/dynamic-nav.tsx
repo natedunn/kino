@@ -1,12 +1,12 @@
 'use client';
 
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { Link } from '@tanstack/react-router';
 import type { Icon } from '@/icons/types';
 import type { ClassValue } from '@/lib/utils';
 import type { LinkProps } from '@tanstack/react-router';
 
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Link } from '@tanstack/react-router';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -58,7 +58,7 @@ export function DynamicNavigation({ orgSlug, projectSlug, onStateChange }: Dynam
 	);
 	const canManageSettings = projectQuery.data?.permissions.canEdit ?? false;
 
-	const items: NavigationItem[] = [
+	const items: Array<NavigationItem> = [
 		{
 			children: 'Overview',
 			icon: Home,
@@ -113,7 +113,7 @@ export function DynamicNavigation({ orgSlug, projectSlug, onStateChange }: Dynam
 
 	const [visibleItems, setVisibleItems] = useState<number>(10);
 	const containerRef = useRef<HTMLDivElement>(null);
-	const itemButtonRefs = useRef<(HTMLButtonElement | null)[]>([]);
+	const itemButtonRefs = useRef<Array<HTMLButtonElement | null>>([]);
 	const [isCalculating, setIsCalculating] = useState<boolean>(true);
 
 	useEffect(() => {

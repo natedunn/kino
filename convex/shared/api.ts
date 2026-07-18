@@ -789,17 +789,6 @@ export const api = {
 		),
 	},
 	update: {
-		backfillProjectUpdatedTimes: createApiLeaf<
-			'mutation',
-			typeof import('../functions/update').backfillProjectUpdatedTimes
-		>(
-			createGeneratedFunctionReference<
-				'mutation',
-				'public',
-				typeof import('../functions/update').backfillProjectUpdatedTimes
-			>('update:backfillProjectUpdatedTimes'),
-			{ auth: 'required', type: 'mutation' }
-		),
 		bulkPublish: createApiLeaf<'mutation', typeof import('../functions/update').bulkPublish>(
 			createGeneratedFunctionReference<
 				'mutation',

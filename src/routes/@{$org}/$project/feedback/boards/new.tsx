@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useCRPC } from '@/lib/convex/crpc';
 import { crpcServer } from '@/lib/convex/crpc-server';
 import { projectTitle, titleMeta } from '@/lib/seo';
-import { boardFormSchema, FORM_LIMITS, validationMessage } from '@/lib/validation';
+import { FORM_LIMITS, boardFormSchema, validationMessage } from '@/lib/validation';
 
 export const Route = createFileRoute('/@{$org}/$project/feedback/boards/new')({
 	loader: async ({ context, params }) => {

@@ -1,4 +1,3 @@
-import type { Doc } from './_generated/dataModel';
 
 import { eq, unsetToken } from 'kitcn/orm';
 import { CRPCError } from 'kitcn/server';
@@ -29,6 +28,7 @@ import {
 } from '../lib/validation';
 import { isValidTarget, resolveTargetOrNull } from '../shared/target';
 import {
+	MIDDLE_COMMENT_PAGE_SIZE,
 	assertCanAdminFeedback,
 	createCommentEnrichCache,
 	dedupeComments,
@@ -36,7 +36,6 @@ import {
 	feedbackStatusSchema,
 	getFeedbackCommentWindow,
 	hasOverlap,
-	MIDDLE_COMMENT_PAGE_SIZE,
 	targetGranularitySchema,
 	toProfileSummary,
 	toPublicFeedbackComment,
@@ -45,6 +44,7 @@ import {
 } from './feedback.lib';
 import { recordFeedbackEvent } from './feedbackEvent.lib';
 import { feedbackCommentTable, feedbackTable } from './schema';
+import type { Doc } from './_generated/dataModel';
 
 export const create = authMutation
 	.input(
@@ -83,7 +83,7 @@ export const create = authMutation
 		const [feedback] = await ctx.orm
 			.insert(feedbackTable)
 			.values({
-				authorProfileId: profile._id as any,
+				authorProfileId: profile._id,
 				boardId: asId<'feedbackBoard'>(input.boardId),
 				projectId: asId<'project'>(input.projectId),
 				slug,
@@ -96,7 +96,7 @@ export const create = authMutation
 		const [feedbackComment] = await ctx.orm
 			.insert(feedbackCommentTable)
 			.values({
-				authorProfileId: profile._id as any,
+				authorProfileId: profile._id,
 				content: input.firstComment,
 				feedbackId: feedback.id as any,
 				initial: true,

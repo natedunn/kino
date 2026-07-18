@@ -20,10 +20,10 @@ import { crpcServer } from '@/lib/convex/crpc-server';
 import { titleMeta } from '@/lib/seo';
 import { cn } from '@/lib/utils';
 import {
-	filterSlugInput,
 	FORM_LIMITS,
-	orgFormSchema,
 	SLUG_INPUT_PATTERN,
+	filterSlugInput,
+	orgFormSchema,
 	validationMessage,
 } from '@/lib/validation';
 
@@ -93,7 +93,7 @@ function AuthenticatedCreateTeamRoute() {
 		},
 	});
 
-	const underLimit = orgsData?.underLimit ?? true;
+	const underLimit = orgsData.underLimit;
 
 	return (
 		<div className='relative w-full'>

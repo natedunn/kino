@@ -1,9 +1,9 @@
-import type { Doc } from './_generated/dataModel';
 
 import { z } from 'zod';
 
 import { asId, getDoc, isProjectEditorRole, toPublicDoc } from '../lib/kino';
 import { resolveProfileImageUrl } from '../lib/storage';
+import type { Doc } from './_generated/dataModel';
 
 export const updateCategorySchema = z.enum(['changelog', 'article', 'announcement']);
 export const UPDATE_LIST_PREVIEW_CHARS = 420;
@@ -22,7 +22,7 @@ export async function toProfileSummary(profile: Doc<'profile'> | null) {
 		: null;
 }
 
-export function dedupeComments<T extends { id: string }>(comments: T[]) {
+export function dedupeComments<T extends { id: string }>(comments: Array<T>) {
 	const seen = new Set<string>();
 	return comments.filter((comment) => {
 		if (seen.has(comment.id)) return false;
@@ -31,7 +31,7 @@ export function dedupeComments<T extends { id: string }>(comments: T[]) {
 	});
 }
 
-export function dedupeDocsById<T extends { _id: string }>(docs: T[]) {
+export function dedupeDocsById<T extends { _id: string }>(docs: Array<T>) {
 	const seen = new Set<string>();
 	return docs.filter((doc) => {
 		if (seen.has(doc._id)) return false;
@@ -100,9 +100,9 @@ export async function toPublicUpdateComment(
 		.query('updateCommentEmote')
 		.withIndex('by_updateCommentId', (q: any) => q.eq('updateCommentId', comment._id))
 		.collect();
-	const emoteCounts: Record<string, { authorProfileIds: string[]; count: number }> = {};
+	const emoteCounts: Record<string, { authorProfileIds: Array<string>; count: number }> = {};
 	for (const emote of emotes) {
-		if (!emoteCounts[emote.content]) {
+		if (!Object.hasOwn(emoteCounts, emote.content)) {
 			emoteCounts[emote.content] = { authorProfileIds: [], count: 0 };
 		}
 		emoteCounts[emote.content].count++;

@@ -1,13 +1,10 @@
-import type { DefaultOptions } from '@tanstack/react-query';
-import type { Value } from 'convex/values';
-import type { AuthStore } from 'kitcn/react';
 
 import {
-	defaultShouldDehydrateQuery,
-	hashKey,
 	MutationCache,
 	QueryCache,
 	QueryClient,
+	defaultShouldDehydrateQuery,
+	hashKey,
 } from '@tanstack/react-query';
 import { convexToJson } from 'convex/values';
 import { isCRPCClientError, isCRPCError } from 'kitcn/crpc';
@@ -17,6 +14,9 @@ import {
 	getQueryClientSingleton,
 } from 'kitcn/react';
 import SuperJSON from 'superjson';
+import type { AuthStore } from 'kitcn/react';
+import type { Value } from 'convex/values';
+import type { DefaultOptions } from '@tanstack/react-query';
 
 import { captureAppError } from '@/lib/posthog';
 

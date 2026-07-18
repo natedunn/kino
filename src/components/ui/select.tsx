@@ -1,9 +1,9 @@
-import type { VariantProps } from 'class-variance-authority';
 
 import * as React from 'react';
 import { Select as SelectPrimitive } from '@base-ui/react/select';
 import { cva } from 'class-variance-authority';
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from 'lucide-react';
+import type { VariantProps } from 'class-variance-authority';
 
 import { cn } from '@/lib/utils';
 

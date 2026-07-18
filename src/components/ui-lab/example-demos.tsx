@@ -1,5 +1,3 @@
-import type { LabItem } from './types';
-
 import { useState } from 'react';
 import {
 	ArrowBigUp,
@@ -13,6 +11,9 @@ import {
 	Sparkles,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { Preview } from './parts';
+import type { LabItem } from './types';
+
 
 import CheckboxButton from '@/components/checkbox-button';
 import { InlineAlert } from '@/components/inline-alert';
@@ -59,7 +60,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { GithubIcon } from '@/icons';
 
-import { Preview } from './parts';
 
 /** Examples render into a single, centered preview surface. */
 function ExampleStage({ children }: { children: React.ReactNode }) {
@@ -473,7 +473,7 @@ function NotificationsExample() {
 	);
 }
 
-export const EXAMPLE_ITEMS: LabItem[] = [
+export const EXAMPLE_ITEMS: Array<LabItem> = [
 	{
 		id: 'sign-in',
 		name: 'Sign in',

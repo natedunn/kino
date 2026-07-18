@@ -1,15 +1,14 @@
-import type { ReactNode } from 'react';
-import type { Shortcut, ShortcutRegistration } from './types';
 
-import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { hasReservedModifier, isEditableTarget, isOverlayOpen, normalizeKey } from './keys';
 import { ShortcutsContext } from './shortcuts-context';
+import type { Shortcut, ShortcutRegistration } from './types';
+import type { ReactNode } from 'react';
 
-const ShortcutsDialog = lazy(async () => {
-	const { ShortcutsDialog } = await import('./shortcuts-dialog');
-	return { default: ShortcutsDialog };
-});
+const ShortcutsDialog = lazy(() =>
+	import('./shortcuts-dialog').then((m) => ({ default: m.ShortcutsDialog }))
+);
 
 export function ShortcutsProvider({ children }: { children: ReactNode }) {
 	const [open, setOpen] = useState(false);

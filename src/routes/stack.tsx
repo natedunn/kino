@@ -1,8 +1,8 @@
+import { Link, createFileRoute } from '@tanstack/react-router';
+import { ArrowUpRight } from 'lucide-react';
 import type { IconProps } from '@/icons/types';
 import type { ComponentType } from 'react';
 
-import { createFileRoute, Link } from '@tanstack/react-router';
-import { ArrowUpRight } from 'lucide-react';
 
 import { ClickableContainer } from '@/components/clickable-container';
 import {

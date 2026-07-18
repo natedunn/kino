@@ -28,7 +28,7 @@ export const listAssignableMembers = authQuery
 		});
 
 		const membersWithProfiles = await Promise.all(
-			projectMembers.map(async (member: any) => ({
+			projectMembers.map((member: any) => ({
 				profile: member.profile ?? null,
 				profileId: member.profileId,
 				role: member.role,
@@ -157,8 +157,8 @@ export const inviteProjectMember = authMutation
 		}
 
 		await ctx.orm.insert(projectMemberTable).values({
-			profileId: profileId as any,
-			projectId: access.project.id as any,
+			profileId: profileId,
+			projectId: access.project.id,
 			projectSlug: access.project.slug,
 			projectVisibility: access.project.visibility,
 			role: 'member',

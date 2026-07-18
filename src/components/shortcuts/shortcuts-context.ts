@@ -1,6 +1,6 @@
+import { createContext } from 'react';
 import type { Shortcut } from './types';
 
-import { createContext } from 'react';
 
 export type ShortcutsContextValue = {
 	close: () => void;

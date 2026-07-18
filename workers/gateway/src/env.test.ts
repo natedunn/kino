@@ -1,8 +1,8 @@
-import type { GatewayEnv } from './env';
 
 import { describe, expect, it } from 'vitest';
 
 import { isTrustedTargetUrl, timingSafeEqualString } from './env';
+import type { GatewayEnv } from './env';
 
 const devEnv = {
 	TRUSTED_TARGET_PATTERNS:

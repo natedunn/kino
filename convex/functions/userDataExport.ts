@@ -1,4 +1,3 @@
-import type { ExportCtx, ExportSectionId } from './userDataExport.lib';
 
 import { CRPCError } from 'kitcn/server';
 import { z } from 'zod';
@@ -8,13 +7,17 @@ import { getCurrentProfileOrThrow } from '../lib/kino';
 import {
 	EXPORT_FORMAT,
 	EXPORT_VERSION,
-	exportSectionIds,
-	exportSectionIdSchema,
-	exportSections,
 	MAX_EXPORT_BYTES,
+	exportSectionIdSchema,
+	exportSectionIds,
+	exportSections,
 	resolveRequestedSections,
 } from './userDataExport.lib';
+import type { ExportCtx, ExportSectionId } from './userDataExport.lib';
 
+// The crpc `.query()` handler type requires a Promise-returning function, so
+// `async` is required here even though the body is synchronous.
+// eslint-disable-next-line @typescript-eslint/require-await
 export const getAvailableSections = authQuery.input(z.object({})).query(async () =>
 	exportSectionIds.map((sectionId) => {
 		const section = exportSections[sectionId];

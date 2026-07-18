@@ -1,7 +1,3 @@
-import type { MarkdownEditorRef } from '@/components/editor';
-import type { EmoteContent } from '@/components/emote';
-import type { ReactNode, RefObject } from 'react';
-
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from '@tanstack/react-router';
 import {
@@ -12,6 +8,10 @@ import {
 	Quote,
 	Trash2,
 } from 'lucide-react';
+import type { MarkdownEditorRef } from '@/components/editor';
+import type { EmoteContent } from '@/components/emote';
+import type { ReactNode, RefObject } from 'react';
+
 
 import { EditorContentDisplay, MarkdownEditor, sanitizeEditorContent } from '@/components/editor';
 import { EmoteButton, EmotePicker } from '@/components/emote';
@@ -44,7 +44,7 @@ export type ThreadComment = {
 	canEdit?: boolean;
 	content: string;
 	createdAt: Date | number | string;
-	emoteCounts?: Record<string, { authorProfileIds: string[]; count: number }>;
+	emoteCounts?: Record<string, { authorProfileIds: Array<string>; count: number }>;
 	id: string;
 	updatedTime?: Date | number | string | null;
 };
@@ -70,7 +70,7 @@ export function CommentList<TComment extends ThreadComment>({
 	onToggleEmote,
 	onUpdate,
 }: {
-	comments: TComment[];
+	comments: Array<TComment>;
 	currentProfileId?: string;
 	getAction?: (comment: TComment) => ReactNode;
 	getBadges?: (comment: TComment) => ReactNode;
@@ -216,10 +216,10 @@ export function CommentCard({
 		}
 	}
 
-	const emoteEntries = Object.entries(comment.emoteCounts ?? {}) as [
+	const emoteEntries = Object.entries(comment.emoteCounts ?? {}) as Array<[
 		EmoteContent,
-		{ authorProfileIds: string[]; count: number },
-	][];
+		{ authorProfileIds: Array<string>; count: number },
+	]>;
 
 	return (
 		<li
@@ -531,7 +531,7 @@ export function CommentForm({
 	return (
 		<div className='mt-6'>
 			<MarkdownEditor
-				ariaLabel={placeholder ?? 'Write a comment'}
+				ariaLabel={placeholder}
 				className='rounded-b-none'
 				disabled={isSubmitting}
 				maxHeight='400px'

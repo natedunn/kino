@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { createFileRoute, Link } from '@tanstack/react-router';
+import { Link, createFileRoute } from '@tanstack/react-router';
 import { GitBranch, ShieldCheck, Unplug } from 'lucide-react';
 
 import { InlineAlert } from '@/components/inline-alert';
@@ -140,6 +140,9 @@ function GitHubIntegrationRoute() {
 			installationId: activeInstallationId,
 			orgSlug: params.org,
 		});
+		// `repositoriesQuery` is a TanStack mutation whose identity changes every
+		// render; sync only when the selected installation (or org) changes.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [activeInstallationId, params.org]);
 
 	function toggleSource(source: Source) {

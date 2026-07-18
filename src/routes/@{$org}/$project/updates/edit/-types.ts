@@ -18,7 +18,7 @@ export type DashboardUpdate = {
 };
 
 export type DeleteDialogState = {
-	ids: string[];
+	ids: Array<string>;
 	updates: Array<{ id: string; title: string }>;
 } | null;
 

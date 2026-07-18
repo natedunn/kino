@@ -1,7 +1,6 @@
 import { CRPCError } from 'kitcn/server';
 import { z } from 'zod';
 
-import { type GitHubIssueTarget, type GitHubRepository } from '../lib/github-client';
 import {
 	asId,
 	getCurrentProfileOrThrow,
@@ -9,6 +8,7 @@ import {
 	toPublicDoc,
 	verifyProjectAccess,
 } from '../lib/kino';
+import type {GitHubIssueTarget, GitHubRepository} from '../lib/github-client';
 
 export const kindSchema = z.literal('issue');
 
@@ -110,7 +110,7 @@ export async function getVerifiedContext(
 		});
 	}
 
-	const installation = await ctx.db.get(connection.githubInstallationId);
+	const installation = await ctx.db.get('githubInstallation', connection.githubInstallationId);
 	if (!installation || installation.status !== 'active') {
 		throw new CRPCError({
 			code: 'NOT_FOUND',

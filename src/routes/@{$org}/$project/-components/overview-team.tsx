@@ -1,13 +1,13 @@
+import { Link } from '@tanstack/react-router';
+import { MOCK_MEMBERS } from '../-overview-mock-data';
+import { OverviewSection } from './overview-section';
 import type { Member } from '../-overview-types';
 
-import { Link } from '@tanstack/react-router';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Interview from '@/icons/interview';
 import { cn } from '@/lib/utils';
 
-import { MOCK_MEMBERS } from '../-overview-mock-data';
-import { OverviewSection } from './overview-section';
 
 function initials(name: string) {
 	return name

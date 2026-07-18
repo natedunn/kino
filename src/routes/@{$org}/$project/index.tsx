@@ -1,14 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 
-import { useCRPC } from '@/lib/convex/crpc';
-import { projectTitle, titleMeta } from '@/lib/seo';
 
 import { OverviewActivity } from './-components/overview-activity';
 import { OverviewHeader } from './-components/overview-header';
 import { OverviewRecentUpdates } from './-components/overview-recent-updates';
 import { OverviewStats } from './-components/overview-stats';
 import { OverviewTeam } from './-components/overview-team';
+import { projectTitle, titleMeta } from '@/lib/seo';
+import { useCRPC } from '@/lib/convex/crpc';
 
 export const Route = createFileRoute('/@{$org}/$project/')({
 	head: ({ params }) => ({

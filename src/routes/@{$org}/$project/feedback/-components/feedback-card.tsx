@@ -1,8 +1,8 @@
+import { UpvoteButton } from './upvote-button';
 import { ClickableContainer } from '@/components/clickable-container';
 import { StatusIcon } from '@/icons';
 import { stripHtml, truncateToNearestSpace } from '@/lib/utils/truncate';
 
-import { UpvoteButton } from './upvote-button';
 
 function isPlainLeftClick(event: React.MouseEvent<HTMLAnchorElement>) {
 	return event.button === 0 && !event.metaKey && !event.altKey && !event.ctrlKey && !event.shiftKey;
@@ -33,7 +33,7 @@ export function FeedbackCard({
 		}
 
 		event.preventDefault();
-		onNavigationClick?.();
+		onNavigationClick();
 	};
 
 	return (
@@ -50,7 +50,7 @@ export function FeedbackCard({
 				className='group flex w-full flex-col rounded-r-lg p-5 transition-colors duration-100 ease-in-out hocus:bg-accent/50 hocus:outline-primary'
 				href={href}
 				keyboardInteractive={false}
-				onClick={() => onNavigationClick?.()}
+				onClick={() => onNavigationClick()}
 				onPreload={onPreload}
 			>
 				<div className='flex items-start gap-4'>

@@ -1,9 +1,9 @@
-import type { GatewayEnv } from './env';
 
 import { createGatewayAuth } from './auth';
 import { handleGitHubRelayOAuthCallback } from './github-relay';
 import { handleGitHubWebhook, handleTargetsApi } from './hooks';
 import { rewriteProxyCallbackRedirect } from './redirect-rewrite';
+import type { GatewayEnv } from './env';
 
 export default {
 	async fetch(request: Request, env: GatewayEnv, ctx: ExecutionContext) {

@@ -1,6 +1,6 @@
+import { isTrustedTargetOrigin } from './env';
 import type { GatewayEnv } from './env';
 
-import { isTrustedTargetOrigin } from './env';
 
 /**
  * Rewrites the oAuthProxy callback redirect to the originating app origin.

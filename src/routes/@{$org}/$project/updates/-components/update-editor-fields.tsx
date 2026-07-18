@@ -1,8 +1,10 @@
+import { useState } from 'react';
+import { X } from 'lucide-react';
+import { CategoryBadge } from './category-badge';
+import { FeedbackSelector } from './feedback-selector';
 import type { ReactNode } from 'react';
 import type { UpdateCategory } from './category-badge';
 
-import { useState } from 'react';
-import { X } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -17,8 +19,6 @@ import {
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 
-import { CategoryBadge } from './category-badge';
-import { FeedbackSelector } from './feedback-selector';
 
 export const UPDATE_CATEGORIES = ['changelog', 'article', 'announcement'] as const;
 
@@ -115,7 +115,7 @@ export function TagsField({
 	value: Array<string>;
 }) {
 	const [tagInput, setTagInput] = useState('');
-	const tags = value || [];
+	const tags = value;
 
 	const addTag = () => {
 		const trimmed = tagInput.trim();
@@ -138,7 +138,7 @@ export function TagsField({
 								variant='ghost'
 								size='icon-xs'
 								className='ml-0.5 size-4 hover:text-destructive'
-								onClick={() => onChange(tags.filter((value) => value !== tag))}
+								onClick={() => onChange(tags.filter((t) => t !== tag))}
 								type='button'
 							>
 								<X className='h-3 w-3' />

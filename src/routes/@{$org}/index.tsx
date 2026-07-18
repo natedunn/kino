@@ -1,5 +1,5 @@
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
-import { createFileRoute, Link } from '@tanstack/react-router';
+import { Link, createFileRoute } from '@tanstack/react-router';
 import {
 	Activity,
 	ArrowRight,
@@ -13,6 +13,8 @@ import {
 	Zap,
 } from 'lucide-react';
 
+import { NoPublicProjects } from './-components/no-public-projects';
+import { OrgProjects } from './-components/org-projects';
 import { EmptyState } from '@/components/kino/common';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -21,8 +23,6 @@ import { useCRPC } from '@/lib/convex/crpc';
 import { crpcServer } from '@/lib/convex/crpc-server';
 import { titleFromSlug, titleMeta } from '@/lib/seo';
 
-import { NoPublicProjects } from './-components/no-public-projects';
-import { OrgProjects } from './-components/org-projects';
 
 export const Route = createFileRoute('/@{$org}/')({
 	head: ({ params }) => ({
@@ -291,12 +291,12 @@ function OrganizationRoute() {
 												<Avatar className='size-8 shrink-0'>
 													{m.user.image ? <AvatarImage src={m.user.image} /> : null}
 													<AvatarFallback className='text-xs font-semibold'>
-														{(m.user.name ?? m.user.email)[0]?.toUpperCase()}
+														{(m.user.name)[0].toUpperCase()}
 													</AvatarFallback>
 												</Avatar>
 												<div className='flex min-w-0 flex-1 items-center justify-between gap-2'>
 													<span className='truncate text-sm font-medium'>
-														{m.user.name ?? m.user.email}
+														{m.user.name}
 													</span>
 													<Badge
 														variant='outline'

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useForm } from '@tanstack/react-form';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { createFileRoute, Link, redirect, useNavigate } from '@tanstack/react-router';
+import { Link, createFileRoute, redirect, useNavigate } from '@tanstack/react-router';
 
 import { InlineAlert } from '@/components/inline-alert';
 import { EmptyState } from '@/components/kino/common';
@@ -13,10 +13,10 @@ import { useCRPC } from '@/lib/convex/crpc';
 import { crpcServer } from '@/lib/convex/crpc-server';
 import { projectTitle, titleMeta } from '@/lib/seo';
 import {
-	boardFormSchema,
-	filterSlugInput,
 	FORM_LIMITS,
 	SLUG_INPUT_PATTERN,
+	boardFormSchema,
+	filterSlugInput,
 	validationMessage,
 } from '@/lib/validation';
 
@@ -100,7 +100,6 @@ function EditBoardRoute() {
 		}),
 		[
 			boardQuery.data?.description,
-			boardQuery.data?.id,
 			boardQuery.data?.name,
 			boardQuery.data?.slug,
 		]

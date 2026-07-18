@@ -1,12 +1,12 @@
+import { ChevronUp, MessageSquare } from 'lucide-react';
+import { LIST_ORDER, STATUS_CONFIG } from '../-config';
 import type { RoadmapItem } from '../-types';
 
-import { ChevronUp, MessageSquare } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { GithubIcon } from '@/icons';
 import { cn } from '@/lib/utils';
 
-import { LIST_ORDER, STATUS_CONFIG } from '../-config';
 
 function ListItem({ item }: { item: RoadmapItem }) {
 	const config = STATUS_CONFIG[item.status];

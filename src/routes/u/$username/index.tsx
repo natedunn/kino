@@ -1,5 +1,5 @@
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
-import { createFileRoute, Link } from '@tanstack/react-router';
+import { Link, createFileRoute } from '@tanstack/react-router';
 import { Link as LinkIcon, MapPin, User2 } from 'lucide-react';
 
 import { NotFound } from '@/components/_not-found';

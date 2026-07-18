@@ -2,6 +2,7 @@
 
 import { BadgeCheck, Bell, ChevronsUpDown, CreditCard, LogOut, Sparkles } from 'lucide-react';
 
+import { Button } from './ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
 	DropdownMenu,
@@ -13,7 +14,6 @@ import {
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-import { Button } from './ui/button';
 
 export function NavUser({
 	user,

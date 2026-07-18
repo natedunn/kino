@@ -1,7 +1,9 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
-import { createFileRoute, Link, Outlet, useRouterState } from '@tanstack/react-router';
+import { Link, Outlet, createFileRoute, useRouterState } from '@tanstack/react-router';
 import { GitBranch, Settings, Users } from 'lucide-react';
 
+import { OrgSettingsSelector } from './-components/org-settings-selector';
+import { useSettingsOrgController } from './-components/use-settings-org';
 import { EmptyState } from '@/components/kino/common';
 import { SidebarNavGroup, SidebarNavItem, SidebarNavSelect } from '@/components/sidebar-nav';
 import { EditingBar } from '@/components/site-nav/editing-bar';
@@ -12,8 +14,6 @@ import { useCRPC } from '@/lib/convex/crpc';
 import { crpcServer } from '@/lib/convex/crpc-server';
 import { titleMeta } from '@/lib/seo';
 
-import { OrgSettingsSelector } from './-components/org-settings-selector';
-import { useSettingsOrgController } from './-components/use-settings-org';
 
 type SettingsSearch = { org?: string };
 

@@ -1,6 +1,7 @@
+import { SmilePlus } from 'lucide-react';
+import { EMOTE_EMOJI } from './types';
 import type { EmoteContent } from './types';
 
-import { SmilePlus } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -10,7 +11,6 @@ import {
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-import { EMOTE_EMOJI } from './types';
 
 type EmotePickerProps = {
 	disabled?: boolean;
@@ -27,7 +27,7 @@ export function EmotePicker({ disabled, onSelect }: EmotePickerProps) {
 				</Button>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align='start' className='grid grid-cols-5 gap-1 p-2'>
-				{(Object.keys(EMOTE_EMOJI) as EmoteContent[]).map((emoteType) => (
+				{(Object.keys(EMOTE_EMOJI) as Array<EmoteContent>).map((emoteType) => (
 					<DropdownMenuItem
 						className='flex cursor-pointer items-center justify-center p-2 text-lg hover:bg-accent'
 						key={emoteType}

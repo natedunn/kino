@@ -1,5 +1,5 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
-import { createFileRoute, Link, Outlet, useRouterState } from '@tanstack/react-router';
+import { Link, Outlet, createFileRoute, useRouterState } from '@tanstack/react-router';
 import { Bell, Database, Palette, ShieldCheck, User } from 'lucide-react';
 
 import { SidebarNavGroup, SidebarNavItem, SidebarNavSelect } from '@/components/sidebar-nav';

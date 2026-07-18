@@ -1,3 +1,4 @@
+import { Suspense, lazy } from 'react';
 import type { ComponentProps } from 'react';
 // NOTE: type-only import — erased at build time, so it does NOT create a static
 // runtime dependency on markdown-editor.tsx. The dynamic import() below is the
@@ -5,7 +6,6 @@ import type { ComponentProps } from 'react';
 // highlight.js grammars into a separate chunk.
 import type { MarkdownEditor } from './markdown-editor';
 
-import { lazy, Suspense } from 'react';
 
 const MarkdownEditorImpl = lazy(() =>
 	import('./markdown-editor').then((module) => ({

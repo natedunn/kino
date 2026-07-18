@@ -1,5 +1,3 @@
-import type { LabItem } from './types';
-
 import { useState } from 'react';
 import {
 	Bell,
@@ -19,6 +17,9 @@ import {
 	User,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { Cell, CopySnippet, Demo } from './parts';
+import type { LabItem } from './types';
+
 
 import CheckboxButton from '@/components/checkbox-button';
 import { InlineAlert } from '@/components/inline-alert';
@@ -106,7 +107,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { GithubIcon } from '@/icons';
 
-import { Cell, CopySnippet, Demo } from './parts';
 
 /* ------------------------------------------------------------------ */
 /* Buttons                                                            */
@@ -325,7 +325,7 @@ function CheckboxDemo() {
 /* ------------------------------------------------------------------ */
 
 function CheckboxButtonDemo() {
-	const [selected, setSelected] = useState<string[]>(['weekly']);
+	const [selected, setSelected] = useState<Array<string>>(['weekly']);
 	const toggle = (id: string) =>
 		setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 	return (
@@ -954,7 +954,7 @@ function CopySnippetDemo() {
 	);
 }
 
-export const COMPONENT_ITEMS: LabItem[] = [
+export const COMPONENT_ITEMS: Array<LabItem> = [
 	{
 		id: 'button',
 		name: 'Button',

@@ -1,8 +1,10 @@
-import type { API } from '@/lib/api';
-
 import React from 'react';
 import { Link, useRouterState } from '@tanstack/react-router';
 import { Command, Ellipsis } from 'lucide-react';
+import { NavButton } from './nav-button';
+import { UserDropdown } from './user-dropdown';
+import type { API } from '@/lib/api';
+
 
 import { useCommandPalette } from '@/components/command';
 import { KinoMark } from '@/components/kino-mark';
@@ -19,8 +21,6 @@ import Bell from '@/icons/bell';
 import SearchSparkle from '@/icons/search-sparkle';
 import { cn } from '@/lib/utils';
 
-import { NavButton } from './nav-button';
-import { UserDropdown } from './user-dropdown';
 
 const notifications = [
 	{
@@ -77,7 +77,7 @@ export const MainNav = ({ context, isUserPending = false, subNav, user }: MainNa
 	const org = context.type === 'global' ? undefined : context.org;
 	const orgSlug = org?.slug;
 	const projectSlug = context.type === 'project' ? context.projectSlug : undefined;
-	const orgInitial = (org?.name ?? orgSlug ?? '')[0]?.toUpperCase();
+	const orgInitial = (org?.name ?? orgSlug ?? '')[0].toUpperCase();
 	const hasSubNav = !!subNav;
 
 	return (
@@ -104,11 +104,11 @@ export const MainNav = ({ context, isUserPending = false, subNav, user }: MainNa
 										<div
 											className={cn(
 												'-ml-3 flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-foreground/15 ring-2 ring-muted select-none dark:border-foreground/25 dark:ring-black',
-												org?.logo ? 'bg-background' : 'bg-foreground',
+												org.logo ? 'bg-background' : 'bg-foreground',
 												projectSlug && 'max-[459px]:hidden'
 											)}
 										>
-											{org?.logo ? (
+											{org.logo ? (
 												<img alt='' className='h-full w-full object-cover' src={org.logo} />
 											) : (
 												<span className='text-sm font-bold text-background'>{orgInitial}</span>

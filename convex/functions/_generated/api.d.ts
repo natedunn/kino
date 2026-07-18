@@ -589,12 +589,6 @@ export declare const api: {
     >;
   };
   update: {
-    backfillProjectUpdatedTimes: FunctionReference<
-      "mutation",
-      "public",
-      { cursor?: string; limit?: number; projectId: string },
-      any
-    >;
     bulkPublish: FunctionReference<
       "mutation",
       "public",

@@ -11,7 +11,7 @@ export type FeedbackCommentData = {
 	canEdit?: boolean;
 	content: string;
 	createdAt: number | string | Date;
-	emoteCounts?: Record<string, { authorProfileIds: string[]; count: number }>;
+	emoteCounts?: Record<string, { authorProfileIds: Array<string>; count: number }>;
 	id: string;
 	initial?: boolean;
 	isTeamMember?: boolean;

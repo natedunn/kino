@@ -1,4 +1,3 @@
-import type { Id } from './_generated/dataModel';
 
 import { createFunctionHandle } from 'convex/server';
 import { v } from 'convex/values';
@@ -7,11 +6,11 @@ import { z } from 'zod';
 
 import { authMutation, authQuery, optionalAuthQuery } from '../lib/crpc';
 import {
+	LIMITS,
 	canEditOrgRole,
 	ensureUniqueOrgSlug,
 	findOrganization,
 	getCurrentProfile,
-	LIMITS,
 	verifyOrgAccess,
 } from '../lib/kino';
 import { orgUploadsR2 } from '../lib/r2';
@@ -31,6 +30,7 @@ import {
 import { internal } from './_generated/api';
 import { internalMutation } from './generated/server';
 import { parseOrgAvatarKey, visibilitySchema, withResolvedLogo } from './org.lib';
+import type { Id } from './_generated/dataModel';
 
 export const create = authMutation
 	.input(
@@ -67,6 +67,8 @@ export const create = authMutation
 			headers: ctx.headers,
 		});
 
+		// Defensive: the auth API types this as non-null, but guard the failure case.
+		// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 		if (!organization) {
 			throw new CRPCError({
 				code: 'INTERNAL_SERVER_ERROR',
@@ -151,7 +153,7 @@ export const generateAvatarUploadUrl = authMutation
 		})
 	)
 	.mutation(async ({ ctx, input }) => {
-		const organization = await ctx.db.get(input.organizationId as Id<'organization'>);
+		const organization = await ctx.db.get("organization", input.organizationId as Id<'organization'>);
 		if (!organization) {
 			throw new CRPCError({
 				code: 'NOT_FOUND',
@@ -181,7 +183,7 @@ export const syncAvatarMetadata = authMutation
 	)
 	.mutation(async ({ ctx, input }) => {
 		const organizationId = parseOrgAvatarKey(input.key);
-		const organization = await ctx.db.get(organizationId);
+		const organization = await ctx.db.get("organization", organizationId);
 		if (!organization) {
 			throw new CRPCError({
 				code: 'NOT_FOUND',
@@ -225,10 +227,10 @@ export const onAvatarMetadataSynced = internalMutation({
 	},
 	handler: async (ctx, args) => {
 		const organizationId = parseOrgAvatarKey(args.key);
-		const organization = await ctx.db.get(organizationId);
+		const organization = await ctx.db.get("organization", organizationId);
 		if (!organization) return;
 
-		const metadata = await getOrgUploadR2Metadata(ctx as any, args.key);
+		const metadata = await getOrgUploadR2Metadata(ctx, args.key);
 		if (!metadata) return;
 
 		try {
@@ -237,15 +239,15 @@ export const onAvatarMetadataSynced = internalMutation({
 			// The presigned PUT lets the client upload arbitrary bytes, so this is the
 			// server-side enforcement point. Reject invalid uploads by deleting the
 			// object and clearing the (already-set) org logo so nothing bad is served.
-			await orgUploadsR2.deleteObject(ctx as any, args.key);
+			await orgUploadsR2.deleteObject(ctx, args.key);
 			if (organization.logo === args.key) {
-				await ctx.db.patch(organizationId, { logo: undefined });
+				await ctx.db.patch("organization", organizationId, { logo: undefined });
 			}
 			return;
 		}
 
 		await updateOrgStorageUsage(
-			ctx as any,
+			ctx,
 			organization.slug,
 			metadata.size ?? 0,
 			args.isNew ? 1 : 0

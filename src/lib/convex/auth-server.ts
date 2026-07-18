@@ -73,7 +73,7 @@ function withPublicAuthRequestUrl(request: Request) {
 }
 
 type HeadersWithSetCookieList = Headers & {
-	getSetCookie?: () => string[];
+	getSetCookie?: () => Array<string>;
 };
 
 export function getSetCookieValues(source: Headers) {

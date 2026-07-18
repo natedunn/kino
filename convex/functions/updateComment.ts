@@ -31,7 +31,7 @@ export const create = authMutation
 		const [comment] = await ctx.orm
 			.insert(updateCommentTable)
 			.values({
-				authorProfileId: profile._id as any,
+				authorProfileId: profile._id,
 				content: input.content,
 				updateId: item._id as any,
 			})
@@ -133,9 +133,9 @@ export const listByUpdate = optionalAuthQuery
 					.query('updateCommentEmote')
 					.withIndex('by_updateCommentId', (q: any) => q.eq('updateCommentId', comment._id))
 					.collect();
-				const emoteCounts: Record<string, { authorProfileIds: string[]; count: number }> = {};
+				const emoteCounts: Record<string, { authorProfileIds: Array<string>; count: number }> = {};
 				for (const emote of emotes) {
-					if (!emoteCounts[emote.content]) {
+					if (!Object.hasOwn(emoteCounts, emote.content)) {
 						emoteCounts[emote.content] = { authorProfileIds: [], count: 0 };
 					}
 					emoteCounts[emote.content].count++;

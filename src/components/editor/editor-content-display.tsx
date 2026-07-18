@@ -1,9 +1,9 @@
 import { startTransition, useEffect, useMemo, useState } from 'react';
 
-import { cn } from '@/lib/utils';
 
 import { formatInlineCode } from './format-inline-code';
 import { sanitizeEditorContent } from './sanitize-content';
+import { cn } from '@/lib/utils';
 
 type EditorContentDisplayProps = {
 	className?: string;

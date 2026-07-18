@@ -7,5 +7,5 @@ export type ClassValue =
 	| boolean
 	| null
 	| undefined
-	| ClassValue[]
+	| Array<ClassValue>
 	| { [key: string]: any };

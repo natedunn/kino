@@ -31,7 +31,6 @@ export function UpvoteButton({
 	const showResult =
 		mutation.isSuccess &&
 		isThisFeedback &&
-		!!mutation.data &&
 		mutation.data.upvoted !== initialHasUpvoted;
 	const count = showOptimistic ? optimisticCount : showResult ? mutation.data.count : initialCount;
 	const hasUpvoted = showOptimistic

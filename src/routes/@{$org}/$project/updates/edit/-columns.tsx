@@ -1,15 +1,15 @@
-import type { DashboardUpdate } from './-types';
 
 import { Link } from '@tanstack/react-router';
 import { createColumnHelper } from '@tanstack/react-table';
 import { ChevronRight } from 'lucide-react';
 
+import { CategoryBadge } from '../-components/category-badge';
+import { StatusBadge } from '../-components/status-badge';
+import type { DashboardUpdate } from './-types';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { formatFullDate, formatTimestamp } from '@/lib/utils/format-timestamp';
 
-import { CategoryBadge } from '../-components/category-badge';
-import { StatusBadge } from '../-components/status-badge';
 
 const columnHelper = createColumnHelper<DashboardUpdate>();
 

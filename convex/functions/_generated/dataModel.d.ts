@@ -464,6 +464,12 @@ export type DataModel = {
       by_creation_time: ["_creationTime"];
       by_authorProfileId: ["authorProfileId", "_creationTime"];
       by_feedbackCommentId: ["feedbackCommentId", "_creationTime"];
+      by_feedbackCommentId_authorProfileId_content: [
+        "feedbackCommentId",
+        "authorProfileId",
+        "content",
+        "_creationTime",
+      ];
       by_feedbackId: ["feedbackId", "_creationTime"];
     };
     searchIndexes: {};
@@ -1286,6 +1292,12 @@ export type DataModel = {
       by_id: ["_id"];
       by_creation_time: ["_creationTime"];
       by_updateCommentId: ["updateCommentId", "_creationTime"];
+      by_updateCommentId_authorProfileId_content: [
+        "updateCommentId",
+        "authorProfileId",
+        "content",
+        "_creationTime",
+      ];
       by_updateId: ["updateId", "_creationTime"];
     };
     searchIndexes: {};
@@ -1323,9 +1335,10 @@ export type DataModel = {
       by_id: ["_id"];
       by_creation_time: ["_creationTime"];
       by_updateId: ["updateId", "_creationTime"];
-      by_updateId_authorProfileId: [
+      by_updateId_authorProfileId_content: [
         "updateId",
         "authorProfileId",
+        "content",
         "_creationTime",
       ];
     };

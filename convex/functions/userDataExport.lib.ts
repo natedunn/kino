@@ -1,10 +1,10 @@
-import type { Doc } from './_generated/dataModel';
-import type { QueryCtx } from './generated/server';
 
 import { CRPCError } from 'kitcn/server';
 import { z } from 'zod';
 
 import { getDoc, getProjectViewAccess, verifyOrgAccess } from '../lib/kino';
+import type { QueryCtx } from './generated/server';
+import type { Doc } from './_generated/dataModel';
 
 export const EXPORT_FORMAT = 'kino-user-data-export' as const;
 export const EXPORT_VERSION = 1;
@@ -246,7 +246,7 @@ export const exportSections: Record<ExportSectionId, ExportSectionDefinition> = 
 	},
 };
 
-export function resolveRequestedSections(requestedSections: ExportSectionId[] | undefined) {
+export function resolveRequestedSections(requestedSections: Array<ExportSectionId> | undefined) {
 	if (!requestedSections) {
 		return exportSectionIds.filter((sectionId) => exportSections[sectionId].includedByDefault);
 	}

@@ -2,6 +2,9 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { createFileRoute, redirect } from '@tanstack/react-router';
 import { CheckCircle2, GitBranch, RefreshCw } from 'lucide-react';
 
+import { SettingsSkeleton } from '../-components/settings-skeleton';
+import { useDelayedFlag } from '../-components/use-delayed-flag';
+import { useSettingsOrgSlug } from '../-components/use-settings-org';
 import { InlineAlert } from '@/components/inline-alert';
 import { EmptyState } from '@/components/kino/common';
 import { Button } from '@/components/ui/button';
@@ -9,9 +12,6 @@ import { useCRPC } from '@/lib/convex/crpc';
 import { crpcServer } from '@/lib/convex/crpc-server';
 import { titleMeta } from '@/lib/seo';
 
-import { SettingsSkeleton } from '../-components/settings-skeleton';
-import { useDelayedFlag } from '../-components/use-delayed-flag';
-import { useSettingsOrgSlug } from '../-components/use-settings-org';
 
 type IntegrationsSearch = { github?: string };
 
@@ -42,7 +42,7 @@ export const Route = createFileRoute('/org/settings/integrations/')({
 
 function IntegrationsSettingsRoute() {
 	const orgSlug = useSettingsOrgSlug();
-	const search = Route.useSearch() as { github?: string };
+	const search = Route.useSearch();
 	const crpc = useCRPC();
 
 	const orgQuery = useQuery(

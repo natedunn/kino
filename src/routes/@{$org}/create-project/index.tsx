@@ -21,10 +21,10 @@ import { crpcServer } from '@/lib/convex/crpc-server';
 import { titleFromSlug, titleMeta } from '@/lib/seo';
 import { cn } from '@/lib/utils';
 import {
-	filterSlugInput,
 	FORM_LIMITS,
-	projectFormSchema,
 	SLUG_INPUT_PATTERN,
+	filterSlugInput,
+	projectFormSchema,
 	validationMessage,
 } from '@/lib/validation';
 
@@ -133,7 +133,7 @@ function CreateProjectRoute() {
 									<div className='z-10 flex w-full flex-col items-center justify-center pt-10'>
 										<Avatar className='size-24 border'>
 											<AvatarFallback className='rounded-lg text-xl font-bold'>
-												{values.name?.[0]?.toUpperCase() ?? '?'}
+												{values.name[0].toUpperCase()}
 											</AvatarFallback>
 										</Avatar>
 										<div

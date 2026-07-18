@@ -3,6 +3,9 @@ import { useForm } from '@tanstack/react-form';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router';
 
+import { SettingsSkeleton } from '../-components/settings-skeleton';
+import { useDelayedFlag } from '../-components/use-delayed-flag';
+import { persistSettingsOrg, useSettingsOrgSlug } from '../-components/use-settings-org';
 import { InlineAlert } from '@/components/inline-alert';
 import { EmptyState } from '@/components/kino/common';
 import { Label, LabelDescription, LabelWrapper } from '@/components/label';
@@ -15,16 +18,13 @@ import { crpcServer } from '@/lib/convex/crpc-server';
 import { titleMeta } from '@/lib/seo';
 import { cn } from '@/lib/utils';
 import {
-	filterSlugInput,
 	FORM_LIMITS,
-	orgFormSchema,
 	SLUG_INPUT_PATTERN,
+	filterSlugInput,
+	orgFormSchema,
 	validationMessage,
 } from '@/lib/validation';
 
-import { SettingsSkeleton } from '../-components/settings-skeleton';
-import { useDelayedFlag } from '../-components/use-delayed-flag';
-import { persistSettingsOrg, useSettingsOrgSlug } from '../-components/use-settings-org';
 
 type GeneralSettingsFormValues = {
 	avatarFile: File | null;
@@ -125,15 +125,15 @@ function GeneralSettingsRoute() {
 	const form = useForm({
 		defaultValues: formDefaultValues,
 		onSubmit: async ({ value, formApi }) => {
-			const org = orgQuery.data?.org;
-			if (!org) return;
+			const currentOrg = orgQuery.data?.org;
+			if (!currentOrg) return;
 			setFormError(null);
 
 			try {
 				const parsed = orgFormSchema.safeParse({
 					name: value.name,
 					slug: value.slug,
-					visibility: org.visibility,
+					visibility: currentOrg.visibility,
 				});
 				if (!parsed.success) {
 					setFormError(validationMessage(parsed.error));
@@ -142,7 +142,7 @@ function GeneralSettingsRoute() {
 
 				if (value.avatarFile) {
 					const { key, url } = await uploadUrlMutation.mutateAsync({
-						organizationId: org.id,
+						organizationId: currentOrg.id,
 					});
 					const response = await fetch(url, {
 						body: value.avatarFile,
@@ -158,7 +158,7 @@ function GeneralSettingsRoute() {
 				}
 
 				const updatedOrg = await updateMutation.mutateAsync({
-					currentSlug: org.slug,
+					currentSlug: currentOrg.slug,
 					name: parsed.data.name,
 					updatedSlug: parsed.data.slug || undefined,
 				});

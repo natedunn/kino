@@ -2,12 +2,12 @@ import { memo } from 'react';
 import { Link } from '@tanstack/react-router';
 import { Calendar, Heart, MessageSquare } from 'lucide-react';
 
+import { CategoryBadge } from './category-badge';
+import { useEmoteToggle } from './use-emote-toggle';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { formatFullDate } from '@/lib/utils/format-timestamp';
 
-import { CategoryBadge } from './category-badge';
-import { useEmoteToggle } from './use-emote-toggle';
 
 // Memoized: the updates list re-renders on local state changes (e.g. "Load
 // more") while each row's props stay referentially stable, so memo skips

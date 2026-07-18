@@ -1,6 +1,6 @@
 import { Suspense, useState } from 'react';
 import { useSuspenseQuery } from '@tanstack/react-query';
-import { createFileRoute, Link } from '@tanstack/react-router';
+import { Link, createFileRoute } from '@tanstack/react-router';
 import { ArrowRight, ChevronDown, FolderOpen, Lock, Plus, Settings } from 'lucide-react';
 
 import { MainNav } from '@/components/site-nav/main-nav';
@@ -52,7 +52,7 @@ function AuthenticatedDashboard() {
 	const { data: orgsData } = useSuspenseQuery(
 		crpc.org.findMyOrgs.queryOptions({}, { skipUnauth: true })
 	);
-	const orgs = orgsData?.teams ?? [];
+	const orgs = orgsData.teams;
 
 	return (
 		<div className='flex min-h-svh flex-col'>
@@ -70,7 +70,7 @@ function AuthenticatedDashboard() {
 									: `${orgs.length} team${orgs.length === 1 ? '' : 's'}`}
 							</p>
 						</div>
-						{orgsData?.underLimit ? (
+						{orgsData.underLimit ? (
 							<Button asChild size='sm'>
 								<Link to='/create/team'>
 									<Plus className='size-3.5' />
@@ -129,7 +129,7 @@ function OrgSection({
 					<Avatar className='size-8 border'>
 						{org.logo ? <AvatarImage src={org.logo} /> : null}
 						<AvatarFallback className='text-sm font-semibold'>
-							{org.name[0]?.toUpperCase()}
+							{org.name[0].toUpperCase()}
 						</AvatarFallback>
 					</Avatar>
 					<span className='font-semibold decoration-2 underline-offset-2 group-hover:underline'>

@@ -1,8 +1,8 @@
-import type { LabItem } from '@/components/ui-lab/types';
 
 import { useMemo, useState } from 'react';
-import { createFileRoute, Link } from '@tanstack/react-router';
+import { Link, createFileRoute } from '@tanstack/react-router';
 import { ArrowLeft, Blocks, Layers, MoonIcon, Search, SunIcon } from 'lucide-react';
+import type { LabItem } from '@/components/ui-lab/types';
 
 import { COMPONENT_ITEMS } from '@/components/ui-lab/component-demos';
 import { EXAMPLE_ITEMS } from '@/components/ui-lab/example-demos';
@@ -122,13 +122,13 @@ function UiLibraryPage() {
 									</span>
 								</div>
 								<ul className='space-y-0.5'>
-									{section.matches.map((item) => {
-										const isActive = item.id === active.id;
+									{section.matches.map((match) => {
+										const isActive = match.id === active.id;
 										return (
-											<li key={item.id}>
+											<li key={match.id}>
 												<button
 													type='button'
-													onClick={() => setActiveId(item.id)}
+													onClick={() => setActiveId(match.id)}
 													className={cn(
 														'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors',
 														isActive
@@ -142,10 +142,10 @@ function UiLibraryPage() {
 															isActive ? 'bg-primary' : 'bg-transparent'
 														)}
 													/>
-													<span className='truncate'>{item.name}</span>
-													{item.tag && (
+													<span className='truncate'>{match.name}</span>
+													{match.tag && (
 														<span className='ml-auto rounded bg-muted px-1 font-mono text-[10px] text-muted-foreground'>
-															{item.tag}
+															{match.tag}
 														</span>
 													)}
 												</button>

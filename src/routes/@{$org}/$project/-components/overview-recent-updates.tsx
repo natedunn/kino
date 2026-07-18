@@ -1,12 +1,12 @@
 import { Link } from '@tanstack/react-router';
 import { MessageSquare } from 'lucide-react';
 
-import CalendarDays from '@/icons/calendar-days';
-import { cn } from '@/lib/utils';
 
 import { UPDATE_CATEGORY_CONFIG } from '../-overview-config';
 import { MOCK_RECENT_UPDATES } from '../-overview-mock-data';
 import { OverviewSection } from './overview-section';
+import { cn } from '@/lib/utils';
+import CalendarDays from '@/icons/calendar-days';
 
 export function OverviewRecentUpdates({ params }: { params: { org: string; project: string } }) {
 	return (

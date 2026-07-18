@@ -29,7 +29,7 @@ function OrgAvatar({ org, className }: { org: SelectorOrg; className?: string })
 			{org.logo ? (
 				<img alt='' className='h-full w-full object-cover' src={org.logo} />
 			) : (
-				(org.name[0]?.toUpperCase() ?? '')
+				org.name[0].toUpperCase()
 			)}
 		</span>
 	);
@@ -46,7 +46,7 @@ export function OrgSettingsSelector({
 }: {
 	activeSlug: string | null;
 	onSelect: (slug: string) => void;
-	orgs: SelectorOrg[];
+	orgs: Array<SelectorOrg>;
 }) {
 	const active = orgs.find((org) => org.slug === activeSlug) ?? null;
 

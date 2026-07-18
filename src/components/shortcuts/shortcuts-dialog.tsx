@@ -1,6 +1,6 @@
+import { useMemo } from 'react';
 import type { Shortcut, ShortcutGroupName } from './types';
 
-import { useMemo } from 'react';
 
 import {
 	Dialog,

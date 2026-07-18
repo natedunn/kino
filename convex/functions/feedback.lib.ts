@@ -1,4 +1,3 @@
-import type { Doc } from './_generated/dataModel';
 
 import { CRPCError } from 'kitcn/server';
 import { z } from 'zod';
@@ -14,6 +13,7 @@ import {
 } from '../lib/kino';
 import { resolveProfileImageUrl } from '../lib/storage';
 import { resolveTargetOrNull, targetGranularities } from '../shared/target';
+import type { Doc } from './_generated/dataModel';
 
 export const feedbackStatusSchema = z.enum([
 	'open',
@@ -118,9 +118,9 @@ export async function toPublicFeedbackComment(
 		.query('feedbackCommentEmote')
 		.withIndex('by_feedbackCommentId', (q: any) => q.eq('feedbackCommentId', comment._id))
 		.collect();
-	const emoteCounts: Record<string, { authorProfileIds: string[]; count: number }> = {};
+	const emoteCounts: Record<string, { authorProfileIds: Array<string>; count: number }> = {};
 	for (const emote of emotes) {
-		if (!emoteCounts[emote.content]) {
+		if (!Object.hasOwn(emoteCounts, emote.content)) {
 			emoteCounts[emote.content] = { authorProfileIds: [], count: 0 };
 		}
 		emoteCounts[emote.content].count++;
@@ -141,7 +141,7 @@ export async function toPublicFeedbackComment(
 	};
 }
 
-export function dedupeComments<T extends { id: string }>(comments: T[]) {
+export function dedupeComments<T extends { id: string }>(comments: Array<T>) {
 	const seen = new Set<string>();
 	return comments.filter((comment) => {
 		if (seen.has(comment.id)) return false;
@@ -150,7 +150,7 @@ export function dedupeComments<T extends { id: string }>(comments: T[]) {
 	});
 }
 
-export function dedupeDocsById<T extends { _id: string }>(docs: T[]) {
+export function dedupeDocsById<T extends { _id: string }>(docs: Array<T>) {
 	const seen = new Set<string>();
 	return docs.filter((doc) => {
 		if (seen.has(doc._id)) return false;

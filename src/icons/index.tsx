@@ -1,6 +1,5 @@
 import React from 'react';
 
-import { cn } from '@/lib/utils';
 
 import Box from './box';
 import Bug from './bug';
@@ -14,6 +13,7 @@ import Edit from './edit';
 import Github from './github';
 import GridDots from './grid-dots';
 import Lightbulb from './lightbulb';
+import { cn } from '@/lib/utils';
 
 export const iconRegistry = {
 	lightbulb: Lightbulb,
@@ -45,10 +45,7 @@ export function Icon({
 		console.warn('No icon set');
 		return null;
 	}
-	const I = iconRegistry[!!name ? name : !!fallback ? fallback : 'box'];
-	if (!I) {
-		return null;
-	}
+	const I = iconRegistry[name ? name : fallback ? fallback : 'box'];
 	return <I {...rest} />;
 }
 

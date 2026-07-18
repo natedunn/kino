@@ -3,6 +3,9 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { createFileRoute, redirect } from '@tanstack/react-router';
 import { Trash2 } from 'lucide-react';
 
+import { SettingsSkeleton } from '../-components/settings-skeleton';
+import { useDelayedFlag } from '../-components/use-delayed-flag';
+import { useSettingsOrgSlug } from '../-components/use-settings-org';
 import { InlineAlert } from '@/components/inline-alert';
 import { EmptyState } from '@/components/kino/common';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -13,11 +16,8 @@ import { useCRPC } from '@/lib/convex/crpc';
 import { crpcServer } from '@/lib/convex/crpc-server';
 import { titleMeta } from '@/lib/seo';
 import { cn } from '@/lib/utils';
-import { emailSchema, FORM_LIMITS } from '@/lib/validation';
+import { FORM_LIMITS, emailSchema } from '@/lib/validation';
 
-import { SettingsSkeleton } from '../-components/settings-skeleton';
-import { useDelayedFlag } from '../-components/use-delayed-flag';
-import { useSettingsOrgSlug } from '../-components/use-settings-org';
 
 export const Route = createFileRoute('/org/settings/members/')({
 	head: () => ({
@@ -200,12 +200,12 @@ function MembersSettingsRoute() {
 								<Avatar className='size-8 shrink-0'>
 									{member.user.image ? <AvatarImage src={member.user.image} /> : null}
 									<AvatarFallback className='text-xs font-semibold'>
-										{(member.user.name ?? member.user.email)[0]?.toUpperCase()}
+										{member.user.name[0].toUpperCase()}
 									</AvatarFallback>
 								</Avatar>
 								<div className='min-w-0 flex-1'>
 									<p className='truncate text-sm font-medium'>
-										{member.user.name ?? member.user.email}
+										{member.user.name}
 									</p>
 									<p className='truncate text-xs text-muted-foreground'>{member.user.email}</p>
 								</div>
@@ -234,7 +234,7 @@ function MembersSettingsRoute() {
 											onClick={() => {
 												if (
 													window.confirm(
-														`Remove ${member.user.name ?? member.user.email} from this organization?`
+														`Remove ${member.user.name} from this organization?`
 													)
 												) {
 													removeMember.mutate({ memberId: member.id });

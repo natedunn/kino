@@ -1,13 +1,3 @@
-import type { TargetGranularity } from '@convex/target';
-import type { CSSProperties, FormEvent, KeyboardEvent } from 'react';
-import type { ThreadComment } from '../../-components/comment-thread';
-import type {
-	FeedbackCommentData,
-	FeedbackEventData,
-	GitHubConnectionData,
-	ProfileSummary,
-} from './-types';
-
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import {
 	dateFromDayTarget,
@@ -21,7 +11,7 @@ import {
 	parseQuarterParts,
 } from '@convex/target';
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
-import { createFileRoute, getRouteApi, Link, notFound, useNavigate } from '@tanstack/react-router';
+import { Link, createFileRoute, getRouteApi, notFound, useNavigate } from '@tanstack/react-router';
 import { useAuth } from 'kitcn/react';
 import {
 	Bell,
@@ -41,6 +31,24 @@ import {
 	Users,
 	X as XIcon,
 } from 'lucide-react';
+import { UpvoteButton } from '../-components/upvote-button';
+import { CommentCard, CommentEditorProvider, CommentForm } from '../../-components/comment-thread';
+import { FeedbackEventItem } from './-components/feedback-event-item';
+import {
+	GitHubConnectionDialog,
+	GithubConnectionIcon,
+	GithubIssueStateBadge,
+} from './-components/github-connection-dialog';
+import type { TargetGranularity } from '@convex/target';
+import type { CSSProperties, FormEvent, KeyboardEvent } from 'react';
+import type { ThreadComment } from '../../-components/comment-thread';
+import type {
+	FeedbackCommentData,
+	FeedbackEventData,
+	GitHubConnectionData,
+	ProfileSummary,
+} from './-types';
+
 
 import { ProfileLinkOrUnknown } from '@/components/profile-link';
 import { SidebarSection } from '@/components/sidebar-section';
@@ -91,14 +99,6 @@ import { cn } from '@/lib/utils';
 import { formatTimestamp, toTimestamp } from '@/lib/utils/format-timestamp';
 import { FORM_LIMITS } from '@/lib/validation';
 
-import { UpvoteButton } from '../-components/upvote-button';
-import { CommentCard, CommentEditorProvider, CommentForm } from '../../-components/comment-thread';
-import { FeedbackEventItem } from './-components/feedback-event-item';
-import {
-	GitHubConnectionDialog,
-	GithubConnectionIcon,
-	GithubIssueStateBadge,
-} from './-components/github-connection-dialog';
 
 const SIDEBAR_STORAGE_KEY = 'feedback-detail-sidebar-state';
 
@@ -407,7 +407,7 @@ function FeedbackDetailContent({
 			]),
 		[feedbackData.commentWindow.head, feedbackData.commentWindow.tail, middleComments]
 	);
-	const events = eventsQuery.data ?? [];
+	const events = useMemo(() => eventsQuery.data ?? [], [eventsQuery.data]);
 	const currentProfile = interactiveQuery.data?.currentProfile;
 	const assignedProfile = interactiveQuery.data?.assignedProfile;
 	const isAuthenticated = auth.hasSession || auth.isAuthenticated;
@@ -521,8 +521,8 @@ function FeedbackDetailContent({
 			);
 			updateMiddleState((current) => ({
 				...current,
-				comments: dedupeFeedbackComments([...current.comments, ...(result?.comments ?? [])]),
-				cursor: result?.nextCursor ?? null,
+				comments: dedupeFeedbackComments([...current.comments, ...result.comments]),
+				cursor: result.nextCursor ?? null,
 				pageCount: current.pageCount + 1,
 			}));
 		} finally {
@@ -549,8 +549,8 @@ function FeedbackDetailContent({
 			});
 			await queryClient.invalidateQueries({ queryKey: options.queryKey });
 			const result = await queryClient.fetchQuery(options);
-			refreshed.push(...(result?.comments ?? []));
-			nextCursor = result?.nextCursor ?? null;
+			refreshed.push(...result.comments);
+			nextCursor = result.nextCursor ?? null;
 			cursor = nextCursor;
 		}
 
@@ -577,6 +577,9 @@ function FeedbackDetailContent({
 		// `listByFeedback` is a live subscription — refreshing the counts
 		// server-side pushes the new data, so no manual refetch is needed.
 		refreshGithubConnectionsMutation.mutate({ feedbackId: feedback.id });
+		// `refreshGithubConnectionsMutation` is a mutation object (unstable ref);
+		// key this off the feedback/connection state, not the mutation identity.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [feedback.id, visibleGithubConnections.length, projectData.permissions.canEdit]);
 
 	const timelineItems = useMemo(
@@ -1668,8 +1671,8 @@ function InlineFeedbackTitleEditor({
 		try {
 			await onSave(trimmedDraftTitle);
 			closeEditor();
-		} catch (error) {
-			setError(error instanceof Error ? error.message : 'Unable to save title');
+		} catch (err) {
+			setError(err instanceof Error ? err.message : 'Unable to save title');
 		}
 	}
 

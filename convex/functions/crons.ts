@@ -20,7 +20,7 @@ export const cleanupWebhookDeliveries = internalMutation({
 			.take(CLEANUP_BATCH_SIZE);
 
 		for (const row of stale) {
-			await ctx.db.delete(row._id);
+			await ctx.db.delete("githubWebhookDelivery", row._id);
 		}
 
 		// Stay within transaction limits: if a full batch was deleted there may

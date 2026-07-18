@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+	FORM_LIMITS,
 	emailSchema,
 	filterSlugInput,
 	filterUsernameInput,
-	FORM_LIMITS,
 	normalizeSlugInput,
 	orgFormSchema,
 	profileFormSchema,

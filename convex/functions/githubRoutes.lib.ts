@@ -67,10 +67,10 @@ export function isGitHubNotFoundError(error: unknown) {
 }
 
 export async function findDeletedInstallationIds(args: {
-	knownInstallationIds: number[];
+	knownInstallationIds: Array<number>;
 	userInstallationIds: Set<number>;
 }) {
-	const deletedInstallationIds: number[] = [];
+	const deletedInstallationIds: Array<number> = [];
 	await Promise.all(
 		args.knownInstallationIds.map(async (installationId) => {
 			if (args.userInstallationIds.has(installationId)) return;

@@ -1,11 +1,11 @@
+import { ChevronUp } from 'lucide-react';
+import { CURRENT_QUARTER, QUARTERS, STATUS_CONFIG } from '../-config';
 import type { RoadmapItem } from '../-types';
 
-import { ChevronUp } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
-import { CURRENT_QUARTER, QUARTERS, STATUS_CONFIG } from '../-config';
 
 function TimelineCard({ item }: { item: RoadmapItem }) {
 	const config = STATUS_CONFIG[item.status];

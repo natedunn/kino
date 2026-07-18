@@ -1,4 +1,3 @@
-import type { FeedbackEventData } from '../-types';
 
 import { memo } from 'react';
 import { Link } from '@tanstack/react-router';
@@ -12,6 +11,7 @@ import {
 	UserMinus,
 	UserPlus,
 } from 'lucide-react';
+import type { FeedbackEventData } from '../-types';
 
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { StatusIcon } from '@/icons';
@@ -19,7 +19,7 @@ import { formatFullDate, formatRelativeDay, toTimestamp } from '@/lib/utils/form
 
 // Memoized: timeline event rows take only the stable `event` prop, so they
 // skip re-rendering when unrelated top-level state (dialogs, sheets) changes.
-export const FeedbackEventItem = memo(function FeedbackEventItem({
+export const FeedbackEventItem = memo(function ({
 	event,
 }: {
 	event: FeedbackEventData;

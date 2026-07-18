@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+	VALIDATION_LIMITS,
 	emailSchema,
 	generatedSlugSchema,
 	httpUrlSchema,
@@ -10,7 +11,6 @@ import {
 	projectSlugSchema,
 	projectSlugWriteSchema,
 	usernameSchema,
-	VALIDATION_LIMITS,
 } from './validation';
 
 describe('slug validation', () => {

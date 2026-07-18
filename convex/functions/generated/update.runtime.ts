@@ -17,17 +17,6 @@ import {
 // Do not edit manually. Run `kitcn codegen` to regenerate.
 
 const procedureRegistry = {
-	backfillProjectUpdatedTimes: [
-		'mutation',
-		typedProcedureResolver(
-			createGeneratedFunctionReference<
-				'mutation',
-				'public',
-				typeof import('../update').backfillProjectUpdatedTimes
-			>('update:backfillProjectUpdatedTimes'),
-			() => (require('../update') as Record<string, unknown>)['backfillProjectUpdatedTimes']
-		),
-	],
 	bulkPublish: [
 		'mutation',
 		typedProcedureResolver(

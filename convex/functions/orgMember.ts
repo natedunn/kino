@@ -35,7 +35,7 @@ export const listMembers = authQuery
 									email: user.email,
 									id: user._id,
 									image: user.image ?? null,
-									name: user.name ?? null,
+									name: user.name,
 								},
 								userId: m.userId,
 							}

@@ -1,7 +1,6 @@
 import { CRPCError } from 'kitcn/server';
 import { z } from 'zod';
 
-import { type GitHubInstallationDetails, type GitHubRepository } from '../lib/github-client';
 import { getCurrentProfileOrThrow, verifyOrgAccess } from '../lib/kino';
 import {
 	githubLoginSchema,
@@ -12,6 +11,7 @@ import {
 	githubTitleSchema,
 	githubUrlSchema,
 } from '../lib/validation';
+import type {GitHubInstallationDetails, GitHubRepository} from '../lib/github-client';
 
 export const connectionModeSchema = z.enum(['read', 'read_write']);
 export const sourceSchema = z.enum(['issues', 'discussions']);
