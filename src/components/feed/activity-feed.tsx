@@ -30,8 +30,12 @@ export interface ActivityFeedItem {
 	secondary?: ReactNode;
 	/** Optional extra meta shown before the type · time row (e.g. the author). */
 	meta?: ReactNode;
-	/** Optional destination; when set the row becomes a link. */
-	href?: string;
+	/**
+	 * Optional render callback; when provided the row becomes a link. The caller
+	 * supplies the link element (e.g. a TanStack Router `<Link>`) so navigation
+	 * stays typed and constrained to known routes.
+	 */
+	renderLink?: (children: ReactNode) => ReactNode;
 }
 
 const ACTIVITY_CONFIG: Record<ActivityKind, { label: string; Icon: IconType; colorClass: string }> =
@@ -128,13 +132,12 @@ export function ActivityFeed({ items }: { items: Array<ActivityFeedItem> }) {
 						key={event.id}
 						className='relative z-10 flex overflow-hidden rounded-lg border bg-card'
 					>
-						{event.href ? (
-							<a
-								href={event.href}
-								className='flex w-full min-w-0 transition-colors hover:bg-accent/30'
-							>
-								{body}
-							</a>
+						{event.renderLink ? (
+							event.renderLink(
+								<div className='flex w-full min-w-0 transition-colors hover:bg-accent/30'>
+									{body}
+								</div>
+							)
 						) : (
 							body
 						)}

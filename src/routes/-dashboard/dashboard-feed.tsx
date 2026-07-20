@@ -34,10 +34,9 @@ export function DashboardFeed() {
 						id: item.id,
 						kind: item.kind,
 						when: item.when,
-						href: item.href,
 						avatarLabel: item.org,
 						primary: <span className='font-semibold'>{item.org}</span>,
-						secondary: `“${item.title}”`,
+						secondary: `"${item.title}"`,
 						meta: item.author,
 					}))}
 				/>
