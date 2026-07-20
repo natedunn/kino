@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { createFileRoute, redirect } from '@tanstack/react-router';
+import { createFileRoute } from '@tanstack/react-router';
 import { Trash2 } from 'lucide-react';
 
 import { InlineAlert } from '@/components/inline-alert';
@@ -24,17 +24,12 @@ export const Route = createFileRoute('/org/settings/members/')({
 	head: () => ({
 		meta: [titleMeta(['Members'])],
 	}),
-	loader: async ({ context, location }) => {
+	loader: ({ context, location }) => {
 		const orgSlug = (location.search as { org?: string }).org;
 		if (!context.loaderToken || !orgSlug) return;
-		const orgData = await context.queryClient.ensureQueryData(
-			crpcServer.org.getDetails.queryOptions({ slug: orgSlug }, { skipUnauth: true })
-		);
-		// Managing members is edit-only. Bounce non-editors before render; the
-		// component still enforces the finer `canManage` distinction.
-		if (!orgData?.permissions.canEdit) {
-			throw redirect({ to: '/dashboard' });
-		}
+		// Access (canEdit) is gated once on the `/org/settings` layout loader; the
+		// component still enforces the finer `canManage` distinction. Here we only
+		// warm the page-specific caches.
 		void context.queryClient.ensureQueryData(
 			crpcServer.orgMember.listMembers.queryOptions({ slug: orgSlug })
 		);

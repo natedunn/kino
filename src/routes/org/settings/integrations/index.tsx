@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { createFileRoute, redirect } from '@tanstack/react-router';
+import { createFileRoute } from '@tanstack/react-router';
 import { CheckCircle2, GitBranch, RefreshCw } from 'lucide-react';
 
 import { InlineAlert } from '@/components/inline-alert';
@@ -22,17 +22,11 @@ export const Route = createFileRoute('/org/settings/integrations/')({
 	validateSearch: (search: Record<string, unknown>): IntegrationsSearch => ({
 		github: typeof search.github === 'string' ? search.github : undefined,
 	}),
-	loader: async ({ context, location }) => {
+	loader: ({ context, location }) => {
 		const orgSlug = (location.search as { org?: string }).org;
 		if (!context.loaderToken || !orgSlug) return;
-		const orgData = await context.queryClient.ensureQueryData(
-			crpcServer.org.getDetails.queryOptions({ slug: orgSlug }, { skipUnauth: true })
-		);
-		// Org integrations is edit-only. Bounce non-editors before render.
-		if (!orgData?.permissions.canEdit) {
-			throw redirect({ to: '/dashboard' });
-		}
-		// Warm the integration cache without blocking navigation.
+		// Access (canEdit) is gated once on the `/org/settings` layout loader. Warm
+		// the integration cache without blocking navigation.
 		void context.queryClient.ensureQueryData(
 			crpcServer.github.getOrgIntegration.queryOptions({ orgSlug }, { skipUnauth: true })
 		);
