@@ -44,7 +44,7 @@ export type ThreadComment = {
 	canEdit?: boolean;
 	content: string;
 	createdAt: Date | number | string;
-	emoteCounts?: Record<string, { authorProfileIds: string[]; count: number }>;
+	emoteCounts?: Record<string, { authorProfileIds: Array<string>; count: number }>;
 	id: string;
 	updatedTime?: Date | number | string | null;
 };
@@ -70,7 +70,7 @@ export function CommentList<TComment extends ThreadComment>({
 	onToggleEmote,
 	onUpdate,
 }: {
-	comments: TComment[];
+	comments: Array<TComment>;
 	currentProfileId?: string;
 	getAction?: (comment: TComment) => ReactNode;
 	getBadges?: (comment: TComment) => ReactNode;
@@ -216,10 +216,9 @@ export function CommentCard({
 		}
 	}
 
-	const emoteEntries = Object.entries(comment.emoteCounts ?? {}) as [
-		EmoteContent,
-		{ authorProfileIds: string[]; count: number },
-	][];
+	const emoteEntries = Object.entries(comment.emoteCounts ?? {}) as Array<
+		[EmoteContent, { authorProfileIds: Array<string>; count: number }]
+	>;
 
 	return (
 		<li
@@ -531,7 +530,7 @@ export function CommentForm({
 	return (
 		<div className='mt-6'>
 			<MarkdownEditor
-				ariaLabel={placeholder ?? 'Write a comment'}
+				ariaLabel={placeholder}
 				className='rounded-b-none'
 				disabled={isSubmitting}
 				maxHeight='400px'

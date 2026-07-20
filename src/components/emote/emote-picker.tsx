@@ -27,7 +27,7 @@ export function EmotePicker({ disabled, onSelect }: EmotePickerProps) {
 				</Button>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align='start' className='grid grid-cols-5 gap-1 p-2'>
-				{(Object.keys(EMOTE_EMOJI) as EmoteContent[]).map((emoteType) => (
+				{(Object.keys(EMOTE_EMOJI) as Array<EmoteContent>).map((emoteType) => (
 					<DropdownMenuItem
 						className='flex cursor-pointer items-center justify-center p-2 text-lg hover:bg-accent'
 						key={emoteType}

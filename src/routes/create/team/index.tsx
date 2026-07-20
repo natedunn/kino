@@ -93,7 +93,7 @@ function AuthenticatedCreateTeamRoute() {
 		},
 	});
 
-	const underLimit = orgsData?.underLimit ?? true;
+	const underLimit = orgsData.underLimit;
 
 	return (
 		<div className='relative w-full'>

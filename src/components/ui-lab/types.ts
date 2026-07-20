@@ -19,5 +19,5 @@ export type LabItem = {
 export type LabSection = {
 	id: string;
 	label: string;
-	items: LabItem[];
+	items: Array<LabItem>;
 };

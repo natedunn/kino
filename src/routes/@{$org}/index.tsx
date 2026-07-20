@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button';
 import { useCRPC } from '@/lib/convex/crpc';
 import { crpcServer } from '@/lib/convex/crpc-server';
 import { titleFromSlug, titleMeta } from '@/lib/seo';
+import { getInitial } from '@/lib/utils/get-initial';
 
 import { NoPublicProjects } from './-components/no-public-projects';
 import { OrgProjects } from './-components/org-projects';
@@ -291,13 +292,11 @@ function OrganizationRoute() {
 												<Avatar className='size-8 shrink-0'>
 													{m.user.image ? <AvatarImage src={m.user.image} /> : null}
 													<AvatarFallback className='text-xs font-semibold'>
-														{(m.user.name ?? m.user.email)[0]?.toUpperCase()}
+														{getInitial(m.user.name, m.user.email)}
 													</AvatarFallback>
 												</Avatar>
 												<div className='flex min-w-0 flex-1 items-center justify-between gap-2'>
-													<span className='truncate text-sm font-medium'>
-														{m.user.name ?? m.user.email}
-													</span>
+													<span className='truncate text-sm font-medium'>{m.user.name}</span>
 													<Badge
 														variant='outline'
 														className='shrink-0 text-[10px] text-muted-foreground capitalize'

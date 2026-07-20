@@ -53,7 +53,7 @@ export async function updateOrgStorageUsage(
 		.unique();
 
 	if (existing) {
-		await ctx.db.patch(existing._id, {
+		await ctx.db.patch('orgStorageUsage', existing._id, {
 			fileCount: Math.max(0, existing.fileCount + fileCountDelta),
 			totalBytes: Math.max(0, existing.totalBytes + byteDelta),
 			updatedTime: Date.now(),
@@ -97,7 +97,7 @@ export function validateOrganizationLogoMetadata(metadata: ImageMetadata) {
 function validateImageMetadata(
 	metadata: ImageMetadata,
 	args: {
-		allowedContentTypes?: readonly string[];
+		allowedContentTypes?: ReadonlyArray<string>;
 		maxBytes: number;
 		tooLargeMessage: string;
 		wrongTypeMessage: string;

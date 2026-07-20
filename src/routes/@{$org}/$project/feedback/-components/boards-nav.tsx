@@ -21,7 +21,7 @@ type FeedbackBoardNavItem = {
 	icon?: string | null;
 };
 
-export function BoardsNav({ boards }: { boards: FeedbackBoardNavItem[] | null }) {
+export function BoardsNav({ boards }: { boards: Array<FeedbackBoardNavItem> | null }) {
 	const routePath = '/@{$org}/$project/feedback/';
 	const { org, project } = useParams({ from: routePath });
 	const { board: boardParam } = useSearch({ from: routePath });
@@ -41,7 +41,7 @@ export function BoardsNav({ boards }: { boards: FeedbackBoardNavItem[] | null })
 				label: '1–9',
 				description: 'Select board by position',
 				run: ({ key }: { key: string }) => {
-					const target = allBoards[Number(key) - 1];
+					const target = allBoards.at(Number(key) - 1);
 					if (!target) return;
 					navigate({
 						params: { org, project },
@@ -73,7 +73,7 @@ export function BoardsNav({ boards }: { boards: FeedbackBoardNavItem[] | null })
 					{({ isActive }) => (
 						<SidebarNavItem
 							active={board.slug === boardParam || isActive}
-							icon={<Icon fallback='box' name={board?.icon as IconName} size='16px' />}
+							icon={<Icon fallback='box' name={board.icon as IconName} size='16px' />}
 						>
 							{board.name}
 						</SidebarNavItem>

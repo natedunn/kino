@@ -104,7 +104,7 @@ async function syncProjectMembershipsForOrgMember(
 	}
 ) {
 	const [organization, profile] = await Promise.all([
-		ctx.db.get(args.organizationId),
+		ctx.db.get('organization', args.organizationId),
 		ctx.db
 			.query('profile')
 			.withIndex('by_userId', (q: any) => q.eq('userId', args.userId))
@@ -133,7 +133,9 @@ async function syncProjectMembershipsForOrgMember(
 		);
 
 		await Promise.all(
-			projectMemberships.flat().map((membership: any) => ctx.db.delete(membership._id))
+			projectMemberships
+				.flat()
+				.map((membership: any) => ctx.db.delete('projectMember', membership._id))
 		);
 		return;
 	}
@@ -154,14 +156,16 @@ async function syncProjectMembershipsForOrgMember(
 				.collect();
 
 			if (memberships.length > 0) {
-				await ctx.db.patch(memberships[0]._id, {
+				await ctx.db.patch('projectMember', memberships[0]._id, {
 					projectSlug: project.slug,
 					projectVisibility: project.visibility,
 					role: projectRole,
 					updatedTime: Date.now(),
 				});
 				await Promise.all(
-					memberships.slice(1).map((membership: any) => ctx.db.delete(membership._id))
+					memberships
+						.slice(1)
+						.map((membership: any) => ctx.db.delete('projectMember', membership._id))
 				);
 				return;
 			}
@@ -225,14 +229,16 @@ async function syncProjectMembershipsForProject(
 			const role = ORG_ROLE_TO_PROJECT_ROLE[member.role as SupportedOrgRole];
 
 			if (existingMemberships.length > 0) {
-				await ctx.db.patch(existingMemberships[0]._id, {
+				await ctx.db.patch('projectMember', existingMemberships[0]._id, {
 					projectSlug: project.slug,
 					projectVisibility: project.visibility,
 					role,
 					updatedTime: Date.now(),
 				});
 				await Promise.all(
-					existingMemberships.slice(1).map((membership: any) => ctx.db.delete(membership._id))
+					existingMemberships
+						.slice(1)
+						.map((membership: any) => ctx.db.delete('projectMember', membership._id))
 				);
 				return;
 			}
@@ -266,12 +272,12 @@ export const userTable = convexTable(
 		banExpires: integer(),
 		profileId: text(),
 	},
-	(userTable) => [
-		index('email_name').on(userTable.email, userTable.name),
-		index('name').on(userTable.name),
-		index('userId').on(userTable.userId),
-		index('username').on(userTable.username),
-		index('profileId').on(userTable.profileId),
+	(table) => [
+		index('email_name').on(table.email, table.name),
+		index('name').on(table.name),
+		index('userId').on(table.userId),
+		index('username').on(table.username),
+		index('profileId').on(table.profileId),
 	]
 );
 
@@ -290,10 +296,10 @@ export const sessionTable = convexTable(
 		impersonatedBy: text(),
 		activeOrganizationId: text(),
 	},
-	(sessionTable) => [
-		index('expiresAt').on(sessionTable.expiresAt),
-		index('expiresAt_userId').on(sessionTable.expiresAt, sessionTable.userId),
-		index('userId').on(sessionTable.userId),
+	(table) => [
+		index('expiresAt').on(table.expiresAt),
+		index('expiresAt_userId').on(table.expiresAt, table.userId),
+		index('userId').on(table.userId),
 	]
 );
 
@@ -315,11 +321,11 @@ export const accountTable = convexTable(
 		createdAt: timestamp().notNull(),
 		updatedAt: timestamp().notNull(),
 	},
-	(accountTable) => [
-		index('accountId').on(accountTable.accountId),
-		index('accountId_providerId').on(accountTable.accountId, accountTable.providerId),
-		index('providerId_userId').on(accountTable.providerId, accountTable.userId),
-		index('userId').on(accountTable.userId),
+	(table) => [
+		index('accountId').on(table.accountId),
+		index('accountId_providerId').on(table.accountId, table.providerId),
+		index('providerId_userId').on(table.providerId, table.userId),
+		index('userId').on(table.userId),
 	]
 );
 
@@ -332,10 +338,7 @@ export const verificationTable = convexTable(
 		createdAt: timestamp().notNull(),
 		updatedAt: timestamp().notNull(),
 	},
-	(verificationTable) => [
-		index('expiresAt').on(verificationTable.expiresAt),
-		index('identifier').on(verificationTable.identifier),
-	]
+	(table) => [index('expiresAt').on(table.expiresAt), index('identifier').on(table.identifier)]
 );
 
 export const organizationTable = convexTable(
@@ -348,10 +351,7 @@ export const organizationTable = convexTable(
 		metadata: text(),
 		visibility: text().notNull(),
 	},
-	(organizationTable) => [
-		index('name').on(organizationTable.name),
-		index('slug').on(organizationTable.slug),
-	]
+	(table) => [index('name').on(table.name), index('slug').on(table.slug)]
 );
 
 export const memberTable = convexTable(
@@ -366,14 +366,14 @@ export const memberTable = convexTable(
 		role: text().notNull(),
 		createdAt: timestamp().notNull(),
 	},
-	(memberTable) => [
-		index('organizationId').on(memberTable.organizationId),
-		index('userId').on(memberTable.userId),
-		index('role').on(memberTable.role),
-		index('userId_organizationId').on(memberTable.userId, memberTable.organizationId),
+	(table) => [
+		index('organizationId').on(table.organizationId),
+		index('userId').on(table.userId),
+		index('role').on(table.role),
+		index('userId_organizationId').on(table.userId, table.organizationId),
 		// better-auth organization plugin queries members by these composites
-		index('organizationId_userId').on(memberTable.organizationId, memberTable.userId),
-		index('organizationId_role').on(memberTable.organizationId, memberTable.role),
+		index('organizationId_userId').on(table.organizationId, table.userId),
+		index('organizationId_role').on(table.organizationId, table.role),
 	]
 );
 
@@ -392,19 +392,15 @@ export const invitationTable = convexTable(
 			.notNull()
 			.references(() => userTable.id),
 	},
-	(invitationTable) => [
-		index('organizationId').on(invitationTable.organizationId),
-		index('email').on(invitationTable.email),
-		index('role').on(invitationTable.role),
-		index('status').on(invitationTable.status),
-		index('inviterId').on(invitationTable.inviterId),
+	(table) => [
+		index('organizationId').on(table.organizationId),
+		index('email').on(table.email),
+		index('role').on(table.role),
+		index('status').on(table.status),
+		index('inviterId').on(table.inviterId),
 		// better-auth organization plugin queries invitations by these composites
-		index('email_organizationId_status').on(
-			invitationTable.email,
-			invitationTable.organizationId,
-			invitationTable.status
-		),
-		index('organizationId_status').on(invitationTable.organizationId, invitationTable.status),
+		index('email_organizationId_status').on(table.email, table.organizationId, table.status),
+		index('organizationId_status').on(table.organizationId, table.status),
 	]
 );
 
@@ -434,10 +430,7 @@ export const profileTable = convexTable(
 		role: textEnum(PROFILE_ROLES).notNull(),
 		name: text().notNull(),
 	},
-	(profileTable) => [
-		index('by_username').on(profileTable.username),
-		index('by_userId').on(profileTable.userId),
-	]
+	(table) => [index('by_username').on(table.username), index('by_userId').on(table.userId)]
 );
 
 export const projectTable = convexTable(
@@ -453,16 +446,12 @@ export const projectTable = convexTable(
 		logoUrl: text(),
 		slug: text().notNull(),
 	},
-	(projectTable) => [
-		index('by_orgSlug').on(projectTable.orgSlug),
-		index('by_slug').on(projectTable.slug),
-		index('by_updatedTime').on(projectTable.updatedTime),
-		index('by_orgSlug_slug').on(projectTable.orgSlug, projectTable.slug),
-		index('by_orgSlug_visibility_updatedAt').on(
-			projectTable.orgSlug,
-			projectTable.visibility,
-			projectTable.updatedTime
-		),
+	(table) => [
+		index('by_orgSlug').on(table.orgSlug),
+		index('by_slug').on(table.slug),
+		index('by_updatedTime').on(table.updatedTime),
+		index('by_orgSlug_slug').on(table.orgSlug, table.slug),
+		index('by_orgSlug_visibility_updatedAt').on(table.orgSlug, table.visibility, table.updatedTime),
 	]
 );
 
@@ -481,23 +470,12 @@ export const projectMemberTable = convexTable(
 		projectVisibility: textEnum(PROJECT_VISIBILITIES).notNull(),
 		projectSlug: text().notNull(),
 	},
-	(projectMemberTable) => [
-		index('by_projectId').on(projectMemberTable.projectId),
-		index('by_profileId_projectId').on(projectMemberTable.profileId, projectMemberTable.projectId),
-		index('by_profileId_projectSlug').on(
-			projectMemberTable.profileId,
-			projectMemberTable.projectSlug
-		),
-		index('by_profileId_projectId_role').on(
-			projectMemberTable.profileId,
-			projectMemberTable.projectId,
-			projectMemberTable.role
-		),
-		index('by_profileId_projectSlug_role').on(
-			projectMemberTable.profileId,
-			projectMemberTable.projectSlug,
-			projectMemberTable.role
-		),
+	(table) => [
+		index('by_projectId').on(table.projectId),
+		index('by_profileId_projectId').on(table.profileId, table.projectId),
+		index('by_profileId_projectSlug').on(table.profileId, table.projectSlug),
+		index('by_profileId_projectId_role').on(table.profileId, table.projectId, table.role),
+		index('by_profileId_projectSlug_role').on(table.profileId, table.projectSlug, table.role),
 	]
 );
 
@@ -510,7 +488,7 @@ export const orgStorageUsageTable = convexTable(
 		totalBytes: integer().notNull(),
 		fileCount: integer().notNull(),
 	},
-	(orgStorageUsageTable) => [index('by_orgSlug').on(orgStorageUsageTable.orgSlug)]
+	(table) => [index('by_orgSlug').on(table.orgSlug)]
 );
 
 export const feedbackBoardTable = convexTable(
@@ -526,9 +504,9 @@ export const feedbackBoardTable = convexTable(
 		icon: text(),
 		slug: text().notNull(),
 	},
-	(feedbackBoardTable) => [
-		index('by_projectId').on(feedbackBoardTable.projectId),
-		index('by_slug_projectId').on(feedbackBoardTable.slug, feedbackBoardTable.projectId),
+	(table) => [
+		index('by_projectId').on(table.projectId),
+		index('by_slug_projectId').on(table.slug, table.projectId),
 	]
 );
 
@@ -553,10 +531,10 @@ export const feedbackCommentTable = convexTable(
 		content: text().notNull(),
 		initial: boolean(),
 	},
-	(feedbackCommentTable) => [
-		index('by_feedbackId').on(feedbackCommentTable.feedbackId),
-		index('by_authorProfileId').on(feedbackCommentTable.authorProfileId),
-		index('by_replyFeedbackCommentId').on(feedbackCommentTable.replyFeedbackCommentId),
+	(table) => [
+		index('by_feedbackId').on(table.feedbackId),
+		index('by_authorProfileId').on(table.authorProfileId),
+		index('by_replyFeedbackCommentId').on(table.replyFeedbackCommentId),
 	]
 );
 
@@ -594,28 +572,24 @@ export const feedbackTable = convexTable(
 		tags: arrayOf(text().notNull()),
 		searchContent: text(),
 	},
-	(feedbackTable) => [
-		index('by_slug').on(feedbackTable.slug),
-		index('by_projectId').on(feedbackTable.projectId),
+	(table) => [
+		index('by_slug').on(table.slug),
+		index('by_projectId').on(table.projectId),
 		// Indexes required so kitcn can enforce the implicit-FK onDelete actions on
 		// these pointer/assignment columns during cascade deletes.
-		index('by_firstCommentId').on(feedbackTable.firstCommentId),
-		index('by_answerCommentId').on(feedbackTable.answerCommentId),
-		index('by_assignedProfileId').on(feedbackTable.assignedProfileId),
+		index('by_firstCommentId').on(table.firstCommentId),
+		index('by_answerCommentId').on(table.answerCommentId),
+		index('by_assignedProfileId').on(table.assignedProfileId),
 		// Standalone leading-field index on boardId so the feedbackBoard→feedback
 		// cascade can resolve referencing rows (composite indexes don't qualify).
-		index('by_boardId').on(feedbackTable.boardId),
-		index('by_projectId_slug').on(feedbackTable.projectId, feedbackTable.slug),
-		index('by_projectId_boardId').on(feedbackTable.projectId, feedbackTable.boardId),
-		index('by_projectId_status').on(feedbackTable.projectId, feedbackTable.status),
-		index('by_projectId_boardId_status').on(
-			feedbackTable.projectId,
-			feedbackTable.boardId,
-			feedbackTable.status
-		),
+		index('by_boardId').on(table.boardId),
+		index('by_projectId_slug').on(table.projectId, table.slug),
+		index('by_projectId_boardId').on(table.projectId, table.boardId),
+		index('by_projectId_status').on(table.projectId, table.status),
+		index('by_projectId_boardId_status').on(table.projectId, table.boardId, table.status),
 		searchIndex('by_projectId_boardId_status_searchContent')
-			.on(feedbackTable.searchContent)
-			.filter(feedbackTable.projectId, feedbackTable.boardId, feedbackTable.status),
+			.on(table.searchContent)
+			.filter(table.projectId, table.boardId, table.status),
 	]
 );
 
@@ -635,10 +609,15 @@ export const feedbackCommentEmoteTable = convexTable(
 			.references(() => feedbackCommentTable.id, { onDelete: 'cascade' }),
 		content: textEnum(EMOTE_CONTENTS).notNull(),
 	},
-	(feedbackCommentEmoteTable) => [
-		index('by_authorProfileId').on(feedbackCommentEmoteTable.authorProfileId),
-		index('by_feedbackId').on(feedbackCommentEmoteTable.feedbackId),
-		index('by_feedbackCommentId').on(feedbackCommentEmoteTable.feedbackCommentId),
+	(table) => [
+		index('by_authorProfileId').on(table.authorProfileId),
+		index('by_feedbackId').on(table.feedbackId),
+		index('by_feedbackCommentId').on(table.feedbackCommentId),
+		index('by_feedbackCommentId_authorProfileId_content').on(
+			table.feedbackCommentId,
+			table.authorProfileId,
+			table.content
+		),
 	]
 );
 
@@ -656,7 +635,7 @@ export const feedbackEventTable = convexTable(
 		eventType: textEnum(FEEDBACK_EVENT_TYPES).notNull(),
 		metadata: json(),
 	},
-	(feedbackEventTable) => [index('by_feedbackId').on(feedbackEventTable.feedbackId)]
+	(table) => [index('by_feedbackId').on(table.feedbackId)]
 );
 
 export const feedbackUpvoteTable = convexTable(
@@ -671,12 +650,9 @@ export const feedbackUpvoteTable = convexTable(
 			.notNull()
 			.references(() => profileTable.id),
 	},
-	(feedbackUpvoteTable) => [
-		index('by_feedbackId').on(feedbackUpvoteTable.feedbackId),
-		index('by_feedbackId_authorProfileId').on(
-			feedbackUpvoteTable.feedbackId,
-			feedbackUpvoteTable.authorProfileId
-		),
+	(table) => [
+		index('by_feedbackId').on(table.feedbackId),
+		index('by_feedbackId_authorProfileId').on(table.feedbackId, table.authorProfileId),
 	]
 );
 
@@ -702,22 +678,18 @@ export const updateTable = convexTable(
 		coverImageId: text(),
 		authorAsOrg: boolean(),
 	},
-	(updateTable) => [
-		index('by_projectId_slug').on(updateTable.projectId, updateTable.slug),
-		index('by_projectId_updatedTime').on(updateTable.projectId, updateTable.updatedTime),
-		index('by_projectId_status_publishedAt').on(
-			updateTable.projectId,
-			updateTable.status,
-			updateTable.publishedAt
-		),
+	(table) => [
+		index('by_projectId_slug').on(table.projectId, table.slug),
+		index('by_projectId_updatedTime').on(table.projectId, table.updatedTime),
+		index('by_projectId_status_publishedAt').on(table.projectId, table.status, table.publishedAt),
 		// Supports the public updates list when filtered by category. Ordered so a
 		// category-scoped read can still page by publishedAt (non-editor, published
 		// only) or by status then publishedAt (editor, all statuses).
 		index('by_projectId_category_status_publishedAt').on(
-			updateTable.projectId,
-			updateTable.category,
-			updateTable.status,
-			updateTable.publishedAt
+			table.projectId,
+			table.category,
+			table.status,
+			table.publishedAt
 		),
 	]
 );
@@ -735,12 +707,10 @@ export const updateCommentTable = convexTable(
 			.references(() => profileTable.id),
 		content: text().notNull(),
 	},
-	(updateCommentTable) => [
-		aggregateIndex('by_updateId')
-			.on(updateCommentTable.updateId)
-			.count(updateCommentTable.updateId),
-		index('by_updateId').on(updateCommentTable.updateId),
-		index('by_authorProfileId').on(updateCommentTable.authorProfileId),
+	(table) => [
+		aggregateIndex('by_updateId').on(table.updateId).count(table.updateId),
+		index('by_updateId').on(table.updateId),
+		index('by_authorProfileId').on(table.authorProfileId),
 	]
 );
 
@@ -757,14 +727,13 @@ export const updateEmoteTable = convexTable(
 			.references(() => profileTable.id),
 		content: textEnum(EMOTE_CONTENTS).notNull(),
 	},
-	(updateEmoteTable) => [
-		aggregateIndex('by_updateId_content')
-			.on(updateEmoteTable.updateId, updateEmoteTable.content)
-			.count(updateEmoteTable.updateId),
-		index('by_updateId').on(updateEmoteTable.updateId),
-		index('by_updateId_authorProfileId').on(
-			updateEmoteTable.updateId,
-			updateEmoteTable.authorProfileId
+	(table) => [
+		aggregateIndex('by_updateId_content').on(table.updateId, table.content).count(table.updateId),
+		index('by_updateId').on(table.updateId),
+		index('by_updateId_authorProfileId_content').on(
+			table.updateId,
+			table.authorProfileId,
+			table.content
 		),
 	]
 );
@@ -785,9 +754,14 @@ export const updateCommentEmoteTable = convexTable(
 			.references(() => profileTable.id),
 		content: textEnum(EMOTE_CONTENTS).notNull(),
 	},
-	(updateCommentEmoteTable) => [
-		index('by_updateCommentId').on(updateCommentEmoteTable.updateCommentId),
-		index('by_updateId').on(updateCommentEmoteTable.updateId),
+	(table) => [
+		index('by_updateCommentId').on(table.updateCommentId),
+		index('by_updateId').on(table.updateId),
+		index('by_updateCommentId_authorProfileId_content').on(
+			table.updateCommentId,
+			table.authorProfileId,
+			table.content
+		),
 	]
 );
 
@@ -816,11 +790,11 @@ export const githubConnectionStateTable = convexTable(
 		status: textEnum(GITHUB_CONNECTION_STATE_STATUSES).notNull(),
 		consumedAt: integer(),
 	},
-	(githubConnectionStateTable) => [
-		index('by_stateHash').on(githubConnectionStateTable.stateHash),
-		index('by_orgId').on(githubConnectionStateTable.orgId),
-		index('by_projectId').on(githubConnectionStateTable.projectId),
-		index('by_expiresAt').on(githubConnectionStateTable.expiresAt),
+	(table) => [
+		index('by_stateHash').on(table.stateHash),
+		index('by_orgId').on(table.orgId),
+		index('by_projectId').on(table.projectId),
+		index('by_expiresAt').on(table.expiresAt),
 	]
 );
 
@@ -845,13 +819,10 @@ export const githubInstallationTable = convexTable(
 		repositorySelection: text().notNull(),
 		status: textEnum(GITHUB_INSTALLATION_STATUSES).notNull(),
 	},
-	(githubInstallationTable) => [
-		index('by_installationId').on(githubInstallationTable.installationId),
-		index('by_orgId').on(githubInstallationTable.orgId),
-		index('by_orgId_installationId').on(
-			githubInstallationTable.orgId,
-			githubInstallationTable.installationId
-		),
+	(table) => [
+		index('by_installationId').on(table.installationId),
+		index('by_orgId').on(table.orgId),
+		index('by_orgId_installationId').on(table.orgId, table.installationId),
 	]
 );
 
@@ -887,14 +858,11 @@ export const githubRepositoryConnectionTable = convexTable(
 		verificationStatus: text().notNull(),
 		verificationSummary: json(),
 	},
-	(githubRepositoryConnectionTable) => [
-		index('by_projectId').on(githubRepositoryConnectionTable.projectId),
-		index('by_orgId_repoId').on(
-			githubRepositoryConnectionTable.orgId,
-			githubRepositoryConnectionTable.repoId
-		),
-		index('by_githubInstallationId').on(githubRepositoryConnectionTable.githubInstallationId),
-		index('by_repoId').on(githubRepositoryConnectionTable.repoId),
+	(table) => [
+		index('by_projectId').on(table.projectId),
+		index('by_orgId_repoId').on(table.orgId, table.repoId),
+		index('by_githubInstallationId').on(table.githubInstallationId),
+		index('by_repoId').on(table.repoId),
 	]
 );
 
@@ -925,21 +893,15 @@ export const feedbackGithubConnectionTable = convexTable(
 		url: text().notNull(),
 		state: text().notNull(),
 	},
-	(feedbackGithubConnectionTable) => [
-		index('by_feedbackId').on(feedbackGithubConnectionTable.feedbackId),
-		index('by_projectId').on(feedbackGithubConnectionTable.projectId),
-		index('by_githubRepositoryConnectionId').on(
-			feedbackGithubConnectionTable.githubRepositoryConnectionId
-		),
+	(table) => [
+		index('by_feedbackId').on(table.feedbackId),
+		index('by_projectId').on(table.projectId),
+		index('by_githubRepositoryConnectionId').on(table.githubRepositoryConnectionId),
 		index('by_githubRepositoryConnectionId_githubNodeId').on(
-			feedbackGithubConnectionTable.githubRepositoryConnectionId,
-			feedbackGithubConnectionTable.githubNodeId
+			table.githubRepositoryConnectionId,
+			table.githubNodeId
 		),
-		index('by_feedbackId_kind_githubNodeId').on(
-			feedbackGithubConnectionTable.feedbackId,
-			feedbackGithubConnectionTable.kind,
-			feedbackGithubConnectionTable.githubNodeId
-		),
+		index('by_feedbackId_kind_githubNodeId').on(table.feedbackId, table.kind, table.githubNodeId),
 	]
 );
 
@@ -953,9 +915,9 @@ export const githubWebhookDeliveryTable = convexTable(
 		receivedTime: integer().notNull(),
 		result: textEnum(['processed', 'ignored'] as const).notNull(),
 	},
-	(githubWebhookDeliveryTable) => [
-		index('by_deliveryId').on(githubWebhookDeliveryTable.deliveryId),
-		index('by_receivedTime').on(githubWebhookDeliveryTable.receivedTime),
+	(table) => [
+		index('by_deliveryId').on(table.deliveryId),
+		index('by_receivedTime').on(table.receivedTime),
 	]
 );
 
@@ -1207,7 +1169,7 @@ export default defineSchema(tables)
 					await Promise.all(
 						boards.map((name) =>
 							ctx.orm.insert(feedbackBoardTable).values({
-								icon: name === 'Bugs' ? 'bug' : name === 'Improvements' ? 'chart-up' : 'lightbulb',
+								icon: name === 'Bugs' ? 'bug' : name === 'Improvements' ? 'chartUp' : 'lightbulb',
 								name,
 								projectId: change.newDoc.id as any,
 								slug: normalizeSlug(name, VALIDATION_LIMITS.projectSlug),
@@ -1236,19 +1198,19 @@ export default defineSchema(tables)
 
 					await Promise.all([
 						...memberships.map((membership: any) =>
-							ctx.db.patch(membership._id, {
+							ctx.db.patch('projectMember', membership._id, {
 								projectSlug: change.newDoc.slug,
 								projectVisibility: change.newDoc.visibility,
 							})
 						),
 						...connectionStates.map((state: any) =>
-							ctx.db.patch(state._id, {
+							ctx.db.patch('githubConnectionState', state._id, {
 								projectSlug: change.newDoc.slug,
 								updatedTime: now,
 							})
 						),
 						...repoConnections.map((connection: any) =>
-							ctx.db.patch(connection._id, {
+							ctx.db.patch('githubRepositoryConnection', connection._id, {
 								projectSlug: change.newDoc.slug,
 								updatedTime: now,
 							})
@@ -1276,9 +1238,9 @@ export default defineSchema(tables)
 				// pointers) are nulled (FK set null). Only the initial-comment search
 				// denormalization needs a trigger.
 				if (change.operation === 'update' && change.newDoc.initial) {
-					const feedback = await ctx.db.get(change.newDoc.feedbackId);
+					const feedback = await ctx.db.get('feedback', change.newDoc.feedbackId);
 					if (feedback) {
-						await ctx.db.patch(feedback._id, {
+						await ctx.db.patch('feedback', feedback._id, {
 							searchContent: `${feedback.title} ${change.newDoc.content}`,
 							updatedTime: Date.now(),
 						});

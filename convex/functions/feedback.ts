@@ -83,7 +83,7 @@ export const create = authMutation
 		const [feedback] = await ctx.orm
 			.insert(feedbackTable)
 			.values({
-				authorProfileId: profile._id as any,
+				authorProfileId: profile._id,
 				boardId: asId<'feedbackBoard'>(input.boardId),
 				projectId: asId<'project'>(input.projectId),
 				slug,
@@ -96,7 +96,7 @@ export const create = authMutation
 		const [feedbackComment] = await ctx.orm
 			.insert(feedbackCommentTable)
 			.values({
-				authorProfileId: profile._id as any,
+				authorProfileId: profile._id,
 				content: input.firstComment,
 				feedbackId: feedback.id as any,
 				initial: true,

@@ -189,6 +189,9 @@ function EditUpdateRoute() {
 			tags: (update?.tags ?? []).map(String),
 			title: update?.title ?? '',
 		}),
+		// `tagsKey`/`relatedFeedbackIdsKey` are stringified snapshots of the raw
+		// arrays used in the body; depending on the raw arrays would churn identity.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[
 			relatedFeedbackIdsKey,
 			tagsKey,
@@ -242,7 +245,7 @@ function EditUpdateRoute() {
 		!projectQuery.data?.project ||
 		!projectQuery.data.permissions.canEdit ||
 		!update ||
-		!updateData?.canEdit
+		!updateData.canEdit
 	) {
 		return <InlineAlert variant='warning'>Update editing unavailable.</InlineAlert>;
 	}

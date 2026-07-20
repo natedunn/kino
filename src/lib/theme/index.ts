@@ -41,13 +41,13 @@ export function subscribeThemePreference(onChange: () => void) {
 		typeof window !== 'undefined' ? window.matchMedia('(prefers-color-scheme: dark)') : null;
 
 	const handleExternalChange = () => onChange();
-	window.addEventListener?.('storage', handleExternalChange);
-	media?.addEventListener?.('change', handleExternalChange);
+	window.addEventListener('storage', handleExternalChange);
+	media?.addEventListener('change', handleExternalChange);
 
 	return () => {
 		themeListeners.delete(onChange);
-		window.removeEventListener?.('storage', handleExternalChange);
-		media?.removeEventListener?.('change', handleExternalChange);
+		window.removeEventListener('storage', handleExternalChange);
+		media?.removeEventListener('change', handleExternalChange);
 	};
 }
 

@@ -123,7 +123,7 @@ export const Route = createFileRoute('/@{$org}/$project/feedback/')({
 	}),
 });
 
-function getBoardId(boards: BoardSummary[] | null | undefined, boardSlug: string | undefined) {
+function getBoardId(boards: Array<BoardSummary> | null | undefined, boardSlug: string | undefined) {
 	return boards?.find((item) => item.slug === boardSlug)?.id ?? 'all';
 }
 

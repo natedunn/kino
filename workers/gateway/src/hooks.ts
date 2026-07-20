@@ -66,7 +66,7 @@ async function verifyGitHubSignature(
 }
 
 async function listTargets(env: GatewayEnv) {
-	const targets: RegisteredTarget[] = [];
+	const targets: Array<RegisteredTarget> = [];
 	let cursor: string | undefined;
 	do {
 		const page = await env.TARGETS.list({

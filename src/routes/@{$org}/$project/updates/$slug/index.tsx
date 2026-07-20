@@ -30,6 +30,7 @@ import { useSidebarState } from '@/lib/hooks/use-sidebar-state';
 import { projectTitle, titleFromSlug, titleMeta } from '@/lib/seo';
 import { cn } from '@/lib/utils';
 import { formatFullDate, formatRelativeDay } from '@/lib/utils/format-timestamp';
+import { getInitial } from '@/lib/utils/get-initial';
 
 import { CategoryBadge } from '../-components/category-badge';
 import { useEmoteToggle } from '../-components/use-emote-toggle';
@@ -229,10 +230,10 @@ function UpdateDetailRoute() {
 		[middleComments, updateData.commentWindow.head, updateData.commentWindow.tail]
 	);
 
-	const heartData = interactiveData?.emoteCounts?.heart ?? updateData.emoteCounts?.heart;
-	const serverLikeCount = heartData?.count ?? 0;
+	const heartData = interactiveData?.emoteCounts.heart ?? updateData.emoteCounts.heart;
+	const serverLikeCount = heartData.count;
 	const serverIsLiked = currentProfile
-		? Boolean(heartData?.authorProfileIds?.includes(currentProfile.id))
+		? Boolean(heartData.authorProfileIds.includes(currentProfile.id))
 		: false;
 	const [copied, setCopied] = useState(false);
 
@@ -276,9 +277,9 @@ function UpdateDetailRoute() {
 				...current,
 				comments: dedupeUpdateComments([
 					...current.comments,
-					...((result?.comments ?? []) as Array<UpdateCommentData>),
+					...(result.comments as Array<UpdateCommentData>),
 				]),
-				cursor: result?.nextCursor ?? null,
+				cursor: result.nextCursor ?? null,
 				pageCount: current.pageCount + 1,
 			}));
 		} finally {
@@ -305,8 +306,8 @@ function UpdateDetailRoute() {
 			});
 			await queryClient.invalidateQueries({ queryKey: options.queryKey });
 			const result = await queryClient.fetchQuery(options);
-			refreshed.push(...((result?.comments ?? []) as Array<UpdateCommentData>));
-			nextCursor = result?.nextCursor ?? null;
+			refreshed.push(...(result.comments as Array<UpdateCommentData>));
+			nextCursor = result.nextCursor ?? null;
 			cursor = nextCursor;
 		}
 
@@ -346,7 +347,7 @@ function UpdateDetailRoute() {
 										/>
 									) : (
 										<div className='flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground'>
-											{updateData.author.name?.charAt(0) ?? '?'}
+											{getInitial(updateData.author.name)}
 										</div>
 									)}
 									<span>@{updateData.author.username}</span>

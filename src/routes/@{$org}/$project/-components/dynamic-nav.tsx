@@ -58,7 +58,7 @@ export function DynamicNavigation({ orgSlug, projectSlug, onStateChange }: Dynam
 	);
 	const canManageSettings = projectQuery.data?.permissions.canEdit ?? false;
 
-	const items: NavigationItem[] = [
+	const items: Array<NavigationItem> = [
 		{
 			children: 'Overview',
 			icon: Home,
@@ -113,7 +113,7 @@ export function DynamicNavigation({ orgSlug, projectSlug, onStateChange }: Dynam
 
 	const [visibleItems, setVisibleItems] = useState<number>(10);
 	const containerRef = useRef<HTMLDivElement>(null);
-	const itemButtonRefs = useRef<(HTMLButtonElement | null)[]>([]);
+	const itemButtonRefs = useRef<Array<HTMLButtonElement | null>>([]);
 	const [isCalculating, setIsCalculating] = useState<boolean>(true);
 
 	useEffect(() => {

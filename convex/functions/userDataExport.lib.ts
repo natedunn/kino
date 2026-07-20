@@ -246,7 +246,7 @@ export const exportSections: Record<ExportSectionId, ExportSectionDefinition> = 
 	},
 };
 
-export function resolveRequestedSections(requestedSections: ExportSectionId[] | undefined) {
+export function resolveRequestedSections(requestedSections: Array<ExportSectionId> | undefined) {
 	if (!requestedSections) {
 		return exportSectionIds.filter((sectionId) => exportSections[sectionId].includedByDefault);
 	}

@@ -125,15 +125,15 @@ function GeneralSettingsRoute() {
 	const form = useForm({
 		defaultValues: formDefaultValues,
 		onSubmit: async ({ value, formApi }) => {
-			const org = orgQuery.data?.org;
-			if (!org) return;
+			const currentOrg = orgQuery.data?.org;
+			if (!currentOrg) return;
 			setFormError(null);
 
 			try {
 				const parsed = orgFormSchema.safeParse({
 					name: value.name,
 					slug: value.slug,
-					visibility: org.visibility,
+					visibility: currentOrg.visibility,
 				});
 				if (!parsed.success) {
 					setFormError(validationMessage(parsed.error));
@@ -142,7 +142,7 @@ function GeneralSettingsRoute() {
 
 				if (value.avatarFile) {
 					const { key, url } = await uploadUrlMutation.mutateAsync({
-						organizationId: org.id,
+						organizationId: currentOrg.id,
 					});
 					const response = await fetch(url, {
 						body: value.avatarFile,
@@ -158,7 +158,7 @@ function GeneralSettingsRoute() {
 				}
 
 				const updatedOrg = await updateMutation.mutateAsync({
-					currentSlug: org.slug,
+					currentSlug: currentOrg.slug,
 					name: parsed.data.name,
 					updatedSlug: parsed.data.slug || undefined,
 				});

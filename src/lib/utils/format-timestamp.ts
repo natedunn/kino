@@ -29,9 +29,9 @@ export function formatFullDate(timestamp: number): string {
 		'December',
 	];
 
-	const getOrdinalSuffix = (day: number): string => {
-		if (day >= 11 && day <= 13) return 'th';
-		switch (day % 10) {
+	const getOrdinalSuffix = (n: number): string => {
+		if (n >= 11 && n <= 13) return 'th';
+		switch (n % 10) {
 			case 1:
 				return 'st';
 			case 2:
@@ -139,9 +139,9 @@ export function formatTimestamp(
 	const month = months[date.getMonth()];
 
 	// Add ordinal suffix
-	const getOrdinalSuffix = (day: number): string => {
-		if (day >= 11 && day <= 13) return 'th';
-		switch (day % 10) {
+	const getOrdinalSuffix = (n: number): string => {
+		if (n >= 11 && n <= 13) return 'th';
+		switch (n % 10) {
 			case 1:
 				return 'st';
 			case 2:

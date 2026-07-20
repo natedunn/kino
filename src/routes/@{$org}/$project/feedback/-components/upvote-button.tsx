@@ -29,10 +29,7 @@ export function UpvoteButton({
 	// disagrees with props; once props catch up we fall back to them, so a later
 	// count change from another viewer isn't masked by a stale result.
 	const showResult =
-		mutation.isSuccess &&
-		isThisFeedback &&
-		!!mutation.data &&
-		mutation.data.upvoted !== initialHasUpvoted;
+		mutation.isSuccess && isThisFeedback && mutation.data.upvoted !== initialHasUpvoted;
 	const count = showOptimistic ? optimisticCount : showResult ? mutation.data.count : initialCount;
 	const hasUpvoted = showOptimistic
 		? optimisticHasUpvoted

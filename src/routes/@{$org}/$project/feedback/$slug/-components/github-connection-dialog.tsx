@@ -142,7 +142,7 @@ function GitHubConnectionDialogBody({
 		}, 300);
 	}
 
-	const searchResults = (searchQuery.data ?? []) as GitHubTargetData[];
+	const searchResults = (searchQuery.data ?? []) as Array<GitHubTargetData>;
 	const searching = canSearch && searchQuery.isFetching;
 	const error =
 		localError ||

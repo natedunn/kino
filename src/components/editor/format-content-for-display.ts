@@ -8,9 +8,9 @@ const CLASS_ATTRIBUTE_REGEX = /\bclass=(["'])(.*?)\1/i;
 const LANGUAGE_CLASS_PREFIX = 'language-';
 
 type HighlightNode = {
-	children?: HighlightNode[];
+	children?: Array<HighlightNode>;
 	properties?: {
-		className?: string[];
+		className?: Array<string>;
 	};
 	tagName?: string;
 	value?: string;
@@ -66,7 +66,7 @@ function getClassNames(attributes: string) {
 	return classValue.split(/\s+/).filter(Boolean);
 }
 
-function mergeClassNames(attributes: string, classNames: string[]) {
+function mergeClassNames(attributes: string, classNames: Array<string>) {
 	const mergedClassNames = Array.from(new Set([...getClassNames(attributes), ...classNames]));
 
 	if (mergedClassNames.length === 0) {
@@ -90,7 +90,7 @@ function getLanguage(attributes: string) {
 	);
 }
 
-function serializeHighlightedNodes(nodes: HighlightNode[]): string {
+function serializeHighlightedNodes(nodes: Array<HighlightNode>): string {
 	return nodes
 		.map((node) => {
 			if (typeof node.value === 'string') {
@@ -127,7 +127,7 @@ export function formatContentForDisplay(html: string) {
 					? lowlight.highlight(language, code)
 					: lowlight.highlightAuto(code);
 			const highlightedNodes = Array.isArray(result.children)
-				? (result.children as HighlightNode[])
+				? (result.children as Array<HighlightNode>)
 				: [];
 
 			const highlightedCode = serializeHighlightedNodes(highlightedNodes);

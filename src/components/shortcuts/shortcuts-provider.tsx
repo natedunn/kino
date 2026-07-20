@@ -6,10 +6,9 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react
 import { hasReservedModifier, isEditableTarget, isOverlayOpen, normalizeKey } from './keys';
 import { ShortcutsContext } from './shortcuts-context';
 
-const ShortcutsDialog = lazy(async () => {
-	const { ShortcutsDialog } = await import('./shortcuts-dialog');
-	return { default: ShortcutsDialog };
-});
+const ShortcutsDialog = lazy(() =>
+	import('./shortcuts-dialog').then((m) => ({ default: m.ShortcutsDialog }))
+);
 
 export function ShortcutsProvider({ children }: { children: ReactNode }) {
 	const [open, setOpen] = useState(false);

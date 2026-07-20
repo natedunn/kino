@@ -15,6 +15,9 @@ import {
 	resolveRequestedSections,
 } from './userDataExport.lib';
 
+// The crpc `.query()` handler type requires a Promise-returning function, so
+// `async` is required here even though the body is synchronous.
+// eslint-disable-next-line @typescript-eslint/require-await
 export const getAvailableSections = authQuery.input(z.object({})).query(async () =>
 	exportSectionIds.map((sectionId) => {
 		const section = exportSections[sectionId];

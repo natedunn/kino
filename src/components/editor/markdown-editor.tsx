@@ -116,8 +116,8 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
 			},
 			extensions: extensionsRef.current,
 			immediatelyRender: false,
-			onUpdate: ({ editor }) => {
-				const html = editor.getHTML();
+			onUpdate: ({ editor: activeEditor }) => {
+				const html = activeEditor.getHTML();
 				lastHTMLRef.current = html;
 				onChangeRef.current?.(html);
 			},

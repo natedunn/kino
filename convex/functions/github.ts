@@ -68,7 +68,7 @@ export const startProjectConnection = authMutation
 		});
 
 		await ctx.orm.insert(githubConnectionStateTable).values({
-			createdByProfileId: profile._id as any,
+			createdByProfileId: profile._id,
 			createdByUserId: ctx.userId,
 			expiresAt,
 			mode: input.mode,
@@ -110,7 +110,7 @@ export const startOrgConnection = authMutation
 		});
 
 		await ctx.orm.insert(githubConnectionStateTable).values({
-			createdByProfileId: profile._id as any,
+			createdByProfileId: profile._id,
 			createdByUserId: ctx.userId,
 			expiresAt,
 			mode: input.mode,
@@ -152,7 +152,7 @@ export const startInstallationRefresh = authMutation
 		});
 
 		await ctx.orm.insert(githubConnectionStateTable).values({
-			createdByProfileId: profile._id as any,
+			createdByProfileId: profile._id,
 			createdByUserId: ctx.userId,
 			expiresAt,
 			mode: input.mode,
@@ -194,7 +194,7 @@ export const startOrgInstallationRefresh = authMutation
 		});
 
 		await ctx.orm.insert(githubConnectionStateTable).values({
-			createdByProfileId: profile._id as any,
+			createdByProfileId: profile._id,
 			createdByUserId: ctx.userId,
 			expiresAt,
 			mode: input.mode,
@@ -620,7 +620,7 @@ export const saveRepositoryConnection = privateMutation
 
 		const now = Date.now();
 		const values = {
-			connectedByProfileId: profile._id as any,
+			connectedByProfileId: profile._id,
 			deletedTime: null,
 			discussionsVerifiedAt: input.verificationSummary.discussions.ok ? now : undefined,
 			enabledSources: input.enabledSources,

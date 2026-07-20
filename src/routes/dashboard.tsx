@@ -12,6 +12,7 @@ import { useAuthLostRedirect } from '@/lib/auth/use-auth-lost';
 import { useCRPC } from '@/lib/convex/crpc';
 import { crpcServer } from '@/lib/convex/crpc-server';
 import { titleMeta } from '@/lib/seo';
+import { getInitial } from '@/lib/utils/get-initial';
 
 export const Route = createFileRoute('/dashboard')({
 	head: () => ({
@@ -52,7 +53,7 @@ function AuthenticatedDashboard() {
 	const { data: orgsData } = useSuspenseQuery(
 		crpc.org.findMyOrgs.queryOptions({}, { skipUnauth: true })
 	);
-	const orgs = orgsData?.teams ?? [];
+	const orgs = orgsData.teams;
 
 	return (
 		<div className='flex min-h-svh flex-col'>
@@ -70,7 +71,7 @@ function AuthenticatedDashboard() {
 									: `${orgs.length} team${orgs.length === 1 ? '' : 's'}`}
 							</p>
 						</div>
-						{orgsData?.underLimit ? (
+						{orgsData.underLimit ? (
 							<Button asChild size='sm'>
 								<Link to='/create/team'>
 									<Plus className='size-3.5' />
@@ -129,7 +130,7 @@ function OrgSection({
 					<Avatar className='size-8 border'>
 						{org.logo ? <AvatarImage src={org.logo} /> : null}
 						<AvatarFallback className='text-sm font-semibold'>
-							{org.name[0]?.toUpperCase()}
+							{getInitial(org.name)}
 						</AvatarFallback>
 					</Avatar>
 					<span className='font-semibold decoration-2 underline-offset-2 group-hover:underline'>

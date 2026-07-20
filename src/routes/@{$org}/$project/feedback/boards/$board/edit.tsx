@@ -98,12 +98,7 @@ function EditBoardRoute() {
 			name: boardQuery.data?.name ?? '',
 			slug: boardQuery.data?.slug ?? '',
 		}),
-		[
-			boardQuery.data?.description,
-			boardQuery.data?.id,
-			boardQuery.data?.name,
-			boardQuery.data?.slug,
-		]
+		[boardQuery.data?.description, boardQuery.data?.name, boardQuery.data?.slug]
 	);
 
 	const form = useForm({

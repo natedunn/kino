@@ -124,7 +124,7 @@ export const webhook = publicRoute.post('/api/github/webhook').mutation(async ({
 	let payload: {
 		action?: string;
 		installation?: {
-			events?: string[];
+			events?: Array<string>;
 			id?: number;
 			permissions?: Record<string, string>;
 			repository_selection?: string;

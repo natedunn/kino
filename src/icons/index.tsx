@@ -45,10 +45,11 @@ export function Icon({
 		console.warn('No icon set');
 		return null;
 	}
-	const I = iconRegistry[!!name ? name : !!fallback ? fallback : 'box'];
-	if (!I) {
-		return null;
-	}
+	// Callers cast dynamic strings (e.g. DB-stored board icons) to `IconName`, so
+	// the lookup can miss the registry at runtime; widen the type to reflect that
+	// and guard against a bad key.
+	const I = iconRegistry[name ? name : fallback ? fallback : 'box'] as IconValue | undefined;
+	if (!I) return null;
 	return <I {...rest} />;
 }
 

@@ -172,7 +172,6 @@ registerProcedureNameLookup(
 			{ column: 3, line: 178, name: 'projectMember:removeProjectMember' },
 		],
 		'update.ts': [
-			{ column: 3, line: 345, name: 'update:backfillProjectUpdatedTimes' },
 			{ column: 3, line: 295, name: 'update:bulkPublish' },
 			{ column: 3, line: 446, name: 'update:bulkRemove' },
 			{ column: 3, line: 398, name: 'update:bulkUnpublish' },

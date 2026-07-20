@@ -50,16 +50,13 @@ const Devtools = import.meta.env.DEV
 		})
 	: null;
 
-const Toaster = lazy(async () => {
-	const { Toaster } = await import('@/components/ui/sonner');
-	return { default: Toaster };
-});
+const Toaster = lazy(() => import('@/components/ui/sonner').then((m) => ({ default: m.Toaster })));
 
 const getLoaderToken = createServerFn({ method: 'GET' }).handler(async () => {
 	return await getServerAuthToken();
 });
 
-const getAppEnvironment = createServerFn({ method: 'GET' }).handler(async () => {
+const getAppEnvironment = createServerFn({ method: 'GET' }).handler(() => {
 	const request = getRequest();
 
 	return inferAppEnvironment({

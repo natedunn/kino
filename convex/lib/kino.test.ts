@@ -223,7 +223,7 @@ describe('reconcileSystemRole', () => {
 		const ctx = {
 			orm: { query: { profile: { findFirst: async () => profile } } },
 			db: {
-				patch: async (id: string, data: Record<string, unknown>) => {
+				patch: async (_table: string, id: string, data: Record<string, unknown>) => {
 					patches.push({ id, data });
 				},
 			},

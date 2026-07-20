@@ -23,4 +23,4 @@ export const EMOTE_EMOJI: Record<EmoteContent, string> = {
 	explodingHead: '🤯',
 };
 
-export type EmoteCounts = Record<string, { authorProfileIds: string[]; count: number }>;
+export type EmoteCounts = Record<string, { authorProfileIds: Array<string>; count: number }>;

@@ -49,7 +49,7 @@ export const OrgProjects = ({ projects, orgSlug }: OrgProjectsProps) => {
 
 								{'description' in project && project.description ? (
 									<p className='line-clamp-2 text-sm leading-relaxed text-muted-foreground'>
-										{project.description as string}
+										{project.description}
 									</p>
 								) : (
 									<p className='text-sm text-muted-foreground/50 italic'>No description</p>

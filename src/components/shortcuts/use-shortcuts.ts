@@ -57,6 +57,5 @@ export function useRegisterShortcuts(scopeId: string, shortcuts: Array<Shortcut>
 		return registerShortcuts(scopeId, proxies);
 		// Intentionally register once per scope; `run`/`enabled` stay fresh via the
 		// ref, so `shortcuts` is deliberately excluded from the deps.
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [registerShortcuts, scopeId]);
 }

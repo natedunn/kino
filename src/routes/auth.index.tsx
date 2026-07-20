@@ -73,6 +73,9 @@ function SignInPage() {
 		if (isAuthed && !isSigningOut()) {
 			void goToRedirect();
 		}
+		// `goToRedirect` is re-created each render; the redirect intent depends on
+		// auth state only (see comment above), so it's deliberately excluded.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [isAuthed, session.data?.user]);
 
 	const [email, setEmail] = useState('');

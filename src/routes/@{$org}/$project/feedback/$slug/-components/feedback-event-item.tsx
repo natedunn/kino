@@ -19,11 +19,7 @@ import { formatFullDate, formatRelativeDay, toTimestamp } from '@/lib/utils/form
 
 // Memoized: timeline event rows take only the stable `event` prop, so they
 // skip re-rendering when unrelated top-level state (dialogs, sheets) changes.
-export const FeedbackEventItem = memo(function FeedbackEventItem({
-	event,
-}: {
-	event: FeedbackEventData;
-}) {
+export const FeedbackEventItem = memo(function ({ event }: { event: FeedbackEventData }) {
 	const Icon = getEventIcon(event.eventType);
 	const createdAt = toTimestamp(event.createdAt);
 

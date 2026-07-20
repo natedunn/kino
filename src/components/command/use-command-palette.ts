@@ -34,5 +34,5 @@ export function useRegisterCommands(scopeId: string, commands: Array<AppCommand>
 
 	useEffect(() => {
 		return context.registerCommands(scopeId, commands);
-	}, [commands, context.registerCommands, scopeId]);
+	}, [commands, context, scopeId]);
 }

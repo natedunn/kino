@@ -473,7 +473,7 @@ function NotificationsExample() {
 	);
 }
 
-export const EXAMPLE_ITEMS: LabItem[] = [
+export const EXAMPLE_ITEMS: Array<LabItem> = [
 	{
 		id: 'sign-in',
 		name: 'Sign in',

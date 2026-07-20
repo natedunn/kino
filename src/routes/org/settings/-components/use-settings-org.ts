@@ -45,7 +45,7 @@ export function useEditableOrgs() {
 export function useSettingsOrgController() {
 	const navigate = useNavigate();
 	const { data: orgs } = useEditableOrgs();
-	const search = useSearch({ strict: false }) as { org?: string };
+	const search = useSearch({ strict: false });
 	const searchOrg = search.org;
 	// Navigate against the current path explicitly — relative `to: "."` from an
 	// unbound `useNavigate()` can resolve from the root and silently no-op.
@@ -108,5 +108,5 @@ export function useSettingsOrgController() {
  */
 export function useSettingsOrgSlug() {
 	const search = useSearch({ from: SETTINGS_ROUTE });
-	return (search as { org?: string }).org;
+	return search.org;
 }

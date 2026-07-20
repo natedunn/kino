@@ -32,7 +32,7 @@ export type GitHubInstallationDetails = {
 		login: string;
 		type: string;
 	} | null;
-	events: string[];
+	events: Array<string>;
 	permissions: Record<string, string>;
 	repository_selection: string;
 };
@@ -154,7 +154,7 @@ function decodeBase64Der(value: string) {
 function derLength(length: number) {
 	if (length < 0x80) return [length];
 
-	const bytes: number[] = [];
+	const bytes: Array<number> = [];
 	let remaining = length;
 	while (remaining > 0) {
 		bytes.unshift(remaining & 0xff);
@@ -163,7 +163,7 @@ function derLength(length: number) {
 	return [0x80 | bytes.length, ...bytes];
 }
 
-function derSequence(...parts: Uint8Array[]) {
+function derSequence(...parts: Array<Uint8Array>) {
 	const length = parts.reduce((total, part) => total + part.length, 0);
 	const bytes = new Uint8Array(1 + derLength(length).length + length);
 	let offset = 0;
@@ -430,7 +430,7 @@ export async function exchangeGitHubSetupCode(code: string) {
 
 export async function listUserInstallations(userToken: string) {
 	const result = await githubFetch<{
-		installations: GitHubInstallationDetails[];
+		installations: Array<GitHubInstallationDetails>;
 	}>(`${GITHUB_API_URL}/user/installations?per_page=100`, {
 		method: 'GET',
 		token: userToken,
@@ -449,7 +449,7 @@ export async function getAppInstallation(installationId: number) {
 export async function createInstallationToken(args: {
 	installationId: number;
 	mode: 'read' | 'read_write';
-	repositoryIds?: number[];
+	repositoryIds?: Array<number>;
 }) {
 	const jwt = await createGitHubAppJwt();
 	const permissions =
@@ -472,7 +472,7 @@ export async function createInstallationToken(args: {
 }
 
 export async function listInstallationRepositories(token: string) {
-	const result = await githubFetch<{ repositories: GitHubRepository[] }>(
+	const result = await githubFetch<{ repositories: Array<GitHubRepository> }>(
 		`${GITHUB_API_URL}/installation/repositories?per_page=100`,
 		{ method: 'GET', token }
 	);
@@ -523,7 +523,7 @@ export async function searchRepositoryIssues(args: {
 }) {
 	const search = args.query.trim();
 	if (!search) {
-		const result = await githubFetch<GitHubIssueApiItem[]>(
+		const result = await githubFetch<Array<GitHubIssueApiItem>>(
 			`${GITHUB_API_URL}/repos/${args.repository.full_name}/issues?state=all&sort=updated&direction=desc&per_page=10`,
 			{ method: 'GET', token: args.token }
 		);
@@ -539,7 +539,7 @@ export async function searchRepositoryIssues(args: {
 	url.searchParams.set('order', 'desc');
 	url.searchParams.set('per_page', '10');
 
-	const result = await githubFetch<{ items: GitHubIssueApiItem[] }>(url.toString(), {
+	const result = await githubFetch<{ items: Array<GitHubIssueApiItem> }>(url.toString(), {
 		method: 'GET',
 		token: args.token,
 	});

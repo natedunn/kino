@@ -41,7 +41,7 @@ export const create = authMutation
 		const [comment] = await ctx.orm
 			.insert(feedbackCommentTable)
 			.values({
-				authorProfileId: profile._id as any,
+				authorProfileId: profile._id,
 				content: input.content,
 				feedbackId: asId<'feedback'>(input.feedbackId),
 				initial: false,
@@ -133,7 +133,7 @@ export const listByFeedback = optionalAuthQuery
 			.order('asc')
 			.collect();
 
-		const projectId = feedback?.projectId;
+		const projectId = feedback.projectId;
 		const currentProfile = await getCurrentProfile(ctx, ctx.userId);
 
 		return await Promise.all(
@@ -156,9 +156,9 @@ export const listByFeedback = optionalAuthQuery
 					.withIndex('by_feedbackCommentId', (q: any) => q.eq('feedbackCommentId', comment._id))
 					.collect();
 
-				const emoteCounts: Record<string, { authorProfileIds: string[]; count: number }> = {};
+				const emoteCounts: Record<string, { authorProfileIds: Array<string>; count: number }> = {};
 				for (const emote of emotes) {
-					if (!emoteCounts[emote.content]) {
+					if (!Object.hasOwn(emoteCounts, emote.content)) {
 						emoteCounts[emote.content] = { authorProfileIds: [], count: 0 };
 					}
 					emoteCounts[emote.content].count++;

@@ -42,7 +42,7 @@ export const Route = createFileRoute('/org/settings/integrations/')({
 
 function IntegrationsSettingsRoute() {
 	const orgSlug = useSettingsOrgSlug();
-	const search = Route.useSearch() as { github?: string };
+	const search = Route.useSearch();
 	const crpc = useCRPC();
 
 	const orgQuery = useQuery(

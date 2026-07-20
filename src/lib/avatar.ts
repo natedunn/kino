@@ -13,7 +13,7 @@ export async function isAnimatedWebp(file: File): Promise<boolean> {
 		text.split('').every((char, i) => buffer[offset + i] === char.charCodeAt(0));
 
 	if (!matchesAscii(0, 'RIFF') || !matchesAscii(8, 'WEBP')) return false;
-	if (matchesAscii(12, 'VP8X') && ((buffer[20] ?? 0) & 0x02) !== 0) return true;
+	if (matchesAscii(12, 'VP8X') && (buffer[20] & 0x02) !== 0) return true;
 	for (let i = 12; i < buffer.length - 4; i++) {
 		if (matchesAscii(i, 'ANIM')) return true;
 	}
