@@ -30,7 +30,10 @@ export function KinoNews() {
 					return (
 						<li key={item.id} className='transition-colors hover:bg-muted/40'>
 							{item.href ? (
-								<a href={item.href} className='block outline-none focus-visible:ring-2 focus-visible:ring-ring'>
+								<a
+									href={item.href}
+									className='block outline-none focus-visible:ring-2 focus-visible:ring-ring'
+								>
 									{content}
 								</a>
 							) : (

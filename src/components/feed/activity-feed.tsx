@@ -132,15 +132,13 @@ export function ActivityFeed({ items }: { items: Array<ActivityFeedItem> }) {
 						key={event.id}
 						className='relative z-10 flex overflow-hidden rounded-lg border bg-card'
 					>
-						{event.renderLink ? (
-							event.renderLink(
-								<div className='flex w-full min-w-0 transition-colors hover:bg-accent/30'>
-									{body}
-								</div>
-							)
-						) : (
-							body
-						)}
+						{event.renderLink
+							? event.renderLink(
+									<div className='flex w-full min-w-0 transition-colors hover:bg-accent/30'>
+										{body}
+									</div>
+								)
+							: body}
 					</li>
 				);
 			})}
