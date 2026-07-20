@@ -1,5 +1,5 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
-import { createFileRoute, Link, Outlet, useRouterState } from '@tanstack/react-router';
+import { createFileRoute, Link, Outlet, redirect, useRouterState } from '@tanstack/react-router';
 import { GitBranch, Settings, Users } from 'lucide-react';
 
 import { EmptyState } from '@/components/kino/common';
@@ -43,7 +43,8 @@ export const Route = createFileRoute('/org/settings')({
 		org: typeof search.org === 'string' ? search.org : undefined,
 	}),
 	beforeLoad: ({ context, location }) => requireAuth(context, location),
-	loader: async ({ context }) => {
+	loaderDeps: ({ search }) => ({ org: search.org }),
+	loader: async ({ context, deps }) => {
 		if (!context.loaderToken) {
 			return;
 		}
@@ -51,6 +52,20 @@ export const Route = createFileRoute('/org/settings')({
 		await context.queryClient.ensureQueryData(
 			crpcServer.org.findMyEditableOrgs.queryOptions({}, { skipUnauth: true })
 		);
+
+		// The whole org-settings area is an edit-only surface. Gate `canEdit` once
+		// here so the child pages (general/members/integrations) inherit it instead
+		// of each re-implementing the same redirect. Server procedures remain the
+		// real boundary. Only enforceable when an org is selected via the `?org=`
+		// search param; the default-org pick happens client-side in the shell.
+		if (deps.org) {
+			const orgData = await context.queryClient.ensureQueryData(
+				crpcServer.org.getDetails.queryOptions({ slug: deps.org }, { skipUnauth: true })
+			);
+			if (!orgData?.permissions.canEdit) {
+				throw redirect({ to: '/dashboard' });
+			}
+		}
 	},
 	component: OrgSettingsRoute,
 });

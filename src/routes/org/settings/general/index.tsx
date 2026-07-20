@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useForm } from '@tanstack/react-form';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 
 import { InlineAlert } from '@/components/inline-alert';
 import { EmptyState } from '@/components/kino/common';
@@ -11,7 +11,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ALLOWED_AVATAR_TYPES, validateAvatarFile } from '@/lib/avatar';
 import { useCRPC } from '@/lib/convex/crpc';
-import { crpcServer } from '@/lib/convex/crpc-server';
 import { titleMeta } from '@/lib/seo';
 import { cn } from '@/lib/utils';
 import {
@@ -69,17 +68,7 @@ export const Route = createFileRoute('/org/settings/general/')({
 	head: () => ({
 		meta: [titleMeta(['General Settings'])],
 	}),
-	loader: async ({ context, location }) => {
-		const orgSlug = (location.search as { org?: string }).org;
-		if (!context.loaderToken || !orgSlug) return;
-		const orgData = await context.queryClient.ensureQueryData(
-			crpcServer.org.getDetails.queryOptions({ slug: orgSlug }, { skipUnauth: true })
-		);
-		// Org general settings is edit-only. Bounce non-editors before render.
-		if (!orgData?.permissions.canEdit) {
-			throw redirect({ to: '/dashboard' });
-		}
-	},
+	// Access is gated once on the `/org/settings` layout loader (canEdit).
 	component: GeneralSettingsRoute,
 });
 

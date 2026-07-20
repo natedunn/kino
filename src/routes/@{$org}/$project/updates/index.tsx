@@ -2,11 +2,10 @@ import type { ReactNode } from 'react';
 
 import { useState } from 'react';
 import { useQuery, useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
-import { createFileRoute, Link, notFound, redirect } from '@tanstack/react-router';
+import { createFileRoute, Link, notFound } from '@tanstack/react-router';
 import { Settings2 } from 'lucide-react';
 
 import { RoutePending } from '@/components/route-pending';
-import { EditingBar } from '@/components/site-nav/editing-bar';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import CirclePlusOutline from '@/icons/circle-plus-outline';
@@ -67,15 +66,6 @@ export const Route = createFileRoute('/@{$org}/$project/updates/')({
 
 		if (!projectData?.project) {
 			throw notFound();
-		}
-
-		// Manage Updates is an edit-only surface. Bounce non-editors to the project
-		// overview before any list data loads. Server procedures still enforce this.
-		if (!projectData.permissions.canEdit) {
-			throw redirect({
-				to: '/@{$org}/$project',
-				params: { org: params.org, project: params.project },
-			});
 		}
 
 		// Non-blocking warm-up: `intent` preload runs this loader on hover/focus, so
@@ -229,92 +219,89 @@ function UpdatesListRoute() {
 	}
 
 	return (
-		<>
-			<EditingBar />
-			<div className='container flex flex-1 flex-col overflow-visible'>
-				<div className='flex flex-1 flex-col gap-8 md:grid md:grid-cols-12'>
-					<div className='order-last py-6 md:order-first md:col-span-3 md:border-r md:border-border/75'>
-						<div className='sticky top-6 flex flex-col overflow-hidden'>
-							<div className='pb-6 md:pr-6'>
-								<h2 className='mx-2 text-sm font-bold text-muted-foreground'>Categories</h2>
-								<div className='mt-2'>
-									<CategoriesNav />
+		<div className='container flex flex-1 flex-col overflow-visible'>
+			<div className='flex flex-1 flex-col gap-8 md:grid md:grid-cols-12'>
+				<div className='order-last py-6 md:order-first md:col-span-3 md:border-r md:border-border/75'>
+					<div className='sticky top-6 flex flex-col overflow-hidden'>
+						<div className='pb-6 md:pr-6'>
+							<h2 className='mx-2 text-sm font-bold text-muted-foreground'>Categories</h2>
+							<div className='mt-2'>
+								<CategoriesNav />
+							</div>
+						</div>
+						{canEdit ? (
+							<div className='border-t pt-6 md:pr-6'>
+								<h2 className='mx-2 text-sm font-bold text-muted-foreground'>Actions</h2>
+								<div className='mt-2 flex flex-col gap-3'>
+									<Button asChild className='w-full'>
+										<Link
+											params={{ org: orgSlug, project: projectSlug }}
+											to='/@{$org}/$project/updates/new'
+										>
+											<CirclePlusOutline size='16px' /> New Update
+										</Link>
+									</Button>
+									<Button asChild className='w-full' variant='outline'>
+										<Link
+											params={{ org: orgSlug, project: projectSlug }}
+											search={{ pageSize: 20 }}
+											to='/@{$org}/$project/updates/edit'
+										>
+											<Settings2 className='size-4' /> Manage Updates
+										</Link>
+									</Button>
 								</div>
 							</div>
-							{canEdit ? (
-								<div className='border-t pt-6 md:pr-6'>
-									<h2 className='mx-2 text-sm font-bold text-muted-foreground'>Actions</h2>
-									<div className='mt-2 flex flex-col gap-3'>
-										<Button asChild className='w-full'>
-											<Link
-												params={{ org: orgSlug, project: projectSlug }}
-												to='/@{$org}/$project/updates/new'
-											>
-												<CirclePlusOutline size='16px' /> New Update
-											</Link>
-										</Button>
-										<Button asChild className='w-full' variant='outline'>
-											<Link
-												params={{ org: orgSlug, project: projectSlug }}
-												search={{ pageSize: 20 }}
-												to='/@{$org}/$project/updates/edit'
-											>
-												<Settings2 className='size-4' /> Manage Updates
-											</Link>
-										</Button>
-									</div>
-								</div>
-							) : null}
-						</div>
-					</div>
-
-					<div
-						className='flex flex-col gap-4 py-8 md:col-span-9'
-						aria-busy={isInitialUpdatesLoading || refreshingUpdates || loadingMore}
-						aria-live='polite'
-					>
-						{isInitialUpdatesLoading ? (
-							<>
-								<span className='sr-only'>Loading updates...</span>
-								<UpdatesListSkeleton />
-							</>
-						) : null}
-						{!isInitialUpdatesLoading && updates.length === 0 ? (
-							<Notice icon={<Missing aria-hidden='true' size='32px' />}>No updates yet.</Notice>
-						) : null}
-						{updates.length > 0 ? (
-							<>
-								<ul className='flex flex-col'>
-									{updates.map((update, index) => (
-										<UpdateCard
-											key={update.id}
-											currentProfileId={currentProfileQuery.data?.id}
-											isLast={!canLoadMore && index === updates.length - 1}
-											orgSlug={orgSlug}
-											projectSlug={projectSlug}
-											update={update}
-										/>
-									))}
-								</ul>
-								{canLoadMore ? (
-									<div className='flex justify-center pt-2'>
-										<Button
-											disabled={loadingMore}
-											onClick={() => void loadMoreUpdates()}
-											variant='outline'
-										>
-											{loadingMore ? 'Loading…' : 'Load more updates'}
-										</Button>
-									</div>
-								) : null}
-								{loadMoreError ? (
-									<p className='text-center text-sm text-destructive'>{loadMoreError.message}</p>
-								) : null}
-							</>
 						) : null}
 					</div>
 				</div>
+
+				<div
+					className='flex flex-col gap-4 py-8 md:col-span-9'
+					aria-busy={isInitialUpdatesLoading || refreshingUpdates || loadingMore}
+					aria-live='polite'
+				>
+					{isInitialUpdatesLoading ? (
+						<>
+							<span className='sr-only'>Loading updates...</span>
+							<UpdatesListSkeleton />
+						</>
+					) : null}
+					{!isInitialUpdatesLoading && updates.length === 0 ? (
+						<Notice icon={<Missing aria-hidden='true' size='32px' />}>No updates yet.</Notice>
+					) : null}
+					{updates.length > 0 ? (
+						<>
+							<ul className='flex flex-col'>
+								{updates.map((update, index) => (
+									<UpdateCard
+										key={update.id}
+										currentProfileId={currentProfileQuery.data?.id}
+										isLast={!canLoadMore && index === updates.length - 1}
+										orgSlug={orgSlug}
+										projectSlug={projectSlug}
+										update={update}
+									/>
+								))}
+							</ul>
+							{canLoadMore ? (
+								<div className='flex justify-center pt-2'>
+									<Button
+										disabled={loadingMore}
+										onClick={() => void loadMoreUpdates()}
+										variant='outline'
+									>
+										{loadingMore ? 'Loading…' : 'Load more updates'}
+									</Button>
+								</div>
+							) : null}
+							{loadMoreError ? (
+								<p className='text-center text-sm text-destructive'>{loadMoreError.message}</p>
+							) : null}
+						</>
+					) : null}
+				</div>
 			</div>
-		</>
+		</div>
 	);
 }
