@@ -1,7 +1,7 @@
+import type { IconName } from '@/icons';
 
 import { useMemo } from 'react';
 import { Link, useNavigate, useParams, useSearch } from '@tanstack/react-router';
-import type { IconName } from '@/icons';
 
 import { useRegisterShortcuts } from '@/components/shortcuts';
 import { SidebarNavGroup, SidebarNavItem } from '@/components/sidebar-nav';

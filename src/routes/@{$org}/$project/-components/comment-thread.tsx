@@ -1,3 +1,7 @@
+import type { MarkdownEditorRef } from '@/components/editor';
+import type { EmoteContent } from '@/components/emote';
+import type { ReactNode, RefObject } from 'react';
+
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from '@tanstack/react-router';
 import {
@@ -8,10 +12,6 @@ import {
 	Quote,
 	Trash2,
 } from 'lucide-react';
-import type { MarkdownEditorRef } from '@/components/editor';
-import type { EmoteContent } from '@/components/emote';
-import type { ReactNode, RefObject } from 'react';
-
 
 import { EditorContentDisplay, MarkdownEditor, sanitizeEditorContent } from '@/components/editor';
 import { EmoteButton, EmotePicker } from '@/components/emote';
@@ -216,10 +216,9 @@ export function CommentCard({
 		}
 	}
 
-	const emoteEntries = Object.entries(comment.emoteCounts ?? {}) as Array<[
-		EmoteContent,
-		{ authorProfileIds: Array<string>; count: number },
-	]>;
+	const emoteEntries = Object.entries(comment.emoteCounts ?? {}) as Array<
+		[EmoteContent, { authorProfileIds: Array<string>; count: number }]
+	>;
 
 	return (
 		<li

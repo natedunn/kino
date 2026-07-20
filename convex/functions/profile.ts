@@ -1,3 +1,4 @@
+import type { Id } from './_generated/dataModel';
 
 import { createFunctionHandle } from 'convex/server';
 import { ConvexError, v } from 'convex/values';
@@ -24,7 +25,6 @@ import { internal } from './_generated/api';
 import { internalMutation } from './generated/server';
 import { toPublicProfileSummary } from './profile.lib';
 import { profileTable } from './schema';
-import type { Id } from './_generated/dataModel';
 
 export const findMyProfile = authQuery.query(async ({ ctx }) => {
 	const profile = await getCurrentProfile(ctx, ctx.userId);
@@ -123,7 +123,7 @@ export const onAvatarMetadataSynced = internalMutation({
 			});
 		}
 
-		const profile = await ctx.db.get("profile", profileId as Id<'profile'>);
+		const profile = await ctx.db.get('profile', profileId as Id<'profile'>);
 		if (!profile) return;
 
 		const metadata = await getUserUploadR2Metadata(ctx, args.key);
@@ -187,10 +187,7 @@ export const update = authMutation
 			Object.entries(input.profile).filter(([, value]) => value !== undefined)
 		);
 		if (Object.keys(nextProfile).length > 0) {
-			await ctx.orm
-				.update(profileTable)
-				.set(nextProfile)
-				.where(eq(profileTable.id, profile._id));
+			await ctx.orm.update(profileTable).set(nextProfile).where(eq(profileTable.id, profile._id));
 		}
 
 		const updatedProfile = (await getCurrentProfile(ctx, ctx.userId)) ?? {

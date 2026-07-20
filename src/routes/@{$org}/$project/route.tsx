@@ -1,4 +1,4 @@
-import { Outlet, createFileRoute, notFound } from '@tanstack/react-router';
+import { createFileRoute, notFound, Outlet } from '@tanstack/react-router';
 
 import { NotFound } from '@/components/_not-found';
 import { crpcServer } from '@/lib/convex/crpc-server';

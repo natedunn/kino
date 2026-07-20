@@ -1,12 +1,12 @@
 'use client';
 
+import type { ConvexQueryClient } from 'kitcn/react';
+import type { ReactNode } from 'react';
 
 import { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { ConvexAuthProvider } from 'kitcn/auth/client';
 import { useAuth, useAuthStore, useFetchAccessToken } from 'kitcn/react';
-import type { ReactNode } from 'react';
-import type { ConvexQueryClient } from 'kitcn/react';
 
 import { setAuthSnapshot } from '@/lib/auth/auth-snapshot';
 import { authClient } from '@/lib/convex/auth-client';

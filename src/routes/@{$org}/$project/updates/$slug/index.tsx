@@ -1,6 +1,8 @@
+import type { ThreadComment } from '../../-components/comment-thread';
+
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
-import { Link, createFileRoute, getRouteApi, notFound } from '@tanstack/react-router';
+import { createFileRoute, getRouteApi, Link, notFound } from '@tanstack/react-router';
 import { useAuth } from 'kitcn/react';
 import {
 	Calendar,
@@ -14,11 +16,6 @@ import {
 	Rss,
 	Users,
 } from 'lucide-react';
-import { CategoryBadge } from '../-components/category-badge';
-import { useEmoteToggle } from '../-components/use-emote-toggle';
-import { CommentEditorProvider, CommentForm, CommentList } from '../../-components/comment-thread';
-import type { ThreadComment } from '../../-components/comment-thread';
-
 
 import { EditorContentDisplay } from '@/components/editor';
 import { ProfileLinkOrUnknown } from '@/components/profile-link';
@@ -35,6 +32,9 @@ import { cn } from '@/lib/utils';
 import { formatFullDate, formatRelativeDay } from '@/lib/utils/format-timestamp';
 import { getInitial } from '@/lib/utils/get-initial';
 
+import { CategoryBadge } from '../-components/category-badge';
+import { useEmoteToggle } from '../-components/use-emote-toggle';
+import { CommentEditorProvider, CommentForm, CommentList } from '../../-components/comment-thread';
 
 export const Route = createFileRoute('/@{$org}/$project/updates/$slug/')({
 	component: UpdateDetailRoute,

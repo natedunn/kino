@@ -1,10 +1,10 @@
+import type { ActionCtx, MutationCtx, QueryCtx } from '../functions/generated/server';
 
 import { getHeaders } from 'kitcn/auth';
 import { CRPCError } from 'kitcn/server';
 
 import { getAuth } from '../functions/generated/auth';
 import { initCRPC } from '../functions/generated/server';
-import type { ActionCtx, MutationCtx, QueryCtx } from '../functions/generated/server';
 
 const c = initCRPC
 	.meta<{

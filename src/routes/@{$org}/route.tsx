@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Outlet, createFileRoute, notFound, useParams } from '@tanstack/react-router';
+import { createFileRoute, notFound, Outlet, useParams } from '@tanstack/react-router';
 
-import { DynamicNavigation } from './$project/-components/dynamic-nav';
 import { DefaultCatchBoundary } from '@/components/_default-catch-boundary';
 import { NotFound } from '@/components/_not-found';
 import { MainNav } from '@/components/site-nav/main-nav';
@@ -11,6 +10,7 @@ import { crpcServer } from '@/lib/convex/crpc-server';
 import { titleFromSlug, titleMeta } from '@/lib/seo';
 import { cn } from '@/lib/utils';
 
+import { DynamicNavigation } from './$project/-components/dynamic-nav';
 
 export const Route = createFileRoute('/@{$org}')({
 	head: ({ params }) => ({

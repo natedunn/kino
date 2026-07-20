@@ -1,8 +1,8 @@
+import type { IconName } from '@/icons';
 
 import { useQuery } from '@tanstack/react-query';
-import { Link, createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, Link } from '@tanstack/react-router';
 import { Plus } from 'lucide-react';
-import type { IconName } from '@/icons';
 
 import { EmptyState } from '@/components/kino/common';
 import { Button, buttonVariants } from '@/components/ui/button';

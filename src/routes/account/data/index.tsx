@@ -1,9 +1,9 @@
+import type { ApiOutputs } from '@convex/api';
 
 import { useMemo, useState } from 'react';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { Check, Database, Download } from 'lucide-react';
-import type { ApiOutputs } from '@convex/api';
 
 import { InlineAlert } from '@/components/inline-alert';
 import { Label, LabelDescription, LabelWrapper } from '@/components/label';

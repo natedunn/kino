@@ -1,6 +1,6 @@
-import { isTrustedTargetUrl, timingSafeEqualString } from './env';
 import type { GatewayEnv } from './env';
 
+import { isTrustedTargetUrl, timingSafeEqualString } from './env';
 
 /**
  * Signed-state trampoline for the GitHub App (sync) install/authorize flow.

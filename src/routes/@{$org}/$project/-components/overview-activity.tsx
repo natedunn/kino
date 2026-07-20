@@ -1,4 +1,3 @@
-import { MOCK_ACTIVITY } from '../-overview-mock-data';
 import type { Icon as IconType } from '@/icons/types';
 import type { ActivityKind } from '../-overview-types';
 
@@ -10,6 +9,7 @@ import Github from '@/icons/github';
 import Interview from '@/icons/interview';
 import { cn } from '@/lib/utils';
 
+import { MOCK_ACTIVITY } from '../-overview-mock-data';
 
 const ACTIVITY_CONFIG: Record<ActivityKind, { label: string; Icon: IconType; colorClass: string }> =
 	{

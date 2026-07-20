@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { Link, createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, Link } from '@tanstack/react-router';
 
 import { AuthFooter, AuthHeader } from '@/components/auth/auth-card';
 import { InlineAlert } from '@/components/inline-alert';

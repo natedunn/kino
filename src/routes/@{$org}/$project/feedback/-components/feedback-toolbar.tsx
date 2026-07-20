@@ -218,7 +218,7 @@ export function FeedbackToolbar() {
 								items={STATUS_OPTIONS}
 								onValueChange={(value) => {
 									setSearchParams({
-										status: (value ?? undefined),
+										status: value ?? undefined,
 									});
 								}}
 								value={!status ? null : status}

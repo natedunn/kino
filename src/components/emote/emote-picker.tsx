@@ -1,7 +1,6 @@
-import { SmilePlus } from 'lucide-react';
-import { EMOTE_EMOJI } from './types';
 import type { EmoteContent } from './types';
 
+import { SmilePlus } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -11,6 +10,7 @@ import {
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
+import { EMOTE_EMOJI } from './types';
 
 type EmotePickerProps = {
 	disabled?: boolean;

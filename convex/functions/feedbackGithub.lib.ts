@@ -1,3 +1,5 @@
+import type { GitHubIssueTarget, GitHubRepository } from '../lib/github-client';
+
 import { CRPCError } from 'kitcn/server';
 import { z } from 'zod';
 
@@ -8,7 +10,6 @@ import {
 	toPublicDoc,
 	verifyProjectAccess,
 } from '../lib/kino';
-import type {GitHubIssueTarget, GitHubRepository} from '../lib/github-client';
 
 export const kindSchema = z.literal('issue');
 

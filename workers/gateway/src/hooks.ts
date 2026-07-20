@@ -1,6 +1,6 @@
-import { isAuthorizedAdmin, isTrustedTargetUrl, timingSafeEqualString } from './env';
 import type { GatewayEnv } from './env';
 
+import { isAuthorizedAdmin, isTrustedTargetUrl, timingSafeEqualString } from './env';
 
 /**
  * GitHub App webhook fan-out.

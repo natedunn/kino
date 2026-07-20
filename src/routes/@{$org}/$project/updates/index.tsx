@@ -1,11 +1,9 @@
-import { useState } from 'react';
-import { useQuery, useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
-import { Link, createFileRoute, notFound, redirect } from '@tanstack/react-router';
-import { Settings2 } from 'lucide-react';
-import { CategoriesNav } from './-components/categories-nav';
-import { UpdateCard } from './-components/update-card';
 import type { ReactNode } from 'react';
 
+import { useState } from 'react';
+import { useQuery, useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
+import { createFileRoute, Link, notFound, redirect } from '@tanstack/react-router';
+import { Settings2 } from 'lucide-react';
 
 import { RoutePending } from '@/components/route-pending';
 import { EditingBar } from '@/components/site-nav/editing-bar';
@@ -17,6 +15,8 @@ import { useCRPC } from '@/lib/convex/crpc';
 import { crpcServer } from '@/lib/convex/crpc-server';
 import { projectTitle, titleMeta } from '@/lib/seo';
 
+import { CategoriesNav } from './-components/categories-nav';
+import { UpdateCard } from './-components/update-card';
 
 const NUM_OF_ITEMS_PER_PAGE = 10;
 

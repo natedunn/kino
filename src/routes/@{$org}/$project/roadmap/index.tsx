@@ -1,16 +1,16 @@
+import type { RoadmapItem, ViewMode } from './-types';
 
 import { useMemo, useState } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import { LayoutGrid, List, Milestone, Search } from 'lucide-react';
 
+import { projectTitle, titleMeta } from '@/lib/seo';
+import { cn } from '@/lib/utils';
 
 import { BoardView } from './-components/board-view';
 import { ListView } from './-components/list-view';
 import { TimelineView } from './-components/timeline-view';
 import { MOCK_ITEMS } from './-mock-data';
-import type { RoadmapItem, ViewMode } from './-types';
-import { cn } from '@/lib/utils';
-import { projectTitle, titleMeta } from '@/lib/seo';
 
 export const Route = createFileRoute('/@{$org}/$project/roadmap/')({
 	head: ({ params }) => ({

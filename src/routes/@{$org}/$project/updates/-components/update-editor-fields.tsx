@@ -1,10 +1,8 @@
-import { useState } from 'react';
-import { X } from 'lucide-react';
-import { CategoryBadge } from './category-badge';
-import { FeedbackSelector } from './feedback-selector';
 import type { ReactNode } from 'react';
 import type { UpdateCategory } from './category-badge';
 
+import { useState } from 'react';
+import { X } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -19,6 +17,8 @@ import {
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 
+import { CategoryBadge } from './category-badge';
+import { FeedbackSelector } from './feedback-selector';
 
 export const UPDATE_CATEGORIES = ['changelog', 'article', 'announcement'] as const;
 

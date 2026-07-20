@@ -1,17 +1,10 @@
+import type { UpdateCategory } from '../-components/category-badge';
+
 import { useRef, useState } from 'react';
 import { revalidateLogic, useForm } from '@tanstack/react-form';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { Link, createFileRoute, getRouteApi, redirect, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, getRouteApi, Link, redirect, useNavigate } from '@tanstack/react-router';
 import { ArrowLeft, LinkIcon, Settings2, Tag } from 'lucide-react';
-import {
-	CategoryField,
-	RelatedFeedbackField,
-	TagsField,
-	UpdateEditorCard,
-	UpdateTitleInput,
-} from '../-components/update-editor-fields';
-import type { UpdateCategory } from '../-components/category-badge';
-
 
 import { LazyMarkdownEditor } from '@/components/editor/markdown-editor.lazy';
 import { sanitizeEditorContent } from '@/components/editor/sanitize-content';
@@ -29,6 +22,13 @@ import { projectTitle, titleMeta } from '@/lib/seo';
 import { cn } from '@/lib/utils';
 import { FORM_LIMITS, updateFormSchema, validationMessage } from '@/lib/validation';
 
+import {
+	CategoryField,
+	RelatedFeedbackField,
+	TagsField,
+	UpdateEditorCard,
+	UpdateTitleInput,
+} from '../-components/update-editor-fields';
 
 const SIDEBAR_STORAGE_KEY = 'update-new-sidebar-state';
 

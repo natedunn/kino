@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import { useSuspenseQuery } from '@tanstack/react-query';
-import { Link, Navigate, createFileRoute, redirect } from '@tanstack/react-router';
+import { createFileRoute, Link, Navigate, redirect } from '@tanstack/react-router';
 import { ArrowLeft } from 'lucide-react';
 
 import { Skeleton } from '@/components/ui/skeleton';

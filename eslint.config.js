@@ -18,6 +18,14 @@ export default [
 	...tanstackConfig,
 	// Convex-specific lint rules.
 	...convexPlugin.configs.recommended,
+	// Import ordering is owned by Prettier (@ianvs/prettier-plugin-sort-imports);
+	// disable the conflicting ESLint rules so the two formatters don't fight.
+	{
+		rules: {
+			'import/order': 'off',
+			'sort-imports': 'off',
+		},
+	},
 	// React Hooks linting (classic rules) for app source.
 	{
 		files: ['src/**/*.{ts,tsx}'],

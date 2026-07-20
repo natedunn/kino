@@ -1,12 +1,12 @@
+import type {
+	MutationCtx as ServerMutationCtx,
+	QueryCtx as ServerQueryCtx,
+} from '../_generated/server';
 
 import { convexTest as baseConvexTest } from 'convex-test';
 
 import { withOrm } from './generated/server';
 import schema from './schema';
-import type {
-	MutationCtx as ServerMutationCtx,
-	QueryCtx as ServerQueryCtx,
-} from '../_generated/server';
 
 // convex-test needs the set of function modules so it can run scheduled
 // functions and procedure calls. Tests that only drive ctx.orm directly don't

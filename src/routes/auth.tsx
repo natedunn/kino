@@ -1,6 +1,6 @@
 'use client';
 
-import { Outlet, createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, Outlet } from '@tanstack/react-router';
 
 import { AuthBackground } from '@/components/auth/auth-background';
 import { titleMeta } from '@/lib/seo';

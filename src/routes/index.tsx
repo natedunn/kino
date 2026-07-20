@@ -1,7 +1,7 @@
-
-import { Link, createFileRoute, redirect } from '@tanstack/react-router';
-import { ArrowRight, MessageSquare, Newspaper, Route as RouteIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
+
+import { createFileRoute, Link, redirect } from '@tanstack/react-router';
+import { ArrowRight, MessageSquare, Newspaper, Route as RouteIcon } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { isClientDefinitelyAuthed } from '@/lib/auth/auth-snapshot';

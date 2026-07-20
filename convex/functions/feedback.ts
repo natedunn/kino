@@ -1,3 +1,4 @@
+import type { Doc } from './_generated/dataModel';
 
 import { eq, unsetToken } from 'kitcn/orm';
 import { CRPCError } from 'kitcn/server';
@@ -28,7 +29,6 @@ import {
 } from '../lib/validation';
 import { isValidTarget, resolveTargetOrNull } from '../shared/target';
 import {
-	MIDDLE_COMMENT_PAGE_SIZE,
 	assertCanAdminFeedback,
 	createCommentEnrichCache,
 	dedupeComments,
@@ -36,6 +36,7 @@ import {
 	feedbackStatusSchema,
 	getFeedbackCommentWindow,
 	hasOverlap,
+	MIDDLE_COMMENT_PAGE_SIZE,
 	targetGranularitySchema,
 	toProfileSummary,
 	toPublicFeedbackComment,
@@ -44,7 +45,6 @@ import {
 } from './feedback.lib';
 import { recordFeedbackEvent } from './feedbackEvent.lib';
 import { feedbackCommentTable, feedbackTable } from './schema';
-import type { Doc } from './_generated/dataModel';
 
 export const create = authMutation
 	.input(

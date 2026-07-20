@@ -1,6 +1,6 @@
 import { Suspense, useState } from 'react';
 import { useSuspenseQuery } from '@tanstack/react-query';
-import { Link, createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, Link } from '@tanstack/react-router';
 import { ArrowRight, ChevronDown, FolderOpen, Lock, Plus, Settings } from 'lucide-react';
 
 import { MainNav } from '@/components/site-nav/main-nav';

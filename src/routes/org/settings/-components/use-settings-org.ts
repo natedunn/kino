@@ -108,5 +108,5 @@ export function useSettingsOrgController() {
  */
 export function useSettingsOrgSlug() {
 	const search = useSearch({ from: SETTINGS_ROUTE });
-	return (search).org;
+	return search.org;
 }

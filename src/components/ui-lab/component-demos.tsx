@@ -1,3 +1,5 @@
+import type { LabItem } from './types';
+
 import { useState } from 'react';
 import {
 	Bell,
@@ -17,9 +19,6 @@ import {
 	User,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { Cell, CopySnippet, Demo } from './parts';
-import type { LabItem } from './types';
-
 
 import CheckboxButton from '@/components/checkbox-button';
 import { InlineAlert } from '@/components/inline-alert';
@@ -107,6 +106,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { GithubIcon } from '@/icons';
 
+import { Cell, CopySnippet, Demo } from './parts';
 
 /* ------------------------------------------------------------------ */
 /* Buttons                                                            */

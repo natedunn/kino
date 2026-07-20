@@ -1,3 +1,4 @@
+import type { Doc } from './_generated/dataModel';
 
 import { CRPCError } from 'kitcn/server';
 import { z } from 'zod';
@@ -13,7 +14,6 @@ import {
 } from '../lib/kino';
 import { resolveProfileImageUrl } from '../lib/storage';
 import { resolveTargetOrNull, targetGranularities } from '../shared/target';
-import type { Doc } from './_generated/dataModel';
 
 export const feedbackStatusSchema = z.enum([
 	'open',

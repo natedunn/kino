@@ -1,9 +1,9 @@
+import type { Doc, Id, TableNames } from '../functions/_generated/dataModel';
 
 import { CRPCError } from 'kitcn/server';
 
 import { memberTable, organizationTable, profileTable } from '../functions/schema';
-import { VALIDATION_LIMITS, isReservedHandle, normalizeSlug } from './validation';
-import type { Doc, Id, TableNames } from '../functions/_generated/dataModel';
+import { isReservedHandle, normalizeSlug, VALIDATION_LIMITS } from './validation';
 
 export const DEFAULT_FEEDBACK_BOARDS = ['Bugs', 'Feature Requests', 'Improvements'] as const;
 

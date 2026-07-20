@@ -1,9 +1,9 @@
+import type { Id } from './_generated/dataModel';
 
 import { ConvexError } from 'convex/values';
 import { z } from 'zod';
 
 import { getOrganizationLogoObjectKey, resolveOrganizationLogoUrl } from '../lib/storage';
-import type { Id } from './_generated/dataModel';
 
 export const visibilitySchema = z.enum(['public', 'private']);
 

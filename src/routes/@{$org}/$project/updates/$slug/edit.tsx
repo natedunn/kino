@@ -1,25 +1,17 @@
+import type { UpdateCategory } from '../-components/category-badge';
+
 import { useMemo, useState } from 'react';
 import { revalidateLogic, useForm } from '@tanstack/react-form';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import {
-	Link,
 	createFileRoute,
 	getRouteApi,
+	Link,
 	notFound,
 	redirect,
 	useNavigate,
 } from '@tanstack/react-router';
 import { ArrowLeft, Image, LinkIcon, Settings2, Tag, Trash2 } from 'lucide-react';
-import { CoverImageUpload } from '../-components/cover-image-upload';
-import {
-	CategoryField,
-	RelatedFeedbackField,
-	TagsField,
-	UpdateEditorCard,
-	UpdateTitleInput,
-} from '../-components/update-editor-fields';
-import type { UpdateCategory } from '../-components/category-badge';
-
 
 import { LazyMarkdownEditor } from '@/components/editor/markdown-editor.lazy';
 import { sanitizeEditorContent } from '@/components/editor/sanitize-content';
@@ -36,6 +28,14 @@ import { projectTitle, titleFromSlug, titleMeta } from '@/lib/seo';
 import { cn } from '@/lib/utils';
 import { updateFormSchema, validationMessage } from '@/lib/validation';
 
+import { CoverImageUpload } from '../-components/cover-image-upload';
+import {
+	CategoryField,
+	RelatedFeedbackField,
+	TagsField,
+	UpdateEditorCard,
+	UpdateTitleInput,
+} from '../-components/update-editor-fields';
 
 type UpdateFormValues = {
 	category: UpdateCategory;

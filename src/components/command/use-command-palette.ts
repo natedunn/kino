@@ -1,8 +1,8 @@
+import type { AppCommand } from './types';
 
 import { useContext, useEffect } from 'react';
 
 import { CommandContext } from './command-context';
-import type { AppCommand } from './types';
 
 export function useCommandPalette() {
 	const context = useContext(CommandContext);

@@ -3,9 +3,6 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { createFileRoute, redirect } from '@tanstack/react-router';
 import { Trash2 } from 'lucide-react';
 
-import { SettingsSkeleton } from '../-components/settings-skeleton';
-import { useDelayedFlag } from '../-components/use-delayed-flag';
-import { useSettingsOrgSlug } from '../-components/use-settings-org';
 import { InlineAlert } from '@/components/inline-alert';
 import { EmptyState } from '@/components/kino/common';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -17,8 +14,11 @@ import { crpcServer } from '@/lib/convex/crpc-server';
 import { titleMeta } from '@/lib/seo';
 import { cn } from '@/lib/utils';
 import { getInitial } from '@/lib/utils/get-initial';
-import { FORM_LIMITS, emailSchema } from '@/lib/validation';
+import { emailSchema, FORM_LIMITS } from '@/lib/validation';
 
+import { SettingsSkeleton } from '../-components/settings-skeleton';
+import { useDelayedFlag } from '../-components/use-delayed-flag';
+import { useSettingsOrgSlug } from '../-components/use-settings-org';
 
 export const Route = createFileRoute('/org/settings/members/')({
 	head: () => ({

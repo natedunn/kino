@@ -1,4 +1,4 @@
-import { Navigate, createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, Navigate } from '@tanstack/react-router';
 
 import { titleFromSlug, titleMeta } from '@/lib/seo';
 

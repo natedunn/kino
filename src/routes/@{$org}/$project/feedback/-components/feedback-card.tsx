@@ -1,8 +1,8 @@
-import { UpvoteButton } from './upvote-button';
 import { ClickableContainer } from '@/components/clickable-container';
 import { StatusIcon } from '@/icons';
 import { stripHtml, truncateToNearestSpace } from '@/lib/utils/truncate';
 
+import { UpvoteButton } from './upvote-button';
 
 function isPlainLeftClick(event: React.MouseEvent<HTMLAnchorElement>) {
 	return event.button === 0 && !event.metaKey && !event.altKey && !event.ctrlKey && !event.shiftKey;

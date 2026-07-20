@@ -5,10 +5,10 @@ import { Underline } from '@tiptap/extension-underline';
 import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 
+import { cn } from '@/lib/utils';
 
 import { EditorToolbar } from './editor-toolbar';
 import { createLowlightCodeBlock } from './extensions/lowlight-code-block';
-import { cn } from '@/lib/utils';
 
 function createExtensions(getPlaceholder: () => string) {
 	return [

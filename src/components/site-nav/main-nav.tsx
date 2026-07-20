@@ -1,10 +1,8 @@
+import type { API } from '@/lib/api';
+
 import React from 'react';
 import { Link, useRouterState } from '@tanstack/react-router';
 import { Command, Ellipsis } from 'lucide-react';
-import { NavButton } from './nav-button';
-import { UserDropdown } from './user-dropdown';
-import type { API } from '@/lib/api';
-
 
 import { useCommandPalette } from '@/components/command';
 import { KinoMark } from '@/components/kino-mark';
@@ -22,6 +20,8 @@ import SearchSparkle from '@/icons/search-sparkle';
 import { cn } from '@/lib/utils';
 import { getInitial } from '@/lib/utils/get-initial';
 
+import { NavButton } from './nav-button';
+import { UserDropdown } from './user-dropdown';
 
 const notifications = [
 	{

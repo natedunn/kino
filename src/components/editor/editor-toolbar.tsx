@@ -1,3 +1,4 @@
+import type { Editor } from '@tiptap/react';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useEditorState } from '@tiptap/react';
@@ -16,7 +17,6 @@ import {
 	Strikethrough,
 	Underline,
 } from 'lucide-react';
-import type { Editor } from '@tiptap/react';
 
 import { Button } from '@/components/ui/button';
 import {

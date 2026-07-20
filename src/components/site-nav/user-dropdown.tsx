@@ -1,3 +1,6 @@
+import type { API } from '@/lib/api';
+import type { ComponentType } from 'react';
+
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import {
@@ -9,10 +12,6 @@ import {
 	Settings,
 	User,
 } from 'lucide-react';
-import { NavButton } from './nav-button';
-import type { API } from '@/lib/api';
-import type { ComponentType } from 'react';
-
 
 import { useShortcuts } from '@/components/shortcuts';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -27,6 +26,7 @@ import { trackAuthError, trackAuthSuccess } from '@/lib/auth-analytics';
 import { useSignOutMutationOptions } from '@/lib/auth/auth-client';
 import { beginSignOut, endSignOut } from '@/lib/auth/sign-out-state';
 
+import { NavButton } from './nav-button';
 
 export function UserDropdown({
 	orgSlug,

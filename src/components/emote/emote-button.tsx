@@ -1,9 +1,9 @@
-import { EMOTE_EMOJI } from './types';
 import type { EmoteContent } from './types';
 
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
+import { EMOTE_EMOJI } from './types';
 
 type EmoteButtonProps = {
 	count: number;

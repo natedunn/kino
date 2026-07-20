@@ -7,10 +7,10 @@ import {
 	normalizeSlugInput,
 } from '../../src/lib/validation';
 import {
+	normalizeSlug,
 	RESERVED_HANDLES as SERVER_RESERVED_HANDLES,
 	SLUG_PATTERN as SERVER_SLUG_PATTERN,
 	VALIDATION_LIMITS,
-	normalizeSlug,
 } from './validation';
 
 // The client (`src/lib/validation.ts`) and server (`convex/lib/validation.ts`)

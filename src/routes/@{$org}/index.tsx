@@ -1,5 +1,5 @@
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
-import { Link, createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, Link } from '@tanstack/react-router';
 import {
 	Activity,
 	ArrowRight,
@@ -13,8 +13,6 @@ import {
 	Zap,
 } from 'lucide-react';
 
-import { NoPublicProjects } from './-components/no-public-projects';
-import { OrgProjects } from './-components/org-projects';
 import { EmptyState } from '@/components/kino/common';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -24,6 +22,8 @@ import { crpcServer } from '@/lib/convex/crpc-server';
 import { titleFromSlug, titleMeta } from '@/lib/seo';
 import { getInitial } from '@/lib/utils/get-initial';
 
+import { NoPublicProjects } from './-components/no-public-projects';
+import { OrgProjects } from './-components/org-projects';
 
 export const Route = createFileRoute('/@{$org}/')({
 	head: ({ params }) => ({

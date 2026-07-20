@@ -1,10 +1,10 @@
+import type { ReactNode } from 'react';
 
 import { useRef, useState } from 'react';
 import { useForm, useStore } from '@tanstack/react-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useBlocker, useNavigate } from '@tanstack/react-router';
 import { Plus, ShieldCheck, Trash2 } from 'lucide-react';
-import type { ReactNode } from 'react';
 
 import { InlineAlert } from '@/components/inline-alert';
 import { EmptyState } from '@/components/kino/common';
@@ -33,11 +33,11 @@ import { crpcServer } from '@/lib/convex/crpc-server';
 import { titleMeta } from '@/lib/seo';
 import { cn } from '@/lib/utils';
 import {
+	filterSlugInput,
 	FORM_LIMITS,
 	MAX_PROJECT_URLS,
-	SLUG_INPUT_PATTERN,
-	filterSlugInput,
 	projectFormSchema,
+	SLUG_INPUT_PATTERN,
 	validationMessage,
 } from '@/lib/validation';
 

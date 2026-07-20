@@ -1,9 +1,9 @@
+import type { GitHubTargetData } from '../-types';
 
 import { useRef, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { Check, Link as LinkIcon, Plus, Search } from 'lucide-react';
-import type { GitHubTargetData } from '../-types';
 
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';

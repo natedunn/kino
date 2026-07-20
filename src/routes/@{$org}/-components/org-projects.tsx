@@ -1,7 +1,7 @@
+import type { ApiOutputs } from '@convex/api';
 
 import { Link } from '@tanstack/react-router';
 import { ArrowRight, Globe, Lock } from 'lucide-react';
-import type { ApiOutputs } from '@convex/api';
 
 import { Badge } from '@/components/ui/badge';
 

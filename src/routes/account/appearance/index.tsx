@@ -1,8 +1,8 @@
+import type { ThemePreference } from '@/lib/theme';
 
 import { useSyncExternalStore } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import { Check, Moon, Sun } from 'lucide-react';
-import type { ThemePreference } from '@/lib/theme';
 
 import { titleMeta } from '@/lib/seo';
 import {

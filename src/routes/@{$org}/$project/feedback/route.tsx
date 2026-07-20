@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { Outlet, createFileRoute, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, Outlet, useNavigate } from '@tanstack/react-router';
 
 import { useRegisterCommands } from '@/components/command';
 import { useRegisterShortcuts } from '@/components/shortcuts';

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { Link, createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, Link } from '@tanstack/react-router';
 import { GitBranch, ShieldCheck, Unplug } from 'lucide-react';
 
 import { InlineAlert } from '@/components/inline-alert';

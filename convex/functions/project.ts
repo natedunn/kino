@@ -5,9 +5,9 @@ import { z } from 'zod';
 
 import { authMutation, authQuery, optionalAuthQuery, privateQuery } from '../lib/crpc';
 import {
-	LIMITS,
 	asId,
 	getCurrentProfile,
+	LIMITS,
 	toPublicDoc,
 	verifyOrgAccess,
 	verifyProjectAccess,
@@ -24,9 +24,9 @@ import {
 import { internal } from './_generated/api';
 import { internalMutation, withOrm } from './generated/server';
 import {
-	PROJECT_PURGE_BATCH_SIZE,
 	getActiveRepoConnection,
 	normalizeUrl,
+	PROJECT_PURGE_BATCH_SIZE,
 	repoCanonicalUrl,
 	visibilitySchema,
 } from './project.lib';
@@ -371,7 +371,10 @@ export const prepareGithubUrlImport = privateQuery
 				message: 'No connected GitHub repository for this project',
 			});
 		}
-		const installation: any = await ctx.db.get('githubInstallation', connection.githubInstallationId);
+		const installation: any = await ctx.db.get(
+			'githubInstallation',
+			connection.githubInstallationId
+		);
 		if (!installation || installation.status !== 'active') {
 			throw new CRPCError({
 				code: 'NOT_FOUND',
@@ -430,7 +433,7 @@ export const purgeProject = internalMutation({
 		// Safety: only purge projects `remove` has soft-deleted. If the row is gone
 		// (already purged) or was never soft-deleted, do nothing — this internal
 		// mutation must never irreversibly wipe an active project.
-		const project: any = await ctx.db.get("project", projectId);
+		const project: any = await ctx.db.get('project', projectId);
 		if (!project || project.deletedTime == null) return null;
 
 		// Each entry: a table + its ORM delete, purged before the project row.

@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 
 import { createElement } from 'react';
 import {
@@ -12,7 +13,6 @@ import {
 	Section,
 	Text,
 } from '@react-email/components';
-import type { ReactNode } from 'react';
 
 /**
  * Shared chrome for every transactional email. Inline styles only — email

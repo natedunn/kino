@@ -1,18 +1,17 @@
-import { Suspense, lazy, useRef } from 'react';
-import {
-	HeadContent,
-	Outlet,
-	ScriptOnce,
-	Scripts,
-	createRootRouteWithContext,
-} from '@tanstack/react-router';
-import { createServerFn } from '@tanstack/react-start';
-import { getRequest } from '@tanstack/react-start/server';
-import appCss from '../styles.css?url';
 import type { QueryClient } from '@tanstack/react-query';
 import type { ConvexQueryClient } from 'kitcn/react';
 import type { ReactNode } from 'react';
 
+import { lazy, Suspense, useRef } from 'react';
+import {
+	createRootRouteWithContext,
+	HeadContent,
+	Outlet,
+	ScriptOnce,
+	Scripts,
+} from '@tanstack/react-router';
+import { createServerFn } from '@tanstack/react-start';
+import { getRequest } from '@tanstack/react-start/server';
 
 import { DefaultCatchBoundary } from '@/components/_default-catch-boundary';
 import { Providers } from '@/components/providers';
@@ -22,6 +21,7 @@ import { isClientAuthed } from '@/lib/auth/auth-snapshot';
 import { getServerAuthToken } from '@/lib/convex/auth-start-token';
 import { crpcServer } from '@/lib/convex/crpc-server';
 
+import appCss from '../styles.css?url';
 
 const Devtools = import.meta.env.DEV
 	? lazy(async () => {
@@ -50,9 +50,7 @@ const Devtools = import.meta.env.DEV
 		})
 	: null;
 
-const Toaster = lazy(() =>
-	import('@/components/ui/sonner').then((m) => ({ default: m.Toaster }))
-);
+const Toaster = lazy(() => import('@/components/ui/sonner').then((m) => ({ default: m.Toaster })));
 
 const getLoaderToken = createServerFn({ method: 'GET' }).handler(async () => {
 	return await getServerAuthToken();

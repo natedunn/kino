@@ -1,9 +1,9 @@
+import type { VariantProps } from 'class-variance-authority';
+import type React from 'react';
 
 import { useState } from 'react';
 import { cva } from 'class-variance-authority';
 import { Check } from 'lucide-react';
-import type React from 'react';
-import type { VariantProps } from 'class-variance-authority';
 
 import { cn } from '@/lib/utils';
 

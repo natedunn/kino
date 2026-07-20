@@ -1,8 +1,8 @@
+import type { LabItem } from '@/components/ui-lab/types';
 
 import { useMemo, useState } from 'react';
-import { Link, createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, Link } from '@tanstack/react-router';
 import { ArrowLeft, Blocks, Layers, MoonIcon, Search, SunIcon } from 'lucide-react';
-import type { LabItem } from '@/components/ui-lab/types';
 
 import { COMPONENT_ITEMS } from '@/components/ui-lab/component-demos';
 import { EXAMPLE_ITEMS } from '@/components/ui-lab/example-demos';

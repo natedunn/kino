@@ -1,18 +1,18 @@
+import type {
+	OrganizationInvitationEmailProps,
+	ResetPasswordEmailProps,
+	VerificationEmailProps,
+} from './index';
 
 import { createElement } from 'react';
 import { render } from '@react-email/render';
 
 import { sendEmail } from '../lib/bento';
 import {
+	emailSubjects,
 	OrganizationInvitationEmail,
 	ResetPasswordEmail,
 	VerificationEmail,
-	emailSubjects,
-} from './index';
-import type {
-	OrganizationInvitationEmailProps,
-	ResetPasswordEmailProps,
-	VerificationEmailProps,
 } from './index';
 
 /**

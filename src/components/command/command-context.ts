@@ -1,6 +1,6 @@
-import { createContext } from 'react';
 import type { AppCommand } from './types';
 
+import { createContext } from 'react';
 
 export type CommandContextValue = {
 	close: () => void;

@@ -1,5 +1,6 @@
 'use client';
 
+import type { ColumnDef, SortingState } from '@tanstack/react-table';
 
 import { useMemo, useState } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
@@ -28,7 +29,6 @@ import {
 	Upload,
 	X,
 } from 'lucide-react';
-import type { ColumnDef, SortingState } from '@tanstack/react-table';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';

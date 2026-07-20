@@ -1,3 +1,4 @@
+import type { Doc, Id } from './_generated/dataModel';
 
 import { createFunctionHandle } from 'convex/server';
 import { ConvexError, v } from 'convex/values';
@@ -40,17 +41,16 @@ import { internal } from './_generated/api';
 import { internalMutation } from './generated/server';
 import { UPDATE_CATEGORIES, updateTable } from './schema';
 import {
-	MIDDLE_COMMENT_PAGE_SIZE,
 	createCommentEnrichCache,
 	dedupeComments,
 	dedupeDocsById,
 	getUpdateCommentWindow,
 	getUpdateListPreview,
+	MIDDLE_COMMENT_PAGE_SIZE,
 	toProfileSummary,
 	toPublicUpdateComment,
 	updateCategorySchema,
 } from './update.lib';
-import type { Doc, Id } from './_generated/dataModel';
 
 export const create = authMutation
 	.input(
@@ -418,7 +418,7 @@ export const syncMetadata = authMutation
 		}
 
 		const updateId = parts[1] as Id<'update'>;
-		const existingUpdate = await ctx.db.get("update", updateId);
+		const existingUpdate = await ctx.db.get('update', updateId);
 		if (!existingUpdate) {
 			throw new ConvexError({
 				code: '404',
@@ -426,7 +426,7 @@ export const syncMetadata = authMutation
 			});
 		}
 
-		const project = await ctx.db.get("project", existingUpdate.projectId);
+		const project = await ctx.db.get('project', existingUpdate.projectId);
 		if (!project) {
 			throw new ConvexError({
 				code: '404',
@@ -519,22 +519,17 @@ export const onCoverImageMetadataSynced = internalMutation({
 		}
 
 		const updateId = parts[1] as Id<'update'>;
-		const existingUpdate = await ctx.db.get("update", updateId);
+		const existingUpdate = await ctx.db.get('update', updateId);
 		if (!existingUpdate) return;
 
-		const project = await ctx.db.get("project", existingUpdate.projectId);
+		const project = await ctx.db.get('project', existingUpdate.projectId);
 		if (!project) return;
 
 		const metadata = await getCoverImageR2Metadata(ctx, args.key);
 		if (!metadata) return;
 
 		validateCoverImageMetadata(metadata);
-		await updateOrgStorageUsage(
-			ctx,
-			project.orgSlug,
-			metadata.size ?? 0,
-			args.isNew ? 1 : 0
-		);
+		await updateOrgStorageUsage(ctx, project.orgSlug, metadata.size ?? 0, args.isNew ? 1 : 0);
 	},
 });
 

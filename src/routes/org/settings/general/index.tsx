@@ -3,9 +3,6 @@ import { useForm } from '@tanstack/react-form';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router';
 
-import { SettingsSkeleton } from '../-components/settings-skeleton';
-import { useDelayedFlag } from '../-components/use-delayed-flag';
-import { persistSettingsOrg, useSettingsOrgSlug } from '../-components/use-settings-org';
 import { InlineAlert } from '@/components/inline-alert';
 import { EmptyState } from '@/components/kino/common';
 import { Label, LabelDescription, LabelWrapper } from '@/components/label';
@@ -18,13 +15,16 @@ import { crpcServer } from '@/lib/convex/crpc-server';
 import { titleMeta } from '@/lib/seo';
 import { cn } from '@/lib/utils';
 import {
-	FORM_LIMITS,
-	SLUG_INPUT_PATTERN,
 	filterSlugInput,
+	FORM_LIMITS,
 	orgFormSchema,
+	SLUG_INPUT_PATTERN,
 	validationMessage,
 } from '@/lib/validation';
 
+import { SettingsSkeleton } from '../-components/settings-skeleton';
+import { useDelayedFlag } from '../-components/use-delayed-flag';
+import { persistSettingsOrg, useSettingsOrgSlug } from '../-components/use-settings-org';
 
 type GeneralSettingsFormValues = {
 	avatarFile: File | null;

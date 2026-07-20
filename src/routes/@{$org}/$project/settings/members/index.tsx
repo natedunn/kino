@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { useCRPC } from '@/lib/convex/crpc';
 import { crpcServer } from '@/lib/convex/crpc-server';
 import { titleMeta } from '@/lib/seo';
-import { FORM_LIMITS, emailSchema } from '@/lib/validation';
+import { emailSchema, FORM_LIMITS } from '@/lib/validation';
 
 export const Route = createFileRoute('/@{$org}/$project/settings/members/')({
 	head: () => ({

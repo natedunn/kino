@@ -1,8 +1,8 @@
+import type { MutationCtx } from '../functions/generated/server';
 
 import { CRPCError } from 'kitcn/server';
 
 import { orgUploadsR2, userUploadsR2 } from './r2';
-import type { MutationCtx } from '../functions/generated/server';
 
 export const MAX_COVER_IMAGE_BYTES = 5 * 1024 * 1024;
 export const MAX_PROFILE_IMAGE_BYTES = 5 * 1024 * 1024;
@@ -53,7 +53,7 @@ export async function updateOrgStorageUsage(
 		.unique();
 
 	if (existing) {
-		await ctx.db.patch("orgStorageUsage", existing._id, {
+		await ctx.db.patch('orgStorageUsage', existing._id, {
 			fileCount: Math.max(0, existing.fileCount + fileCountDelta),
 			totalBytes: Math.max(0, existing.totalBytes + byteDelta),
 			updatedTime: Date.now(),

@@ -1,3 +1,13 @@
+import type { TargetGranularity } from '@convex/target';
+import type { CSSProperties, FormEvent, KeyboardEvent } from 'react';
+import type { ThreadComment } from '../../-components/comment-thread';
+import type {
+	FeedbackCommentData,
+	FeedbackEventData,
+	GitHubConnectionData,
+	ProfileSummary,
+} from './-types';
+
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import {
 	dateFromDayTarget,
@@ -11,7 +21,7 @@ import {
 	parseQuarterParts,
 } from '@convex/target';
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
-import { Link, createFileRoute, getRouteApi, notFound, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, getRouteApi, Link, notFound, useNavigate } from '@tanstack/react-router';
 import { useAuth } from 'kitcn/react';
 import {
 	Bell,
@@ -31,24 +41,6 @@ import {
 	Users,
 	X as XIcon,
 } from 'lucide-react';
-import { UpvoteButton } from '../-components/upvote-button';
-import { CommentCard, CommentEditorProvider, CommentForm } from '../../-components/comment-thread';
-import { FeedbackEventItem } from './-components/feedback-event-item';
-import {
-	GitHubConnectionDialog,
-	GithubConnectionIcon,
-	GithubIssueStateBadge,
-} from './-components/github-connection-dialog';
-import type { TargetGranularity } from '@convex/target';
-import type { CSSProperties, FormEvent, KeyboardEvent } from 'react';
-import type { ThreadComment } from '../../-components/comment-thread';
-import type {
-	FeedbackCommentData,
-	FeedbackEventData,
-	GitHubConnectionData,
-	ProfileSummary,
-} from './-types';
-
 
 import { ProfileLinkOrUnknown } from '@/components/profile-link';
 import { SidebarSection } from '@/components/sidebar-section';
@@ -99,6 +91,14 @@ import { cn } from '@/lib/utils';
 import { formatTimestamp, toTimestamp } from '@/lib/utils/format-timestamp';
 import { FORM_LIMITS } from '@/lib/validation';
 
+import { UpvoteButton } from '../-components/upvote-button';
+import { CommentCard, CommentEditorProvider, CommentForm } from '../../-components/comment-thread';
+import { FeedbackEventItem } from './-components/feedback-event-item';
+import {
+	GitHubConnectionDialog,
+	GithubConnectionIcon,
+	GithubIssueStateBadge,
+} from './-components/github-connection-dialog';
 
 const SIDEBAR_STORAGE_KEY = 'feedback-detail-sidebar-state';
 

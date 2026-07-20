@@ -1,6 +1,6 @@
-import { MOCK_STATS } from '../-overview-mock-data';
 import { Card } from '@/components/ui/card';
 
+import { MOCK_STATS } from '../-overview-mock-data';
 
 const numberFormatter = new Intl.NumberFormat('en-US');
 

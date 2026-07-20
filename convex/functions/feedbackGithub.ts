@@ -75,7 +75,10 @@ export const listByFeedback = optionalAuthQuery
 		for (const connection of connections) {
 			if (connection.deletedTime) continue;
 
-			const repositoryConnection = await ctx.db.get("githubRepositoryConnection", connection.githubRepositoryConnectionId);
+			const repositoryConnection = await ctx.db.get(
+				'githubRepositoryConnection',
+				connection.githubRepositoryConnectionId
+			);
 			if (repositoryConnection?.repoPrivate && !access.permissions.canEdit) {
 				continue;
 			}

@@ -1,8 +1,8 @@
+import type { Shortcut } from './types';
 
 import { useContext, useEffect, useRef } from 'react';
 
 import { ShortcutsContext } from './shortcuts-context';
-import type { Shortcut } from './types';
 
 export function useShortcuts() {
 	const context = useContext(ShortcutsContext);

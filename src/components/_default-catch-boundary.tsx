@@ -1,8 +1,8 @@
+import type { ErrorComponentProps } from '@tanstack/react-router';
 
 import { useEffect } from 'react';
 import { isCancelledError } from '@tanstack/react-query';
 import { ErrorComponent, Link, rootRouteId, useMatch, useRouter } from '@tanstack/react-router';
-import type { ErrorComponentProps } from '@tanstack/react-router';
 
 import { RoutePending } from '@/components/route-pending';
 import { Button } from '@/components/ui/button';

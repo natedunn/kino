@@ -14,10 +14,10 @@ import { crpcServer } from '@/lib/convex/crpc-server';
 import { titleMeta } from '@/lib/seo';
 import { cn } from '@/lib/utils';
 import {
-	FORM_LIMITS,
-	USERNAME_MIN_LENGTH,
 	filterUsernameInput,
+	FORM_LIMITS,
 	profileFormSchema,
+	USERNAME_MIN_LENGTH,
 	validationMessage,
 } from '@/lib/validation';
 

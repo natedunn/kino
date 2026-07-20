@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
 import type { AppCommand, CommandGroupName } from './types';
 
+import { useMemo, useState } from 'react';
 
 import {
 	CommandDialog,

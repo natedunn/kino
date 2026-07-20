@@ -1,7 +1,7 @@
+import type { ToasterProps } from 'sonner';
 
 import * as React from 'react';
 import { Toaster as Sonner } from 'sonner';
-import type { ToasterProps } from 'sonner';
 
 import { getCurrentThemePreference } from '@/lib/theme';
 

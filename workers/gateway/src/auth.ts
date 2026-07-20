@@ -1,7 +1,7 @@
+import type { GatewayEnv } from './env';
 
 import { betterAuth } from 'better-auth';
 import { oAuthProxy } from 'better-auth/plugins';
-import type { GatewayEnv } from './env';
 
 /**
  * A deliberately minimal better-auth instance whose only job is the

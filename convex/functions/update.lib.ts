@@ -1,9 +1,9 @@
+import type { Doc } from './_generated/dataModel';
 
 import { z } from 'zod';
 
 import { asId, getDoc, isProjectEditorRole, toPublicDoc } from '../lib/kino';
 import { resolveProfileImageUrl } from '../lib/storage';
-import type { Doc } from './_generated/dataModel';
 
 export const updateCategorySchema = z.enum(['changelog', 'article', 'announcement']);
 export const UPDATE_LIST_PREVIEW_CHARS = 420;

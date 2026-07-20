@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { useRouterState } from '@tanstack/react-router';
 import type { AppEnvironment } from '@/lib/app-env';
 import type { PostHog, PostHogConfig } from 'posthog-js';
 import type { ReactNode } from 'react';
 
+import { useEffect, useRef, useState } from 'react';
+import { useRouterState } from '@tanstack/react-router';
 
 import { authClient } from '@/lib/convex/auth-client';
 
