@@ -46,7 +46,7 @@ export function YourTeams({ teams, underLimit }: { teams: Array<Team>; underLimi
 								className='group flex items-center gap-2.5 px-4 py-2.5 transition-colors hover:bg-muted/40'
 							>
 								<Avatar className='size-7 border'>
-									{team.logo ? <AvatarImage src={team.logo} alt='' /> : null}
+									{team.logo ? <AvatarImage src={team.logo} alt={team.name} /> : null}
 									<AvatarFallback className='text-xs font-semibold'>
 										{getInitial(team.name)}
 									</AvatarFallback>
