@@ -33,6 +33,7 @@ import { useSidebarState } from '@/lib/hooks/use-sidebar-state';
 import { projectTitle, titleFromSlug, titleMeta } from '@/lib/seo';
 import { cn } from '@/lib/utils';
 import { formatFullDate, formatRelativeDay } from '@/lib/utils/format-timestamp';
+import { getInitial } from '@/lib/utils/get-initial';
 
 
 export const Route = createFileRoute('/@{$org}/$project/updates/$slug/')({
@@ -276,7 +277,7 @@ function UpdateDetailRoute() {
 				...current,
 				comments: dedupeUpdateComments([
 					...current.comments,
-					...((result.comments) as Array<UpdateCommentData>),
+					...(result.comments as Array<UpdateCommentData>),
 				]),
 				cursor: result.nextCursor ?? null,
 				pageCount: current.pageCount + 1,
@@ -305,7 +306,7 @@ function UpdateDetailRoute() {
 			});
 			await queryClient.invalidateQueries({ queryKey: options.queryKey });
 			const result = await queryClient.fetchQuery(options);
-			refreshed.push(...((result.comments) as Array<UpdateCommentData>));
+			refreshed.push(...(result.comments as Array<UpdateCommentData>));
 			nextCursor = result.nextCursor ?? null;
 			cursor = nextCursor;
 		}
@@ -346,7 +347,7 @@ function UpdateDetailRoute() {
 										/>
 									) : (
 										<div className='flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground'>
-											{updateData.author.name.charAt(0)}
+											{getInitial(updateData.author.name)}
 										</div>
 									)}
 									<span>@{updateData.author.username}</span>

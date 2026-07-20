@@ -10,6 +10,7 @@ import {
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
+import { getInitial } from '@/lib/utils/get-initial';
 
 type SelectorOrg = {
 	logo?: string | null;
@@ -29,7 +30,7 @@ function OrgAvatar({ org, className }: { org: SelectorOrg; className?: string })
 			{org.logo ? (
 				<img alt='' className='h-full w-full object-cover' src={org.logo} />
 			) : (
-				org.name[0].toUpperCase()
+				getInitial(org.name)
 			)}
 		</span>
 	);

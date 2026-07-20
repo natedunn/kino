@@ -20,6 +20,7 @@ import {
 import Bell from '@/icons/bell';
 import SearchSparkle from '@/icons/search-sparkle';
 import { cn } from '@/lib/utils';
+import { getInitial } from '@/lib/utils/get-initial';
 
 
 const notifications = [
@@ -77,7 +78,7 @@ export const MainNav = ({ context, isUserPending = false, subNav, user }: MainNa
 	const org = context.type === 'global' ? undefined : context.org;
 	const orgSlug = org?.slug;
 	const projectSlug = context.type === 'project' ? context.projectSlug : undefined;
-	const orgInitial = (org?.name ?? orgSlug ?? '')[0].toUpperCase();
+	const orgInitial = getInitial(org?.name, orgSlug);
 	const hasSubNav = !!subNav;
 
 	return (

@@ -12,6 +12,7 @@ import { useAuthLostRedirect } from '@/lib/auth/use-auth-lost';
 import { useCRPC } from '@/lib/convex/crpc';
 import { crpcServer } from '@/lib/convex/crpc-server';
 import { titleMeta } from '@/lib/seo';
+import { getInitial } from '@/lib/utils/get-initial';
 
 export const Route = createFileRoute('/dashboard')({
 	head: () => ({
@@ -129,7 +130,7 @@ function OrgSection({
 					<Avatar className='size-8 border'>
 						{org.logo ? <AvatarImage src={org.logo} /> : null}
 						<AvatarFallback className='text-sm font-semibold'>
-							{org.name[0].toUpperCase()}
+							{getInitial(org.name)}
 						</AvatarFallback>
 					</Avatar>
 					<span className='font-semibold decoration-2 underline-offset-2 group-hover:underline'>
