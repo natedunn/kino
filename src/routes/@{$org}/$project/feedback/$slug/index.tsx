@@ -244,8 +244,9 @@ type TimelineMiddleState = {
 function dedupeTimeline(items: Array<TimelineItem>) {
 	const seen = new Set<string>();
 	return items.filter((item) => {
-		if (seen.has(item.id)) return false;
-		seen.add(item.id);
+		const key = `${item.type}:${item.id}`;
+		if (seen.has(key)) return false;
+		seen.add(key);
 		return true;
 	});
 }
