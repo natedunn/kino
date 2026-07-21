@@ -4,7 +4,7 @@ import { z } from 'zod';
 
 import { authMutation, authQuery } from '../lib/crpc';
 import { asId, getDoc, isProjectEditorRole, verifyProjectAccess } from '../lib/kino';
-import { resolveProfileImageUrl } from '../lib/storage';
+import { createProfileImageUrlCache, resolveProfileImageUrl } from '../lib/storage';
 import { emailSchema, idSchema } from '../lib/validation';
 import { projectMemberTable } from './schema';
 
@@ -35,6 +35,7 @@ export const listAssignableMembers = authQuery
 			}))
 		);
 
+		const imageUrlCache = createProfileImageUrlCache();
 		const rows = await Promise.all(
 			membersWithProfiles
 				.filter((member) => isProjectEditorRole(member.role))
@@ -42,7 +43,7 @@ export const listAssignableMembers = authQuery
 					profile: member.profile
 						? {
 								id: member.profile._id,
-								imageUrl: await resolveProfileImageUrl(member.profile),
+								imageUrl: await resolveProfileImageUrl(member.profile, imageUrlCache),
 								name: member.profile.name ?? null,
 								username: member.profile.username,
 							}
@@ -80,6 +81,7 @@ export const listProjectMembers = authQuery
 			limit: 200,
 		});
 
+		const imageUrlCache = createProfileImageUrlCache();
 		const members = (
 			await Promise.all(
 				rows
@@ -88,7 +90,7 @@ export const listProjectMembers = authQuery
 						id: member.id,
 						profile: {
 							id: member.profile._id,
-							imageUrl: await resolveProfileImageUrl(member.profile),
+							imageUrl: await resolveProfileImageUrl(member.profile, imageUrlCache),
 							name: member.profile.name ?? null,
 							username: member.profile.username,
 						},

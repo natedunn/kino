@@ -1,13 +1,15 @@
 import { z } from 'zod';
 
 import { optionalAuthQuery, privateMutation } from '../lib/crpc';
-import { asId, getDoc, getProjectViewAccess, toPublicDoc } from '../lib/kino';
-import { resolveProfileImageUrl } from '../lib/storage';
+import { asId, getDoc, getProjectViewAccess } from '../lib/kino';
+import { createProfileImageUrlCache } from '../lib/storage';
 import { idSchema } from '../lib/validation';
 import {
 	createOrUpdateFeedbackEvent,
+	enrichFeedbackEvent,
 	feedbackEventMetadataSchema,
 	feedbackEventTypeSchema,
+	MAX_TIMELINE_EVENTS,
 } from './feedbackEvent.lib';
 
 export const create = privateMutation
@@ -41,34 +43,10 @@ export const listByFeedback = optionalAuthQuery
 			.query('feedbackEvent')
 			.withIndex('by_feedbackId', (q: any) => q.eq('feedbackId', input.feedbackId))
 			.order('asc')
-			.collect();
+			.take(MAX_TIMELINE_EVENTS);
 
+		const imageUrlCache = createProfileImageUrlCache();
 		return await Promise.all(
-			events.map(async (event: any) => {
-				const actor = await getDoc<'profile'>(ctx, event.actorProfileId);
-				const targetProfile = event.metadata?.targetProfileId
-					? await getDoc<'profile'>(ctx, asId<'profile'>(event.metadata.targetProfileId))
-					: null;
-
-				return {
-					...toPublicDoc(event),
-					actor: actor
-						? {
-								id: actor._id,
-								imageUrl: await resolveProfileImageUrl(actor),
-								name: actor.name,
-								username: actor.username,
-							}
-						: null,
-					targetProfile: targetProfile
-						? {
-								id: targetProfile._id,
-								imageUrl: await resolveProfileImageUrl(targetProfile),
-								name: targetProfile.name,
-								username: targetProfile.username,
-							}
-						: null,
-				};
-			})
+			events.map((event: any) => enrichFeedbackEvent(ctx, event, imageUrlCache))
 		);
 	});

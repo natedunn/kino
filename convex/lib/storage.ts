@@ -178,10 +178,31 @@ export async function deleteCoverImageAttachment(
 	}
 }
 
-export async function resolveProfileImageUrl(profile: ProfileImageSource | null | undefined) {
+// Request-scoped memoization for profile-image presigns. `resolveProfileImageUrl`
+// re-signs the R2 object URL on every call; when a single query resolves images for
+// many rows (e.g. a feedback timeline where the same actor recurs, or a member
+// list), passing a shared cache dedupes the repeated signing (and amortizes the
+// one-time aws-sdk presigner warmup). Keyed by R2 object key, which deterministically
+// maps to a signed URL. Optional — callers without a cache behave exactly as before.
+export type ProfileImageUrlCache = Map<string, Promise<string | null>>;
+
+export function createProfileImageUrlCache(): ProfileImageUrlCache {
+	return new Map();
+}
+
+export async function resolveProfileImageUrl(
+	profile: ProfileImageSource | null | undefined,
+	cache?: ProfileImageUrlCache
+) {
 	if (!profile) return null;
 	if (profile.imageKey) {
-		const r2Url = await resolveUserUploadUrl(profile.imageKey);
+		const key = profile.imageKey;
+		let signed = cache?.get(key);
+		if (!signed) {
+			signed = resolveUserUploadUrl(key);
+			cache?.set(key, signed);
+		}
+		const r2Url = await signed;
 		if (r2Url) {
 			return r2Url;
 		}

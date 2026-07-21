@@ -1,3 +1,4 @@
+import type { ProfileImageUrlCache } from '../lib/storage';
 import type { Doc } from './_generated/dataModel';
 
 import { CRPCError } from 'kitcn/server';
@@ -24,9 +25,9 @@ export const feedbackStatusSchema = z.enum([
 ]);
 export const feedbackPrioritySchema = z.enum(['none', 'low', 'medium', 'high', 'urgent']);
 export const targetGranularitySchema = z.enum(targetGranularities);
-export const CRITICAL_COMMENT_HEAD_COUNT = 5;
-export const CRITICAL_COMMENT_TAIL_COUNT = 10;
-export const MIDDLE_COMMENT_PAGE_SIZE = 20;
+// Safety bound on emote reactions read per comment (a comment realistically has a
+// small number of distinct reactors); prevents an unbounded per-comment scan.
+export const MAX_COMMENT_EMOTES = 1000;
 
 export function hasOverlap(left: Array<string>, right: Array<string>) {
 	return left.some((value) => right.includes(value));
@@ -48,11 +49,14 @@ export function toPublicFeedbackDoc(feedback: Doc<'feedback'>) {
 	};
 }
 
-export async function toProfileSummary(profile: Doc<'profile'> | null) {
+export async function toProfileSummary(
+	profile: Doc<'profile'> | null,
+	imageUrlCache?: ProfileImageUrlCache
+) {
 	return profile
 		? {
 				id: profile._id,
-				imageUrl: await resolveProfileImageUrl(profile),
+				imageUrl: await resolveProfileImageUrl(profile, imageUrlCache),
 				name: profile.name,
 				username: profile.username,
 			}
@@ -110,7 +114,8 @@ export async function toPublicFeedbackComment(
 	comment: Doc<'feedbackComment'>,
 	projectId: string,
 	currentProfile?: Doc<'profile'> | null,
-	cache: CommentEnrichCache = createCommentEnrichCache()
+	cache: CommentEnrichCache = createCommentEnrichCache(),
+	imageUrlCache?: ProfileImageUrlCache
 ) {
 	const author = await getCachedAuthor(ctx, comment.authorProfileId, cache);
 	const isTeamMember = await getCachedIsTeamMember(ctx, author, projectId, cache);
@@ -118,7 +123,7 @@ export async function toPublicFeedbackComment(
 	const emotes = await ctx.db
 		.query('feedbackCommentEmote')
 		.withIndex('by_feedbackCommentId', (q: any) => q.eq('feedbackCommentId', comment._id))
-		.collect();
+		.take(MAX_COMMENT_EMOTES);
 	const emoteCounts: Record<string, { authorProfileIds: Array<string>; count: number }> = {};
 	for (const emote of emotes) {
 		if (!Object.hasOwn(emoteCounts, emote.content)) {
@@ -130,7 +135,7 @@ export async function toPublicFeedbackComment(
 
 	return {
 		...toPublicDoc(comment),
-		author: await toProfileSummary(author),
+		author: await toProfileSummary(author, imageUrlCache),
 		canDelete:
 			!!currentProfile && !comment.initial && comment.authorProfileId === currentProfile._id,
 		canEdit: !!currentProfile && comment.authorProfileId === currentProfile._id,
@@ -139,64 +144,6 @@ export async function toPublicFeedbackComment(
 		initial: comment.initial,
 		isTeamMember,
 		updatedTime: comment.updatedTime,
-	};
-}
-
-export function dedupeComments<T extends { id: string }>(comments: Array<T>) {
-	const seen = new Set<string>();
-	return comments.filter((comment) => {
-		if (seen.has(comment.id)) return false;
-		seen.add(comment.id);
-		return true;
-	});
-}
-
-export function dedupeDocsById<T extends { _id: string }>(docs: Array<T>) {
-	const seen = new Set<string>();
-	return docs.filter((doc) => {
-		if (seen.has(doc._id)) return false;
-		seen.add(doc._id);
-		return true;
-	});
-}
-
-export async function getFeedbackCommentWindow(ctx: any, args: { feedbackId: string }) {
-	const feedbackId = asId<'feedback'>(args.feedbackId);
-	const headPage = await ctx.db
-		.query('feedbackComment')
-		.withIndex('by_feedbackId', (q: any) => q.eq('feedbackId', feedbackId))
-		.order('asc')
-		.paginate({ cursor: null, numItems: CRITICAL_COMMENT_HEAD_COUNT });
-	const tailDocs = await ctx.db
-		.query('feedbackComment')
-		.withIndex('by_feedbackId', (q: any) => q.eq('feedbackId', feedbackId))
-		.order('desc')
-		.take(CRITICAL_COMMENT_TAIL_COUNT);
-	const tailIds = new Set(tailDocs.map((comment: Doc<'feedbackComment'>) => comment._id));
-
-	let middleCursor: string | null = null;
-	if (!headPage.isDone) {
-		// Probe the first comment after the head to decide whether a middle gap
-		// exists. This must use `.take()`, not a second `.paginate()` — Convex
-		// allows only one paginated query per function, and the head page above is
-		// it. (A second `.paginate()` here throws once a thread exceeds the head
-		// count.)
-		const headPlusOne = await ctx.db
-			.query('feedbackComment')
-			.withIndex('by_feedbackId', (q: any) => q.eq('feedbackId', feedbackId))
-			.order('asc')
-			.take(CRITICAL_COMMENT_HEAD_COUNT + 1);
-		const probeComment = headPlusOne[CRITICAL_COMMENT_HEAD_COUNT];
-		if (probeComment && !tailIds.has(probeComment._id)) {
-			middleCursor = headPage.continueCursor;
-		}
-	}
-
-	return {
-		head: headPage.page,
-		middleCursor,
-		tail: tailDocs.reverse(),
-		tailCommentIds: Array.from(tailIds),
 	};
 }
 

@@ -25,8 +25,22 @@ export const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL);
 export const hydrationConfig: Pick<DefaultOptions, 'dehydrate' | 'hydrate'> = {
 	dehydrate: {
 		serializeData: SuperJSON.serialize,
-		shouldDehydrateQuery: (query) =>
-			defaultShouldDehydrateQuery(query) || query.state.status === 'pending',
+		shouldDehydrateQuery: (query) => {
+			if (defaultShouldDehydrateQuery(query)) return true;
+			// Stream still-`pending` queries during SSR EXCEPT Convex ones. A pending
+			// query is emitted as a deferred chunk, which holds the streaming HTML
+			// document response open until it settles. Convex `useQuery` subscriptions
+			// and the feedback loaders' fire-and-forget `void prefetchQuery(...)` warm-ups
+			// are intentionally non-blocking, but streaming them keeps the browser tab's
+			// load indicator spinning after the page has painted — and against a cold
+			// local Convex backend they can take ~1s+ to settle. Let them resolve
+			// client-side instead so the document response can close promptly.
+			if (query.state.status === 'pending') {
+				const key = query.queryKey[0];
+				return key !== 'convexQuery' && key !== 'convexAction';
+			}
+			return false;
+		},
 		shouldRedactErrors: () => false,
 	},
 	hydrate: {
