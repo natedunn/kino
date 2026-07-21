@@ -15,7 +15,6 @@ import type { OrmTriggerContext } from 'kitcn/orm';
 
 const procedureRegistry = {
   "create": ["mutation", typedProcedureResolver(createGeneratedFunctionReference<"mutation", "internal", typeof import("../feedbackEvent").create>("feedbackEvent:create"), () => (require("../feedbackEvent") as Record<string, unknown>)["create"])],
-  "listByFeedback": ["query", typedProcedureResolver(createGeneratedFunctionReference<"query", "public", typeof import("../feedbackEvent").listByFeedback>("feedbackEvent:listByFeedback"), () => (require("../feedbackEvent") as Record<string, unknown>)["listByFeedback"])],
 } as const;
 
   const handlerRegistry = procedureRegistry;

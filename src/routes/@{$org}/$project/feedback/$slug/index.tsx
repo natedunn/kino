@@ -1,12 +1,7 @@
 import type { TargetGranularity } from '@convex/target';
 import type { CSSProperties, FormEvent, KeyboardEvent } from 'react';
 import type { ThreadComment } from '../../-components/comment-thread';
-import type {
-	FeedbackCommentData,
-	FeedbackEventData,
-	GitHubConnectionData,
-	ProfileSummary,
-} from './-types';
+import type { GitHubConnectionData, ProfileSummary, TimelineItem } from './-types';
 
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -239,28 +234,26 @@ export const Route = createFileRoute('/@{$org}/$project/feedback/$slug/')({
 	}),
 });
 
-type MiddleCommentState<TComment> = {
-	comments: Array<TComment>;
+type TimelineMiddleState = {
+	items: Array<TimelineItem>;
 	cursor: string | null;
 	key: string;
 	pageCount: number;
 };
 
-function dedupeFeedbackComments(comments: Array<FeedbackCommentData>) {
+function dedupeTimeline(items: Array<TimelineItem>) {
 	const seen = new Set<string>();
-	return comments.filter((comment) => {
-		if (seen.has(comment.id)) return false;
-		seen.add(comment.id);
+	return items.filter((item) => {
+		const key = `${item.type}:${item.id}`;
+		if (seen.has(key)) return false;
+		seen.add(key);
 		return true;
 	});
 }
 
-function createMiddleCommentState<TComment>(
-	key: string,
-	cursor: string | null
-): MiddleCommentState<TComment> {
+function createTimelineMiddleState(key: string, cursor: string | null): TimelineMiddleState {
 	return {
-		comments: [],
+		items: [],
 		cursor,
 		key,
 		pageCount: 0,
@@ -323,23 +316,25 @@ function FeedbackDetailContent({
 	const [connectionDialogOpen, setConnectionDialogOpen] = useState(false);
 	const [targetDrawerOpen, setTargetDrawerOpen] = useState(false);
 	const feedback = feedbackData.feedback;
-	const middleStateKey = `${feedback.id}:${feedbackData.commentWindow.middleCursor ?? ''}`;
-	const initialMiddleState = () =>
-		createMiddleCommentState<FeedbackCommentData>(
-			middleStateKey,
-			feedbackData.commentWindow.middleCursor
-		);
-	const [middleState, setMiddleState] =
-		useState<MiddleCommentState<FeedbackCommentData>>(initialMiddleState);
+	const timeline = feedbackData.timeline;
+	// Cursors that bound the collapsed middle of the merged (comments + events)
+	// timeline: `middleStartCursor` marks where the middle begins (just after the
+	// head), `middleEndCursor` marks the tail boundary. Both come from the live
+	// `getDetailCritical` window.
+	const middleStartCursor: string | null = timeline.middleCursor ?? null;
+	const middleEndCursor: string | null = timeline.middleEndCursor ?? null;
+	const middleStateKey = `${feedback.id}:${middleStartCursor ?? ''}`;
+	const initialMiddleState = () => createTimelineMiddleState(middleStateKey, middleStartCursor);
+	const [middleState, setMiddleState] = useState<TimelineMiddleState>(initialMiddleState);
 	// When the feedback or server middle-cursor changes, `middleStateKey` changes
 	// and this render derives a fresh (collapsed) snapshot instead of resetting
 	// via an effect. The STORED `middleState` is not rewritten here — it keeps its
-	// old key/comments until the next `updateMiddleState`, which re-bases onto a
+	// old key/items until the next `updateMiddleState`, which re-bases onto a
 	// fresh initial when it sees a stale key. Always read the snapshot through
 	// `activeMiddleState`; reading `middleState` directly can surface a previous
-	// feedback's comments after navigation.
+	// feedback's items after navigation.
 	const activeMiddleState = middleState.key === middleStateKey ? middleState : initialMiddleState();
-	const middleComments = activeMiddleState.comments;
+	const middleItems = activeMiddleState.items;
 	const middleCursor = activeMiddleState.cursor;
 	// How many middle pages the viewer has expanded. Middle pages are a snapshot
 	// (not a live subscription) to avoid holding a subscription open over a long
@@ -354,11 +349,7 @@ function FeedbackDetailContent({
 		DEFAULT_SIDEBAR_STATE
 	);
 
-	const updateMiddleState = (
-		updater: (
-			current: MiddleCommentState<FeedbackCommentData>
-		) => MiddleCommentState<FeedbackCommentData>
-	) => {
+	const updateMiddleState = (updater: (current: TimelineMiddleState) => TimelineMiddleState) => {
 		setMiddleState((current) =>
 			updater(current.key === middleStateKey ? current : initialMiddleState())
 		);
@@ -369,14 +360,6 @@ function FeedbackDetailContent({
 			{
 				feedbackId: feedback.id,
 				projectId: projectData.project.id,
-			},
-			{ enabled: !!feedback.id }
-		)
-	);
-	const eventsQuery = useQuery(
-		crpc.feedbackEvent.listByFeedback.queryOptions(
-			{
-				feedbackId: feedback.id,
 			},
 			{ enabled: !!feedback.id }
 		)
@@ -406,16 +389,6 @@ function FeedbackDetailContent({
 		)
 	);
 
-	const comments = useMemo(
-		() =>
-			dedupeFeedbackComments([
-				...feedbackData.commentWindow.head,
-				...middleComments,
-				...feedbackData.commentWindow.tail,
-			]),
-		[feedbackData.commentWindow.head, feedbackData.commentWindow.tail, middleComments]
-	);
-	const events = useMemo(() => eventsQuery.data ?? [], [eventsQuery.data]);
 	const currentProfile = interactiveQuery.data?.currentProfile;
 	const assignedProfile = interactiveQuery.data?.assignedProfile;
 	const isAuthenticated = auth.hasSession || auth.isAuthenticated;
@@ -424,10 +397,9 @@ function FeedbackDetailContent({
 	// Priority is editor/admin-only — the feedback author cannot change it.
 	const canEditPriority = projectData.permissions.canEdit;
 	const canMarkAnswer = interactiveQuery.data?.canMarkAnswer ?? false;
+	// The pinned "opened this feedback" comment, already enriched (author, emote
+	// counts, permissions) by `getDetailCritical`.
 	const firstComment = feedbackData.firstComment;
-	const firstCommentWithEmotes = comments.find(
-		(comment: FeedbackCommentData) => comment.id === firstComment?.id
-	);
 	const boardOptions = feedbackData.board
 		? [
 				feedbackData.board,
@@ -535,13 +507,13 @@ function FeedbackDetailContent({
 			const result = await queryClient.fetchQuery(
 				crpc.feedback.getMiddleComments.staticQueryOptions({
 					cursor: middleCursor,
+					endCursor: middleEndCursor,
 					feedbackId: feedback.id,
-					tailCommentIds: feedbackData.commentWindow.tailCommentIds,
 				})
 			);
 			updateMiddleState((current) => ({
 				...current,
-				comments: dedupeFeedbackComments([...current.comments, ...result.comments]),
+				items: dedupeTimeline([...current.items, ...result.items]),
 				cursor: result.nextCursor ?? null,
 				pageCount: current.pageCount + 1,
 			}));
@@ -554,29 +526,29 @@ function FeedbackDetailContent({
 	// network read so a comment they just edited/deleted/reacted to is reflected.
 	// No-op when nothing in the middle is expanded.
 	async function revalidateMiddleComments() {
-		const startCursor = feedbackData.commentWindow.middleCursor;
+		const startCursor = middleStartCursor;
 		if (!startCursor || middlePageCount === 0) return;
 
 		let cursor: string | null = startCursor;
 		let nextCursor: string | null = null;
-		const refreshed: Array<FeedbackCommentData> = [];
+		const refreshed: Array<TimelineItem> = [];
 
 		for (let page = 0; page < middlePageCount && cursor; page++) {
 			const options = crpc.feedback.getMiddleComments.staticQueryOptions({
 				cursor,
+				endCursor: middleEndCursor,
 				feedbackId: feedback.id,
-				tailCommentIds: feedbackData.commentWindow.tailCommentIds,
 			});
 			await queryClient.invalidateQueries({ queryKey: options.queryKey });
 			const result = await queryClient.fetchQuery(options);
-			refreshed.push(...result.comments);
+			refreshed.push(...result.items);
 			nextCursor = result.nextCursor ?? null;
 			cursor = nextCursor;
 		}
 
 		updateMiddleState((current) => ({
 			...current,
-			comments: dedupeFeedbackComments(refreshed),
+			items: dedupeTimeline(refreshed),
 			cursor: nextCursor,
 		}));
 	}
@@ -602,38 +574,32 @@ function FeedbackDetailContent({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [feedback.id, visibleGithubConnections.length, projectData.permissions.canEdit]);
 
+	// The merged timeline is already ordered server-side (head → middle → tail);
+	// dedupe overlaps (short threads share head/tail) and sort defensively.
 	const timelineItems = useMemo(
 		() =>
-			[
-				...comments
-					.filter((comment: FeedbackCommentData) => !comment.initial)
-					.map((comment: FeedbackCommentData) => ({
-						createdAt: toTimestamp(comment.createdAt),
-						data: comment,
-						type: 'comment' as const,
-					})),
-				...events.map((event: FeedbackEventData) => ({
-					createdAt: toTimestamp(event.createdAt),
-					data: event,
-					type: 'event' as const,
-				})),
-			].sort((a, b) => a.createdAt - b.createdAt),
-		[comments, events]
+			dedupeTimeline([...timeline.head, ...middleItems, ...timeline.tail]).sort(
+				(a, b) => a.createdAt - b.createdAt || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)
+			),
+		[timeline.head, timeline.tail, middleItems]
+	);
+	const tailItemIds = useMemo(
+		() => new Set((timeline.tail as Array<TimelineItem>).map((item) => item.id)),
+		[timeline.tail]
 	);
 	// Anchor the "Show more comments" button after the last currently-loaded
-	// non-tail comment, so it sits just above the tail and moves down as more
-	// middle pages load. Anchoring to a fixed head comment leaves the button
-	// stranded above freshly-loaded middle comments.
-	const middleButtonAnchorCommentId = useMemo(() => {
-		const tailIds = new Set(feedbackData.commentWindow.tailCommentIds);
+	// non-tail item, so it sits just above the tail and moves down as more middle
+	// pages load. Anchoring to a fixed head item leaves the button stranded above
+	// freshly-loaded middle items.
+	const middleButtonAnchorId = useMemo(() => {
 		for (let index = timelineItems.length - 1; index >= 0; index--) {
 			const item = timelineItems[index];
-			if (item.type === 'comment' && !tailIds.has(item.data.id)) {
-				return item.data.id;
+			if (!tailItemIds.has(item.id)) {
+				return item.id;
 			}
 		}
 		return null;
-	}, [timelineItems, feedbackData.commentWindow.tailCommentIds]);
+	}, [timelineItems, tailItemIds]);
 	const middleCommentsButton = middleCursor ? (
 		<li className='relative z-10 flex justify-center'>
 			<Button
@@ -1122,20 +1088,12 @@ function FeedbackDetailContent({
 											badges={
 												<>
 													<CommentBadge kind='author' label='Author' />
-													{firstCommentWithEmotes?.isTeamMember ? (
+													{firstComment.isTeamMember ? (
 														<CommentBadge kind='team' label='Team' />
 													) : null}
 												</>
 											}
-											comment={
-												{
-													...firstComment,
-													author: feedbackData.author,
-													canDelete: firstCommentWithEmotes?.canDelete,
-													canEdit: firstCommentWithEmotes?.canEdit,
-													emoteCounts: firstCommentWithEmotes?.emoteCounts,
-												} as ThreadComment
-											}
+											comment={firstComment as ThreadComment}
 											currentProfileId={currentProfile?.id}
 											isDeleting={commentDeleteMutation.isPending}
 											isUpdating={commentUpdateMutation.isPending}
@@ -1156,9 +1114,9 @@ function FeedbackDetailContent({
 											verb='opened this feedback'
 										/>
 									) : null}
-									{!middleButtonAnchorCommentId ? middleCommentsButton : null}
+									{!middleButtonAnchorId ? middleCommentsButton : null}
 									{timelineItems.map((item) => (
-										<Fragment key={`${item.type}:${item.data.id}`}>
+										<Fragment key={`${item.type}:${item.id}`}>
 											{item.type === 'comment' ? (
 												<CommentCard
 													badges={
@@ -1226,9 +1184,7 @@ function FeedbackDetailContent({
 											) : (
 												<FeedbackEventItem event={item.data} />
 											)}
-											{item.type === 'comment' && item.data.id === middleButtonAnchorCommentId
-												? middleCommentsButton
-												: null}
+											{item.id === middleButtonAnchorId ? middleCommentsButton : null}
 										</Fragment>
 									))}
 								</ul>

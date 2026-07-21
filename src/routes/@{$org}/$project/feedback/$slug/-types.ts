@@ -39,6 +39,10 @@ export type FeedbackEventData = {
 	targetProfile?: ProfileSummary | null;
 };
 
+export type TimelineItem =
+	| { type: 'comment'; id: string; createdAt: number; cursor: string; data: FeedbackCommentData }
+	| { type: 'event'; id: string; createdAt: number; cursor: string; data: FeedbackEventData };
+
 export type GitHubConnectionData = {
 	githubNumber: number;
 	id: string;
