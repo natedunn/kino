@@ -18,7 +18,7 @@ export function resolveBoardIconName({
 	name?: string | null;
 }): IconName {
 	if (icon === 'chartUp' && name === 'Improvements') return 'improvements';
-	if (icon && icon in iconRegistry) return icon as IconName;
+	if (icon && Object.prototype.hasOwnProperty.call(iconRegistry, icon)) return icon as IconName;
 	return 'box';
 }
 
