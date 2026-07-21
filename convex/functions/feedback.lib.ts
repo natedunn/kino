@@ -22,6 +22,7 @@ export const feedbackStatusSchema = z.enum([
 	'completed',
 	'paused',
 ]);
+export const feedbackPrioritySchema = z.enum(['none', 'low', 'medium', 'high', 'urgent']);
 export const targetGranularitySchema = z.enum(targetGranularities);
 export const CRITICAL_COMMENT_HEAD_COUNT = 5;
 export const CRITICAL_COMMENT_TAIL_COUNT = 10;

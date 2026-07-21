@@ -6,6 +6,7 @@ import { feedbackEventTable } from './schema';
 
 export const feedbackEventTypeSchema = z.enum([
 	'status_changed',
+	'priority_changed',
 	'board_changed',
 	'assigned',
 	'unassigned',

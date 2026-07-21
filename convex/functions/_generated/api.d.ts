@@ -99,6 +99,12 @@ export declare const api: {
       { boardId: string; id: string },
       any
     >;
+    updatePriority: FunctionReference<
+      "mutation",
+      "public",
+      { id: string; priority: "none" | "low" | "medium" | "high" | "urgent" },
+      any
+    >;
     updateStatus: FunctionReference<
       "mutation",
       "public",
@@ -820,6 +826,7 @@ export declare const internal: {
         actorProfileId: string;
         eventType:
           | "status_changed"
+          | "priority_changed"
           | "board_changed"
           | "assigned"
           | "unassigned"

@@ -27,7 +27,6 @@ import {
 	Bell,
 	Calendar as CalendarIcon,
 	Check,
-	ChevronDown,
 	ChevronRight,
 	ExternalLink,
 	GitBranch,
@@ -116,6 +115,14 @@ const FEEDBACK_STATUS_OPTIONS = [
 	{ label: 'Paused', value: 'paused' },
 	{ label: 'Completed', value: 'completed' },
 	{ label: 'Closed', value: 'closed' },
+] as const;
+
+const FEEDBACK_PRIORITY_OPTIONS = [
+	{ dotClass: 'bg-muted-foreground/40', label: 'None', value: 'none' },
+	{ dotClass: 'bg-sky-500', label: 'Low', value: 'low' },
+	{ dotClass: 'bg-amber-500', label: 'Medium', value: 'medium' },
+	{ dotClass: 'bg-orange-500', label: 'High', value: 'high' },
+	{ dotClass: 'bg-red-500', label: 'Urgent', value: 'urgent' },
 ] as const;
 
 const TARGET_GRANULARITY_OPTIONS: Array<{
@@ -413,6 +420,8 @@ function FeedbackDetailContent({
 	const isAuthenticated = auth.hasSession || auth.isAuthenticated;
 	const canEditStatus =
 		feedback.authorProfileId === currentProfile?.id || projectData.permissions.canEdit;
+	// Priority is editor/admin-only — the feedback author cannot change it.
+	const canEditPriority = projectData.permissions.canEdit;
 	const canMarkAnswer = interactiveQuery.data?.canMarkAnswer ?? false;
 	const firstComment = feedbackData.firstComment;
 	const firstCommentWithEmotes = comments.find(
@@ -446,6 +455,15 @@ function FeedbackDetailContent({
 		),
 		value: status.value,
 	}));
+	const prioritySelectItems = FEEDBACK_PRIORITY_OPTIONS.map((priority) => ({
+		label: (
+			<span className='inline-flex items-center gap-1.5'>
+				<span className={`size-2 rounded-full ${priority.dotClass}`} />
+				{priority.label}
+			</span>
+		),
+		value: priority.value,
+	}));
 	const boardSelectItems = boardOptions.map((board: { id: string; name: string }) => ({
 		label: board.name,
 		value: board.id,
@@ -459,6 +477,7 @@ function FeedbackDetailContent({
 	];
 
 	const statusMutation = useMutation(crpc.feedback.updateStatus.mutationOptions());
+	const priorityMutation = useMutation(crpc.feedback.updatePriority.mutationOptions());
 	const titleMutation = useMutation(crpc.feedback.updateTitle.mutationOptions());
 	const boardMutation = useMutation(crpc.feedback.updateBoard.mutationOptions());
 	const targetMutation = useMutation(crpc.feedback.updateTarget.mutationOptions());
@@ -837,15 +856,41 @@ function FeedbackDetailContent({
 
 									<div className='flex items-center justify-between py-1.5'>
 										<span className='text-sm text-muted-foreground'>Priority</span>
-										<Button
-											className='h-auto gap-1.5 px-2 py-1 text-xs'
-											size='sm'
-											variant='outline'
-										>
-											<span className='size-2 rounded-full bg-amber-500' />
-											Medium
-											<ChevronDown size={12} />
-										</Button>
+										{canEditPriority ? (
+											<Select
+												items={prioritySelectItems}
+												onValueChange={(value) =>
+													priorityMutation.mutate({
+														id: feedback.id,
+														priority: value as never,
+													})
+												}
+												value={feedback.priority ?? 'none'}
+											>
+												<SelectTrigger className='min-w-32'>
+													<SelectValue />
+												</SelectTrigger>
+												<SelectContent>
+													{FEEDBACK_PRIORITY_OPTIONS.map((priority) => (
+														<SelectItem key={priority.value} value={priority.value}>
+															<span className={`size-2 rounded-full ${priority.dotClass}`} />
+															{priority.label}
+														</SelectItem>
+													))}
+												</SelectContent>
+											</Select>
+										) : (
+											<span className='inline-flex items-center gap-1.5 text-sm capitalize'>
+												<span
+													className={`size-2 rounded-full ${
+														FEEDBACK_PRIORITY_OPTIONS.find(
+															(option) => option.value === (feedback.priority ?? 'none')
+														)?.dotClass ?? 'bg-muted-foreground/40'
+													}`}
+												/>
+												{feedback.priority ?? 'none'}
+											</span>
+										)}
 									</div>
 
 									<div className='flex items-center justify-between py-1.5'>

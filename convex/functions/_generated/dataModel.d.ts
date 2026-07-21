@@ -308,6 +308,7 @@ export type DataModel = {
       authorProfileId: Id<"profile">;
       boardId: Id<"feedbackBoard">;
       firstCommentId?: null | Id<"feedbackComment">;
+      priority?: null | "none" | "low" | "medium" | "high" | "urgent";
       projectId: Id<"project">;
       searchContent?: null | string;
       slug: string;
@@ -329,6 +330,7 @@ export type DataModel = {
       | "authorProfileId"
       | "boardId"
       | "firstCommentId"
+      | "priority"
       | "projectId"
       | "searchContent"
       | "slug"
@@ -481,6 +483,7 @@ export type DataModel = {
       deletedTime?: null | number;
       eventType:
         | "status_changed"
+        | "priority_changed"
         | "board_changed"
         | "assigned"
         | "unassigned"

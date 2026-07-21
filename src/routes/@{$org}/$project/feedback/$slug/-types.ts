@@ -26,6 +26,7 @@ export type FeedbackEventData = {
 		| 'answer_unmarked'
 		| 'assigned'
 		| 'board_changed'
+		| 'priority_changed'
 		| 'status_changed'
 		| 'title_changed'
 		| 'unassigned'
