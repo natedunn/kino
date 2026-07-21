@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import { api } from './_generated/api';
 import {
+	feedbackEventTable,
 	feedbackTable,
 	memberTable,
 	organizationTable,
@@ -126,5 +127,81 @@ describe('feedback remove (authenticated end-to-end)', () => {
 		await expect(t.mutation(api.feedback.remove, { id: seed.feedbackId })).rejects.toThrow(
 			/UNAUTHORIZED|authenticated/i
 		);
+	});
+});
+
+describe('feedback updatePriority (authenticated end-to-end)', () => {
+	it('persists the priority and records a priority_changed event', async () => {
+		const t = convexTest();
+		const seed = await t.run((baseCtx) => runCtx(baseCtx).then(seedAuthedOrgAdmin));
+		const asUser = t.withIdentity({
+			sessionId: seed.sessionId,
+			subject: seed.userId,
+		});
+
+		await asUser.mutation(api.feedback.updatePriority, {
+			id: seed.feedbackId,
+			priority: 'high',
+		});
+
+		const { row, events } = await t.run(async (baseCtx) => {
+			const ctx = await runCtx(baseCtx);
+			const row = await ctx.orm.query.feedback.findFirst({
+				where: { id: seed.feedbackId },
+			});
+			const events = await ctx.orm.query.feedbackEvent.findMany({
+				where: { feedbackId: seed.feedbackId },
+				limit: 10,
+			});
+			return { events, row };
+		});
+
+		expect(row?.priority).toBe('high');
+		const priorityEvents = events.filter((e) => e.eventType === 'priority_changed');
+		expect(priorityEvents).toHaveLength(1);
+		expect(priorityEvents[0].metadata).toMatchObject({ newValue: 'high', oldValue: 'none' });
+	});
+
+	it('coalesces rapid same-actor priority changes into one timeline event', async () => {
+		const t = convexTest();
+		const seed = await t.run((baseCtx) => runCtx(baseCtx).then(seedAuthedOrgAdmin));
+		const asUser = t.withIdentity({
+			sessionId: seed.sessionId,
+			subject: seed.userId,
+		});
+
+		await asUser.mutation(api.feedback.updatePriority, {
+			id: seed.feedbackId,
+			priority: 'low',
+		});
+		await asUser.mutation(api.feedback.updatePriority, {
+			id: seed.feedbackId,
+			priority: 'urgent',
+		});
+
+		const { row, priorityEvents } = await t.run(async (baseCtx) => {
+			const ctx = await runCtx(baseCtx);
+			const row = await ctx.orm.query.feedback.findFirst({
+				where: { id: seed.feedbackId },
+			});
+			const events = await ctx.orm.query.feedbackEvent.findMany({
+				where: { feedbackId: seed.feedbackId },
+				limit: 10,
+			});
+			return { priorityEvents: events.filter((e) => e.eventType === 'priority_changed'), row };
+		});
+
+		expect(row?.priority).toBe('urgent');
+		// Both changes collapse into a single row: original oldValue kept, latest newValue taken.
+		expect(priorityEvents).toHaveLength(1);
+		expect(priorityEvents[0].metadata).toMatchObject({ newValue: 'urgent', oldValue: 'none' });
+	});
+
+	it('rejects an unauthenticated priority change', async () => {
+		const t = convexTest();
+		const seed = await t.run((baseCtx) => runCtx(baseCtx).then(seedAuthedOrgAdmin));
+		await expect(
+			t.mutation(api.feedback.updatePriority, { id: seed.feedbackId, priority: 'high' })
+		).rejects.toThrow(/UNAUTHORIZED|authenticated/i);
 	});
 });

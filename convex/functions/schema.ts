@@ -28,8 +28,10 @@ const PROJECT_VISIBILITIES = ['public', 'private', 'archived'] as const;
 // by any code path and have been removed (verified: no rows used them).
 const PROJECT_MEMBER_ROLES = ['member', 'org:admin', 'org:editor'] as const;
 const FEEDBACK_STATUSES = ['open', 'in-progress', 'closed', 'completed', 'paused'] as const;
+const FEEDBACK_PRIORITIES = ['none', 'low', 'medium', 'high', 'urgent'] as const;
 const FEEDBACK_EVENT_TYPES = [
 	'status_changed',
+	'priority_changed',
 	'board_changed',
 	'assigned',
 	'unassigned',
@@ -567,6 +569,10 @@ export const feedbackTable = convexTable(
 			onDelete: 'set null',
 		}),
 		status: textEnum(FEEDBACK_STATUSES).notNull(),
+		// Nullable: existing rows have no priority (read as 'none'); editors set it
+		// explicitly. Will gain a `by_projectId_priority` (staged) index when priority
+		// filtering lands elsewhere.
+		priority: textEnum(FEEDBACK_PRIORITIES),
 		target: text(),
 		targetGranularity: textEnum(targetGranularities),
 		tags: arrayOf(text().notNull()),

@@ -8,6 +8,7 @@ import {
 	CheckCircle2,
 	CircleX,
 	FolderInput,
+	SignalHigh,
 	Tag,
 	UserMinus,
 	UserPlus,
@@ -65,6 +66,8 @@ function getEventIcon(eventType: FeedbackEventData['eventType']) {
 	switch (eventType) {
 		case 'status_changed':
 			return ArrowRightLeft;
+		case 'priority_changed':
+			return SignalHigh;
 		case 'board_changed':
 			return FolderInput;
 		case 'title_changed':
@@ -91,6 +94,13 @@ function getEventDescription(event: FeedbackEventData) {
 				<span className='inline-flex flex-wrap items-center gap-1'>
 					changed status from <StatusPill status={metadata?.oldValue} /> to{' '}
 					<StatusPill status={metadata?.newValue} />
+				</span>
+			);
+		case 'priority_changed':
+			return (
+				<span className='inline-flex flex-wrap items-center gap-1'>
+					changed priority from <PriorityPill priority={metadata?.oldValue} /> to{' '}
+					<PriorityPill priority={metadata?.newValue} />
 				</span>
 			);
 		case 'board_changed':
@@ -156,6 +166,24 @@ function getEventDescription(event: FeedbackEventData) {
 		default:
 			return <span>made a change</span>;
 	}
+}
+
+const PRIORITY_DOT_CLASS: Record<string, string> = {
+	high: 'bg-orange-500',
+	low: 'bg-sky-500',
+	medium: 'bg-amber-500',
+	none: 'bg-muted-foreground/40',
+	urgent: 'bg-red-500',
+};
+
+function PriorityPill({ priority }: { priority?: string | null }) {
+	const value = priority ?? 'none';
+	return (
+		<span className='inline-flex items-center gap-1 rounded bg-muted px-1.5 py-0.5'>
+			<span className={`size-2 rounded-full ${PRIORITY_DOT_CLASS[value] ?? PRIORITY_DOT_CLASS.none}`} />
+			<span className='text-xs font-medium capitalize'>{value}</span>
+		</span>
+	);
 }
 
 function StatusPill({ status }: { status?: string | null }) {

@@ -33,6 +33,7 @@ import {
 	createCommentEnrichCache,
 	dedupeComments,
 	dedupeDocsById,
+	feedbackPrioritySchema,
 	feedbackStatusSchema,
 	getFeedbackCommentWindow,
 	hasOverlap,
@@ -85,6 +86,7 @@ export const create = authMutation
 			.values({
 				authorProfileId: profile._id,
 				boardId: asId<'feedbackBoard'>(input.boardId),
+				priority: 'none',
 				projectId: asId<'project'>(input.projectId),
 				slug,
 				status: 'open',
@@ -169,6 +171,41 @@ export const updateStatus = authMutation
 				metadata: { oldValue: feedback.status, newValue: input.status },
 			});
 		}
+		return { success: true };
+	});
+
+export const updatePriority = authMutation
+	.input(
+		z.object({
+			id: idSchema,
+			priority: feedbackPrioritySchema,
+		})
+	)
+	.mutation(async ({ ctx, input }) => {
+		const { feedback, permissions, profile } = await verifyFeedbackWriteAccess(
+			ctx,
+			input.id,
+			ctx.userId
+		);
+		// Priority is editor/admin-only (unlike status, which the author may also change).
+		assertCanAdminFeedback(permissions);
+
+		const oldPriority = feedback.priority ?? 'none';
+		if (oldPriority === input.priority) {
+			return { success: true };
+		}
+
+		await ctx.orm
+			.update(feedbackTable)
+			.set({ priority: input.priority, updatedTime: Date.now() })
+			.where(eq(feedbackTable.id, feedback._id as any));
+
+		await recordFeedbackEvent(ctx, {
+			actorProfileId: profile._id,
+			eventType: 'priority_changed',
+			feedbackId: feedback._id,
+			metadata: { oldValue: oldPriority, newValue: input.priority },
+		});
 		return { success: true };
 	});
 
