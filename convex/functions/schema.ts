@@ -714,6 +714,10 @@ export const updateCommentTable = convexTable(
 		content: text().notNull(),
 	},
 	(table) => [
+		// aggregateIndex keeps an exact count in a hidden aggregate_bucket row, maintained by
+		// an implicit ORM change-trigger in the SAME mutation as each write. Writes to this table
+		// MUST go through ctx.orm (insert/delete) so the trigger fires — a raw ctx.db write would
+		// silently drift the count. See docs/reactions-aggregate.md.
 		aggregateIndex('by_updateId').on(table.updateId).count(table.updateId),
 		index('by_updateId').on(table.updateId),
 		index('by_authorProfileId').on(table.authorProfileId),
@@ -734,6 +738,12 @@ export const updateEmoteTable = convexTable(
 		content: textEnum(EMOTE_CONTENTS).notNull(),
 	},
 	(table) => [
+		// aggregateIndex keeps an exact per-(updateId, content) count in a hidden aggregate_bucket
+		// row, maintained by an implicit ORM change-trigger in the SAME mutation as each write.
+		// Writes to this table MUST go through ctx.orm (insert/delete) so the trigger fires — a raw
+		// ctx.db write would silently drift the count. Note: the bucket is a single unsharded row per
+		// key, so concurrent toggles on the same (updateId, content) contend on one row (hot-key OCC).
+		// See docs/reactions-aggregate.md.
 		aggregateIndex('by_updateId_content').on(table.updateId, table.content).count(table.updateId),
 		index('by_updateId').on(table.updateId),
 		index('by_updateId_authorProfileId_content').on(
