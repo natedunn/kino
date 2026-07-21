@@ -137,6 +137,32 @@ function run(
   return capture ? result.stdout : ""
 }
 
+// Writes a bootstrap-only kitcn config that mirrors the workspace kitcn.json but
+// forces `dev.aggregateBackfill.enabled: "off"`, so `kitcn dev --bootstrap` skips
+// its aggregate backfill kickoff (see the call site for why). Scoped to this
+// seed run only — the base kitcn.json is untouched, so `kitcn dev` (shared mode)
+// and deploy keep their normal backfill behavior. kitcn resolves paths.* relative
+// to cwd (workspaceRoot), not the config file, so this can live in seedDir.
+function writeBootstrapKitcnConfig() {
+  const basePath = path.join(workspaceRoot, "kitcn.json")
+  const base = fs.existsSync(basePath)
+    ? JSON.parse(fs.readFileSync(basePath, "utf8"))
+    : {}
+  const bootstrapConfig = {
+    ...base,
+    dev: {
+      ...base.dev,
+      aggregateBackfill: {
+        ...base.dev?.aggregateBackfill,
+        enabled: "off",
+      },
+    },
+  }
+  const configPath = path.join(seedDir, "kitcn.bootstrap.json")
+  fs.writeFileSync(configPath, `${JSON.stringify(bootstrapConfig, null, 2)}\n`)
+  return configPath
+}
+
 function isProcessRunning(pid) {
   try {
     process.kill(pid, 0)
@@ -633,6 +659,17 @@ if (!options.skipDeploy && !options.target) {
       "kitcn",
       "dev",
       "--bootstrap",
+      // Disable kitcn's bootstrap-time aggregate backfill kickoff. The
+      // --replace-all import below overwrites the aggregate_* tables anyway,
+      // and dev-supervisor.mjs re-runs `kitcn aggregate backfill` on every dev
+      // boot, so the kickoff here is wasted work — and because it's a
+      // no-retry race on a freshly-pushed backend it usually loses, emitting a
+      // misleading "aggregateBackfill kickoff failed in bootstrap" warning.
+      // The `--backfill=off` CLI flag is ignored on the --bootstrap path in
+      // kitcn 0.15.x (the bootstrap reads config.dev.aggregateBackfill.enabled
+      // directly), so we drive it through a config override instead.
+      "--config",
+      path.relative(workspaceRoot, writeBootstrapKitcnConfig()),
       "--env-file",
       path.relative(workspaceRoot, anonymousEnvFilePath),
     ],
