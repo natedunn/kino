@@ -1169,7 +1169,8 @@ export default defineSchema(tables)
 					await Promise.all(
 						boards.map((name) =>
 							ctx.orm.insert(feedbackBoardTable).values({
-								icon: name === 'Bugs' ? 'bug' : name === 'Improvements' ? 'chartUp' : 'lightbulb',
+								icon:
+									name === 'Bugs' ? 'bug' : name === 'Improvements' ? 'improvements' : 'lightbulb',
 								name,
 								projectId: change.newDoc.id as any,
 								slug: normalizeSlug(name, VALIDATION_LIMITS.projectSlug),

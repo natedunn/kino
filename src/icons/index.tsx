@@ -13,11 +13,13 @@ import CircleSlash from './circle-slash';
 import Edit from './edit';
 import Github from './github';
 import GridDots from './grid-dots';
+import Improvements from './improvements';
 import Lightbulb from './lightbulb';
 
 export const iconRegistry = {
 	lightbulb: Lightbulb,
 	bug: Bug,
+	improvements: Improvements,
 	gridDots: GridDots,
 	box: Box,
 	chartUp: ChartUp,
@@ -28,6 +30,57 @@ export const iconRegistry = {
 export type IconValue = (typeof iconRegistry)[keyof typeof iconRegistry];
 
 export type IconName = keyof typeof iconRegistry;
+
+export type IconTone = 'duo' | 'outline';
+
+export type IconRegistryOption = {
+	icon: IconValue;
+	keywords?: Array<string>;
+	label: string;
+	tone: IconTone;
+	value: IconName;
+};
+
+export const iconRegistryOptions: Array<IconRegistryOption> = [
+	{
+		icon: Lightbulb,
+		keywords: ['idea', 'feature request'],
+		label: 'Feature Requests',
+		tone: 'duo',
+		value: 'lightbulb',
+	},
+	{ icon: Bug, keywords: ['issue', 'defect'], label: 'Bugs', tone: 'duo', value: 'bug' },
+	{
+		icon: Improvements,
+		keywords: ['iteration', 'enhancement', 'wrench'],
+		label: 'Improvements',
+		tone: 'duo',
+		value: 'improvements',
+	},
+	{ icon: Box, keywords: ['default', 'package'], label: 'Box', tone: 'duo', value: 'box' },
+	{
+		icon: ChartUp,
+		keywords: ['trend', 'metrics', 'growth'],
+		label: 'Chart Up',
+		tone: 'duo',
+		value: 'chartUp',
+	},
+	{
+		icon: GridDots,
+		keywords: ['grid', 'apps'],
+		label: 'Grid Dots',
+		tone: 'duo',
+		value: 'gridDots',
+	},
+	{ icon: Edit, keywords: ['write', 'pencil'], label: 'Edit', tone: 'duo', value: 'edit' },
+	{
+		icon: Github,
+		keywords: ['repository', 'code'],
+		label: 'GitHub',
+		tone: 'outline',
+		value: 'github',
+	},
+];
 
 type IconProps = {
 	name?: IconName;
@@ -48,7 +101,7 @@ export function Icon({
 	// Callers cast dynamic strings (e.g. DB-stored board icons) to `IconName`, so
 	// the lookup can miss the registry at runtime; widen the type to reflect that
 	// and guard against a bad key.
-	const I = iconRegistry[name ? name : fallback ? fallback : 'box'] as IconValue | undefined;
+	const I = (name ? iconRegistry[name] : undefined) ?? iconRegistry[fallback ?? 'box'];
 	if (!I) return null;
 	return <I {...rest} />;
 }

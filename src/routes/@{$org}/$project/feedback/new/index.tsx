@@ -3,6 +3,7 @@ import { useForm } from '@tanstack/react-form';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 
+import { BoardIcon } from '@/components/board-icon';
 import { LazyMarkdownEditor } from '@/components/editor/markdown-editor.lazy';
 import { sanitizeEditorContent } from '@/components/editor/sanitize-content';
 import { InlineAlert } from '@/components/inline-alert';
@@ -160,6 +161,7 @@ function NewFeedbackRoute() {
 										<SelectContent>
 											{boards.map((board) => (
 												<SelectItem key={board.id} value={board.id}>
+													<BoardIcon icon={board.icon} name={board.name} size='14px' />
 													{board.name}
 												</SelectItem>
 											))}
