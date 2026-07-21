@@ -51,12 +51,7 @@ export declare const api: {
     getMiddleComments: FunctionReference<
       "query",
       "public",
-      {
-        cursor: string;
-        feedbackId: string;
-        limit?: number;
-        tailCommentIds?: Array<string>;
-      },
+      { cursor: string; endCursor?: string | null; feedbackId: string },
       any
     >;
     listProjectFeedback: FunctionReference<
