@@ -41,6 +41,7 @@ import {
 	X as XIcon,
 } from 'lucide-react';
 
+import { BoardIcon } from '@/components/board-icon';
 import { ProfileLinkOrUnknown } from '@/components/profile-link';
 import { SidebarSection } from '@/components/sidebar-section';
 import { Badge } from '@/components/ui/badge';
@@ -842,15 +843,27 @@ function FeedbackDetailContent({
 													<SelectValue placeholder='No board' />
 												</SelectTrigger>
 												<SelectContent>
-													{boardOptions.map((board: { id: string; name: string }) => (
-														<SelectItem key={board.id} value={board.id}>
-															{board.name}
-														</SelectItem>
-													))}
+													{boardOptions.map(
+														(board: { icon?: string | null; id: string; name: string }) => (
+															<SelectItem key={board.id} value={board.id}>
+																<BoardIcon icon={board.icon} name={board.name} size='14px' />
+																{board.name}
+															</SelectItem>
+														)
+													)}
 												</SelectContent>
 											</Select>
 										) : (
-											<span className='text-sm'>{feedbackData.board?.name ?? 'No board'}</span>
+											<span className='inline-flex items-center gap-1.5 text-sm'>
+												{feedbackData.board ? (
+													<BoardIcon
+														icon={feedbackData.board.icon}
+														name={feedbackData.board.name}
+														size='14px'
+													/>
+												) : null}
+												{feedbackData.board?.name ?? 'No board'}
+											</span>
 										)}
 									</div>
 

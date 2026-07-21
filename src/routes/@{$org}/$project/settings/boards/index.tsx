@@ -1,12 +1,10 @@
-import type { IconName } from '@/icons';
-
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { Plus } from 'lucide-react';
 
+import { BoardIcon } from '@/components/board-icon';
 import { EmptyState } from '@/components/kino/common';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { Icon } from '@/icons';
 import Eye from '@/icons/eye';
 import Pen from '@/icons/pen';
 import { useCRPC } from '@/lib/convex/crpc';
@@ -88,7 +86,7 @@ function BoardsIndexRoute() {
 			{boards.length === 0 ? (
 				<div className='rounded-xl border border-dashed bg-muted/20 p-10 text-center'>
 					<div className='mx-auto flex size-10 items-center justify-center rounded-full bg-background shadow-sm'>
-						<Icon fallback='box' name='box' size='20px' />
+						<BoardIcon icon='box' name='All' size='20px' />
 					</div>
 					<p className='mt-3 text-sm font-medium'>No boards yet</p>
 					<p className='mt-1 text-sm text-muted-foreground'>
@@ -112,11 +110,7 @@ function BoardsIndexRoute() {
 						>
 							<div className='flex items-start gap-4'>
 								<div className='flex size-10 shrink-0 items-center justify-center rounded-lg border bg-muted/40'>
-									<Icon
-										fallback='box'
-										name={(board.icon as IconName | null) ?? 'box'}
-										size='20px'
-									/>
+									<BoardIcon icon={board.icon} name={board.name} size='20px' />
 								</div>
 								<div className='min-w-0 flex-1'>
 									<div className='truncate text-base font-semibold'>{board.name}</div>

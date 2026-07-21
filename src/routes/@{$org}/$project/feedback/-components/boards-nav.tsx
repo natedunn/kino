@@ -1,11 +1,9 @@
-import type { IconName } from '@/icons';
-
 import { useMemo } from 'react';
 import { Link, useNavigate, useParams, useSearch } from '@tanstack/react-router';
 
+import { BoardIcon } from '@/components/board-icon';
 import { useRegisterShortcuts } from '@/components/shortcuts';
 import { SidebarNavGroup, SidebarNavItem } from '@/components/sidebar-nav';
-import { Icon } from '@/icons';
 
 // Single shortcut covering 1–9; the digit pressed selects the board at that
 // position in the list below (1 = All).
@@ -73,7 +71,7 @@ export function BoardsNav({ boards }: { boards: Array<FeedbackBoardNavItem> | nu
 					{({ isActive }) => (
 						<SidebarNavItem
 							active={board.slug === boardParam || isActive}
-							icon={<Icon fallback='box' name={board.icon as IconName} size='16px' />}
+							icon={<BoardIcon icon={board.icon} name={board.name} size='16px' />}
 						>
 							{board.name}
 						</SidebarNavItem>
