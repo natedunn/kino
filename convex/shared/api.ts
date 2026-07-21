@@ -46,9 +46,6 @@ export const api = {
   feedbackCommentEmote: {
     toggle: createApiLeaf<"mutation", typeof import("../functions/feedbackCommentEmote").toggle>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/feedbackCommentEmote").toggle>("feedbackCommentEmote:toggle"), { auth: "required", type: "mutation" }),
   },
-  feedbackEvent: {
-    listByFeedback: createApiLeaf<"query", typeof import("../functions/feedbackEvent").listByFeedback>(createGeneratedFunctionReference<"query", "public", typeof import("../functions/feedbackEvent").listByFeedback>("feedbackEvent:listByFeedback"), { auth: "optional", type: "query" }),
-  },
   feedbackGithub: {
     connectExisting: createApiLeaf<"action", typeof import("../functions/feedbackGithub").connectExisting>(createGeneratedFunctionReference<"action", "public", typeof import("../functions/feedbackGithub").connectExisting>("feedbackGithub:connectExisting"), { auth: "required", type: "action" }),
     createAndConnect: createApiLeaf<"action", typeof import("../functions/feedbackGithub").createAndConnect>(createGeneratedFunctionReference<"action", "public", typeof import("../functions/feedbackGithub").createAndConnect>("feedbackGithub:createAndConnect"), { auth: "required", type: "action" }),

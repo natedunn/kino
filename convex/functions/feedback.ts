@@ -533,11 +533,15 @@ export const getDetailCritical = optionalAuthQuery
 		]);
 
 		// One merged, windowed timeline of comments + events (the pinned initial
-		// comment is excluded; it is returned separately below).
+		// comment is excluded; it is returned separately below). Share this request's
+		// caches so the author/first-comment enrichment above and the timeline
+		// head/tail don't re-fetch the same author docs or re-sign the same avatars.
 		const timeline = await getFeedbackTimelineWindow(ctx, {
+			commentCache,
 			currentProfile: access.profile,
 			feedbackId: feedback._id,
 			firstCommentId: feedback.firstCommentId,
+			imageUrlCache,
 			projectId: input.projectId,
 		});
 

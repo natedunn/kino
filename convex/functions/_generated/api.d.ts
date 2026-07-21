@@ -221,14 +221,6 @@ export declare const api: {
       any
     >;
   };
-  feedbackEvent: {
-    listByFeedback: FunctionReference<
-      "query",
-      "public",
-      { feedbackId: string },
-      any
-    >;
-  };
   feedbackGithub: {
     connectExisting: FunctionReference<
       "action",

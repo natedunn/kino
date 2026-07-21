@@ -182,6 +182,11 @@ export async function getFeedbackTimelineWindow(
 		firstCommentId: any;
 		projectId: string;
 		currentProfile: Doc<'profile'> | null;
+		// Optional request-scoped caches so the caller (e.g. `getDetailCritical`,
+		// which also enriches the feedback author + pinned first comment) shares
+		// author-doc lookups and avatar presigns with the timeline enrichment.
+		commentCache?: CommentEnrichCache;
+		imageUrlCache?: ProfileImageUrlCache;
 	}
 ) {
 	const feedbackId = asId<'feedback'>(args.feedbackId);
@@ -218,8 +223,8 @@ export async function getFeedbackTimelineWindow(
 	const middleEndCursor =
 		hasMiddle && tailRaw.length > 0 ? encodeTimelineCursor(keyOf(tailRaw[0])) : null;
 
-	const commentCache = createCommentEnrichCache();
-	const imageUrlCache = createProfileImageUrlCache();
+	const commentCache = args.commentCache ?? createCommentEnrichCache();
+	const imageUrlCache = args.imageUrlCache ?? createProfileImageUrlCache();
 	const enriched = await enrichUnique(
 		ctx,
 		[...headRaw, ...tailRaw],

@@ -64,11 +64,6 @@ export const feedbackEventMetadataSchema = z
 
 export const COALESCE_WINDOW_MS = 60 * 1000;
 
-// Safety bound on events read for a single feedback's activity list. Feedback
-// threads accrue few events (status/assignee/board/target changes, coalesced within
-// a minute), so this cap is generous headroom while preventing an unbounded scan.
-export const MAX_TIMELINE_EVENTS = 500;
-
 export async function createOrUpdateFeedbackEvent(
 	ctx: { db: any; orm: any },
 	input: {
