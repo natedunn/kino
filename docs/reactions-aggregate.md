@@ -30,7 +30,7 @@ Two strategies coexist, on purpose:
 ## What kitcn's `aggregateIndex().count()` actually is
 
 It is a **homegrown/vendored aggregate engine, NOT the official `@convex-dev/aggregate` component**
-(our `convex.config.ts` only mounts `r2`). kitcn injects `aggregate_bucket` / `aggregate_rank_*` /
+(our `convex/functions/convex.config.ts` only mounts `r2`). kitcn injects `aggregate_bucket` / `aggregate_rank_*` /
 `aggregate_state` tables into our data model and maintains them via an implicit ORM change-trigger.
 
 - **Filtered `.count({ where })`** reads a single `aggregate_bucket` row per key-tuple. The count is
@@ -66,4 +66,4 @@ the list query, and the comment count). Escape ramps:
 2. Hand-rolled denormalized counter — precedent already exists in `feedbackUpvote.ts`.
 3. Plain `collect().length` for low-volume surfaces.
 
-The two aggregate-indexed tables are annotated in `schema.ts` (`updateComment`, `updateEmote`).
+The two aggregate-indexed tables are annotated in `convex/functions/schema.ts` (`updateComment`, `updateEmote`).
