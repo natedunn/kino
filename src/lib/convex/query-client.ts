@@ -130,6 +130,10 @@ export function createQueryClient() {
 		defaultOptions: {
 			...hydrationConfig,
 			queries: {
+				// Convex subscriptions keep cached data live, so aggressive garbage
+				// collection only forces a re-suspension (skeleton) when navigating
+				// back after idling past the default 5-minute gcTime.
+				gcTime: 30 * 60 * 1000,
 				queryKeyHashFn: convexQueryKeyHashFn,
 				retry: (failureCount, error) => {
 					if (isCRPCError(error)) return false;

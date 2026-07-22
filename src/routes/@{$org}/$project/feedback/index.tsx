@@ -95,28 +95,37 @@ export const Route = createFileRoute('/@{$org}/$project/feedback/')({
 			})
 		);
 
+		const firstPageOptions = crpcServer.feedback.listProjectFeedback.queryOptions(
+			getFeedbackListArgs({
+				boardId: getBoardId(boards, deps.board),
+				cursor: null,
+				projectId: projectData.project.id,
+				search: deps.search,
+				status: deps.status,
+			})
+		);
+
+		if (typeof window === 'undefined') {
+			// Hard refresh: pending Convex queries are not dehydrated (see
+			// `hydrationConfig`), so a fire-and-forget prefetch is discarded and the
+			// client refetches from scratch — a skeleton phase after first paint.
+			// Await so the first page ships inside the document and the list paints
+			// once, with data.
+			await context.queryClient.ensureQueryData(firstPageOptions).catch(() => undefined);
+			return;
+		}
+
 		// Non-blocking warm-up: `intent` preload runs this loader on hover/focus, so
 		// the first page (and current profile) is usually cached by the time the
 		// user clicks — the list paints without a skeleton. We intentionally do not
 		// await: a cold navigation still renders the shell immediately and falls
 		// back to the skeleton while these resolve.
-		void context.queryClient.prefetchQuery(
-			crpcServer.feedback.listProjectFeedback.queryOptions(
-				getFeedbackListArgs({
-					boardId: getBoardId(boards, deps.board),
-					cursor: null,
-					projectId: projectData.project.id,
-					search: deps.search,
-					status: deps.status,
-				})
-			)
-		);
+		void context.queryClient.prefetchQuery(firstPageOptions);
 		void context.queryClient.prefetchQuery(
 			crpcServer.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
 		);
 	},
 	pendingComponent: () => <RoutePending variant='sidebar' />,
-	pendingMs: 600,
 	validateSearch: validateFeedbackSearch,
 	head: ({ params }) => ({
 		meta: [titleMeta(['Feedback', projectTitle(params.org, params.project)])],

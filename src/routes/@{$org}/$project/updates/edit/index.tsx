@@ -97,7 +97,6 @@ export const Route = createFileRoute('/@{$org}/$project/updates/edit/')({
 		);
 	},
 	pendingComponent: () => <RoutePending variant='page' />,
-	pendingMs: 600,
 	validateSearch: validateDashboardSearch,
 	head: ({ params }) => ({
 		meta: [titleMeta(['Manage Updates', projectTitle(params.org, params.project)])],

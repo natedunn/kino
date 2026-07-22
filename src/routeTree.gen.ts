@@ -9,95 +9,70 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as UiRouteImport } from './routes/ui'
-import { Route as StackRouteImport } from './routes/stack'
-import { Route as DashboardRouteImport } from './routes/dashboard'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AdminRouteImport } from './routes/admin'
-import { Route as AccountRouteRouteImport } from './routes/account/route'
-import { Route as AtChar123orgChar125RouteRouteImport } from './routes/@{$org}/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthIndexRouteImport } from './routes/auth.index'
-import { Route as AccountIndexRouteImport } from './routes/account/index'
+import { Route as AtChar123orgChar125RouteRouteImport } from './routes/@{$org}/route'
+import { Route as AccountRouteRouteImport } from './routes/account/route'
+import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as StackRouteImport } from './routes/stack'
+import { Route as UiRouteImport } from './routes/ui'
 import { Route as AtChar123orgChar125IndexRouteImport } from './routes/@{$org}/index'
-import { Route as AuthVerifyEmailRouteImport } from './routes/auth.verify-email'
-import { Route as AuthSignUpRouteImport } from './routes/auth.sign-up'
-import { Route as AuthResetPasswordRouteImport } from './routes/auth.reset-password'
-import { Route as AuthForgotPasswordRouteImport } from './routes/auth.forgot-password'
-import { Route as AuthAcceptInvitationRouteImport } from './routes/auth.accept-invitation'
-import { Route as OrgSettingsRouteRouteImport } from './routes/org/settings/route'
 import { Route as AtChar123orgChar125ProjectRouteRouteImport } from './routes/@{$org}/$project/route'
-import { Route as UUsernameIndexRouteImport } from './routes/u/$username/index'
-import { Route as ProfileSettingsIndexRouteImport } from './routes/profile/settings/index'
-import { Route as OrgSettingsIndexRouteImport } from './routes/org/settings/index'
-import { Route as CreateTeamIndexRouteImport } from './routes/create/team/index'
-import { Route as AccountSecurityIndexRouteImport } from './routes/account/security/index'
-import { Route as AccountProfileIndexRouteImport } from './routes/account/profile/index'
-import { Route as AccountNotificationsIndexRouteImport } from './routes/account/notifications/index'
-import { Route as AccountDataIndexRouteImport } from './routes/account/data/index'
-import { Route as AccountAppearanceIndexRouteImport } from './routes/account/appearance/index'
-import { Route as AtChar123orgChar125CreateProjectIndexRouteImport } from './routes/@{$org}/create-project/index'
+import { Route as AccountIndexRouteImport } from './routes/account/index'
+import { Route as AuthIndexRouteImport } from './routes/auth.index'
+import { Route as AuthAcceptInvitationRouteImport } from './routes/auth.accept-invitation'
+import { Route as AuthForgotPasswordRouteImport } from './routes/auth.forgot-password'
+import { Route as AuthResetPasswordRouteImport } from './routes/auth.reset-password'
+import { Route as AuthSignUpRouteImport } from './routes/auth.sign-up'
+import { Route as AuthVerifyEmailRouteImport } from './routes/auth.verify-email'
+import { Route as OrgSettingsRouteRouteImport } from './routes/org/settings/route'
 import { Route as AtChar123orgChar125ProjectIndexRouteImport } from './routes/@{$org}/$project/index'
-import { Route as ApiGithubCallbackRouteImport } from './routes/api/github/callback'
-import { Route as ApiGithubSplatRouteImport } from './routes/api/github/$'
-import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
-import { Route as AtChar123orgChar125ProjectSettingsRouteRouteImport } from './routes/@{$org}/$project/settings/route'
 import { Route as AtChar123orgChar125ProjectFeedbackRouteRouteImport } from './routes/@{$org}/$project/feedback/route'
-import { Route as OrgSettingsMembersIndexRouteImport } from './routes/org/settings/members/index'
-import { Route as OrgSettingsIntegrationsIndexRouteImport } from './routes/org/settings/integrations/index'
-import { Route as OrgSettingsGeneralIndexRouteImport } from './routes/org/settings/general/index'
-import { Route as AtChar123orgChar125IntegrationsGithubIndexRouteImport } from './routes/@{$org}/integrations/github/index'
-import { Route as AtChar123orgChar125ProjectUpdatesIndexRouteImport } from './routes/@{$org}/$project/updates/index'
-import { Route as AtChar123orgChar125ProjectSettingsIndexRouteImport } from './routes/@{$org}/$project/settings/index'
-import { Route as AtChar123orgChar125ProjectRoadmapIndexRouteImport } from './routes/@{$org}/$project/roadmap/index'
-import { Route as AtChar123orgChar125ProjectFilesIndexRouteImport } from './routes/@{$org}/$project/files/index'
-import { Route as AtChar123orgChar125ProjectFeedbackIndexRouteImport } from './routes/@{$org}/$project/feedback/index'
+import { Route as AtChar123orgChar125ProjectSettingsRouteRouteImport } from './routes/@{$org}/$project/settings/route'
+import { Route as AtChar123orgChar125CreateProjectIndexRouteImport } from './routes/@{$org}/create-project/index'
+import { Route as AccountAppearanceIndexRouteImport } from './routes/account/appearance/index'
+import { Route as AccountDataIndexRouteImport } from './routes/account/data/index'
+import { Route as AccountNotificationsIndexRouteImport } from './routes/account/notifications/index'
+import { Route as AccountProfileIndexRouteImport } from './routes/account/profile/index'
+import { Route as AccountSecurityIndexRouteImport } from './routes/account/security/index'
+import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as ApiGithubSplatRouteImport } from './routes/api/github/$'
+import { Route as ApiGithubCallbackRouteImport } from './routes/api/github/callback'
+import { Route as CreateTeamIndexRouteImport } from './routes/create/team/index'
+import { Route as OrgSettingsIndexRouteImport } from './routes/org/settings/index'
+import { Route as ProfileSettingsIndexRouteImport } from './routes/profile/settings/index'
+import { Route as UUsernameIndexRouteImport } from './routes/u/$username/index'
 import { Route as AtChar123orgChar125ProjectDiscussionsIndexRouteImport } from './routes/@{$org}/$project/discussions/index'
-import { Route as AtChar123orgChar125ProjectUpdatesNewIndexRouteImport } from './routes/@{$org}/$project/updates/new/index'
-import { Route as AtChar123orgChar125ProjectUpdatesEditIndexRouteImport } from './routes/@{$org}/$project/updates/edit/index'
-import { Route as AtChar123orgChar125ProjectUpdatesSlugIndexRouteImport } from './routes/@{$org}/$project/updates/$slug/index'
-import { Route as AtChar123orgChar125ProjectSettingsMembersIndexRouteImport } from './routes/@{$org}/$project/settings/members/index'
-import { Route as AtChar123orgChar125ProjectSettingsIntegrationsIndexRouteImport } from './routes/@{$org}/$project/settings/integrations/index'
-import { Route as AtChar123orgChar125ProjectSettingsGeneralIndexRouteImport } from './routes/@{$org}/$project/settings/general/index'
-import { Route as AtChar123orgChar125ProjectSettingsDangerIndexRouteImport } from './routes/@{$org}/$project/settings/danger/index'
-import { Route as AtChar123orgChar125ProjectSettingsBoardsIndexRouteImport } from './routes/@{$org}/$project/settings/boards/index'
-import { Route as AtChar123orgChar125ProjectIntegrationsGithubIndexRouteImport } from './routes/@{$org}/$project/integrations/github/index'
-import { Route as AtChar123orgChar125ProjectFeedbackNewIndexRouteImport } from './routes/@{$org}/$project/feedback/new/index'
-import { Route as AtChar123orgChar125ProjectFeedbackBoardsIndexRouteImport } from './routes/@{$org}/$project/feedback/boards/index'
+import { Route as AtChar123orgChar125ProjectFeedbackIndexRouteImport } from './routes/@{$org}/$project/feedback/index'
+import { Route as AtChar123orgChar125ProjectFilesIndexRouteImport } from './routes/@{$org}/$project/files/index'
+import { Route as AtChar123orgChar125ProjectRoadmapIndexRouteImport } from './routes/@{$org}/$project/roadmap/index'
+import { Route as AtChar123orgChar125ProjectSettingsIndexRouteImport } from './routes/@{$org}/$project/settings/index'
+import { Route as AtChar123orgChar125ProjectUpdatesIndexRouteImport } from './routes/@{$org}/$project/updates/index'
+import { Route as AtChar123orgChar125IntegrationsGithubIndexRouteImport } from './routes/@{$org}/integrations/github/index'
+import { Route as OrgSettingsGeneralIndexRouteImport } from './routes/org/settings/general/index'
+import { Route as OrgSettingsIntegrationsIndexRouteImport } from './routes/org/settings/integrations/index'
+import { Route as OrgSettingsMembersIndexRouteImport } from './routes/org/settings/members/index'
 import { Route as AtChar123orgChar125ProjectFeedbackSlugIndexRouteImport } from './routes/@{$org}/$project/feedback/$slug/index'
-import { Route as AtChar123orgChar125ProjectUpdatesSlugEditRouteImport } from './routes/@{$org}/$project/updates/$slug/edit'
+import { Route as AtChar123orgChar125ProjectFeedbackBoardsIndexRouteImport } from './routes/@{$org}/$project/feedback/boards/index'
 import { Route as AtChar123orgChar125ProjectFeedbackBoardsNewRouteImport } from './routes/@{$org}/$project/feedback/boards/new'
+import { Route as AtChar123orgChar125ProjectFeedbackNewIndexRouteImport } from './routes/@{$org}/$project/feedback/new/index'
+import { Route as AtChar123orgChar125ProjectIntegrationsGithubIndexRouteImport } from './routes/@{$org}/$project/integrations/github/index'
+import { Route as AtChar123orgChar125ProjectSettingsBoardsIndexRouteImport } from './routes/@{$org}/$project/settings/boards/index'
+import { Route as AtChar123orgChar125ProjectSettingsDangerIndexRouteImport } from './routes/@{$org}/$project/settings/danger/index'
+import { Route as AtChar123orgChar125ProjectSettingsGeneralIndexRouteImport } from './routes/@{$org}/$project/settings/general/index'
+import { Route as AtChar123orgChar125ProjectSettingsIntegrationsIndexRouteImport } from './routes/@{$org}/$project/settings/integrations/index'
+import { Route as AtChar123orgChar125ProjectSettingsMembersIndexRouteImport } from './routes/@{$org}/$project/settings/members/index'
+import { Route as AtChar123orgChar125ProjectUpdatesSlugIndexRouteImport } from './routes/@{$org}/$project/updates/$slug/index'
+import { Route as AtChar123orgChar125ProjectUpdatesSlugEditRouteImport } from './routes/@{$org}/$project/updates/$slug/edit'
+import { Route as AtChar123orgChar125ProjectUpdatesEditIndexRouteImport } from './routes/@{$org}/$project/updates/edit/index'
+import { Route as AtChar123orgChar125ProjectUpdatesNewIndexRouteImport } from './routes/@{$org}/$project/updates/new/index'
 import { Route as AtChar123orgChar125ProjectFeedbackBoardsBoardIndexRouteImport } from './routes/@{$org}/$project/feedback/boards/$board/index'
 import { Route as AtChar123orgChar125ProjectFeedbackBoardsBoardEditRouteImport } from './routes/@{$org}/$project/feedback/boards/$board/edit'
 
-const UiRoute = UiRouteImport.update({
-  id: '/ui',
-  path: '/ui',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const StackRoute = StackRouteImport.update({
-  id: '/stack',
-  path: '/stack',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DashboardRoute = DashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminRoute = AdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AccountRouteRoute = AccountRouteRouteImport.update({
-  id: '/account',
-  path: '/account',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AtChar123orgChar125RouteRoute =
@@ -106,20 +81,35 @@ const AtChar123orgChar125RouteRoute =
     path: '/@{$org}',
     getParentRoute: () => rootRouteImport,
   } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const AccountRouteRoute = AccountRouteRouteImport.update({
+  id: '/account',
+  path: '/account',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthIndexRoute = AuthIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AuthRoute,
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AccountIndexRoute = AccountIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AccountRouteRoute,
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StackRoute = StackRouteImport.update({
+  id: '/stack',
+  path: '/stack',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UiRoute = UiRouteImport.update({
+  id: '/ui',
+  path: '/ui',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AtChar123orgChar125IndexRoute =
   AtChar123orgChar125IndexRouteImport.update({
@@ -127,24 +117,20 @@ const AtChar123orgChar125IndexRoute =
     path: '/',
     getParentRoute: () => AtChar123orgChar125RouteRoute,
   } as any)
-const AuthVerifyEmailRoute = AuthVerifyEmailRouteImport.update({
-  id: '/verify-email',
-  path: '/verify-email',
-  getParentRoute: () => AuthRoute,
+const AtChar123orgChar125ProjectRouteRoute =
+  AtChar123orgChar125ProjectRouteRouteImport.update({
+    id: '/$project',
+    path: '/$project',
+    getParentRoute: () => AtChar123orgChar125RouteRoute,
+  } as any)
+const AccountIndexRoute = AccountIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AccountRouteRoute,
 } as any)
-const AuthSignUpRoute = AuthSignUpRouteImport.update({
-  id: '/sign-up',
-  path: '/sign-up',
-  getParentRoute: () => AuthRoute,
-} as any)
-const AuthResetPasswordRoute = AuthResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
-  getParentRoute: () => AuthRoute,
-} as any)
-const AuthForgotPasswordRoute = AuthForgotPasswordRouteImport.update({
-  id: '/forgot-password',
-  path: '/forgot-password',
+const AuthIndexRoute = AuthIndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => AuthRoute,
 } as any)
 const AuthAcceptInvitationRoute = AuthAcceptInvitationRouteImport.update({
@@ -152,94 +138,35 @@ const AuthAcceptInvitationRoute = AuthAcceptInvitationRouteImport.update({
   path: '/accept-invitation',
   getParentRoute: () => AuthRoute,
 } as any)
+const AuthForgotPasswordRoute = AuthForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthResetPasswordRoute = AuthResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthSignUpRoute = AuthSignUpRouteImport.update({
+  id: '/sign-up',
+  path: '/sign-up',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthVerifyEmailRoute = AuthVerifyEmailRouteImport.update({
+  id: '/verify-email',
+  path: '/verify-email',
+  getParentRoute: () => AuthRoute,
+} as any)
 const OrgSettingsRouteRoute = OrgSettingsRouteRouteImport.update({
   id: '/org/settings',
   path: '/org/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AtChar123orgChar125ProjectRouteRoute =
-  AtChar123orgChar125ProjectRouteRouteImport.update({
-    id: '/$project',
-    path: '/$project',
-    getParentRoute: () => AtChar123orgChar125RouteRoute,
-  } as any)
-const UUsernameIndexRoute = UUsernameIndexRouteImport.update({
-  id: '/u/$username/',
-  path: '/u/$username/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProfileSettingsIndexRoute = ProfileSettingsIndexRouteImport.update({
-  id: '/profile/settings/',
-  path: '/profile/settings/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const OrgSettingsIndexRoute = OrgSettingsIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => OrgSettingsRouteRoute,
-} as any)
-const CreateTeamIndexRoute = CreateTeamIndexRouteImport.update({
-  id: '/create/team/',
-  path: '/create/team/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AccountSecurityIndexRoute = AccountSecurityIndexRouteImport.update({
-  id: '/security/',
-  path: '/security/',
-  getParentRoute: () => AccountRouteRoute,
-} as any)
-const AccountProfileIndexRoute = AccountProfileIndexRouteImport.update({
-  id: '/profile/',
-  path: '/profile/',
-  getParentRoute: () => AccountRouteRoute,
-} as any)
-const AccountNotificationsIndexRoute =
-  AccountNotificationsIndexRouteImport.update({
-    id: '/notifications/',
-    path: '/notifications/',
-    getParentRoute: () => AccountRouteRoute,
-  } as any)
-const AccountDataIndexRoute = AccountDataIndexRouteImport.update({
-  id: '/data/',
-  path: '/data/',
-  getParentRoute: () => AccountRouteRoute,
-} as any)
-const AccountAppearanceIndexRoute = AccountAppearanceIndexRouteImport.update({
-  id: '/appearance/',
-  path: '/appearance/',
-  getParentRoute: () => AccountRouteRoute,
-} as any)
-const AtChar123orgChar125CreateProjectIndexRoute =
-  AtChar123orgChar125CreateProjectIndexRouteImport.update({
-    id: '/create-project/',
-    path: '/create-project/',
-    getParentRoute: () => AtChar123orgChar125RouteRoute,
-  } as any)
 const AtChar123orgChar125ProjectIndexRoute =
   AtChar123orgChar125ProjectIndexRouteImport.update({
     id: '/',
     path: '/',
-    getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
-  } as any)
-const ApiGithubCallbackRoute = ApiGithubCallbackRouteImport.update({
-  id: '/api/github/callback',
-  path: '/api/github/callback',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiGithubSplatRoute = ApiGithubSplatRouteImport.update({
-  id: '/api/github/$',
-  path: '/api/github/$',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
-  id: '/api/auth/$',
-  path: '/api/auth/$',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AtChar123orgChar125ProjectSettingsRouteRoute =
-  AtChar123orgChar125ProjectSettingsRouteRouteImport.update({
-    id: '/settings',
-    path: '/settings',
     getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
   } as any)
 const AtChar123orgChar125ProjectFeedbackRouteRoute =
@@ -248,50 +175,83 @@ const AtChar123orgChar125ProjectFeedbackRouteRoute =
     path: '/feedback',
     getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
   } as any)
-const OrgSettingsMembersIndexRoute = OrgSettingsMembersIndexRouteImport.update({
-  id: '/members/',
-  path: '/members/',
-  getParentRoute: () => OrgSettingsRouteRoute,
-} as any)
-const OrgSettingsIntegrationsIndexRoute =
-  OrgSettingsIntegrationsIndexRouteImport.update({
-    id: '/integrations/',
-    path: '/integrations/',
-    getParentRoute: () => OrgSettingsRouteRoute,
+const AtChar123orgChar125ProjectSettingsRouteRoute =
+  AtChar123orgChar125ProjectSettingsRouteRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
   } as any)
-const OrgSettingsGeneralIndexRoute = OrgSettingsGeneralIndexRouteImport.update({
-  id: '/general/',
-  path: '/general/',
-  getParentRoute: () => OrgSettingsRouteRoute,
-} as any)
-const AtChar123orgChar125IntegrationsGithubIndexRoute =
-  AtChar123orgChar125IntegrationsGithubIndexRouteImport.update({
-    id: '/integrations/github/',
-    path: '/integrations/github/',
+const AtChar123orgChar125CreateProjectIndexRoute =
+  AtChar123orgChar125CreateProjectIndexRouteImport.update({
+    id: '/create-project/',
+    path: '/create-project/',
     getParentRoute: () => AtChar123orgChar125RouteRoute,
   } as any)
-const AtChar123orgChar125ProjectUpdatesIndexRoute =
-  AtChar123orgChar125ProjectUpdatesIndexRouteImport.update({
-    id: '/updates/',
-    path: '/updates/',
-    getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
+const AccountAppearanceIndexRoute = AccountAppearanceIndexRouteImport.update({
+  id: '/appearance/',
+  path: '/appearance/',
+  getParentRoute: () => AccountRouteRoute,
+} as any)
+const AccountDataIndexRoute = AccountDataIndexRouteImport.update({
+  id: '/data/',
+  path: '/data/',
+  getParentRoute: () => AccountRouteRoute,
+} as any)
+const AccountNotificationsIndexRoute =
+  AccountNotificationsIndexRouteImport.update({
+    id: '/notifications/',
+    path: '/notifications/',
+    getParentRoute: () => AccountRouteRoute,
   } as any)
-const AtChar123orgChar125ProjectSettingsIndexRoute =
-  AtChar123orgChar125ProjectSettingsIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => AtChar123orgChar125ProjectSettingsRouteRoute,
-  } as any)
-const AtChar123orgChar125ProjectRoadmapIndexRoute =
-  AtChar123orgChar125ProjectRoadmapIndexRouteImport.update({
-    id: '/roadmap/',
-    path: '/roadmap/',
-    getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
-  } as any)
-const AtChar123orgChar125ProjectFilesIndexRoute =
-  AtChar123orgChar125ProjectFilesIndexRouteImport.update({
-    id: '/files/',
-    path: '/files/',
+const AccountProfileIndexRoute = AccountProfileIndexRouteImport.update({
+  id: '/profile/',
+  path: '/profile/',
+  getParentRoute: () => AccountRouteRoute,
+} as any)
+const AccountSecurityIndexRoute = AccountSecurityIndexRouteImport.update({
+  id: '/security/',
+  path: '/security/',
+  getParentRoute: () => AccountRouteRoute,
+} as any)
+const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
+  id: '/api/auth/$',
+  path: '/api/auth/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiGithubSplatRoute = ApiGithubSplatRouteImport.update({
+  id: '/api/github/$',
+  path: '/api/github/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiGithubCallbackRoute = ApiGithubCallbackRouteImport.update({
+  id: '/api/github/callback',
+  path: '/api/github/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CreateTeamIndexRoute = CreateTeamIndexRouteImport.update({
+  id: '/create/team/',
+  path: '/create/team/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OrgSettingsIndexRoute = OrgSettingsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => OrgSettingsRouteRoute,
+} as any)
+const ProfileSettingsIndexRoute = ProfileSettingsIndexRouteImport.update({
+  id: '/profile/settings/',
+  path: '/profile/settings/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UUsernameIndexRoute = UUsernameIndexRouteImport.update({
+  id: '/u/$username/',
+  path: '/u/$username/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AtChar123orgChar125ProjectDiscussionsIndexRoute =
+  AtChar123orgChar125ProjectDiscussionsIndexRouteImport.update({
+    id: '/discussions/',
+    path: '/discussions/',
     getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
   } as any)
 const AtChar123orgChar125ProjectFeedbackIndexRoute =
@@ -300,70 +260,56 @@ const AtChar123orgChar125ProjectFeedbackIndexRoute =
     path: '/',
     getParentRoute: () => AtChar123orgChar125ProjectFeedbackRouteRoute,
   } as any)
-const AtChar123orgChar125ProjectDiscussionsIndexRoute =
-  AtChar123orgChar125ProjectDiscussionsIndexRouteImport.update({
-    id: '/discussions/',
-    path: '/discussions/',
+const AtChar123orgChar125ProjectFilesIndexRoute =
+  AtChar123orgChar125ProjectFilesIndexRouteImport.update({
+    id: '/files/',
+    path: '/files/',
     getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
   } as any)
-const AtChar123orgChar125ProjectUpdatesNewIndexRoute =
-  AtChar123orgChar125ProjectUpdatesNewIndexRouteImport.update({
-    id: '/updates/new/',
-    path: '/updates/new/',
+const AtChar123orgChar125ProjectRoadmapIndexRoute =
+  AtChar123orgChar125ProjectRoadmapIndexRouteImport.update({
+    id: '/roadmap/',
+    path: '/roadmap/',
     getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
   } as any)
-const AtChar123orgChar125ProjectUpdatesEditIndexRoute =
-  AtChar123orgChar125ProjectUpdatesEditIndexRouteImport.update({
-    id: '/updates/edit/',
-    path: '/updates/edit/',
+const AtChar123orgChar125ProjectSettingsIndexRoute =
+  AtChar123orgChar125ProjectSettingsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AtChar123orgChar125ProjectSettingsRouteRoute,
+  } as any)
+const AtChar123orgChar125ProjectUpdatesIndexRoute =
+  AtChar123orgChar125ProjectUpdatesIndexRouteImport.update({
+    id: '/updates/',
+    path: '/updates/',
     getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
   } as any)
-const AtChar123orgChar125ProjectUpdatesSlugIndexRoute =
-  AtChar123orgChar125ProjectUpdatesSlugIndexRouteImport.update({
-    id: '/updates/$slug/',
-    path: '/updates/$slug/',
-    getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
-  } as any)
-const AtChar123orgChar125ProjectSettingsMembersIndexRoute =
-  AtChar123orgChar125ProjectSettingsMembersIndexRouteImport.update({
-    id: '/members/',
-    path: '/members/',
-    getParentRoute: () => AtChar123orgChar125ProjectSettingsRouteRoute,
-  } as any)
-const AtChar123orgChar125ProjectSettingsIntegrationsIndexRoute =
-  AtChar123orgChar125ProjectSettingsIntegrationsIndexRouteImport.update({
-    id: '/integrations/',
-    path: '/integrations/',
-    getParentRoute: () => AtChar123orgChar125ProjectSettingsRouteRoute,
-  } as any)
-const AtChar123orgChar125ProjectSettingsGeneralIndexRoute =
-  AtChar123orgChar125ProjectSettingsGeneralIndexRouteImport.update({
-    id: '/general/',
-    path: '/general/',
-    getParentRoute: () => AtChar123orgChar125ProjectSettingsRouteRoute,
-  } as any)
-const AtChar123orgChar125ProjectSettingsDangerIndexRoute =
-  AtChar123orgChar125ProjectSettingsDangerIndexRouteImport.update({
-    id: '/danger/',
-    path: '/danger/',
-    getParentRoute: () => AtChar123orgChar125ProjectSettingsRouteRoute,
-  } as any)
-const AtChar123orgChar125ProjectSettingsBoardsIndexRoute =
-  AtChar123orgChar125ProjectSettingsBoardsIndexRouteImport.update({
-    id: '/boards/',
-    path: '/boards/',
-    getParentRoute: () => AtChar123orgChar125ProjectSettingsRouteRoute,
-  } as any)
-const AtChar123orgChar125ProjectIntegrationsGithubIndexRoute =
-  AtChar123orgChar125ProjectIntegrationsGithubIndexRouteImport.update({
+const AtChar123orgChar125IntegrationsGithubIndexRoute =
+  AtChar123orgChar125IntegrationsGithubIndexRouteImport.update({
     id: '/integrations/github/',
     path: '/integrations/github/',
-    getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
+    getParentRoute: () => AtChar123orgChar125RouteRoute,
   } as any)
-const AtChar123orgChar125ProjectFeedbackNewIndexRoute =
-  AtChar123orgChar125ProjectFeedbackNewIndexRouteImport.update({
-    id: '/new/',
-    path: '/new/',
+const OrgSettingsGeneralIndexRoute = OrgSettingsGeneralIndexRouteImport.update({
+  id: '/general/',
+  path: '/general/',
+  getParentRoute: () => OrgSettingsRouteRoute,
+} as any)
+const OrgSettingsIntegrationsIndexRoute =
+  OrgSettingsIntegrationsIndexRouteImport.update({
+    id: '/integrations/',
+    path: '/integrations/',
+    getParentRoute: () => OrgSettingsRouteRoute,
+  } as any)
+const OrgSettingsMembersIndexRoute = OrgSettingsMembersIndexRouteImport.update({
+  id: '/members/',
+  path: '/members/',
+  getParentRoute: () => OrgSettingsRouteRoute,
+} as any)
+const AtChar123orgChar125ProjectFeedbackSlugIndexRoute =
+  AtChar123orgChar125ProjectFeedbackSlugIndexRouteImport.update({
+    id: '/$slug/',
+    path: '/$slug/',
     getParentRoute: () => AtChar123orgChar125ProjectFeedbackRouteRoute,
   } as any)
 const AtChar123orgChar125ProjectFeedbackBoardsIndexRoute =
@@ -372,11 +318,59 @@ const AtChar123orgChar125ProjectFeedbackBoardsIndexRoute =
     path: '/boards/',
     getParentRoute: () => AtChar123orgChar125ProjectFeedbackRouteRoute,
   } as any)
-const AtChar123orgChar125ProjectFeedbackSlugIndexRoute =
-  AtChar123orgChar125ProjectFeedbackSlugIndexRouteImport.update({
-    id: '/$slug/',
-    path: '/$slug/',
+const AtChar123orgChar125ProjectFeedbackBoardsNewRoute =
+  AtChar123orgChar125ProjectFeedbackBoardsNewRouteImport.update({
+    id: '/boards/new',
+    path: '/boards/new',
     getParentRoute: () => AtChar123orgChar125ProjectFeedbackRouteRoute,
+  } as any)
+const AtChar123orgChar125ProjectFeedbackNewIndexRoute =
+  AtChar123orgChar125ProjectFeedbackNewIndexRouteImport.update({
+    id: '/new/',
+    path: '/new/',
+    getParentRoute: () => AtChar123orgChar125ProjectFeedbackRouteRoute,
+  } as any)
+const AtChar123orgChar125ProjectIntegrationsGithubIndexRoute =
+  AtChar123orgChar125ProjectIntegrationsGithubIndexRouteImport.update({
+    id: '/integrations/github/',
+    path: '/integrations/github/',
+    getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
+  } as any)
+const AtChar123orgChar125ProjectSettingsBoardsIndexRoute =
+  AtChar123orgChar125ProjectSettingsBoardsIndexRouteImport.update({
+    id: '/boards/',
+    path: '/boards/',
+    getParentRoute: () => AtChar123orgChar125ProjectSettingsRouteRoute,
+  } as any)
+const AtChar123orgChar125ProjectSettingsDangerIndexRoute =
+  AtChar123orgChar125ProjectSettingsDangerIndexRouteImport.update({
+    id: '/danger/',
+    path: '/danger/',
+    getParentRoute: () => AtChar123orgChar125ProjectSettingsRouteRoute,
+  } as any)
+const AtChar123orgChar125ProjectSettingsGeneralIndexRoute =
+  AtChar123orgChar125ProjectSettingsGeneralIndexRouteImport.update({
+    id: '/general/',
+    path: '/general/',
+    getParentRoute: () => AtChar123orgChar125ProjectSettingsRouteRoute,
+  } as any)
+const AtChar123orgChar125ProjectSettingsIntegrationsIndexRoute =
+  AtChar123orgChar125ProjectSettingsIntegrationsIndexRouteImport.update({
+    id: '/integrations/',
+    path: '/integrations/',
+    getParentRoute: () => AtChar123orgChar125ProjectSettingsRouteRoute,
+  } as any)
+const AtChar123orgChar125ProjectSettingsMembersIndexRoute =
+  AtChar123orgChar125ProjectSettingsMembersIndexRouteImport.update({
+    id: '/members/',
+    path: '/members/',
+    getParentRoute: () => AtChar123orgChar125ProjectSettingsRouteRoute,
+  } as any)
+const AtChar123orgChar125ProjectUpdatesSlugIndexRoute =
+  AtChar123orgChar125ProjectUpdatesSlugIndexRouteImport.update({
+    id: '/updates/$slug/',
+    path: '/updates/$slug/',
+    getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
   } as any)
 const AtChar123orgChar125ProjectUpdatesSlugEditRoute =
   AtChar123orgChar125ProjectUpdatesSlugEditRouteImport.update({
@@ -384,11 +378,17 @@ const AtChar123orgChar125ProjectUpdatesSlugEditRoute =
     path: '/updates/$slug/edit',
     getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
   } as any)
-const AtChar123orgChar125ProjectFeedbackBoardsNewRoute =
-  AtChar123orgChar125ProjectFeedbackBoardsNewRouteImport.update({
-    id: '/boards/new',
-    path: '/boards/new',
-    getParentRoute: () => AtChar123orgChar125ProjectFeedbackRouteRoute,
+const AtChar123orgChar125ProjectUpdatesEditIndexRoute =
+  AtChar123orgChar125ProjectUpdatesEditIndexRouteImport.update({
+    id: '/updates/edit/',
+    path: '/updates/edit/',
+    getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
+  } as any)
+const AtChar123orgChar125ProjectUpdatesNewIndexRoute =
+  AtChar123orgChar125ProjectUpdatesNewIndexRouteImport.update({
+    id: '/updates/new/',
+    path: '/updates/new/',
+    getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
   } as any)
 const AtChar123orgChar125ProjectFeedbackBoardsBoardIndexRoute =
   AtChar123orgChar125ProjectFeedbackBoardsBoardIndexRouteImport.update({
@@ -785,46 +785,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/ui': {
-      id: '/ui'
-      path: '/ui'
-      fullPath: '/ui'
-      preLoaderRoute: typeof UiRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/stack': {
-      id: '/stack'
-      path: '/stack'
-      fullPath: '/stack'
-      preLoaderRoute: typeof StackRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/dashboard': {
-      id: '/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin': {
-      id: '/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AdminRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/account': {
-      id: '/account'
-      path: '/account'
-      fullPath: '/account'
-      preLoaderRoute: typeof AccountRouteRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/@{$org}': {
@@ -834,26 +799,47 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AtChar123orgChar125RouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/account': {
+      id: '/account'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof AccountRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/auth/': {
-      id: '/auth/'
-      path: '/'
-      fullPath: '/auth/'
-      preLoaderRoute: typeof AuthIndexRouteImport
-      parentRoute: typeof AuthRoute
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/account/': {
-      id: '/account/'
-      path: '/'
-      fullPath: '/account/'
-      preLoaderRoute: typeof AccountIndexRouteImport
-      parentRoute: typeof AccountRouteRoute
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stack': {
+      id: '/stack'
+      path: '/stack'
+      fullPath: '/stack'
+      preLoaderRoute: typeof StackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ui': {
+      id: '/ui'
+      path: '/ui'
+      fullPath: '/ui'
+      preLoaderRoute: typeof UiRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/@{$org}/': {
       id: '/@{$org}/'
@@ -862,32 +848,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AtChar123orgChar125IndexRouteImport
       parentRoute: typeof AtChar123orgChar125RouteRoute
     }
-    '/auth/verify-email': {
-      id: '/auth/verify-email'
-      path: '/verify-email'
-      fullPath: '/auth/verify-email'
-      preLoaderRoute: typeof AuthVerifyEmailRouteImport
-      parentRoute: typeof AuthRoute
+    '/@{$org}/$project': {
+      id: '/@{$org}/$project'
+      path: '/$project'
+      fullPath: '/@{$org}/$project'
+      preLoaderRoute: typeof AtChar123orgChar125ProjectRouteRouteImport
+      parentRoute: typeof AtChar123orgChar125RouteRoute
     }
-    '/auth/sign-up': {
-      id: '/auth/sign-up'
-      path: '/sign-up'
-      fullPath: '/auth/sign-up'
-      preLoaderRoute: typeof AuthSignUpRouteImport
-      parentRoute: typeof AuthRoute
+    '/account/': {
+      id: '/account/'
+      path: '/'
+      fullPath: '/account/'
+      preLoaderRoute: typeof AccountIndexRouteImport
+      parentRoute: typeof AccountRouteRoute
     }
-    '/auth/reset-password': {
-      id: '/auth/reset-password'
-      path: '/reset-password'
-      fullPath: '/auth/reset-password'
-      preLoaderRoute: typeof AuthResetPasswordRouteImport
-      parentRoute: typeof AuthRoute
-    }
-    '/auth/forgot-password': {
-      id: '/auth/forgot-password'
-      path: '/forgot-password'
-      fullPath: '/auth/forgot-password'
-      preLoaderRoute: typeof AuthForgotPasswordRouteImport
+    '/auth/': {
+      id: '/auth/'
+      path: '/'
+      fullPath: '/auth/'
+      preLoaderRoute: typeof AuthIndexRouteImport
       parentRoute: typeof AuthRoute
     }
     '/auth/accept-invitation': {
@@ -897,6 +876,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthAcceptInvitationRouteImport
       parentRoute: typeof AuthRoute
     }
+    '/auth/forgot-password': {
+      id: '/auth/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/auth/forgot-password'
+      preLoaderRoute: typeof AuthForgotPasswordRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/auth/reset-password': {
+      id: '/auth/reset-password'
+      path: '/reset-password'
+      fullPath: '/auth/reset-password'
+      preLoaderRoute: typeof AuthResetPasswordRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/auth/sign-up': {
+      id: '/auth/sign-up'
+      path: '/sign-up'
+      fullPath: '/auth/sign-up'
+      preLoaderRoute: typeof AuthSignUpRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/auth/verify-email': {
+      id: '/auth/verify-email'
+      path: '/verify-email'
+      fullPath: '/auth/verify-email'
+      preLoaderRoute: typeof AuthVerifyEmailRouteImport
+      parentRoute: typeof AuthRoute
+    }
     '/org/settings': {
       id: '/org/settings'
       path: '/org/settings'
@@ -904,116 +911,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OrgSettingsRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/@{$org}/$project': {
-      id: '/@{$org}/$project'
-      path: '/$project'
-      fullPath: '/@{$org}/$project'
-      preLoaderRoute: typeof AtChar123orgChar125ProjectRouteRouteImport
-      parentRoute: typeof AtChar123orgChar125RouteRoute
-    }
-    '/u/$username/': {
-      id: '/u/$username/'
-      path: '/u/$username'
-      fullPath: '/u/$username/'
-      preLoaderRoute: typeof UUsernameIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/profile/settings/': {
-      id: '/profile/settings/'
-      path: '/profile/settings'
-      fullPath: '/profile/settings/'
-      preLoaderRoute: typeof ProfileSettingsIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/org/settings/': {
-      id: '/org/settings/'
-      path: '/'
-      fullPath: '/org/settings/'
-      preLoaderRoute: typeof OrgSettingsIndexRouteImport
-      parentRoute: typeof OrgSettingsRouteRoute
-    }
-    '/create/team/': {
-      id: '/create/team/'
-      path: '/create/team'
-      fullPath: '/create/team/'
-      preLoaderRoute: typeof CreateTeamIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/account/security/': {
-      id: '/account/security/'
-      path: '/security'
-      fullPath: '/account/security/'
-      preLoaderRoute: typeof AccountSecurityIndexRouteImport
-      parentRoute: typeof AccountRouteRoute
-    }
-    '/account/profile/': {
-      id: '/account/profile/'
-      path: '/profile'
-      fullPath: '/account/profile/'
-      preLoaderRoute: typeof AccountProfileIndexRouteImport
-      parentRoute: typeof AccountRouteRoute
-    }
-    '/account/notifications/': {
-      id: '/account/notifications/'
-      path: '/notifications'
-      fullPath: '/account/notifications/'
-      preLoaderRoute: typeof AccountNotificationsIndexRouteImport
-      parentRoute: typeof AccountRouteRoute
-    }
-    '/account/data/': {
-      id: '/account/data/'
-      path: '/data'
-      fullPath: '/account/data/'
-      preLoaderRoute: typeof AccountDataIndexRouteImport
-      parentRoute: typeof AccountRouteRoute
-    }
-    '/account/appearance/': {
-      id: '/account/appearance/'
-      path: '/appearance'
-      fullPath: '/account/appearance/'
-      preLoaderRoute: typeof AccountAppearanceIndexRouteImport
-      parentRoute: typeof AccountRouteRoute
-    }
-    '/@{$org}/create-project/': {
-      id: '/@{$org}/create-project/'
-      path: '/create-project'
-      fullPath: '/@{$org}/create-project/'
-      preLoaderRoute: typeof AtChar123orgChar125CreateProjectIndexRouteImport
-      parentRoute: typeof AtChar123orgChar125RouteRoute
-    }
     '/@{$org}/$project/': {
       id: '/@{$org}/$project/'
       path: '/'
       fullPath: '/@{$org}/$project/'
       preLoaderRoute: typeof AtChar123orgChar125ProjectIndexRouteImport
-      parentRoute: typeof AtChar123orgChar125ProjectRouteRoute
-    }
-    '/api/github/callback': {
-      id: '/api/github/callback'
-      path: '/api/github/callback'
-      fullPath: '/api/github/callback'
-      preLoaderRoute: typeof ApiGithubCallbackRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/github/$': {
-      id: '/api/github/$'
-      path: '/api/github/$'
-      fullPath: '/api/github/$'
-      preLoaderRoute: typeof ApiGithubSplatRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/auth/$': {
-      id: '/api/auth/$'
-      path: '/api/auth/$'
-      fullPath: '/api/auth/$'
-      preLoaderRoute: typeof ApiAuthSplatRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/@{$org}/$project/settings': {
-      id: '/@{$org}/$project/settings'
-      path: '/settings'
-      fullPath: '/@{$org}/$project/settings'
-      preLoaderRoute: typeof AtChar123orgChar125ProjectSettingsRouteRouteImport
       parentRoute: typeof AtChar123orgChar125ProjectRouteRoute
     }
     '/@{$org}/$project/feedback': {
@@ -1023,60 +925,109 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AtChar123orgChar125ProjectFeedbackRouteRouteImport
       parentRoute: typeof AtChar123orgChar125ProjectRouteRoute
     }
-    '/org/settings/members/': {
-      id: '/org/settings/members/'
-      path: '/members'
-      fullPath: '/org/settings/members/'
-      preLoaderRoute: typeof OrgSettingsMembersIndexRouteImport
-      parentRoute: typeof OrgSettingsRouteRoute
+    '/@{$org}/$project/settings': {
+      id: '/@{$org}/$project/settings'
+      path: '/settings'
+      fullPath: '/@{$org}/$project/settings'
+      preLoaderRoute: typeof AtChar123orgChar125ProjectSettingsRouteRouteImport
+      parentRoute: typeof AtChar123orgChar125ProjectRouteRoute
     }
-    '/org/settings/integrations/': {
-      id: '/org/settings/integrations/'
-      path: '/integrations'
-      fullPath: '/org/settings/integrations/'
-      preLoaderRoute: typeof OrgSettingsIntegrationsIndexRouteImport
-      parentRoute: typeof OrgSettingsRouteRoute
-    }
-    '/org/settings/general/': {
-      id: '/org/settings/general/'
-      path: '/general'
-      fullPath: '/org/settings/general/'
-      preLoaderRoute: typeof OrgSettingsGeneralIndexRouteImport
-      parentRoute: typeof OrgSettingsRouteRoute
-    }
-    '/@{$org}/integrations/github/': {
-      id: '/@{$org}/integrations/github/'
-      path: '/integrations/github'
-      fullPath: '/@{$org}/integrations/github/'
-      preLoaderRoute: typeof AtChar123orgChar125IntegrationsGithubIndexRouteImport
+    '/@{$org}/create-project/': {
+      id: '/@{$org}/create-project/'
+      path: '/create-project'
+      fullPath: '/@{$org}/create-project/'
+      preLoaderRoute: typeof AtChar123orgChar125CreateProjectIndexRouteImport
       parentRoute: typeof AtChar123orgChar125RouteRoute
     }
-    '/@{$org}/$project/updates/': {
-      id: '/@{$org}/$project/updates/'
-      path: '/updates'
-      fullPath: '/@{$org}/$project/updates/'
-      preLoaderRoute: typeof AtChar123orgChar125ProjectUpdatesIndexRouteImport
-      parentRoute: typeof AtChar123orgChar125ProjectRouteRoute
+    '/account/appearance/': {
+      id: '/account/appearance/'
+      path: '/appearance'
+      fullPath: '/account/appearance/'
+      preLoaderRoute: typeof AccountAppearanceIndexRouteImport
+      parentRoute: typeof AccountRouteRoute
     }
-    '/@{$org}/$project/settings/': {
-      id: '/@{$org}/$project/settings/'
+    '/account/data/': {
+      id: '/account/data/'
+      path: '/data'
+      fullPath: '/account/data/'
+      preLoaderRoute: typeof AccountDataIndexRouteImport
+      parentRoute: typeof AccountRouteRoute
+    }
+    '/account/notifications/': {
+      id: '/account/notifications/'
+      path: '/notifications'
+      fullPath: '/account/notifications/'
+      preLoaderRoute: typeof AccountNotificationsIndexRouteImport
+      parentRoute: typeof AccountRouteRoute
+    }
+    '/account/profile/': {
+      id: '/account/profile/'
+      path: '/profile'
+      fullPath: '/account/profile/'
+      preLoaderRoute: typeof AccountProfileIndexRouteImport
+      parentRoute: typeof AccountRouteRoute
+    }
+    '/account/security/': {
+      id: '/account/security/'
+      path: '/security'
+      fullPath: '/account/security/'
+      preLoaderRoute: typeof AccountSecurityIndexRouteImport
+      parentRoute: typeof AccountRouteRoute
+    }
+    '/api/auth/$': {
+      id: '/api/auth/$'
+      path: '/api/auth/$'
+      fullPath: '/api/auth/$'
+      preLoaderRoute: typeof ApiAuthSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/github/$': {
+      id: '/api/github/$'
+      path: '/api/github/$'
+      fullPath: '/api/github/$'
+      preLoaderRoute: typeof ApiGithubSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/github/callback': {
+      id: '/api/github/callback'
+      path: '/api/github/callback'
+      fullPath: '/api/github/callback'
+      preLoaderRoute: typeof ApiGithubCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/create/team/': {
+      id: '/create/team/'
+      path: '/create/team'
+      fullPath: '/create/team/'
+      preLoaderRoute: typeof CreateTeamIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/org/settings/': {
+      id: '/org/settings/'
       path: '/'
-      fullPath: '/@{$org}/$project/settings/'
-      preLoaderRoute: typeof AtChar123orgChar125ProjectSettingsIndexRouteImport
-      parentRoute: typeof AtChar123orgChar125ProjectSettingsRouteRoute
+      fullPath: '/org/settings/'
+      preLoaderRoute: typeof OrgSettingsIndexRouteImport
+      parentRoute: typeof OrgSettingsRouteRoute
     }
-    '/@{$org}/$project/roadmap/': {
-      id: '/@{$org}/$project/roadmap/'
-      path: '/roadmap'
-      fullPath: '/@{$org}/$project/roadmap/'
-      preLoaderRoute: typeof AtChar123orgChar125ProjectRoadmapIndexRouteImport
-      parentRoute: typeof AtChar123orgChar125ProjectRouteRoute
+    '/profile/settings/': {
+      id: '/profile/settings/'
+      path: '/profile/settings'
+      fullPath: '/profile/settings/'
+      preLoaderRoute: typeof ProfileSettingsIndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/@{$org}/$project/files/': {
-      id: '/@{$org}/$project/files/'
-      path: '/files'
-      fullPath: '/@{$org}/$project/files/'
-      preLoaderRoute: typeof AtChar123orgChar125ProjectFilesIndexRouteImport
+    '/u/$username/': {
+      id: '/u/$username/'
+      path: '/u/$username'
+      fullPath: '/u/$username/'
+      preLoaderRoute: typeof UUsernameIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/@{$org}/$project/discussions/': {
+      id: '/@{$org}/$project/discussions/'
+      path: '/discussions'
+      fullPath: '/@{$org}/$project/discussions/'
+      preLoaderRoute: typeof AtChar123orgChar125ProjectDiscussionsIndexRouteImport
       parentRoute: typeof AtChar123orgChar125ProjectRouteRoute
     }
     '/@{$org}/$project/feedback/': {
@@ -1086,81 +1037,67 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AtChar123orgChar125ProjectFeedbackIndexRouteImport
       parentRoute: typeof AtChar123orgChar125ProjectFeedbackRouteRoute
     }
-    '/@{$org}/$project/discussions/': {
-      id: '/@{$org}/$project/discussions/'
-      path: '/discussions'
-      fullPath: '/@{$org}/$project/discussions/'
-      preLoaderRoute: typeof AtChar123orgChar125ProjectDiscussionsIndexRouteImport
+    '/@{$org}/$project/files/': {
+      id: '/@{$org}/$project/files/'
+      path: '/files'
+      fullPath: '/@{$org}/$project/files/'
+      preLoaderRoute: typeof AtChar123orgChar125ProjectFilesIndexRouteImport
       parentRoute: typeof AtChar123orgChar125ProjectRouteRoute
     }
-    '/@{$org}/$project/updates/new/': {
-      id: '/@{$org}/$project/updates/new/'
-      path: '/updates/new'
-      fullPath: '/@{$org}/$project/updates/new/'
-      preLoaderRoute: typeof AtChar123orgChar125ProjectUpdatesNewIndexRouteImport
+    '/@{$org}/$project/roadmap/': {
+      id: '/@{$org}/$project/roadmap/'
+      path: '/roadmap'
+      fullPath: '/@{$org}/$project/roadmap/'
+      preLoaderRoute: typeof AtChar123orgChar125ProjectRoadmapIndexRouteImport
       parentRoute: typeof AtChar123orgChar125ProjectRouteRoute
     }
-    '/@{$org}/$project/updates/edit/': {
-      id: '/@{$org}/$project/updates/edit/'
-      path: '/updates/edit'
-      fullPath: '/@{$org}/$project/updates/edit/'
-      preLoaderRoute: typeof AtChar123orgChar125ProjectUpdatesEditIndexRouteImport
+    '/@{$org}/$project/settings/': {
+      id: '/@{$org}/$project/settings/'
+      path: '/'
+      fullPath: '/@{$org}/$project/settings/'
+      preLoaderRoute: typeof AtChar123orgChar125ProjectSettingsIndexRouteImport
+      parentRoute: typeof AtChar123orgChar125ProjectSettingsRouteRoute
+    }
+    '/@{$org}/$project/updates/': {
+      id: '/@{$org}/$project/updates/'
+      path: '/updates'
+      fullPath: '/@{$org}/$project/updates/'
+      preLoaderRoute: typeof AtChar123orgChar125ProjectUpdatesIndexRouteImport
       parentRoute: typeof AtChar123orgChar125ProjectRouteRoute
     }
-    '/@{$org}/$project/updates/$slug/': {
-      id: '/@{$org}/$project/updates/$slug/'
-      path: '/updates/$slug'
-      fullPath: '/@{$org}/$project/updates/$slug/'
-      preLoaderRoute: typeof AtChar123orgChar125ProjectUpdatesSlugIndexRouteImport
-      parentRoute: typeof AtChar123orgChar125ProjectRouteRoute
-    }
-    '/@{$org}/$project/settings/members/': {
-      id: '/@{$org}/$project/settings/members/'
-      path: '/members'
-      fullPath: '/@{$org}/$project/settings/members/'
-      preLoaderRoute: typeof AtChar123orgChar125ProjectSettingsMembersIndexRouteImport
-      parentRoute: typeof AtChar123orgChar125ProjectSettingsRouteRoute
-    }
-    '/@{$org}/$project/settings/integrations/': {
-      id: '/@{$org}/$project/settings/integrations/'
-      path: '/integrations'
-      fullPath: '/@{$org}/$project/settings/integrations/'
-      preLoaderRoute: typeof AtChar123orgChar125ProjectSettingsIntegrationsIndexRouteImport
-      parentRoute: typeof AtChar123orgChar125ProjectSettingsRouteRoute
-    }
-    '/@{$org}/$project/settings/general/': {
-      id: '/@{$org}/$project/settings/general/'
-      path: '/general'
-      fullPath: '/@{$org}/$project/settings/general/'
-      preLoaderRoute: typeof AtChar123orgChar125ProjectSettingsGeneralIndexRouteImport
-      parentRoute: typeof AtChar123orgChar125ProjectSettingsRouteRoute
-    }
-    '/@{$org}/$project/settings/danger/': {
-      id: '/@{$org}/$project/settings/danger/'
-      path: '/danger'
-      fullPath: '/@{$org}/$project/settings/danger/'
-      preLoaderRoute: typeof AtChar123orgChar125ProjectSettingsDangerIndexRouteImport
-      parentRoute: typeof AtChar123orgChar125ProjectSettingsRouteRoute
-    }
-    '/@{$org}/$project/settings/boards/': {
-      id: '/@{$org}/$project/settings/boards/'
-      path: '/boards'
-      fullPath: '/@{$org}/$project/settings/boards/'
-      preLoaderRoute: typeof AtChar123orgChar125ProjectSettingsBoardsIndexRouteImport
-      parentRoute: typeof AtChar123orgChar125ProjectSettingsRouteRoute
-    }
-    '/@{$org}/$project/integrations/github/': {
-      id: '/@{$org}/$project/integrations/github/'
+    '/@{$org}/integrations/github/': {
+      id: '/@{$org}/integrations/github/'
       path: '/integrations/github'
-      fullPath: '/@{$org}/$project/integrations/github/'
-      preLoaderRoute: typeof AtChar123orgChar125ProjectIntegrationsGithubIndexRouteImport
-      parentRoute: typeof AtChar123orgChar125ProjectRouteRoute
+      fullPath: '/@{$org}/integrations/github/'
+      preLoaderRoute: typeof AtChar123orgChar125IntegrationsGithubIndexRouteImport
+      parentRoute: typeof AtChar123orgChar125RouteRoute
     }
-    '/@{$org}/$project/feedback/new/': {
-      id: '/@{$org}/$project/feedback/new/'
-      path: '/new'
-      fullPath: '/@{$org}/$project/feedback/new/'
-      preLoaderRoute: typeof AtChar123orgChar125ProjectFeedbackNewIndexRouteImport
+    '/org/settings/general/': {
+      id: '/org/settings/general/'
+      path: '/general'
+      fullPath: '/org/settings/general/'
+      preLoaderRoute: typeof OrgSettingsGeneralIndexRouteImport
+      parentRoute: typeof OrgSettingsRouteRoute
+    }
+    '/org/settings/integrations/': {
+      id: '/org/settings/integrations/'
+      path: '/integrations'
+      fullPath: '/org/settings/integrations/'
+      preLoaderRoute: typeof OrgSettingsIntegrationsIndexRouteImport
+      parentRoute: typeof OrgSettingsRouteRoute
+    }
+    '/org/settings/members/': {
+      id: '/org/settings/members/'
+      path: '/members'
+      fullPath: '/org/settings/members/'
+      preLoaderRoute: typeof OrgSettingsMembersIndexRouteImport
+      parentRoute: typeof OrgSettingsRouteRoute
+    }
+    '/@{$org}/$project/feedback/$slug/': {
+      id: '/@{$org}/$project/feedback/$slug/'
+      path: '/$slug'
+      fullPath: '/@{$org}/$project/feedback/$slug/'
+      preLoaderRoute: typeof AtChar123orgChar125ProjectFeedbackSlugIndexRouteImport
       parentRoute: typeof AtChar123orgChar125ProjectFeedbackRouteRoute
     }
     '/@{$org}/$project/feedback/boards/': {
@@ -1170,12 +1107,68 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AtChar123orgChar125ProjectFeedbackBoardsIndexRouteImport
       parentRoute: typeof AtChar123orgChar125ProjectFeedbackRouteRoute
     }
-    '/@{$org}/$project/feedback/$slug/': {
-      id: '/@{$org}/$project/feedback/$slug/'
-      path: '/$slug'
-      fullPath: '/@{$org}/$project/feedback/$slug/'
-      preLoaderRoute: typeof AtChar123orgChar125ProjectFeedbackSlugIndexRouteImport
+    '/@{$org}/$project/feedback/boards/new': {
+      id: '/@{$org}/$project/feedback/boards/new'
+      path: '/boards/new'
+      fullPath: '/@{$org}/$project/feedback/boards/new'
+      preLoaderRoute: typeof AtChar123orgChar125ProjectFeedbackBoardsNewRouteImport
       parentRoute: typeof AtChar123orgChar125ProjectFeedbackRouteRoute
+    }
+    '/@{$org}/$project/feedback/new/': {
+      id: '/@{$org}/$project/feedback/new/'
+      path: '/new'
+      fullPath: '/@{$org}/$project/feedback/new/'
+      preLoaderRoute: typeof AtChar123orgChar125ProjectFeedbackNewIndexRouteImport
+      parentRoute: typeof AtChar123orgChar125ProjectFeedbackRouteRoute
+    }
+    '/@{$org}/$project/integrations/github/': {
+      id: '/@{$org}/$project/integrations/github/'
+      path: '/integrations/github'
+      fullPath: '/@{$org}/$project/integrations/github/'
+      preLoaderRoute: typeof AtChar123orgChar125ProjectIntegrationsGithubIndexRouteImport
+      parentRoute: typeof AtChar123orgChar125ProjectRouteRoute
+    }
+    '/@{$org}/$project/settings/boards/': {
+      id: '/@{$org}/$project/settings/boards/'
+      path: '/boards'
+      fullPath: '/@{$org}/$project/settings/boards/'
+      preLoaderRoute: typeof AtChar123orgChar125ProjectSettingsBoardsIndexRouteImport
+      parentRoute: typeof AtChar123orgChar125ProjectSettingsRouteRoute
+    }
+    '/@{$org}/$project/settings/danger/': {
+      id: '/@{$org}/$project/settings/danger/'
+      path: '/danger'
+      fullPath: '/@{$org}/$project/settings/danger/'
+      preLoaderRoute: typeof AtChar123orgChar125ProjectSettingsDangerIndexRouteImport
+      parentRoute: typeof AtChar123orgChar125ProjectSettingsRouteRoute
+    }
+    '/@{$org}/$project/settings/general/': {
+      id: '/@{$org}/$project/settings/general/'
+      path: '/general'
+      fullPath: '/@{$org}/$project/settings/general/'
+      preLoaderRoute: typeof AtChar123orgChar125ProjectSettingsGeneralIndexRouteImport
+      parentRoute: typeof AtChar123orgChar125ProjectSettingsRouteRoute
+    }
+    '/@{$org}/$project/settings/integrations/': {
+      id: '/@{$org}/$project/settings/integrations/'
+      path: '/integrations'
+      fullPath: '/@{$org}/$project/settings/integrations/'
+      preLoaderRoute: typeof AtChar123orgChar125ProjectSettingsIntegrationsIndexRouteImport
+      parentRoute: typeof AtChar123orgChar125ProjectSettingsRouteRoute
+    }
+    '/@{$org}/$project/settings/members/': {
+      id: '/@{$org}/$project/settings/members/'
+      path: '/members'
+      fullPath: '/@{$org}/$project/settings/members/'
+      preLoaderRoute: typeof AtChar123orgChar125ProjectSettingsMembersIndexRouteImport
+      parentRoute: typeof AtChar123orgChar125ProjectSettingsRouteRoute
+    }
+    '/@{$org}/$project/updates/$slug/': {
+      id: '/@{$org}/$project/updates/$slug/'
+      path: '/updates/$slug'
+      fullPath: '/@{$org}/$project/updates/$slug/'
+      preLoaderRoute: typeof AtChar123orgChar125ProjectUpdatesSlugIndexRouteImport
+      parentRoute: typeof AtChar123orgChar125ProjectRouteRoute
     }
     '/@{$org}/$project/updates/$slug/edit': {
       id: '/@{$org}/$project/updates/$slug/edit'
@@ -1184,12 +1177,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AtChar123orgChar125ProjectUpdatesSlugEditRouteImport
       parentRoute: typeof AtChar123orgChar125ProjectRouteRoute
     }
-    '/@{$org}/$project/feedback/boards/new': {
-      id: '/@{$org}/$project/feedback/boards/new'
-      path: '/boards/new'
-      fullPath: '/@{$org}/$project/feedback/boards/new'
-      preLoaderRoute: typeof AtChar123orgChar125ProjectFeedbackBoardsNewRouteImport
-      parentRoute: typeof AtChar123orgChar125ProjectFeedbackRouteRoute
+    '/@{$org}/$project/updates/edit/': {
+      id: '/@{$org}/$project/updates/edit/'
+      path: '/updates/edit'
+      fullPath: '/@{$org}/$project/updates/edit/'
+      preLoaderRoute: typeof AtChar123orgChar125ProjectUpdatesEditIndexRouteImport
+      parentRoute: typeof AtChar123orgChar125ProjectRouteRoute
+    }
+    '/@{$org}/$project/updates/new/': {
+      id: '/@{$org}/$project/updates/new/'
+      path: '/updates/new'
+      fullPath: '/@{$org}/$project/updates/new/'
+      preLoaderRoute: typeof AtChar123orgChar125ProjectUpdatesNewIndexRouteImport
+      parentRoute: typeof AtChar123orgChar125ProjectRouteRoute
     }
     '/@{$org}/$project/feedback/boards/$board/': {
       id: '/@{$org}/$project/feedback/boards/$board/'
