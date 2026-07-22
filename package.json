@@ -2,6 +2,11 @@
   "name": "kitcn-root-1",
   "private": true,
   "type": "module",
+  "pnpm": {
+    "patchedDependencies": {
+      "kitcn": "patches/kitcn.patch"
+    }
+  },
   "scripts": {
     "dev": "pnpm run dev:anonymous",
     "dev:clean": "node scripts/dev-clean.mjs",
