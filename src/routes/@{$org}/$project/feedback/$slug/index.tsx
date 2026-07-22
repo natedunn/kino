@@ -241,16 +241,18 @@ function targetTokenFromFields(granularity: TargetGranularity, fields: TargetFie
 	}
 }
 
-// Year options: current year → +10, extended back to include an older existing target year.
-function buildYearOptions(earliestYear: number) {
+// Year options: a compact rolling range, plus the seeded value so existing targets
+// outside the range stay visible/selectable.
+function buildYearOptions(seedYear: number) {
 	const currentYear = new Date().getFullYear();
-	const start = Math.min(currentYear, earliestYear);
-	const end = currentYear + 10;
-	const options: Array<{ label: string; value: string }> = [];
-	for (let year = start; year <= end; year++) {
-		options.push({ label: String(year), value: String(year) });
+	const years = new Set<number>();
+	for (let year = currentYear - 10; year <= currentYear + 10; year++) {
+		years.add(year);
 	}
-	return options;
+	years.add(seedYear);
+	return [...years]
+		.sort((a, b) => a - b)
+		.map((year) => ({ label: String(year), value: String(year) }));
 }
 
 // Day-of-month options sized to the selected month/year.
@@ -1361,7 +1363,7 @@ function FeedbackTargetDrawer({
 	const initial = resolveInitialTargetState(currentTarget, currentGranularity);
 	const [granularity, setGranularity] = useState<TargetGranularity>(initial.granularity);
 	const [fields, setFields] = useState<TargetFields>(initial.fields);
-	const [earliestYear, setEarliestYear] = useState(Number(initial.fields.year));
+	const [seedYear, setSeedYear] = useState(Number(initial.fields.year));
 	const [slideFrom, setSlideFrom] = useState<'left' | 'right'>('right');
 	const [error, setError] = useState('');
 
@@ -1374,7 +1376,7 @@ function FeedbackTargetDrawer({
 			const next = resolveInitialTargetState(currentTarget, currentGranularity);
 			setGranularity(next.granularity);
 			setFields(next.fields);
-			setEarliestYear(Number(next.fields.year));
+			setSeedYear(Number(next.fields.year));
 			setSlideFrom('right');
 			setError('');
 		}
@@ -1384,7 +1386,7 @@ function FeedbackTargetDrawer({
 
 	const yearNum = Number(fields.year);
 	const monthNum = Number(fields.month);
-	const yearOptions = useMemo(() => buildYearOptions(earliestYear), [earliestYear]);
+	const yearOptions = useMemo(() => buildYearOptions(seedYear), [seedYear]);
 	const dayOptions = useMemo(() => buildDayOptions(yearNum, monthNum), [yearNum, monthNum]);
 	// The stored day can exceed the current month's length (e.g. picking day 31, then a
 	// shorter month); clamp for display but keep `fields.day` so it restores on a longer month.
@@ -1508,7 +1510,7 @@ function FeedbackTargetDrawer({
 						{/* Panel slides in from the direction the picked range sits in the nav. */}
 						<div
 							className={cn(
-								'animate-in fade-in-0 duration-200',
+								'animate-in duration-200 fade-in-0',
 								slideFrom === 'right' ? 'slide-in-from-right-6' : 'slide-in-from-left-6'
 							)}
 							key={granularity}
