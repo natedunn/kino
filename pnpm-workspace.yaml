@@ -1,5 +1,2 @@
 packages:
   - .
-
-patchedDependencies:
-  kitcn@0.15.15: patches/kitcn.patch
