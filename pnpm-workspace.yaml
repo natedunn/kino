@@ -2,4 +2,4 @@ packages:
   - .
 
 patchedDependencies:
-  kitcn: patches/kitcn.patch
+  kitcn@0.15.15: patches/kitcn.patch
