@@ -53,6 +53,12 @@ export function pad2(value: number) {
 	return String(value).padStart(2, '0');
 }
 
+// Number of days in a given month (1-indexed). Exposed for client-side day-of-month
+// option lists / clamping so the drawer shares the same leap-year logic as the parsers.
+export function getDaysInMonth(year: number, month: number) {
+	return daysInMonth(year, month);
+}
+
 function isLeapYear(year: number) {
 	return year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
 }
