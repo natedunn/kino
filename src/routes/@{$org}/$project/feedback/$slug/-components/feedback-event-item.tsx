@@ -180,7 +180,9 @@ function PriorityPill({ priority }: { priority?: string | null }) {
 	const value = priority ?? 'none';
 	return (
 		<span className='inline-flex items-center gap-1 rounded bg-muted px-1.5 py-0.5'>
-			<span className={`size-2 rounded-full ${PRIORITY_DOT_CLASS[value] ?? PRIORITY_DOT_CLASS.none}`} />
+			<span
+				className={`size-2 rounded-full ${PRIORITY_DOT_CLASS[value] ?? PRIORITY_DOT_CLASS.none}`}
+			/>
 			<span className='text-xs font-medium capitalize'>{value}</span>
 		</span>
 	);

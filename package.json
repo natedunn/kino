@@ -120,5 +120,11 @@
     "vitest": "^3.2.4",
     "web-vitals": "^5.1.0",
     "wrangler": "^4.94.0"
+  },
+  "packageManager": "pnpm@10.28.2",
+  "pnpm": {
+    "patchedDependencies": {
+      "kitcn": "patches/kitcn.patch"
+    }
   }
 }
