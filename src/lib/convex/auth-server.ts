@@ -1,5 +1,5 @@
 import { splitSetCookieHeader } from 'better-auth/cookies';
-import { convexBetterAuthReactStart } from 'kitcn/auth/start';
+import { convexBetterAuthReactStart } from 'kitcn/auth/start/server';
 
 function createAuth() {
 	return convexBetterAuthReactStart({

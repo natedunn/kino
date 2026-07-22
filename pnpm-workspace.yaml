@@ -1,2 +1,5 @@
 packages:
   - .
+
+patchedDependencies:
+  kitcn: patches/kitcn.patch

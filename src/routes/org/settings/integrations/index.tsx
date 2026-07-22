@@ -45,12 +45,14 @@ function IntegrationsSettingsRoute() {
 			{ enabled: !!orgSlug, skipUnauth: true }
 		)
 	);
+	// Only needs the slug (the loader warms this same query), so run it in
+	// parallel with the org details query instead of waterfalling behind it.
 	const integrationQuery = useQuery(
 		crpc.github.getOrgIntegration.queryOptions(
 			{
 				orgSlug: orgSlug ?? '',
 			},
-			{ enabled: !!orgSlug && !!orgQuery.data?.org, skipUnauth: true }
+			{ enabled: !!orgSlug, skipUnauth: true }
 		)
 	);
 	const startConnection = useMutation(

@@ -1,0 +1,75 @@
+diff --git a/dist/react/index.js b/dist/react/index.js
+index 05dc1c4a52601b6f2593b2cd644cd9654f6e28cf..85e6ddcf41bee573f9be7f83e5815728124ba163 100644
+--- a/dist/react/index.js
++++ b/dist/react/index.js
+@@ -1275,6 +1275,19 @@ function useFnMeta() {
+ * }
+ * ```
+ */
++function decodeJwtSubject(token) {
++	if (!token) return null;
++	try {
++		const payload = token.split(".")[1];
++		if (!payload) return null;
++		const normalized = payload.replace(/-/g, "+").replace(/_/g, "/");
++		const padded = normalized.padEnd(normalized.length + (4 - normalized.length % 4) % 4, "=");
++		const decoded = JSON.parse(atob(padded));
++		return typeof decoded.sub === "string" ? decoded.sub : null;
++	} catch {
++		return null;
++	}
++}
+ function createCRPCContext(options) {
+ 	const { api, ...httpOptions } = options;
+ 	const meta = buildMetaIndex(api);
+@@ -1296,7 +1309,27 @@ function createCRPCContext(options) {
+ 				token
+ 			};
+ 			if (!previous) return;
+-			if (tokenReady && (previous.token !== token || previous.isAuthenticated !== isAuthenticated)) convexQueryClient.resetAuthQueries();
++			if (!tokenReady) return;
++			if (previous.token === token && previous.isAuthenticated === isAuthenticated) return;
++			// Same-identity auth transitions (post-hydration bootstrap, wake refresh,
++			// expiry rotation, the auth bridge settling long after SSR paint on slow
++			// networks) must not wipe loaded query data — Convex setAuth reruns live
++			// subscriptions server-side with the new identity, so data updates in
++			// place. Hard-reset (data wipe + re-suspend) only when the identity
++			// actually changes: a different subject across two known tokens, or an
++			// isAuthenticated flip where the subject cannot be shown to be the same
++			// (genuine sign-in from anonymous, sign-out). For a flip with the same
++			// known subject, refresh subscriptions without discarding data so
++			// auth-gated queries resubscribe under the new state. (Sign-out flows
++			// additionally call resetAuthQueries() directly from the auth mutations,
++			// so logout cleanup does not depend on this effect.)
++			const previousSubject = decodeJwtSubject(previous.token);
++			const nextSubject = decodeJwtSubject(token);
++			const subjectChanged = previousSubject !== null && nextSubject !== null && previousSubject !== nextSubject;
++			const authFlipped = previous.isAuthenticated !== isAuthenticated;
++			const sameKnownSubject = previousSubject !== null && previousSubject === nextSubject;
++			if (subjectChanged || (authFlipped && !sameKnownSubject)) convexQueryClient.resetAuthQueries();
++			else if (authFlipped) convexQueryClient.softRefreshAuthQueries();
+ 		}, [
+ 			convexQueryClient,
+ 			isAuthenticated,
+@@ -1893,6 +1926,21 @@ var ConvexQueryClient = class {
+ 		for (const query of this.queryClient.getQueryCache().getAll()) if (this.isAuthBoundQuery(query)) this.subscribeQuery(query);
+ 	}
+ 	/**
++	* Rebuild auth-bound subscriptions for a same-identity auth transition
++	* WITHOUT resetting cached data, so already-rendered content stays on screen.
++	* Live subscriptions receive fresh results on resubscribe; non-subscribed
++	* (subscribe: false) auth queries are refetched to pick up the new auth state.
++	*/
++	async softRefreshAuthQueries() {
++		const authQueries = this.queryClient.getQueryCache().getAll().filter((query) => this.isAuthBoundQuery(query));
++		for (const query of authQueries) {
++			this.cancelPendingUnsubscribe(query.queryHash);
++			this.unsubscribeQueryByHash(query.queryHash);
++		}
++		for (const query of this.queryClient.getQueryCache().getAll()) if (this.isAuthBoundQuery(query)) this.subscribeQuery(query);
++		await this.queryClient.refetchQueries({ predicate: (query) => this.isAuthBoundQuery(query) && (query.meta)?.subscribe === false && query.getObserversCount() > 0 });
++	}
++	/**
+ 	* Batch update all subscriptions.
+ 	* Called internally when Convex client reconnects.
+ 	*/

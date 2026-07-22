@@ -10,7 +10,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "better-auth": "1.6.9"
+    "better-auth": "1.6.23"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260610.0",
