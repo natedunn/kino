@@ -6,9 +6,8 @@ import type { GitHubConnectionData, ProfileSummary, TimelineItem } from './-type
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import {
 	dateFromDayTarget,
-	dayTargetFromDate,
-	formatTarget,
 	formatTargetOrUnscheduled,
+	getDaysInMonth,
 	getQuarterFromDate,
 	isValidTarget,
 	pad2,
@@ -41,7 +40,6 @@ import { ProfileLinkOrUnknown } from '@/components/profile-link';
 import { SidebarSection } from '@/components/sidebar-section';
 import { Badge } from '@/components/ui/badge';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
 import {
 	Dialog,
 	DialogContent,
@@ -132,60 +130,137 @@ const TARGET_GRANULARITY_OPTIONS: Array<{
 ];
 
 const QUARTER_OPTIONS = [
-	{ label: 'Q1', value: 'Q1' },
-	{ label: 'Q2', value: 'Q2' },
-	{ label: 'Q3', value: 'Q3' },
-	{ label: 'Q4', value: 'Q4' },
+	{ label: 'Quarter 1 (Q1)', value: 'Q1' },
+	{ label: 'Quarter 2 (Q2)', value: 'Q2' },
+	{ label: 'Quarter 3 (Q3)', value: 'Q3' },
+	{ label: 'Quarter 4 (Q4)', value: 'Q4' },
 ] as const;
 
 const MONTH_OPTIONS = [
-	{ label: 'January', value: '01' },
-	{ label: 'February', value: '02' },
-	{ label: 'March', value: '03' },
-	{ label: 'April', value: '04' },
-	{ label: 'May', value: '05' },
-	{ label: 'June', value: '06' },
-	{ label: 'July', value: '07' },
-	{ label: 'August', value: '08' },
-	{ label: 'September', value: '09' },
-	{ label: 'October', value: '10' },
-	{ label: 'November', value: '11' },
-	{ label: 'December', value: '12' },
+	{ label: 'January (01)', value: '01' },
+	{ label: 'February (02)', value: '02' },
+	{ label: 'March (03)', value: '03' },
+	{ label: 'April (04)', value: '04' },
+	{ label: 'May (05)', value: '05' },
+	{ label: 'June (06)', value: '06' },
+	{ label: 'July (07)', value: '07' },
+	{ label: 'August (08)', value: '08' },
+	{ label: 'September (09)', value: '09' },
+	{ label: 'October (10)', value: '10' },
+	{ label: 'November (11)', value: '11' },
+	{ label: 'December (12)', value: '12' },
 ] as const;
 
-function defaultTargetForGranularity(granularity: TargetGranularity) {
-	const now = new Date();
-	const year = now.getFullYear();
-	const month = now.getMonth() + 1;
-	const day = now.getDate();
+// How far the granularity nav slides its panel in; index order mirrors the nav (L→R).
+const GRANULARITY_ORDER: Array<TargetGranularity> = ['day', 'month', 'quarter', 'year'];
 
-	switch (granularity) {
-		case 'day':
-			return `${year}-${pad2(month)}-${pad2(day)}`;
-		case 'month':
-			return `${year}-${pad2(month)}`;
-		case 'quarter':
-			return `${year}-Q${getQuarterFromDate(now)}`;
+// Local edit state for the target drawer. Each field persists independently so switching
+// granularity never wipes the others (year carries everywhere; month/day carry between the
+// day and month ranges; quarter keeps its own value).
+type TargetFields = {
+	day: string; // "15"
+	month: string; // "07"
+	quarter: string; // "Q1"
+	year: string; // "2026"
+};
+
+function quarterFromMonth(month: number) {
+	return `Q${Math.floor((month - 1) / 3) + 1}`;
+}
+
+// Seed the drawer fields from an existing target (falling back to today for anything the
+// target doesn't specify) and pick the granularity to open on.
+function resolveInitialTargetState(
+	currentTarget: string | null,
+	currentGranularity: TargetGranularity | null
+): { fields: TargetFields; granularity: TargetGranularity } {
+	const now = new Date();
+	const fields: TargetFields = {
+		day: pad2(now.getDate()),
+		month: pad2(now.getMonth() + 1),
+		quarter: `Q${getQuarterFromDate(now)}`,
+		year: String(now.getFullYear()),
+	};
+
+	if (!currentTarget || !currentGranularity || !isValidTarget(currentTarget, currentGranularity)) {
+		return { fields, granularity: 'quarter' };
+	}
+
+	switch (currentGranularity) {
+		case 'day': {
+			const date = dateFromDayTarget(currentTarget);
+			if (date) {
+				fields.year = String(date.getFullYear());
+				fields.month = pad2(date.getMonth() + 1);
+				fields.day = pad2(date.getDate());
+				fields.quarter = quarterFromMonth(date.getMonth() + 1);
+			}
+			break;
+		}
+		case 'month': {
+			const parsed = parseMonthParts(currentTarget);
+			if (parsed) {
+				fields.year = String(parsed.year);
+				fields.month = pad2(parsed.month);
+				fields.quarter = quarterFromMonth(parsed.month);
+			}
+			break;
+		}
+		case 'quarter': {
+			const parsed = parseQuarterParts(currentTarget);
+			if (parsed) {
+				fields.year = String(parsed.year);
+				fields.quarter = `Q${parsed.quarter}`;
+			}
+			break;
+		}
 		case 'year':
-			return String(year);
+			fields.year = currentTarget;
+			break;
+	}
+
+	return { fields, granularity: currentGranularity };
+}
+
+// Build the target token string the mutation expects from the current field values.
+function targetTokenFromFields(granularity: TargetGranularity, fields: TargetFields) {
+	const yearNum = Number(fields.year);
+	const monthNum = Number(fields.month);
+	switch (granularity) {
+		case 'day': {
+			const maxDay = getDaysInMonth(yearNum, monthNum);
+			const clampedDay = Math.min(Math.max(Number(fields.day) || 1, 1), maxDay);
+			return `${fields.year}-${fields.month}-${pad2(clampedDay)}`;
+		}
+		case 'month':
+			return `${fields.year}-${fields.month}`;
+		case 'quarter':
+			return `${fields.year}-${fields.quarter}`;
+		case 'year':
+			return fields.year;
 	}
 }
 
-function parseQuarterTarget(target: string) {
-	const parsed = parseQuarterParts(target);
-	return {
-		quarter: parsed ? `Q${parsed.quarter}` : `Q${getQuarterFromDate(new Date())}`,
-		year: parsed ? String(parsed.year) : String(new Date().getFullYear()),
-	};
+// Year options: current year → +10, extended back to include an older existing target year.
+function buildYearOptions(earliestYear: number) {
+	const currentYear = new Date().getFullYear();
+	const start = Math.min(currentYear, earliestYear);
+	const end = currentYear + 10;
+	const options: Array<{ label: string; value: string }> = [];
+	for (let year = start; year <= end; year++) {
+		options.push({ label: String(year), value: String(year) });
+	}
+	return options;
 }
 
-function parseMonthTarget(target: string) {
-	const parsed = parseMonthParts(target);
-	const now = new Date();
-	return {
-		month: parsed ? pad2(parsed.month) : pad2(now.getMonth() + 1),
-		year: parsed ? String(parsed.year) : String(now.getFullYear()),
-	};
+// Day-of-month options sized to the selected month/year.
+function buildDayOptions(year: number, month: number) {
+	const total = getDaysInMonth(year, month);
+	const options: Array<{ label: string; value: string }> = [];
+	for (let day = 1; day <= total; day++) {
+		options.push({ label: String(day), value: pad2(day) });
+	}
+	return options;
 }
 
 const routeApi = getRouteApi('/@{$org}/$project/feedback/$slug/');
@@ -678,7 +753,6 @@ function FeedbackDetailContent({
 				currentGranularity={feedback.targetGranularity ?? null}
 				currentTarget={feedback.target ?? null}
 				feedbackId={feedback.id}
-				feedbackTitle={feedback.title}
 				isSaving={targetMutation.isPending}
 				onOpenChange={setTargetDrawerOpen}
 				onSave={(value) =>
@@ -876,13 +950,13 @@ function FeedbackDetailContent({
 										<span className='text-sm text-muted-foreground'>Target</span>
 										{projectData.permissions.canEdit ? (
 											<Button
-												className='h-auto max-w-52 justify-end gap-1.5 px-2 py-1 text-xs'
+												className='max-w-52 justify-end'
 												onClick={() => setTargetDrawerOpen(true)}
-												size='sm'
+												size='default'
 												type='button'
-												variant='ghost'
+												variant='secondary'
 											>
-												<CalendarIcon className='size-3' />
+												<CalendarIcon className='size-3.5' />
 												<span className='truncate'>
 													{formatTargetOrUnscheduled(
 														feedback.target ?? null,
@@ -1262,7 +1336,6 @@ function FeedbackTargetDrawer({
 	currentGranularity,
 	currentTarget,
 	feedbackId,
-	feedbackTitle,
 	isSaving,
 	onOpenChange,
 	onSave,
@@ -1271,7 +1344,6 @@ function FeedbackTargetDrawer({
 	currentGranularity: TargetGranularity | null;
 	currentTarget: string | null;
 	feedbackId: string;
-	feedbackTitle: string;
 	isSaving: boolean;
 	onOpenChange: (open: boolean) => void;
 	onSave: (
@@ -1282,59 +1354,59 @@ function FeedbackTargetDrawer({
 	) => Promise<unknown>;
 	open: boolean;
 }) {
-	const resolveInitialState = () => {
-		const granularity =
-			currentTarget && currentGranularity && isValidTarget(currentTarget, currentGranularity)
-				? currentGranularity
-				: 'quarter';
-		const target =
-			currentTarget && currentGranularity && isValidTarget(currentTarget, currentGranularity)
-				? currentTarget
-				: defaultTargetForGranularity(granularity);
-		return { granularity, target };
-	};
-
 	const isMobile = useIsMobile();
 	// Slide up from the bottom on mobile, in from the right on larger screens.
 	const swipeDirection = isMobile ? 'down' : 'right';
 
-	const initialState = resolveInitialState();
-	const [granularity, setGranularity] = useState<TargetGranularity>(initialState.granularity);
-	const [target, setTarget] = useState(initialState.target);
+	const initial = resolveInitialTargetState(currentTarget, currentGranularity);
+	const [granularity, setGranularity] = useState<TargetGranularity>(initial.granularity);
+	const [fields, setFields] = useState<TargetFields>(initial.fields);
+	const [earliestYear, setEarliestYear] = useState(Number(initial.fields.year));
+	const [slideFrom, setSlideFrom] = useState<'left' | 'right'>('right');
 	const [error, setError] = useState('');
 
-	// Only seed local edit state when the sheet transitions to open. Re-seeding on
+	// Only seed local edit state when the drawer transitions to open. Re-seeding on
 	// every `currentTarget`/`currentGranularity` change would discard the user's
 	// in-progress edits whenever the live Convex query re-emits the feedback doc.
 	const wasOpen = useRef(false);
 	useEffect(() => {
 		if (open && !wasOpen.current) {
-			const next = resolveInitialState();
+			const next = resolveInitialTargetState(currentTarget, currentGranularity);
 			setGranularity(next.granularity);
-			setTarget(next.target);
+			setFields(next.fields);
+			setEarliestYear(Number(next.fields.year));
+			setSlideFrom('right');
 			setError('');
 		}
 		wasOpen.current = open;
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [open]);
 
-	const selectedDate = granularity === 'day' ? dateFromDayTarget(target) : undefined;
-	const quarterTarget = parseQuarterTarget(target);
-	const monthTarget = parseMonthTarget(target);
-	const trimmedTarget = target.trim();
-	const targetPreview = isValidTarget(trimmedTarget, granularity)
-		? formatTarget(trimmedTarget, granularity)
-		: 'Invalid target';
+	const yearNum = Number(fields.year);
+	const monthNum = Number(fields.month);
+	const yearOptions = useMemo(() => buildYearOptions(earliestYear), [earliestYear]);
+	const dayOptions = useMemo(() => buildDayOptions(yearNum, monthNum), [yearNum, monthNum]);
+	// The stored day can exceed the current month's length (e.g. picking day 31, then a
+	// shorter month); clamp for display but keep `fields.day` so it restores on a longer month.
+	const dayValue = pad2(Math.min(Math.max(Number(fields.day) || 1, 1), dayOptions.length));
+
+	function updateFields(patch: Partial<TargetFields>) {
+		setFields((prev) => ({ ...prev, ...patch }));
+		setError('');
+	}
 
 	function handleGranularityChange(nextGranularity: TargetGranularity) {
+		if (nextGranularity === granularity) return;
+		const from = GRANULARITY_ORDER.indexOf(granularity);
+		const to = GRANULARITY_ORDER.indexOf(nextGranularity);
+		setSlideFrom(to > from ? 'right' : 'left');
 		setGranularity(nextGranularity);
-		setTarget(defaultTargetForGranularity(nextGranularity));
 		setError('');
 	}
 
 	async function handleSave(event: FormEvent<HTMLFormElement>) {
 		event.preventDefault();
-		const nextTarget = target.trim();
+		const nextTarget = targetTokenFromFields(granularity, fields);
 		if (!isValidTarget(nextTarget, granularity)) {
 			setError('Enter a valid target for the selected type.');
 			return;
@@ -1359,6 +1431,30 @@ function FeedbackTargetDrawer({
 		}
 	}
 
+	const yearField = (
+		<div className='flex min-w-0 flex-col gap-1.5'>
+			<label className='text-xs font-medium text-muted-foreground' htmlFor='target-year'>
+				Year
+			</label>
+			<Select
+				items={yearOptions}
+				onValueChange={(value) => updateFields({ year: String(value) })}
+				value={fields.year}
+			>
+				<SelectTrigger className='h-10 w-full' id='target-year'>
+					<SelectValue />
+				</SelectTrigger>
+				<SelectContent>
+					{yearOptions.map((option) => (
+						<SelectItem key={option.value} value={option.value}>
+							{option.label}
+						</SelectItem>
+					))}
+				</SelectContent>
+			</Select>
+		</div>
+	);
+
 	return (
 		<Drawer
 			onOpenChange={onOpenChange}
@@ -1366,187 +1462,173 @@ function FeedbackTargetDrawer({
 			showSwipeHandle={isMobile}
 			swipeDirection={swipeDirection}
 		>
-			<DrawerContent className='rounded-xl border bg-card [--bleed:0px] [--drawer-bleed-background:var(--color-card)] [--drawer-inset:0.5rem] data-[swipe-axis=x]:sm:[--drawer-content-width:28rem]'>
-				<DrawerHeader className='border-b bg-muted/40 px-5 py-5'>
-					<div className='flex items-start gap-3 pr-8 text-left'>
-						<span className='flex size-9 shrink-0 items-center justify-center rounded-lg border bg-background text-primary shadow-xs'>
-							<CalendarIcon className='size-4' />
+			<DrawerContent className='rounded-xl border bg-card [--bleed:0px] [--drawer-bleed-background:var(--color-card)] [--drawer-inset:0.5rem] data-[swipe-axis=x]:sm:[--drawer-content-width:26rem]'>
+				<DrawerHeader className='border-b bg-muted/40 px-5 py-4'>
+					<div className='flex items-center gap-2.5 pr-8 text-left'>
+						<span className='flex size-7 shrink-0 items-center justify-center rounded-md border bg-background text-primary shadow-xs'>
+							<CalendarIcon className='size-3.5' />
 						</span>
-						<div className='min-w-0 space-y-1'>
-							<div className='text-xs font-medium text-muted-foreground uppercase'>Target</div>
-							<DrawerTitle className='line-clamp-2 text-base leading-snug'>
-								{feedbackTitle}
-							</DrawerTitle>
-						</div>
+						<DrawerTitle className='text-sm font-semibold tracking-tight'>
+							Edit target timeframe
+						</DrawerTitle>
 					</div>
 					<DrawerDescription className='sr-only'>
 						Target options for feedback {feedbackId}
 					</DrawerDescription>
-					<DrawerClose className='absolute top-4 right-4 rounded-xs opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-hidden disabled:pointer-events-none'>
+					<DrawerClose className='absolute top-3.5 right-4 rounded-xs opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-hidden disabled:pointer-events-none'>
 						<XIcon className='size-4' />
 						<span className='sr-only'>Close</span>
 					</DrawerClose>
 				</DrawerHeader>
 
 				<form className='flex min-h-0 flex-1 flex-col' onSubmit={handleSave}>
-					<div className='flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-5 py-6'>
-						<div className='rounded-xl border bg-gradient-to-b from-muted/50 to-muted/10 px-5 py-4'>
-							<div className='text-[0.7rem] font-medium tracking-[0.1em] text-muted-foreground uppercase'>
-								Selected target
-							</div>
-							<div
-								className={cn(
-									'mt-1.5 truncate text-2xl font-semibold tracking-tight',
-									!isValidTarget(trimmedTarget, granularity) && 'text-muted-foreground/60'
-								)}
-							>
-								{targetPreview}
-							</div>
+					{/* Granularity nav — the primary control, doubling as range navigation. */}
+					<div className='border-b px-5 py-3'>
+						<div className='grid grid-cols-4 gap-1 rounded-lg border bg-muted p-1'>
+							{TARGET_GRANULARITY_OPTIONS.map((option) => (
+								<button
+									aria-pressed={granularity === option.value}
+									className={cn(
+										'h-8 rounded-md text-xs font-medium transition-all',
+										granularity === option.value
+											? 'bg-foreground text-background shadow-xs'
+											: 'text-muted-foreground hover:text-foreground'
+									)}
+									key={option.value}
+									onClick={() => handleGranularityChange(option.value)}
+									type='button'
+								>
+									{option.label}
+								</button>
+							))}
 						</div>
+					</div>
 
-						<div className='flex flex-col gap-2'>
-							<span className='text-xs font-medium text-muted-foreground'>Resolution</span>
-							<div className='grid grid-cols-4 gap-1 rounded-lg border bg-muted p-1'>
-								{TARGET_GRANULARITY_OPTIONS.map((option) => (
-									<button
-										aria-pressed={granularity === option.value}
-										className={cn(
-											'h-8 rounded-md text-xs font-medium transition-all',
-											granularity === option.value
-												? 'bg-foreground text-background shadow-xs'
-												: 'text-muted-foreground hover:text-foreground'
-										)}
-										key={option.value}
-										onClick={() => handleGranularityChange(option.value)}
-										type='button'
-									>
-										{option.label}
-									</button>
-								))}
-							</div>
+					<div className='flex min-h-0 flex-1 flex-col gap-4 overflow-x-hidden overflow-y-auto px-5 py-5'>
+						{/* Panel slides in from the direction the picked range sits in the nav. */}
+						<div
+							className={cn(
+								'animate-in fade-in-0 duration-200',
+								slideFrom === 'right' ? 'slide-in-from-right-6' : 'slide-in-from-left-6'
+							)}
+							key={granularity}
+						>
+							{granularity === 'day' ? (
+								<div className='grid grid-cols-3 gap-3'>
+									<div className='flex min-w-0 flex-col gap-1.5'>
+										<label
+											className='text-xs font-medium text-muted-foreground'
+											htmlFor='target-day'
+										>
+											Day
+										</label>
+										<Select
+											items={dayOptions}
+											onValueChange={(value) => updateFields({ day: String(value) })}
+											value={dayValue}
+										>
+											<SelectTrigger className='h-10 w-full' id='target-day'>
+												<SelectValue />
+											</SelectTrigger>
+											<SelectContent>
+												{dayOptions.map((option) => (
+													<SelectItem key={option.value} value={option.value}>
+														{option.label}
+													</SelectItem>
+												))}
+											</SelectContent>
+										</Select>
+									</div>
+									<div className='flex min-w-0 flex-col gap-1.5'>
+										<label
+											className='text-xs font-medium text-muted-foreground'
+											htmlFor='target-day-month'
+										>
+											Month
+										</label>
+										<Select
+											items={MONTH_OPTIONS}
+											onValueChange={(value) => updateFields({ month: String(value) })}
+											value={fields.month}
+										>
+											<SelectTrigger className='h-10 w-full' id='target-day-month'>
+												<SelectValue />
+											</SelectTrigger>
+											<SelectContent>
+												{MONTH_OPTIONS.map((option) => (
+													<SelectItem key={option.value} value={option.value}>
+														{option.label}
+													</SelectItem>
+												))}
+											</SelectContent>
+										</Select>
+									</div>
+									{yearField}
+								</div>
+							) : null}
+
+							{granularity === 'month' ? (
+								<div className='grid grid-cols-2 gap-3'>
+									<div className='flex min-w-0 flex-col gap-1.5'>
+										<label
+											className='text-xs font-medium text-muted-foreground'
+											htmlFor='target-month'
+										>
+											Month
+										</label>
+										<Select
+											items={MONTH_OPTIONS}
+											onValueChange={(value) => updateFields({ month: String(value) })}
+											value={fields.month}
+										>
+											<SelectTrigger className='h-10 w-full' id='target-month'>
+												<SelectValue />
+											</SelectTrigger>
+											<SelectContent>
+												{MONTH_OPTIONS.map((option) => (
+													<SelectItem key={option.value} value={option.value}>
+														{option.label}
+													</SelectItem>
+												))}
+											</SelectContent>
+										</Select>
+									</div>
+									{yearField}
+								</div>
+							) : null}
+
+							{granularity === 'quarter' ? (
+								<div className='grid grid-cols-2 gap-3'>
+									<div className='flex min-w-0 flex-col gap-1.5'>
+										<label
+											className='text-xs font-medium text-muted-foreground'
+											htmlFor='target-quarter'
+										>
+											Quarter
+										</label>
+										<Select
+											items={QUARTER_OPTIONS}
+											onValueChange={(value) => updateFields({ quarter: String(value) })}
+											value={fields.quarter}
+										>
+											<SelectTrigger className='h-10 w-full' id='target-quarter'>
+												<SelectValue />
+											</SelectTrigger>
+											<SelectContent>
+												{QUARTER_OPTIONS.map((option) => (
+													<SelectItem key={option.value} value={option.value}>
+														{option.label}
+													</SelectItem>
+												))}
+											</SelectContent>
+										</Select>
+									</div>
+									{yearField}
+								</div>
+							) : null}
+
+							{granularity === 'year' ? yearField : null}
 						</div>
-
-						{granularity === 'day' ? (
-							<div className='flex justify-center rounded-xl border bg-card p-1'>
-								<Calendar
-									className='p-2'
-									mode='single'
-									onSelect={(date) => {
-										if (date) setTarget(dayTargetFromDate(date));
-									}}
-									selected={selectedDate}
-								/>
-							</div>
-						) : null}
-
-						{granularity === 'month' ? (
-							<div className='grid grid-cols-[minmax(0,1fr)_7rem] gap-3'>
-								<div className='flex min-w-0 flex-col gap-2'>
-									<label
-										className='text-xs font-medium text-muted-foreground'
-										htmlFor='target-month'
-									>
-										Month
-									</label>
-									<Select
-										onValueChange={(value) => setTarget(`${monthTarget.year}-${value}`)}
-										value={monthTarget.month}
-									>
-										<SelectTrigger className='h-10 w-full' id='target-month'>
-											<SelectValue />
-										</SelectTrigger>
-										<SelectContent>
-											{MONTH_OPTIONS.map((option) => (
-												<SelectItem key={option.value} value={option.value}>
-													{option.label}
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
-								</div>
-								<div className='flex min-w-0 flex-col gap-2'>
-									<label
-										className='text-xs font-medium text-muted-foreground'
-										htmlFor='target-month-year'
-									>
-										Year
-									</label>
-									<Input
-										className='h-10'
-										id='target-month-year'
-										max={9999}
-										min={1000}
-										onChange={(event) => setTarget(`${event.target.value}-${monthTarget.month}`)}
-										type='number'
-										value={monthTarget.year}
-									/>
-								</div>
-							</div>
-						) : null}
-
-						{granularity === 'quarter' ? (
-							<div className='grid grid-cols-[minmax(0,1fr)_7rem] gap-3'>
-								<div className='flex min-w-0 flex-col gap-2'>
-									<label
-										className='text-xs font-medium text-muted-foreground'
-										htmlFor='target-quarter'
-									>
-										Quarter
-									</label>
-									<Select
-										onValueChange={(value) => setTarget(`${quarterTarget.year}-${value}`)}
-										value={quarterTarget.quarter}
-									>
-										<SelectTrigger className='h-10 w-full' id='target-quarter'>
-											<SelectValue />
-										</SelectTrigger>
-										<SelectContent>
-											{QUARTER_OPTIONS.map((option) => (
-												<SelectItem key={option.value} value={option.value}>
-													{option.label}
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
-								</div>
-								<div className='flex min-w-0 flex-col gap-2'>
-									<label
-										className='text-xs font-medium text-muted-foreground'
-										htmlFor='target-quarter-year'
-									>
-										Year
-									</label>
-									<Input
-										className='h-10'
-										id='target-quarter-year'
-										max={9999}
-										min={1000}
-										onChange={(event) =>
-											setTarget(`${event.target.value}-${quarterTarget.quarter}`)
-										}
-										type='number'
-										value={quarterTarget.year}
-									/>
-								</div>
-							</div>
-						) : null}
-
-						{granularity === 'year' ? (
-							<div className='flex flex-col gap-2'>
-								<label className='text-xs font-medium text-muted-foreground' htmlFor='target-year'>
-									Year
-								</label>
-								<Input
-									className='h-10'
-									id='target-year'
-									max={9999}
-									min={1000}
-									onChange={(event) => setTarget(event.target.value)}
-									type='number'
-									value={target}
-								/>
-							</div>
-						) : null}
 
 						{error ? (
 							<p className='rounded-md border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive'>
@@ -1555,27 +1637,28 @@ function FeedbackTargetDrawer({
 						) : null}
 					</div>
 
-					<DrawerFooter className='border-t bg-muted/40 px-5 py-4'>
-						<div className='flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between'>
+					<DrawerFooter className='border-t bg-muted/40 px-5 py-3'>
+						<div className='flex flex-row items-center justify-between gap-2'>
 							<Button
-								className='sm:mr-auto'
 								disabled={isSaving}
 								onClick={handleClear}
+								size='sm'
 								type='button'
 								variant='ghost'
 							>
 								Clear
 							</Button>
-							<div className='flex flex-col-reverse gap-2 sm:flex-row'>
+							<div className='flex flex-row gap-2'>
 								<Button
 									disabled={isSaving}
 									onClick={() => onOpenChange(false)}
+									size='sm'
 									type='button'
 									variant='outline'
 								>
 									Cancel
 								</Button>
-								<Button disabled={isSaving} type='submit'>
+								<Button disabled={isSaving} size='sm' type='submit'>
 									{isSaving ? 'Saving...' : 'Save target'}
 								</Button>
 							</div>
