@@ -95,8 +95,8 @@ function GitHubIntegrationRoute() {
 			},
 		})
 	);
-
 	const installations = integrationQuery.data?.installations ?? [];
+	const staleInstallations = integrationQuery.data?.staleInstallations ?? [];
 	const connections = integrationQuery.data?.connections ?? [];
 	const activeConnection = connections[0] ?? null;
 	const connectedInstallation = activeConnection
@@ -133,6 +133,8 @@ function GitHubIntegrationRoute() {
 	);
 	const selectedRepositoryValue = selectedRepository ? String(selectedRepository.id) : '';
 	const hasInstallations = installations.length > 0;
+	const hasKnownInstallations = hasInstallations || staleInstallations.length > 0;
+	const needsGitHubRefresh = staleInstallations.length > 0;
 
 	useEffect(() => {
 		if (!activeInstallationId) {
@@ -217,12 +219,17 @@ function GitHubIntegrationRoute() {
 			{search.github === 'error' ? (
 				<InlineAlert variant='danger'>GitHub installation could not be completed.</InlineAlert>
 			) : null}
-			{!hasInstallations ? (
+			{needsGitHubRefresh ? (
+				<InlineAlert variant='warning'>
+					GitHub access needs to be refreshed. Open organization settings and select Refresh
+					accounts, then try again.
+				</InlineAlert>
+			) : null}
+			{!hasKnownInstallations && !needsGitHubRefresh ? (
 				<InlineAlert variant='warning'>
 					Connect GitHub access for this organization before selecting a project repository.
 				</InlineAlert>
 			) : null}
-
 			<div className='space-y-6'>
 				<section className='overflow-hidden rounded-xl border bg-card'>
 					<div className='flex items-start gap-4 border-b p-6'>

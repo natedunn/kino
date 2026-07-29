@@ -403,13 +403,11 @@ export const prepareGithubUrlImport = privateQuery
 			connection.githubInstallationId
 		);
 		if (!installation || installation.status !== 'active') {
-			throw new CRPCError({
-				code: 'NOT_FOUND',
-				message: 'GitHub installation is no longer active',
-			});
+			return { recoveryRequired: true as const };
 		}
 		return {
 			installationId: installation.installationId as number,
+			recoveryRequired: false as const,
 			repoFullName: connection.repoFullName as string,
 			repoId: connection.repoId as number,
 			repoName: connection.repoName as string,

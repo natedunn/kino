@@ -1,3 +1,6 @@
+import type { Id } from './_generated/dataModel';
+import type { MutationCtx, QueryCtx } from './generated/server';
+
 import { eq } from 'kitcn/orm';
 import { CRPCError } from 'kitcn/server';
 import { z } from 'zod';
@@ -41,6 +44,133 @@ import {
 	githubRepositoryConnectionTable,
 	githubWebhookDeliveryTable,
 } from './schema';
+
+const MAX_RECONCILIATION_INSTALLATIONS = 100;
+const MAX_RECONCILIATION_REPOSITORY_CONNECTIONS = 500;
+
+function reconciliationCapacityError(resource: string) {
+	return new CRPCError({
+		code: 'CONFLICT',
+		message: `Too many GitHub ${resource} to refresh safely. Contact support.`,
+	});
+}
+
+async function getOrgInstallationsForReconciliation(ctx: QueryCtx | MutationCtx, orgId: string) {
+	const installations = await ctx.db
+		.query('githubInstallation')
+		.withIndex('by_orgId', (q) => q.eq('orgId', orgId))
+		.take(MAX_RECONCILIATION_INSTALLATIONS + 1);
+	if (installations.length > MAX_RECONCILIATION_INSTALLATIONS) {
+		throw reconciliationCapacityError('installations');
+	}
+	return installations;
+}
+
+async function getLiveOrgRepositoryConnectionsForReconciliation(
+	ctx: QueryCtx | MutationCtx,
+	orgId: string
+) {
+	const repositoryConnections = await ctx.db
+		.query('githubRepositoryConnection')
+		.withIndex('by_orgId_repoId', (q) => q.eq('orgId', orgId))
+		// Deleted rows must not consume the safety limit or hide a live connection.
+		// eslint-disable-next-line @convex-dev/no-filter-in-query
+		.filter((q) => q.eq(q.field('deletedTime'), undefined))
+		.take(MAX_RECONCILIATION_REPOSITORY_CONNECTIONS + 1);
+	if (repositoryConnections.length > MAX_RECONCILIATION_REPOSITORY_CONNECTIONS) {
+		throw reconciliationCapacityError('repository connections');
+	}
+	return repositoryConnections;
+}
+
+async function findAuthorizedInstallationReconciliationTarget(
+	ctx: MutationCtx,
+	args: {
+		accountId: number;
+		installationId: number;
+		orgId: string;
+	}
+) {
+	const exactMatch = await ctx.db
+		.query('githubInstallation')
+		.withIndex('by_orgId_installationId', (q) =>
+			q.eq('orgId', args.orgId).eq('installationId', args.installationId)
+		)
+		.unique();
+	if (exactMatch) return exactMatch;
+
+	const orgInstallations = await getOrgInstallationsForReconciliation(ctx, args.orgId);
+	const accountCandidates = orgInstallations.filter(
+		(installation) => installation.accountId === args.accountId
+	);
+	if (accountCandidates.length === 0) return null;
+
+	const repositoryConnections = await getLiveOrgRepositoryConnectionsForReconciliation(
+		ctx,
+		args.orgId
+	);
+	const connectedInstallationIds = new Set(
+		repositoryConnections.map((connection) => connection.githubInstallationId)
+	);
+
+	return accountCandidates.sort((left, right) => {
+		const connectionRank =
+			Number(connectedInstallationIds.has(right._id)) -
+			Number(connectedInstallationIds.has(left._id));
+		if (connectionRank !== 0) return connectionRank;
+
+		const leftUpdated = left.updatedTime ?? left._creationTime;
+		const rightUpdated = right.updatedTime ?? right._creationTime;
+		return rightUpdated - leftUpdated;
+	})[0];
+}
+
+async function repairAuthorizedInstallationRepositoryConnections(
+	ctx: MutationCtx,
+	args: {
+		accountId: number;
+		activeInstallationId: Id<'githubInstallation'>;
+		authorizedRepositoryIds: Array<number>;
+		orgId: string;
+		updatedTime: number;
+	}
+) {
+	const [orgInstallations, repositoryConnections] = await Promise.all([
+		getOrgInstallationsForReconciliation(ctx, args.orgId),
+		getLiveOrgRepositoryConnectionsForReconciliation(ctx, args.orgId),
+	]);
+	const accountInstallationIds = new Set(
+		orgInstallations
+			.filter((installation) => installation.accountId === args.accountId)
+			.map((installation) => installation._id)
+	);
+	const authorizedRepositoryIds = new Set(args.authorizedRepositoryIds);
+
+	for (const connection of repositoryConnections) {
+		if (!accountInstallationIds.has(connection.githubInstallationId)) continue;
+
+		if (!authorizedRepositoryIds.has(connection.repoId)) {
+			await ctx.orm
+				.update(githubRepositoryConnectionTable)
+				.set({
+					deletedTime: args.updatedTime,
+					updatedTime: args.updatedTime,
+					verificationStatus: 'unauthorized',
+				})
+				.where(eq(githubRepositoryConnectionTable.id, connection._id));
+			continue;
+		}
+		if (connection.githubInstallationId === args.activeInstallationId) continue;
+
+		await ctx.orm
+			.update(githubRepositoryConnectionTable)
+			.set({
+				githubInstallationId: args.activeInstallationId,
+				updatedTime: args.updatedTime,
+			})
+			.where(eq(githubRepositoryConnectionTable.id, connection._id));
+	}
+}
 
 export const startProjectConnection = authMutation
 	.input(
@@ -228,7 +358,7 @@ export const getProjectIntegration = authQuery
 			userId: ctx.userId,
 		});
 		if (!access.organization) {
-			return { installations: [] };
+			return { connections: [], installations: [], staleInstallations: [] };
 		}
 
 		if (!access.permissions.canCreate) {
@@ -251,10 +381,14 @@ export const getProjectIntegration = authQuery
 		const installations = rawInstallations
 			.filter((installation: any) => installation.status === 'active')
 			.slice(0, 20);
+		const staleInstallations = rawInstallations
+			.filter((installation: any) => installation.status === 'stale')
+			.slice(0, 20);
 		const connections = rawConnections.filter((connection: any) => !connection.deletedTime);
 		return {
 			connections: connections.map(toPublicDoc),
 			installations: installations.map(toPublicDoc),
+			staleInstallations: staleInstallations.map(toPublicDoc),
 		};
 	});
 
@@ -283,8 +417,12 @@ export const getOrgIntegration = authQuery
 		const installations = rawInstallations
 			.filter((installation: any) => installation.status === 'active')
 			.slice(0, 20);
+		const staleInstallations = rawInstallations
+			.filter((installation: any) => installation.status === 'stale')
+			.slice(0, 20);
 		return {
 			installations: installations.map(toPublicDoc),
+			staleInstallations: staleInstallations.map(toPublicDoc),
 		};
 	});
 
@@ -314,19 +452,42 @@ export const getRefreshInstallationsForCallback = privateQuery
 			});
 		}
 
-		const installations = await ctx.db
-			.query('githubInstallation')
-			.withIndex('by_orgId', (q: any) => q.eq('orgId', stateDoc.orgId))
-			.take(100);
+		const [installations, repositoryConnections] = await Promise.all([
+			getOrgInstallationsForReconciliation(ctx, stateDoc.orgId),
+			getLiveOrgRepositoryConnectionsForReconciliation(ctx, stateDoc.orgId),
+		]);
+		const installationById = new Map(
+			installations.map((installation: any) => [installation._id, installation])
+		);
+		const targetsByAccountId = new Map<number, Map<number, { fullName: string; id: number }>>();
+		for (const connection of repositoryConnections) {
+			const installation: any = installationById.get(connection.githubInstallationId);
+			if (!installation) continue;
+
+			const repositories =
+				targetsByAccountId.get(installation.accountId) ??
+				new Map<number, { fullName: string; id: number }>();
+			repositories.set(connection.repoId, {
+				fullName: connection.repoFullName,
+				id: connection.repoId,
+			});
+			targetsByAccountId.set(installation.accountId, repositories);
+		}
 
 		return {
 			installations: installations
-				.filter((installation: any) => installation.status === 'active')
+				.filter(
+					(installation: any) => installation.status === 'active' || installation.status === 'stale'
+				)
 				.map((installation: any) => ({
 					installationId: installation.installationId,
 				})),
 			orgSlug: stateDoc.orgSlug,
 			projectSlug: stateDoc.projectSlug,
+			repositoryTargets: [...targetsByAccountId].map(([accountId, repositories]) => ({
+				accountId,
+				repositories: [...repositories.values()],
+			})),
 		};
 	});
 
@@ -369,9 +530,39 @@ export const getInstallationForExternal = privateQuery
 		};
 	});
 
+export const markInstallationStale = privateMutation
+	.input(
+		z.object({
+			installationId: z.number().int(),
+		})
+	)
+	.mutation(async ({ ctx, input }) => {
+		const installations = await ctx.db
+			.query('githubInstallation')
+			.withIndex('by_installationId', (q: any) => q.eq('installationId', input.installationId))
+			.take(50);
+		const activeInstallations = installations.filter(
+			(installation: any) => installation.status === 'active'
+		);
+		const now = Date.now();
+
+		for (const installation of activeInstallations) {
+			await ctx.orm
+				.update(githubInstallationTable)
+				.set({
+					status: 'stale',
+					updatedTime: now,
+				})
+				.where(eq(githubInstallationTable.id, installation._id));
+		}
+
+		return { updatedCount: activeInstallations.length };
+	});
+
 export const completeInstallationCallback = privateMutation
 	.input(
 		z.object({
+			authorizedRepositoryIds: z.array(z.number().int()).max(500),
 			installation: githubInstallationSchema,
 			setupAction: z.string().trim().max(40).optional(),
 			state: githubStateSchema,
@@ -410,12 +601,19 @@ export const completeInstallationCallback = privateMutation
 			});
 		}
 
-		const existing = await ctx.db
-			.query('githubInstallation')
-			.withIndex('by_orgId_installationId', (q: any) =>
-				q.eq('orgId', stateDoc.orgId).eq('installationId', input.installation.id)
-			)
-			.unique();
+		const existing =
+			input.setupAction === 'remove'
+				? await ctx.db
+						.query('githubInstallation')
+						.withIndex('by_orgId_installationId', (q: any) =>
+							q.eq('orgId', stateDoc.orgId).eq('installationId', input.installation.id)
+						)
+						.unique()
+				: await findAuthorizedInstallationReconciliationTarget(ctx, {
+						accountId: input.installation.account.id,
+						installationId: input.installation.id,
+						orgId: stateDoc.orgId,
+					});
 
 		const values = {
 			accountId: input.installation.account.id,
@@ -432,13 +630,26 @@ export const completeInstallationCallback = privateMutation
 			updatedTime: Date.now(),
 		};
 
+		let savedInstallationId: Id<'githubInstallation'>;
 		if (existing) {
 			await ctx.orm
 				.update(githubInstallationTable)
 				.set(values)
 				.where(eq(githubInstallationTable.id, existing._id));
+			savedInstallationId = existing._id;
 		} else {
-			await ctx.orm.insert(githubInstallationTable).values(values);
+			const [created] = await ctx.orm.insert(githubInstallationTable).values(values).returning();
+			savedInstallationId = created.id as Id<'githubInstallation'>;
+		}
+
+		if (values.status === 'active') {
+			await repairAuthorizedInstallationRepositoryConnections(ctx, {
+				accountId: values.accountId,
+				activeInstallationId: savedInstallationId,
+				authorizedRepositoryIds: input.authorizedRepositoryIds,
+				orgId: values.orgId,
+				updatedTime: values.updatedTime,
+			});
 		}
 
 		await ctx.orm
@@ -461,7 +672,14 @@ export const completeUserInstallationsCallback = privateMutation
 	.input(
 		z.object({
 			deletedInstallationIds: z.array(z.number().int()).max(100).default([]),
-			installations: z.array(githubInstallationSchema).max(100),
+			installations: z
+				.array(
+					z.object({
+						authorizedRepositoryIds: z.array(z.number().int()).max(500),
+						installation: githubInstallationSchema,
+					})
+				)
+				.max(100),
 			state: githubStateSchema,
 		})
 	)
@@ -494,15 +712,15 @@ export const completeUserInstallationsCallback = privateMutation
 
 		const now = Date.now();
 		let savedCount = 0;
-		for (const installation of input.installations) {
+		for (const authorizedInstallation of input.installations) {
+			const { authorizedRepositoryIds, installation } = authorizedInstallation;
 			if (!installation.account) continue;
 
-			const existing = await ctx.db
-				.query('githubInstallation')
-				.withIndex('by_orgId_installationId', (q: any) =>
-					q.eq('orgId', stateDoc.orgId).eq('installationId', installation.id)
-				)
-				.unique();
+			const existing = await findAuthorizedInstallationReconciliationTarget(ctx, {
+				accountId: installation.account.id,
+				installationId: installation.id,
+				orgId: stateDoc.orgId,
+			});
 
 			const values = {
 				accountId: installation.account.id,
@@ -519,14 +737,24 @@ export const completeUserInstallationsCallback = privateMutation
 				updatedTime: now,
 			};
 
+			let savedInstallationId: Id<'githubInstallation'>;
 			if (existing) {
 				await ctx.orm
 					.update(githubInstallationTable)
 					.set(values)
 					.where(eq(githubInstallationTable.id, existing._id));
+				savedInstallationId = existing._id;
 			} else {
-				await ctx.orm.insert(githubInstallationTable).values(values);
+				const [created] = await ctx.orm.insert(githubInstallationTable).values(values).returning();
+				savedInstallationId = created.id as Id<'githubInstallation'>;
 			}
+			await repairAuthorizedInstallationRepositoryConnections(ctx, {
+				accountId: values.accountId,
+				activeInstallationId: savedInstallationId,
+				authorizedRepositoryIds,
+				orgId: values.orgId,
+				updatedTime: values.updatedTime,
+			});
 			savedCount += 1;
 		}
 

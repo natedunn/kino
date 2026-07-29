@@ -3,7 +3,9 @@ import { z } from 'zod';
 
 import { publicRoute, router } from '../lib/crpc';
 import {
+	createInstallationToken,
 	exchangeGitHubSetupCode,
+	findAccessibleInstallationRepositoryIds,
 	getAppInstallation,
 	listUserInstallations,
 	sanitizeGitHubInstallationDetails,
@@ -22,6 +24,24 @@ import {
 	githubSettingsUrl,
 	siteUrlFromState,
 } from './githubRoutes.lib';
+
+async function authorizedRepositoryIdsForInstallation(args: {
+	installationId: number;
+	repositoryTarget?: {
+		repositories: Array<{ fullName: string; id: number }>;
+	};
+}) {
+	if (!args.repositoryTarget || args.repositoryTarget.repositories.length === 0) return [];
+
+	const token = await createInstallationToken({
+		installationId: args.installationId,
+		mode: 'read',
+	});
+	return await findAccessibleInstallationRepositoryIds({
+		repositories: args.repositoryTarget.repositories,
+		token: token.token,
+	});
+}
 
 export const callback = publicRoute
 	.get('/api/github/callback')
@@ -45,10 +65,10 @@ export const callback = publicRoute
 
 			const userToken = await exchangeGitHubSetupCode(searchParams.code);
 			const userInstallations = await listUserInstallations(userToken);
+			const refreshState = await caller.getRefreshInstallationsForCallback({
+				state: searchParams.state,
+			});
 			if (!searchParams.installation_id) {
-				const refreshState = await caller.getRefreshInstallationsForCallback({
-					state: searchParams.state,
-				});
 				const userInstallationIds = new Set(
 					userInstallations.map((installation) => installation.id)
 				);
@@ -58,9 +78,31 @@ export const callback = publicRoute
 					),
 					userInstallationIds,
 				});
+				const installations = await Promise.all(
+					userInstallations.map(async (installation) => {
+						const repositoryTarget = refreshState.repositoryTargets.find(
+							(target) => target.accountId === installation.account?.id
+						);
+						if (!repositoryTarget || repositoryTarget.repositories.length === 0) {
+							return {
+								authorizedRepositoryIds: [],
+								installation: sanitizeGitHubInstallationDetails(installation),
+							};
+						}
+
+						const authorizedRepositoryIds = await authorizedRepositoryIdsForInstallation({
+							installationId: installation.id,
+							repositoryTarget,
+						});
+						return {
+							authorizedRepositoryIds,
+							installation: sanitizeGitHubInstallationDetails(installation),
+						};
+					})
+				);
 				const result = await caller.completeUserInstallationsCallback({
 					deletedInstallationIds,
-					installations: userInstallations.map(sanitizeGitHubInstallationDetails),
+					installations,
 					state: searchParams.state,
 				});
 				redirect = githubSettingsUrl({
@@ -80,7 +122,20 @@ export const callback = publicRoute
 			}
 
 			const installation = await getAppInstallation(searchParams.installation_id);
+			const repositoryTarget = refreshState.repositoryTargets.find(
+				(target) => target.accountId === installation.account?.id
+			);
+			const authorizedRepositoryIds =
+				searchParams.setup_action === 'remove' ||
+				!repositoryTarget ||
+				repositoryTarget.repositories.length === 0
+					? []
+					: await authorizedRepositoryIdsForInstallation({
+							installationId: installation.id,
+							repositoryTarget,
+						});
 			const result = await caller.completeInstallationCallback({
+				authorizedRepositoryIds,
 				installation: sanitizeGitHubInstallationDetails(installation),
 				setupAction: searchParams.setup_action,
 				state: searchParams.state,
