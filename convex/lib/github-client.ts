@@ -406,6 +406,17 @@ async function githubFetch<T>(url: string, init: RequestInit & { token?: string 
 	return (await response.json()) as T;
 }
 
+export function isGitHubNotFoundError(error: unknown) {
+	const message = error instanceof Error ? error.message : '';
+	return (
+		(typeof error === 'object' &&
+			error !== null &&
+			'code' in error &&
+			(error as { code?: string }).code === 'NOT_FOUND') ||
+		message.includes('GitHub request failed (404)')
+	);
+}
+
 export async function exchangeGitHubSetupCode(code: string) {
 	const env = getRequiredGitHubRelayEnv();
 	const result = await githubFetch<{ access_token?: string; error?: string }>(

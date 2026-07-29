@@ -3,13 +3,13 @@ import { z } from 'zod';
 
 import { authAction } from '../lib/crpc';
 import {
-	createInstallationToken,
 	listInstallationRepositories,
 	probeRepository,
 	sanitizeGitHubRepository,
 } from '../lib/github-client';
 import { orgSlugSchema, projectSlugSchema } from '../lib/validation';
 import { createGithubCaller } from './generated/github.runtime';
+import { createInstallationTokenWithRecovery } from './github.lib';
 import { connectionModeSchema, sourceSchema } from './githubExternal.lib';
 
 export const listInstallationRepositoriesForProject = authAction
@@ -27,7 +27,8 @@ export const listInstallationRepositoriesForProject = authAction
 			userId: ctx.userId,
 		});
 
-		const token = await createInstallationToken({
+		const token = await createInstallationTokenWithRecovery({
+			caller,
 			installationId: input.installationId,
 			mode: 'read',
 		});
@@ -61,7 +62,8 @@ export const connectRepository = authAction
 			userId: ctx.userId,
 		});
 
-		const token = await createInstallationToken({
+		const token = await createInstallationTokenWithRecovery({
+			caller,
 			installationId: input.installationId,
 			mode: input.mode,
 			repositoryIds: [input.repoId],

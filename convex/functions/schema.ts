@@ -43,7 +43,7 @@ const UPDATE_STATUSES = ['draft', 'published'] as const;
 export const UPDATE_CATEGORIES = ['changelog', 'article', 'announcement'] as const;
 const GITHUB_SYNC_MODES = ['read', 'read_write'] as const;
 const GITHUB_CONNECTION_STATE_STATUSES = ['pending', 'consumed', 'expired'] as const;
-const GITHUB_INSTALLATION_STATUSES = ['active', 'suspended', 'deleted'] as const;
+const GITHUB_INSTALLATION_STATUSES = ['active', 'suspended', 'stale', 'deleted'] as const;
 const FEEDBACK_GITHUB_CONNECTION_KINDS = ['issue'] as const;
 export const EMOTE_CONTENTS = [
 	'thumbsUp',

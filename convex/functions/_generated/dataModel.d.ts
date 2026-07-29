@@ -658,7 +658,7 @@ export type DataModel = {
       orgSlug: string;
       permissions?: null | any;
       repositorySelection: string;
-      status: "active" | "suspended" | "deleted";
+      status: "active" | "suspended" | "stale" | "deleted";
       updatedTime?: null | number;
       _id: Id<"githubInstallation">;
       _creationTime: number;

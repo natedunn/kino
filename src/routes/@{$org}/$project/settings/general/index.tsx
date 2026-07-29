@@ -66,6 +66,11 @@ type GeneralSettingsFormValues = {
 	visibility: ProjectVisibility;
 };
 
+function mutationErrorMessage(error: unknown, fallback: string) {
+	const anyError = error as { data?: { message?: string }; message?: string };
+	return anyError.data?.message ?? anyError.message ?? fallback;
+}
+
 // A settings card split into a bg-accent header (label + description) and a
 // bg-card body (the field), divided by a full-width border.
 function SectionCard({
@@ -208,7 +213,7 @@ function ProjectGeneralSettingsRoute() {
 					bypassBlockerRef.current = false;
 				}
 			} catch (error) {
-				setFormError(error instanceof Error ? error.message : 'Unable to update project');
+				setFormError(mutationErrorMessage(error, 'Unable to update project'));
 			}
 		},
 	});
@@ -460,9 +465,7 @@ function ProjectGeneralSettingsRoute() {
 															}
 														} catch (error) {
 															setFormError(
-																error instanceof Error
-																	? error.message
-																	: 'Unable to import from GitHub'
+																mutationErrorMessage(error, 'Unable to import from GitHub')
 															);
 														}
 													}}

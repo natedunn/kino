@@ -1085,6 +1085,12 @@ export declare const internal: {
       { state: string },
       any
     >;
+    markInstallationStale: FunctionReference<
+      "mutation",
+      "internal",
+      { installationId: number },
+      any
+    >;
     processWebhookEvent: FunctionReference<
       "mutation",
       "internal",

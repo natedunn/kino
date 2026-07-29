@@ -3,6 +3,7 @@ import type { GitHubInstallationDetails, GitHubRepository } from '../lib/github-
 import { CRPCError } from 'kitcn/server';
 import { z } from 'zod';
 
+import { createInstallationToken, isGitHubNotFoundError } from '../lib/github-client';
 import { getCurrentProfileOrThrow, verifyOrgAccess } from '../lib/kino';
 import {
 	githubLoginSchema,
@@ -16,6 +17,55 @@ import {
 
 export const connectionModeSchema = z.enum(['read', 'read_write']);
 export const sourceSchema = z.enum(['issues', 'discussions']);
+
+export const GITHUB_INSTALLATION_STALE_REASON = 'github_installation_stale' as const;
+
+export function githubInstallationRefreshRequiredError() {
+	return new CRPCError({
+		code: 'CONFLICT',
+		data: { reason: GITHUB_INSTALLATION_STALE_REASON },
+		message:
+			'GitHub access needs to be refreshed. Open organization settings, select Refresh accounts, and try again.',
+	});
+}
+
+type InstallationRecoveryCaller = {
+	markInstallationStale: (input: { installationId: number }) => Promise<unknown>;
+};
+
+export async function createInstallationTokenWithRecovery(args: {
+	caller: InstallationRecoveryCaller;
+	installationId: number;
+	mode: 'read' | 'read_write';
+	repositoryIds?: Array<number>;
+}) {
+	try {
+		return await createInstallationToken({
+			installationId: args.installationId,
+			mode: args.mode,
+			repositoryIds: args.repositoryIds,
+		});
+	} catch (error) {
+		return await recoverFromInstallationTokenError({
+			caller: args.caller,
+			error,
+			installationId: args.installationId,
+		});
+	}
+}
+
+export async function recoverFromInstallationTokenError(args: {
+	caller: InstallationRecoveryCaller;
+	error: unknown;
+	installationId: number;
+}): Promise<never> {
+	if (!isGitHubNotFoundError(args.error)) throw args.error;
+
+	await args.caller.markInstallationStale({
+		installationId: args.installationId,
+	});
+	throw githubInstallationRefreshRequiredError();
+}
 
 export const githubInstallationSchema = z.object({
 	account: z

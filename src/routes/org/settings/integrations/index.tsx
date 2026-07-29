@@ -69,9 +69,12 @@ function IntegrationsSettingsRoute() {
 			},
 		})
 	);
-
 	const installations = integrationQuery.data?.installations ?? [];
+	const staleInstallations = integrationQuery.data?.staleInstallations ?? [];
+	const knownInstallations = [...installations, ...staleInstallations];
 	const hasInstallations = installations.length > 0;
+	const hasStaleInstallations = staleInstallations.length > 0;
+	const hasKnownInstallations = knownInstallations.length > 0;
 
 	const isLoading = !orgSlug || orgQuery.isLoading || integrationQuery.isLoading;
 	const showSkeleton = useDelayedFlag(isLoading);
@@ -117,7 +120,6 @@ function IntegrationsSettingsRoute() {
 			{search.github === 'error' ? (
 				<InlineAlert variant='danger'>GitHub installation could not be completed.</InlineAlert>
 			) : null}
-
 			<div className='grid gap-8 xl:grid-cols-[minmax(0,1fr)_320px]'>
 				<div className='space-y-6'>
 					<section className='overflow-hidden rounded-xl border bg-card'>
@@ -132,6 +134,11 @@ function IntegrationsSettingsRoute() {
 										<span className='inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-300'>
 											<CheckCircle2 className='size-3' />
 											Connected
+										</span>
+									) : hasStaleInstallations ? (
+										<span className='inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:bg-amber-500/10 dark:text-amber-300'>
+											<RefreshCw className='size-3' />
+											Needs attention
 										</span>
 									) : (
 										<span className='inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground'>
@@ -157,9 +164,9 @@ function IntegrationsSettingsRoute() {
 								type='button'
 							>
 								<GitBranch className='size-4' />
-								{hasInstallations ? 'Manage GitHub access' : 'Install GitHub App'}
+								{hasKnownInstallations ? 'Manage GitHub access' : 'Install GitHub App'}
 							</Button>
-							{hasInstallations ? (
+							{hasKnownInstallations ? (
 								<Button
 									disabled={refreshInstallations.isPending}
 									onClick={() =>
@@ -184,18 +191,18 @@ function IntegrationsSettingsRoute() {
 					{refreshInstallations.error ? (
 						<InlineAlert variant='danger'>{refreshInstallations.error.message}</InlineAlert>
 					) : null}
-
 					<section className='space-y-3'>
 						<div className='flex items-center justify-between'>
 							<h3 className='text-sm font-semibold'>Connected accounts</h3>
-							{hasInstallations ? (
+							{hasKnownInstallations ? (
 								<span className='text-xs text-muted-foreground'>
-									{installations.length} {installations.length === 1 ? 'account' : 'accounts'}
+									{knownInstallations.length}{' '}
+									{knownInstallations.length === 1 ? 'account' : 'accounts'}
 								</span>
 							) : null}
 						</div>
 
-						{!hasInstallations ? (
+						{!hasKnownInstallations ? (
 							<div className='rounded-xl border border-dashed bg-muted/20 p-8 text-center'>
 								<div className='mx-auto flex size-10 items-center justify-center rounded-full bg-background shadow-sm'>
 									<GitBranch className='size-5 text-muted-foreground' />
@@ -207,7 +214,7 @@ function IntegrationsSettingsRoute() {
 							</div>
 						) : (
 							<div className='grid gap-3 md:grid-cols-2'>
-								{installations.map((installation) => (
+								{knownInstallations.map((installation) => (
 									<div
 										className='rounded-xl border bg-card p-4 transition-colors hover:border-foreground/20'
 										key={installation.id}
