@@ -496,6 +496,7 @@ export async function fetchRepository(args: { fullName: string; token: string })
 	const repository = await githubFetch<{
 		homepage: string | null;
 		html_url: string;
+		id: number;
 	}>(`${GITHUB_API_URL}/repos/${args.fullName}`, {
 		method: 'GET',
 		token: args.token,
@@ -503,6 +504,7 @@ export async function fetchRepository(args: { fullName: string; token: string })
 	return {
 		homepage: repository.homepage,
 		htmlUrl: repository.html_url,
+		id: repository.id,
 	};
 }
 
@@ -521,11 +523,11 @@ export async function findAccessibleInstallationRepositoryIds(args: {
 		const results = await Promise.all(
 			batch.map(async (repository) => {
 				try {
-					await fetchRepository({
+					const accessibleRepository = await fetchRepository({
 						fullName: repository.fullName,
 						token: args.token,
 					});
-					return repository.id;
+					return accessibleRepository.id === repository.id ? repository.id : null;
 				} catch (error) {
 					if (isGitHubNotFoundError(error)) return null;
 					throw error;

@@ -1,4 +1,6 @@
 // @vitest-environment edge-runtime
+import type { Id } from './_generated/dataModel';
+
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { createGitHubAppState, sha256Hex } from '../lib/github-client';
@@ -587,5 +589,112 @@ describe('stale GitHub installations', () => {
 				userId: seeded.userId,
 			})
 		).rejects.toThrow('No connected GitHub repository');
+	});
+
+	it('rejects oversized refresh snapshots without disconnecting repositories', async () => {
+		const t = convexTest();
+		const seeded = await t.run(async (baseCtx) => {
+			const ctx = await runCtx(baseCtx);
+			const admin = await seedOrgAdmin(ctx, 'oversized-refresh');
+			const active = await seedInstallation(ctx, {
+				accountId: 10,
+				installationId: 600,
+				organization: admin.organization,
+				profile: admin.profile,
+				status: 'active',
+			});
+			const nonce = 'oversized-refresh-state';
+			const state = await createGitHubAppState({
+				exp: Date.now() + 60_000,
+				nonce,
+				targetUrl: 'https://usekino.com/api/github/callback',
+			});
+			const [stateDoc] = await ctx.orm
+				.insert(githubConnectionStateTable)
+				.values({
+					createdByProfileId: admin.profile.id,
+					createdByUserId: admin.user.id,
+					expiresAt: Date.now() + 60_000,
+					mode: 'read',
+					orgId: admin.organization.id,
+					orgSlug: admin.organization.slug,
+					stateHash: await sha256Hex(nonce),
+					status: 'pending',
+					updatedTime: Date.now(),
+				})
+				.returning();
+
+			let overflowConnectionId: Id<'githubRepositoryConnection'> | undefined;
+			for (let repoId = 1_000; repoId <= 1_500; repoId += 1) {
+				const connectionId = await ctx.db.insert('githubRepositoryConnection', {
+					connectedByProfileId: admin.profile.id,
+					enabledSources: ['issues'],
+					githubInstallationId: active.id,
+					issuesVerifiedAt: Date.now(),
+					mode: 'read',
+					orgId: admin.organization.id,
+					orgSlug: admin.organization.slug,
+					projectId: admin.project.id,
+					projectSlug: admin.project.slug,
+					repoFullName: `account-10/repo-${repoId}`,
+					repoId,
+					repoName: `repo-${repoId}`,
+					repoNodeId: `R_${repoId}`,
+					repoOwner: 'account-10',
+					repoPrivate: false,
+					verificationStatus: 'verified',
+					verificationSummary: {
+						discussions: { enabled: false, ok: false },
+						issues: { ok: true },
+					},
+				});
+				if (repoId === 1_500) overflowConnectionId = connectionId;
+			}
+
+			if (!overflowConnectionId) throw new Error('Failed to seed overflow connection');
+			return {
+				overflowConnectionId,
+				state,
+				stateDocId: stateDoc.id,
+			};
+		});
+
+		await expect(
+			t.query(internal.github.getRefreshInstallationsForCallback, {
+				state: seeded.state,
+			})
+		).rejects.toThrow('Too many GitHub repository connections to refresh safely');
+
+		await expect(
+			t.mutation(internal.github.completeUserInstallationsCallback, {
+				deletedInstallationIds: [],
+				installations: [
+					{
+						authorizedRepositoryIds: Array.from({ length: 500 }, (_, index) => index + 1_000),
+						installation: {
+							account: { id: 10, login: 'account-10', type: 'User' },
+							events: ['issues'],
+							id: 600,
+							permissions: { issues: 'write', metadata: 'read' },
+							repository_selection: 'all',
+						},
+					},
+				],
+				state: seeded.state,
+			})
+		).rejects.toThrow('Too many GitHub repository connections to refresh safely');
+
+		const result = await t.run(async (baseCtx) => {
+			const ctx = await runCtx(baseCtx);
+			return {
+				connection: await ctx.db.get('githubRepositoryConnection', seeded.overflowConnectionId),
+				state: await ctx.db.get('githubConnectionState', seeded.stateDocId),
+			};
+		});
+		expect(result.connection).toMatchObject({
+			verificationStatus: 'verified',
+		});
+		expect(result.connection?.deletedTime).toBeUndefined();
+		expect(result.state?.status).toBe('pending');
 	});
 });

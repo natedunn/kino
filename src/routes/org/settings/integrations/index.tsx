@@ -75,6 +75,7 @@ function IntegrationsSettingsRoute() {
 	const hasInstallations = installations.length > 0;
 	const hasStaleInstallations = staleInstallations.length > 0;
 	const hasKnownInstallations = knownInstallations.length > 0;
+	const staleInstallationIds = new Set(staleInstallations.map((installation) => installation.id));
 
 	const isLoading = !orgSlug || orgQuery.isLoading || integrationQuery.isLoading;
 	const showSkeleton = useDelayedFlag(isLoading);
@@ -130,15 +131,15 @@ function IntegrationsSettingsRoute() {
 							<div className='min-w-0 flex-1'>
 								<div className='flex flex-wrap items-center gap-2'>
 									<h3 className='text-base font-semibold'>GitHub</h3>
-									{hasInstallations ? (
-										<span className='inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-300'>
-											<CheckCircle2 className='size-3' />
-											Connected
-										</span>
-									) : hasStaleInstallations ? (
+									{hasStaleInstallations ? (
 										<span className='inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:bg-amber-500/10 dark:text-amber-300'>
 											<RefreshCw className='size-3' />
 											Needs attention
+										</span>
+									) : hasInstallations ? (
+										<span className='inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-300'>
+											<CheckCircle2 className='size-3' />
+											Connected
 										</span>
 									) : (
 										<span className='inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground'>
@@ -214,31 +215,41 @@ function IntegrationsSettingsRoute() {
 							</div>
 						) : (
 							<div className='grid gap-3 md:grid-cols-2'>
-								{knownInstallations.map((installation) => (
-									<div
-										className='rounded-xl border bg-card p-4 transition-colors hover:border-foreground/20'
-										key={installation.id}
-									>
-										<div className='flex items-center gap-3'>
-											<div className='flex size-9 items-center justify-center rounded-lg border bg-background text-sm font-bold'>
-												{installation.accountLogin[0]?.toUpperCase()}
+								{knownInstallations.map((installation) => {
+									const isStale = staleInstallationIds.has(installation.id);
+
+									return (
+										<div
+											className='rounded-xl border bg-card p-4 transition-colors hover:border-foreground/20'
+											key={installation.id}
+										>
+											<div className='flex items-center gap-3'>
+												<div className='flex size-9 items-center justify-center rounded-lg border bg-background text-sm font-bold'>
+													{installation.accountLogin[0]?.toUpperCase()}
+												</div>
+												<div className='min-w-0 flex-1'>
+													<div className='truncate text-sm font-medium'>
+														{installation.accountLogin}
+													</div>
+													<div className='text-xs text-muted-foreground'>
+														{installation.accountType}
+													</div>
+												</div>
+												{isStale ? (
+													<span className='inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:bg-amber-500/10 dark:text-amber-300'>
+														<RefreshCw className='size-3' />
+														Needs refresh
+													</span>
+												) : null}
 											</div>
-											<div className='min-w-0 flex-1'>
-												<div className='truncate text-sm font-medium'>
-													{installation.accountLogin}
-												</div>
-												<div className='text-xs text-muted-foreground'>
-													{installation.accountType}
-												</div>
+											<div className='mt-3 inline-flex items-center rounded-md bg-muted/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground'>
+												{installation.repositorySelection === 'all'
+													? 'All repositories'
+													: 'Selected repositories'}
 											</div>
 										</div>
-										<div className='mt-3 inline-flex items-center rounded-md bg-muted/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground'>
-											{installation.repositorySelection === 'all'
-												? 'All repositories'
-												: 'Selected repositories'}
-										</div>
-									</div>
-								))}
+									);
+								})}
 							</div>
 						)}
 					</section>

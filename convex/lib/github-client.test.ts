@@ -132,6 +132,17 @@ describe('github helpers', () => {
 					JSON.stringify({
 						homepage: null,
 						html_url: 'https://github.com/acme/allowed',
+						id: 1,
+					}),
+					{ status: 200 }
+				);
+			}
+			if (url.endsWith('/repos/acme/reused')) {
+				return new Response(
+					JSON.stringify({
+						homepage: null,
+						html_url: 'https://github.com/acme/reused',
+						id: 999,
 					}),
 					{ status: 200 }
 				);
@@ -146,11 +157,12 @@ describe('github helpers', () => {
 					{ fullName: 'acme/allowed', id: 1 },
 					{ fullName: 'acme/removed', id: 2 },
 					{ fullName: 'acme/allowed', id: 1 },
+					{ fullName: 'acme/reused', id: 3 },
 				],
 				token: 'installation-token',
 			})
 		).resolves.toEqual([1]);
-		expect(fetchMock).toHaveBeenCalledTimes(2);
+		expect(fetchMock).toHaveBeenCalledTimes(3);
 	});
 
 	it('hashes state values with sha256 hex', async () => {
