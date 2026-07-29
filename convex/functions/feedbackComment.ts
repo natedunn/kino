@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { authMutation, optionalAuthQuery } from '../lib/crpc';
 import {
 	asId,
+	assertProjectWritable,
 	getCurrentProfile,
 	getCurrentProfileOrThrow,
 	getDoc,
@@ -38,6 +39,7 @@ export const create = authMutation
 				message: 'You do not have access to this feedback',
 			});
 		}
+		assertProjectWritable(access);
 		const [comment] = await ctx.orm
 			.insert(feedbackCommentTable)
 			.values({
@@ -61,7 +63,10 @@ export const update = authMutation
 		const profile = await getCurrentProfileOrThrow(ctx, ctx.userId);
 		const comment = await getDoc(ctx, asId<'feedbackComment'>(input._id));
 		if (!comment) throw new CRPCError({ code: 'NOT_FOUND', message: 'Comment not found' });
-		await getActiveFeedbackOrThrow(ctx, comment.feedbackId);
+		const feedback = await getActiveFeedbackOrThrow(ctx, comment.feedbackId);
+		assertProjectWritable(
+			await verifyProjectAccess(ctx, { id: feedback.projectId, userId: ctx.userId })
+		);
 		if (comment.authorProfileId !== profile._id) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
@@ -89,7 +94,10 @@ export const remove = authMutation
 		const profile = await getCurrentProfileOrThrow(ctx, ctx.userId);
 		const comment = await getDoc(ctx, asId<'feedbackComment'>(input._id));
 		if (!comment) throw new CRPCError({ code: 'NOT_FOUND', message: 'Comment not found' });
-		await getActiveFeedbackOrThrow(ctx, comment.feedbackId);
+		const feedback = await getActiveFeedbackOrThrow(ctx, comment.feedbackId);
+		assertProjectWritable(
+			await verifyProjectAccess(ctx, { id: feedback.projectId, userId: ctx.userId })
+		);
 		if (comment.authorProfileId !== profile._id) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',

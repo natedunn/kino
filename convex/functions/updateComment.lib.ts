@@ -1,6 +1,6 @@
 import { CRPCError } from 'kitcn/server';
 
-import { asId, getDocOrThrow, verifyProjectAccess } from '../lib/kino';
+import { asId, assertProjectWritable, getDocOrThrow, verifyProjectAccess } from '../lib/kino';
 
 export async function ensureUpdateCommentAccess(
 	ctx: any,
@@ -11,6 +11,7 @@ export async function ensureUpdateCommentAccess(
 
 	const project = await getDocOrThrow(ctx, item.projectId, 'Project not found');
 	const access = await verifyProjectAccess(ctx, { slug: project.slug, userId });
+	assertProjectWritable(access);
 	if (item.status === 'draft') {
 		if (!access.permissions.canEdit) {
 			throw new CRPCError({

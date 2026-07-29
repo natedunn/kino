@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { authMutation, optionalAuthQuery } from '../lib/crpc';
 import {
 	asId,
+	assertProjectWritable,
 	generateRandomSlug,
 	getCurrentProfile,
 	getCurrentProfileOrThrow,
@@ -67,6 +68,7 @@ export const create = authMutation
 				message: 'You do not have access to this project',
 			});
 		}
+		assertProjectWritable(access);
 		const board = await getDoc<'feedbackBoard'>(ctx, asId<'feedbackBoard'>(input.boardId));
 		if (!board || board.projectId !== asId<'project'>(input.projectId)) {
 			throw new CRPCError({
@@ -304,13 +306,14 @@ export const setAnswerComment = authMutation
 		})
 	)
 	.mutation(async ({ ctx, input }) => {
-		const { feedback, isOwner, profile, projectMember } = await verifyFeedbackWriteAccess(
+		const { feedback, isOwner, permissions, profile } = await verifyFeedbackWriteAccess(
 			ctx,
 			input.feedbackId,
 			ctx.userId
 		);
-		const canMarkAnswer =
-			isOwner || profile.role === 'system:admin' || projectMember?.role === 'org:admin';
+		// Match the other feedback mutations: the author or anyone with edit
+		// access (org:admin, org:editor, system:admin) can mark the answer.
+		const canMarkAnswer = isOwner || permissions.canEdit;
 		if (!canMarkAnswer) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
@@ -604,9 +607,7 @@ export const getDetailInteractive = optionalAuthQuery
 
 		return {
 			assignedProfile: await toProfileSummary(assignedProfile),
-			canMarkAnswer:
-				feedback.authorProfileId === currentProfile?._id ||
-				access.projectMember?.role === 'org:admin',
+			canMarkAnswer: feedback.authorProfileId === currentProfile?._id || access.permissions.canEdit,
 			currentProfile: await toProfileSummary(currentProfile),
 			hasUpvoted: !!existingUpvote,
 		};

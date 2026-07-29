@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, notFound, Outlet, useParams } from '@tanstack/react-router';
 
@@ -8,7 +7,6 @@ import { MainNav } from '@/components/site-nav/main-nav';
 import { useCRPC } from '@/lib/convex/crpc';
 import { crpcServer } from '@/lib/convex/crpc-server';
 import { titleFromSlug, titleMeta } from '@/lib/seo';
-import { cn } from '@/lib/utils';
 
 import { DynamicNavigation } from './$project/-components/dynamic-nav';
 
@@ -38,7 +36,6 @@ function OrganizationShell() {
 		from: '/@{$org}/$project',
 		shouldThrow: false,
 	});
-	const [isProjectNavCalculating, setIsProjectNavCalculating] = useState(false);
 	const profileQuery = useQuery(
 		crpc.profile.findMyProfile.queryOptions({}, { skipUnauth: true, subscribe: false })
 	);
@@ -53,7 +50,6 @@ function OrganizationShell() {
 	const isUserPending =
 		!!loaderToken && (profileQuery.isPending || profileQuery.data === undefined);
 	const projectSlug = projectParams?.project;
-	const hasProjectNav = !!projectSlug;
 	const org =
 		orgQuery.data?.org ??
 		({
@@ -80,21 +76,12 @@ function OrganizationShell() {
 					isUserPending={isUserPending}
 					subNav={
 						projectSlug ? (
-							<DynamicNavigation
-								orgSlug={params.org}
-								projectSlug={projectSlug}
-								onStateChange={(state) => setIsProjectNavCalculating(state.isCalculating)}
-							/>
+							<DynamicNavigation orgSlug={params.org} projectSlug={projectSlug} />
 						) : undefined
 					}
 					user={profileQuery.data}
 				/>
-				<div
-					className={cn(
-						'flex flex-1 flex-col',
-						hasProjectNav && isProjectNavCalculating && 'overflow-x-hidden'
-					)}
-				>
+				<div className='flex flex-1 flex-col'>
 					<Outlet />
 				</div>
 			</div>

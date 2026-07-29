@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import Box from './box';
 import Bug from './bug';
 import ChartUp from './chart-up';
+import UpChevron from './chevron-up';
 import CircleCheck from './circle-check';
 import CircleDot from './circle-dot';
 import CirclePause from './circle-pause';
@@ -15,6 +16,7 @@ import Github from './github';
 import GridDots from './grid-dots';
 import Improvements from './improvements';
 import Lightbulb from './lightbulb';
+import UpArrowCircle from './up-arrow-circle';
 
 export const iconRegistry = {
 	lightbulb: Lightbulb,
@@ -25,6 +27,8 @@ export const iconRegistry = {
 	chartUp: ChartUp,
 	github: Github,
 	edit: Edit,
+	upArrowCircle: UpArrowCircle,
+	upChevron: UpChevron,
 } as const;
 
 export type IconValue = (typeof iconRegistry)[keyof typeof iconRegistry];
@@ -79,6 +83,20 @@ export const iconRegistryOptions: Array<IconRegistryOption> = [
 		label: 'GitHub',
 		tone: 'outline',
 		value: 'github',
+	},
+	{
+		icon: UpArrowCircle,
+		keywords: ['scroll to top', 'back to top', 'arrow up'],
+		label: 'Up Arrow Circle',
+		tone: 'duo',
+		value: 'upArrowCircle',
+	},
+	{
+		icon: UpChevron,
+		keywords: ['up', 'expand', 'top', 'chevron'],
+		label: 'Up Chevron',
+		tone: 'outline',
+		value: 'upChevron',
 	},
 ];
 
@@ -149,4 +167,6 @@ export const StatusIcon = ({
 
 export { default as GithubIcon } from './github';
 export { default as EditIcon } from './edit';
+export { default as UpArrowCircleIcon } from './up-arrow-circle';
+export { default as UpChevronIcon } from './chevron-up';
 export { default as SearchSparkleIcon } from './search-sparkle';

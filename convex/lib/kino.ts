@@ -444,8 +444,23 @@ export async function verifyProjectAccess(
 			})
 		: null;
 
+	// Project roles are derived from org roles: org:admin (org owner/admin),
+	// org:editor (org editor), member (org member). Only org:admin can delete a
+	// project; org:admin and org:editor can edit; all three can view.
+	//
+	// `isArchived` reports the frozen state WITHOUT stripping role-derived
+	// permissions: editors/admins keep `canEdit`/`canDelete` so the settings nav
+	// and pages stay visible to them. The read-only freeze is enforced by
+	// `assertProjectWritable` at each write mutation (and the `project.update`
+	// un-archive carve-out), not by zeroing permissions here — so an attempted
+	// write still surfaces a clear server error.
+	const role = projectMember?.role ?? '_none';
+	const memberRoles = [...PROJECT_EDITOR_ROLES, 'member'] as Array<string>;
+	const isArchived = project.visibility === 'archived';
+
 	if (profile?.role === 'system:admin') {
 		return {
+			isArchived,
 			profile,
 			project,
 			projectMember,
@@ -455,6 +470,7 @@ export async function verifyProjectAccess(
 
 	if (profile?.role === 'system:editor') {
 		return {
+			isArchived,
 			profile,
 			project,
 			projectMember,
@@ -462,16 +478,11 @@ export async function verifyProjectAccess(
 		};
 	}
 
-	// Project roles are derived from org roles: org:admin (org owner/admin),
-	// org:editor (org editor), member (org member). Only org:admin can delete a
-	// project; org:admin and org:editor can edit; all three can view.
-	const role = projectMember?.role ?? '_none';
-	const memberRoles = [...PROJECT_EDITOR_ROLES, 'member'] as Array<string>;
-
 	if (project.visibility === 'public') {
 		const canEdit = isProjectEditorRole(role);
 
 		return {
+			isArchived,
 			profile,
 			project,
 			projectMember,
@@ -484,6 +495,7 @@ export async function verifyProjectAccess(
 		const canEdit = isProjectEditorRole(role);
 
 		return {
+			isArchived,
 			profile,
 			project: canView ? project : null,
 			projectMember,
@@ -492,17 +504,23 @@ export async function verifyProjectAccess(
 	}
 
 	if (project.visibility === 'archived') {
+		// Editors/admins retain their role permissions (so they still see the
+		// settings UI); the freeze itself is enforced by `assertProjectWritable`.
+		// Archived projects stay hidden from plain members and the public.
 		const canView = isProjectEditorRole(role);
+		const canEdit = isProjectEditorRole(role);
 
 		return {
+			isArchived,
 			profile,
 			project: canView ? project : null,
 			projectMember,
-			permissions: { canDelete: role === 'org:admin', canEdit: false, canView },
+			permissions: { canDelete: role === 'org:admin', canEdit, canView },
 		};
 	}
 
 	return {
+		isArchived,
 		profile,
 		project: null,
 		projectMember,
@@ -527,6 +545,7 @@ export async function getProjectViewAccess(
 	const project = await findProject(ctx, args);
 	if (!project) {
 		return {
+			isArchived: false,
 			profile: null,
 			project: null,
 			projectMember: null,
@@ -534,6 +553,22 @@ export async function getProjectViewAccess(
 		};
 	}
 	return await verifyProjectAccess(ctx, { id: project.id, userId: args.userId });
+}
+
+/**
+ * Guards content-write mutations against frozen (archived) projects. Archived
+ * projects are read-only for everyone, so call this at the top of every write
+ * mutation after resolving access. The only writes that intentionally bypass it
+ * are an admin deleting the project (`project.remove`) or lifting the archived
+ * state (`project.update`), which authorize those specific actions themselves.
+ */
+export function assertProjectWritable(access: { isArchived?: boolean }) {
+	if (access.isArchived) {
+		throw new CRPCError({
+			code: 'FORBIDDEN',
+			message: 'This project is archived and read-only. An admin must un-archive it first.',
+		});
+	}
 }
 
 export async function setUserProfileId(ctx: OrmMutationCtx, userId: string, profileId: string) {

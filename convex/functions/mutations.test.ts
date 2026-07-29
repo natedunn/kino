@@ -1,15 +1,17 @@
 // @vitest-environment edge-runtime
+import { eq } from 'kitcn/orm';
 import { describe, expect, it } from 'vitest';
 
 import { api } from './_generated/api';
 import {
-	feedbackEventTable,
 	feedbackTable,
 	memberTable,
 	organizationTable,
 	profileTable,
 	projectTable,
 	sessionTable,
+	updateCommentTable,
+	updateTable,
 	userTable,
 } from './schema';
 import { convexTest, runCtx } from './setup.testing';
@@ -146,14 +148,14 @@ describe('feedback updatePriority (authenticated end-to-end)', () => {
 
 		const { row, events } = await t.run(async (baseCtx) => {
 			const ctx = await runCtx(baseCtx);
-			const row = await ctx.orm.query.feedback.findFirst({
+			const feedbackRow = await ctx.orm.query.feedback.findFirst({
 				where: { id: seed.feedbackId },
 			});
-			const events = await ctx.orm.query.feedbackEvent.findMany({
+			const feedbackEvents = await ctx.orm.query.feedbackEvent.findMany({
 				where: { feedbackId: seed.feedbackId },
 				limit: 10,
 			});
-			return { events, row };
+			return { events: feedbackEvents, row: feedbackRow };
 		});
 
 		expect(row?.priority).toBe('high');
@@ -181,14 +183,17 @@ describe('feedback updatePriority (authenticated end-to-end)', () => {
 
 		const { row, priorityEvents } = await t.run(async (baseCtx) => {
 			const ctx = await runCtx(baseCtx);
-			const row = await ctx.orm.query.feedback.findFirst({
+			const feedbackRow = await ctx.orm.query.feedback.findFirst({
 				where: { id: seed.feedbackId },
 			});
 			const events = await ctx.orm.query.feedbackEvent.findMany({
 				where: { feedbackId: seed.feedbackId },
 				limit: 10,
 			});
-			return { priorityEvents: events.filter((e) => e.eventType === 'priority_changed'), row };
+			return {
+				priorityEvents: events.filter((e) => e.eventType === 'priority_changed'),
+				row: feedbackRow,
+			};
 		});
 
 		expect(row?.priority).toBe('urgent');
@@ -203,5 +208,108 @@ describe('feedback updatePriority (authenticated end-to-end)', () => {
 		await expect(
 			t.mutation(api.feedback.updatePriority, { id: seed.feedbackId, priority: 'high' })
 		).rejects.toThrow(/UNAUTHORIZED|authenticated/i);
+	});
+});
+
+async function archiveSeededProject(t: ReturnType<typeof convexTest>, projectId: string) {
+	await t.run(async (baseCtx) => {
+		const ctx = await runCtx(baseCtx);
+		await ctx.orm
+			.update(projectTable)
+			.set({ visibility: 'archived' })
+			.where(eq(projectTable.id, projectId));
+	});
+}
+
+describe('archived projects are frozen (end-to-end)', () => {
+	it('rejects content writes even for an org admin', async () => {
+		const t = convexTest();
+		const seed = await t.run((baseCtx) => runCtx(baseCtx).then(seedAuthedOrgAdmin));
+		await archiveSeededProject(t, seed.projectId);
+		const asUser = t.withIdentity({ sessionId: seed.sessionId, subject: seed.userId });
+
+		// A feedback write (org admin would normally be allowed) is blocked...
+		await expect(
+			asUser.mutation(api.feedback.updatePriority, { id: seed.feedbackId, priority: 'high' })
+		).rejects.toThrow(/archived/i);
+		// ...and so is creating a comment.
+		await expect(
+			asUser.mutation(api.feedbackComment.create, {
+				content: 'hello',
+				feedbackId: seed.feedbackId,
+			})
+		).rejects.toThrow(/archived/i);
+	});
+
+	it('lets an admin un-archive (visibility only)', async () => {
+		const t = convexTest();
+		const seed = await t.run((baseCtx) => runCtx(baseCtx).then(seedAuthedOrgAdmin));
+		await archiveSeededProject(t, seed.projectId);
+		const asUser = t.withIdentity({ sessionId: seed.sessionId, subject: seed.userId });
+
+		await asUser.mutation(api.project.update, { id: seed.projectId, visibility: 'public' });
+
+		const project = await t.run(async (baseCtx) => {
+			const ctx = await runCtx(baseCtx);
+			return ctx.orm.query.project.findFirst({ where: { id: seed.projectId } });
+		});
+		expect(project?.visibility).toBe('public');
+	});
+
+	it('rejects update and update-comment reactions', async () => {
+		const t = convexTest();
+		const seed = await t.run((baseCtx) => runCtx(baseCtx).then(seedAuthedOrgAdmin));
+		const { updateCommentId, updateId } = await t.run(async (baseCtx) => {
+			const ctx = await runCtx(baseCtx);
+			const [update] = await ctx.orm
+				.insert(updateTable)
+				.values({
+					authorProfileId: seed.profileId,
+					category: 'changelog',
+					content: 'Update body',
+					projectId: seed.projectId,
+					slug: 'update-1',
+					status: 'published',
+					title: 'Update 1',
+					updatedTime: Date.now(),
+				})
+				.returning();
+			const [comment] = await ctx.orm
+				.insert(updateCommentTable)
+				.values({
+					authorProfileId: seed.profileId,
+					content: 'Update comment',
+					updateId: update.id,
+				})
+				.returning();
+			return { updateCommentId: comment.id, updateId: update.id };
+		});
+		await archiveSeededProject(t, seed.projectId);
+		const asUser = t.withIdentity({ sessionId: seed.sessionId, subject: seed.userId });
+
+		await expect(
+			asUser.mutation(api.updateEmote.toggle, {
+				content: 'heart',
+				updateId,
+			})
+		).rejects.toThrow(/archived/i);
+		await expect(
+			asUser.mutation(api.updateCommentEmote.toggle, {
+				content: 'heart',
+				updateCommentId,
+				updateId,
+			})
+		).rejects.toThrow(/archived/i);
+	});
+
+	it('rejects a non-visibility project edit while archived', async () => {
+		const t = convexTest();
+		const seed = await t.run((baseCtx) => runCtx(baseCtx).then(seedAuthedOrgAdmin));
+		await archiveSeededProject(t, seed.projectId);
+		const asUser = t.withIdentity({ sessionId: seed.sessionId, subject: seed.userId });
+
+		await expect(
+			asUser.mutation(api.project.update, { id: seed.projectId, name: 'Renamed' })
+		).rejects.toThrow(/archived/i);
 	});
 });

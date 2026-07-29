@@ -10,15 +10,17 @@ import { titleMeta } from '@/lib/seo';
 
 export const Route = createFileRoute('/auth/verify-email')({
 	head: () => ({ meta: [titleMeta(['Verify email'])] }),
-	validateSearch: (search: Record<string, unknown>): { error?: string } =>
-		typeof search.error === 'string' ? { error: search.error } : {},
+	validateSearch: (search: Record<string, unknown>): { error?: string; redirect?: string } => ({
+		...(typeof search.error === 'string' ? { error: search.error } : {}),
+		...(typeof search.redirect === 'string' ? { redirect: search.redirect } : {}),
+	}),
 	component: VerifyEmailPage,
 });
 
 function VerifyEmailPage() {
 	// Better Auth verifies the token on the API side and redirects here with the
 	// outcome. We only render the result.
-	const { error } = Route.useSearch();
+	const { error, redirect } = Route.useSearch();
 	const ok = !error;
 
 	useEffect(() => {
@@ -40,8 +42,8 @@ function VerifyEmailPage() {
 				</InlineAlert>
 			)}
 			<AuthFooter>
-				<Link className='link-text font-medium text-foreground' to='/dashboard'>
-					Continue to dashboard
+				<Link className='link-text font-medium text-foreground' search={{ redirect }} to='/auth'>
+					Continue to sign in
 				</Link>
 			</AuthFooter>
 		</>

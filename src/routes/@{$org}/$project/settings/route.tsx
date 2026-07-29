@@ -19,8 +19,10 @@ export const Route = createFileRoute('/@{$org}/$project/settings')({
 	}),
 	// The entire project settings area is edit-only. Gate the whole layout here
 	// so every child page (general/boards/members/integrations/danger) is
-	// protected in one explicit place. `getDetails` is cached by the `$project`
-	// loader, so this is a free read. Server procedures remain the real boundary.
+	// protected in one explicit place. Archived projects keep role-derived
+	// `canEdit`, so editors/admins still reach settings (read-only, enforced
+	// server-side). `getDetails` is cached by the `$project` loader, so this is a
+	// free read. Server procedures remain the real boundary.
 	loader: async ({ context, params }) => {
 		const projectData = await context.queryClient.ensureQueryData(
 			crpcServer.project.getDetails.queryOptions({
