@@ -7,32 +7,11 @@ import { isReservedHandle, normalizeSlug, VALIDATION_LIMITS } from './validation
 
 export const DEFAULT_FEEDBACK_BOARDS = ['Bugs', 'Feature Requests', 'Improvements'] as const;
 
-export const SYSTEM_ROLES = ['system:admin', 'system:editor', 'user'] as const;
+export const SYSTEM_ROLES = ['system:admin', 'user'] as const;
 export type SystemRole = (typeof SYSTEM_ROLES)[number];
 
-/**
- * Project roles that can edit content (boards, feedback, updates, comments).
- * Derived from org roles: `org:admin` and `org:editor` can edit; plain
- * `member` can only view. This is the single source of truth for "is this
- * member allowed to administer content" — content authorization is enforced
- * here and in `verifyProjectAccess`, not by better-auth roles.
- */
-export const PROJECT_EDITOR_ROLES = ['org:admin', 'org:editor'] as const;
-
-export function isProjectEditorRole(role: string | null | undefined): boolean {
-	return role === 'org:admin' || role === 'org:editor';
-}
-
-/**
- * Org membership roles that grant edit access to the organization itself
- * (general settings, content). Single source of truth for "can this member edit
- * the org" — used by `verifyOrgAccess` and the `/org/settings` selector. Note
- * member management (members page) is stricter and limited to owner/admin.
- */
-export const ORG_EDIT_ROLES = ['owner', 'admin', 'editor'] as const;
-
-export function canEditOrgRole(role: string | null | undefined): boolean {
-	return role === 'owner' || role === 'admin' || role === 'editor';
+export function canManageOrgRole(role: string | null | undefined): boolean {
+	return role === 'owner' || role === 'admin';
 }
 
 /**
@@ -42,7 +21,7 @@ export function canEditOrgRole(role: string | null | undefined): boolean {
  * unexpected value.
  */
 export function sanitizeSystemRole(role: string | null | undefined): SystemRole {
-	return role === 'system:admin' || role === 'system:editor' ? role : 'user';
+	return role === 'system:admin' ? role : 'user';
 }
 
 export const LIMITS = {
@@ -326,9 +305,12 @@ export async function findProjectMember(
 				profileId: args.profileId,
 				projectId: args.projectId,
 			},
-			limit: 1,
+			limit: 5,
 		});
-		return withLegacyAliases(members[0]);
+		const directMember = members.find(
+			(member: any) => member.role === undefined || member.role === null || member.role === 'member'
+		);
+		return withLegacyAliases(directMember);
 	}
 	if (args.projectSlug) {
 		const members = await ctx.orm.query.projectMember.findMany({
@@ -336,12 +318,59 @@ export async function findProjectMember(
 				profileId: args.profileId,
 				projectSlug: args.projectSlug,
 			},
-			limit: 1,
+			limit: 5,
 		});
-		return withLegacyAliases(members[0]);
+		const directMember = members.find(
+			(member: any) => member.role === undefined || member.role === null || member.role === 'member'
+		);
+		return withLegacyAliases(directMember);
 	}
 	return null;
 }
+
+export async function isProjectTeamMember(
+	ctx: OrmCtx,
+	args: { profile: { userId: string } | null | undefined; projectId: string }
+) {
+	if (!args.profile) return false;
+	const project = await findProject(ctx, { id: args.projectId });
+	if (!project) return false;
+	const organization = await findOrganization(ctx, { slug: project.orgSlug });
+	if (!organization) return false;
+	const member = await findMember(ctx, {
+		organizationId: organization.id,
+		userId: args.profile.userId,
+	});
+	if (!member) return false;
+	if (member.role === 'owner' || member.role === 'admin') return true;
+	if (member.role !== 'moderator') return false;
+	const assignment = await ctx.orm.query.projectModeratorAccess.findFirst({
+		where: {
+			memberId: member.id,
+			organizationId: organization.id,
+			projectId: project.id,
+		},
+	});
+	return !!assignment;
+}
+
+const NO_PROJECT_PERMISSIONS = {
+	canDelete: false,
+	canEditSettings: false,
+	canManageAccess: false,
+	canManageContent: false,
+	canManageIntegrations: false,
+	canView: false,
+} as const;
+
+const FULL_PROJECT_PERMISSIONS = {
+	canDelete: true,
+	canEditSettings: true,
+	canManageAccess: true,
+	canManageContent: true,
+	canManageIntegrations: true,
+	canView: true,
+} as const;
 
 /**
  * Org access check that FAILS CLOSED rather than throwing. When the org is
@@ -396,23 +425,9 @@ export async function verifyOrgAccess(
 		};
 	}
 
-	if (profile?.role === 'system:editor') {
-		return {
-			member,
-			organization,
-			profile,
-			permissions: {
-				canCreate: false,
-				canDelete: false,
-				canEdit: true,
-				canView: true,
-			},
-		};
-	}
-
 	const role = member?.role ?? null;
 	const canView = organization.visibility === 'public' || !!role;
-	const canEdit = canEditOrgRole(role);
+	const canEdit = canManageOrgRole(role);
 	const canDelete = role === 'admin' || role === 'owner';
 	const canCreate = role === 'admin' || role === 'owner';
 
@@ -436,103 +451,109 @@ export async function verifyProjectAccess(
 ) {
 	const project = await getProjectOrThrow(ctx, args);
 	const profile = await getCurrentProfile(ctx, args.userId);
+	const organization = await findOrganization(ctx, { slug: project.orgSlug });
+	const organizationMember =
+		organization && args.userId
+			? await findMember(ctx, {
+					organizationId: organization.id,
+					userId: args.userId,
+				})
+			: null;
 	const projectMember = profile
 		? await findProjectMember(ctx, {
 				profileId: profile.id,
-				projectId: args.id,
-				projectSlug: args.slug,
+				projectId: project.id,
 			})
 		: null;
-
-	// Project roles are derived from org roles: org:admin (org owner/admin),
-	// org:editor (org editor), member (org member). Only org:admin can delete a
-	// project; org:admin and org:editor can edit; all three can view.
-	//
-	// `isArchived` reports the frozen state WITHOUT stripping role-derived
-	// permissions: editors/admins keep `canEdit`/`canDelete` so the settings nav
-	// and pages stay visible to them. The read-only freeze is enforced by
-	// `assertProjectWritable` at each write mutation (and the `project.update`
-	// un-archive carve-out), not by zeroing permissions here — so an attempted
-	// write still surfaces a clear server error.
-	const role = projectMember?.role ?? '_none';
-	const memberRoles = [...PROJECT_EDITOR_ROLES, 'member'] as Array<string>;
+	const moderatorAccess =
+		organizationMember?.role === 'moderator'
+			? await ctx.orm.query.projectModeratorAccess.findFirst({
+					where: {
+						memberId: organizationMember.id,
+						organizationId: organization?.id,
+						projectId: project.id,
+					},
+				})
+			: null;
 	const isArchived = project.visibility === 'archived';
 
 	if (profile?.role === 'system:admin') {
 		return {
 			isArchived,
+			moderatorAccess,
+			organizationMember,
 			profile,
 			project,
 			projectMember,
-			permissions: { canDelete: true, canEdit: true, canView: true },
+			permissions: { ...FULL_PROJECT_PERMISSIONS },
 		};
 	}
 
-	if (profile?.role === 'system:editor') {
+	if (organizationMember?.role === 'owner' || organizationMember?.role === 'admin') {
 		return {
 			isArchived,
+			moderatorAccess,
+			organizationMember,
 			profile,
 			project,
 			projectMember,
-			permissions: { canDelete: false, canEdit: true, canView: true },
+			permissions: { ...FULL_PROJECT_PERMISSIONS },
+		};
+	}
+
+	if (organizationMember?.role === 'moderator' && moderatorAccess) {
+		return {
+			isArchived,
+			moderatorAccess,
+			organizationMember,
+			profile,
+			project,
+			projectMember,
+			permissions: {
+				canDelete: false,
+				canEditSettings: true,
+				canManageAccess: false,
+				canManageContent: true,
+				canManageIntegrations: false,
+				canView: true,
+			},
 		};
 	}
 
 	if (project.visibility === 'public') {
-		const canEdit = isProjectEditorRole(role);
-
 		return {
 			isArchived,
+			moderatorAccess,
+			organizationMember,
 			profile,
 			project,
 			projectMember,
-			permissions: { canDelete: role === 'org:admin', canEdit, canView: true },
+			permissions: { ...NO_PROJECT_PERMISSIONS, canView: true },
 		};
 	}
 
-	if (project.visibility === 'private') {
-		const canView = memberRoles.includes(role);
-		const canEdit = isProjectEditorRole(role);
-
+	if (project.visibility === 'private' && projectMember) {
 		return {
 			isArchived,
+			moderatorAccess,
+			organizationMember,
 			profile,
-			project: canView ? project : null,
+			project,
 			projectMember,
-			permissions: { canDelete: role === 'org:admin', canEdit, canView },
-		};
-	}
-
-	if (project.visibility === 'archived') {
-		// Editors/admins retain their role permissions (so they still see the
-		// settings UI); the freeze itself is enforced by `assertProjectWritable`.
-		// Archived projects stay hidden from plain members and the public.
-		const canView = isProjectEditorRole(role);
-		const canEdit = isProjectEditorRole(role);
-
-		return {
-			isArchived,
-			profile,
-			project: canView ? project : null,
-			projectMember,
-			permissions: { canDelete: role === 'org:admin', canEdit, canView },
+			permissions: { ...NO_PROJECT_PERMISSIONS, canView: true },
 		};
 	}
 
 	return {
 		isArchived,
+		moderatorAccess,
+		organizationMember,
 		profile,
 		project: null,
 		projectMember,
-		permissions: { canDelete: false, canEdit: false, canView: false },
+		permissions: { ...NO_PROJECT_PERMISSIONS },
 	};
 }
-
-const NO_ACCESS_PERMISSIONS = {
-	canDelete: false,
-	canEdit: false,
-	canView: false,
-} as const;
 
 /**
  * Non-throwing project access check. Returns canView=false (rather than throwing
@@ -549,7 +570,9 @@ export async function getProjectViewAccess(
 			profile: null,
 			project: null,
 			projectMember: null,
-			permissions: { ...NO_ACCESS_PERMISSIONS },
+			moderatorAccess: null,
+			organizationMember: null,
+			permissions: { ...NO_PROJECT_PERMISSIONS },
 		};
 	}
 	return await verifyProjectAccess(ctx, { id: project.id, userId: args.userId });

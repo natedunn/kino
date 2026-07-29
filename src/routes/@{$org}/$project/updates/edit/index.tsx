@@ -81,7 +81,7 @@ export const Route = createFileRoute('/@{$org}/$project/updates/edit/')({
 			throw notFound();
 		}
 
-		if (!projectData.permissions.canEdit) {
+		if (!projectData.permissions.canManageContent) {
 			throw redirect({
 				to: '/@{$org}/$project/updates',
 				params: { org: params.org, project: params.project },
@@ -137,7 +137,7 @@ function UpdatesDashboardRoute() {
 	return (
 		<>
 			<EditingBar />
-			<UpdatesDashboard canDelete={projectData.permissions.canDelete} pageSize={pageSize} />
+			<UpdatesDashboard canDelete={projectData.permissions.canManageContent} pageSize={pageSize} />
 		</>
 	);
 }

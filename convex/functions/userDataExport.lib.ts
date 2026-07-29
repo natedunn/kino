@@ -142,7 +142,7 @@ export async function getUpdateCommentContext(ctx: ExportCtx, comment: Doc<'upda
 	if (
 		!access.permissions.canView ||
 		!access.project ||
-		(update.status === 'draft' && !access.permissions.canEdit)
+		(update.status === 'draft' && !access.permissions.canManageContent)
 	) {
 		return {
 			contextAccess: 'inaccessible' as const,

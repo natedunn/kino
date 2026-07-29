@@ -55,7 +55,7 @@ export function DynamicNavigation({ orgSlug, projectSlug }: DynamicNavigationPro
 			{ subscribe: false }
 		)
 	);
-	const canManageSettings = projectQuery.data?.permissions.canEdit ?? false;
+	const canManageSettings = projectQuery.data?.permissions.canEditSettings ?? false;
 
 	const items: Array<NavigationItem> = [
 		{

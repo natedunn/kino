@@ -13,7 +13,7 @@ export async function ensureUpdateCommentAccess(
 	const access = await verifyProjectAccess(ctx, { slug: project.slug, userId });
 	assertProjectWritable(access);
 	if (item.status === 'draft') {
-		if (!access.permissions.canEdit) {
+		if (!access.permissions.canManageContent) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
 				message: 'You cannot comment on draft updates',

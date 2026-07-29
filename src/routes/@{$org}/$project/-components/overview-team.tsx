@@ -21,7 +21,7 @@ function initials(name: string) {
 const ROLE_CLASS: Record<Member['role'], string> = {
 	Owner: 'text-primary',
 	Admin: 'text-foreground',
-	Editor: 'text-muted-foreground',
+	Moderator: 'text-muted-foreground',
 	Member: 'text-muted-foreground',
 };
 

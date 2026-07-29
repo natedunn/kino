@@ -13,10 +13,11 @@ import {
  * Content-level authorization is still enforced by the app's own
  * verifyOrgAccess / verifyProjectAccess helpers. The purpose of registering
  * roles here is to make them FIRST-CLASS, ASSIGNABLE better-auth roles — in
- * particular `editor`, which better-auth would otherwise reject when creating
+ * particular `moderator`, which better-auth would otherwise reject when creating
  * an invitation (createInvitation validates the role name against this set).
  *
- * Role set (below system admin): owner / admin / editor / member.
+ * `editor` remains registered only for the compatibility deploy so pending
+ * legacy invitations can still be accepted while the migration runs.
  */
 const statement = { ...defaultStatements } as const;
 
@@ -24,9 +25,11 @@ export const ac = createAccessControl(statement);
 
 export const owner = ac.newRole({ ...ownerAc.statements });
 export const admin = ac.newRole({ ...adminAc.statements });
-// `editor` sits between admin and member: it can edit project content (enforced
-// by verify*Access), but has no org-management rights beyond a plain member.
+// Moderator authority is enforced by explicit project assignments in Kino.
+// Better Auth grants moderators no organization-management permissions.
+export const moderator = ac.newRole({ ...memberAc.statements });
+// Legacy compatibility only; remove after member/invitation migration.
 export const editor = ac.newRole({ ...memberAc.statements });
 export const member = ac.newRole({ ...memberAc.statements });
 
-export const roles = { admin, editor, member, owner };
+export const roles = { admin, editor, member, moderator, owner };

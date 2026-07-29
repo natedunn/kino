@@ -421,16 +421,33 @@ export declare const api: {
     >;
   };
   orgMember: {
+    acceptInvitation: FunctionReference<
+      "mutation",
+      "public",
+      { invitationId: string },
+      any
+    >;
     cancelInvitation: FunctionReference<
       "mutation",
       "public",
       { invitationId: string },
       any
     >;
+    getModeratorProjectAccess: FunctionReference<
+      "query",
+      "public",
+      { memberId: string },
+      any
+    >;
     inviteMember: FunctionReference<
       "mutation",
       "public",
-      { email: string; organizationId: string; role: "admin" | "editor" },
+      {
+        email: string;
+        organizationId: string;
+        projectIds?: Array<string>;
+        role: "admin" | "moderator";
+      },
       any
     >;
     leaveOrganization: FunctionReference<
@@ -446,16 +463,32 @@ export declare const api: {
       { slug: string },
       any
     >;
+    rejectInvitation: FunctionReference<
+      "mutation",
+      "public",
+      { invitationId: string },
+      any
+    >;
     removeMember: FunctionReference<
       "mutation",
       "public",
       { memberId: string },
       any
     >;
+    setModeratorProjectAccess: FunctionReference<
+      "mutation",
+      "public",
+      { memberId: string; projectIds: Array<string> },
+      any
+    >;
     updateMemberRole: FunctionReference<
       "mutation",
       "public",
-      { memberId: string; role: "owner" | "admin" | "editor" },
+      {
+        memberId: string;
+        projectIds?: Array<string>;
+        role: "owner" | "admin" | "moderator";
+      },
       any
     >;
   };
@@ -544,6 +577,20 @@ export declare const api: {
         }>;
         visibility?: "public" | "private" | "archived";
       },
+      any
+    >;
+  };
+  projectAccess: {
+    getManagementState: FunctionReference<
+      "query",
+      "public",
+      { projectId: string },
+      any
+    >;
+    setModeratorAccess: FunctionReference<
+      "mutation",
+      "public",
+      { enabled: boolean; memberId: string; projectId: string },
       any
     >;
   };

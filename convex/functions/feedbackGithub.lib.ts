@@ -88,10 +88,10 @@ export async function getVerifiedContext(
 		userId: args.userId,
 	});
 	assertProjectWritable(access);
-	if (!access.permissions.canEdit) {
+	if (!access.permissions.canManageContent) {
 		throw new CRPCError({
 			code: 'FORBIDDEN',
-			message: 'Only project admins and editors can connect GitHub items',
+			message: 'Only project admins and assigned moderators can connect GitHub items',
 		});
 	}
 

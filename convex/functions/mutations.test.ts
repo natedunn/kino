@@ -20,8 +20,7 @@ type Ctx = Awaited<ReturnType<typeof runCtx>>;
 
 // Seed a full authenticated org-admin: user + profile + org + admin membership +
 // a session row (so the kitcn auth chain — getHeaders → session.token → Bearer →
-// auth.api.getSession — resolves), then a project (its insert trigger derives the
-// org:admin projectMember granting canEdit) and a feedback row.
+// auth.api.getSession — resolves), then a project and a feedback row.
 async function seedAuthedOrgAdmin(ctx: Ctx) {
 	const [user] = await ctx.orm
 		.insert(userTable)

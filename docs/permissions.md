@@ -1,135 +1,147 @@
 # Roles & Permissions
 
-This is the canonical reference for how authorization works in Kino. There is
-**one enforcement system**: every org/project-scoped read and write resolves a
-permission through the helpers in `convex/lib/kino.ts`. The frontend only ever
-mirrors server-computed permissions — it never decides access on its own.
+This is the canonical authorization reference for Kino. Server-computed
+permissions are the enforcement boundary; the frontend only mirrors them.
 
-## The three scopes
+## Scopes and sources of truth
 
-| Scope            | Stored in                                       | Values                                                          | Source of truth           | Enforced by                                                     |
-| ---------------- | ----------------------------------------------- | --------------------------------------------------------------- | ------------------------- | --------------------------------------------------------------- |
-| **System**       | `user.role` → mirrored to `profile.role`        | `system:admin`, `system:editor`, `user`                         | `user.role` (better-auth) | `verifyOrgAccess` / `verifyProjectAccess` (read `profile.role`) |
-| **Organization** | `member.role` (better-auth organization plugin) | `owner`, `admin`, `editor`                                      | `member.role`             | `verifyOrgAccess`                                               |
-| **Project**      | `projectMember.role`                            | `org:admin`, `org:editor` (derived from org), `member` (direct) | hybrid — see below        | `verifyProjectAccess`                                           |
+| Scope                     | Stored in                               | Values                                            | Purpose                              |
+| ------------------------- | --------------------------------------- | ------------------------------------------------- | ------------------------------------ |
+| System                    | `user.role`, mirrored to `profile.role` | `system:admin`, `user`                            | Global administration                |
+| Organization              | Better Auth `member.role`               | `owner`, `admin`, `moderator`, framework `member` | Organization identity and management |
+| Moderator assignment      | `projectModeratorAccess`                | one active row per moderator/project              | Explicit project management          |
+| Direct project membership | `projectMember`                         | no role field                                     | Participation in a private project   |
 
-Kino is a mostly-public service: **anyone with an account has a public profile
-and can view + comment + upvote + submit feedback on any _public_ project, in any
-org, with no membership.** Roles below only restrict _management_ and _access to
-private projects_.
+Kino is mostly public. Anyone can view and participate in public projects under
+the existing public-project rules. Organization membership does not by itself
+grant authority over a project.
 
-### System role (controlled denormalization)
+### System roles
 
-`user.role` is the source of truth. `profile.role` is a **derived copy** kept in
-sync by the `user.change` trigger (`convex/functions/auth.ts`) and self-healed on
-session bootstrap (`ensureUserBootstrap` / `reconcileSystemRole` in
-`convex/lib/kino.ts`). All authorization reads `profile.role`. Never write
-`profile.role` outside `sanitizeSystemRole` — that is the single sanitizer.
+`user.role` is authoritative. `profile.role` is a controlled derived copy,
+maintained by the user trigger and reconciled during session bootstrap.
+Authorization reads the sanitized profile role.
 
-- `system:admin` — full access everywhere; powers the `/admin` dashboard.
-- `system:editor` — may edit + view any org/project, but not create or delete.
-- `user` — no elevated access; permissions come from org/project membership.
+- `system:admin` has every organization and project capability.
+- `user` has no global privileges.
 
-System admins are seeded from `SUPER_ADMIN_EMAIL` at sign-up. There is no
-better-auth admin plugin — it was removed; the `system:admin` role is the app's
-own and is enforced by the helpers above.
+The removed `system:editor` value is treated as `user` during the compatibility
+deployment and migrated in both tables before the schema is narrowed.
 
-### Organization role
+### Organization roles
 
-An org's roles are the **team that runs it**. There is **no plain org "member"**
-— public users don't "join" orgs. Roles are managed at `/@<org>/settings/members`
-(`convex/functions/orgMember.ts`) and registered as real better-auth
-access-control roles in `convex/shared/auth-roles.ts` so they're assignable
-(including via invitations). Org roles **cascade to every project in the org**.
-`verifyOrgAccess` grants:
+- `owner` and `admin` manage organization settings, members, integrations, and
+  every project in the organization.
+- `moderator` can view the organization as a team identity but cannot access
+  organization settings. Project authority requires an explicit active
+  assignment.
+- Better Auth's framework-compatible `member` role carries no Kino management
+  authority and is not offered by Kino's invitation or role-management UI.
 
-| Role          | view             | edit | create | delete/manage members |
-| ------------- | ---------------- | ---- | ------ | --------------------- |
-| owner / admin | ✅               | ✅   | ✅     | ✅                    |
-| editor        | ✅               | ✅   | ❌     | ❌                    |
-| (non-member)  | public orgs only | ❌   | ❌     | ❌                    |
+`findMyEditableOrgs` returns owner/admin memberships only. Moderators therefore
+do not appear in the organization-settings selector, and direct settings
+navigation is rejected.
 
-(`owner` is the creator and the only role that can grant/revoke `owner`.)
+### Project access
 
-### Project role (hybrid: derived management + direct private membership)
+`verifyProjectAccess` returns:
 
-A project's roles come from **two sources**:
+```ts
+{
+	canView: boolean;
+	canManageContent: boolean;
+	canEditSettings: boolean;
+	canManageAccess: boolean;
+	canManageIntegrations: boolean;
+	canDelete: boolean;
+}
+```
 
-1. **Management — derived from org role** via `ORG_ROLE_TO_PROJECT_ROLE`
-   (`convex/functions/schema.ts`), kept in sync by schema triggers:
+Capabilities resolve in this order:
 
-   | Org role      | → Project role |
-   | ------------- | -------------- |
-   | owner / admin | `org:admin`    |
-   | editor        | `org:editor`   |
+1. System admin: all capabilities.
+2. Organization owner/admin: all capabilities on every organization project.
+3. Current organization moderator with a matching
+   `projectModeratorAccess` row: view, content management, and ordinary project
+   settings.
+4. Direct `projectMember`: view and normal participation in a private project.
+5. Signed-in or anonymous visitor: existing public-project behavior.
+6. Everyone else: fail closed.
 
-2. **Private-project access — direct, per-project** (`projectMember.role =
-"member"`, managed at `/@<org>/<project>/settings/members` via
-   `convex/functions/projectMember.ts`). A `member` row gives an individual user
-   normal access to a **private** project that's otherwise hidden. On a **public**
-   project the row is inert (everyone can already view) and is intentionally
-   **kept** so access is restored if the project goes private again.
+Every moderator-assignment read also verifies that the referenced member still
+belongs to the project organization and still has role `moderator`. A stale row
+never grants access.
 
-`verifyProjectAccess` is visibility-aware (`public` / `private` / `archived`):
+| Actor                 | Org settings |           Project content |  General settings | Members | Integrations | Project deletion |
+| --------------------- | -----------: | ------------------------: | ----------------: | ------: | -----------: | ---------------: |
+| System admin          |          Yes |                       Yes |               Yes |     Yes |          Yes |              Yes |
+| Org owner/admin       |          Yes |              All projects |      All projects |     Yes |          Yes |              Yes |
+| Assigned moderator    |           No |         Assigned projects | Assigned projects |      No |           No |               No |
+| Unassigned moderator  |           No | Public participation only |                No |      No |           No |               No |
+| Direct project member |           No |      Normal participation |                No |      No |           No |               No |
+| Ordinary user         |           No |      Public participation |                No |      No |           No |               No |
 
-| Project role            | public             | private   | archived | delete              |
-| ----------------------- | ------------------ | --------- | -------- | ------------------- |
-| org:admin               | view+edit          | view+edit | view     | ✅ (only org:admin) |
-| org:editor              | view+edit          | view+edit | view     | ❌                  |
-| member (direct)         | view               | view      | ❌       | ❌                  |
-| (non-member, signed in) | view + participate | ❌        | ❌       | ❌                  |
-| (anonymous)             | view               | ❌        | ❌       | ❌                  |
+Assigned moderators may view assigned private and archived projects. Archived
+projects remain read-only through `assertProjectWritable`. Only owners/admins
+may archive or unarchive. Moderators can change general metadata and visibility,
+manage feedback, comments, boards, drafts, updates, status, priority, targets,
+answers, and link feedback to a repository already configured for the project.
+Repository installation/configuration remains owner/admin-only.
 
-## The rule for new code
+`projectMember` exclusively represents direct private-project participation.
+It must never be used to represent organization roles or moderator assignments.
 
-**Every Convex query/mutation/action that reads or writes org-, project-,
-feedback-, or update-scoped data MUST gate through one of:**
+## Invitations and role transitions
 
-- `verifyOrgAccess(ctx, { id|slug, userId })`
-- `verifyProjectAccess(ctx, { id|slug, userId })`
-- `getProjectViewAccess(ctx, { id|slug, userId })` — non-throwing, fails closed; use for read paths
-- For feedback/update children, resolve the parent project first, then gate.
+Moderator invitations require an explicit `projectIds` array; `[]` means “No
+project access.” Selections are stored in
+`pendingModeratorProjectAccess` until the authenticated recipient accepts
+through `orgMember.acceptInvitation`. Acceptance calls Better Auth first, then
+activates assignments idempotently and removes the pending rows.
 
-Builders (`convex/lib/crpc.ts`): `publicQuery`/`publicMutation` (no auth),
-`optionalAuthQuery`/`optionalAuthMutation` (auth optional), `authQuery`/
-`authMutation`/`authAction` (auth required, NO role check — you must still call a
-`verify*Access` helper), `privateQuery`/`privateMutation`/`privateAction`
-(internal only).
+Changing into `moderator` likewise requires an explicit project selection.
+Changing out of the role, removing a member, or leaving the organization deletes
+all assignments. Assignments are not dormant and new projects do not inherit
+them.
 
-Do **not** introduce a second source of truth (e.g. reading `user.role` for
-authz, or re-deriving permissions client-side). Keep all `can*` decisions in the
-`verify*Access` helpers.
+## Rules for new code
+
+Every organization/project-scoped endpoint must use one of:
+
+- `verifyOrgAccess(ctx, { id | slug, userId })`
+- `verifyProjectAccess(ctx, { id | slug, userId })`
+- `getProjectViewAccess(ctx, { id | slug, userId })` for non-throwing reads
+
+Use the narrowest project capability:
+
+- content, comments, feedback, boards, drafts, updates:
+  `canManageContent`
+- name, description, slug, links, logo, visibility:
+  `canEditSettings`
+- direct members and moderator assignments: `canManageAccess`
+- repository installation/configuration: `canManageIntegrations`
+- project deletion and archive/unarchive: owner/admin capability (`canDelete`)
+
+For feedback/update children, resolve and authorize the parent project. Validate
+all client-supplied member, organization, and project IDs as belonging to the
+same scope. Hidden navigation is never a substitute for the server check.
 
 ### Review checklist
 
-- [ ] New scoped endpoint calls a `verify*Access` helper (or is `private*`).
-- [ ] Read paths fail closed (return empty/null) when `canView` is false.
-- [ ] Client-supplied ids are validated to belong to the authorized scope.
-- [ ] Writes that require management use `canDelete`/`canEdit` as appropriate.
-- [ ] No new `publicQuery`/`publicMutation` exposing scoped data.
+- [ ] Scoped endpoints call the appropriate access helper.
+- [ ] Reads fail closed when `canView` is false.
+- [ ] Writes check the narrowest capability.
+- [ ] Archived-project writes call `assertProjectWritable`.
+- [ ] Cross-organization IDs are rejected.
+- [ ] Moderator grants revalidate current organization and role.
+- [ ] Direct member rows contain no organization-derived authority.
 
-## Known gaps / follow-ups
+## Compatibility deployment
 
-- **Invitation emails**: `orgMember.inviteMember` creates the invitation record
-  but there is no email delivery configured yet — wiring better-auth's
-  `sendInvitationEmail` hook to a provider (e.g. Resend / Cloudflare Email) is a
-  follow-up. (Project members are added by looking up existing accounts, so they
-  don't depend on email.)
-- **Org-level ban of public users**: not built. better-auth has no org-level ban
-  (its `banned` was a _global_ admin-plugin ban, now removed; the org plugin has
-  no ban concept). A per-org block needs our own table (e.g. `orgBlock { orgId,
-profileId }`) checked in the feedback/comment/upvote write paths — intended
-  behavior: a blocked user can still read public projects but cannot write to any
-  project owned by that org.
-- **Impersonation**: not built. It lives in better-auth's `admin` plugin
-  (`impersonateUser` / `stopImpersonating` / `session.impersonatedBy`), which was
-  removed. Re-add a configured `admin({ adminRoles: ["system:admin"] })` if you
-  want "log in as user" for support.
-- **Project-membership sync**: org → project sync runs via schema triggers and
-  is idempotent for the common paths. A reconcile-on-bootstrap safety net (to
-  self-heal the rare "profile missing at sync time" race) is a future
-  enhancement; current live data is consistent.
-- **Dead better-auth columns**: `user.banned/banReason/banExpires` and
-  `session.impersonatedBy` remain in the schema (inert) after the admin-plugin
-  removal. Dropping them needs a widen-migrate-narrow migration (existing rows
-  carry `banned: false`).
+During Deploy 1 only, schemas and Better Auth registration accept legacy
+`editor`, `system:editor`, and legacy project-member role values so existing
+rows and invitations remain readable while migrations run. Authorization does
+not honor those values. The timestamped migrations rename organization members
+and invitations, downgrade both system-role copies, delete org-derived project
+rows, and unset the direct-member role. Deploy 2 removes all compatibility
+shapes after verification.

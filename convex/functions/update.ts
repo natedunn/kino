@@ -74,7 +74,7 @@ export const create = authMutation
 		});
 
 		assertProjectWritable(access);
-		if (!access.permissions.canEdit) {
+		if (!access.permissions.canManageContent) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
 				message: 'You do not have permission to create updates for this project',
@@ -122,7 +122,7 @@ export const update = authMutation
 		});
 
 		assertProjectWritable(access);
-		if (!access.permissions.canEdit) {
+		if (!access.permissions.canManageContent) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
 				message: 'You do not have permission to edit this update',
@@ -166,7 +166,7 @@ export const publish = authMutation
 		});
 
 		assertProjectWritable(access);
-		if (!access.permissions.canEdit) {
+		if (!access.permissions.canManageContent) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
 				message: 'You do not have permission to publish this update',
@@ -199,7 +199,7 @@ export const unpublish = authMutation
 		});
 
 		assertProjectWritable(access);
-		if (!access.permissions.canEdit) {
+		if (!access.permissions.canManageContent) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
 				message: 'You do not have permission to unpublish this update',
@@ -231,7 +231,7 @@ export const remove = authMutation
 		});
 
 		assertProjectWritable(access);
-		if (!access.permissions.canDelete) {
+		if (!access.permissions.canManageContent) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
 				message: 'You do not have permission to delete this update',
@@ -263,7 +263,7 @@ export const bulkPublish = authMutation
 		});
 
 		assertProjectWritable(access);
-		if (!access.permissions.canEdit) {
+		if (!access.permissions.canManageContent) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
 				message: 'You do not have permission to publish these updates',
@@ -309,7 +309,7 @@ export const bulkUnpublish = authMutation
 		});
 
 		assertProjectWritable(access);
-		if (!access.permissions.canEdit) {
+		if (!access.permissions.canManageContent) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
 				message: 'You do not have permission to unpublish these updates',
@@ -354,7 +354,7 @@ export const bulkRemove = authMutation
 		});
 
 		assertProjectWritable(access);
-		if (!access.permissions.canDelete) {
+		if (!access.permissions.canManageContent) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
 				message: 'You do not have permission to delete these updates',
@@ -402,7 +402,7 @@ export const generateCoverImageUploadUrl = authMutation
 		});
 
 		assertProjectWritable(access);
-		if (!access.permissions.canEdit) {
+		if (!access.permissions.canManageContent) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
 				message: 'You do not have permission to upload cover images for this update',
@@ -449,7 +449,7 @@ export const syncMetadata = authMutation
 			userId: ctx.userId,
 		});
 		assertProjectWritable(access);
-		if (!access.permissions.canEdit) {
+		if (!access.permissions.canManageContent) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
 				message: 'You do not have permission to upload cover images for this update',
@@ -492,7 +492,7 @@ export const clearCoverImage = authMutation
 		});
 
 		assertProjectWritable(access);
-		if (!access.permissions.canEdit) {
+		if (!access.permissions.canManageContent) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
 				message: 'You do not have permission to clear this update cover image',
@@ -565,7 +565,7 @@ export const getCoverImageUrl = optionalAuthQuery
 			userId: ctx.userId,
 		});
 		if (!access.permissions.canView) return null;
-		if (updateDoc.status === 'draft' && !access.permissions.canEdit) return null;
+		if (updateDoc.status === 'draft' && !access.permissions.canManageContent) return null;
 
 		return await resolveCoverImageUrl(input.key);
 	});
@@ -596,7 +596,7 @@ export const getBySlug = optionalAuthQuery
 		if (!access.permissions.canView) {
 			return null;
 		}
-		if (item.status === 'draft' && !access.permissions.canEdit) {
+		if (item.status === 'draft' && !access.permissions.canManageContent) {
 			return null;
 		}
 
@@ -650,7 +650,7 @@ export const getBySlug = optionalAuthQuery
 						username: author.username,
 					}
 				: null,
-			canEdit: access.permissions.canEdit,
+			canEdit: access.permissions.canManageContent,
 			commentCount: comments.length,
 			coverImageUrl: await resolveCoverImageUrl(item.coverImageId ?? null),
 			emoteCounts,
@@ -682,7 +682,7 @@ export const getDetailCritical = optionalAuthQuery
 			userId: ctx.userId,
 		});
 		if (!access.permissions.canView) return null;
-		if (item.status === 'draft' && !access.permissions.canEdit) return null;
+		if (item.status === 'draft' && !access.permissions.canManageContent) return null;
 
 		const [author, coverImageUrl, commentWindow, heartCount] = await Promise.all([
 			getDoc<'profile'>(ctx, item.authorProfileId),
@@ -750,7 +750,7 @@ export const getDetailInteractive = optionalAuthQuery
 			userId: ctx.userId,
 		});
 		if (!access.permissions.canView) return null;
-		if (item.status === 'draft' && !access.permissions.canEdit) return null;
+		if (item.status === 'draft' && !access.permissions.canManageContent) return null;
 
 		const currentProfile = access.profile;
 		const [heartCount, currentProfileHeart, relatedFeedback] = await Promise.all([
@@ -792,7 +792,7 @@ export const getDetailInteractive = optionalAuthQuery
 		]);
 
 		return {
-			canEdit: access.permissions.canEdit,
+			canEdit: access.permissions.canManageContent,
 			currentProfile: await toProfileSummary(currentProfile),
 			emoteCounts: {
 				heart: {
@@ -828,7 +828,7 @@ export const getMiddleComments = optionalAuthQuery
 		if (!access.permissions.canView) {
 			return { comments: [], nextCursor: null };
 		}
-		if (item.status === 'draft' && !access.permissions.canEdit) {
+		if (item.status === 'draft' && !access.permissions.canManageContent) {
 			return { comments: [], nextCursor: null };
 		}
 
@@ -890,7 +890,7 @@ export const listByProject = optionalAuthQuery
 			? ctx.db
 					.query('update')
 					.withIndex('by_projectId_category_status_publishedAt', (q: any) =>
-						access.permissions.canEdit
+						access.permissions.canManageContent
 							? q.eq('projectId', project._id).eq('category', input.category)
 							: q
 									.eq('projectId', project._id)
@@ -901,7 +901,7 @@ export const listByProject = optionalAuthQuery
 			: ctx.db
 					.query('update')
 					.withIndex('by_projectId_status_publishedAt', (q: any) =>
-						access.permissions.canEdit
+						access.permissions.canManageContent
 							? q.eq('projectId', project._id)
 							: q.eq('projectId', project._id).eq('status', 'published')
 					)
@@ -990,7 +990,7 @@ export const listProjectDashboard = authQuery
 			slug: project.slug,
 			userId: ctx.userId,
 		});
-		if (!access.permissions.canEdit) {
+		if (!access.permissions.canManageContent) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
 				message: 'You do not have permission to manage updates for this project',

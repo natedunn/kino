@@ -2,7 +2,7 @@ import type { Doc } from './_generated/dataModel';
 
 import { z } from 'zod';
 
-import { asId, getDoc, isProjectEditorRole, toPublicDoc } from '../lib/kino';
+import { asId, getDoc, isProjectTeamMember, toPublicDoc } from '../lib/kino';
 import { resolveProfileImageUrl } from '../lib/storage';
 
 export const updateCategorySchema = z.enum(['changelog', 'article', 'announcement']);
@@ -72,15 +72,7 @@ export function getCachedIsTeamMember(
 	const key = String(author._id);
 	let cached = cache.teamMember.get(key);
 	if (!cached) {
-		cached = (async () => {
-			const projectMember = await ctx.db
-				.query('projectMember')
-				.withIndex('by_profileId_projectId', (q: any) =>
-					q.eq('profileId', author._id).eq('projectId', asId<'project'>(projectId))
-				)
-				.first();
-			return !!projectMember && isProjectEditorRole(projectMember.role);
-		})();
+		cached = isProjectTeamMember(ctx, { profile: author, projectId });
 		cache.teamMember.set(key, cached);
 	}
 	return cached;
