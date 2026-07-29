@@ -15,6 +15,7 @@ import {
 
 import { EditorContentDisplay, MarkdownEditor, sanitizeEditorContent } from '@/components/editor';
 import { EmoteButton, EmotePicker } from '@/components/emote';
+import { GradientIconBadge } from '@/components/gradient-icon-badge';
 import { Button } from '@/components/ui/button';
 import {
 	DropdownMenu,
@@ -125,6 +126,7 @@ export function CommentCard({
 	isUpdating,
 	onDelete,
 	onToggleEmote,
+	onUnauthenticated,
 	onUpdate,
 	railClassName,
 	verb = 'commented',
@@ -139,6 +141,9 @@ export function CommentCard({
 	isUpdating?: boolean;
 	onDelete?: (commentId: string) => void;
 	onToggleEmote?: (commentId: string, content: EmoteContent) => void;
+	// Called when a signed-out visitor tries to react, so callers can prompt them
+	// to sign in instead of the emote controls being disabled.
+	onUnauthenticated?: () => void;
 	onUpdate?: (commentId: string, content: string) => void | Promise<unknown>;
 	railClassName?: string;
 	verb?: string;
@@ -365,18 +370,25 @@ export function CommentCard({
 									<EmotePicker
 										disabled={!currentProfileId}
 										onSelect={(content) => onToggleEmote(comment.id, content)}
+										onUnauthenticated={!currentProfileId ? onUnauthenticated : undefined}
 									/>
 								) : null}
 								{emoteEntries.map(([emoteType, data]) => (
 									<EmoteButton
 										count={data.count}
-										disabled={!currentProfileId || !onToggleEmote}
+										disabled={!onToggleEmote || (!currentProfileId && !onUnauthenticated)}
 										emoteType={emoteType}
 										isActive={
 											currentProfileId ? data.authorProfileIds.includes(currentProfileId) : false
 										}
 										key={emoteType}
-										onClick={() => onToggleEmote?.(comment.id, emoteType)}
+										onClick={() => {
+											if (!currentProfileId) {
+												onUnauthenticated?.();
+												return;
+											}
+											onToggleEmote?.(comment.id, emoteType);
+										}}
 									/>
 								))}
 							</div>
@@ -485,25 +497,25 @@ export function CommentForm({
 	if (!isAuthenticated) {
 		if (signedOut === 'rich') {
 			return (
-				<div className='mt-6 rounded-lg border border-dashed border-border bg-muted/50 p-8'>
-					<div className='flex flex-col items-center justify-center gap-4 text-center'>
-						<div className='flex size-12 items-center justify-center rounded-full bg-primary/10'>
-							<MessageCircle className='size-6 text-primary' />
-						</div>
-						<div className='flex flex-col gap-1'>
-							<h3 className='font-medium'>Join the conversation</h3>
-							<p className='text-sm text-muted-foreground'>
+				<div className='mt-6 overflow-hidden rounded-lg border border-border bg-muted/50 p-5 md:p-8'>
+					<div className='flex flex-col items-center justify-center gap-3 text-center md:gap-5'>
+						<GradientIconBadge className='size-11 md:size-14'>
+							<MessageCircle className='size-5 md:size-6' />
+						</GradientIconBadge>
+						<div className='flex flex-col gap-1 md:gap-1.5'>
+							<h3 className='font-semibold tracking-tight md:text-lg'>Join the conversation</h3>
+							<p className='text-xs text-balance text-muted-foreground md:text-sm'>
 								Sign in to share your thoughts and help improve this project.
 							</p>
 						</div>
-						<div className='flex items-center gap-2'>
-							<Button asChild>
+						<div className='flex w-full flex-col items-center gap-2 sm:w-auto sm:flex-row'>
+							<Button asChild className='w-full sm:w-auto' size='sm'>
 								<Link search={{ redirect: redirectTo } as never} to='/auth'>
 									Sign in to comment
 								</Link>
 							</Button>
-							<Button asChild variant='outline'>
-								<Link to='/'>Create an account</Link>
+							<Button asChild className='w-full sm:w-auto' size='sm' variant='outline'>
+								<Link to='/auth/sign-up'>Create an account</Link>
 							</Button>
 						</div>
 					</div>

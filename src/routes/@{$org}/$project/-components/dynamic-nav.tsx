@@ -38,10 +38,9 @@ interface DynamicNavigationProps {
 	orgSlug: string;
 	projectSlug: string;
 	className?: string;
-	onStateChange?: (state: { isCalculating: boolean }) => void;
 }
 
-export function DynamicNavigation({ orgSlug, projectSlug, onStateChange }: DynamicNavigationProps) {
+export function DynamicNavigation({ orgSlug, projectSlug }: DynamicNavigationProps) {
 	const crpc = useCRPC();
 	const params = {
 		org: orgSlug,
@@ -114,16 +113,10 @@ export function DynamicNavigation({ orgSlug, projectSlug, onStateChange }: Dynam
 	const [visibleItems, setVisibleItems] = useState<number>(10);
 	const containerRef = useRef<HTMLDivElement>(null);
 	const itemButtonRefs = useRef<Array<HTMLButtonElement | null>>([]);
-	const [isCalculating, setIsCalculating] = useState<boolean>(true);
-
-	useEffect(() => {
-		onStateChange?.({ isCalculating });
-	}, [isCalculating, onStateChange]);
 
 	useIsomorphicLayoutEffect(() => {
 		const calculateVisibleItems = () => {
 			if (!containerRef.current) {
-				setIsCalculating(false);
 				return;
 			}
 
@@ -167,7 +160,6 @@ export function DynamicNavigation({ orgSlug, projectSlug, onStateChange }: Dynam
 			if (Math.abs(finalCount - visibleItems) > 0) {
 				setVisibleItems(finalCount);
 			}
-			setIsCalculating(false);
 		};
 
 		calculateVisibleItems();
@@ -175,7 +167,6 @@ export function DynamicNavigation({ orgSlug, projectSlug, onStateChange }: Dynam
 		// Debounced resize handler to prevent excessive calculations
 		let resizeTimeout: ReturnType<typeof setTimeout>;
 		const handleResize = () => {
-			setIsCalculating(true);
 			clearTimeout(resizeTimeout);
 			resizeTimeout = setTimeout(calculateVisibleItems, 100);
 		};
@@ -184,7 +175,6 @@ export function DynamicNavigation({ orgSlug, projectSlug, onStateChange }: Dynam
 
 		// Observer for container size changes
 		const observer = new ResizeObserver(() => {
-			setIsCalculating(true);
 			clearTimeout(resizeTimeout);
 			resizeTimeout = setTimeout(calculateVisibleItems, 50);
 		});
@@ -204,7 +194,7 @@ export function DynamicNavigation({ orgSlug, projectSlug, onStateChange }: Dynam
 	const hiddenItems = items.slice(visibleItems);
 
 	return (
-		<div ref={containerRef} className='relative overflow-x-hidden'>
+		<div ref={containerRef} className='relative overflow-x-clip'>
 			<div className='container'>
 				<div className='flex flex-nowrap items-end gap-1'>
 					{visibleItemsList.map((item, index) => {

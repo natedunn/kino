@@ -20,13 +20,31 @@ import { formatFullDate, formatRelativeDay, toTimestamp } from '@/lib/utils/form
 
 // Memoized: timeline event rows take only the stable `event` prop, so they
 // skip re-rendering when unrelated top-level state (dialogs, sheets) changes.
-export const FeedbackEventItem = memo(function ({ event }: { event: FeedbackEventData }) {
+export const FeedbackEventItem = memo(function ({
+	event,
+	isLast = false,
+}: {
+	event: FeedbackEventData;
+	isLast?: boolean;
+}) {
 	const Icon = getEventIcon(event.eventType);
 	const createdAt = toTimestamp(event.createdAt);
 
 	return (
 		<li className='relative z-10 flex items-start gap-3 py-2 pl-4'>
-			<div className='ml-0.5 flex h-6 w-8 shrink-0 items-center justify-center'>
+			{/* When this event is the last row, the shared timeline rail (the `before`
+			    line on the parent <ul>) would otherwise trail past the icon down to the
+			    bottom of the list. Mask it from the icon's vertical center down so the
+			    line's end tucks behind the icon. The icon wrapper below is `relative`
+			    so it paints ON TOP of this mask (positioned siblings paint in DOM order),
+			    keeping the mask behind the icon rather than notching it. */}
+			{isLast ? (
+				<span
+					aria-hidden
+					className='pointer-events-none absolute top-5 bottom-0 left-8 w-1 bg-background'
+				/>
+			) : null}
+			<div className='relative ml-0.5 flex h-6 w-8 shrink-0 items-center justify-center'>
 				<div className='flex h-6 w-6 items-center justify-center rounded-full border bg-muted'>
 					<Icon className='h-3 w-3 text-muted-foreground' />
 				</div>

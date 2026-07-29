@@ -69,6 +69,15 @@ import {
 	DialogTrigger,
 } from '@/components/ui/dialog';
 import {
+	Drawer,
+	DrawerContent,
+	DrawerDescription,
+	DrawerFooter,
+	DrawerHeader,
+	DrawerTitle,
+	DrawerTrigger,
+} from '@/components/ui/drawer';
+import {
 	DropdownMenu,
 	DropdownMenuCheckboxItem,
 	DropdownMenuContent,
@@ -94,15 +103,6 @@ import {
 	SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import {
-	Sheet,
-	SheetContent,
-	SheetDescription,
-	SheetFooter,
-	SheetHeader,
-	SheetTitle,
-	SheetTrigger,
-} from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -699,31 +699,38 @@ function DialogDemo() {
 }
 
 /* ------------------------------------------------------------------ */
-/* Sheet                                                              */
+/* Drawer                                                             */
 /* ------------------------------------------------------------------ */
 
-function SheetDemo() {
+function DrawerDemo() {
+	const directions = [
+		{ direction: 'right', label: 'right' },
+		{ direction: 'left', label: 'left' },
+		{ direction: 'up', label: 'top' },
+		{ direction: 'down', label: 'bottom' },
+	] as const;
+
 	return (
 		<Demo title='Slide-over panel' center>
-			{(['right', 'left', 'top', 'bottom'] as const).map((side) => (
-				<Sheet key={side}>
-					<SheetTrigger render={<Button variant='outline' />}>{side}</SheetTrigger>
-					<SheetContent side={side}>
-						<SheetHeader>
-							<SheetTitle>Edit profile</SheetTitle>
-							<SheetDescription>
+			{directions.map(({ direction, label }) => (
+				<Drawer key={direction} swipeDirection={direction}>
+					<DrawerTrigger render={<Button variant='outline' />}>{label}</DrawerTrigger>
+					<DrawerContent>
+						<DrawerHeader>
+							<DrawerTitle>Edit profile</DrawerTitle>
+							<DrawerDescription>
 								Make changes to your profile here. Click save when you&apos;re done.
-							</SheetDescription>
-						</SheetHeader>
+							</DrawerDescription>
+						</DrawerHeader>
 						<div className='flex flex-col gap-3 px-4'>
 							<Input placeholder='Display name' defaultValue='Nate Dunn' />
 							<Input placeholder='Username' defaultValue='natedunn' />
 						</div>
-						<SheetFooter>
+						<DrawerFooter>
 							<Button>Save changes</Button>
-						</SheetFooter>
-					</SheetContent>
-				</Sheet>
+						</DrawerFooter>
+					</DrawerContent>
+				</Drawer>
 			))}
 		</Demo>
 	);
@@ -1177,19 +1184,19 @@ export const COMPONENT_ITEMS: Array<LabItem> = [
 		render: () => <DialogDemo />,
 	},
 	{
-		id: 'sheet',
-		name: 'Sheet',
-		description: 'Slide-over panel anchored to any edge.',
+		id: 'drawer',
+		name: 'Drawer',
+		description: 'Draggable slide-over panel anchored to any edge.',
 		importCode: `import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet"`,
-		render: () => <SheetDemo />,
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer"`,
+		render: () => <DrawerDemo />,
 	},
 	{
 		id: 'popover',

@@ -51,18 +51,28 @@ function TooltipTrigger({
 }
 
 function TooltipContent({
+	align,
+	alignOffset,
 	className,
 	sideOffset = 8,
 	side = 'top',
 	children,
 	...props
 }: React.ComponentProps<typeof TooltipPrimitive.Popup> & {
+	align?: React.ComponentProps<typeof TooltipPrimitive.Positioner>['align'];
+	alignOffset?: React.ComponentProps<typeof TooltipPrimitive.Positioner>['alignOffset'];
 	sideOffset?: number;
 	side?: 'top' | 'bottom' | 'left' | 'right';
 }) {
 	return (
 		<TooltipPrimitive.Portal>
-			<TooltipPrimitive.Positioner sideOffset={sideOffset} side={side} className='isolate z-50'>
+			<TooltipPrimitive.Positioner
+				align={align}
+				alignOffset={alignOffset}
+				sideOffset={sideOffset}
+				side={side}
+				className='isolate z-50'
+			>
 				<TooltipPrimitive.Popup
 					data-slot='tooltip-content'
 					className={cn(
@@ -72,7 +82,10 @@ function TooltipContent({
 					{...props}
 				>
 					{children}
-					<TooltipPrimitive.Arrow className='absolute data-[side=bottom]:-top-1.5 data-[side=bottom]:rotate-180 data-[side=left]:-right-1.5 data-[side=left]:-rotate-90 data-[side=right]:-left-1.5 data-[side=right]:rotate-90 data-[side=top]:-bottom-1.5'>
+					{/* Base UI tracks the arrow to the anchor centre, which drifts to the
+					    edge over wide triggers. Force it to the centre of the tooltip body
+					    instead (important overrides Base UI's inline left/top). */}
+					<TooltipPrimitive.Arrow className='absolute data-[side=bottom]:-top-1.5 data-[side=bottom]:left-1/2! data-[side=bottom]:-translate-x-1/2! data-[side=bottom]:rotate-180 data-[side=left]:top-1/2! data-[side=left]:-right-1.5 data-[side=left]:-translate-y-1/2! data-[side=left]:-rotate-90 data-[side=right]:top-1/2! data-[side=right]:-left-1.5 data-[side=right]:-translate-y-1/2! data-[side=right]:rotate-90 data-[side=top]:-bottom-1.5 data-[side=top]:left-1/2! data-[side=top]:-translate-x-1/2!'>
 						<svg width='12' height='6' viewBox='0 0 12 6' className='fill-primary'>
 							<path d='M0 0L6 6L12 0' />
 						</svg>

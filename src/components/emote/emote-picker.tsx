@@ -15,9 +15,26 @@ import { EMOTE_EMOJI } from './types';
 type EmotePickerProps = {
 	disabled?: boolean;
 	onSelect: (emoteType: EmoteContent) => void;
+	// When set, the trigger opens a sign-in prompt instead of the picker (used for
+	// signed-out visitors) rather than rendering as a disabled button.
+	onUnauthenticated?: () => void;
 };
 
-export function EmotePicker({ disabled, onSelect }: EmotePickerProps) {
+export function EmotePicker({ disabled, onSelect, onUnauthenticated }: EmotePickerProps) {
+	if (onUnauthenticated) {
+		return (
+			<Button
+				className='gap-2 rounded-full'
+				onClick={onUnauthenticated}
+				size='sm'
+				variant='outline'
+			>
+				<SmilePlus size={16} />
+				<span className='sr-only'>Add reaction</span>
+			</Button>
+		);
+	}
+
 	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>

@@ -1,0 +1,32 @@
+import React from 'react';
+
+export interface IconProps extends React.SVGProps<SVGSVGElement> {
+	size?: string;
+}
+
+function IconUpArrowCircleFillDuo18({ size = '18px', ...props }: IconProps) {
+	return (
+		<svg
+			xmlns='http://www.w3.org/2000/svg'
+			x='0px'
+			y='0px'
+			width={size}
+			height={size}
+			viewBox='0 0 18 18'
+			{...props}
+		>
+			<path
+				d='M1 9C1 13.411 4.589 17 9 17C13.411 17 17 13.411 17 9C17 4.589 13.411 1 9 1C4.589 1 1 4.589 1 9Z'
+				fill='currentColor'
+				opacity='var(--icon-secondary-opacity)'
+				data-color='color-2'
+			/>
+			<path
+				d='M11.72 9.53005C12.013 9.82305 12.488 9.82305 12.781 9.53005C12.927 9.38405 13.001 9.19202 13.001 9.00002C13.001 8.80802 12.928 8.61599 12.781 8.46999L9.53099 5.21999C9.23799 4.92699 8.76299 4.92699 8.46999 5.21999L5.21999 8.46999C4.92699 8.76299 4.92699 9.23803 5.21999 9.53103C5.51299 9.82403 5.98799 9.82403 6.28099 9.53103L8.25099 7.561V16.25C8.25099 16.664 8.58699 17 9.00099 17C9.41499 17 9.75099 16.664 9.75099 16.25V7.561L11.721 9.53103L11.72 9.53005Z'
+				fill='currentColor'
+			/>
+		</svg>
+	);
+}
+
+export default IconUpArrowCircleFillDuo18;
