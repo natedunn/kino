@@ -30,6 +30,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { GithubIcon } from '@/icons';
 import { useCRPC } from '@/lib/convex/crpc';
 import { crpcServer } from '@/lib/convex/crpc-server';
+import { extractErrorMessage } from '@/lib/errors';
 import { titleMeta } from '@/lib/seo';
 import { cn } from '@/lib/utils';
 import {
@@ -65,11 +66,6 @@ type GeneralSettingsFormValues = {
 	urls: Array<ProjectUrlValue>;
 	visibility: ProjectVisibility;
 };
-
-function mutationErrorMessage(error: unknown, fallback: string) {
-	const anyError = error as { data?: { message?: string }; message?: string };
-	return anyError.data?.message ?? anyError.message ?? fallback;
-}
 
 // A settings card split into a bg-accent header (label + description) and a
 // bg-card body (the field), divided by a full-width border.
@@ -213,7 +209,7 @@ function ProjectGeneralSettingsRoute() {
 					bypassBlockerRef.current = false;
 				}
 			} catch (error) {
-				setFormError(mutationErrorMessage(error, 'Unable to update project'));
+				setFormError(extractErrorMessage(error, 'Unable to update project'));
 			}
 		},
 	});
@@ -246,10 +242,20 @@ function ProjectGeneralSettingsRoute() {
 		);
 	}
 
+	const isArchived = project.visibility === 'archived';
+	const isAdmin = detailsQuery.data?.permissions.canDelete ?? false;
 	const isSaving = updateMutation.isPending;
 
 	return (
 		<section className='max-w-3xl'>
+			{isArchived ? (
+				<InlineAlert className='mb-6' variant='warning'>
+					This project is archived and read-only —{' '}
+					{isAdmin
+						? 'change its visibility below to un-archive it before making other changes.'
+						: 'an admin must un-archive it before changes can be saved.'}
+				</InlineAlert>
+			) : null}
 			<form
 				className='flex flex-col gap-6'
 				onSubmit={(event) => {
@@ -465,7 +471,7 @@ function ProjectGeneralSettingsRoute() {
 															}
 														} catch (error) {
 															setFormError(
-																mutationErrorMessage(error, 'Unable to import from GitHub')
+																extractErrorMessage(error, 'Unable to import from GitHub')
 															);
 														}
 													}}
@@ -487,7 +493,11 @@ function ProjectGeneralSettingsRoute() {
 					</SectionCard>
 
 					<SectionCard
-						description='Public projects are visible to everyone. Private projects are only visible to members.'
+						description={
+							isAdmin
+								? 'Public projects are visible to everyone; private ones only to members. Archived projects are frozen and read-only until un-archived.'
+								: 'Public projects are visible to everyone. Private projects are only visible to members.'
+						}
 						label='Visibility'
 					>
 						<form.Field name='visibility'>
@@ -504,6 +514,8 @@ function ProjectGeneralSettingsRoute() {
 									<SelectContent>
 										<SelectItem value='public'>Public</SelectItem>
 										<SelectItem value='private'>Private</SelectItem>
+										{/* Archiving/un-archiving is admin-only (enforced server-side too). */}
+										{isAdmin ? <SelectItem value='archived'>Archived</SelectItem> : null}
 									</SelectContent>
 								</Select>
 							)}
@@ -513,7 +525,8 @@ function ProjectGeneralSettingsRoute() {
 
 				{(formError ?? updateMutation.error) ? (
 					<InlineAlert variant='danger'>
-						Unable to update project: {formError ?? updateMutation.error?.message}
+						Unable to update project:{' '}
+						{formError ?? extractErrorMessage(updateMutation.error, 'Please try again.')}
 					</InlineAlert>
 				) : null}
 

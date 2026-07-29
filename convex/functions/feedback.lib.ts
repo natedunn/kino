@@ -6,6 +6,7 @@ import { z } from 'zod';
 
 import {
 	asId,
+	assertProjectWritable,
 	getCurrentProfileOrThrow,
 	getDoc,
 	getDocOrThrow,
@@ -152,6 +153,9 @@ export async function verifyFeedbackWriteAccess(ctx: any, feedbackId: string, us
 	const feedback = await getDocOrThrow(ctx, asId<'feedback'>(feedbackId), 'Feedback not found');
 	const project = await getDocOrThrow(ctx, feedback.projectId, 'Project not found');
 	const access = await verifyProjectAccess(ctx, { slug: project.slug, userId });
+	// Archived projects are frozen — block every feedback write here (including
+	// the author's own `isOwner` edits) in one place.
+	assertProjectWritable(access);
 	return {
 		feedback,
 		isOwner: feedback.authorProfileId === profile._id,

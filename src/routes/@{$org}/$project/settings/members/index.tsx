@@ -10,8 +10,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useCRPC } from '@/lib/convex/crpc';
 import { crpcServer } from '@/lib/convex/crpc-server';
+import { extractErrorMessage } from '@/lib/errors';
 import { titleMeta } from '@/lib/seo';
 import { emailSchema, FORM_LIMITS } from '@/lib/validation';
+
+import { ArchivedSettingsNotice } from '../-components/archived-notice';
 
 export const Route = createFileRoute('/@{$org}/$project/settings/members/')({
 	head: () => ({
@@ -36,8 +39,7 @@ export const Route = createFileRoute('/@{$org}/$project/settings/members/')({
 
 function mutationErrorMessage(error: unknown) {
 	if (!error) return null;
-	const anyError = error as { data?: { message?: string }; message?: string };
-	return anyError.data?.message ?? anyError.message ?? 'Something went wrong';
+	return extractErrorMessage(error);
 }
 
 function ProjectMembersRoute() {
@@ -91,12 +93,14 @@ function ProjectMembersRoute() {
 	}
 
 	const isPrivate = project.visibility === 'private';
+	const isArchived = project.visibility === 'archived';
 	const members = membersQuery.data?.members ?? [];
 	const actionError =
 		mutationErrorMessage(invite.error) ?? mutationErrorMessage(removeMember.error);
 
 	return (
 		<section className='max-w-3xl'>
+			{isArchived ? <ArchivedSettingsNotice className='mb-6' /> : null}
 			<header className='border-b pb-4'>
 				<h2 className='text-xl font-semibold'>Project members</h2>
 				<p className='mt-1 text-sm text-muted-foreground'>

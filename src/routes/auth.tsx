@@ -33,6 +33,14 @@ export function getSafeRedirectTarget(redirect: string | undefined) {
 	}
 }
 
+export function getVerifyEmailCallbackUrl(origin: string, redirect: string | undefined) {
+	const callbackUrl = new URL('/auth/verify-email', origin);
+	if (redirect) {
+		callbackUrl.searchParams.set('redirect', getSafeRedirectTarget(redirect));
+	}
+	return callbackUrl.toString();
+}
+
 function AuthLayout() {
 	return (
 		<div className='relative flex min-h-svh flex-col sm:items-center sm:justify-center sm:px-6 sm:py-16'>

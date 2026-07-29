@@ -141,11 +141,38 @@ export const update = authMutation
 		if (!access.project) {
 			throw new CRPCError({ code: 'NOT_FOUND', message: 'Project not found' });
 		}
-		if (!access.permissions.canEdit) {
-			throw new CRPCError({
-				code: 'FORBIDDEN',
-				message: 'User does not have permission',
-			});
+
+		// Archiving/un-archiving is an admin-only action (org:admin or system:admin).
+		const isAdmin =
+			access.profile?.role === 'system:admin' || access.projectMember?.role === 'org:admin';
+
+		if (access.isArchived) {
+			// The project is frozen. The only permitted change is an admin lifting
+			// the archived state (visibility → public/private). A save that leaves it
+			// archived is rejected; the admin un-archives (the accompanying field
+			// values apply as part of that same save) before further edits.
+			const liftingArchive = input.visibility !== undefined && input.visibility !== 'archived';
+			if (!isAdmin || !liftingArchive) {
+				throw new CRPCError({
+					code: 'FORBIDDEN',
+					message:
+						'This project is archived and read-only. An admin must un-archive it (change its visibility) to make changes.',
+				});
+			}
+		} else {
+			if (!access.permissions.canEdit) {
+				throw new CRPCError({
+					code: 'FORBIDDEN',
+					message: 'User does not have permission',
+				});
+			}
+			// Entering the archived (frozen) state is restricted to admins.
+			if (input.visibility === 'archived' && !isAdmin) {
+				throw new CRPCError({
+					code: 'FORBIDDEN',
+					message: 'Only an admin can archive a project.',
+				});
+			}
 		}
 
 		if (input.slug && input.slug !== access.project.slug) {

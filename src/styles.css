@@ -221,6 +221,11 @@
 	transition: none !important;
 }
 
+/* Link text that only reveals its underline on hover. */
+.link {
+	@apply cursor-pointer underline-offset-4 hover:underline;
+}
+
 .markdown-prose {
 	@apply prose max-w-none text-foreground dark:prose-invert;
 }

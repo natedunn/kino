@@ -11,6 +11,8 @@ import { useCRPC } from '@/lib/convex/crpc';
 import { crpcServer } from '@/lib/convex/crpc-server';
 import { titleMeta } from '@/lib/seo';
 
+import { ArchivedSettingsNotice } from '../-components/archived-notice';
+
 export const Route = createFileRoute('/@{$org}/$project/settings/boards/')({
 	head: () => ({
 		meta: [titleMeta(['Boards'])],
@@ -68,6 +70,7 @@ function BoardsIndexRoute() {
 
 	return (
 		<section className='space-y-6'>
+			{projectQuery.data.project.visibility === 'archived' ? <ArchivedSettingsNotice /> : null}
 			<header className='flex flex-col items-start gap-4 border-b pb-4 sm:flex-row sm:items-end sm:justify-between'>
 				<div>
 					<h2 className='text-xl font-semibold'>Boards</h2>

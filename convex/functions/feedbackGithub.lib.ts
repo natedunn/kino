@@ -5,6 +5,7 @@ import { z } from 'zod';
 
 import {
 	asId,
+	assertProjectWritable,
 	getCurrentProfileOrThrow,
 	getDocOrThrow,
 	toPublicDoc,
@@ -86,6 +87,7 @@ export async function getVerifiedContext(
 		slug: project.slug,
 		userId: args.userId,
 	});
+	assertProjectWritable(access);
 	if (!access.permissions.canEdit) {
 		throw new CRPCError({
 			code: 'FORBIDDEN',

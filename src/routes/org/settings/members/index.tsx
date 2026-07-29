@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useCRPC } from '@/lib/convex/crpc';
 import { crpcServer } from '@/lib/convex/crpc-server';
+import { extractErrorMessage } from '@/lib/errors';
 import { titleMeta } from '@/lib/seo';
 import { cn } from '@/lib/utils';
 import { getInitial } from '@/lib/utils/get-initial';
@@ -47,8 +48,7 @@ type AssignableRole = (typeof ASSIGNABLE_ROLES)[number];
 
 function mutationErrorMessage(error: unknown) {
 	if (!error) return null;
-	const anyError = error as { data?: { message?: string }; message?: string };
-	return anyError.data?.message ?? anyError.message ?? 'Something went wrong';
+	return extractErrorMessage(error);
 }
 
 function MembersSettingsRoute() {

@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { authMutation, optionalAuthQuery } from '../lib/crpc';
 import {
 	asId,
+	assertProjectWritable,
 	getCurrentProfile,
 	getCurrentProfileOrThrow,
 	getDoc,
@@ -49,6 +50,11 @@ export const update = authMutation
 	.mutation(async ({ ctx, input }) => {
 		const profile = await getCurrentProfileOrThrow(ctx, ctx.userId);
 		const comment = await getDocOrThrow(ctx, asId<'updateComment'>(input._id), 'Comment not found');
+		const item = await getDocOrThrow(ctx, comment.updateId, 'Update not found');
+		const project = await getDocOrThrow(ctx, item.projectId, 'Project not found');
+		assertProjectWritable(
+			await verifyProjectAccess(ctx, { slug: project.slug, userId: ctx.userId })
+		);
 		if (comment.authorProfileId !== profile._id) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
@@ -75,6 +81,11 @@ export const remove = authMutation
 	.mutation(async ({ ctx, input }) => {
 		const profile = await getCurrentProfileOrThrow(ctx, ctx.userId);
 		const comment = await getDocOrThrow(ctx, asId<'updateComment'>(input._id), 'Comment not found');
+		const item = await getDocOrThrow(ctx, comment.updateId, 'Update not found');
+		const project = await getDocOrThrow(ctx, item.projectId, 'Project not found');
+		assertProjectWritable(
+			await verifyProjectAccess(ctx, { slug: project.slug, userId: ctx.userId })
+		);
 		if (comment.authorProfileId !== profile._id) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
