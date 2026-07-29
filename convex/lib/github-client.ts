@@ -506,6 +506,41 @@ export async function fetchRepository(args: { fullName: string; token: string })
 	};
 }
 
+export async function findAccessibleInstallationRepositoryIds(args: {
+	repositories: Array<{ fullName: string; id: number }>;
+	token: string;
+}) {
+	const uniqueRepositories = [
+		...new Map(args.repositories.map((repository) => [repository.id, repository])).values(),
+	];
+	const accessibleRepositoryIds: Array<number> = [];
+	const concurrency = 10;
+
+	for (let offset = 0; offset < uniqueRepositories.length; offset += concurrency) {
+		const batch = uniqueRepositories.slice(offset, offset + concurrency);
+		const results = await Promise.all(
+			batch.map(async (repository) => {
+				try {
+					await fetchRepository({
+						fullName: repository.fullName,
+						token: args.token,
+					});
+					return repository.id;
+				} catch (error) {
+					if (isGitHubNotFoundError(error)) return null;
+					throw error;
+				}
+			})
+		);
+
+		accessibleRepositoryIds.push(
+			...results.filter((repositoryId): repositoryId is number => repositoryId !== null)
+		);
+	}
+
+	return accessibleRepositoryIds;
+}
+
 type GitHubIssueApiItem = {
 	html_url: string;
 	id: number;

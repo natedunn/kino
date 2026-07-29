@@ -1045,6 +1045,7 @@ export declare const internal: {
       "mutation",
       "internal",
       {
+        authorizedRepositoryIds: Array<number>;
         installation: {
           account: { id: number; login: string; type: string } | null;
           events: Array<string>;
@@ -1063,11 +1064,14 @@ export declare const internal: {
       {
         deletedInstallationIds?: Array<number>;
         installations: Array<{
-          account: { id: number; login: string; type: string } | null;
-          events: Array<string>;
-          id: number;
-          permissions: Record<string, string>;
-          repository_selection: string;
+          authorizedRepositoryIds: Array<number>;
+          installation: {
+            account: { id: number; login: string; type: string } | null;
+            events: Array<string>;
+            id: number;
+            permissions: Record<string, string>;
+            repository_selection: string;
+          };
         }>;
         state: string;
       },

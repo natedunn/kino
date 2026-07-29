@@ -288,11 +288,14 @@ describe('stale GitHub installations', () => {
 			deletedInstallationIds: [200],
 			installations: [
 				{
-					account: { id: 7, login: 'account-7', type: 'User' },
-					events: ['issues'],
-					id: 201,
-					permissions: { issues: 'write', metadata: 'read' },
-					repository_selection: 'all',
+					authorizedRepositoryIds: [300],
+					installation: {
+						account: { id: 7, login: 'account-7', type: 'User' },
+						events: ['issues'],
+						id: 201,
+						permissions: { issues: 'write', metadata: 'read' },
+						repository_selection: 'all',
+					},
 				},
 			],
 			state: seeded.state,
@@ -398,11 +401,14 @@ describe('stale GitHub installations', () => {
 			deletedInstallationIds: [],
 			installations: [
 				{
-					account: { id: 8, login: 'account-8', type: 'User' },
-					events: ['issues'],
-					id: 401,
-					permissions: { issues: 'write', metadata: 'read' },
-					repository_selection: 'all',
+					authorizedRepositoryIds: [402],
+					installation: {
+						account: { id: 8, login: 'account-8', type: 'User' },
+						events: ['issues'],
+						id: 401,
+						permissions: { issues: 'write', metadata: 'read' },
+						repository_selection: 'all',
+					},
 				},
 			],
 			state: seeded.state,
@@ -430,5 +436,156 @@ describe('stale GitHub installations', () => {
 			repoFullName: 'account-8/repo',
 			repoId: 402,
 		});
+	});
+
+	it('disconnects repositories excluded from a replacement installation', async () => {
+		const t = convexTest();
+		const seeded = await t.run(async (baseCtx) => {
+			const ctx = await runCtx(baseCtx);
+			const admin = await seedOrgAdmin(ctx, 'selected-refresh');
+			const active = await seedInstallation(ctx, {
+				accountId: 9,
+				installationId: 500,
+				organization: admin.organization,
+				profile: admin.profile,
+				status: 'active',
+			});
+			const [excludedProject] = await ctx.orm
+				.insert(projectTable)
+				.values({
+					name: 'Excluded repository project',
+					orgSlug: admin.organization.slug,
+					slug: 'excluded-repository-project',
+					visibility: 'public',
+				})
+				.returning();
+			const connectionValues = {
+				connectedByProfileId: admin.profile.id,
+				enabledSources: ['issues'],
+				githubInstallationId: active.id,
+				issuesVerifiedAt: Date.now(),
+				mode: 'read' as const,
+				orgId: admin.organization.id,
+				orgSlug: admin.organization.slug,
+				repoOwner: 'account-9',
+				repoPrivate: false,
+				verificationStatus: 'verified',
+				verificationSummary: {
+					discussions: { enabled: false, ok: false },
+					issues: { ok: true },
+				},
+			};
+			const [allowedConnection] = await ctx.orm
+				.insert(githubRepositoryConnectionTable)
+				.values({
+					...connectionValues,
+					projectId: admin.project.id,
+					projectSlug: admin.project.slug,
+					repoFullName: 'account-9/allowed',
+					repoId: 501,
+					repoName: 'allowed',
+					repoNodeId: 'R_allowed',
+				})
+				.returning();
+			const [excludedConnection] = await ctx.orm
+				.insert(githubRepositoryConnectionTable)
+				.values({
+					...connectionValues,
+					projectId: excludedProject.id,
+					projectSlug: excludedProject.slug,
+					repoFullName: 'account-9/excluded',
+					repoId: 502,
+					repoName: 'excluded',
+					repoNodeId: 'R_excluded',
+				})
+				.returning();
+
+			const nonce = 'selected-refresh-state';
+			const state = await createGitHubAppState({
+				exp: Date.now() + 60_000,
+				nonce,
+				targetUrl: 'https://usekino.com/api/github/callback',
+			});
+			await ctx.orm.insert(githubConnectionStateTable).values({
+				createdByProfileId: admin.profile.id,
+				createdByUserId: admin.user.id,
+				expiresAt: Date.now() + 60_000,
+				mode: 'read',
+				orgId: admin.organization.id,
+				orgSlug: admin.organization.slug,
+				stateHash: await sha256Hex(nonce),
+				status: 'pending',
+				updatedTime: Date.now(),
+			});
+
+			return {
+				activeId: active.id,
+				allowedConnectionId: allowedConnection.id,
+				excludedConnectionId: excludedConnection.id,
+				excludedProjectId: excludedProject.id,
+				state,
+				userId: admin.user.id,
+			};
+		});
+
+		const refreshContext = await t.query(internal.github.getRefreshInstallationsForCallback, {
+			state: seeded.state,
+		});
+		expect(refreshContext.repositoryTargets).toEqual([
+			{
+				accountId: 9,
+				repositories: [
+					{ fullName: 'account-9/allowed', id: 501 },
+					{ fullName: 'account-9/excluded', id: 502 },
+				],
+			},
+		]);
+
+		await t.mutation(internal.github.completeUserInstallationsCallback, {
+			deletedInstallationIds: [500],
+			installations: [
+				{
+					authorizedRepositoryIds: [501],
+					installation: {
+						account: { id: 9, login: 'account-9', type: 'User' },
+						events: ['issues'],
+						id: 503,
+						permissions: { issues: 'write', metadata: 'read' },
+						repository_selection: 'selected',
+					},
+				},
+			],
+			state: seeded.state,
+		});
+
+		const result = await t.run(async (baseCtx) => {
+			const ctx = await runCtx(baseCtx);
+			return {
+				allowed: await ctx.db.get('githubRepositoryConnection', seeded.allowedConnectionId),
+				excluded: await ctx.db.get('githubRepositoryConnection', seeded.excludedConnectionId),
+				installation: await ctx.db.get('githubInstallation', seeded.activeId),
+			};
+		});
+		expect(result.installation).toMatchObject({
+			installationId: 503,
+			repositorySelection: 'selected',
+			status: 'active',
+		});
+		expect(result.allowed).toMatchObject({
+			githubInstallationId: seeded.activeId,
+			verificationStatus: 'verified',
+		});
+		expect(result.allowed?.deletedTime).toBeUndefined();
+		expect(result.excluded).toMatchObject({
+			githubInstallationId: seeded.activeId,
+			verificationStatus: 'unauthorized',
+		});
+		expect(result.excluded?.deletedTime).toEqual(expect.any(Number));
+		await expect(
+			t.query(internal.project.prepareGithubUrlImport, {
+				id: seeded.excludedProjectId,
+				userId: seeded.userId,
+			})
+		).rejects.toThrow('No connected GitHub repository');
 	});
 });

@@ -65,10 +65,10 @@ async function findAuthorizedInstallationReconciliationTarget(
 		.query('githubInstallation')
 		.withIndex('by_orgId', (q) => q.eq('orgId', args.orgId))
 		.take(100);
-	const staleCandidates = orgInstallations.filter(
-		(installation) => installation.status === 'stale' && installation.accountId === args.accountId
+	const accountCandidates = orgInstallations.filter(
+		(installation) => installation.accountId === args.accountId
 	);
-	if (staleCandidates.length === 0) return null;
+	if (accountCandidates.length === 0) return null;
 
 	const repositoryConnections = await ctx.db
 		.query('githubRepositoryConnection')
@@ -80,7 +80,7 @@ async function findAuthorizedInstallationReconciliationTarget(
 			.map((connection) => connection.githubInstallationId)
 	);
 
-	return staleCandidates.sort((left, right) => {
+	return accountCandidates.sort((left, right) => {
 		const connectionRank =
 			Number(connectedInstallationIds.has(right._id)) -
 			Number(connectedInstallationIds.has(left._id));
@@ -97,6 +97,7 @@ async function repairAuthorizedInstallationRepositoryConnections(
 	args: {
 		accountId: number;
 		activeInstallationId: Id<'githubInstallation'>;
+		authorizedRepositoryIds: Array<number>;
 		orgId: string;
 		updatedTime: number;
 	}
@@ -105,25 +106,31 @@ async function repairAuthorizedInstallationRepositoryConnections(
 		.query('githubInstallation')
 		.withIndex('by_orgId', (q) => q.eq('orgId', args.orgId))
 		.take(100);
-	const inactiveInstallationIds = orgInstallations
-		.filter(
-			(installation) =>
-				installation._id !== args.activeInstallationId &&
-				installation.accountId === args.accountId &&
-				(installation.status === 'deleted' || installation.status === 'stale')
-		)
+	const accountInstallationIds = orgInstallations
+		.filter((installation) => installation.accountId === args.accountId)
 		.map((installation) => installation._id);
+	const authorizedRepositoryIds = new Set(args.authorizedRepositoryIds);
 
-	for (const inactiveInstallationId of inactiveInstallationIds) {
-		const repositoryConnections = await ctx.db
+	for (const installationId of accountInstallationIds) {
+		const repositoryConnections = ctx.db
 			.query('githubRepositoryConnection')
-			.withIndex('by_githubInstallationId', (q) =>
-				q.eq('githubInstallationId', inactiveInstallationId)
-			)
-			.take(100);
+			.withIndex('by_githubInstallationId', (q) => q.eq('githubInstallationId', installationId));
 
-		for (const connection of repositoryConnections) {
+		for await (const connection of repositoryConnections) {
 			if (connection.deletedTime) continue;
+
+			if (!authorizedRepositoryIds.has(connection.repoId)) {
+				await ctx.orm
+					.update(githubRepositoryConnectionTable)
+					.set({
+						deletedTime: args.updatedTime,
+						updatedTime: args.updatedTime,
+						verificationStatus: 'unauthorized',
+					})
+					.where(eq(githubRepositoryConnectionTable.id, connection._id));
+				continue;
+			}
+			if (connection.githubInstallationId === args.activeInstallationId) continue;
 
 			await ctx.orm
 				.update(githubRepositoryConnectionTable)
@@ -420,6 +427,29 @@ export const getRefreshInstallationsForCallback = privateQuery
 			.query('githubInstallation')
 			.withIndex('by_orgId', (q: any) => q.eq('orgId', stateDoc.orgId))
 			.take(100);
+		const installationById = new Map(
+			installations.map((installation: any) => [installation._id, installation])
+		);
+		const repositoryConnections = await ctx.db
+			.query('githubRepositoryConnection')
+			.withIndex('by_orgId_repoId', (q: any) => q.eq('orgId', stateDoc.orgId))
+			.take(500);
+		const targetsByAccountId = new Map<number, Map<number, { fullName: string; id: number }>>();
+		for (const connection of repositoryConnections) {
+			if (connection.deletedTime) continue;
+
+			const installation: any = installationById.get(connection.githubInstallationId);
+			if (!installation) continue;
+
+			const repositories =
+				targetsByAccountId.get(installation.accountId) ??
+				new Map<number, { fullName: string; id: number }>();
+			repositories.set(connection.repoId, {
+				fullName: connection.repoFullName,
+				id: connection.repoId,
+			});
+			targetsByAccountId.set(installation.accountId, repositories);
+		}
 
 		return {
 			installations: installations
@@ -431,6 +461,10 @@ export const getRefreshInstallationsForCallback = privateQuery
 				})),
 			orgSlug: stateDoc.orgSlug,
 			projectSlug: stateDoc.projectSlug,
+			repositoryTargets: [...targetsByAccountId].map(([accountId, repositories]) => ({
+				accountId,
+				repositories: [...repositories.values()],
+			})),
 		};
 	});
 
@@ -505,6 +539,7 @@ export const markInstallationStale = privateMutation
 export const completeInstallationCallback = privateMutation
 	.input(
 		z.object({
+			authorizedRepositoryIds: z.array(z.number().int()).max(500),
 			installation: githubInstallationSchema,
 			setupAction: z.string().trim().max(40).optional(),
 			state: githubStateSchema,
@@ -588,6 +623,7 @@ export const completeInstallationCallback = privateMutation
 			await repairAuthorizedInstallationRepositoryConnections(ctx, {
 				accountId: values.accountId,
 				activeInstallationId: savedInstallationId,
+				authorizedRepositoryIds: input.authorizedRepositoryIds,
 				orgId: values.orgId,
 				updatedTime: values.updatedTime,
 			});
@@ -613,7 +649,14 @@ export const completeUserInstallationsCallback = privateMutation
 	.input(
 		z.object({
 			deletedInstallationIds: z.array(z.number().int()).max(100).default([]),
-			installations: z.array(githubInstallationSchema).max(100),
+			installations: z
+				.array(
+					z.object({
+						authorizedRepositoryIds: z.array(z.number().int()).max(500),
+						installation: githubInstallationSchema,
+					})
+				)
+				.max(100),
 			state: githubStateSchema,
 		})
 	)
@@ -646,7 +689,8 @@ export const completeUserInstallationsCallback = privateMutation
 
 		const now = Date.now();
 		let savedCount = 0;
-		for (const installation of input.installations) {
+		for (const authorizedInstallation of input.installations) {
+			const { authorizedRepositoryIds, installation } = authorizedInstallation;
 			if (!installation.account) continue;
 
 			const existing = await findAuthorizedInstallationReconciliationTarget(ctx, {
@@ -684,6 +728,7 @@ export const completeUserInstallationsCallback = privateMutation
 			await repairAuthorizedInstallationRepositoryConnections(ctx, {
 				accountId: values.accountId,
 				activeInstallationId: savedInstallationId,
+				authorizedRepositoryIds,
 				orgId: values.orgId,
 				updatedTime: values.updatedTime,
 			});
