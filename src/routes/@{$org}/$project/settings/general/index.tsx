@@ -471,9 +471,7 @@ function ProjectGeneralSettingsRoute() {
 															}
 														} catch (error) {
 															setFormError(
-																error instanceof Error
-																	? error.message
-																	: 'Unable to import from GitHub'
+																extractErrorMessage(error, 'Unable to import from GitHub')
 															);
 														}
 													}}

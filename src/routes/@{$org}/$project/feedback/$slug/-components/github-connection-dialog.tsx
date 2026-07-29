@@ -18,6 +18,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { GithubIcon } from '@/icons';
 import { useCRPC } from '@/lib/convex/crpc';
+import { extractErrorMessage } from '@/lib/errors';
 import { cn } from '@/lib/utils';
 import { FORM_LIMITS } from '@/lib/validation';
 
@@ -160,12 +161,14 @@ function GitHubConnectionDialogBody({
 
 	const searchResults = (searchQuery.data ?? []) as Array<GitHubTargetData>;
 	const searching = canSearch && searchQuery.isFetching;
+	const requestError =
+		availabilityQuery.error ??
+		connectExistingMutation.error ??
+		createMutation.error ??
+		searchQuery.error;
 	const error =
 		localError ||
-		(availabilityQuery.error?.message ??
-			connectExistingMutation.error?.message ??
-			createMutation.error?.message ??
-			searchQuery.error?.message);
+		(requestError ? extractErrorMessage(requestError, 'Unable to connect GitHub') : '');
 	const feedbackUrl = typeof window === 'undefined' ? '' : window.location.href.split('#')[0];
 	const canCreate =
 		title.trim().length > 0 &&
@@ -222,7 +225,10 @@ function GitHubConnectionDialogBody({
 
 			{/* Mode nav — official Tabs, styled to match the target-timeframe dialog. */}
 			<div className='border-b px-5 py-3'>
-				<Tabs onValueChange={(value) => handleModeChange(value as 'create' | 'existing')} value={mode}>
+				<Tabs
+					onValueChange={(value) => handleModeChange(value as 'create' | 'existing')}
+					value={mode}
+				>
 					<TabsList
 						className='grid h-auto w-full grid-cols-2 gap-1 rounded-lg border bg-muted p-1'
 						indicatorClassName='h-[calc(var(--active-tab-height)-0.25rem)] bg-foreground shadow-xs ring-0'
@@ -276,7 +282,7 @@ function GitHubConnectionDialogBody({
 				) : mode === 'existing' ? (
 					<div
 						className={cn(
-							'space-y-3 animate-in duration-200 fade-in-0',
+							'animate-in space-y-3 duration-200 fade-in-0',
 							slideFrom === 'right' ? 'slide-in-from-right-6' : 'slide-in-from-left-6'
 						)}
 						key='existing'
@@ -342,7 +348,7 @@ function GitHubConnectionDialogBody({
 				) : (
 					<div
 						className={cn(
-							'space-y-3 animate-in duration-200 fade-in-0',
+							'animate-in space-y-3 duration-200 fade-in-0',
 							slideFrom === 'right' ? 'slide-in-from-right-6' : 'slide-in-from-left-6'
 						)}
 						key='create'

@@ -515,7 +515,9 @@ export function CommentForm({
 								</Link>
 							</Button>
 							<Button asChild className='w-full sm:w-auto' size='sm' variant='outline'>
-								<Link to='/auth/sign-up'>Create an account</Link>
+								<Link search={{ redirect: redirectTo } as never} to='/auth/sign-up'>
+									Create an account
+								</Link>
 							</Button>
 						</div>
 					</div>

@@ -49,7 +49,7 @@ export function SignInPromptDialog({
 	open: boolean;
 }) {
 	// Return the visitor to the page they were on once they finish authenticating.
-	const redirect = useRouterState({ select: (state) => state.location.pathname });
+	const redirect = useRouterState({ select: (state) => state.location.href });
 	const copy = ACTION_COPY[action];
 
 	return (
@@ -85,7 +85,9 @@ export function SignInPromptDialog({
 							</Link>
 						</Button>
 						<Button asChild size='lg' variant='outline'>
-							<Link to='/auth/sign-up'>Create account</Link>
+							<Link search={{ redirect }} to='/auth/sign-up'>
+								Create account
+							</Link>
 						</Button>
 					</div>
 				</div>

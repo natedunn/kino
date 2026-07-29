@@ -71,6 +71,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { EditIcon, StatusIcon, UpChevronIcon } from '@/icons';
 import { useCRPC } from '@/lib/convex/crpc';
 import { crpcServer } from '@/lib/convex/crpc-server';
+import { extractErrorMessage } from '@/lib/errors';
 import { useIsBelow } from '@/lib/hooks/use-mobile';
 import { useSidebarState } from '@/lib/hooks/use-sidebar-state';
 import { projectTitle, titleFromSlug, titleMeta } from '@/lib/seo';
@@ -1554,7 +1555,7 @@ function FeedbackTargetDrawer({
 			await onSave({ target: nextTarget, targetGranularity: granularity });
 			onOpenChange(false);
 		} catch (saveError) {
-			setError(saveError instanceof Error ? saveError.message : 'Failed to save target');
+			setError(extractErrorMessage(saveError, 'Failed to save target'));
 		}
 	}
 
@@ -1564,7 +1565,7 @@ function FeedbackTargetDrawer({
 			await onSave(null);
 			onOpenChange(false);
 		} catch (clearError) {
-			setError(clearError instanceof Error ? clearError.message : 'Failed to clear target');
+			setError(extractErrorMessage(clearError, 'Failed to clear target'));
 		}
 	}
 
@@ -1835,7 +1836,7 @@ function EditTitleDialog({
 			await onSave(trimmedTitle);
 			onOpenChange(false);
 		} catch (error) {
-			setTitleError(error instanceof Error ? error.message : 'Failed to save title');
+			setTitleError(extractErrorMessage(error, 'Failed to save title'));
 		}
 	}
 
@@ -1904,7 +1905,6 @@ function DeleteFeedbackDialog({
 			setDeleteError('');
 		}
 		wasOpen.current = open;
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [open]);
 
 	const canConfirmDelete = deleteConfirm === 'DELETE' && !isDeleting;
@@ -1916,7 +1916,7 @@ function DeleteFeedbackDialog({
 			// Resolves into a navigation away from this page on success.
 			await onDelete();
 		} catch (error) {
-			setDeleteError(error instanceof Error ? error.message : 'Failed to delete feedback');
+			setDeleteError(extractErrorMessage(error, 'Failed to delete feedback'));
 		}
 	}
 
@@ -1990,7 +1990,6 @@ function CloseFeedbackDialog({
 			setCloseError('');
 		}
 		wasOpen.current = open;
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [open]);
 
 	async function handleClose() {
@@ -2000,7 +1999,7 @@ function CloseFeedbackDialog({
 			await onClose();
 			onOpenChange(false);
 		} catch (error) {
-			setCloseError(error instanceof Error ? error.message : 'Failed to close feedback');
+			setCloseError(extractErrorMessage(error, 'Failed to close feedback'));
 		}
 	}
 
