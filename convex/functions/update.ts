@@ -9,6 +9,7 @@ import { z } from 'zod';
 import { authMutation, authQuery, optionalAuthQuery } from '../lib/crpc';
 import {
 	asId,
+	assertProjectWritable,
 	generateRandomSlug,
 	getCurrentProfile,
 	getCurrentProfileOrThrow,
@@ -72,6 +73,7 @@ export const create = authMutation
 			userId: ctx.userId,
 		});
 
+		assertProjectWritable(access);
 		if (!access.permissions.canEdit) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
@@ -119,6 +121,7 @@ export const update = authMutation
 			userId: ctx.userId,
 		});
 
+		assertProjectWritable(access);
 		if (!access.permissions.canEdit) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
@@ -162,6 +165,7 @@ export const publish = authMutation
 			userId: ctx.userId,
 		});
 
+		assertProjectWritable(access);
 		if (!access.permissions.canEdit) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
@@ -194,6 +198,7 @@ export const unpublish = authMutation
 			userId: ctx.userId,
 		});
 
+		assertProjectWritable(access);
 		if (!access.permissions.canEdit) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
@@ -225,6 +230,7 @@ export const remove = authMutation
 			userId: ctx.userId,
 		});
 
+		assertProjectWritable(access);
 		if (!access.permissions.canDelete) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
@@ -256,6 +262,7 @@ export const bulkPublish = authMutation
 			userId: ctx.userId,
 		});
 
+		assertProjectWritable(access);
 		if (!access.permissions.canEdit) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
@@ -301,6 +308,7 @@ export const bulkUnpublish = authMutation
 			userId: ctx.userId,
 		});
 
+		assertProjectWritable(access);
 		if (!access.permissions.canEdit) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
@@ -345,6 +353,7 @@ export const bulkRemove = authMutation
 			userId: ctx.userId,
 		});
 
+		assertProjectWritable(access);
 		if (!access.permissions.canDelete) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
@@ -392,6 +401,7 @@ export const generateCoverImageUploadUrl = authMutation
 			userId: ctx.userId,
 		});
 
+		assertProjectWritable(access);
 		if (!access.permissions.canEdit) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
@@ -438,6 +448,7 @@ export const syncMetadata = authMutation
 			slug: project.slug,
 			userId: ctx.userId,
 		});
+		assertProjectWritable(access);
 		if (!access.permissions.canEdit) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
@@ -480,6 +491,7 @@ export const clearCoverImage = authMutation
 			userId: ctx.userId,
 		});
 
+		assertProjectWritable(access);
 		if (!access.permissions.canEdit) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',

@@ -4,7 +4,7 @@ import { CRPCError } from 'kitcn/server';
 import { z } from 'zod';
 
 import { authMutation, optionalAuthQuery } from '../lib/crpc';
-import { asId, getDoc, toPublicDoc, verifyProjectAccess } from '../lib/kino';
+import { asId, assertProjectWritable, getDoc, toPublicDoc, verifyProjectAccess } from '../lib/kino';
 import {
 	boardDescriptionSchema,
 	boardIconSchema,
@@ -38,6 +38,7 @@ export const create = authMutation
 			id: input.projectId,
 			userId: ctx.userId,
 		});
+		assertProjectWritable(access);
 		if (!access.permissions.canEdit) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
@@ -88,6 +89,7 @@ export const update = authMutation
 			slug: input.projectSlug,
 			userId: ctx.userId,
 		});
+		assertProjectWritable(access);
 		if (!access.permissions.canEdit) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
@@ -201,6 +203,7 @@ export const _delete = authMutation
 			id: input.projectId,
 			userId: ctx.userId,
 		});
+		assertProjectWritable(access);
 		if (!access.permissions.canDelete) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',

@@ -3,7 +3,7 @@ import type { GitHubInstallationDetails, GitHubRepository } from '../lib/github-
 import { CRPCError } from 'kitcn/server';
 import { z } from 'zod';
 
-import { getCurrentProfileOrThrow, verifyOrgAccess } from '../lib/kino';
+import { assertProjectWritable, getCurrentProfileOrThrow, verifyOrgAccess } from '../lib/kino';
 import {
 	githubLoginSchema,
 	githubNodeIdSchema,
@@ -69,6 +69,8 @@ export async function verifyOrgAdminForProject(
 	if (!project) {
 		throw new CRPCError({ code: 'NOT_FOUND', message: 'Project not found' });
 	}
+	// GitHub connections mutate the project — frozen while archived.
+	assertProjectWritable({ isArchived: project.visibility === 'archived' });
 
 	const access = await verifyOrgAccess(ctx, {
 		slug: args.orgSlug,

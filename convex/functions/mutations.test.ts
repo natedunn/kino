@@ -1,4 +1,5 @@
 // @vitest-environment edge-runtime
+import { eq } from 'kitcn/orm';
 import { describe, expect, it } from 'vitest';
 
 import { api } from './_generated/api';
@@ -203,5 +204,62 @@ describe('feedback updatePriority (authenticated end-to-end)', () => {
 		await expect(
 			t.mutation(api.feedback.updatePriority, { id: seed.feedbackId, priority: 'high' })
 		).rejects.toThrow(/UNAUTHORIZED|authenticated/i);
+	});
+});
+
+async function archiveSeededProject(t: ReturnType<typeof convexTest>, projectId: string) {
+	await t.run(async (baseCtx) => {
+		const ctx = await runCtx(baseCtx);
+		await ctx.orm
+			.update(projectTable)
+			.set({ visibility: 'archived' })
+			.where(eq(projectTable.id, projectId));
+	});
+}
+
+describe('archived projects are frozen (end-to-end)', () => {
+	it('rejects content writes even for an org admin', async () => {
+		const t = convexTest();
+		const seed = await t.run((baseCtx) => runCtx(baseCtx).then(seedAuthedOrgAdmin));
+		await archiveSeededProject(t, seed.projectId);
+		const asUser = t.withIdentity({ sessionId: seed.sessionId, subject: seed.userId });
+
+		// A feedback write (org admin would normally be allowed) is blocked...
+		await expect(
+			asUser.mutation(api.feedback.updatePriority, { id: seed.feedbackId, priority: 'high' })
+		).rejects.toThrow(/archived/i);
+		// ...and so is creating a comment.
+		await expect(
+			asUser.mutation(api.feedbackComment.create, {
+				content: 'hello',
+				feedbackId: seed.feedbackId,
+			})
+		).rejects.toThrow(/archived/i);
+	});
+
+	it('lets an admin un-archive (visibility only)', async () => {
+		const t = convexTest();
+		const seed = await t.run((baseCtx) => runCtx(baseCtx).then(seedAuthedOrgAdmin));
+		await archiveSeededProject(t, seed.projectId);
+		const asUser = t.withIdentity({ sessionId: seed.sessionId, subject: seed.userId });
+
+		await asUser.mutation(api.project.update, { id: seed.projectId, visibility: 'public' });
+
+		const project = await t.run(async (baseCtx) => {
+			const ctx = await runCtx(baseCtx);
+			return ctx.orm.query.project.findFirst({ where: { id: seed.projectId } });
+		});
+		expect(project?.visibility).toBe('public');
+	});
+
+	it('rejects a non-visibility project edit while archived', async () => {
+		const t = convexTest();
+		const seed = await t.run((baseCtx) => runCtx(baseCtx).then(seedAuthedOrgAdmin));
+		await archiveSeededProject(t, seed.projectId);
+		const asUser = t.withIdentity({ sessionId: seed.sessionId, subject: seed.userId });
+
+		await expect(
+			asUser.mutation(api.project.update, { id: seed.projectId, name: 'Renamed' })
+		).rejects.toThrow(/archived/i);
 	});
 });

@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { authMutation, optionalAuthQuery } from '../lib/crpc';
 import {
 	asId,
+	assertProjectWritable,
 	getCurrentProfile,
 	getDoc,
 	getProjectViewAccess,
@@ -43,6 +44,7 @@ export const toggle = authMutation
 				message: 'You do not have access to this feedback',
 			});
 		}
+		assertProjectWritable(access);
 
 		const existing = await ctx.db
 			.query('feedbackUpvote')

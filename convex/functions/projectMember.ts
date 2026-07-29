@@ -3,7 +3,13 @@ import { CRPCError } from 'kitcn/server';
 import { z } from 'zod';
 
 import { authMutation, authQuery } from '../lib/crpc';
-import { asId, getDoc, isProjectEditorRole, verifyProjectAccess } from '../lib/kino';
+import {
+	asId,
+	assertProjectWritable,
+	getDoc,
+	isProjectEditorRole,
+	verifyProjectAccess,
+} from '../lib/kino';
 import { createProfileImageUrlCache, resolveProfileImageUrl } from '../lib/storage';
 import { emailSchema, idSchema } from '../lib/validation';
 import { projectMemberTable } from './schema';
@@ -116,6 +122,7 @@ export const inviteProjectMember = authMutation
 		if (!access.project) {
 			throw new CRPCError({ code: 'NOT_FOUND', message: 'Project not found' });
 		}
+		assertProjectWritable(access);
 		if (!access.permissions.canEdit) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
@@ -192,6 +199,7 @@ export const removeProjectMember = authMutation
 			id: membership.projectId,
 			userId: ctx.userId,
 		});
+		assertProjectWritable(access);
 		if (!access.permissions.canEdit) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',

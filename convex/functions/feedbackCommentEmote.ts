@@ -4,7 +4,13 @@ import { z } from 'zod';
 
 import { authMutation } from '../lib/crpc';
 import { emoteContentSchema } from '../lib/emote';
-import { asId, getCurrentProfileOrThrow, getDoc, verifyProjectAccess } from '../lib/kino';
+import {
+	asId,
+	assertProjectWritable,
+	getCurrentProfileOrThrow,
+	getDoc,
+	verifyProjectAccess,
+} from '../lib/kino';
 import { idSchema } from '../lib/validation';
 import { feedbackCommentEmoteTable } from './schema';
 
@@ -32,6 +38,7 @@ export const toggle = authMutation
 				message: 'You do not have access to this feedback',
 			});
 		}
+		assertProjectWritable(access);
 		const comment = await getDoc(ctx, asId<'feedbackComment'>(input.feedbackCommentId));
 		if (!comment || comment.feedbackId !== feedback._id) {
 			throw new CRPCError({
