@@ -19,11 +19,10 @@
   "env": {
     "dev": {
       "name": "kino-gateway-dev",
-      "routes": [
-        { "pattern": "gateway-dev.usekino.com", "custom_domain": true },
-      ],
+      "routes": [{ "pattern": "gateway-dev.usekino.com", "custom_domain": true }],
       "vars": {
         "GATEWAY_ORIGIN": "https://gateway-dev.usekino.com",
+        "QUICK_TUNNEL_TARGETS_ENABLED": "true",
         // Comma-separated origin patterns allowed as redirect/webhook targets.
         "TRUSTED_TARGET_PATTERNS": "https://*-kino.hello-fc8.workers.dev,https://kino.hello-fc8.workers.dev,https://*.kino.localhost:*,https://*.kino.localhost,http://*.kino.localhost:*,http://localhost:*,http://127.0.0.1:*,https://*.convex.site",
       },

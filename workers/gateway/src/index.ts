@@ -4,6 +4,7 @@ import { createGatewayAuth } from './auth';
 import { handleGitHubRelayOAuthCallback } from './github-relay';
 import { handleGitHubWebhook, handleTargetsApi } from './hooks';
 import { rewriteProxyCallbackRedirect } from './redirect-rewrite';
+import { handleShareOriginsApi } from './share-origins';
 
 export default {
 	async fetch(request: Request, env: GatewayEnv, ctx: ExecutionContext) {
@@ -12,7 +13,7 @@ export default {
 		// Better Auth oAuthProxy production leg (GitHub OAuth login callback).
 		if (url.pathname.startsWith('/api/auth')) {
 			const response = await createGatewayAuth(env).handler(request);
-			return rewriteProxyCallbackRedirect(env, response);
+			return await rewriteProxyCallbackRedirect(env, response);
 		}
 
 		// GitHub App (sync) install/authorize trampoline.
@@ -28,6 +29,10 @@ export default {
 		// Webhook target registry (deploy/cleanup scripts).
 		if (url.pathname === '/hooks/targets') {
 			return handleTargetsApi(env, request);
+		}
+
+		if (url.pathname === '/dev/share-origins') {
+			return handleShareOriginsApi(env, request);
 		}
 
 		if (url.pathname === '/' || url.pathname === '/health') {

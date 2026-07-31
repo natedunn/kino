@@ -23,6 +23,9 @@ Routes:
 - `GET/PUT/DELETE /hooks/targets` — bearer-token registry of fan-out targets
   (KV, 14-day TTL). Driven by `scripts/gateway-webhook-target.mjs` in the app
   repo.
+- `GET/PUT/DELETE /dev/share-origins` — dev-only, bearer-protected registry of
+  exact temporary `trycloudflare.com` origins used by `pnpm dev:share` (KV,
+  6-hour TTL). Disabled in production.
 - `GET /health` — liveness.
 
 ```sh

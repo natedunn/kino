@@ -80,6 +80,7 @@ const config = defineConfig({
 		viteReact(),
 	],
 	server: {
+		...(process.env.KINO_SHARE === '1' ? { allowedHosts: ['.trycloudflare.com'] } : {}),
 		...(process.env.HOST ? { host: process.env.HOST } : {}),
 		...(Number.isFinite(port) ? { port, strictPort: true } : {}),
 	},

@@ -79,6 +79,7 @@ describe('trusted auth origins', () => {
 			'https://*.localhost:*',
 			'http://*.localhost',
 			'http://*.localhost:*',
+			'https://*.trycloudflare.com',
 			'https://kino.*.workers.dev',
 			'https://*-kino.*.workers.dev',
 		]);
@@ -89,6 +90,7 @@ describe('trusted auth origins', () => {
 			'[::1]:*',
 			'*.localhost',
 			'*.localhost:*',
+			'*.trycloudflare.com',
 			'kino.*.workers.dev',
 			'*-kino.*.workers.dev',
 		]);
@@ -96,6 +98,12 @@ describe('trusted auth origins', () => {
 		expect(isTrustedOrigin('http://127.0.0.1:5173/auth')).toBe(true);
 		expect(isTrustedOrigin('https://rasalhague.kino.localhost')).toBe(true);
 		expect(isTrustedOrigin('http://rasalhague.kino.localhost:1355')).toBe(true);
+		expect(isTrustedOrigin('https://quiet-bird-123.trycloudflare.com')).toBe(true);
+	});
+
+	it('does not trust Quick Tunnel origins outside local development', () => {
+		resetEnv({ SITE_URL: 'https://usekino.com' });
+		expect(isTrustedOrigin('https://quiet-bird-123.trycloudflare.com')).toBe(false);
 	});
 
 	it('reads the OAuth proxy production URL (the tier gateway)', () => {
