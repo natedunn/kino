@@ -41,7 +41,7 @@ describe('getAppInstallMetadata', () => {
 	it('uses blue production installation branding', () => {
 		expect(getAppInstallMetadata('production')).toEqual({
 			manifestHref: '/manifests/kino-production.json',
-			appleTouchIconHref: '/pwa/production/apple-touch-icon-180.png',
+			appleTouchIconHref: '/pwa/production/apple-touch-icon-180.png?v=2',
 			themeColor: '#0000FF',
 			safariMaskColor: '#0000FF',
 		});
@@ -50,7 +50,7 @@ describe('getAppInstallMetadata', () => {
 	it('uses yellow preview installation branding', () => {
 		expect(getAppInstallMetadata('preview')).toEqual({
 			manifestHref: '/manifests/kino-preview.json',
-			appleTouchIconHref: '/pwa/preview/apple-touch-icon-180.png',
+			appleTouchIconHref: '/pwa/preview/apple-touch-icon-180.png?v=2',
 			themeColor: '#FACC15',
 			safariMaskColor: '#FACC15',
 		});
@@ -59,7 +59,7 @@ describe('getAppInstallMetadata', () => {
 	it('uses green local installation branding', () => {
 		expect(getAppInstallMetadata('local')).toEqual({
 			manifestHref: '/manifests/kino-local.json',
-			appleTouchIconHref: '/pwa/local/apple-touch-icon-180.png',
+			appleTouchIconHref: '/pwa/local/apple-touch-icon-180.png?v=2',
 			themeColor: '#22C55E',
 			safariMaskColor: '#22C55E',
 		});

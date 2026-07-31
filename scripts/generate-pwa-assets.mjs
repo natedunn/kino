@@ -6,6 +6,7 @@ import sharp from 'sharp';
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const environments = ['local', 'preview', 'production'];
+const source = path.join(projectRoot, 'public', 'pwa', 'kino-install.svg');
 const assets = [
 	{ fileName: 'apple-touch-icon-180.png', size: 180 },
 	{ fileName: 'icon-192.png', size: 192 },
@@ -14,7 +15,6 @@ const assets = [
 ];
 
 for (const environment of environments) {
-	const source = path.join(projectRoot, 'public', 'favicons', `kino-${environment}.svg`);
 	const outputDirectory = path.join(projectRoot, 'public', 'pwa', environment);
 
 	await mkdir(outputDirectory, { recursive: true });

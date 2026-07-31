@@ -11,11 +11,13 @@ const projectRoot = process.cwd();
 const publicDirectory = path.join(projectRoot, 'public');
 const execFileAsync = promisify(execFile);
 
-const environments = {
+const manifestThemeColors = {
 	local: '#22C55E',
 	preview: '#FACC15',
 	production: '#0000FF',
 } as const satisfies Record<AppEnvironment, string>;
+const installBlueStops = ['#2563EB', '#3B82F6'];
+const iosDarkBackground = '#1C1C1E';
 
 type ManifestIcon = {
 	src: string;
@@ -64,38 +66,55 @@ async function readPngDimensions(filePath: string) {
 	};
 }
 
-async function inspectMaskableIcon(filePath: string, backgroundColor: string) {
+function relativeLuminance(hexColor: string) {
+	const channels = [1, 3, 5].map((offset) => Number.parseInt(hexColor.slice(offset, offset + 2), 16) / 255);
+	const [red, green, blue] = channels.map((channel) =>
+		channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4
+	);
+
+	return 0.2126 * red + 0.7152 * green + 0.0722 * blue;
+}
+
+function contrastRatio(firstColor: string, secondColor: string) {
+	const luminances = [relativeLuminance(firstColor), relativeLuminance(secondColor)].sort(
+		(first, second) => second - first
+	);
+
+	return (luminances[0] + 0.05) / (luminances[1] + 0.05);
+}
+
+async function inspectMaskableIcon(filePath: string) {
 	const script = `
 		import sharp from 'sharp';
 
-		const [filePath, backgroundColor] = process.argv.slice(1);
-		const background = {
-			red: Number.parseInt(backgroundColor.slice(1, 3), 16),
-			green: Number.parseInt(backgroundColor.slice(3, 5), 16),
-			blue: Number.parseInt(backgroundColor.slice(5, 7), 16),
-		};
+		const [filePath] = process.argv.slice(1);
 		const { data, info } = await sharp(filePath).ensureAlpha().raw().toBuffer({
 			resolveWithObject: true,
 		});
 		const center = info.width / 2;
+		const backgroundColors = new Set();
 		let farthestMarkPixel = 0;
 		let markPixelCount = 0;
+		let minimumAlpha = 255;
 
 		for (let y = 0; y < info.height; y += 1) {
 			for (let x = 0; x < info.width; x += 1) {
 				const offset = (y * info.width + x) * info.channels;
-				const colorDistance =
-					Math.abs(data[offset] - background.red) +
-					Math.abs(data[offset + 1] - background.green) +
-					Math.abs(data[offset + 2] - background.blue);
+				const red = data[offset];
+				const green = data[offset + 1];
+				const blue = data[offset + 2];
+				minimumAlpha = Math.min(minimumAlpha, data[offset + 3]);
+				const isWhiteMark = Math.min(red, green, blue) >= 230;
 
-				if (colorDistance < 30) continue;
-
-				markPixelCount += 1;
-				farthestMarkPixel = Math.max(
-					farthestMarkPixel,
-					Math.hypot(x + 0.5 - center, y + 0.5 - center)
-				);
+				if (isWhiteMark) {
+					markPixelCount += 1;
+					farthestMarkPixel = Math.max(
+						farthestMarkPixel,
+						Math.hypot(x + 0.5 - center, y + 0.5 - center)
+					);
+				} else {
+					backgroundColors.add(red + ',' + green + ',' + blue);
+				}
 			}
 		}
 
@@ -104,11 +123,13 @@ async function inspectMaskableIcon(filePath: string, backgroundColor: string) {
 			height: info.height,
 			markPixelCount,
 			farthestMarkPixel,
+			backgroundColorCount: backgroundColors.size,
+			minimumAlpha,
 		}));
 	`;
 	const { stdout } = await execFileAsync(
 		process.execPath,
-		['--input-type=module', '--eval', script, filePath, backgroundColor],
+		['--input-type=module', '--eval', script, filePath],
 		{ cwd: projectRoot }
 	);
 
@@ -117,12 +138,25 @@ async function inspectMaskableIcon(filePath: string, backgroundColor: string) {
 		height: number;
 		markPixelCount: number;
 		farthestMarkPixel: number;
+		backgroundColorCount: number;
+		minimumAlpha: number;
 	};
 }
 
 describe('PWA manifests and assets', () => {
-	for (const environment of Object.keys(environments) as Array<AppEnvironment>) {
-		const themeColor = environments[environment];
+	it('uses a blue gradient that remains contrasty under either iOS dark treatment', async () => {
+		const sourceSvg = await readFile(path.join(publicDirectory, 'pwa', 'kino-install.svg'), 'utf8');
+
+		expect(sourceSvg).toContain('<linearGradient');
+		for (const blue of installBlueStops) {
+			expect(sourceSvg).toContain(`stop-color="${blue}"`);
+			expect(contrastRatio(blue, '#FFFFFF')).toBeGreaterThanOrEqual(3);
+			expect(contrastRatio(blue, iosDarkBackground)).toBeGreaterThanOrEqual(3);
+		}
+	});
+
+	for (const environment of Object.keys(manifestThemeColors) as Array<AppEnvironment>) {
+		const themeColor = manifestThemeColors[environment];
 
 		it(`defines complete ${environment} installation metadata`, async () => {
 			const manifest = await readManifest(environment);
@@ -169,21 +203,37 @@ describe('PWA manifests and assets', () => {
 			);
 			const touchDimensions = await readPngDimensions(appleTouchIcon);
 			expect(touchDimensions).toEqual({ width: 180, height: 180 });
-
-			const sourceSvg = await readFile(
-				path.join(publicDirectory, 'favicons', `kino-${environment}.svg`),
-				'utf8'
-			);
-			expect(sourceSvg.toUpperCase()).toContain(`FILL="${themeColor}"`);
 		});
 
 		it(`keeps the ${environment} maskable mark inside the safe zone`, async () => {
 			const maskableIcon = path.join(publicDirectory, 'pwa', environment, 'icon-maskable-512.png');
-			const inspection = await inspectMaskableIcon(maskableIcon, themeColor);
+			const inspection = await inspectMaskableIcon(maskableIcon);
 
 			expect(inspection).toMatchObject({ width: 512, height: 512 });
+			expect(inspection.minimumAlpha).toBe(255);
+			expect(inspection.backgroundColorCount).toBeGreaterThan(16);
 			expect(inspection.markPixelCount).toBeGreaterThan(0);
 			expect(inspection.farthestMarkPixel).toBeLessThanOrEqual(inspection.width * 0.4);
 		});
 	}
+
+	it('uses the same blue installed-app artwork in every environment', async () => {
+		for (const assetName of [
+			'apple-touch-icon-180.png',
+			'icon-192.png',
+			'icon-512.png',
+			'icon-maskable-512.png',
+		]) {
+			const productionIcon = await readFile(
+				path.join(publicDirectory, 'pwa', 'production', assetName)
+			);
+
+			for (const environment of ['local', 'preview'] satisfies Array<AppEnvironment>) {
+				const environmentIcon = await readFile(
+					path.join(publicDirectory, 'pwa', environment, assetName)
+				);
+				expect(environmentIcon).toEqual(productionIcon);
+			}
+		}
+	});
 });
