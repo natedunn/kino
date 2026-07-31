@@ -19,6 +19,8 @@ describe('Quick Tunnel development helpers', () => {
 
 	it('rejects deceptive and malformed tunnel URLs', () => {
 		expect(quickTunnelUrlFromOutput('https://quiet.trycloudflare.com.evil.test')).toBeNull();
+		expect(quickTunnelUrlFromOutput('https://quiet.trycloudflare.com:8443')).toBeNull();
+		expect(quickTunnelUrlFromOutput('https://quiet.trycloudflare.com@evil.test')).toBeNull();
 		expect(quickTunnelUrlFromOutput('http://quiet.trycloudflare.com')).toBeNull();
 		expect(quickTunnelUrlFromOutput('no URL here')).toBeNull();
 	});

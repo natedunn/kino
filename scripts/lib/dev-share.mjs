@@ -3,7 +3,7 @@ import os from "node:os"
 import path from "node:path"
 
 const QUICK_TUNNEL_URL_RE =
-  /https:\/\/[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.trycloudflare\.com(?![a-z0-9.-])/i
+  /https:\/\/[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.trycloudflare\.com(?![a-z0-9.:@-])/i
 const SHARE_ENV_KEYS = [
   "HOST",
   "KINO_SHARE",
