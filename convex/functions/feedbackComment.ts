@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { authMutation, optionalAuthQuery } from '../lib/crpc';
 import {
 	asId,
+	assertProjectWritable,
 	getCurrentProfile,
 	getCurrentProfileOrThrow,
 	getDoc,
@@ -38,10 +39,11 @@ export const create = authMutation
 				message: 'You do not have access to this feedback',
 			});
 		}
+		assertProjectWritable(access);
 		const [comment] = await ctx.orm
 			.insert(feedbackCommentTable)
 			.values({
-				authorProfileId: profile._id as any,
+				authorProfileId: profile._id,
 				content: input.content,
 				feedbackId: asId<'feedback'>(input.feedbackId),
 				initial: false,
@@ -61,7 +63,10 @@ export const update = authMutation
 		const profile = await getCurrentProfileOrThrow(ctx, ctx.userId);
 		const comment = await getDoc(ctx, asId<'feedbackComment'>(input._id));
 		if (!comment) throw new CRPCError({ code: 'NOT_FOUND', message: 'Comment not found' });
-		await getActiveFeedbackOrThrow(ctx, comment.feedbackId);
+		const feedback = await getActiveFeedbackOrThrow(ctx, comment.feedbackId);
+		assertProjectWritable(
+			await verifyProjectAccess(ctx, { id: feedback.projectId, userId: ctx.userId })
+		);
 		if (comment.authorProfileId !== profile._id) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
@@ -89,7 +94,10 @@ export const remove = authMutation
 		const profile = await getCurrentProfileOrThrow(ctx, ctx.userId);
 		const comment = await getDoc(ctx, asId<'feedbackComment'>(input._id));
 		if (!comment) throw new CRPCError({ code: 'NOT_FOUND', message: 'Comment not found' });
-		await getActiveFeedbackOrThrow(ctx, comment.feedbackId);
+		const feedback = await getActiveFeedbackOrThrow(ctx, comment.feedbackId);
+		assertProjectWritable(
+			await verifyProjectAccess(ctx, { id: feedback.projectId, userId: ctx.userId })
+		);
 		if (comment.authorProfileId !== profile._id) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
@@ -133,7 +141,7 @@ export const listByFeedback = optionalAuthQuery
 			.order('asc')
 			.collect();
 
-		const projectId = feedback?.projectId;
+		const projectId = feedback.projectId;
 		const currentProfile = await getCurrentProfile(ctx, ctx.userId);
 
 		return await Promise.all(
@@ -156,9 +164,9 @@ export const listByFeedback = optionalAuthQuery
 					.withIndex('by_feedbackCommentId', (q: any) => q.eq('feedbackCommentId', comment._id))
 					.collect();
 
-				const emoteCounts: Record<string, { authorProfileIds: string[]; count: number }> = {};
+				const emoteCounts: Record<string, { authorProfileIds: Array<string>; count: number }> = {};
 				for (const emote of emotes) {
-					if (!emoteCounts[emote.content]) {
+					if (!Object.hasOwn(emoteCounts, emote.content)) {
 						emoteCounts[emote.content] = { authorProfileIds: [], count: 0 };
 					}
 					emoteCounts[emote.content].count++;

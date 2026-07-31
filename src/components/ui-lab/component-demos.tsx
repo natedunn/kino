@@ -1,3 +1,4 @@
+import type { IconSelectorOption } from '@/components/icon-selector';
 import type { LabItem } from './types';
 
 import { useState } from 'react';
@@ -21,6 +22,7 @@ import {
 import { toast } from 'sonner';
 
 import CheckboxButton from '@/components/checkbox-button';
+import { IconSelector } from '@/components/icon-selector';
 import { InlineAlert } from '@/components/inline-alert';
 import { Label, LabelDescription, LabelWrapper } from '@/components/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -67,6 +69,15 @@ import {
 	DialogTrigger,
 } from '@/components/ui/dialog';
 import {
+	Drawer,
+	DrawerContent,
+	DrawerDescription,
+	DrawerFooter,
+	DrawerHeader,
+	DrawerTitle,
+	DrawerTrigger,
+} from '@/components/ui/drawer';
+import {
 	DropdownMenu,
 	DropdownMenuCheckboxItem,
 	DropdownMenuContent,
@@ -92,19 +103,10 @@ import {
 	SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import {
-	Sheet,
-	SheetContent,
-	SheetDescription,
-	SheetFooter,
-	SheetHeader,
-	SheetTitle,
-	SheetTrigger,
-} from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { GithubIcon } from '@/icons';
+import { GithubIcon, iconRegistryOptions } from '@/icons';
 
 import { Cell, CopySnippet, Demo } from './parts';
 
@@ -325,7 +327,7 @@ function CheckboxDemo() {
 /* ------------------------------------------------------------------ */
 
 function CheckboxButtonDemo() {
-	const [selected, setSelected] = useState<string[]>(['weekly']);
+	const [selected, setSelected] = useState<Array<string>>(['weekly']);
 	const toggle = (id: string) =>
 		setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 	return (
@@ -478,6 +480,24 @@ const FRUITS = [
 	{ label: 'Pineapple', value: 'pineapple' },
 ];
 
+const ICON_SELECTOR_DEMO_OPTIONS: Array<IconSelectorOption<string>> = [
+	...iconRegistryOptions,
+	{
+		icon: Settings,
+		keywords: ['gear', 'preferences'],
+		label: 'Settings',
+		tone: 'outline',
+		value: 'settingsOutline',
+	},
+	{
+		icon: Mail,
+		keywords: ['email', 'message'],
+		label: 'Mail',
+		tone: 'outline',
+		value: 'mailOutline',
+	},
+];
+
 function SelectDemo() {
 	const [value, setValue] = useState('');
 	return (
@@ -507,6 +527,62 @@ function SelectDemo() {
 				</SelectContent>
 			</Select>
 		</Demo>
+	);
+}
+
+/* ------------------------------------------------------------------ */
+/* Icon selector                                                       */
+/* ------------------------------------------------------------------ */
+
+function IconSelectorDemo() {
+	const [value, setValue] = useState('improvements');
+	const selected = ICON_SELECTOR_DEMO_OPTIONS.find((option) => option.value === value);
+	const SelectedIcon = selected?.icon;
+
+	return (
+		<>
+			<Demo title='Picker' className='items-start'>
+				<div className='w-full max-w-sm space-y-3'>
+					<IconSelector
+						onValueChange={setValue}
+						options={ICON_SELECTOR_DEMO_OPTIONS}
+						value={value}
+					/>
+					<div className='flex items-center gap-3 rounded-lg border bg-background p-3'>
+						<span className='flex size-10 items-center justify-center text-foreground'>
+							{SelectedIcon ? <SelectedIcon className='size-5' /> : null}
+						</span>
+						<div className='min-w-0'>
+							<p className='truncate text-sm font-medium'>{selected?.label}</p>
+							<p className='text-xs text-muted-foreground uppercase'>{selected?.tone}</p>
+						</div>
+					</div>
+				</div>
+			</Demo>
+			<Demo title='Tone distinction'>
+				{(['duo', 'outline'] as const).map((tone) => (
+					<div className='min-w-52 space-y-2' key={tone}>
+						<div className='text-xs font-medium text-muted-foreground uppercase'>{tone}</div>
+						<div className='grid grid-cols-4 gap-1'>
+							{ICON_SELECTOR_DEMO_OPTIONS.filter((option) => option.tone === tone)
+								.slice(0, 4)
+								.map((option) => {
+									const DemoIcon = option.icon;
+									return (
+										<div
+											className='flex size-12 items-center justify-center text-foreground'
+											key={option.value}
+											title={option.label}
+										>
+											<DemoIcon className='size-5' />
+										</div>
+									);
+								})}
+						</div>
+					</div>
+				))}
+			</Demo>
+		</>
 	);
 }
 
@@ -623,31 +699,38 @@ function DialogDemo() {
 }
 
 /* ------------------------------------------------------------------ */
-/* Sheet                                                              */
+/* Drawer                                                             */
 /* ------------------------------------------------------------------ */
 
-function SheetDemo() {
+function DrawerDemo() {
+	const directions = [
+		{ direction: 'right', label: 'right' },
+		{ direction: 'left', label: 'left' },
+		{ direction: 'up', label: 'top' },
+		{ direction: 'down', label: 'bottom' },
+	] as const;
+
 	return (
 		<Demo title='Slide-over panel' center>
-			{(['right', 'left', 'top', 'bottom'] as const).map((side) => (
-				<Sheet key={side}>
-					<SheetTrigger render={<Button variant='outline' />}>{side}</SheetTrigger>
-					<SheetContent side={side}>
-						<SheetHeader>
-							<SheetTitle>Edit profile</SheetTitle>
-							<SheetDescription>
+			{directions.map(({ direction, label }) => (
+				<Drawer key={direction} swipeDirection={direction}>
+					<DrawerTrigger render={<Button variant='outline' />}>{label}</DrawerTrigger>
+					<DrawerContent>
+						<DrawerHeader>
+							<DrawerTitle>Edit profile</DrawerTitle>
+							<DrawerDescription>
 								Make changes to your profile here. Click save when you&apos;re done.
-							</SheetDescription>
-						</SheetHeader>
+							</DrawerDescription>
+						</DrawerHeader>
 						<div className='flex flex-col gap-3 px-4'>
 							<Input placeholder='Display name' defaultValue='Nate Dunn' />
 							<Input placeholder='Username' defaultValue='natedunn' />
 						</div>
-						<SheetFooter>
+						<DrawerFooter>
 							<Button>Save changes</Button>
-						</SheetFooter>
-					</SheetContent>
-				</Sheet>
+						</DrawerFooter>
+					</DrawerContent>
+				</Drawer>
 			))}
 		</Demo>
 	);
@@ -954,7 +1037,7 @@ function CopySnippetDemo() {
 	);
 }
 
-export const COMPONENT_ITEMS: LabItem[] = [
+export const COMPONENT_ITEMS: Array<LabItem> = [
 	{
 		id: 'button',
 		name: 'Button',
@@ -1061,6 +1144,13 @@ export const COMPONENT_ITEMS: LabItem[] = [
 		render: () => <SelectDemo />,
 	},
 	{
+		id: 'icon-selector',
+		name: 'Icon Selector',
+		description: 'A searchable icon picker with duo and outline tone groups.',
+		importCode: `import { IconSelector } from "@/components/icon-selector"`,
+		render: () => <IconSelectorDemo />,
+	},
+	{
 		id: 'dropdown-menu',
 		name: 'Dropdown Menu',
 		description:
@@ -1094,19 +1184,19 @@ export const COMPONENT_ITEMS: LabItem[] = [
 		render: () => <DialogDemo />,
 	},
 	{
-		id: 'sheet',
-		name: 'Sheet',
-		description: 'Slide-over panel anchored to any edge.',
+		id: 'drawer',
+		name: 'Drawer',
+		description: 'Draggable slide-over panel anchored to any edge.',
 		importCode: `import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet"`,
-		render: () => <SheetDemo />,
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer"`,
+		render: () => <DrawerDemo />,
 	},
 	{
 		id: 'popover',

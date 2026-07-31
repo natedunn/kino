@@ -51,12 +51,7 @@ export declare const api: {
     getMiddleComments: FunctionReference<
       "query",
       "public",
-      {
-        cursor: string;
-        feedbackId: string;
-        limit?: number;
-        tailCommentIds?: Array<string>;
-      },
+      { cursor: string; endCursor?: string | null; feedbackId: string },
       any
     >;
     listProjectFeedback: FunctionReference<
@@ -97,6 +92,12 @@ export declare const api: {
       "mutation",
       "public",
       { boardId: string; id: string },
+      any
+    >;
+    updatePriority: FunctionReference<
+      "mutation",
+      "public",
+      { id: string; priority: "none" | "low" | "medium" | "high" | "urgent" },
       any
     >;
     updateStatus: FunctionReference<
@@ -217,14 +218,6 @@ export declare const api: {
         feedbackCommentId: string;
         feedbackId: string;
       },
-      any
-    >;
-  };
-  feedbackEvent: {
-    listByFeedback: FunctionReference<
-      "query",
-      "public",
-      { feedbackId: string },
       any
     >;
   };
@@ -589,12 +582,6 @@ export declare const api: {
     >;
   };
   update: {
-    backfillProjectUpdatedTimes: FunctionReference<
-      "mutation",
-      "public",
-      { cursor?: string; limit?: number; projectId: string },
-      any
-    >;
     bulkPublish: FunctionReference<
       "mutation",
       "public",
@@ -826,6 +813,7 @@ export declare const internal: {
         actorProfileId: string;
         eventType:
           | "status_changed"
+          | "priority_changed"
           | "board_changed"
           | "assigned"
           | "unassigned"
@@ -1057,6 +1045,7 @@ export declare const internal: {
       "mutation",
       "internal",
       {
+        authorizedRepositoryIds: Array<number>;
         installation: {
           account: { id: number; login: string; type: string } | null;
           events: Array<string>;
@@ -1075,11 +1064,14 @@ export declare const internal: {
       {
         deletedInstallationIds?: Array<number>;
         installations: Array<{
-          account: { id: number; login: string; type: string } | null;
-          events: Array<string>;
-          id: number;
-          permissions: Record<string, string>;
-          repository_selection: string;
+          authorizedRepositoryIds: Array<number>;
+          installation: {
+            account: { id: number; login: string; type: string } | null;
+            events: Array<string>;
+            id: number;
+            permissions: Record<string, string>;
+            repository_selection: string;
+          };
         }>;
         state: string;
       },
@@ -1095,6 +1087,12 @@ export declare const internal: {
       "query",
       "internal",
       { state: string },
+      any
+    >;
+    markInstallationStale: FunctionReference<
+      "mutation",
+      "internal",
+      { installationId: number },
       any
     >;
     processWebhookEvent: FunctionReference<

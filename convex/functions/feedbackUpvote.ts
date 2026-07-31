@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { authMutation, optionalAuthQuery } from '../lib/crpc';
 import {
 	asId,
+	assertProjectWritable,
 	getCurrentProfile,
 	getDoc,
 	getProjectViewAccess,
@@ -43,6 +44,7 @@ export const toggle = authMutation
 				message: 'You do not have access to this feedback',
 			});
 		}
+		assertProjectWritable(access);
 
 		const existing = await ctx.db
 			.query('feedbackUpvote')
@@ -53,7 +55,7 @@ export const toggle = authMutation
 
 		if (existing) {
 			await ctx.orm.delete(feedbackUpvoteTable).where(eq(feedbackUpvoteTable.id, existing._id));
-			const count = Math.max(0, (feedback.upvotes ?? 0) - 1);
+			const count = Math.max(0, feedback.upvotes - 1);
 			await ctx.orm
 				.update(feedbackTable)
 				.set({ upvotes: count })
@@ -62,10 +64,10 @@ export const toggle = authMutation
 		}
 
 		await ctx.orm.insert(feedbackUpvoteTable).values({
-			authorProfileId: profile._id as any,
+			authorProfileId: profile._id,
 			feedbackId: asId<'feedback'>(input.feedbackId),
 		});
-		const count = (feedback.upvotes ?? 0) + 1;
+		const count = feedback.upvotes + 1;
 		await ctx.orm
 			.update(feedbackTable)
 			.set({ upvotes: count })
@@ -145,7 +147,7 @@ export const getUpvoteData = optionalAuthQuery
 		});
 		if (!access.permissions.canView) return { count: 0, hasUpvoted: false };
 
-		const count = feedback.upvotes ?? 0;
+		const count = feedback.upvotes;
 
 		// Reuse the profile resolved by the access check.
 		const profile = access.profile;

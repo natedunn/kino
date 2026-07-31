@@ -1,9 +1,11 @@
+import type { GitHubIssueTarget, GitHubRepository } from '../lib/github-client';
+
 import { CRPCError } from 'kitcn/server';
 import { z } from 'zod';
 
-import { type GitHubIssueTarget, type GitHubRepository } from '../lib/github-client';
 import {
 	asId,
+	assertProjectWritable,
 	getCurrentProfileOrThrow,
 	getDocOrThrow,
 	toPublicDoc,
@@ -85,6 +87,7 @@ export async function getVerifiedContext(
 		slug: project.slug,
 		userId: args.userId,
 	});
+	assertProjectWritable(access);
 	if (!access.permissions.canEdit) {
 		throw new CRPCError({
 			code: 'FORBIDDEN',
@@ -110,7 +113,7 @@ export async function getVerifiedContext(
 		});
 	}
 
-	const installation = await ctx.db.get(connection.githubInstallationId);
+	const installation = await ctx.db.get('githubInstallation', connection.githubInstallationId);
 	if (!installation || installation.status !== 'active') {
 		throw new CRPCError({
 			code: 'NOT_FOUND',

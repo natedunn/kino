@@ -50,16 +50,13 @@ const Devtools = import.meta.env.DEV
 		})
 	: null;
 
-const Toaster = lazy(async () => {
-	const { Toaster } = await import('@/components/ui/sonner');
-	return { default: Toaster };
-});
+const Toaster = lazy(() => import('@/components/ui/sonner').then((m) => ({ default: m.Toaster })));
 
 const getLoaderToken = createServerFn({ method: 'GET' }).handler(async () => {
 	return await getServerAuthToken();
 });
 
-const getAppEnvironment = createServerFn({ method: 'GET' }).handler(async () => {
+const getAppEnvironment = createServerFn({ method: 'GET' }).handler(() => {
 	const request = getRequest();
 
 	return inferAppEnvironment({
@@ -178,19 +175,6 @@ export const Route = createRootRouteWithContext<{
 				{
 					rel: 'stylesheet',
 					href: appCss,
-				},
-				{
-					rel: 'preconnect',
-					href: 'https://fonts.googleapis.com',
-				},
-				{
-					rel: 'preconnect',
-					href: 'https://fonts.gstatic.com',
-					crossOrigin: '',
-				},
-				{
-					rel: 'stylesheet',
-					href: 'https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap',
 				},
 			],
 		};

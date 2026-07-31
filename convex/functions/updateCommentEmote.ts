@@ -36,12 +36,11 @@ export const toggle = authMutation
 
 		const existing = await ctx.db
 			.query('updateCommentEmote')
-			.withIndex('by_updateCommentId', (q: any) => q.eq('updateCommentId', comment._id))
-			.filter((q: any) =>
-				q.and(
-					q.eq(q.field('authorProfileId'), profile._id),
-					q.eq(q.field('content'), input.content)
-				)
+			.withIndex('by_updateCommentId_authorProfileId_content', (q: any) =>
+				q
+					.eq('updateCommentId', comment._id)
+					.eq('authorProfileId', profile._id)
+					.eq('content', input.content)
 			)
 			.first();
 
@@ -53,10 +52,10 @@ export const toggle = authMutation
 		}
 
 		await ctx.orm.insert(updateCommentEmoteTable).values({
-			authorProfileId: profile._id as any,
+			authorProfileId: profile._id,
 			content: input.content,
-			updateCommentId: comment._id as any,
-			updateId: item._id as any,
+			updateCommentId: comment._id,
+			updateId: item._id,
 		});
 		return { action: 'added' as const };
 	});

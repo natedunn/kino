@@ -16,7 +16,7 @@ import { trackAuthError, trackAuthStarted, trackAuthSuccess } from '@/lib/auth-a
 import { endSignOut, isSigningOut } from '@/lib/auth/sign-out-state';
 import { authClient } from '@/lib/convex/auth-client';
 
-import { getSafeRedirectTarget } from './auth';
+import { getSafeRedirectTarget, getVerifyEmailCallbackUrl } from './auth';
 
 export const Route = createFileRoute('/auth/')({
 	validateSearch: (search: Record<string, unknown>): { redirect?: string } =>
@@ -73,6 +73,9 @@ function SignInPage() {
 		if (isAuthed && !isSigningOut()) {
 			void goToRedirect();
 		}
+		// `goToRedirect` is re-created each render; the redirect intent depends on
+		// auth state only (see comment above), so it's deliberately excluded.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [isAuthed, session.data?.user]);
 
 	const [email, setEmail] = useState('');
@@ -92,7 +95,7 @@ function SignInPage() {
 		try {
 			await authClient.sendVerificationEmail({
 				email,
-				callbackURL: new URL('/auth/verify-email', window.location.origin).toString(),
+				callbackURL: getVerifyEmailCallbackUrl(window.location.origin, redirectTarget),
 			});
 			trackAuthSuccess('email_verification', { method: 'resend' });
 			setResendState('sent');
@@ -281,7 +284,11 @@ function SignInPage() {
 			</div>
 			<AuthFooter>
 				Don’t have an account?{' '}
-				<Link className='link-text font-medium text-foreground' to='/auth/sign-up'>
+				<Link
+					className='link-text font-medium text-foreground'
+					search={{ redirect }}
+					to='/auth/sign-up'
+				>
 					Create one
 				</Link>
 			</AuthFooter>

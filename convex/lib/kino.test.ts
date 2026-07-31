@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+	assertProjectWritable,
 	ensureUniqueOrgSlug,
 	getProjectViewAccess,
 	pickPersonalOrganizationId,
@@ -186,7 +187,11 @@ describe('verifyProjectAccess', () => {
 		expect(access.permissions.canDelete).toBe(true);
 	});
 
-	it('only org:admin can delete; archived projects are view-only', async () => {
+	// Archived projects report `isArchived: true` but KEEP role-derived
+	// permissions so editors/admins still see the settings UI. The read-only
+	// freeze is enforced by `assertProjectWritable` at the mutations, not by
+	// zeroing `canEdit` here.
+	it('flags archived and keeps org:admin edit/delete permissions', async () => {
 		const ctx = makeAccessCtx({
 			project: { id: 'p1', slug: 's', visibility: 'archived' },
 			profile: { id: 'profile_1', role: 'user', userId: 'user_1' },
@@ -196,9 +201,65 @@ describe('verifyProjectAccess', () => {
 			id: 'p1',
 			userId: 'user_1',
 		});
+		expect(access.isArchived).toBe(true);
 		expect(access.permissions.canView).toBe(true);
-		expect(access.permissions.canEdit).toBe(false);
+		expect(access.permissions.canEdit).toBe(true);
 		expect(access.permissions.canDelete).toBe(true);
+	});
+
+	it('flags archived and keeps org:editor edit permission (no delete)', async () => {
+		const ctx = makeAccessCtx({
+			project: { id: 'p1', slug: 's', visibility: 'archived' },
+			profile: { id: 'profile_1', role: 'user', userId: 'user_1' },
+			projectMember: { id: 'm1', role: 'org:editor' },
+		});
+		const access = await verifyProjectAccess(ctx, { id: 'p1', userId: 'user_1' });
+		expect(access.isArchived).toBe(true);
+		expect(access.permissions.canView).toBe(true);
+		expect(access.permissions.canEdit).toBe(true);
+		expect(access.permissions.canDelete).toBe(false);
+	});
+
+	it('flags archived for a system admin while keeping full permissions', async () => {
+		const ctx = makeAccessCtx({
+			project: { id: 'p1', slug: 's', visibility: 'archived' },
+			profile: { id: 'profile_1', role: 'system:admin', userId: 'user_1' },
+			projectMember: null,
+		});
+		const access = await verifyProjectAccess(ctx, { id: 'p1', userId: 'user_1' });
+		expect(access.isArchived).toBe(true);
+		expect(access.permissions.canEdit).toBe(true);
+		expect(access.permissions.canDelete).toBe(true);
+	});
+
+	it('hides an archived project from plain members', async () => {
+		const ctx = makeAccessCtx({
+			project: { id: 'p1', slug: 's', visibility: 'archived' },
+			profile: { id: 'profile_1', role: 'user', userId: 'user_1' },
+			projectMember: { id: 'm1', role: 'member' },
+		});
+		const access = await verifyProjectAccess(ctx, { id: 'p1', userId: 'user_1' });
+		expect(access.permissions.canView).toBe(false);
+		expect(access.project).toBeNull();
+	});
+
+	it('marks non-archived projects as writable', async () => {
+		const ctx = makeAccessCtx({
+			project: { id: 'p1', slug: 's', visibility: 'public' },
+		});
+		const access = await verifyProjectAccess(ctx, { id: 'p1' });
+		expect(access.isArchived).toBe(false);
+	});
+});
+
+describe('assertProjectWritable', () => {
+	it('throws when the project is archived', () => {
+		expect(() => assertProjectWritable({ isArchived: true })).toThrow(/archived/i);
+	});
+
+	it('is a no-op when the project is not archived', () => {
+		expect(() => assertProjectWritable({ isArchived: false })).not.toThrow();
+		expect(() => assertProjectWritable({})).not.toThrow();
 	});
 });
 
@@ -223,7 +284,7 @@ describe('reconcileSystemRole', () => {
 		const ctx = {
 			orm: { query: { profile: { findFirst: async () => profile } } },
 			db: {
-				patch: async (id: string, data: Record<string, unknown>) => {
+				patch: async (_table: string, id: string, data: Record<string, unknown>) => {
 					patches.push({ id, data });
 				},
 			},

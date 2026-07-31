@@ -85,23 +85,23 @@ export function EditorToolbar({ editor }: { editor: Editor | null }) {
 	const flags =
 		useEditorState({
 			editor,
-			selector: ({ editor }) =>
-				editor
+			selector: ({ editor: activeEditor }) =>
+				activeEditor
 					? {
-							blockquote: editor.isActive('blockquote'),
-							bold: editor.isActive('bold'),
-							bulletList: editor.isActive('bulletList'),
-							code: editor.isActive('code'),
-							codeBlock: editor.isActive('codeBlock'),
-							heading: editor.isActive('heading'),
-							heading1: editor.isActive('heading', { level: 1 }),
-							heading2: editor.isActive('heading', { level: 2 }),
-							heading3: editor.isActive('heading', { level: 3 }),
-							italic: editor.isActive('italic'),
-							link: editor.isActive('link'),
-							orderedList: editor.isActive('orderedList'),
-							strike: editor.isActive('strike'),
-							underline: editor.isActive('underline'),
+							blockquote: activeEditor.isActive('blockquote'),
+							bold: activeEditor.isActive('bold'),
+							bulletList: activeEditor.isActive('bulletList'),
+							code: activeEditor.isActive('code'),
+							codeBlock: activeEditor.isActive('codeBlock'),
+							heading: activeEditor.isActive('heading'),
+							heading1: activeEditor.isActive('heading', { level: 1 }),
+							heading2: activeEditor.isActive('heading', { level: 2 }),
+							heading3: activeEditor.isActive('heading', { level: 3 }),
+							italic: activeEditor.isActive('italic'),
+							link: activeEditor.isActive('link'),
+							orderedList: activeEditor.isActive('orderedList'),
+							strike: activeEditor.isActive('strike'),
+							underline: activeEditor.isActive('underline'),
 						}
 					: EMPTY_FLAGS,
 		}) ?? EMPTY_FLAGS;
@@ -125,7 +125,7 @@ export function EditorToolbar({ editor }: { editor: Editor | null }) {
 	const isFocused = editor?.isFocused ?? false;
 	const isFlagActive = (key: FlagKey) => isFocused && flags[key];
 
-	const chain = () => editor?.chain().focus() as any;
+	const chain = useCallback(() => editor?.chain().focus() as any, [editor]);
 
 	const getCurrentBlockLabel = () => {
 		if (!isFocused) return 'H';
@@ -233,7 +233,7 @@ export function EditorToolbar({ editor }: { editor: Editor | null }) {
 						},
 					]
 				: [],
-		[editor]
+		[editor, chain]
 	);
 
 	const calculateOverflow = useCallback(() => {

@@ -20,10 +20,9 @@ export const toggle = authMutation
 
 		const existing = await ctx.db
 			.query('updateEmote')
-			.withIndex('by_updateId_authorProfileId', (q: any) =>
-				q.eq('updateId', item._id).eq('authorProfileId', profile._id)
+			.withIndex('by_updateId_authorProfileId_content', (q: any) =>
+				q.eq('updateId', item._id).eq('authorProfileId', profile._id).eq('content', input.content)
 			)
-			.filter((q: any) => q.eq(q.field('content'), input.content))
 			.first();
 
 		if (existing) {
@@ -32,9 +31,9 @@ export const toggle = authMutation
 		}
 
 		await ctx.orm.insert(updateEmoteTable).values({
-			authorProfileId: profile._id as any,
+			authorProfileId: profile._id,
 			content: input.content,
-			updateId: item._id as any,
+			updateId: item._id,
 		});
 		return { action: 'added' as const };
 	});

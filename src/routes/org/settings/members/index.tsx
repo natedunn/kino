@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { createFileRoute, redirect } from '@tanstack/react-router';
+import { createFileRoute } from '@tanstack/react-router';
 import { Trash2 } from 'lucide-react';
 
 import { InlineAlert } from '@/components/inline-alert';
@@ -11,8 +11,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useCRPC } from '@/lib/convex/crpc';
 import { crpcServer } from '@/lib/convex/crpc-server';
+import { extractErrorMessage } from '@/lib/errors';
 import { titleMeta } from '@/lib/seo';
 import { cn } from '@/lib/utils';
+import { getInitial } from '@/lib/utils/get-initial';
 import { emailSchema, FORM_LIMITS } from '@/lib/validation';
 
 import { SettingsSkeleton } from '../-components/settings-skeleton';
@@ -23,17 +25,12 @@ export const Route = createFileRoute('/org/settings/members/')({
 	head: () => ({
 		meta: [titleMeta(['Members'])],
 	}),
-	loader: async ({ context, location }) => {
+	loader: ({ context, location }) => {
 		const orgSlug = (location.search as { org?: string }).org;
 		if (!context.loaderToken || !orgSlug) return;
-		const orgData = await context.queryClient.ensureQueryData(
-			crpcServer.org.getDetails.queryOptions({ slug: orgSlug }, { skipUnauth: true })
-		);
-		// Managing members is edit-only. Bounce non-editors before render; the
-		// component still enforces the finer `canManage` distinction.
-		if (!orgData?.permissions.canEdit) {
-			throw redirect({ to: '/dashboard' });
-		}
+		// Access (canEdit) is gated once on the `/org/settings` layout loader; the
+		// component still enforces the finer `canManage` distinction. Here we only
+		// warm the page-specific caches.
 		void context.queryClient.ensureQueryData(
 			crpcServer.orgMember.listMembers.queryOptions({ slug: orgSlug })
 		);
@@ -51,8 +48,7 @@ type AssignableRole = (typeof ASSIGNABLE_ROLES)[number];
 
 function mutationErrorMessage(error: unknown) {
 	if (!error) return null;
-	const anyError = error as { data?: { message?: string }; message?: string };
-	return anyError.data?.message ?? anyError.message ?? 'Something went wrong';
+	return extractErrorMessage(error);
 }
 
 function MembersSettingsRoute() {
@@ -200,12 +196,12 @@ function MembersSettingsRoute() {
 								<Avatar className='size-8 shrink-0'>
 									{member.user.image ? <AvatarImage src={member.user.image} /> : null}
 									<AvatarFallback className='text-xs font-semibold'>
-										{(member.user.name ?? member.user.email)[0]?.toUpperCase()}
+										{getInitial(member.user.name, member.user.email)}
 									</AvatarFallback>
 								</Avatar>
 								<div className='min-w-0 flex-1'>
 									<p className='truncate text-sm font-medium'>
-										{member.user.name ?? member.user.email}
+										{member.user.name || member.user.email}
 									</p>
 									<p className='truncate text-xs text-muted-foreground'>{member.user.email}</p>
 								</div>
@@ -234,7 +230,7 @@ function MembersSettingsRoute() {
 											onClick={() => {
 												if (
 													window.confirm(
-														`Remove ${member.user.name ?? member.user.email} from this organization?`
+														`Remove ${member.user.name || member.user.email} from this organization?`
 													)
 												) {
 													removeMember.mutate({ memberId: member.id });

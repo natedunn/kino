@@ -10,7 +10,6 @@ import {
 	privateQuery,
 } from '../lib/crpc';
 import {
-	createInstallationToken,
 	createIssueComment,
 	createRepositoryIssue,
 	getRepositoryIssue,
@@ -34,6 +33,8 @@ import {
 	saveTarget,
 } from './feedbackGithub.lib';
 import { createFeedbackGithubCaller } from './generated/feedbackGithub.runtime';
+import { createGithubCaller } from './generated/github.runtime';
+import { createInstallationTokenWithRecovery } from './github.lib';
 import { feedbackGithubConnectionTable } from './schema';
 
 export const getContextForAction = privateQuery
@@ -75,7 +76,10 @@ export const listByFeedback = optionalAuthQuery
 		for (const connection of connections) {
 			if (connection.deletedTime) continue;
 
-			const repositoryConnection = await ctx.db.get(connection.githubRepositoryConnectionId);
+			const repositoryConnection = await ctx.db.get(
+				'githubRepositoryConnection',
+				connection.githubRepositoryConnectionId
+			);
 			if (repositoryConnection?.repoPrivate && !access.permissions.canEdit) {
 				continue;
 			}
@@ -260,12 +264,14 @@ export const searchTargets = authAction
 	)
 	.action(async ({ ctx, input }) => {
 		const caller = createFeedbackGithubCaller(ctx);
+		const githubCaller = createGithubCaller(ctx);
 		const context = await caller.getContextForAction({
 			feedbackId: input.feedbackId,
 			kind: input.kind,
 			userId: ctx.userId,
 		});
-		const token = await createInstallationToken({
+		const token = await createInstallationTokenWithRecovery({
+			caller: githubCaller,
 			installationId: context.installation.installationId,
 			mode: 'read',
 			repositoryIds: [context.repository.id],
@@ -290,12 +296,14 @@ export const connectExisting = authAction
 	)
 	.action(async ({ ctx, input }) => {
 		const caller = createFeedbackGithubCaller(ctx);
+		const githubCaller = createGithubCaller(ctx);
 		const context = await caller.getContextForAction({
 			feedbackId: input.feedbackId,
 			kind: input.kind,
 			userId: ctx.userId,
 		});
-		const token = await createInstallationToken({
+		const token = await createInstallationTokenWithRecovery({
+			caller: githubCaller,
 			installationId: context.installation.installationId,
 			mode: 'read_write',
 			repositoryIds: [context.repository.id],
@@ -346,12 +354,14 @@ export const createAndConnect = authAction
 	)
 	.action(async ({ ctx, input }) => {
 		const caller = createFeedbackGithubCaller(ctx);
+		const githubCaller = createGithubCaller(ctx);
 		const context = await caller.getContextForAction({
 			feedbackId: input.feedbackId,
 			kind: input.kind,
 			userId: ctx.userId,
 		});
-		const token = await createInstallationToken({
+		const token = await createInstallationTokenWithRecovery({
+			caller: githubCaller,
 			installationId: context.installation.installationId,
 			mode: 'read_write',
 			repositoryIds: [context.repository.id],
@@ -384,13 +394,15 @@ export const refreshCounts = authAction
 	)
 	.action(async ({ ctx, input }) => {
 		const caller = createFeedbackGithubCaller(ctx);
+		const githubCaller = createGithubCaller(ctx);
 		const context = await caller.getContextForAction({
 			feedbackId: input.feedbackId,
 			kind: 'issue',
 			requireSource: false,
 			userId: ctx.userId,
 		});
-		const token = await createInstallationToken({
+		const token = await createInstallationTokenWithRecovery({
+			caller: githubCaller,
 			installationId: context.installation.installationId,
 			mode: 'read',
 			repositoryIds: [context.repository.id],

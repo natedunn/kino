@@ -1,13 +1,17 @@
+import type { IconName } from '@/icons';
+
 import { useState } from 'react';
 import { useForm } from '@tanstack/react-form';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router';
 
+import { IconSelector } from '@/components/icon-selector';
 import { InlineAlert } from '@/components/inline-alert';
 import { EmptyState, slugify } from '@/components/kino/common';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { iconRegistryOptions } from '@/icons';
 import { useCRPC } from '@/lib/convex/crpc';
 import { crpcServer } from '@/lib/convex/crpc-server';
 import { projectTitle, titleMeta } from '@/lib/seo';
@@ -60,6 +64,7 @@ function NewBoardRoute() {
 	const form = useForm({
 		defaultValues: {
 			description: '',
+			icon: 'box' as IconName,
 			name: '',
 		},
 		onSubmit: async ({ value }) => {
@@ -68,6 +73,7 @@ function NewBoardRoute() {
 			setFormError(null);
 			const parsed = boardFormSchema.safeParse({
 				description: value.description,
+				icon: value.icon,
 				name: value.name,
 				slug: slugify(value.name),
 			});
@@ -78,6 +84,7 @@ function NewBoardRoute() {
 
 			await createMutation.mutateAsync({
 				description: parsed.data.description || undefined,
+				icon: parsed.data.icon || undefined,
 				name: parsed.data.name,
 				projectId: project.id,
 				slug: parsed.data.slug,
@@ -119,6 +126,22 @@ function NewBoardRoute() {
 									<Input
 										maxLength={FORM_LIMITS.boardName}
 										onChange={(event) => field.handleChange(event.target.value)}
+										value={field.state.value}
+									/>
+								</div>
+							)}
+						</form.Field>
+						<form.Field name='icon'>
+							{(field) => (
+								<div className='grid gap-2'>
+									<label className='text-sm font-medium'>Icon</label>
+									<p className='text-sm text-muted-foreground'>
+										Pick the visual marker used anywhere this board appears.
+									</p>
+									<IconSelector
+										contentClassName='w-96'
+										onValueChange={(value) => field.handleChange(value)}
+										options={iconRegistryOptions}
 										value={field.state.value}
 									/>
 								</div>

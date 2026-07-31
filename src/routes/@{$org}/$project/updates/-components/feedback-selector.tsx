@@ -22,9 +22,9 @@ export function FeedbackSelector({
 	selectedIds,
 	onChange,
 }: {
-	onChange: (ids: string[]) => void;
+	onChange: (ids: Array<string>) => void;
 	projectId: string;
-	selectedIds: string[];
+	selectedIds: Array<string>;
 }) {
 	const crpc = useCRPC();
 	const [open, setOpen] = useState(false);

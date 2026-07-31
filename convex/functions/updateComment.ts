@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { authMutation, optionalAuthQuery } from '../lib/crpc';
 import {
 	asId,
+	assertProjectWritable,
 	getCurrentProfile,
 	getCurrentProfileOrThrow,
 	getDoc,
@@ -31,7 +32,7 @@ export const create = authMutation
 		const [comment] = await ctx.orm
 			.insert(updateCommentTable)
 			.values({
-				authorProfileId: profile._id as any,
+				authorProfileId: profile._id,
 				content: input.content,
 				updateId: item._id as any,
 			})
@@ -49,6 +50,11 @@ export const update = authMutation
 	.mutation(async ({ ctx, input }) => {
 		const profile = await getCurrentProfileOrThrow(ctx, ctx.userId);
 		const comment = await getDocOrThrow(ctx, asId<'updateComment'>(input._id), 'Comment not found');
+		const item = await getDocOrThrow(ctx, comment.updateId, 'Update not found');
+		const project = await getDocOrThrow(ctx, item.projectId, 'Project not found');
+		assertProjectWritable(
+			await verifyProjectAccess(ctx, { slug: project.slug, userId: ctx.userId })
+		);
 		if (comment.authorProfileId !== profile._id) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
@@ -75,6 +81,11 @@ export const remove = authMutation
 	.mutation(async ({ ctx, input }) => {
 		const profile = await getCurrentProfileOrThrow(ctx, ctx.userId);
 		const comment = await getDocOrThrow(ctx, asId<'updateComment'>(input._id), 'Comment not found');
+		const item = await getDocOrThrow(ctx, comment.updateId, 'Update not found');
+		const project = await getDocOrThrow(ctx, item.projectId, 'Project not found');
+		assertProjectWritable(
+			await verifyProjectAccess(ctx, { slug: project.slug, userId: ctx.userId })
+		);
 		if (comment.authorProfileId !== profile._id) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
@@ -133,9 +144,9 @@ export const listByUpdate = optionalAuthQuery
 					.query('updateCommentEmote')
 					.withIndex('by_updateCommentId', (q: any) => q.eq('updateCommentId', comment._id))
 					.collect();
-				const emoteCounts: Record<string, { authorProfileIds: string[]; count: number }> = {};
+				const emoteCounts: Record<string, { authorProfileIds: Array<string>; count: number }> = {};
 				for (const emote of emotes) {
-					if (!emoteCounts[emote.content]) {
+					if (!Object.hasOwn(emoteCounts, emote.content)) {
 						emoteCounts[emote.content] = { authorProfileIds: [], count: 0 };
 					}
 					emoteCounts[emote.content].count++;

@@ -12,7 +12,7 @@ import {
 	useNavigate,
 } from '@tanstack/react-router';
 import { flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
-import { Columns3, ExternalLink, Globe, Pencil, Plus, Settings2, Trash2 } from 'lucide-react';
+import { Columns3, ExternalLink, Globe, Pencil, Plus, Settings2, Trash2, X } from 'lucide-react';
 
 import { InlineAlert } from '@/components/inline-alert';
 import { RoutePending } from '@/components/route-pending';
@@ -28,6 +28,13 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from '@/components/ui/dialog';
+import {
+	Drawer,
+	DrawerClose,
+	DrawerContent,
+	DrawerDescription,
+	DrawerTitle,
+} from '@/components/ui/drawer';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
 	Select,
@@ -37,13 +44,6 @@ import {
 	SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import {
-	Sheet,
-	SheetContent,
-	SheetDescription,
-	SheetHeader,
-	SheetTitle,
-} from '@/components/ui/sheet';
 import { useCRPC } from '@/lib/convex/crpc';
 import { crpcServer } from '@/lib/convex/crpc-server';
 import { projectTitle, titleMeta } from '@/lib/seo';
@@ -97,7 +97,6 @@ export const Route = createFileRoute('/@{$org}/$project/updates/edit/')({
 		);
 	},
 	pendingComponent: () => <RoutePending variant='page' />,
-	pendingMs: 600,
 	validateSearch: validateDashboardSearch,
 	head: ({ params }) => ({
 		meta: [titleMeta(['Manage Updates', projectTitle(params.org, params.project)])],
@@ -382,139 +381,148 @@ function UpdatesDashboard({ canDelete, pageSize }: { canDelete: boolean; pageSiz
 			</Dialog>
 
 			{/* Row action sheet */}
-			<Sheet
+			<Drawer
 				onOpenChange={(open) => !open && setSheetUpdateId(null)}
 				open={sheetUpdateId !== null && sheetUpdate !== null}
+				swipeDirection='right'
 			>
-				<SheetContent side='right'>
+				<DrawerContent className='rounded-xl border bg-background [--bleed:0px] [--drawer-inset:0.5rem]'>
 					{sheetUpdate ? (
 						<>
-							<SheetHeader>
-								<div className='flex items-center gap-2 text-xs font-medium tracking-wide text-muted-foreground uppercase'>
-									<Settings2 className='size-3.5' />
-									Update Options
-								</div>
-								<SheetTitle className='pr-6 text-lg leading-snug'>{sheetUpdate.title}</SheetTitle>
-								<SheetDescription className='sr-only'>
-									Options for {sheetUpdate.title}
-								</SheetDescription>
-								<div className='flex flex-col gap-2'>
-									<div className='flex flex-wrap items-center gap-2'>
-										<StatusBadge status={sheetUpdate.status} />
-										<CategoryBadge category={sheetUpdate.category} />
+							<DrawerClose className='absolute top-4 right-4 z-10 rounded-xs opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-hidden disabled:pointer-events-none'>
+								<X className='size-4' />
+								<span className='sr-only'>Close</span>
+							</DrawerClose>
+							<div className='flex min-h-0 flex-1 flex-col gap-4'>
+								<div className='flex flex-col gap-1.5 p-4'>
+									<div className='flex items-center gap-2 text-xs font-medium tracking-wide text-muted-foreground uppercase'>
+										<Settings2 className='size-3.5' />
+										Update Options
 									</div>
-									<div className='text-xs text-muted-foreground'>
-										{sheetUpdate.author?.name ?? sheetUpdate.author?.username ?? 'Unknown'}
-										{' · '}
-										{sheetUpdate.status === 'published' && sheetUpdate.publishedAt
-											? `Published ${formatFullDate(sheetUpdate.publishedAt)}`
-											: `Updated ${formatFullDate(sheetUpdate.updatedTime ?? sheetUpdate.createdAt)}`}
+									<DrawerTitle className='pr-6 text-lg leading-snug'>
+										{sheetUpdate.title}
+									</DrawerTitle>
+									<DrawerDescription className='sr-only'>
+										Options for {sheetUpdate.title}
+									</DrawerDescription>
+									<div className='flex flex-col gap-2'>
+										<div className='flex flex-wrap items-center gap-2'>
+											<StatusBadge status={sheetUpdate.status} />
+											<CategoryBadge category={sheetUpdate.category} />
+										</div>
+										<div className='text-xs text-muted-foreground'>
+											{sheetUpdate.author?.name ?? sheetUpdate.author?.username ?? 'Unknown'}
+											{' · '}
+											{sheetUpdate.status === 'published' && sheetUpdate.publishedAt
+												? `Published ${formatFullDate(sheetUpdate.publishedAt)}`
+												: `Updated ${formatFullDate(sheetUpdate.updatedTime ?? sheetUpdate.createdAt)}`}
+										</div>
 									</div>
 								</div>
-							</SheetHeader>
 
-							<div className='flex flex-1 flex-col px-4'>
-								<Separator className='mb-4' />
+								<div className='flex flex-1 flex-col px-4'>
+									<Separator className='mb-4' />
 
-								{/* Links */}
-								<div className='flex flex-col gap-2'>
-									<p className='text-[11px] font-medium tracking-wide text-muted-foreground/70 uppercase'>
-										Links
-									</p>
-									<div className='flex flex-col gap-1.5'>
-										<Link
-											className='inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground'
-											onClick={() => setSheetUpdateId(null)}
-											params={{
-												org: params.org,
-												project: params.project,
-												slug: sheetUpdate.slug,
+									{/* Links */}
+									<div className='flex flex-col gap-2'>
+										<p className='text-[11px] font-medium tracking-wide text-muted-foreground/70 uppercase'>
+											Links
+										</p>
+										<div className='flex flex-col gap-1.5'>
+											<Link
+												className='inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground'
+												onClick={() => setSheetUpdateId(null)}
+												params={{
+													org: params.org,
+													project: params.project,
+													slug: sheetUpdate.slug,
+												}}
+												to='/@{$org}/$project/updates/$slug'
+											>
+												<ExternalLink className='size-3.5' />
+												View update
+											</Link>
+											<Link
+												className='inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground'
+												onClick={() => setSheetUpdateId(null)}
+												params={{
+													org: params.org,
+													project: params.project,
+													slug: sheetUpdate.slug,
+												}}
+												to='/@{$org}/$project/updates/$slug/edit'
+											>
+												<Pencil className='size-3.5' />
+												Edit update
+											</Link>
+										</div>
+									</div>
+
+									<Separator className='my-4' />
+
+									{/* Status */}
+									<div className='flex flex-col gap-2'>
+										<p className='text-[11px] font-medium tracking-wide text-muted-foreground/70 uppercase'>
+											Status
+										</p>
+										<Select
+											items={UPDATE_STATUS_ITEMS}
+											onValueChange={(value) => {
+												setActionError('');
+												if (value === 'published' && sheetUpdate.status === 'draft') {
+													publishMutation.mutate({
+														ids: [sheetUpdate.id],
+														projectId,
+													});
+												} else if (value === 'draft' && sheetUpdate.status === 'published') {
+													unpublishMutation.mutate({
+														ids: [sheetUpdate.id],
+														projectId,
+													});
+												}
 											}}
-											to='/@{$org}/$project/updates/$slug'
+											value={sheetUpdate.status}
 										>
-											<ExternalLink className='size-3.5' />
-											View update
-										</Link>
-										<Link
-											className='inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground'
-											onClick={() => setSheetUpdateId(null)}
-											params={{
-												org: params.org,
-												project: params.project,
-												slug: sheetUpdate.slug,
-											}}
-											to='/@{$org}/$project/updates/$slug/edit'
-										>
-											<Pencil className='size-3.5' />
-											Edit update
-										</Link>
+											<SelectTrigger className='w-full'>
+												<SelectValue />
+											</SelectTrigger>
+											<SelectContent>
+												<SelectItem value='draft'>
+													<StatusBadge status='draft' />
+												</SelectItem>
+												<SelectItem value='published'>
+													<StatusBadge status='published' />
+												</SelectItem>
+											</SelectContent>
+										</Select>
 									</div>
 								</div>
 
-								<Separator className='my-4' />
-
-								{/* Status */}
-								<div className='flex flex-col gap-2'>
-									<p className='text-[11px] font-medium tracking-wide text-muted-foreground/70 uppercase'>
-										Status
-									</p>
-									<Select
-										items={UPDATE_STATUS_ITEMS}
-										onValueChange={(value) => {
-											setActionError('');
-											if (value === 'published' && sheetUpdate.status === 'draft') {
-												publishMutation.mutate({
+								{/* Delete — pinned to bottom */}
+								{canDelete ? (
+									<div className='mt-auto border-t px-4 py-4'>
+										<Button
+											className='w-full justify-start gap-2.5 text-destructive hover:text-destructive'
+											onClick={() => {
+												setSheetUpdateId(null);
+												setDeleteDialog({
 													ids: [sheetUpdate.id],
-													projectId,
+													updates: [{ id: sheetUpdate.id, title: sheetUpdate.title }],
 												});
-											} else if (value === 'draft' && sheetUpdate.status === 'published') {
-												unpublishMutation.mutate({
-													ids: [sheetUpdate.id],
-													projectId,
-												});
-											}
-										}}
-										value={sheetUpdate.status}
-									>
-										<SelectTrigger className='w-full'>
-											<SelectValue />
-										</SelectTrigger>
-										<SelectContent>
-											<SelectItem value='draft'>
-												<StatusBadge status='draft' />
-											</SelectItem>
-											<SelectItem value='published'>
-												<StatusBadge status='published' />
-											</SelectItem>
-										</SelectContent>
-									</Select>
-								</div>
+											}}
+											type='button'
+											variant='ghost'
+										>
+											<Trash2 className='size-4' />
+											Delete Update
+										</Button>
+									</div>
+								) : null}
 							</div>
-
-							{/* Delete — pinned to bottom */}
-							{canDelete ? (
-								<div className='mt-auto border-t px-4 py-4'>
-									<Button
-										className='w-full justify-start gap-2.5 text-destructive hover:text-destructive'
-										onClick={() => {
-											setSheetUpdateId(null);
-											setDeleteDialog({
-												ids: [sheetUpdate.id],
-												updates: [{ id: sheetUpdate.id, title: sheetUpdate.title }],
-											});
-										}}
-										type='button'
-										variant='ghost'
-									>
-										<Trash2 className='size-4' />
-										Delete Update
-									</Button>
-								</div>
-							) : null}
 						</>
 					) : null}
-				</SheetContent>
-			</Sheet>
+				</DrawerContent>
+			</Drawer>
 
 			{/* Page content — single column */}
 			<div className='container flex flex-1 flex-col py-6 md:py-8'>

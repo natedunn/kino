@@ -1,5 +1,5 @@
 import { splitSetCookieHeader } from 'better-auth/cookies';
-import { convexBetterAuthReactStart } from 'kitcn/auth/start';
+import { convexBetterAuthReactStart } from 'kitcn/auth/start/server';
 
 function createAuth() {
 	return convexBetterAuthReactStart({
@@ -73,7 +73,7 @@ function withPublicAuthRequestUrl(request: Request) {
 }
 
 type HeadersWithSetCookieList = Headers & {
-	getSetCookie?: () => string[];
+	getSetCookie?: () => Array<string>;
 };
 
 export function getSetCookieValues(source: Headers) {

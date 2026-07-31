@@ -36,7 +36,7 @@ export function truncateToNearestSpace(text: string, maxLength: number): string 
 	}
 
 	// Find the last space before or at the effectiveMaxLength
-	let lastSpaceIndex = text.lastIndexOf(' ', effectiveMaxLength);
+	const lastSpaceIndex = text.lastIndexOf(' ', effectiveMaxLength);
 
 	if (lastSpaceIndex === -1 || lastSpaceIndex === 0) {
 		// No space found within the limit, or the first character is a space

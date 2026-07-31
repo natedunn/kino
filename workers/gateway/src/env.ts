@@ -61,7 +61,7 @@ export function timingSafeEqualString(left: string, right: string) {
 	if (a.byteLength !== b.byteLength) return false;
 	let result = 0;
 	for (let index = 0; index < a.byteLength; index++) {
-		result |= a[index]! ^ b[index]!;
+		result |= a[index] ^ b[index];
 	}
 	return result === 0;
 }

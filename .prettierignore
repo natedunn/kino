@@ -7,4 +7,6 @@ yarn.lock
 dist/
 **/build
 convex/functions/_generated/
+convex/functions/generated/
+convex/shared/api.ts
 src/routeTree.gen.ts

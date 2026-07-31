@@ -5,6 +5,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 type SidebarSectionProps = {
 	title: string;
 	icon?: React.ReactNode;
+	id?: string;
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
 	children: React.ReactNode;
@@ -14,19 +15,20 @@ type SidebarSectionProps = {
 export function SidebarSection({
 	title,
 	icon,
+	id,
 	open,
 	onOpenChange,
 	children,
 	className,
 }: SidebarSectionProps) {
 	return (
-		<Collapsible open={open} onOpenChange={onOpenChange} className={className}>
+		<Collapsible id={id} open={open} onOpenChange={onOpenChange} className={className}>
 			<CollapsibleTrigger className='group flex w-full cursor-pointer items-center justify-between border-b pb-2'>
 				<h3 className='flex items-center gap-1.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase transition-colors group-hover:text-foreground'>
 					{icon}
 					{title}
 				</h3>
-				<ChevronDown className='size-4 text-muted-foreground transition-all group-hover:text-foreground group-data-[state=open]:rotate-180' />
+				<ChevronDown className='size-4 rotate-90 text-muted-foreground transition-all group-hover:text-foreground group-data-[panel-open]:rotate-0' />
 			</CollapsibleTrigger>
 			<CollapsibleContent>
 				<div className='pt-3'>{children}</div>

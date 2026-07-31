@@ -4,7 +4,7 @@ import { CRPCError } from 'kitcn/server';
 import { z } from 'zod';
 
 import { EMOTE_CONTENTS } from '../functions/schema';
-import { asId, getDocOrThrow, verifyProjectAccess } from './kino';
+import { asId, assertProjectWritable, getDocOrThrow, verifyProjectAccess } from './kino';
 
 /**
  * The single source of truth for emote reaction contents on the server.
@@ -31,6 +31,7 @@ export async function ensureUpdateReactionAccess(
 
 	const project = await getDocOrThrow(ctx, item.projectId, 'Project not found');
 	const access = await verifyProjectAccess(ctx, { slug: project.slug, userId });
+	assertProjectWritable(access);
 
 	if (item.status === 'draft') {
 		if (!access.permissions.canEdit) {

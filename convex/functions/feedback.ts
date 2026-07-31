@@ -1,5 +1,3 @@
-import type { Doc } from './_generated/dataModel';
-
 import { eq, unsetToken } from 'kitcn/orm';
 import { CRPCError } from 'kitcn/server';
 import { z } from 'zod';
@@ -7,6 +5,7 @@ import { z } from 'zod';
 import { authMutation, optionalAuthQuery } from '../lib/crpc';
 import {
 	asId,
+	assertProjectWritable,
 	generateRandomSlug,
 	getCurrentProfile,
 	getCurrentProfileOrThrow,
@@ -16,6 +15,7 @@ import {
 	toPublicDoc,
 	verifyProjectAccess,
 } from '../lib/kino';
+import { createProfileImageUrlCache } from '../lib/storage';
 import {
 	commentContentSchema,
 	feedbackSearchSchema,
@@ -31,12 +31,9 @@ import { isValidTarget, resolveTargetOrNull } from '../shared/target';
 import {
 	assertCanAdminFeedback,
 	createCommentEnrichCache,
-	dedupeComments,
-	dedupeDocsById,
+	feedbackPrioritySchema,
 	feedbackStatusSchema,
-	getFeedbackCommentWindow,
 	hasOverlap,
-	MIDDLE_COMMENT_PAGE_SIZE,
 	targetGranularitySchema,
 	toProfileSummary,
 	toPublicFeedbackComment,
@@ -44,6 +41,7 @@ import {
 	verifyFeedbackWriteAccess,
 } from './feedback.lib';
 import { recordFeedbackEvent } from './feedbackEvent.lib';
+import { getFeedbackTimelineMiddlePage, getFeedbackTimelineWindow } from './feedbackTimeline.lib';
 import { feedbackCommentTable, feedbackTable } from './schema';
 
 export const create = authMutation
@@ -70,6 +68,7 @@ export const create = authMutation
 				message: 'You do not have access to this project',
 			});
 		}
+		assertProjectWritable(access);
 		const board = await getDoc<'feedbackBoard'>(ctx, asId<'feedbackBoard'>(input.boardId));
 		if (!board || board.projectId !== asId<'project'>(input.projectId)) {
 			throw new CRPCError({
@@ -83,8 +82,9 @@ export const create = authMutation
 		const [feedback] = await ctx.orm
 			.insert(feedbackTable)
 			.values({
-				authorProfileId: profile._id as any,
+				authorProfileId: profile._id,
 				boardId: asId<'feedbackBoard'>(input.boardId),
+				priority: 'none',
 				projectId: asId<'project'>(input.projectId),
 				slug,
 				status: 'open',
@@ -96,7 +96,7 @@ export const create = authMutation
 		const [feedbackComment] = await ctx.orm
 			.insert(feedbackCommentTable)
 			.values({
-				authorProfileId: profile._id as any,
+				authorProfileId: profile._id,
 				content: input.firstComment,
 				feedbackId: feedback.id as any,
 				initial: true,
@@ -169,6 +169,41 @@ export const updateStatus = authMutation
 				metadata: { oldValue: feedback.status, newValue: input.status },
 			});
 		}
+		return { success: true };
+	});
+
+export const updatePriority = authMutation
+	.input(
+		z.object({
+			id: idSchema,
+			priority: feedbackPrioritySchema,
+		})
+	)
+	.mutation(async ({ ctx, input }) => {
+		const { feedback, permissions, profile } = await verifyFeedbackWriteAccess(
+			ctx,
+			input.id,
+			ctx.userId
+		);
+		// Priority is editor/admin-only (unlike status, which the author may also change).
+		assertCanAdminFeedback(permissions);
+
+		const oldPriority = feedback.priority ?? 'none';
+		if (oldPriority === input.priority) {
+			return { success: true };
+		}
+
+		await ctx.orm
+			.update(feedbackTable)
+			.set({ priority: input.priority, updatedTime: Date.now() })
+			.where(eq(feedbackTable.id, feedback._id as any));
+
+		await recordFeedbackEvent(ctx, {
+			actorProfileId: profile._id,
+			eventType: 'priority_changed',
+			feedbackId: feedback._id,
+			metadata: { oldValue: oldPriority, newValue: input.priority },
+		});
 		return { success: true };
 	});
 
@@ -271,13 +306,14 @@ export const setAnswerComment = authMutation
 		})
 	)
 	.mutation(async ({ ctx, input }) => {
-		const { feedback, isOwner, profile, projectMember } = await verifyFeedbackWriteAccess(
+		const { feedback, isOwner, permissions, profile } = await verifyFeedbackWriteAccess(
 			ctx,
 			input.feedbackId,
 			ctx.userId
 		);
-		const canMarkAnswer =
-			isOwner || profile.role === 'system:admin' || projectMember?.role === 'org:admin';
+		// Match the other feedback mutations: the author or anyone with edit
+		// access (org:admin, org:editor, system:admin) can mark the answer.
+		const canMarkAnswer = isOwner || permissions.canEdit;
 		if (!canMarkAnswer) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
@@ -490,37 +526,30 @@ export const getDetailCritical = optionalAuthQuery
 		});
 		if (!access.permissions.canView) return null;
 
-		const [author, board, firstComment] = await Promise.all([
+		const imageUrlCache = createProfileImageUrlCache();
+		const commentCache = createCommentEnrichCache();
+
+		const [author, board, firstCommentDoc] = await Promise.all([
 			getDoc<'profile'>(ctx, feedback.authorProfileId),
 			getDoc<'feedbackBoard'>(ctx, feedback.boardId),
 			getDoc<'feedbackComment'>(ctx, feedback.firstCommentId),
 		]);
-		const commentWindow = await getFeedbackCommentWindow(ctx, {
+
+		// One merged, windowed timeline of comments + events (the pinned initial
+		// comment is excluded; it is returned separately below). Share this request's
+		// caches so the author/first-comment enrichment above and the timeline
+		// head/tail don't re-fetch the same author docs or re-sign the same avatars.
+		const timeline = await getFeedbackTimelineWindow(ctx, {
+			commentCache,
+			currentProfile: access.profile,
 			feedbackId: feedback._id,
+			firstCommentId: feedback.firstCommentId,
+			imageUrlCache,
+			projectId: input.projectId,
 		});
-		// Head and tail overlap for short threads, so enrich each unique comment
-		// once (sharing author/team-member lookups) instead of twice.
-		const cache = createCommentEnrichCache();
-		const enrichedById = new Map<string, Awaited<ReturnType<typeof toPublicFeedbackComment>>>();
-		await Promise.all(
-			dedupeDocsById([...commentWindow.head, ...commentWindow.tail]).map(
-				async (comment: Doc<'feedbackComment'>) => {
-					enrichedById.set(
-						comment._id,
-						await toPublicFeedbackComment(ctx, comment, input.projectId, access.profile, cache)
-					);
-				}
-			)
-		);
-		const head = commentWindow.head
-			.map((comment: Doc<'feedbackComment'>) => enrichedById.get(comment._id))
-			.filter(Boolean);
-		const tail = commentWindow.tail
-			.map((comment: Doc<'feedbackComment'>) => enrichedById.get(comment._id))
-			.filter(Boolean);
 
 		return {
-			author: await toProfileSummary(author),
+			author: await toProfileSummary(author, imageUrlCache),
 			board: board
 				? {
 						id: board._id,
@@ -529,22 +558,18 @@ export const getDetailCritical = optionalAuthQuery
 						slug: board.slug,
 					}
 				: null,
-			commentWindow: {
-				head: dedupeComments(head),
-				middleCursor: commentWindow.middleCursor,
-				tail: dedupeComments(tail),
-				tailCommentIds: commentWindow.tailCommentIds,
-			},
 			feedback: toPublicFeedbackDoc(feedback),
-			firstComment: firstComment
-				? {
-						...toPublicDoc(firstComment),
-						authorProfileId: firstComment.authorProfileId,
-						content: firstComment.content,
-						initial: firstComment.initial,
-						updatedTime: firstComment.updatedTime,
-					}
+			firstComment: firstCommentDoc
+				? await toPublicFeedbackComment(
+						ctx,
+						firstCommentDoc,
+						input.projectId,
+						access.profile,
+						commentCache,
+						imageUrlCache
+					)
 				: null,
+			timeline,
 		};
 	});
 
@@ -582,27 +607,26 @@ export const getDetailInteractive = optionalAuthQuery
 
 		return {
 			assignedProfile: await toProfileSummary(assignedProfile),
-			canMarkAnswer:
-				feedback.authorProfileId === currentProfile?._id ||
-				access.projectMember?.role === 'org:admin',
+			canMarkAnswer: feedback.authorProfileId === currentProfile?._id || access.permissions.canEdit,
 			currentProfile: await toProfileSummary(currentProfile),
 			hasUpvoted: !!existingUpvote,
 		};
 	});
 
+// One snapshot page of the collapsed middle of the merged timeline (comments +
+// events), between the head (`cursor`) and the tail (`endCursor`).
 export const getMiddleComments = optionalAuthQuery
 	.input(
 		z.object({
 			cursor: z.string(),
+			endCursor: z.string().nullish(),
 			feedbackId: idSchema,
-			limit: z.number().min(1).max(50).optional(),
-			tailCommentIds: idArraySchema.optional(),
 		})
 	)
 	.query(async ({ ctx, input }) => {
 		const feedback = await getDoc<'feedback'>(ctx, asId<'feedback'>(input.feedbackId));
 		if (!feedback) {
-			return { comments: [], nextCursor: null };
+			return { items: [], nextCursor: null };
 		}
 
 		const access = await getProjectViewAccess(ctx, {
@@ -610,35 +634,16 @@ export const getMiddleComments = optionalAuthQuery
 			userId: ctx.userId,
 		});
 		if (!access.permissions.canView) {
-			return { comments: [], nextCursor: null };
+			return { items: [], nextCursor: null };
 		}
 
-		const tailIds = new Set(input.tailCommentIds ?? []);
-		const page = await ctx.db
-			.query('feedbackComment')
-			.withIndex('by_feedbackId', (q: any) =>
-				q.eq('feedbackId', asId<'feedback'>(input.feedbackId))
-			)
-			.order('asc')
-			.paginate({
-				cursor: input.cursor,
-				numItems: input.limit ?? MIDDLE_COMMENT_PAGE_SIZE,
-			});
-		const hitTail = page.page.some((comment: Doc<'feedbackComment'>) => tailIds.has(comment._id));
-		const visibleComments = page.page.filter(
-			(comment: Doc<'feedbackComment'>) => !tailIds.has(comment._id)
-		);
-		const cache = createCommentEnrichCache();
-		const comments = await Promise.all(
-			visibleComments.map((comment: Doc<'feedbackComment'>) =>
-				toPublicFeedbackComment(ctx, comment, feedback.projectId, access.profile, cache)
-			)
-		);
-
-		return {
-			comments,
-			nextCursor: page.isDone || hitTail ? null : page.continueCursor,
-		};
+		return await getFeedbackTimelineMiddlePage(ctx, {
+			cursor: input.cursor,
+			currentProfile: access.profile,
+			endCursor: input.endCursor ?? null,
+			feedbackId: feedback._id,
+			projectId: feedback.projectId,
+		});
 	});
 
 export const listProjectFeedback = optionalAuthQuery

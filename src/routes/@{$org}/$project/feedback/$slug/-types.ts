@@ -11,7 +11,7 @@ export type FeedbackCommentData = {
 	canEdit?: boolean;
 	content: string;
 	createdAt: number | string | Date;
-	emoteCounts?: Record<string, { authorProfileIds: string[]; count: number }>;
+	emoteCounts?: Record<string, { authorProfileIds: Array<string>; count: number }>;
 	id: string;
 	initial?: boolean;
 	isTeamMember?: boolean;
@@ -26,6 +26,7 @@ export type FeedbackEventData = {
 		| 'answer_unmarked'
 		| 'assigned'
 		| 'board_changed'
+		| 'priority_changed'
 		| 'status_changed'
 		| 'title_changed'
 		| 'unassigned'
@@ -37,6 +38,10 @@ export type FeedbackEventData = {
 	} | null;
 	targetProfile?: ProfileSummary | null;
 };
+
+export type TimelineItem =
+	| { type: 'comment'; id: string; createdAt: number; cursor: string; data: FeedbackCommentData }
+	| { type: 'event'; id: string; createdAt: number; cursor: string; data: FeedbackEventData };
 
 export type GitHubConnectionData = {
 	githubNumber: number;

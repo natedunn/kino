@@ -110,7 +110,7 @@ describe('cloneHeadersPreservingSetCookie', () => {
 		const source = new Headers({
 			location: 'https://scrupulous-lemming-700.convex.site/api/auth/oauth-proxy-callback',
 			vary: 'Origin',
-		}) as Headers & { getSetCookie: () => string[] };
+		}) as Headers & { getSetCookie: () => Array<string> };
 
 		source.getSetCookie = () => [
 			'__Secure-better-auth.state=; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Lax',
@@ -118,7 +118,7 @@ describe('cloneHeadersPreservingSetCookie', () => {
 		];
 
 		const cloned = cloneHeadersPreservingSetCookie(source) as Headers & {
-			getSetCookie?: () => string[];
+			getSetCookie?: () => Array<string>;
 		};
 
 		expect(cloned.get('location')).toBe(
@@ -153,7 +153,7 @@ describe('cloneHeadersPreservingSetCookie', () => {
 	});
 
 	it('splits collapsed getSetCookie values before forwarding them', () => {
-		const source = new Headers() as Headers & { getSetCookie: () => string[] };
+		const source = new Headers() as Headers & { getSetCookie: () => Array<string> };
 		source.getSetCookie = () => [
 			'__Secure-better-auth.state=; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Lax, __Secure-better-auth.session_token=abc; Max-Age=2592000; Path=/; HttpOnly; Secure; SameSite=Lax',
 		];
@@ -164,7 +164,7 @@ describe('cloneHeadersPreservingSetCookie', () => {
 		]);
 
 		const cloned = cloneHeadersPreservingSetCookie(source) as Headers & {
-			getSetCookie?: () => string[];
+			getSetCookie?: () => Array<string>;
 		};
 
 		if (typeof cloned.getSetCookie === 'function') {

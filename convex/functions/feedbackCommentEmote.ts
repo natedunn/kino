@@ -4,7 +4,13 @@ import { z } from 'zod';
 
 import { authMutation } from '../lib/crpc';
 import { emoteContentSchema } from '../lib/emote';
-import { asId, getCurrentProfileOrThrow, getDoc, verifyProjectAccess } from '../lib/kino';
+import {
+	asId,
+	assertProjectWritable,
+	getCurrentProfileOrThrow,
+	getDoc,
+	verifyProjectAccess,
+} from '../lib/kino';
 import { idSchema } from '../lib/validation';
 import { feedbackCommentEmoteTable } from './schema';
 
@@ -32,6 +38,7 @@ export const toggle = authMutation
 				message: 'You do not have access to this feedback',
 			});
 		}
+		assertProjectWritable(access);
 		const comment = await getDoc(ctx, asId<'feedbackComment'>(input.feedbackCommentId));
 		if (!comment || comment.feedbackId !== feedback._id) {
 			throw new CRPCError({
@@ -42,14 +49,11 @@ export const toggle = authMutation
 
 		const existingEmote = await ctx.db
 			.query('feedbackCommentEmote')
-			.withIndex('by_feedbackCommentId', (q: any) =>
-				q.eq('feedbackCommentId', input.feedbackCommentId)
-			)
-			.filter((q: any) =>
-				q.and(
-					q.eq(q.field('authorProfileId'), profile._id),
-					q.eq(q.field('content'), input.content)
-				)
+			.withIndex('by_feedbackCommentId_authorProfileId_content', (q: any) =>
+				q
+					.eq('feedbackCommentId', input.feedbackCommentId)
+					.eq('authorProfileId', profile._id)
+					.eq('content', input.content)
 			)
 			.first();
 
@@ -61,7 +65,7 @@ export const toggle = authMutation
 		}
 
 		await ctx.orm.insert(feedbackCommentEmoteTable).values({
-			authorProfileId: profile._id as any,
+			authorProfileId: profile._id,
 			content: input.content,
 			feedbackCommentId: input.feedbackCommentId as any,
 			feedbackId: input.feedbackId as any,

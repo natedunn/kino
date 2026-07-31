@@ -88,12 +88,12 @@ type SidebarNavSelectItem = {
 };
 
 type SidebarNavSelectProps = {
-	items: SidebarNavSelectItem[];
+	items: Array<SidebarNavSelectItem>;
 	className?: string;
 };
 
 export function SidebarNavSelect({ items, className }: SidebarNavSelectProps) {
-	const activeItem = items.find((item) => item.active) ?? items[0];
+	const activeItem = items.find((item) => item.active) ?? items.at(0);
 
 	if (!activeItem) return null;
 

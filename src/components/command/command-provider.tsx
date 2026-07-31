@@ -15,10 +15,9 @@ import { toggleThemePreference } from '@/lib/theme';
 
 import { CommandContext } from './command-context';
 
-const CommandPalette = lazy(async () => {
-	const { CommandPalette } = await import('./command-palette');
-	return { default: CommandPalette };
-});
+const CommandPalette = lazy(() =>
+	import('./command-palette').then((m) => ({ default: m.CommandPalette }))
+);
 
 export function CommandProvider({ children }: { children: ReactNode }) {
 	const [open, setOpen] = useState(false);

@@ -27,7 +27,7 @@ export function ProfileLink({
 	className,
 }: ProfileLinkProps) {
 	const displayText = display === 'name' ? (profile.name ?? profile.username) : profile.username;
-	const fallbackInitial = profile.name?.charAt(0) ?? profile.username.charAt(0) ?? '?';
+	const fallbackInitial = profile.name?.charAt(0) ?? profile.username.charAt(0);
 
 	return (
 		<Link

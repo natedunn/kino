@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import Box from './box';
 import Bug from './bug';
 import ChartUp from './chart-up';
+import UpChevron from './chevron-up';
 import CircleCheck from './circle-check';
 import CircleDot from './circle-dot';
 import CirclePause from './circle-pause';
@@ -13,21 +14,91 @@ import CircleSlash from './circle-slash';
 import Edit from './edit';
 import Github from './github';
 import GridDots from './grid-dots';
+import Improvements from './improvements';
 import Lightbulb from './lightbulb';
+import UpArrowCircle from './up-arrow-circle';
 
 export const iconRegistry = {
 	lightbulb: Lightbulb,
 	bug: Bug,
+	improvements: Improvements,
 	gridDots: GridDots,
 	box: Box,
 	chartUp: ChartUp,
 	github: Github,
 	edit: Edit,
+	upArrowCircle: UpArrowCircle,
+	upChevron: UpChevron,
 } as const;
 
 export type IconValue = (typeof iconRegistry)[keyof typeof iconRegistry];
 
 export type IconName = keyof typeof iconRegistry;
+
+export type IconTone = 'duo' | 'outline';
+
+export type IconRegistryOption = {
+	icon: IconValue;
+	keywords?: Array<string>;
+	label: string;
+	tone: IconTone;
+	value: IconName;
+};
+
+export const iconRegistryOptions: Array<IconRegistryOption> = [
+	{
+		icon: Lightbulb,
+		keywords: ['idea', 'feature request'],
+		label: 'Feature Requests',
+		tone: 'duo',
+		value: 'lightbulb',
+	},
+	{ icon: Bug, keywords: ['issue', 'defect'], label: 'Bugs', tone: 'duo', value: 'bug' },
+	{
+		icon: Improvements,
+		keywords: ['iteration', 'enhancement', 'wrench'],
+		label: 'Improvements',
+		tone: 'duo',
+		value: 'improvements',
+	},
+	{ icon: Box, keywords: ['default', 'package'], label: 'Box', tone: 'duo', value: 'box' },
+	{
+		icon: ChartUp,
+		keywords: ['trend', 'metrics', 'growth'],
+		label: 'Chart Up',
+		tone: 'duo',
+		value: 'chartUp',
+	},
+	{
+		icon: GridDots,
+		keywords: ['grid', 'apps'],
+		label: 'Grid Dots',
+		tone: 'duo',
+		value: 'gridDots',
+	},
+	{ icon: Edit, keywords: ['write', 'pencil'], label: 'Edit', tone: 'duo', value: 'edit' },
+	{
+		icon: Github,
+		keywords: ['repository', 'code'],
+		label: 'GitHub',
+		tone: 'outline',
+		value: 'github',
+	},
+	{
+		icon: UpArrowCircle,
+		keywords: ['scroll to top', 'back to top', 'arrow up'],
+		label: 'Up Arrow Circle',
+		tone: 'duo',
+		value: 'upArrowCircle',
+	},
+	{
+		icon: UpChevron,
+		keywords: ['up', 'expand', 'top', 'chevron'],
+		label: 'Up Chevron',
+		tone: 'outline',
+		value: 'upChevron',
+	},
+];
 
 type IconProps = {
 	name?: IconName;
@@ -45,10 +116,11 @@ export function Icon({
 		console.warn('No icon set');
 		return null;
 	}
-	const I = iconRegistry[!!name ? name : !!fallback ? fallback : 'box'];
-	if (!I) {
-		return null;
-	}
+	// Callers cast dynamic strings (e.g. DB-stored board icons) to `IconName`, so
+	// the lookup can miss the registry at runtime; widen the type to reflect that
+	// and guard against a bad key.
+	const I = (name ? iconRegistry[name] : undefined) ?? iconRegistry[fallback ?? 'box'];
+	if (!I) return null;
 	return <I {...rest} />;
 }
 
@@ -95,4 +167,6 @@ export const StatusIcon = ({
 
 export { default as GithubIcon } from './github';
 export { default as EditIcon } from './edit';
+export { default as UpArrowCircleIcon } from './up-arrow-circle';
+export { default as UpChevronIcon } from './chevron-up';
 export { default as SearchSparkleIcon } from './search-sparkle';

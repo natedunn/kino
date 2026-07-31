@@ -36,6 +36,11 @@ export function DefaultCatchBoundary({ error }: ErrorComponentProps) {
 	}, [error, isQueryCancellation, isRoot]);
 
 	if (isQueryCancellation) {
+		// This renders inside the failing route's own error boundary (the router's
+		// defaultErrorComponent), so only that route's content region shows the
+		// pending treatment while `router.invalidate()` recovers — the surrounding
+		// layout and nav stay mounted. Recovery must stay on `router.invalidate()`;
+		// never `queryClient.invalidateQueries` on subscribed cRPC paths.
 		return <RoutePending variant='page' />;
 	}
 

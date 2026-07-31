@@ -3,8 +3,14 @@ import { CRPCError } from 'kitcn/server';
 import { z } from 'zod';
 
 import { authMutation, authQuery } from '../lib/crpc';
-import { asId, getDoc, isProjectEditorRole, verifyProjectAccess } from '../lib/kino';
-import { resolveProfileImageUrl } from '../lib/storage';
+import {
+	asId,
+	assertProjectWritable,
+	getDoc,
+	isProjectEditorRole,
+	verifyProjectAccess,
+} from '../lib/kino';
+import { createProfileImageUrlCache, resolveProfileImageUrl } from '../lib/storage';
 import { emailSchema, idSchema } from '../lib/validation';
 import { projectMemberTable } from './schema';
 
@@ -28,13 +34,14 @@ export const listAssignableMembers = authQuery
 		});
 
 		const membersWithProfiles = await Promise.all(
-			projectMembers.map(async (member: any) => ({
+			projectMembers.map((member: any) => ({
 				profile: member.profile ?? null,
 				profileId: member.profileId,
 				role: member.role,
 			}))
 		);
 
+		const imageUrlCache = createProfileImageUrlCache();
 		const rows = await Promise.all(
 			membersWithProfiles
 				.filter((member) => isProjectEditorRole(member.role))
@@ -42,7 +49,7 @@ export const listAssignableMembers = authQuery
 					profile: member.profile
 						? {
 								id: member.profile._id,
-								imageUrl: await resolveProfileImageUrl(member.profile),
+								imageUrl: await resolveProfileImageUrl(member.profile, imageUrlCache),
 								name: member.profile.name ?? null,
 								username: member.profile.username,
 							}
@@ -80,6 +87,7 @@ export const listProjectMembers = authQuery
 			limit: 200,
 		});
 
+		const imageUrlCache = createProfileImageUrlCache();
 		const members = (
 			await Promise.all(
 				rows
@@ -88,7 +96,7 @@ export const listProjectMembers = authQuery
 						id: member.id,
 						profile: {
 							id: member.profile._id,
-							imageUrl: await resolveProfileImageUrl(member.profile),
+							imageUrl: await resolveProfileImageUrl(member.profile, imageUrlCache),
 							name: member.profile.name ?? null,
 							username: member.profile.username,
 						},
@@ -114,6 +122,7 @@ export const inviteProjectMember = authMutation
 		if (!access.project) {
 			throw new CRPCError({ code: 'NOT_FOUND', message: 'Project not found' });
 		}
+		assertProjectWritable(access);
 		if (!access.permissions.canEdit) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
@@ -157,8 +166,8 @@ export const inviteProjectMember = authMutation
 		}
 
 		await ctx.orm.insert(projectMemberTable).values({
-			profileId: profileId as any,
-			projectId: access.project.id as any,
+			profileId: profileId,
+			projectId: access.project.id,
 			projectSlug: access.project.slug,
 			projectVisibility: access.project.visibility,
 			role: 'member',
@@ -190,6 +199,7 @@ export const removeProjectMember = authMutation
 			id: membership.projectId,
 			userId: ctx.userId,
 		});
+		assertProjectWritable(access);
 		if (!access.permissions.canEdit) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',

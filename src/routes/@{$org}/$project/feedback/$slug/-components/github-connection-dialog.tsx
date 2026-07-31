@@ -5,12 +5,20 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { Check, Link as LinkIcon, Plus, Search } from 'lucide-react';
 
+import { Field } from '@/components/field';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import {
+	ResponsiveDialog,
+	ResponsiveDialogContent,
+	ResponsiveDialogFooter,
+	ResponsiveDialogHeader,
+} from '@/components/ui/responsive-dialog';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { GithubIcon } from '@/icons';
 import { useCRPC } from '@/lib/convex/crpc';
+import { extractErrorMessage } from '@/lib/errors';
 import { cn } from '@/lib/utils';
 import { FORM_LIMITS } from '@/lib/validation';
 
@@ -38,51 +46,54 @@ export function GithubIssueStateBadge({ state }: { state: string }) {
 
 export function GitHubConnectionDialog({
 	feedbackId,
-	feedbackTitle,
 	onOpenChange,
 	open,
 	orgSlug,
 	projectSlug,
 }: {
 	feedbackId: string;
-	feedbackTitle: string;
 	onOpenChange: (open: boolean) => void;
 	open: boolean;
 	orgSlug: string;
 	projectSlug: string;
 }) {
 	return (
-		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent className='flex max-h-[92vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-xl'>
+		<ResponsiveDialog open={open} onOpenChange={onOpenChange}>
+			<ResponsiveDialogContent
+				className='flex flex-col gap-0 overflow-hidden p-0'
+				dialogClassName='max-h-[92vh] sm:max-w-xl'
+				drawerClassName='max-h-[calc(100dvh-4rem)]'
+				showCloseButton={false}
+			>
 				{/* The body owns all dialog state. It only mounts while the dialog is
             open, so closing it resets everything — no cleanup effect needed. */}
 				<GitHubConnectionDialogBody
 					feedbackId={feedbackId}
-					feedbackTitle={feedbackTitle}
 					onClose={() => onOpenChange(false)}
 					orgSlug={orgSlug}
 					projectSlug={projectSlug}
 				/>
-			</DialogContent>
-		</Dialog>
+			</ResponsiveDialogContent>
+		</ResponsiveDialog>
 	);
 }
 
 function GitHubConnectionDialogBody({
 	feedbackId,
-	feedbackTitle,
 	onClose,
 	orgSlug,
 	projectSlug,
 }: {
 	feedbackId: string;
-	feedbackTitle: string;
 	onClose: () => void;
 	orgSlug: string;
 	projectSlug: string;
 }) {
 	const crpc = useCRPC();
 	const [mode, setMode] = useState<'existing' | 'create'>('existing');
+	// Slide the mode panel in from the side its tab sits on (existing = left,
+	// create = right), matching the target-timeframe dialog.
+	const [slideFrom, setSlideFrom] = useState<'left' | 'right'>('right');
 	const [query, setQuery] = useState('');
 	// The debounced value actually drives the search query; `query` only feeds the
 	// input so typing stays responsive without firing a request per keystroke.
@@ -133,6 +144,12 @@ function GitHubConnectionDialogBody({
 		})
 	);
 
+	function handleModeChange(nextMode: 'create' | 'existing') {
+		if (nextMode === mode) return;
+		setSlideFrom(nextMode === 'create' ? 'right' : 'left');
+		setMode(nextMode);
+	}
+
 	function handleQueryChange(value: string) {
 		setQuery(value);
 		if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -142,14 +159,16 @@ function GitHubConnectionDialogBody({
 		}, 300);
 	}
 
-	const searchResults = (searchQuery.data ?? []) as GitHubTargetData[];
+	const searchResults = (searchQuery.data ?? []) as Array<GitHubTargetData>;
 	const searching = canSearch && searchQuery.isFetching;
+	const requestError =
+		availabilityQuery.error ??
+		connectExistingMutation.error ??
+		createMutation.error ??
+		searchQuery.error;
 	const error =
 		localError ||
-		(availabilityQuery.error?.message ??
-			connectExistingMutation.error?.message ??
-			createMutation.error?.message ??
-			searchQuery.error?.message);
+		(requestError ? extractErrorMessage(requestError, 'Unable to connect GitHub') : '');
 	const feedbackUrl = typeof window === 'undefined' ? '' : window.location.href.split('#')[0];
 	const canCreate =
 		title.trim().length > 0 &&
@@ -202,54 +221,37 @@ function GitHubConnectionDialogBody({
 
 	return (
 		<>
-			{/* Header */}
-			<div className='flex items-start justify-between px-5 pt-5 pb-4'>
-				<div className='flex items-start gap-3'>
-					<div className='mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg border bg-muted/50'>
-						<GithubIcon className='size-4 text-muted-foreground' />
-					</div>
-					<div>
-						<h2 className='text-sm leading-tight font-semibold'>Connect GitHub</h2>
-						<p className='mt-0.5 line-clamp-1 max-w-xs text-xs text-muted-foreground'>
-							{feedbackTitle}
-						</p>
-					</div>
-				</div>
+			<ResponsiveDialogHeader icon={<GithubIcon />} title='Connect GitHub' />
+
+			{/* Mode nav — official Tabs, styled to match the target-timeframe dialog. */}
+			<div className='border-b px-5 py-3'>
+				<Tabs
+					onValueChange={(value) => handleModeChange(value as 'create' | 'existing')}
+					value={mode}
+				>
+					<TabsList
+						className='grid h-auto w-full grid-cols-2 gap-1 rounded-lg border bg-muted p-1'
+						indicatorClassName='h-[calc(var(--active-tab-height)-0.25rem)] bg-foreground shadow-xs ring-0'
+					>
+						<TabsTrigger
+							className='h-8 rounded-md text-xs data-active:text-background'
+							value='existing'
+						>
+							Link existing
+						</TabsTrigger>
+						<TabsTrigger
+							className='h-8 rounded-md text-xs data-active:text-background'
+							value='create'
+						>
+							Create new
+						</TabsTrigger>
+					</TabsList>
+				</Tabs>
 			</div>
 
-			{/* Controls */}
-			<div className='flex items-center gap-2 border-y bg-muted/30 px-5 py-2'>
-				{/* Mode segmented control */}
-				<div className='flex items-center rounded-md bg-background p-0.5 shadow-sm ring-1 ring-border/60'>
-					<button
-						className={cn(
-							'rounded px-3 py-1 text-xs font-medium transition-all',
-							mode === 'existing'
-								? 'bg-primary text-primary-foreground shadow-sm'
-								: 'text-muted-foreground hover:text-foreground'
-						)}
-						onClick={() => setMode('existing')}
-						type='button'
-					>
-						Link existing
-					</button>
-					<button
-						className={cn(
-							'rounded px-3 py-1 text-xs font-medium transition-all',
-							mode === 'create'
-								? 'bg-primary text-primary-foreground shadow-sm'
-								: 'text-muted-foreground hover:text-foreground'
-						)}
-						onClick={() => setMode('create')}
-						type='button'
-					>
-						Create new
-					</button>
-				</div>
-			</div>
-
-			{/* Body */}
-			<div className='min-h-0 flex-1 overflow-y-auto px-5 py-4'>
+			{/* Body — a min-height floor keeps the dialog from resizing (and the tabs
+          from jumping) as the two modes' content heights differ. */}
+			<div className='min-h-[18rem] flex-1 overflow-x-hidden overflow-y-auto px-5 py-3 md:py-4'>
 				{availabilityQuery.isLoading ? (
 					<div className='space-y-2'>
 						<div className='h-9 animate-pulse rounded-lg bg-muted/50' />
@@ -278,7 +280,13 @@ function GitHubConnectionDialogBody({
 						title='Reconnect with write access'
 					/>
 				) : mode === 'existing' ? (
-					<div className='space-y-3'>
+					<div
+						className={cn(
+							'animate-in space-y-3 duration-200 fade-in-0',
+							slideFrom === 'right' ? 'slide-in-from-right-6' : 'slide-in-from-left-6'
+						)}
+						key='existing'
+					>
 						<div className='relative'>
 							<Search className='absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-muted-foreground' />
 							<Input
@@ -338,35 +346,42 @@ function GitHubConnectionDialogBody({
 						</div>
 					</div>
 				) : (
-					<div className='space-y-3'>
-						<div className='space-y-1.5'>
-							<label className='text-xs font-medium text-muted-foreground'>Title</label>
+					<div
+						className={cn(
+							'animate-in space-y-3 duration-200 fade-in-0',
+							slideFrom === 'right' ? 'slide-in-from-right-6' : 'slide-in-from-left-6'
+						)}
+						key='create'
+					>
+						<Field description='A short summary for the new GitHub issue.' label='Title'>
 							<Input
-								className='h-9 text-sm'
 								maxLength={FORM_LIMITS.githubTitle}
 								onChange={(event) => setTitle(event.target.value)}
 								placeholder='Issue title'
 								value={title}
 							/>
-						</div>
-						<div className='space-y-1.5'>
-							<label className='text-xs font-medium text-muted-foreground'>
-								Body <span className='font-normal text-muted-foreground/60'>(optional)</span>
-							</label>
+						</Field>
+						<Field
+							description='Add context or details for whoever picks this up.'
+							label={
+								<>
+									Body <span className='font-normal text-muted-foreground'>(optional)</span>
+								</>
+							}
+						>
 							<Textarea
-								className='min-h-28 resize-none text-sm'
+								className='min-h-28 resize-none'
 								maxLength={FORM_LIMITS.githubBody}
 								onChange={(event) => setBody(event.target.value)}
 								placeholder='Add a description…'
 								value={body}
 							/>
-						</div>
+						</Field>
 					</div>
 				)}
 			</div>
 
-			{/* Footer */}
-			<div className='flex items-center justify-between border-t bg-muted/20 px-5 py-3'>
+			<ResponsiveDialogFooter className='justify-between'>
 				{error ? <p className='text-xs text-destructive'>{error}</p> : <span />}
 				<div className='flex items-center gap-2'>
 					<Button onClick={onClose} size='sm' type='button' variant='outline'>
@@ -384,7 +399,7 @@ function GitHubConnectionDialogBody({
 						</Button>
 					)}
 				</div>
-			</div>
+			</ResponsiveDialogFooter>
 		</>
 	);
 }

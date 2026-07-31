@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 export const FORM_LIMITS = {
 	boardDescription: 250,
+	boardIcon: 50,
 	boardName: 50,
 	comment: 1200,
 	feedbackTitle: 100,
@@ -298,6 +299,7 @@ export const feedbackFormSchema = z.object({
 
 export const boardFormSchema = z.object({
 	description: z.string().trim().max(FORM_LIMITS.boardDescription).optional(),
+	icon: z.string().trim().max(FORM_LIMITS.boardIcon).optional(),
 	name: z.string().trim().min(1, 'Board name is required').max(FORM_LIMITS.boardName),
 	slug: slug(FORM_LIMITS.projectSlug),
 });

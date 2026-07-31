@@ -1,17 +1,13 @@
+import type { ActivityKind } from '@/components/feed/activity-feed';
 import type { Icon as IconType } from '@/icons/types';
 
 // Types for the static Project Overview draft. These describe the *mock* shapes
 // rendered on the overview dashboard. The project header binds to real data
 // (see index.tsx); everything below is placeholder until wired to the backend.
 
-export type UpdateCategory = 'changelog' | 'article' | 'announcement';
+export type { ActivityKind };
 
-export type ActivityKind =
-	| 'feedback_created'
-	| 'feedback_status_changed'
-	| 'update_published'
-	| 'member_joined'
-	| 'github_linked';
+export type UpdateCategory = 'changelog' | 'article' | 'announcement';
 
 export interface StatCard {
 	key: string;

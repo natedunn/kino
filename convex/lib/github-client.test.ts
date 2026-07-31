@@ -1,7 +1,8 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
 	createGitHubAppState,
+	findAccessibleInstallationRepositoryIds,
 	getGitHubCallbackTargetUrl,
 	githubAppInstallationUrl,
 	githubAppUserAuthorizationUrl,
@@ -40,6 +41,7 @@ function setGitHubRelayEnv() {
 
 afterEach(() => {
 	resetEnv({});
+	vi.unstubAllGlobals();
 });
 
 describe('github helpers', () => {
@@ -120,6 +122,47 @@ describe('github helpers', () => {
 			},
 			private: true,
 		});
+	});
+
+	it('keeps only repositories the replacement installation can access', async () => {
+		const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+			const url = String(input);
+			if (url.endsWith('/repos/acme/allowed')) {
+				return new Response(
+					JSON.stringify({
+						homepage: null,
+						html_url: 'https://github.com/acme/allowed',
+						id: 1,
+					}),
+					{ status: 200 }
+				);
+			}
+			if (url.endsWith('/repos/acme/reused')) {
+				return new Response(
+					JSON.stringify({
+						homepage: null,
+						html_url: 'https://github.com/acme/reused',
+						id: 999,
+					}),
+					{ status: 200 }
+				);
+			}
+			return new Response('Not Found', { status: 404 });
+		});
+		vi.stubGlobal('fetch', fetchMock);
+
+		await expect(
+			findAccessibleInstallationRepositoryIds({
+				repositories: [
+					{ fullName: 'acme/allowed', id: 1 },
+					{ fullName: 'acme/removed', id: 2 },
+					{ fullName: 'acme/allowed', id: 1 },
+					{ fullName: 'acme/reused', id: 3 },
+				],
+				token: 'installation-token',
+			})
+		).resolves.toEqual([1]);
+		expect(fetchMock).toHaveBeenCalledTimes(3);
 	});
 
 	it('hashes state values with sha256 hex', async () => {

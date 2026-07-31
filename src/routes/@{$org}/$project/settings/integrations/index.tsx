@@ -17,7 +17,10 @@ import {
 } from '@/components/ui/select';
 import { useCRPC } from '@/lib/convex/crpc';
 import { crpcServer } from '@/lib/convex/crpc-server';
+import { extractErrorMessage } from '@/lib/errors';
 import { titleMeta } from '@/lib/seo';
+
+import { ArchivedSettingsNotice } from '../-components/archived-notice';
 
 type ConnectionMode = 'read' | 'read_write';
 type Source = 'issues' | 'discussions';
@@ -68,6 +71,11 @@ function GitHubIntegrationRoute() {
 			projectSlug: params.project,
 		})
 	);
+	// Cached by the settings route loader — cheap read just to flag the frozen state.
+	const detailsQuery = useQuery(
+		crpc.project.getDetails.queryOptions({ orgSlug: params.org, slug: params.project })
+	);
+	const isArchived = detailsQuery.data?.project?.visibility === 'archived';
 	const repositoriesQuery = useMutation(
 		crpc.githubExternal.listInstallationRepositoriesForProject.mutationOptions()
 	);
@@ -87,8 +95,8 @@ function GitHubIntegrationRoute() {
 			},
 		})
 	);
-
 	const installations = integrationQuery.data?.installations ?? [];
+	const staleInstallations = integrationQuery.data?.staleInstallations ?? [];
 	const connections = integrationQuery.data?.connections ?? [];
 	const activeConnection = connections[0] ?? null;
 	const connectedInstallation = activeConnection
@@ -125,6 +133,8 @@ function GitHubIntegrationRoute() {
 	);
 	const selectedRepositoryValue = selectedRepository ? String(selectedRepository.id) : '';
 	const hasInstallations = installations.length > 0;
+	const hasKnownInstallations = hasInstallations || staleInstallations.length > 0;
+	const needsGitHubRefresh = staleInstallations.length > 0;
 
 	useEffect(() => {
 		if (!activeInstallationId) {
@@ -140,6 +150,9 @@ function GitHubIntegrationRoute() {
 			installationId: activeInstallationId,
 			orgSlug: params.org,
 		});
+		// `repositoriesQuery` is a TanStack mutation whose identity changes every
+		// render; sync only when the selected installation (or org) changes.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [activeInstallationId, params.org]);
 
 	function toggleSource(source: Source) {
@@ -181,7 +194,7 @@ function GitHubIntegrationRoute() {
 		return (
 			<EmptyState
 				title='GitHub integration unavailable'
-				description={integrationQuery.error.message}
+				description={extractErrorMessage(integrationQuery.error)}
 			/>
 		);
 	}
@@ -196,6 +209,8 @@ function GitHubIntegrationRoute() {
 				</p>
 			</header>
 
+			{isArchived ? <ArchivedSettingsNotice /> : null}
+
 			{search.github === 'connected' ? (
 				<InlineAlert variant='success'>
 					GitHub access connected. Select the repository this project should sync with.
@@ -204,12 +219,17 @@ function GitHubIntegrationRoute() {
 			{search.github === 'error' ? (
 				<InlineAlert variant='danger'>GitHub installation could not be completed.</InlineAlert>
 			) : null}
-			{!hasInstallations ? (
+			{needsGitHubRefresh ? (
+				<InlineAlert variant='warning'>
+					GitHub access needs to be refreshed. Open organization settings and select Refresh
+					accounts, then try again.
+				</InlineAlert>
+			) : null}
+			{!hasKnownInstallations && !needsGitHubRefresh ? (
 				<InlineAlert variant='warning'>
 					Connect GitHub access for this organization before selecting a project repository.
 				</InlineAlert>
 			) : null}
-
 			<div className='space-y-6'>
 				<section className='overflow-hidden rounded-xl border bg-card'>
 					<div className='flex items-start gap-4 border-b p-6'>
@@ -384,10 +404,10 @@ function GitHubIntegrationRoute() {
 				</section>
 
 				{repositoriesQuery.error ? (
-					<InlineAlert variant='danger'>{repositoriesQuery.error.message}</InlineAlert>
+					<InlineAlert variant='danger'>{extractErrorMessage(repositoriesQuery.error)}</InlineAlert>
 				) : null}
 				{connectRepository.error ? (
-					<InlineAlert variant='danger'>{connectRepository.error.message}</InlineAlert>
+					<InlineAlert variant='danger'>{extractErrorMessage(connectRepository.error)}</InlineAlert>
 				) : null}
 				{connectRepository.isSuccess ? (
 					<InlineAlert variant='success'>Repository settings saved.</InlineAlert>
@@ -431,7 +451,9 @@ function GitHubIntegrationRoute() {
 						</div>
 						{disconnectRepository.error ? (
 							<div className='border-t px-6 py-4'>
-								<InlineAlert variant='danger'>{disconnectRepository.error.message}</InlineAlert>
+								<InlineAlert variant='danger'>
+									{extractErrorMessage(disconnectRepository.error)}
+								</InlineAlert>
 							</div>
 						) : null}
 					</section>

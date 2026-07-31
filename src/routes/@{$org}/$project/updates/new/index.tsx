@@ -192,6 +192,7 @@ function NewUpdateRoute() {
 		<>
 			<EditingBar />
 			<form
+				className='flex flex-1 flex-col'
 				onSubmit={(event) => {
 					event.preventDefault();
 					event.stopPropagation();
@@ -280,7 +281,7 @@ function NewUpdateRoute() {
 				) : null}
 
 				{/* Two-column layout */}
-				<div className='container flex-1 grid-cols-12 gap-8 md:grid'>
+				<div className='container flex-1 grid-cols-12 gap-8 md:grid md:grid-rows-1'>
 					{/* Sidebar */}
 					<div className='order-first border-l border-border/75 py-6 md:order-last md:col-span-4'>
 						<div className='sticky top-16 flex flex-col gap-6 pl-8'>

@@ -334,6 +334,11 @@ describe('retained business-logic triggers', () => {
 				'Feature Requests',
 				'Improvements',
 			]);
+			expect(Object.fromEntries(boards.map((board) => [board.name, board.icon]))).toMatchObject({
+				Bugs: 'bug',
+				'Feature Requests': 'lightbulb',
+				Improvements: 'improvements',
+			});
 		});
 	});
 });

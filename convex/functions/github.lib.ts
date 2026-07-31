@@ -1,8 +1,10 @@
+import type { GitHubInstallationDetails, GitHubRepository } from '../lib/github-client';
+
 import { CRPCError } from 'kitcn/server';
 import { z } from 'zod';
 
-import { type GitHubInstallationDetails, type GitHubRepository } from '../lib/github-client';
-import { getCurrentProfileOrThrow, verifyOrgAccess } from '../lib/kino';
+import { createInstallationToken, isGitHubNotFoundError } from '../lib/github-client';
+import { assertProjectWritable, getCurrentProfileOrThrow, verifyOrgAccess } from '../lib/kino';
 import {
 	githubLoginSchema,
 	githubNodeIdSchema,
@@ -15,6 +17,55 @@ import {
 
 export const connectionModeSchema = z.enum(['read', 'read_write']);
 export const sourceSchema = z.enum(['issues', 'discussions']);
+
+export const GITHUB_INSTALLATION_STALE_REASON = 'github_installation_stale' as const;
+
+export function githubInstallationRefreshRequiredError() {
+	return new CRPCError({
+		code: 'CONFLICT',
+		data: { reason: GITHUB_INSTALLATION_STALE_REASON },
+		message:
+			'GitHub access needs to be refreshed. Open organization settings, select Refresh accounts, and try again.',
+	});
+}
+
+type InstallationRecoveryCaller = {
+	markInstallationStale: (input: { installationId: number }) => Promise<unknown>;
+};
+
+export async function createInstallationTokenWithRecovery(args: {
+	caller: InstallationRecoveryCaller;
+	installationId: number;
+	mode: 'read' | 'read_write';
+	repositoryIds?: Array<number>;
+}) {
+	try {
+		return await createInstallationToken({
+			installationId: args.installationId,
+			mode: args.mode,
+			repositoryIds: args.repositoryIds,
+		});
+	} catch (error) {
+		return await recoverFromInstallationTokenError({
+			caller: args.caller,
+			error,
+			installationId: args.installationId,
+		});
+	}
+}
+
+export async function recoverFromInstallationTokenError(args: {
+	caller: InstallationRecoveryCaller;
+	error: unknown;
+	installationId: number;
+}): Promise<never> {
+	if (!isGitHubNotFoundError(args.error)) throw args.error;
+
+	await args.caller.markInstallationStale({
+		installationId: args.installationId,
+	});
+	throw githubInstallationRefreshRequiredError();
+}
 
 export const githubInstallationSchema = z.object({
 	account: z
@@ -68,6 +119,8 @@ export async function verifyOrgAdminForProject(
 	if (!project) {
 		throw new CRPCError({ code: 'NOT_FOUND', message: 'Project not found' });
 	}
+	// GitHub connections mutate the project — frozen while archived.
+	assertProjectWritable({ isArchived: project.visibility === 'archived' });
 
 	const access = await verifyOrgAccess(ctx, {
 		slug: args.orgSlug,

@@ -9,6 +9,7 @@ import { z } from 'zod';
 import { authMutation, authQuery, optionalAuthQuery } from '../lib/crpc';
 import {
 	asId,
+	assertProjectWritable,
 	generateRandomSlug,
 	getCurrentProfile,
 	getCurrentProfileOrThrow,
@@ -28,7 +29,6 @@ import {
 	validateCoverImageMetadata,
 } from '../lib/storage';
 import {
-	cursorSchema,
 	generatedSlugSchema,
 	idArraySchema,
 	idListSchema,
@@ -73,6 +73,7 @@ export const create = authMutation
 			userId: ctx.userId,
 		});
 
+		assertProjectWritable(access);
 		if (!access.permissions.canEdit) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
@@ -83,7 +84,7 @@ export const create = authMutation
 		const [updateRow] = await ctx.orm
 			.insert(updateTable)
 			.values({
-				authorProfileId: profile._id as any,
+				authorProfileId: profile._id,
 				category: input.category ?? 'changelog',
 				content: input.content,
 				coverImageId: input.coverImageId ?? null,
@@ -120,6 +121,7 @@ export const update = authMutation
 			userId: ctx.userId,
 		});
 
+		assertProjectWritable(access);
 		if (!access.permissions.canEdit) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
@@ -163,6 +165,7 @@ export const publish = authMutation
 			userId: ctx.userId,
 		});
 
+		assertProjectWritable(access);
 		if (!access.permissions.canEdit) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
@@ -195,6 +198,7 @@ export const unpublish = authMutation
 			userId: ctx.userId,
 		});
 
+		assertProjectWritable(access);
 		if (!access.permissions.canEdit) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
@@ -226,6 +230,7 @@ export const remove = authMutation
 			userId: ctx.userId,
 		});
 
+		assertProjectWritable(access);
 		if (!access.permissions.canDelete) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
@@ -257,6 +262,7 @@ export const bulkPublish = authMutation
 			userId: ctx.userId,
 		});
 
+		assertProjectWritable(access);
 		if (!access.permissions.canEdit) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
@@ -287,53 +293,6 @@ export const bulkPublish = authMutation
 		return { success: true };
 	});
 
-export const backfillProjectUpdatedTimes = authMutation
-	.input(
-		z.object({
-			cursor: cursorSchema,
-			limit: z.number().int().min(1).max(100).optional(),
-			projectId: idSchema,
-		})
-	)
-	.mutation(async ({ ctx, input }) => {
-		const project = await getDocOrThrow(ctx, asId<'project'>(input.projectId), 'Project not found');
-		const access = await verifyProjectAccess(ctx, {
-			slug: project.slug,
-			userId: ctx.userId,
-		});
-
-		if (!access.permissions.canEdit) {
-			throw new CRPCError({
-				code: 'FORBIDDEN',
-				message: 'You do not have permission to manage updates for this project',
-			});
-		}
-
-		const result = await ctx.db
-			.query('update')
-			.withIndex('by_projectId_slug', (q: any) => q.eq('projectId', project._id))
-			.paginate({
-				cursor: input.cursor ?? null,
-				numItems: input.limit ?? 50,
-			});
-
-		let updatedCount = 0;
-		for (const item of result.page) {
-			if (item.updatedTime !== undefined && item.updatedTime !== null) continue;
-			await ctx.orm
-				.update(updateTable)
-				.set({ updatedTime: item._creationTime })
-				.where(eq(updateTable.id, item._id));
-			updatedCount += 1;
-		}
-
-		return {
-			continueCursor: result.continueCursor,
-			isDone: result.isDone,
-			updatedCount,
-		};
-	});
-
 export const bulkUnpublish = authMutation
 	.input(
 		z.object({
@@ -349,6 +308,7 @@ export const bulkUnpublish = authMutation
 			userId: ctx.userId,
 		});
 
+		assertProjectWritable(access);
 		if (!access.permissions.canEdit) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
@@ -393,6 +353,7 @@ export const bulkRemove = authMutation
 			userId: ctx.userId,
 		});
 
+		assertProjectWritable(access);
 		if (!access.permissions.canDelete) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
@@ -440,6 +401,7 @@ export const generateCoverImageUploadUrl = authMutation
 			userId: ctx.userId,
 		});
 
+		assertProjectWritable(access);
 		if (!access.permissions.canEdit) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
@@ -466,7 +428,7 @@ export const syncMetadata = authMutation
 		}
 
 		const updateId = parts[1] as Id<'update'>;
-		const existingUpdate = await ctx.db.get(updateId);
+		const existingUpdate = await ctx.db.get('update', updateId);
 		if (!existingUpdate) {
 			throw new ConvexError({
 				code: '404',
@@ -474,7 +436,7 @@ export const syncMetadata = authMutation
 			});
 		}
 
-		const project = await ctx.db.get(existingUpdate.projectId);
+		const project = await ctx.db.get('project', existingUpdate.projectId);
 		if (!project) {
 			throw new ConvexError({
 				code: '404',
@@ -486,6 +448,7 @@ export const syncMetadata = authMutation
 			slug: project.slug,
 			userId: ctx.userId,
 		});
+		assertProjectWritable(access);
 		if (!access.permissions.canEdit) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
@@ -528,6 +491,7 @@ export const clearCoverImage = authMutation
 			userId: ctx.userId,
 		});
 
+		assertProjectWritable(access);
 		if (!access.permissions.canEdit) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
@@ -567,22 +531,17 @@ export const onCoverImageMetadataSynced = internalMutation({
 		}
 
 		const updateId = parts[1] as Id<'update'>;
-		const existingUpdate = await ctx.db.get(updateId);
+		const existingUpdate = await ctx.db.get('update', updateId);
 		if (!existingUpdate) return;
 
-		const project = await ctx.db.get(existingUpdate.projectId);
+		const project = await ctx.db.get('project', existingUpdate.projectId);
 		if (!project) return;
 
-		const metadata = await getCoverImageR2Metadata(ctx as any, args.key);
+		const metadata = await getCoverImageR2Metadata(ctx, args.key);
 		if (!metadata) return;
 
 		validateCoverImageMetadata(metadata);
-		await updateOrgStorageUsage(
-			ctx as any,
-			project.orgSlug,
-			metadata.size ?? 0,
-			args.isNew ? 1 : 0
-		);
+		await updateOrgStorageUsage(ctx, project.orgSlug, metadata.size ?? 0, args.isNew ? 1 : 0);
 	},
 });
 
@@ -598,15 +557,15 @@ export const getCoverImageUrl = optionalAuthQuery
 		const parts = input.key.split('.');
 		if (parts[0] !== 'UPDATE_COVER_PHOTO' || !parts[1]) return null;
 
-		const update = await getDoc<'update'>(ctx, asId<'update'>(parts[1]));
-		if (!update) return null;
+		const updateDoc = await getDoc<'update'>(ctx, asId<'update'>(parts[1]));
+		if (!updateDoc) return null;
 
 		const access = await getProjectViewAccess(ctx, {
-			id: update.projectId,
+			id: updateDoc.projectId,
 			userId: ctx.userId,
 		});
 		if (!access.permissions.canView) return null;
-		if (update.status === 'draft' && !access.permissions.canEdit) return null;
+		if (updateDoc.status === 'draft' && !access.permissions.canEdit) return null;
 
 		return await resolveCoverImageUrl(input.key);
 	});
@@ -668,9 +627,9 @@ export const getBySlug = optionalAuthQuery
 			.query('updateEmote')
 			.withIndex('by_updateId', (q: any) => q.eq('updateId', item._id))
 			.collect();
-		const emoteCounts: Record<string, { authorProfileIds: string[]; count: number }> = {};
+		const emoteCounts: Record<string, { authorProfileIds: Array<string>; count: number }> = {};
 		for (const emote of emotes) {
-			if (!emoteCounts[emote.content]) {
+			if (!Object.hasOwn(emoteCounts, emote.content)) {
 				emoteCounts[emote.content] = { authorProfileIds: [], count: 0 };
 			}
 			emoteCounts[emote.content].count++;
@@ -801,10 +760,12 @@ export const getDetailInteractive = optionalAuthQuery
 			currentProfile
 				? ctx.db
 						.query('updateEmote')
-						.withIndex('by_updateId_authorProfileId', (q: any) =>
-							q.eq('updateId', item._id).eq('authorProfileId', currentProfile._id)
+						.withIndex('by_updateId_authorProfileId_content', (q: any) =>
+							q
+								.eq('updateId', item._id)
+								.eq('authorProfileId', currentProfile._id)
+								.eq('content', 'heart')
 						)
-						.filter((q: any) => q.eq(q.field('content'), 'heart'))
 						.first()
 				: Promise.resolve(null),
 			Promise.all(
@@ -964,10 +925,12 @@ export const listByProject = optionalAuthQuery
 						currentProfile
 							? ctx.db
 									.query('updateEmote')
-									.withIndex('by_updateId_authorProfileId', (q: any) =>
-										q.eq('updateId', item._id).eq('authorProfileId', currentProfile._id)
+									.withIndex('by_updateId_authorProfileId_content', (q: any) =>
+										q
+											.eq('updateId', item._id)
+											.eq('authorProfileId', currentProfile._id)
+											.eq('content', 'heart')
 									)
-									.filter((q: any) => q.eq(q.field('content'), 'heart'))
 									.first()
 							: null,
 						ctx.orm.query.updateComment.count({

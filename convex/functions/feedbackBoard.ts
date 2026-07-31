@@ -4,7 +4,7 @@ import { CRPCError } from 'kitcn/server';
 import { z } from 'zod';
 
 import { authMutation, optionalAuthQuery } from '../lib/crpc';
-import { asId, getDoc, toPublicDoc, verifyProjectAccess } from '../lib/kino';
+import { asId, assertProjectWritable, getDoc, toPublicDoc, verifyProjectAccess } from '../lib/kino';
 import {
 	boardDescriptionSchema,
 	boardIconSchema,
@@ -18,6 +18,10 @@ import { internal } from './_generated/api';
 import { BOARD_FEEDBACK_PURGE_BATCH_SIZE } from './feedbackBoard.lib';
 import { internalMutation, withOrm } from './generated/server';
 import { feedbackBoardTable, feedbackTable } from './schema';
+
+// Upper bound on boards read per project. Projects realistically have a handful of
+// boards; this guards the query against ever scanning an unbounded set.
+const MAX_PROJECT_BOARDS = 200;
 
 export const create = authMutation
 	.input(
@@ -34,6 +38,7 @@ export const create = authMutation
 			id: input.projectId,
 			userId: ctx.userId,
 		});
+		assertProjectWritable(access);
 		if (!access.permissions.canEdit) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
@@ -84,6 +89,7 @@ export const update = authMutation
 			slug: input.projectSlug,
 			userId: ctx.userId,
 		});
+		assertProjectWritable(access);
 		if (!access.permissions.canEdit) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
@@ -172,10 +178,12 @@ export const listProjectBoards = optionalAuthQuery
 		});
 		if (!access.permissions.canView || !access.project) return null;
 
+		// Projects have a small, bounded number of boards; cap the read so this can
+		// never turn into a full-table scan as data grows.
 		const boards = await ctx.db
 			.query('feedbackBoard')
 			.withIndex('by_projectId', (q: any) => q.eq('projectId', access.project._id))
-			.collect();
+			.take(MAX_PROJECT_BOARDS);
 		// Hide boards that are mid-deletion (soft-hidden by `_delete` while their
 		// feedback is purged in the background).
 		return boards
@@ -195,6 +203,7 @@ export const _delete = authMutation
 			id: input.projectId,
 			userId: ctx.userId,
 		});
+		assertProjectWritable(access);
 		if (!access.permissions.canDelete) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',

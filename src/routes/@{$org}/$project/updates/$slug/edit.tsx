@@ -189,6 +189,9 @@ function EditUpdateRoute() {
 			tags: (update?.tags ?? []).map(String),
 			title: update?.title ?? '',
 		}),
+		// `tagsKey`/`relatedFeedbackIdsKey` are stringified snapshots of the raw
+		// arrays used in the body; depending on the raw arrays would churn identity.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[
 			relatedFeedbackIdsKey,
 			tagsKey,
@@ -242,7 +245,7 @@ function EditUpdateRoute() {
 		!projectQuery.data?.project ||
 		!projectQuery.data.permissions.canEdit ||
 		!update ||
-		!updateData?.canEdit
+		!updateData.canEdit
 	) {
 		return <InlineAlert variant='warning'>Update editing unavailable.</InlineAlert>;
 	}
@@ -253,6 +256,7 @@ function EditUpdateRoute() {
 
 	return (
 		<form
+			className='flex flex-1 flex-col'
 			onSubmit={(event) => {
 				event.preventDefault();
 				event.stopPropagation();
@@ -356,7 +360,7 @@ function EditUpdateRoute() {
 			) : null}
 
 			{/* Two-column layout */}
-			<div className='container flex flex-1 flex-col gap-8 md:grid md:grid-cols-12'>
+			<div className='container flex flex-1 flex-col gap-8 md:grid md:grid-cols-12 md:grid-rows-1'>
 				{/* Sidebar */}
 				<div className='order-last py-6 md:col-span-4 md:border-l md:border-border/75'>
 					<div className='sticky top-14 flex flex-col gap-6 md:pl-8'>

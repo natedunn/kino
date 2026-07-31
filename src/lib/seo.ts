@@ -24,13 +24,13 @@ export function projectTitle(org: TitlePart, project: TitlePart) {
 	return `${orgTitle}/${projectName}`;
 }
 
-export function appTitle(parts: TitlePart[] = []) {
+export function appTitle(parts: Array<TitlePart> = []) {
 	const titleParts = parts.filter(Boolean);
 
 	return titleParts.join(' • ') || APP_TITLE;
 }
 
-export function titleMeta(parts: TitlePart[] = []) {
+export function titleMeta(parts: Array<TitlePart> = []) {
 	return {
 		title: appTitle(parts),
 	};

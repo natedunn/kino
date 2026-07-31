@@ -1,5 +1,9 @@
 import { getEnv } from '../lib/get-env';
-import { getAppInstallation, verifyGitHubAppState } from '../lib/github-client';
+import {
+	getAppInstallation,
+	isGitHubNotFoundError,
+	verifyGitHubAppState,
+} from '../lib/github-client';
 
 export function projectGitHubSettingsUrl(args: {
 	orgSlug: string;
@@ -55,22 +59,11 @@ export async function siteUrlFromState(state: string | undefined) {
 	}
 }
 
-export function isGitHubNotFoundError(error: unknown) {
-	const message = error instanceof Error ? error.message : '';
-	return (
-		(typeof error === 'object' &&
-			error !== null &&
-			'code' in error &&
-			(error as { code?: string }).code === 'NOT_FOUND') ||
-		message.includes('GitHub request failed (404)')
-	);
-}
-
 export async function findDeletedInstallationIds(args: {
-	knownInstallationIds: number[];
+	knownInstallationIds: Array<number>;
 	userInstallationIds: Set<number>;
 }) {
-	const deletedInstallationIds: number[] = [];
+	const deletedInstallationIds: Array<number> = [];
 	await Promise.all(
 		args.knownInstallationIds.map(async (installationId) => {
 			if (args.userInstallationIds.has(installationId)) return;

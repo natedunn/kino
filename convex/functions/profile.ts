@@ -123,10 +123,10 @@ export const onAvatarMetadataSynced = internalMutation({
 			});
 		}
 
-		const profile = await ctx.db.get(profileId as Id<'profile'>);
+		const profile = await ctx.db.get('profile', profileId as Id<'profile'>);
 		if (!profile) return;
 
-		const metadata = await getUserUploadR2Metadata(ctx as any, args.key);
+		const metadata = await getUserUploadR2Metadata(ctx, args.key);
 		if (!metadata) return;
 
 		validateProfileImageMetadata(metadata);
@@ -170,6 +170,9 @@ export const update = authMutation
 		}
 
 		const nextUser = Object.fromEntries(
+			// Strip explicitly-undefined values before forwarding a partial update; the
+			// input type doesn't model `undefined`, so the rule flags this defensively.
+			// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 			Object.entries(input.user).filter(([, value]) => value !== undefined)
 		);
 		if (Object.keys(nextUser).length > 0) {
@@ -180,13 +183,11 @@ export const update = authMutation
 		}
 
 		const nextProfile = Object.fromEntries(
+			// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 			Object.entries(input.profile).filter(([, value]) => value !== undefined)
 		);
 		if (Object.keys(nextProfile).length > 0) {
-			await ctx.orm
-				.update(profileTable)
-				.set(nextProfile)
-				.where(eq(profileTable.id, profile._id as any));
+			await ctx.orm.update(profileTable).set(nextProfile).where(eq(profileTable.id, profile._id));
 		}
 
 		const updatedProfile = (await getCurrentProfile(ctx, ctx.userId)) ?? {

@@ -1,7 +1,7 @@
 'use client';
 
 import type { AppEnvironment } from '@/lib/app-env';
-import type { PostHogConfig } from 'posthog-js';
+import type { PostHog, PostHogConfig } from 'posthog-js';
 import type { ReactNode } from 'react';
 
 import { useEffect, useRef, useState } from 'react';
@@ -29,7 +29,7 @@ const POSTHOG_TOKEN = fromEnvOrDefault(
 	DEFAULT_POSTHOG_TOKEN
 );
 const POSTHOG_HOST = fromEnvOrDefault(import.meta.env.VITE_POSTHOG_HOST, DEFAULT_POSTHOG_HOST);
-type PostHogClient = typeof import('posthog-js').default;
+type PostHogClient = PostHog;
 
 function canUsePostHog(appEnvironment: AppEnvironment) {
 	return (

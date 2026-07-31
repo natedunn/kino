@@ -11,12 +11,17 @@ import { trackAuthError, trackAuthSuccess } from '@/lib/auth-analytics';
 import { authClient } from '@/lib/convex/auth-client';
 import { titleMeta } from '@/lib/seo';
 
+import { getVerifyEmailCallbackUrl } from './auth';
+
 export const Route = createFileRoute('/auth/sign-up')({
 	head: () => ({ meta: [titleMeta(['Create account'])] }),
+	validateSearch: (search: Record<string, unknown>): { redirect?: string } =>
+		typeof search.redirect === 'string' ? { redirect: search.redirect } : {},
 	component: SignUpPage,
 });
 
 function SignUpPage() {
+	const { redirect } = Route.useSearch();
 	const [name, setName] = useState('');
 	const [email, setEmail] = useState('');
 	const [confirmEmail, setConfirmEmail] = useState('');
@@ -48,7 +53,7 @@ function SignUpPage() {
 				name,
 				email,
 				password,
-				callbackURL: new URL('/auth/verify-email', window.location.origin).toString(),
+				callbackURL: getVerifyEmailCallbackUrl(window.location.origin, redirect),
 			});
 			if (res.error) {
 				trackAuthError('sign_up', res.error);
@@ -74,7 +79,7 @@ function SignUpPage() {
 					continue.
 				</InlineAlert>
 				<AuthFooter>
-					<Link className='link-text font-medium text-foreground' to='/auth'>
+					<Link className='link-text font-medium text-foreground' search={{ redirect }} to='/auth'>
 						Back to sign in
 					</Link>
 				</AuthFooter>
@@ -170,7 +175,7 @@ function SignUpPage() {
 			</form>
 			<AuthFooter>
 				Already have an account?{' '}
-				<Link className='link-text font-medium text-foreground' to='/auth'>
+				<Link className='link-text font-medium text-foreground' search={{ redirect }} to='/auth'>
 					Sign in
 				</Link>
 			</AuthFooter>

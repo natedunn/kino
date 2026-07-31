@@ -1,9 +1,14 @@
 import { z } from 'zod';
 
 import { authAction } from '../lib/crpc';
-import { createInstallationToken, fetchRepository } from '../lib/github-client';
+import { fetchRepository } from '../lib/github-client';
 import { idSchema } from '../lib/validation';
+import { createGithubCaller } from './generated/github.runtime';
 import { createProjectCaller } from './generated/project.runtime';
+import {
+	createInstallationTokenWithRecovery,
+	githubInstallationRefreshRequiredError,
+} from './github.lib';
 
 // Read-only helper for the "Add from GitHub" button. Being an action, it can
 // mint an installation token and hit the GitHub REST API for the repo's
@@ -12,13 +17,19 @@ import { createProjectCaller } from './generated/project.runtime';
 export const importGithubUrls = authAction
 	.input(z.object({ id: idSchema }))
 	.action(async ({ ctx, input }) => {
-		const caller = createProjectCaller(ctx);
-		const prep = await caller.prepareGithubUrlImport({
+		const projectCaller = createProjectCaller(ctx);
+		const githubCaller = createGithubCaller(ctx);
+		const prep = await projectCaller.prepareGithubUrlImport({
 			id: input.id,
 			userId: ctx.userId,
 		});
 
-		const token = await createInstallationToken({
+		if (prep.recoveryRequired) {
+			throw githubInstallationRefreshRequiredError();
+		}
+
+		const token = await createInstallationTokenWithRecovery({
+			caller: githubCaller,
 			installationId: prep.installationId,
 			mode: 'read',
 			repositoryIds: [prep.repoId],

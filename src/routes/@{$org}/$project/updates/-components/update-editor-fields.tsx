@@ -115,7 +115,7 @@ export function TagsField({
 	value: Array<string>;
 }) {
 	const [tagInput, setTagInput] = useState('');
-	const tags = value || [];
+	const tags = value;
 
 	const addTag = () => {
 		const trimmed = tagInput.trim();
@@ -138,7 +138,7 @@ export function TagsField({
 								variant='ghost'
 								size='icon-xs'
 								className='ml-0.5 size-4 hover:text-destructive'
-								onClick={() => onChange(tags.filter((value) => value !== tag))}
+								onClick={() => onChange(tags.filter((t) => t !== tag))}
 								type='button'
 							>
 								<X className='h-3 w-3' />

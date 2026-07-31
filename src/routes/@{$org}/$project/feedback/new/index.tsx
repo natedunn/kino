@@ -3,6 +3,7 @@ import { useForm } from '@tanstack/react-form';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 
+import { BoardIcon } from '@/components/board-icon';
 import { LazyMarkdownEditor } from '@/components/editor/markdown-editor.lazy';
 import { sanitizeEditorContent } from '@/components/editor/sanitize-content';
 import { InlineAlert } from '@/components/inline-alert';
@@ -16,6 +17,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
+import { requireAuth } from '@/lib/auth/require-auth';
 import { authClient } from '@/lib/convex/auth-client';
 import { useCRPC } from '@/lib/convex/crpc';
 import { projectTitle, titleMeta } from '@/lib/seo';
@@ -26,6 +28,12 @@ export const Route = createFileRoute('/@{$org}/$project/feedback/new/')({
 	head: ({ params }) => ({
 		meta: [titleMeta(['New Feedback', projectTitle(params.org, params.project)])],
 	}),
+	// Creating feedback requires a signed-in user. Redirect to `/auth` (and back)
+	// rather than dead-ending on a sign-in prompt. Guarded in the `loader` (the
+	// guard pattern used across the `@{$org}` subtree) rather than `beforeLoad`.
+	// The `feedback.create` mutation remains the real boundary; the component still
+	// handles in-place sign-out and the softer `canView` check.
+	loader: ({ context, location }) => requireAuth(context, location),
 	component: NewFeedbackRoute,
 });
 
@@ -153,6 +161,7 @@ function NewFeedbackRoute() {
 										<SelectContent>
 											{boards.map((board) => (
 												<SelectItem key={board.id} value={board.id}>
+													<BoardIcon icon={board.icon} name={board.name} size='14px' />
 													{board.name}
 												</SelectItem>
 											))}

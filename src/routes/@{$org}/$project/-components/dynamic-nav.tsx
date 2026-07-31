@@ -38,10 +38,9 @@ interface DynamicNavigationProps {
 	orgSlug: string;
 	projectSlug: string;
 	className?: string;
-	onStateChange?: (state: { isCalculating: boolean }) => void;
 }
 
-export function DynamicNavigation({ orgSlug, projectSlug, onStateChange }: DynamicNavigationProps) {
+export function DynamicNavigation({ orgSlug, projectSlug }: DynamicNavigationProps) {
 	const crpc = useCRPC();
 	const params = {
 		org: orgSlug,
@@ -58,7 +57,7 @@ export function DynamicNavigation({ orgSlug, projectSlug, onStateChange }: Dynam
 	);
 	const canManageSettings = projectQuery.data?.permissions.canEdit ?? false;
 
-	const items: NavigationItem[] = [
+	const items: Array<NavigationItem> = [
 		{
 			children: 'Overview',
 			icon: Home,
@@ -113,17 +112,11 @@ export function DynamicNavigation({ orgSlug, projectSlug, onStateChange }: Dynam
 
 	const [visibleItems, setVisibleItems] = useState<number>(10);
 	const containerRef = useRef<HTMLDivElement>(null);
-	const itemButtonRefs = useRef<(HTMLButtonElement | null)[]>([]);
-	const [isCalculating, setIsCalculating] = useState<boolean>(true);
-
-	useEffect(() => {
-		onStateChange?.({ isCalculating });
-	}, [isCalculating, onStateChange]);
+	const itemButtonRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
 	useIsomorphicLayoutEffect(() => {
 		const calculateVisibleItems = () => {
 			if (!containerRef.current) {
-				setIsCalculating(false);
 				return;
 			}
 
@@ -167,7 +160,6 @@ export function DynamicNavigation({ orgSlug, projectSlug, onStateChange }: Dynam
 			if (Math.abs(finalCount - visibleItems) > 0) {
 				setVisibleItems(finalCount);
 			}
-			setIsCalculating(false);
 		};
 
 		calculateVisibleItems();
@@ -175,7 +167,6 @@ export function DynamicNavigation({ orgSlug, projectSlug, onStateChange }: Dynam
 		// Debounced resize handler to prevent excessive calculations
 		let resizeTimeout: ReturnType<typeof setTimeout>;
 		const handleResize = () => {
-			setIsCalculating(true);
 			clearTimeout(resizeTimeout);
 			resizeTimeout = setTimeout(calculateVisibleItems, 100);
 		};
@@ -184,7 +175,6 @@ export function DynamicNavigation({ orgSlug, projectSlug, onStateChange }: Dynam
 
 		// Observer for container size changes
 		const observer = new ResizeObserver(() => {
-			setIsCalculating(true);
 			clearTimeout(resizeTimeout);
 			resizeTimeout = setTimeout(calculateVisibleItems, 50);
 		});
@@ -204,7 +194,7 @@ export function DynamicNavigation({ orgSlug, projectSlug, onStateChange }: Dynam
 	const hiddenItems = items.slice(visibleItems);
 
 	return (
-		<div ref={containerRef} className='relative overflow-x-hidden'>
+		<div ref={containerRef} className='relative overflow-x-clip'>
 			<div className='container'>
 				<div className='flex flex-nowrap items-end gap-1'>
 					{visibleItemsList.map((item, index) => {
@@ -227,7 +217,7 @@ export function DynamicNavigation({ orgSlug, projectSlug, onStateChange }: Dynam
 										className={cn(
 											'inline-flex items-center gap-2 border-b-2 px-3 pt-2 pb-2 text-xs text-muted-foreground transition-colors md:text-sm',
 											isActive
-												? 'border-primary text-foreground'
+												? 'border-primary text-foreground dark:border-blue-400'
 												: 'border-transparent hocus:border-foreground/35 hocus:text-foreground'
 										)}
 									>
@@ -239,7 +229,7 @@ export function DynamicNavigation({ orgSlug, projectSlug, onStateChange }: Dynam
 													className={cn(
 														'size-4',
 														isActive
-															? 'text-primary'
+															? 'text-primary dark:text-blue-400'
 															: 'text-muted-foreground group-hocus:text-foreground'
 													)}
 												/>
