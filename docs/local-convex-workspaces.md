@@ -18,6 +18,12 @@ vars are present before code is pushed.
   anonymous Convex deployment plus Vite. If this same worktree has a stale
   local Convex backend still listening, `pnpm dev` stops it before starting a
   fresh one.
+- `nr dev:share` (`pnpm dev:share`): replace `pnpm dev` for a session that must
+  be opened on a phone or another computer. It starts this worktree's isolated
+  Convex backend and Vite, creates temporary Cloudflare Quick Tunnels for all
+  three local HTTP endpoints, and prints the one public app URL to open. GitHub
+  login and Relay callbacks use an exact, expiring registration in the dev
+  gateway. Stop the entire session with Ctrl+C; do not run `pnpm dev` first.
 - `pnpm dev:shared`: use the old shared Convex dev deployment flow.
 - `pnpm convex:seed:from-dev`: replace the active anonymous deployment's data
   with an export from the shared dev deployment.
@@ -101,4 +107,22 @@ log under `$TMPDIR/kino-dev/<workspace>/convex.log`.
 
 Anonymous Convex backends are local-only URLs. The gateway webhook registration
 script skips localhost targets, so GitHub webhook fan-out remains a shared
-cloud/preview deployment feature for now.
+cloud/preview deployment feature during ordinary `pnpm dev`. During
+`pnpm dev:share`, the temporary public Convex site tunnel is registered for the
+session and unregistered on shutdown.
+
+Quick Tunnel URLs change on every run and are publicly reachable by anyone who
+knows the URL while the command is active. Kino's normal application auth still
+protects authenticated data, but Cloudflare Access is intentionally not added.
+Because this exposes the Vite development server, source modules, local paths,
+and project structure may be visible. Quick Tunnels are development-only, have
+no uptime guarantee, allow at most 200 concurrent in-flight requests, and do
+not support Server-Sent Events. No certificate or software is required on the
+device opening the URL.
+
+The first run may download Wrangler's managed `cloudflared` binary. A
+user-level `~/.cloudflared/config.yml` or `config.yaml` is incompatible with
+Quick Tunnels; the command reports that file and exits rather than modifying
+it. `GATEWAY_URL` and `GATEWAY_ADMIN_TOKEN` must be present locally, and the dev
+gateway must be deployed with temporary share-origin support before the command
+will expose anything.

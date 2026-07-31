@@ -16,9 +16,9 @@ function redirect(location: string) {
 }
 
 describe('rewriteProxyCallbackRedirect', () => {
-	it('rewrites a convex.site oauth-proxy-callback to the app origin', () => {
+	it('rewrites a convex.site oauth-proxy-callback to the app origin', async () => {
 		const callbackURL = encodeURIComponent(`${previewOrigin}/auth`);
-		const result = rewriteProxyCallbackRedirect(
+		const result = await rewriteProxyCallbackRedirect(
 			env,
 			redirect(
 				`https://agile-ibex-133.convex.site/api/auth/oauth-proxy-callback?callbackURL=${callbackURL}&profile=abc`
@@ -33,21 +33,21 @@ describe('rewriteProxyCallbackRedirect', () => {
 		expect(url.searchParams.get('callbackURL')).toBe(`${previewOrigin}/auth`);
 	});
 
-	it('refuses untrusted app origins', () => {
+	it('refuses untrusted app origins', async () => {
 		const callbackURL = encodeURIComponent('https://evil.example.com/auth');
 		const location = `https://agile-ibex-133.convex.site/api/auth/oauth-proxy-callback?callbackURL=${callbackURL}&profile=abc`;
-		const result = rewriteProxyCallbackRedirect(env, redirect(location));
+		const result = await rewriteProxyCallbackRedirect(env, redirect(location));
 		expect(result.headers.get('location')).toBe(location);
 	});
 
-	it('leaves non-proxy-callback redirects alone', () => {
+	it('leaves non-proxy-callback redirects alone', async () => {
 		const location = 'https://github.com/login/oauth/authorize?x=1';
-		const result = rewriteProxyCallbackRedirect(env, redirect(location));
+		const result = await rewriteProxyCallbackRedirect(env, redirect(location));
 		expect(result.headers.get('location')).toBe(location);
 	});
 
-	it('leaves non-redirect responses alone', () => {
+	it('leaves non-redirect responses alone', async () => {
 		const ok = new Response('hi', { status: 200 });
-		expect(rewriteProxyCallbackRedirect(env, ok)).toBe(ok);
+		expect(await rewriteProxyCallbackRedirect(env, ok)).toBe(ok);
 	});
 });

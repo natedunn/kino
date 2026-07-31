@@ -2,6 +2,7 @@ import { spawn } from "node:child_process"
 import fs from "node:fs"
 import os from "node:os"
 import path from "node:path"
+
 import {
   anonymousConvexEnv,
   anonymousEnvFilePath as getAnonymousEnvFilePath,
@@ -15,6 +16,7 @@ import {
   stopStaleWorktreeProcesses,
   waitForLocalBackendToStart,
 } from "./lib/local-convex.mjs"
+import { mergeFrontendEnv } from "./lib/dev-share.mjs"
 
 const workspaceRoot = process.cwd()
 const binDir = path.join(workspaceRoot, "node_modules", ".bin")
@@ -27,8 +29,10 @@ const convexCmd = path.join(
   process.platform === "win32" ? "convex.cmd" : "convex"
 )
 const shellCmd = process.platform === "win32" ? "sh.exe" : "sh"
+const pnpmCmd = process.platform === "win32" ? "pnpm.cmd" : "pnpm"
 const logDir = path.join(os.tmpdir(), "kino-dev", path.basename(workspaceRoot))
 const convexMode = process.env.KINO_CONVEX_MODE ?? "anonymous"
+const shareMode = process.env.KINO_SHARE === "1"
 const anonymousEnvFilePath = getAnonymousEnvFilePath(workspaceRoot)
 const projectLocalConfigPath = getProjectLocalConfigPath(workspaceRoot)
 
@@ -142,7 +146,7 @@ if (convexMode === "anonymous") {
 }
 
 const localEnv = readLocalEnv(workspaceRoot)
-const frontendEnv = { ...process.env, ...localEnv }
+const frontendEnv = mergeFrontendEnv(process.env, localEnv)
 const convexEnv =
   convexMode === "anonymous" ? anonymousConvexEnv() : { ...process.env }
 
@@ -282,8 +286,10 @@ children.push({
   name: "vite",
   ...startProcess(
     "vite",
-    shellCmd,
-    [path.join("scripts", "dev-portless.sh"), "pnpm", "run", "dev:vite"],
+    shareMode ? pnpmCmd : shellCmd,
+    shareMode
+      ? ["run", "dev:vite"]
+      : [path.join("scripts", "dev-portless.sh"), "pnpm", "run", "dev:vite"],
     frontendEnv
   ),
 })

@@ -149,7 +149,7 @@ export async function handleTargetsApi(env: GatewayEnv, request: Request) {
 
 	let url: string;
 	try {
-		const parsed = (await request.json()) as { url?: string };
+		const parsed = await request.json();
 		if (typeof parsed.url !== 'string') throw new Error('missing url');
 		url = parsed.url;
 	} catch {
@@ -159,7 +159,7 @@ export async function handleTargetsApi(env: GatewayEnv, request: Request) {
 	}
 
 	if (request.method === 'PUT') {
-		if (!isTrustedTargetUrl(env, url)) {
+		if (!(await isTrustedTargetUrl(env, url))) {
 			return new Response('Target URL is not a trusted origin', {
 				status: 400,
 			});

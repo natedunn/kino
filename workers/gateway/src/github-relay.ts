@@ -70,7 +70,7 @@ export async function verifyGitHubAppState(env: GatewayEnv, state: string) {
 	if (payload.exp < Date.now()) {
 		throw new Error('GitHub state expired');
 	}
-	if (!isTrustedTargetUrl(env, payload.targetUrl)) {
+	if (!(await isTrustedTargetUrl(env, payload.targetUrl))) {
 		throw new Error('GitHub callback target URL is not trusted');
 	}
 
