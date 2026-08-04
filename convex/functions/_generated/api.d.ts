@@ -445,6 +445,7 @@ export declare const api: {
       {
         email: string;
         organizationId: string;
+        origin?: string;
         projectIds?: Array<string>;
         role: "admin" | "moderator";
       },
@@ -487,7 +488,7 @@ export declare const api: {
       {
         memberId: string;
         projectIds?: Array<string>;
-        role: "owner" | "admin" | "moderator";
+        role: "admin" | "moderator";
       },
       any
     >;

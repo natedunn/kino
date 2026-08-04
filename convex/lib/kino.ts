@@ -628,7 +628,8 @@ export async function createDefaultPersonalOrganization(
 	await ctx.orm.insert(memberTable).values({
 		createdAt: new Date(),
 		organizationId: organization.id,
-		role: 'admin',
+		// Match the better-auth path above: the org creator is its owner.
+		role: 'owner',
 		userId: user.id,
 	});
 

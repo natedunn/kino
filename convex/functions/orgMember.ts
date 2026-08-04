@@ -1,10 +1,15 @@
-import { CRPCError } from 'kitcn/server';
+import type { MutationCtx } from './generated/server';
+
+import { CRPCError, requireSchedulerCtx } from 'kitcn/server';
 import { z } from 'zod';
 
+import { renderOrganizationInvitationEmail } from '../emails/send';
 import { authMutation, authQuery } from '../lib/crpc';
+import { isEmailConfigured, resolveTrustedSiteUrl } from '../lib/get-env';
 import { asId, findOrganization, getDoc, verifyOrgAccess } from '../lib/kino';
 import { emailSchema, idSchema, orgSlugSchema } from '../lib/validation';
-import { assignableRoleSchema, requireOrgManage, updatableRoleSchema } from './orgMember.lib';
+import { createEmailCaller } from './generated/email.runtime';
+import { assignableRoleSchema, requireOrgManage } from './orgMember.lib';
 import { pendingModeratorProjectAccessTable, projectModeratorAccessTable } from './schema';
 
 const projectIdsSchema = z.array(idSchema).max(200);
@@ -143,16 +148,23 @@ export const inviteMember = authMutation
 		z.object({
 			email: emailSchema,
 			organizationId: idSchema,
+			// The inviter's browsing origin, used for the accept link in the
+			// invitation email. Validated server-side against the trusted-origin
+			// set; anything else falls back to SITE_URL.
+			origin: z.string().max(200).optional(),
 			projectIds: projectIdsSchema.optional(),
 			role: assignableRoleSchema,
 		})
 	)
 	.mutation(async ({ ctx, input }) => {
-		await requireOrgManage(ctx, { id: input.organizationId });
-		if (input.role === 'moderator' && input.projectIds === undefined) {
+		const access = await requireOrgManage(ctx, { id: input.organizationId });
+		// A moderator with no projects can manage nothing, so don't create one:
+		// require at least one assignment up front. Existing moderators can still
+		// be stripped to zero via setModeratorProjectAccess.
+		if (input.role === 'moderator' && !input.projectIds?.length) {
 			throw new CRPCError({
 				code: 'BAD_REQUEST',
-				message: 'Choose projects for the moderator, or explicitly choose none',
+				message: 'Select at least one project for the moderator',
 			});
 		}
 		if (input.role !== 'moderator' && input.projectIds !== undefined) {
@@ -196,6 +208,30 @@ export const inviteMember = authMutation
 				)
 			);
 		}
+
+		// The invitation email is sent from here rather than a Better Auth
+		// callback: only this mutation knows the inviter's browsing origin, which
+		// is what makes the accept link point at the environment the invite was
+		// sent from (dev worktree, preview, prod). Render inline (mutations can't
+		// fetch) and schedule the send — transactional with the invite itself.
+		if (isEmailConfigured()) {
+			const { html, subject } = renderOrganizationInvitationEmail({
+				invitation: { id: invitationId, role: input.role },
+				inviter: { user: { email: ctx.user.email ?? '', name: ctx.user.name } },
+				organization: { name: access.organization.name },
+				siteUrl: resolveTrustedSiteUrl(input.origin),
+			});
+			// The authMutation middleware replaces ctx.auth with the better-auth
+			// instance, so the extended ctx no longer matches ProcedureCallerContext
+			// structurally. requireSchedulerCtx still runtime-checks the scheduler;
+			// the cast only restores the base mutation shape the caller expects.
+			const schedulerCtx = requireSchedulerCtx(ctx) as unknown as MutationCtx;
+			await createEmailCaller(schedulerCtx).schedule.now.sendTransactionalEmail({
+				html,
+				subject,
+				to: input.email,
+			});
+		}
 		return { success: true };
 	});
 
@@ -204,7 +240,7 @@ export const updateMemberRole = authMutation
 		z.object({
 			memberId: idSchema,
 			projectIds: projectIdsSchema.optional(),
-			role: updatableRoleSchema,
+			role: assignableRoleSchema,
 		})
 	)
 	.mutation(async ({ ctx, input }) => {
@@ -214,10 +250,11 @@ export const updateMemberRole = authMutation
 		if (!member) {
 			throw new CRPCError({ code: 'NOT_FOUND', message: 'Member not found' });
 		}
-		if (input.role === 'moderator' && input.projectIds === undefined) {
+		// Same rule as inviteMember: never create a zero-access moderator.
+		if (input.role === 'moderator' && !input.projectIds?.length) {
 			throw new CRPCError({
 				code: 'BAD_REQUEST',
-				message: 'Choose projects for the moderator, or explicitly choose none',
+				message: 'Select at least one project for the moderator',
 			});
 		}
 		if (input.role !== 'moderator' && input.projectIds !== undefined) {
@@ -227,32 +264,17 @@ export const updateMemberRole = authMutation
 			});
 		}
 
-		const access = await requireOrgManage(ctx, { id: member.organizationId });
+		await requireOrgManage(ctx, { id: member.organizationId });
 
-		// Only an owner may grant or revoke the owner role.
-		const touchesOwner = input.role === 'owner' || member.role === 'owner';
-		if (touchesOwner && access.member?.role !== 'owner') {
+		// The owner role is frozen: it can never be granted (the input schema
+		// excludes it) or revoked here — not even by the owner themselves. This
+		// mirrors the guards in `removeMember` and `leaveOrganization` and stands
+		// until a dedicated ownership-transfer flow exists.
+		if (member.role === 'owner') {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
-				message: 'Only an owner can change owner roles',
+				message: "The owner's role cannot be changed",
 			});
-		}
-
-		// Never let the last owner be demoted — that would strand the org with no
-		// one able to manage membership. Mirrors the guard in `leaveOrganization`
-		// and `removeMember`. Ownership must be transferred (promote another member
-		// to owner) before the sole owner steps down.
-		if (member.role === 'owner' && input.role !== 'owner') {
-			const owners = await ctx.orm.query.member.findMany({
-				where: { organizationId: member.organizationId, role: 'owner' },
-				limit: 2,
-			});
-			if (owners.length <= 1) {
-				throw new CRPCError({
-					code: 'FORBIDDEN',
-					message: 'Promote another owner before demoting the only owner',
-				});
-			}
 		}
 
 		await ctx.auth.api.updateMemberRole({

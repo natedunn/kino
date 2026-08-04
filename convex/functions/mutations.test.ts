@@ -94,12 +94,68 @@ async function seedAuthedOrgAdmin(ctx: Ctx) {
 		.returning();
 	return {
 		feedbackId: feedback.id,
+		organizationId: organization.id,
 		profileId: profile.id,
 		projectId: project.id,
 		sessionId: session.id,
 		userId: user.id,
 	};
 }
+
+describe('organization invitations (authenticated end-to-end)', () => {
+	// Invitees are identified by email only — they do not need a Kino account
+	// yet. This exercises the full better-auth createInvitation path, which
+	// broke when the org plugin passed its own generated id to the Convex
+	// adapter (Convex owns document IDs).
+	it('creates a pending invitation for an email without a Kino account', async () => {
+		const t = convexTest();
+		const seed = await t.run((baseCtx) => runCtx(baseCtx).then(seedAuthedOrgAdmin));
+		const asUser = t.withIdentity({
+			sessionId: seed.sessionId,
+			subject: seed.userId,
+		});
+
+		await asUser.mutation(api.orgMember.inviteMember, {
+			email: 'newcomer@example.com',
+			organizationId: seed.organizationId,
+			// Untrusted origin: the server must fall back to SITE_URL rather than
+			// reject the invite or trust the value.
+			origin: 'https://evil.example.com',
+			role: 'admin',
+		});
+
+		const invitations = await t.run(async (baseCtx) => {
+			const ctx = await runCtx(baseCtx);
+			const rows = await ctx.orm.query.invitation.findMany({
+				where: { organizationId: seed.organizationId },
+				limit: 10,
+			});
+			// ORM rows carry Date objects, which t.run can't serialize back out.
+			return rows.map((row: any) => ({ email: row.email, status: row.status }));
+		});
+		expect(invitations).toHaveLength(1);
+		expect(invitations[0].email).toBe('newcomer@example.com');
+		expect(invitations[0].status).toBe('pending');
+	});
+
+	it('rejects a moderator invite with no projects', async () => {
+		const t = convexTest();
+		const seed = await t.run((baseCtx) => runCtx(baseCtx).then(seedAuthedOrgAdmin));
+		const asUser = t.withIdentity({
+			sessionId: seed.sessionId,
+			subject: seed.userId,
+		});
+
+		await expect(
+			asUser.mutation(api.orgMember.inviteMember, {
+				email: 'mod@example.com',
+				organizationId: seed.organizationId,
+				projectIds: [],
+				role: 'moderator',
+			})
+		).rejects.toThrow(/at least one project/i);
+	});
+});
 
 describe('feedback remove (authenticated end-to-end)', () => {
 	it('permanently deletes the feedback', async () => {

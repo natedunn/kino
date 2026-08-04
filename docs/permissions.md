@@ -93,13 +93,23 @@ It must never be used to represent organization roles or moderator assignments.
 
 ## Invitations and role transitions
 
-Moderator invitations require an explicit `projectIds` array; `[]` means “No
-project access.” Selections are stored in
+The `owner` role is frozen: it cannot be granted, revoked, or removed through
+invitations or member management — not even by the owner themselves. The
+role-input schemas exclude `owner` and `updateMemberRole`/`removeMember` reject
+any owner-targeting request server-side; the members UI renders the owner row's
+controls disabled to match. Changing ownership will be a dedicated transfer
+flow later.
+
+Moderator invitations require a non-empty `projectIds` array — a moderator with
+zero projects can manage nothing, so one can never be created (enforced in
+`inviteMember`/`updateMemberRole` and mirrored by the UI). An existing
+moderator can still be stripped to zero assignments through
+`setModeratorProjectAccess`. Selections are stored in
 `pendingModeratorProjectAccess` until the authenticated recipient accepts
 through `orgMember.acceptInvitation`. Acceptance calls Better Auth first, then
 activates assignments idempotently and removes the pending rows.
 
-Changing into `moderator` likewise requires an explicit project selection.
+Changing into `moderator` likewise requires at least one selected project.
 Changing out of the role, removing a member, or leaving the organization deletes
 all assignments. Assignments are not dormant and new projects do not inherit
 them.
