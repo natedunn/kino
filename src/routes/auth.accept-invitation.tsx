@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 
 import { AuthFooter, AuthHeader } from '@/components/auth/auth-card';
@@ -23,6 +23,15 @@ function AcceptInvitationPage() {
 	const { invitationId } = Route.useSearch();
 	const session = authClient.useSession();
 	const crpc = useCRPC();
+	const invitationState = useQuery(
+		crpc.orgMember.getInvitationState.queryOptions(
+			{ invitationId: invitationId ?? '' },
+			{
+				enabled: !!invitationId && !!session.data?.user,
+				subscribe: false,
+			}
+		)
+	);
 	const acceptInvitation = useMutation(crpc.orgMember.acceptInvitation.mutationOptions());
 	const rejectInvitation = useMutation(crpc.orgMember.rejectInvitation.mutationOptions());
 	const navigate = useNavigate();
@@ -39,9 +48,18 @@ function AcceptInvitationPage() {
 		);
 	}
 
+	if (session.isPending) {
+		return (
+			<>
+				<AuthHeader title='Accept your invitation' description='Checking your account…' />
+				<div className='h-24 animate-pulse rounded-xl border bg-muted/30' />
+			</>
+		);
+	}
+
 	// Accepting requires an authenticated account. Send the user to sign in and
 	// back here.
-	if (!session.isPending && !session.data?.user) {
+	if (!session.data?.user) {
 		const back = `/auth/accept-invitation?invitationId=${encodeURIComponent(invitationId)}`;
 		return (
 			<>
@@ -60,6 +78,51 @@ function AcceptInvitationPage() {
 						search={{ redirect: back }}
 					>
 						Continue to sign in
+					</Link>
+				</AuthFooter>
+			</>
+		);
+	}
+
+	if (invitationState.isPending) {
+		return (
+			<>
+				<AuthHeader title='Accept your invitation' description='Checking your invitation…' />
+				<div className='h-24 animate-pulse rounded-xl border bg-muted/30' />
+			</>
+		);
+	}
+
+	const state = invitationState.data?.state;
+	if (
+		invitationState.isError ||
+		!state ||
+		state === 'unavailable' ||
+		state === 'wrong_account'
+	) {
+		return (
+			<>
+				<AuthHeader title='Invalid invitation link' />
+				<InlineAlert variant='danger'>
+					This invitation is invalid, expired, or no longer available.
+				</InlineAlert>
+				<AuthFooter>
+					<Link className='link-text font-medium text-foreground' to='/dashboard'>
+						Go to dashboard
+					</Link>
+				</AuthFooter>
+			</>
+		);
+	}
+
+	if (state === 'already_accepted') {
+		return (
+			<>
+				<AuthHeader title='Invitation already accepted' />
+				<InlineAlert variant='success'>You’ve already joined this organization.</InlineAlert>
+				<AuthFooter>
+					<Link className='link-text font-medium text-foreground' to='/dashboard'>
+						Go to dashboard
 					</Link>
 				</AuthFooter>
 			</>

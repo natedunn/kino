@@ -126,6 +126,7 @@ export const listByUpdate = optionalAuthQuery
 			.withIndex('by_updateId', (q: any) => q.eq('updateId', item._id))
 			.order('asc')
 			.collect();
+		const teamMemberByAuthorId = new Map<string, Promise<boolean>>();
 
 		return await Promise.all(
 			comments.map(async (comment) => {
@@ -133,10 +134,15 @@ export const listByUpdate = optionalAuthQuery
 				let isTeamMember = false;
 
 				if (author) {
-					isTeamMember = await isProjectTeamMember(ctx, {
-						profile: author,
-						projectId: item.projectId,
-					});
+					let membership = teamMemberByAuthorId.get(author._id);
+					if (!membership) {
+						membership = isProjectTeamMember(ctx, {
+							profile: author,
+							projectId: item.projectId,
+						});
+						teamMemberByAuthorId.set(author._id, membership);
+					}
+					isTeamMember = await membership;
 				}
 
 				const emotes = await ctx.db

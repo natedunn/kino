@@ -48,10 +48,13 @@ function ProjectSettingsRoute() {
 	const params = Route.useParams();
 	const crpc = useCRPC();
 	const projectQuery = useQuery(
-		crpc.project.getDetails.queryOptions({
-			orgSlug: params.org,
-			slug: params.project,
-		})
+		crpc.project.getDetails.queryOptions(
+			{
+				orgSlug: params.org,
+				slug: params.project,
+			},
+			{ subscribe: false }
+		)
 	);
 	const permissions = projectQuery.data?.permissions;
 	const linkParams = {

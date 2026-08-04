@@ -433,6 +433,12 @@ export declare const api: {
       { invitationId: string },
       any
     >;
+    getInvitationState: FunctionReference<
+      "query",
+      "public",
+      { invitationId: string },
+      any
+    >;
     getModeratorProjectAccess: FunctionReference<
       "query",
       "public",

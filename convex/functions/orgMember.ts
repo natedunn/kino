@@ -88,6 +88,22 @@ async function deletePendingAssignments(ctx: any, invitationId: string) {
 	);
 }
 
+function emailsMatch(left: string | null | undefined, right: string | null | undefined) {
+	return !!left && !!right && left.trim().toLowerCase() === right.trim().toLowerCase();
+}
+
+function assertInvitationRecipient(
+	invitation: { email: string },
+	user: { email?: string | null }
+) {
+	if (!emailsMatch(user.email, invitation.email)) {
+		throw new CRPCError({
+			code: 'FORBIDDEN',
+			message: 'This invitation belongs to a different account',
+		});
+	}
+}
+
 export const listMembers = authQuery
 	.input(z.object({ slug: orgSlugSchema }))
 	.query(async ({ ctx, input }) => {
@@ -348,6 +364,25 @@ export const setModeratorProjectAccess = authMutation
 		return { success: true };
 	});
 
+export const getInvitationState = authQuery
+	.input(z.object({ invitationId: idSchema }))
+	.query(async ({ ctx, input }) => {
+		const invitation = await ctx.orm.query.invitation.findFirst({
+			where: { id: input.invitationId },
+		});
+		if (!invitation) return { state: 'unavailable' as const };
+		if (!emailsMatch(ctx.user.email, invitation.email)) {
+			return { state: 'wrong_account' as const };
+		}
+		if (invitation.status === 'accepted') {
+			return { state: 'already_accepted' as const };
+		}
+		if (invitation.status !== 'pending' || invitation.expiresAt.getTime() <= Date.now()) {
+			return { state: 'unavailable' as const };
+		}
+		return { state: 'pending' as const };
+	});
+
 export const acceptInvitation = authMutation
 	.input(z.object({ invitationId: idSchema }))
 	.mutation(async ({ ctx, input }) => {
@@ -367,14 +402,8 @@ export const acceptInvitation = authMutation
 		if (!currentUser) {
 			throw new CRPCError({ code: 'UNAUTHORIZED', message: 'User not found' });
 		}
-		if (invitation.status === 'accepted') {
-			if (currentUser.email.toLowerCase() !== invitation.email.toLowerCase()) {
-				throw new CRPCError({
-					code: 'FORBIDDEN',
-					message: 'This invitation belongs to a different account',
-				});
-			}
-		} else {
+		assertInvitationRecipient(invitation, currentUser);
+		if (invitation.status !== 'accepted') {
 			await ctx.auth.api.acceptInvitation({
 				body: { invitationId: input.invitationId },
 				headers: ctx.headers,
@@ -538,6 +567,7 @@ export const rejectInvitation = authMutation
 		if (!invitation) {
 			throw new CRPCError({ code: 'NOT_FOUND', message: 'Invitation not found' });
 		}
+		assertInvitationRecipient(invitation, ctx.user);
 		await ctx.auth.api.rejectInvitation({
 			body: { invitationId: input.invitationId },
 			headers: ctx.headers,

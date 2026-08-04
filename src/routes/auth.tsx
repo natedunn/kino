@@ -35,6 +35,10 @@ export function getSafeRedirectTarget(redirect: string | undefined) {
 
 export function getVerifyEmailCallbackUrl(origin: string, redirect: string | undefined) {
 	const callbackUrl = new URL('/auth/verify-email', origin);
+	// Better Auth redirects to this URL only after successfully validating its
+	// signed verification token. The result page uses this marker to distinguish
+	// that callback from an ordinary direct visit.
+	callbackUrl.searchParams.set('verified', '1');
 	if (redirect) {
 		callbackUrl.searchParams.set('redirect', getSafeRedirectTarget(redirect));
 	}

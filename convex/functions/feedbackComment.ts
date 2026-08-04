@@ -145,6 +145,7 @@ export const listByFeedback = optionalAuthQuery
 
 		const projectId = feedback.projectId;
 		const currentProfile = await getCurrentProfile(ctx, ctx.userId);
+		const teamMemberByAuthorId = new Map<string, Promise<boolean>>();
 
 		return await Promise.all(
 			comments.map(async (comment: any) => {
@@ -152,10 +153,15 @@ export const listByFeedback = optionalAuthQuery
 				let isTeamMember = false;
 
 				if (projectId && author) {
-					isTeamMember = await isProjectTeamMember(ctx, {
-						profile: author,
-						projectId,
-					});
+					let membership = teamMemberByAuthorId.get(author._id);
+					if (!membership) {
+						membership = isProjectTeamMember(ctx, {
+							profile: author,
+							projectId,
+						});
+						teamMemberByAuthorId.set(author._id, membership);
+					}
+					isTeamMember = await membership;
 				}
 
 				const emotes = await ctx.db
