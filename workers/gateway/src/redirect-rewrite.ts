@@ -23,7 +23,7 @@ import { isTrustedTargetOrigin } from './env';
  * proxies the request to its Convex deployment itself, and the cookies land
  * on the app origin.
  */
-export function rewriteProxyCallbackRedirect(env: GatewayEnv, response: Response) {
+export async function rewriteProxyCallbackRedirect(env: GatewayEnv, response: Response) {
 	if (response.status < 300 || response.status >= 400) return response;
 
 	const location = response.headers.get('location');
@@ -54,7 +54,7 @@ export function rewriteProxyCallbackRedirect(env: GatewayEnv, response: Response
 	}
 
 	const origin = `${appOrigin.protocol}//${appOrigin.host}`;
-	if (!isTrustedTargetOrigin(env, origin)) {
+	if (!(await isTrustedTargetOrigin(env, origin))) {
 		console.warn(`proxy callback rewrite refused for untrusted origin ${origin}`);
 		return response;
 	}

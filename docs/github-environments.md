@@ -42,15 +42,17 @@ gateway[-dev].usekino.com          (workers/gateway, deployed via wrangler)
   │                                  └─ redirect rewritten to the app origin
   ├─ /github-relay/oauth-callback  Kino Relay signed-state trampoline
   ├─ /hooks/github                 webhook intake: verify HMAC → fan out
-  └─ /hooks/targets                bearer-token registry of fan-out targets (KV)
+  ├─ /hooks/targets                bearer-token registry of fan-out targets (KV)
         ├─ https://<prod>.convex.site/api/github/webhook
         ├─ https://<preview>.convex.site/api/github/webhook
         └─ https://<local-dev>.convex.site/api/github/webhook
+  └─ /dev/share-origins            dev-only exact Quick Tunnel origin registry
 ```
 
-Key fact that shapes the design: **every Convex deployment — including local
-`npx convex dev` — has a publicly reachable `*.convex.site` URL**, so webhook
-fan-out reaches local dev directly. No tunnels.
+Ordinary anonymous Convex development stays loopback-only and skips webhook
+registration. `pnpm dev:share` temporarily tunnels the app plus the local
+Convex cloud/site endpoints and registers only that session's exact app and
+site origins in the dev gateway.
 
 ## Login flow (identical in every environment)
 
@@ -64,7 +66,8 @@ fan-out reaches local dev directly. No tunnels.
    `/api/auth/oauth-proxy-callback`.
 3. **`workers/gateway/src/redirect-rewrite.ts` rewrites that redirect's host**
    from the env's convex.site URL to the app origin embedded in the inner
-   `callbackURL` (validated against `TRUSTED_TARGET_PATTERNS`). Without this
+   `callbackURL` (validated against `TRUSTED_TARGET_PATTERNS` or an active,
+   exact dev share-origin registration). Without this
    the session cookies land on `*.convex.site` and the user stays logged out —
    see Invariant 2.
 4. The app origin proxies `/api/auth/*` to its Convex deployment
@@ -113,8 +116,8 @@ To add sync features (issues/discussions): extend the dispatch in
    `undefined` at runtime in the Workers bundle (esbuild lazy-init) and
    crashes the auth handler with "memoryAdapter is not a function".
 4. **The gateway holds no state worth keeping.** No sessions, no database;
-   KV holds only the fan-out target registry. It must stay safe to redeploy
-   at any time.
+   KV holds only the fan-out target registry and expiring dev share origins. It
+   must stay safe to redeploy at any time.
 5. **No environment special-casing in app code.** Production is just another
    environment behind its gateway. `OAUTH_PROXY_PRODUCTION_URL` must be set
    explicitly per environment (no default — a wrong fallback sends GitHub a
@@ -124,9 +127,13 @@ To add sync features (issues/discussions): extend the dispatch in
    `OAUTH_PROXY_SECRET`, `GITHUB_RELAY_STATE_SECRET`, and
    `GITHUB_RELAY_WEBHOOK_SECRET` must be identical between a tier's gateway
    and its app deployments.
-7. **`TRUSTED_TARGET_PATTERNS` (gateway var) is the allowlist** for both
-   auth-redirect targets and webhook fan-out targets. Keep it tight; new
-   hosting domains must be added here deliberately.
+7. **Target trust stays exact or deliberately patterned.**
+   `TRUSTED_TARGET_PATTERNS` is the static allowlist for auth redirects and
+   webhook targets. The dev-only `/dev/share-origins` registry adds exact
+   `*.trycloudflare.com` origins for an active `pnpm dev:share` session, guarded
+   by `GATEWAY_ADMIN_TOKEN`, refreshed hourly, and expired from KV after six
+   hours. Production never enables this endpoint. Do not add a permanent
+   `*.trycloudflare.com` wildcard.
 8. **Webhook receipt depends only on `GITHUB_RELAY_WEBHOOK_SECRET`.**
    `verifyGitHubWebhookSignature` deliberately does not use
    `getRequiredGitHubRelayEnv()` — an unrelated missing var must not 500 the
@@ -189,6 +196,9 @@ curl -s -X POST https://gateway-dev.usekino.com/hooks/github \
 
 # Registry inspection:
 curl -H "Authorization: Bearer $GATEWAY_ADMIN_TOKEN" https://gateway-dev.usekino.com/hooks/targets
+
+# Dev Quick Tunnel support probe (must return {"enabled":true}):
+curl -H "Authorization: Bearer $GATEWAY_ADMIN_TOKEN" https://gateway-dev.usekino.com/dev/share-origins
 ```
 
 ## Environment variable reference
@@ -220,6 +230,11 @@ env vars — note these apply **at deployment creation**, not retroactively.
 The branch-suffixed split exists because Workers Builds env vars apply to all
 branches; the mapping in `cloudflare-build.sh` makes cross-tier registration
 structurally impossible.
+
+`QUICK_TUNNEL_TARGETS_ENABLED=true` is a non-secret gateway variable present
+only in the dev environment. Deploy the dev gateway before releasing app-side
+`pnpm dev:share` changes; the command deliberately fails its support probe when
+the endpoint is absent. Never add the variable to production.
 
 ## Ops appendix
 

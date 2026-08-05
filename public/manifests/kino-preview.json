@@ -1,0 +1,36 @@
+{
+	"id": "/",
+	"name": "Kino",
+	"short_name": "Kino",
+	"description": "Feedback boards, roadmaps, and changelogs for product teams.",
+	"lang": "en",
+	"dir": "ltr",
+	"start_url": "/",
+	"scope": "/",
+	"display": "standalone",
+	"orientation": "any",
+	"prefer_related_applications": false,
+	"categories": ["business", "productivity"],
+	"theme_color": "#FACC15",
+	"background_color": "#FFFFFF",
+	"icons": [
+		{
+			"src": "/pwa/preview/icon-192.png",
+			"sizes": "192x192",
+			"type": "image/png",
+			"purpose": "any"
+		},
+		{
+			"src": "/pwa/preview/icon-512.png",
+			"sizes": "512x512",
+			"type": "image/png",
+			"purpose": "any"
+		},
+		{
+			"src": "/pwa/preview/icon-maskable-512.png",
+			"sizes": "512x512",
+			"type": "image/png",
+			"purpose": "maskable"
+		}
+	]
+}

@@ -166,6 +166,16 @@ function getPortlessHosts(siteUrl: string) {
 	return ['*.localhost', '*.localhost:*'];
 }
 
+function getQuickTunnelOrigins(siteUrl: string) {
+	if (getLoopbackOrigins(siteUrl).length === 0) return [];
+	return ['https://*.trycloudflare.com'];
+}
+
+function getQuickTunnelHosts(siteUrl: string) {
+	if (getLoopbackOrigins(siteUrl).length === 0) return [];
+	return ['*.trycloudflare.com'];
+}
+
 function hostnameFromOriginPattern(origin: string) {
 	if (origin.includes('*')) {
 		return normalizeHostPattern(origin);
@@ -215,6 +225,7 @@ export function getTrustedOrigins() {
 				env.SITE_URL,
 				...getLoopbackOrigins(env.SITE_URL),
 				...getPortlessOrigins(env.SITE_URL),
+				...getQuickTunnelOrigins(env.SITE_URL),
 				...parseList(env.TRUSTED_ORIGINS),
 				...getAdditionalDeploymentOrigins(),
 				...getCloudflarePreviewOrigins(env.CLOUDFLARE_WORKER_NAME),
@@ -230,6 +241,7 @@ export function getBetterAuthAllowedHosts() {
 			...getTrustedOrigins().map(hostnameFromOriginPattern),
 			...getLoopbackHosts(env.SITE_URL),
 			...getPortlessHosts(env.SITE_URL),
+			...getQuickTunnelHosts(env.SITE_URL),
 			...parseList(env.TRUSTED_HOSTS).map(normalizeHostPattern),
 		])
 	);

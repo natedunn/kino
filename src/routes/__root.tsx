@@ -16,7 +16,7 @@ import { getRequest } from '@tanstack/react-start/server';
 import { DefaultCatchBoundary } from '@/components/_default-catch-boundary';
 import { Providers } from '@/components/providers';
 import { StaleBundleWatcher } from '@/components/stale-bundle-watcher';
-import { getFaviconHref, inferAppEnvironment } from '@/lib/app-env';
+import { getAppInstallMetadata, getFaviconHref, inferAppEnvironment } from '@/lib/app-env';
 import { isClientAuthed } from '@/lib/auth/auth-snapshot';
 import { getServerAuthToken } from '@/lib/convex/auth-start-token';
 import { crpcServer } from '@/lib/convex/crpc-server';
@@ -111,7 +111,9 @@ export const Route = createRootRouteWithContext<{
 		};
 	},
 	head: ({ loaderData }) => {
-		const faviconHref = getFaviconHref(loaderData?.appEnvironment ?? 'production');
+		const appEnvironment = loaderData?.appEnvironment ?? 'production';
+		const faviconHref = getFaviconHref(appEnvironment);
+		const installMetadata = getAppInstallMetadata(appEnvironment);
 
 		return {
 			meta: [
@@ -123,6 +125,26 @@ export const Route = createRootRouteWithContext<{
 					content: 'width=device-width, initial-scale=1',
 				},
 				{
+					name: 'theme-color',
+					content: installMetadata.themeColor,
+				},
+				{
+					name: 'mobile-web-app-capable',
+					content: 'yes',
+				},
+				{
+					name: 'apple-mobile-web-app-capable',
+					content: 'yes',
+				},
+				{
+					name: 'apple-mobile-web-app-title',
+					content: 'Kino',
+				},
+				{
+					name: 'apple-mobile-web-app-status-bar-style',
+					content: 'default',
+				},
+				{
 					title: 'Kino',
 				},
 			],
@@ -130,12 +152,25 @@ export const Route = createRootRouteWithContext<{
 				{
 					rel: 'icon',
 					href: '/favicon.ico',
-					sizes: 'any',
 				},
 				{
 					rel: 'icon',
 					href: faviconHref,
 					type: 'image/svg+xml',
+				},
+				{
+					rel: 'manifest',
+					href: installMetadata.manifestHref,
+				},
+				{
+					rel: 'apple-touch-icon',
+					href: installMetadata.appleTouchIconHref,
+					sizes: '180x180',
+				},
+				{
+					rel: 'mask-icon',
+					href: '/pwa/kino-mask.svg',
+					color: installMetadata.safariMaskColor,
 				},
 				{
 					rel: 'stylesheet',
