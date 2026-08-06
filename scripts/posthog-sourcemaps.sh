@@ -26,3 +26,8 @@ pnpm exec posthog-cli \
   --release-name kino \
   --release-version "$release_version" \
   --delete-after
+
+# posthog-cli deletes uploaded map files, but can leave their sourceMappingURL
+# comments in the JavaScript. Wrangler validates the Worker entrypoint's comment
+# and refuses to deploy when the referenced map no longer exists.
+node scripts/remove-dangling-sourcemap-references.mjs dist
