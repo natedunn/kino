@@ -2,10 +2,9 @@ import { execFile } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { promisify } from 'node:util';
+import type { AppEnvironment } from './app-env';
 
 import { describe, expect, it } from 'vitest';
-
-import type { AppEnvironment } from './app-env';
 
 const projectRoot = process.cwd();
 const publicDirectory = path.join(projectRoot, 'public');
@@ -67,7 +66,9 @@ async function readPngDimensions(filePath: string) {
 }
 
 function relativeLuminance(hexColor: string) {
-	const channels = [1, 3, 5].map((offset) => Number.parseInt(hexColor.slice(offset, offset + 2), 16) / 255);
+	const channels = [1, 3, 5].map(
+		(offset) => Number.parseInt(hexColor.slice(offset, offset + 2), 16) / 255
+	);
 	const [red, green, blue] = channels.map((channel) =>
 		channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4
 	);

@@ -5,8 +5,11 @@ import { Select as SelectPrimitive } from '@base-ui/react/select';
 import { cva } from 'class-variance-authority';
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from 'lucide-react';
 
+import { useProjectThemeStyle } from '@/lib/project-theme';
 import { cn } from '@/lib/utils';
 
+// Base UI displays the raw value in <SelectValue /> unless Root receives an
+// `items` value-to-label map (or SelectValue formats it with a render function).
 const Select = SelectPrimitive.Root;
 
 function SelectGroup({ className, ...props }: SelectPrimitive.Group.Props) {
@@ -84,9 +87,12 @@ function SelectContent({
 		SelectPrimitive.Positioner.Props,
 		'align' | 'alignOffset' | 'side' | 'sideOffset' | 'alignItemWithTrigger'
 	>) {
+	const themeStyle = useProjectThemeStyle();
 	return (
 		<SelectPrimitive.Portal>
 			<SelectPrimitive.Positioner
+				data-project-theme={themeStyle ? '' : undefined}
+				style={themeStyle}
 				side={side}
 				sideOffset={sideOffset}
 				align={align}

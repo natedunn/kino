@@ -120,6 +120,10 @@ export const api = {
     listProjectMembers: createApiLeaf<"query", typeof import("../functions/projectMember").listProjectMembers>(createGeneratedFunctionReference<"query", "public", typeof import("../functions/projectMember").listProjectMembers>("projectMember:listProjectMembers"), { auth: "required", type: "query" }),
     removeProjectMember: createApiLeaf<"mutation", typeof import("../functions/projectMember").removeProjectMember>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/projectMember").removeProjectMember>("projectMember:removeProjectMember"), { auth: "required", type: "mutation" }),
   },
+  projectTheme: {
+    getEditorState: createApiLeaf<"query", typeof import("../functions/projectTheme").getEditorState>(createGeneratedFunctionReference<"query", "public", typeof import("../functions/projectTheme").getEditorState>("projectTheme:getEditorState"), { auth: "required", type: "query" }),
+    publish: createApiLeaf<"mutation", typeof import("../functions/projectTheme").publish>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/projectTheme").publish>("projectTheme:publish"), { auth: "required", type: "mutation" }),
+  },
   update: {
     bulkPublish: createApiLeaf<"mutation", typeof import("../functions/update").bulkPublish>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/update").bulkPublish>("update:bulkPublish"), { auth: "required", type: "mutation" }),
     bulkRemove: createApiLeaf<"mutation", typeof import("../functions/update").bulkRemove>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/update").bulkRemove>("update:bulkRemove"), { auth: "required", type: "mutation" }),

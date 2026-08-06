@@ -16,7 +16,7 @@ export function EditingBar({ className }: { className?: string }) {
 		<div
 			aria-hidden='true'
 			className={cn(
-				'h-10 border-b border-border/60 bg-muted/30 [--editing-stripe:color-mix(in_oklch,var(--foreground)_8%,transparent)]',
+				'h-10 border-b border-border/60 bg-nav [--editing-stripe:color-mix(in_oklch,var(--foreground)_8%,transparent)]',
 				className
 			)}
 			style={{ backgroundImage: STRIPES }}

@@ -3,6 +3,7 @@ import { Menu } from '@base-ui/react/menu';
 import { cva } from 'class-variance-authority';
 import { CheckIcon, ChevronRightIcon, CircleIcon } from 'lucide-react';
 
+import { useProjectThemeStyle } from '@/lib/project-theme';
 import { cn } from '@/lib/utils';
 
 type DropdownMenuSize = 'xs' | 'sm' | 'default' | 'lg' | 'xl';
@@ -87,9 +88,12 @@ function DropdownMenuContent({
 	align?: 'start' | 'center' | 'end';
 	size?: DropdownMenuSize;
 }) {
+	const themeStyle = useProjectThemeStyle();
 	return (
 		<Menu.Portal>
 			<Menu.Positioner
+				data-project-theme={themeStyle ? '' : undefined}
+				style={themeStyle}
 				sideOffset={sideOffset}
 				side={side}
 				align={align}

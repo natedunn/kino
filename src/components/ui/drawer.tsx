@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Drawer as DrawerPrimitive } from '@base-ui/react/drawer';
 
+import { useProjectThemeStyle } from '@/lib/project-theme';
 import { cn } from '@/lib/utils';
 
 type DrawerContextProps = {
@@ -91,12 +92,15 @@ function DrawerSwipeHandle({ className, ...props }: React.ComponentProps<'div'>)
 
 function DrawerContent({ className, children, ...props }: DrawerPrimitive.Popup.Props) {
 	const { hasSnapPoints, modal, showSwipeHandle, swipeDirection } = useDrawer();
+	const themeStyle = useProjectThemeStyle();
 	const swipeAxis = swipeDirection === 'down' || swipeDirection === 'up' ? 'y' : 'x';
 
 	return (
 		<DrawerPortal data-slot='drawer-portal'>
 			{modal === true && <DrawerOverlay data-snap-points={hasSnapPoints ? '' : undefined} />}
 			<DrawerPrimitive.Viewport
+				data-project-theme={themeStyle ? '' : undefined}
+				style={themeStyle}
 				data-slot='drawer-viewport'
 				data-modal={modal}
 				className='pointer-events-none fixed inset-0 z-50 select-none data-[modal=true]:pointer-events-auto'

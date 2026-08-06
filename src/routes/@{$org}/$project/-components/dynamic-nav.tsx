@@ -217,7 +217,7 @@ export function DynamicNavigation({ orgSlug, projectSlug }: DynamicNavigationPro
 										className={cn(
 											'inline-flex items-center gap-2 border-b-2 px-3 pt-2 pb-2 text-xs text-muted-foreground transition-colors md:text-sm',
 											isActive
-												? 'border-primary text-foreground dark:border-blue-400'
+												? 'border-primary text-foreground'
 												: 'border-transparent hocus:border-foreground/35 hocus:text-foreground'
 										)}
 									>
@@ -229,7 +229,7 @@ export function DynamicNavigation({ orgSlug, projectSlug }: DynamicNavigationPro
 													className={cn(
 														'size-4',
 														isActive
-															? 'text-primary dark:text-blue-400'
+															? 'text-primary'
 															: 'text-muted-foreground group-hocus:text-foreground'
 													)}
 												/>

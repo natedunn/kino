@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import Bell from '@/icons/bell';
 import SearchSparkle from '@/icons/search-sparkle';
+import { useProjectThemeStyle } from '@/lib/project-theme';
 import { cn } from '@/lib/utils';
 import { getInitial } from '@/lib/utils/get-initial';
 
@@ -72,6 +73,7 @@ type MainNavContext =
 	  };
 
 export const MainNav = ({ context, isUserPending = false, subNav, user }: MainNavProps) => {
+	const projectThemeStyle = useProjectThemeStyle();
 	const commandPalette = useCommandPalette();
 	const routerState = useRouterState();
 
@@ -83,7 +85,7 @@ export const MainNav = ({ context, isUserPending = false, subNav, user }: MainNa
 
 	return (
 		<>
-			<nav className='bg-muted dark:bg-black'>
+			<nav className='bg-nav'>
 				<div className={cn(!hasSubNav && 'border-b')}>
 					<div className='container'>
 						{/* Top row */}
@@ -104,7 +106,8 @@ export const MainNav = ({ context, isUserPending = false, subNav, user }: MainNa
 									{!!orgSlug && (
 										<div
 											className={cn(
-												'-ml-3 flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-foreground/15 ring-2 ring-muted select-none dark:border-foreground/25 dark:ring-black',
+												'-ml-3 flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-foreground/15 ring-2 ring-muted select-none dark:border-foreground/25',
+												!projectThemeStyle && 'dark:ring-black',
 												org.logo ? 'bg-background' : 'bg-foreground',
 												projectSlug && 'max-[459px]:hidden'
 											)}

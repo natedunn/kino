@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Tooltip as TooltipPrimitive } from '@base-ui/react/tooltip';
 
+import { useProjectThemeStyle } from '@/lib/project-theme';
 import { cn } from '@/lib/utils';
 
 function TooltipProvider({
@@ -64,9 +65,12 @@ function TooltipContent({
 	sideOffset?: number;
 	side?: 'top' | 'bottom' | 'left' | 'right';
 }) {
+	const themeStyle = useProjectThemeStyle();
 	return (
 		<TooltipPrimitive.Portal>
 			<TooltipPrimitive.Positioner
+				data-project-theme={themeStyle ? '' : undefined}
+				style={themeStyle}
 				align={align}
 				alignOffset={alignOffset}
 				sideOffset={sideOffset}

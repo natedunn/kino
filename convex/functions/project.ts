@@ -21,6 +21,7 @@ import {
 	projectSlugWriteSchema,
 	urlListSchema,
 } from '../lib/validation';
+import { normalizeProjectThemePresetId } from '../shared/project-theme';
 import { internal } from './_generated/api';
 import { internalMutation, withOrm } from './generated/server';
 import {
@@ -345,9 +346,23 @@ export const getDetails = optionalAuthQuery
 		if (!access.project || !access.permissions.canView) {
 			return null;
 		}
+		const theme = await ctx.db
+			.query('projectTheme')
+			.withIndex('by_projectId', (q: any) => q.eq('projectId', project._id))
+			.unique();
+		const publishedTheme =
+			theme?.publishedLight && theme.publishedDark
+				? {
+						dark: theme.publishedDark,
+						light: theme.publishedLight,
+						presetId: normalizeProjectThemePresetId(theme.publishedPresetId ?? 'kino'),
+						version: theme.version,
+					}
+				: null;
 
 		return {
 			...access,
+			publishedTheme,
 			profile: toPublicDoc(access.profile),
 			project: toPublicDoc(access.project),
 			projectMember: toPublicDoc(access.projectMember),

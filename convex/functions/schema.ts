@@ -22,6 +22,21 @@ import { targetGranularities } from '../shared/target';
 
 const PROFILE_ROLES = ['system:admin', 'system:editor', 'user'] as const;
 const PROJECT_VISIBILITIES = ['public', 'private', 'archived'] as const;
+const PROJECT_THEME_PRESETS = [
+	'kino',
+	'red',
+	'orange',
+	'golden',
+	'forest',
+	'teal',
+	'purple',
+	'sunset',
+	'monochrome',
+	'custom',
+] as const;
+// `ocean` and the draft columns below are accepted only while legacy rows are
+// cleaned up. They are not exposed by the current theme editor or write API.
+const STORED_PROJECT_THEME_PRESETS = [...PROJECT_THEME_PRESETS, 'ocean'] as const;
 // Project membership is purely DERIVED from org membership (see
 // ORG_ROLE_TO_PROJECT_ROLE). owner/admin -> org:admin, editor -> org:editor,
 // member -> member. The old direct "admin"/"editor" values were never written
@@ -479,6 +494,31 @@ export const projectMemberTable = convexTable(
 		index('by_profileId_projectId_role').on(table.profileId, table.projectId, table.role),
 		index('by_profileId_projectSlug_role').on(table.profileId, table.projectSlug, table.role),
 	]
+);
+
+export const projectThemeTable = convexTable(
+	'projectTheme',
+	{
+		projectId: id('project')
+			.notNull()
+			.references(() => projectTable.id, { onDelete: 'cascade' }),
+		version: integer().notNull(),
+		// Deprecated compatibility fields. Publishing clears these values.
+		presetId: textEnum(STORED_PROJECT_THEME_PRESETS),
+		draftLight: json(),
+		draftDark: json(),
+		draftRevision: integer(),
+		draftUpdatedTime: integer(),
+		publishedLight: json(),
+		publishedDark: json(),
+		publishedPresetId: textEnum(STORED_PROJECT_THEME_PRESETS),
+		publishedRevision: integer().notNull(),
+		publishedTime: integer(),
+		publishedByProfileId: id('profile').references(() => profileTable.id, {
+			onDelete: 'set null',
+		}),
+	},
+	(table) => [index('by_projectId').on(table.projectId)]
 );
 
 export const orgStorageUsageTable = convexTable(
@@ -949,6 +989,7 @@ export const tables = {
 	profile: profileTable,
 	project: projectTable,
 	projectMember: projectMemberTable,
+	projectTheme: projectThemeTable,
 	orgStorageUsage: orgStorageUsageTable,
 	feedback: feedbackTable,
 	feedbackBoard: feedbackBoardTable,
@@ -1071,6 +1112,16 @@ export default defineSchema(tables)
 			feedbackGithubConnections: r.many.feedbackGithubConnection({
 				from: r.project.id,
 				to: r.feedbackGithubConnection.projectId,
+			}),
+		},
+		projectTheme: {
+			project: r.one.project({
+				from: r.projectTheme.projectId,
+				to: r.project.id,
+			}),
+			publishedBy: r.one.profile({
+				from: r.projectTheme.publishedByProfileId,
+				to: r.profile.id,
 			}),
 		},
 		projectMember: {

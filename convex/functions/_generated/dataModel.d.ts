@@ -1139,6 +1139,72 @@ export type DataModel = {
     searchIndexes: {};
     vectorIndexes: {};
   };
+  projectTheme: {
+    document: {
+      draftDark?: null | any;
+      draftLight?: null | any;
+      draftRevision?: null | number;
+      draftUpdatedTime?: null | number;
+      presetId?:
+        | null
+        | "kino"
+        | "red"
+        | "orange"
+        | "golden"
+        | "forest"
+        | "teal"
+        | "purple"
+        | "sunset"
+        | "monochrome"
+        | "custom"
+        | "ocean";
+      projectId: Id<"project">;
+      publishedByProfileId?: null | Id<"profile">;
+      publishedDark?: null | any;
+      publishedLight?: null | any;
+      publishedPresetId?:
+        | null
+        | "kino"
+        | "red"
+        | "orange"
+        | "golden"
+        | "forest"
+        | "teal"
+        | "purple"
+        | "sunset"
+        | "monochrome"
+        | "custom"
+        | "ocean";
+      publishedRevision: number;
+      publishedTime?: null | number;
+      version: number;
+      _id: Id<"projectTheme">;
+      _creationTime: number;
+    };
+    fieldPaths:
+      | "_creationTime"
+      | "_id"
+      | "draftDark"
+      | "draftLight"
+      | "draftRevision"
+      | "draftUpdatedTime"
+      | "presetId"
+      | "projectId"
+      | "publishedByProfileId"
+      | "publishedDark"
+      | "publishedLight"
+      | "publishedPresetId"
+      | "publishedRevision"
+      | "publishedTime"
+      | "version";
+    indexes: {
+      by_id: ["_id"];
+      by_creation_time: ["_creationTime"];
+      by_projectId: ["projectId", "_creationTime"];
+    };
+    searchIndexes: {};
+    vectorIndexes: {};
+  };
   session: {
     document: {
       activeOrganizationId?: null | string;

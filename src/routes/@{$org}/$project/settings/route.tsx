@@ -6,7 +6,7 @@ import {
 	redirect,
 	useRouterState,
 } from '@tanstack/react-router';
-import { GitBranch, LayoutDashboard, Settings, TriangleAlert, Users } from 'lucide-react';
+import { GitBranch, LayoutDashboard, Palette, Settings, TriangleAlert, Users } from 'lucide-react';
 
 import { SidebarNavGroup, SidebarNavItem, SidebarNavSelect } from '@/components/sidebar-nav';
 import { EditingBar } from '@/components/site-nav/editing-bar';
@@ -65,6 +65,11 @@ function ProjectSettingsRoute() {
 			icon: LayoutDashboard,
 			label: 'Boards',
 			to: '/@{$org}/$project/settings/boards' as const,
+		},
+		{
+			icon: Palette,
+			label: 'Appearance',
+			to: '/@{$org}/$project/settings/appearance' as const,
 		},
 		{
 			icon: Users,

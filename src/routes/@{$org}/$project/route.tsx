@@ -19,6 +19,7 @@ export const Route = createFileRoute('/@{$org}/$project')({
 		if (!projectDetails?.project) {
 			throw notFound();
 		}
+		return projectDetails;
 	},
 	component: ProjectRoute,
 	notFoundComponent: () => (

@@ -58,6 +58,7 @@ import { Route as AtChar123orgChar125ProjectFeedbackBoardsIndexRouteImport } fro
 import { Route as AtChar123orgChar125ProjectFeedbackBoardsNewRouteImport } from './routes/@{$org}/$project/feedback/boards/new'
 import { Route as AtChar123orgChar125ProjectFeedbackNewIndexRouteImport } from './routes/@{$org}/$project/feedback/new/index'
 import { Route as AtChar123orgChar125ProjectIntegrationsGithubIndexRouteImport } from './routes/@{$org}/$project/integrations/github/index'
+import { Route as AtChar123orgChar125ProjectSettingsAppearanceIndexRouteImport } from './routes/@{$org}/$project/settings/appearance/index'
 import { Route as AtChar123orgChar125ProjectSettingsBoardsIndexRouteImport } from './routes/@{$org}/$project/settings/boards/index'
 import { Route as AtChar123orgChar125ProjectSettingsDangerIndexRouteImport } from './routes/@{$org}/$project/settings/danger/index'
 import { Route as AtChar123orgChar125ProjectSettingsGeneralIndexRouteImport } from './routes/@{$org}/$project/settings/general/index'
@@ -336,6 +337,12 @@ const AtChar123orgChar125ProjectIntegrationsGithubIndexRoute =
     path: '/integrations/github/',
     getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
   } as any)
+const AtChar123orgChar125ProjectSettingsAppearanceIndexRoute =
+  AtChar123orgChar125ProjectSettingsAppearanceIndexRouteImport.update({
+    id: '/appearance/',
+    path: '/appearance/',
+    getParentRoute: () => AtChar123orgChar125ProjectSettingsRouteRoute,
+  } as any)
 const AtChar123orgChar125ProjectSettingsBoardsIndexRoute =
   AtChar123orgChar125ProjectSettingsBoardsIndexRouteImport.update({
     id: '/boards/',
@@ -454,6 +461,7 @@ export interface FileRoutesByFullPath {
   '/@{$org}/$project/feedback/boards/': typeof AtChar123orgChar125ProjectFeedbackBoardsIndexRoute
   '/@{$org}/$project/feedback/new/': typeof AtChar123orgChar125ProjectFeedbackNewIndexRoute
   '/@{$org}/$project/integrations/github/': typeof AtChar123orgChar125ProjectIntegrationsGithubIndexRoute
+  '/@{$org}/$project/settings/appearance/': typeof AtChar123orgChar125ProjectSettingsAppearanceIndexRoute
   '/@{$org}/$project/settings/boards/': typeof AtChar123orgChar125ProjectSettingsBoardsIndexRoute
   '/@{$org}/$project/settings/danger/': typeof AtChar123orgChar125ProjectSettingsDangerIndexRoute
   '/@{$org}/$project/settings/general/': typeof AtChar123orgChar125ProjectSettingsGeneralIndexRoute
@@ -509,6 +517,7 @@ export interface FileRoutesByTo {
   '/@{$org}/$project/feedback/boards': typeof AtChar123orgChar125ProjectFeedbackBoardsIndexRoute
   '/@{$org}/$project/feedback/new': typeof AtChar123orgChar125ProjectFeedbackNewIndexRoute
   '/@{$org}/$project/integrations/github': typeof AtChar123orgChar125ProjectIntegrationsGithubIndexRoute
+  '/@{$org}/$project/settings/appearance': typeof AtChar123orgChar125ProjectSettingsAppearanceIndexRoute
   '/@{$org}/$project/settings/boards': typeof AtChar123orgChar125ProjectSettingsBoardsIndexRoute
   '/@{$org}/$project/settings/danger': typeof AtChar123orgChar125ProjectSettingsDangerIndexRoute
   '/@{$org}/$project/settings/general': typeof AtChar123orgChar125ProjectSettingsGeneralIndexRoute
@@ -572,6 +581,7 @@ export interface FileRoutesById {
   '/@{$org}/$project/feedback/boards/': typeof AtChar123orgChar125ProjectFeedbackBoardsIndexRoute
   '/@{$org}/$project/feedback/new/': typeof AtChar123orgChar125ProjectFeedbackNewIndexRoute
   '/@{$org}/$project/integrations/github/': typeof AtChar123orgChar125ProjectIntegrationsGithubIndexRoute
+  '/@{$org}/$project/settings/appearance/': typeof AtChar123orgChar125ProjectSettingsAppearanceIndexRoute
   '/@{$org}/$project/settings/boards/': typeof AtChar123orgChar125ProjectSettingsBoardsIndexRoute
   '/@{$org}/$project/settings/danger/': typeof AtChar123orgChar125ProjectSettingsDangerIndexRoute
   '/@{$org}/$project/settings/general/': typeof AtChar123orgChar125ProjectSettingsGeneralIndexRoute
@@ -636,6 +646,7 @@ export interface FileRouteTypes {
     | '/@{$org}/$project/feedback/boards/'
     | '/@{$org}/$project/feedback/new/'
     | '/@{$org}/$project/integrations/github/'
+    | '/@{$org}/$project/settings/appearance/'
     | '/@{$org}/$project/settings/boards/'
     | '/@{$org}/$project/settings/danger/'
     | '/@{$org}/$project/settings/general/'
@@ -691,6 +702,7 @@ export interface FileRouteTypes {
     | '/@{$org}/$project/feedback/boards'
     | '/@{$org}/$project/feedback/new'
     | '/@{$org}/$project/integrations/github'
+    | '/@{$org}/$project/settings/appearance'
     | '/@{$org}/$project/settings/boards'
     | '/@{$org}/$project/settings/danger'
     | '/@{$org}/$project/settings/general'
@@ -753,6 +765,7 @@ export interface FileRouteTypes {
     | '/@{$org}/$project/feedback/boards/'
     | '/@{$org}/$project/feedback/new/'
     | '/@{$org}/$project/integrations/github/'
+    | '/@{$org}/$project/settings/appearance/'
     | '/@{$org}/$project/settings/boards/'
     | '/@{$org}/$project/settings/danger/'
     | '/@{$org}/$project/settings/general/'
@@ -1128,6 +1141,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AtChar123orgChar125ProjectIntegrationsGithubIndexRouteImport
       parentRoute: typeof AtChar123orgChar125ProjectRouteRoute
     }
+    '/@{$org}/$project/settings/appearance/': {
+      id: '/@{$org}/$project/settings/appearance/'
+      path: '/appearance'
+      fullPath: '/@{$org}/$project/settings/appearance/'
+      preLoaderRoute: typeof AtChar123orgChar125ProjectSettingsAppearanceIndexRouteImport
+      parentRoute: typeof AtChar123orgChar125ProjectSettingsRouteRoute
+    }
     '/@{$org}/$project/settings/boards/': {
       id: '/@{$org}/$project/settings/boards/'
       path: '/boards'
@@ -1243,6 +1263,7 @@ const AtChar123orgChar125ProjectFeedbackRouteRouteWithChildren =
 
 interface AtChar123orgChar125ProjectSettingsRouteRouteChildren {
   AtChar123orgChar125ProjectSettingsIndexRoute: typeof AtChar123orgChar125ProjectSettingsIndexRoute
+  AtChar123orgChar125ProjectSettingsAppearanceIndexRoute: typeof AtChar123orgChar125ProjectSettingsAppearanceIndexRoute
   AtChar123orgChar125ProjectSettingsBoardsIndexRoute: typeof AtChar123orgChar125ProjectSettingsBoardsIndexRoute
   AtChar123orgChar125ProjectSettingsDangerIndexRoute: typeof AtChar123orgChar125ProjectSettingsDangerIndexRoute
   AtChar123orgChar125ProjectSettingsGeneralIndexRoute: typeof AtChar123orgChar125ProjectSettingsGeneralIndexRoute
@@ -1254,6 +1275,8 @@ const AtChar123orgChar125ProjectSettingsRouteRouteChildren: AtChar123orgChar125P
   {
     AtChar123orgChar125ProjectSettingsIndexRoute:
       AtChar123orgChar125ProjectSettingsIndexRoute,
+    AtChar123orgChar125ProjectSettingsAppearanceIndexRoute:
+      AtChar123orgChar125ProjectSettingsAppearanceIndexRoute,
     AtChar123orgChar125ProjectSettingsBoardsIndexRoute:
       AtChar123orgChar125ProjectSettingsBoardsIndexRoute,
     AtChar123orgChar125ProjectSettingsDangerIndexRoute:

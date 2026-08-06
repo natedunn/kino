@@ -3,6 +3,7 @@ import { Dialog as DialogPrimitive } from '@base-ui/react/dialog';
 import { XIcon } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { useProjectThemeStyle } from '@/lib/project-theme';
 import { cn } from '@/lib/utils';
 
 function Dialog({ ...props }: DialogPrimitive.Root.Props) {
@@ -21,14 +22,17 @@ function DialogClose({ ...props }: DialogPrimitive.Close.Props) {
 	return <DialogPrimitive.Close data-slot='dialog-close' {...props} />;
 }
 
-function DialogOverlay({ className, ...props }: DialogPrimitive.Backdrop.Props) {
+function DialogOverlay({ className, style, ...props }: DialogPrimitive.Backdrop.Props) {
+	const themeStyle = useProjectThemeStyle();
 	return (
 		<DialogPrimitive.Backdrop
 			data-slot='dialog-overlay'
+			data-project-theme={themeStyle ? '' : undefined}
 			className={cn(
 				'fixed inset-0 isolate z-50 bg-black/40 duration-100 data-closed:animate-out data-closed:fade-out-0 data-open:animate-in data-open:fade-in-0',
 				className
 			)}
+			style={{ ...themeStyle, ...style }}
 			{...props}
 		/>
 	);
@@ -39,20 +43,24 @@ function DialogContent({
 	children,
 	overlayClassName,
 	showCloseButton = true,
+	style,
 	...props
 }: DialogPrimitive.Popup.Props & {
 	overlayClassName?: string;
 	showCloseButton?: boolean;
 }) {
+	const themeStyle = useProjectThemeStyle();
 	return (
 		<DialogPortal>
 			<DialogOverlay className={overlayClassName} />
 			<DialogPrimitive.Popup
 				data-slot='dialog-content'
+				data-project-theme={themeStyle ? '' : undefined}
 				className={cn(
 					'fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl bg-popover p-4 text-sm text-popover-foreground ring-1 ring-foreground/10 duration-100 outline-none data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 sm:max-w-sm',
 					className
 				)}
+				style={{ ...themeStyle, ...style }}
 				{...props}
 			>
 				{children}
