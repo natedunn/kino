@@ -7,7 +7,7 @@ import { z } from 'zod';
 
 import { authMutation, authQuery, optionalAuthQuery } from '../lib/crpc';
 import {
-	canEditOrgRole,
+	canManageOrgRole,
 	ensureUniqueOrgSlug,
 	findOrganization,
 	getCurrentProfile,
@@ -310,7 +310,7 @@ export const findMyOrgs = authQuery.query(async ({ ctx }) => {
 	};
 });
 
-// Orgs where the caller can edit settings (role owner/admin/editor). Used by the
+// Orgs where the caller can manage settings (role owner/admin). Used by the
 // `/org/settings` selector. `listOrganizations` doesn't expose the caller's role,
 // so we read memberships directly. Security is still enforced per-org by
 // `getDetails`/`verifyOrgAccess`; this is only the selector's convenience filter.
@@ -322,7 +322,7 @@ export const findMyEditableOrgs = authQuery.query(async ({ ctx }) => {
 		limit: LIMITS.ADMIN.MAX_ORGS,
 	});
 
-	const editable = memberships.filter((m) => canEditOrgRole(m.role));
+	const editable = memberships.filter((m) => canManageOrgRole(m.role));
 
 	// One indexed lookup per editable org, run in parallel and capped by the
 	// membership limit above.
@@ -335,7 +335,7 @@ export const findMyEditableOrgs = authQuery.query(async ({ ctx }) => {
 				id: resolved.id,
 				logo: resolved.logo,
 				name: resolved.name,
-				role: m.role as 'owner' | 'admin' | 'editor',
+				role: m.role as 'owner' | 'admin',
 				slug: resolved.slug,
 			};
 		})

@@ -15,7 +15,7 @@ import { getInitial } from '@/lib/utils/get-initial';
 type SelectorOrg = {
 	logo?: string | null;
 	name: string;
-	role: 'owner' | 'admin' | 'editor';
+	role: 'owner' | 'admin';
 	slug: string;
 };
 
@@ -38,7 +38,7 @@ function OrgAvatar({ org, className }: { org: SelectorOrg; className?: string })
 
 /**
  * Persistent org switcher rendered above the settings sidebar nav. Lists only
- * orgs the user can edit and reports the picked slug back to the shell.
+ * organizations the user can manage and reports the picked slug back to the shell.
  */
 export function OrgSettingsSelector({
 	activeSlug,
@@ -70,7 +70,7 @@ export function OrgSettingsSelector({
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align='start' className='w-(--anchor-width)'>
 				<DropdownMenuLabel className='text-xs text-muted-foreground'>
-					Organizations you can edit
+					Organizations you can manage
 				</DropdownMenuLabel>
 				<DropdownMenuSeparator />
 				{orgs.map((org) => {

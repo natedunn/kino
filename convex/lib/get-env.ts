@@ -263,6 +263,28 @@ export function isTrustedOrigin(origin: string | undefined) {
 	});
 }
 
+/**
+ * Resolve the origin to embed in outbound links (e.g. invitation emails).
+ * Convex mutations never see the browser's HTTP origin, so callers forward the
+ * client-reported origin; it is honored only when it matches the trusted-origin
+ * set (dev loopback/portless, preview, prod), otherwise we fall back to
+ * SITE_URL. The validation is what keeps a forged origin from turning invite
+ * emails into phishing links.
+ */
+export function resolveTrustedSiteUrl(candidate: string | null | undefined) {
+	if (candidate) {
+		const normalized = normalizeOrigin(candidate.trim());
+		if (isTrustedOrigin(normalized)) return normalized;
+	}
+	return getEnv().SITE_URL;
+}
+
+/** Bento email is usable only when the full credential set is configured. */
+export function isEmailConfigured() {
+	const bento = getBentoEnv();
+	return Boolean(bento.publishableKey && bento.secretKey && bento.siteUuid && bento.from);
+}
+
 export function getTrustedForwardedAuthOrigin(request: Request | undefined) {
 	if (!request) return null;
 

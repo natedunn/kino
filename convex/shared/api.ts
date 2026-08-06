@@ -88,12 +88,17 @@ export const api = {
     update: createApiLeaf<"mutation", typeof import("../functions/org").update>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/org").update>("org:update"), { auth: "required", type: "mutation" }),
   },
   orgMember: {
+    acceptInvitation: createApiLeaf<"mutation", typeof import("../functions/orgMember").acceptInvitation>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/orgMember").acceptInvitation>("orgMember:acceptInvitation"), { auth: "required", type: "mutation" }),
     cancelInvitation: createApiLeaf<"mutation", typeof import("../functions/orgMember").cancelInvitation>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/orgMember").cancelInvitation>("orgMember:cancelInvitation"), { auth: "required", type: "mutation" }),
+    getInvitationState: createApiLeaf<"query", typeof import("../functions/orgMember").getInvitationState>(createGeneratedFunctionReference<"query", "public", typeof import("../functions/orgMember").getInvitationState>("orgMember:getInvitationState"), { auth: "required", type: "query" }),
+    getModeratorProjectAccess: createApiLeaf<"query", typeof import("../functions/orgMember").getModeratorProjectAccess>(createGeneratedFunctionReference<"query", "public", typeof import("../functions/orgMember").getModeratorProjectAccess>("orgMember:getModeratorProjectAccess"), { auth: "required", type: "query" }),
     inviteMember: createApiLeaf<"mutation", typeof import("../functions/orgMember").inviteMember>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/orgMember").inviteMember>("orgMember:inviteMember"), { auth: "required", type: "mutation" }),
     leaveOrganization: createApiLeaf<"mutation", typeof import("../functions/orgMember").leaveOrganization>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/orgMember").leaveOrganization>("orgMember:leaveOrganization"), { auth: "required", type: "mutation" }),
     listMembers: createApiLeaf<"query", typeof import("../functions/orgMember").listMembers>(createGeneratedFunctionReference<"query", "public", typeof import("../functions/orgMember").listMembers>("orgMember:listMembers"), { auth: "required", type: "query" }),
     listPendingInvitations: createApiLeaf<"query", typeof import("../functions/orgMember").listPendingInvitations>(createGeneratedFunctionReference<"query", "public", typeof import("../functions/orgMember").listPendingInvitations>("orgMember:listPendingInvitations"), { auth: "required", type: "query" }),
+    rejectInvitation: createApiLeaf<"mutation", typeof import("../functions/orgMember").rejectInvitation>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/orgMember").rejectInvitation>("orgMember:rejectInvitation"), { auth: "required", type: "mutation" }),
     removeMember: createApiLeaf<"mutation", typeof import("../functions/orgMember").removeMember>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/orgMember").removeMember>("orgMember:removeMember"), { auth: "required", type: "mutation" }),
+    setModeratorProjectAccess: createApiLeaf<"mutation", typeof import("../functions/orgMember").setModeratorProjectAccess>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/orgMember").setModeratorProjectAccess>("orgMember:setModeratorProjectAccess"), { auth: "required", type: "mutation" }),
     updateMemberRole: createApiLeaf<"mutation", typeof import("../functions/orgMember").updateMemberRole>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/orgMember").updateMemberRole>("orgMember:updateMemberRole"), { auth: "required", type: "mutation" }),
   },
   profile: {
@@ -110,6 +115,10 @@ export const api = {
     getManyByOrg: createApiLeaf<"query", typeof import("../functions/project").getManyByOrg>(createGeneratedFunctionReference<"query", "public", typeof import("../functions/project").getManyByOrg>("project:getManyByOrg"), { auth: "optional", type: "query" }),
     remove: createApiLeaf<"mutation", typeof import("../functions/project").remove>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/project").remove>("project:remove"), { auth: "required", type: "mutation" }),
     update: createApiLeaf<"mutation", typeof import("../functions/project").update>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/project").update>("project:update"), { auth: "required", type: "mutation" }),
+  },
+  projectAccess: {
+    getManagementState: createApiLeaf<"query", typeof import("../functions/projectAccess").getManagementState>(createGeneratedFunctionReference<"query", "public", typeof import("../functions/projectAccess").getManagementState>("projectAccess:getManagementState"), { auth: "required", type: "query" }),
+    setModeratorAccess: createApiLeaf<"mutation", typeof import("../functions/projectAccess").setModeratorAccess>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/projectAccess").setModeratorAccess>("projectAccess:setModeratorAccess"), { auth: "required", type: "mutation" }),
   },
   projectExternal: {
     importGithubUrls: createApiLeaf<"action", typeof import("../functions/projectExternal").importGithubUrls>(createGeneratedFunctionReference<"action", "public", typeof import("../functions/projectExternal").importGithubUrls>("projectExternal:importGithubUrls"), { auth: "required", type: "action" }),

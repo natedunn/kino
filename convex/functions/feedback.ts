@@ -11,7 +11,7 @@ import {
 	getCurrentProfileOrThrow,
 	getDoc,
 	getProjectViewAccess,
-	isProjectEditorRole,
+	isProjectTeamMember,
 	toPublicDoc,
 	verifyProjectAccess,
 } from '../lib/kino';
@@ -150,7 +150,7 @@ export const updateStatus = authMutation
 			input.id,
 			ctx.userId
 		);
-		if (!isOwner && !permissions.canEdit) {
+		if (!isOwner && !permissions.canManageContent) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
 				message: 'You do not have permission to update this feedback status',
@@ -185,7 +185,7 @@ export const updatePriority = authMutation
 			input.id,
 			ctx.userId
 		);
-		// Priority is editor/admin-only (unlike status, which the author may also change).
+		// Priority is moderator/admin-only (unlike status, which the author may also change).
 		assertCanAdminFeedback(permissions);
 
 		const oldPriority = feedback.priority ?? 'none';
@@ -220,7 +220,7 @@ export const updateTitle = authMutation
 			input.id,
 			ctx.userId
 		);
-		if (!isOwner && !permissions.canEdit) {
+		if (!isOwner && !permissions.canManageContent) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
 				message: 'You do not have permission to update this feedback title',
@@ -264,7 +264,7 @@ export const updateBoard = authMutation
 			input.id,
 			ctx.userId
 		);
-		if (!isOwner && !permissions.canEdit) {
+		if (!isOwner && !permissions.canManageContent) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
 				message: 'You do not have permission to update this feedback board',
@@ -312,8 +312,8 @@ export const setAnswerComment = authMutation
 			ctx.userId
 		);
 		// Match the other feedback mutations: the author or anyone with edit
-		// access (org:admin, org:editor, system:admin) can mark the answer.
-		const canMarkAnswer = isOwner || permissions.canEdit;
+		// Project-content managers (assigned moderators and admins) can mark the answer.
+		const canMarkAnswer = isOwner || permissions.canManageContent;
 		if (!canMarkAnswer) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
@@ -381,7 +381,7 @@ export const updateAssigned = authMutation
 			input.feedbackId,
 			ctx.userId
 		);
-		if (!permissions.canEdit) {
+		if (!permissions.canManageContent) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
 				message: 'You do not have permission to assign feedback',
@@ -390,23 +390,17 @@ export const updateAssigned = authMutation
 
 		if (input.assignedProfileId !== null) {
 			const assignedProfileId = asId<'profile'>(input.assignedProfileId);
-			const assigneeProjectMember = await ctx.db
-				.query('projectMember')
-				.withIndex('by_profileId_projectId', (q: any) =>
-					q.eq('profileId', assignedProfileId).eq('projectId', feedback.projectId)
-				)
-				.unique();
-
-			if (!assigneeProjectMember) {
+			const assignee = await getDoc<'profile'>(ctx, assignedProfileId);
+			if (
+				!assignee ||
+				!(await isProjectTeamMember(ctx, {
+					profile: assignee,
+					projectId: feedback.projectId,
+				}))
+			) {
 				throw new CRPCError({
 					code: 'BAD_REQUEST',
-					message: 'Assignee must be a project member',
-				});
-			}
-			if (!isProjectEditorRole(assigneeProjectMember.role)) {
-				throw new CRPCError({
-					code: 'BAD_REQUEST',
-					message: 'Assignee must have edit permissions',
+					message: 'Assignee must be an admin or assigned moderator',
 				});
 			}
 		}
@@ -455,7 +449,7 @@ export const updateTarget = authMutation
 			input.feedbackId,
 			ctx.userId
 		);
-		if (!permissions.canEdit) {
+		if (!permissions.canManageContent) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
 				message: 'You do not have permission to update this feedback target',
@@ -607,7 +601,8 @@ export const getDetailInteractive = optionalAuthQuery
 
 		return {
 			assignedProfile: await toProfileSummary(assignedProfile),
-			canMarkAnswer: feedback.authorProfileId === currentProfile?._id || access.permissions.canEdit,
+			canMarkAnswer:
+				feedback.authorProfileId === currentProfile?._id || access.permissions.canManageContent,
 			currentProfile: await toProfileSummary(currentProfile),
 			hasUpvoted: !!existingUpvote,
 		};

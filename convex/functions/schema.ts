@@ -20,6 +20,9 @@ import {
 import { normalizeSlug, VALIDATION_LIMITS } from '../lib/validation';
 import { targetGranularities } from '../shared/target';
 
+// Compatibility-deploy shape: `system:editor` remains schema-valid until the
+// downgrade migration rewrites existing profiles. Authorization treats it as
+// `user` immediately.
 const PROFILE_ROLES = ['system:admin', 'system:editor', 'user'] as const;
 const PROJECT_VISIBILITIES = ['public', 'private', 'archived'] as const;
 const PROJECT_THEME_PRESETS = [
@@ -37,10 +40,9 @@ const PROJECT_THEME_PRESETS = [
 // `ocean` and the draft columns below are accepted only while legacy rows are
 // cleaned up. They are not exposed by the current theme editor or write API.
 const STORED_PROJECT_THEME_PRESETS = [...PROJECT_THEME_PRESETS, 'ocean'] as const;
-// Project membership is purely DERIVED from org membership (see
-// ORG_ROLE_TO_PROJECT_ROLE). owner/admin -> org:admin, editor -> org:editor,
-// member -> member. The old direct "admin"/"editor" values were never written
-// by any code path and have been removed (verified: no rows used them).
+// Compatibility-deploy shape: new direct project members omit `role`; legacy
+// values remain accepted until the cleanup migration removes org-derived rows
+// and unsets `member`.
 const PROJECT_MEMBER_ROLES = ['member', 'org:admin', 'org:editor'] as const;
 const FEEDBACK_STATUSES = ['open', 'in-progress', 'closed', 'completed', 'paused'] as const;
 const FEEDBACK_PRIORITIES = ['none', 'low', 'medium', 'high', 'urgent'] as const;
@@ -90,184 +92,28 @@ const urlField = arrayOf(
 // shape is enforced by the mutations + `urlListSchema` instead.
 const projectUrlField = arrayOf(json());
 
-// Org roles are owner/admin/editor only (no plain org "member"). They cascade
-// to projects as org:admin/org:editor. The project "member" role is NEVER
-// produced here — it is exclusively a DIRECT per-project grant (see
-// projectMember.inviteProjectMember), so org-derived and direct rows can't be
-// conflated.
-const ORG_ROLE_TO_PROJECT_ROLE = {
-	owner: 'org:admin',
-	admin: 'org:admin',
-	editor: 'org:editor',
-} as const;
-
-type SupportedOrgRole = keyof typeof ORG_ROLE_TO_PROJECT_ROLE;
-
-function isSupportedOrgRole(role: string | null | undefined): role is SupportedOrgRole {
-	return role === 'owner' || role === 'admin' || role === 'editor';
-}
-
-// The `.collect()`s in this file's sync helpers are intentionally unbounded:
-// every query is scoped to a single organization (its projects) or a single
-// (profile, project) pair, so the result set is bounded by one org's size and
-// must be processed in full to keep `projectMember` rows consistent. A `.take()`
-// would silently skip memberships and leave them stale/orphaned.
-async function syncProjectMembershipsForOrgMember(
-	ctx: any,
-	args: {
-		organizationId: string;
-		role: string | null | undefined;
-		userId: string;
-	}
-) {
-	const [organization, profile] = await Promise.all([
-		ctx.db.get('organization', args.organizationId),
-		ctx.db
-			.query('profile')
-			.withIndex('by_userId', (q: any) => q.eq('userId', args.userId))
-			.unique(),
-	]);
-
-	if (!organization || !profile) {
-		return;
-	}
-
-	if (!isSupportedOrgRole(args.role)) {
-		const orgProjects = await ctx.db
-			.query('project')
-			.withIndex('by_orgSlug', (q: any) => q.eq('orgSlug', organization.slug))
-			.collect();
-
-		const projectMemberships = await Promise.all(
-			orgProjects.map((project: any) =>
-				ctx.db
-					.query('projectMember')
-					.withIndex('by_profileId_projectId', (q: any) =>
-						q.eq('profileId', profile._id).eq('projectId', project._id)
-					)
-					.collect()
-			)
-		);
-
-		await Promise.all(
-			projectMemberships
-				.flat()
-				.map((membership: any) => ctx.db.delete('projectMember', membership._id))
-		);
-		return;
-	}
-
-	const projectRole = ORG_ROLE_TO_PROJECT_ROLE[args.role];
-	const projects = await ctx.db
-		.query('project')
-		.withIndex('by_orgSlug', (q: any) => q.eq('orgSlug', organization.slug))
-		.collect();
-
+// Moderator access is intentionally independent from direct private-project
+// membership. A member-role change only removes grants; it never creates or
+// restores them.
+async function deleteModeratorAccessForMember(ctx: any, memberId: string) {
+	const assignments = await ctx.db
+		.query('projectModeratorAccess')
+		.withIndex('by_memberId_and_projectId', (q: any) => q.eq('memberId', memberId))
+		.take(200);
 	await Promise.all(
-		projects.map(async (project: any) => {
-			const memberships = await ctx.db
-				.query('projectMember')
-				.withIndex('by_profileId_projectId', (q: any) =>
-					q.eq('profileId', profile._id).eq('projectId', project._id)
-				)
-				.collect();
-
-			if (memberships.length > 0) {
-				await ctx.db.patch('projectMember', memberships[0]._id, {
-					projectSlug: project.slug,
-					projectVisibility: project.visibility,
-					role: projectRole,
-					updatedTime: Date.now(),
-				});
-				await Promise.all(
-					memberships
-						.slice(1)
-						.map((membership: any) => ctx.db.delete('projectMember', membership._id))
-				);
-				return;
-			}
-
-			await ctx.orm.insert(projectMemberTable).values({
-				profileId: profile._id,
-				projectId: project._id,
-				projectSlug: project.slug,
-				projectVisibility: project.visibility,
-				role: projectRole,
-			});
-		})
+		assignments.map((assignment: any) => ctx.db.delete('projectModeratorAccess', assignment._id))
 	);
 }
 
-async function syncProjectMembershipsForProject(
-	ctx: any,
-	project: {
-		_id: string;
-		orgSlug: string;
-		slug: string;
-		visibility: (typeof PROJECT_VISIBILITIES)[number];
-	}
-) {
-	const organization = await ctx.db
-		.query('organization')
-		.withIndex('slug', (q: any) => q.eq('slug', project.orgSlug))
-		.unique();
-
-	if (!organization) {
-		return;
-	}
-
-	const members = await ctx.db
-		.query('member')
-		.withIndex('organizationId', (q: any) => q.eq('organizationId', organization._id))
-		.collect();
-
+async function deletePendingModeratorAccessForInvitation(ctx: any, invitationId: string) {
+	const assignments = await ctx.db
+		.query('pendingModeratorProjectAccess')
+		.withIndex('by_invitationId_and_projectId', (q: any) => q.eq('invitationId', invitationId))
+		.take(200);
 	await Promise.all(
-		members.map(async (member: any) => {
-			if (!isSupportedOrgRole(member.role)) {
-				return;
-			}
-
-			const profile = await ctx.db
-				.query('profile')
-				.withIndex('by_userId', (q: any) => q.eq('userId', member.userId))
-				.unique();
-
-			if (!profile) {
-				return;
-			}
-
-			const existingMemberships = await ctx.db
-				.query('projectMember')
-				.withIndex('by_profileId_projectId', (q: any) =>
-					q.eq('profileId', profile._id).eq('projectId', project._id)
-				)
-				.collect();
-
-			const role = ORG_ROLE_TO_PROJECT_ROLE[member.role as SupportedOrgRole];
-
-			if (existingMemberships.length > 0) {
-				await ctx.db.patch('projectMember', existingMemberships[0]._id, {
-					projectSlug: project.slug,
-					projectVisibility: project.visibility,
-					role,
-					updatedTime: Date.now(),
-				});
-				await Promise.all(
-					existingMemberships
-						.slice(1)
-						.map((membership: any) => ctx.db.delete('projectMember', membership._id))
-				);
-				return;
-			}
-
-			await ctx.orm.insert(projectMemberTable).values({
-				profileId: profile._id,
-				projectId: project._id,
-				projectSlug: project.slug,
-				projectVisibility: project.visibility,
-				role,
-			});
-		})
+		assignments.map((assignment: any) =>
+			ctx.db.delete('pendingModeratorProjectAccess', assignment._id)
+		)
 	);
 }
 
@@ -483,7 +329,9 @@ export const projectMemberTable = convexTable(
 		projectId: id('project')
 			.notNull()
 			.references(() => projectTable.id, { onDelete: 'cascade' }),
-		role: textEnum(PROJECT_MEMBER_ROLES).notNull(),
+		// Deprecated compatibility field. New rows omit it; migration removes
+		// org-derived rows and unsets `member` before the narrow deploy.
+		role: textEnum(PROJECT_MEMBER_ROLES),
 		projectVisibility: textEnum(PROJECT_VISIBILITIES).notNull(),
 		projectSlug: text().notNull(),
 	},
@@ -519,6 +367,51 @@ export const projectThemeTable = convexTable(
 		}),
 	},
 	(table) => [index('by_projectId').on(table.projectId)]
+);
+
+export const projectModeratorAccessTable = convexTable(
+	'projectModeratorAccess',
+	{
+		organizationId: text()
+			.notNull()
+			.references(() => organizationTable.id, { onDelete: 'cascade' }),
+		memberId: text()
+			.notNull()
+			.references(() => memberTable.id, { onDelete: 'cascade' }),
+		projectId: id('project')
+			.notNull()
+			.references(() => projectTable.id, { onDelete: 'cascade' }),
+		updatedTime: integer().notNull(),
+	},
+	(table) => [
+		index('by_memberId_and_projectId').on(table.memberId, table.projectId),
+		index('by_projectId_and_memberId').on(table.projectId, table.memberId),
+		index('by_organizationId_and_memberId').on(table.organizationId, table.memberId),
+		index('by_organizationId_and_projectId').on(table.organizationId, table.projectId),
+	]
+);
+
+export const pendingModeratorProjectAccessTable = convexTable(
+	'pendingModeratorProjectAccess',
+	{
+		invitationId: text()
+			.notNull()
+			.references(() => invitationTable.id, { onDelete: 'cascade' }),
+		organizationId: text()
+			.notNull()
+			.references(() => organizationTable.id, { onDelete: 'cascade' }),
+		projectId: id('project')
+			.notNull()
+			.references(() => projectTable.id, { onDelete: 'cascade' }),
+		updatedTime: integer().notNull(),
+	},
+	(table) => [
+		index('by_invitationId_and_projectId').on(table.invitationId, table.projectId),
+		index('by_organizationId_and_projectId').on(table.organizationId, table.projectId),
+		// Required by kitcn's project FK cascade; the requested organization
+		// composite cannot service a projectId-only incoming-FK lookup.
+		index('by_projectId_and_invitationId').on(table.projectId, table.invitationId),
+	]
 );
 
 export const orgStorageUsageTable = convexTable(
@@ -609,7 +502,7 @@ export const feedbackTable = convexTable(
 			onDelete: 'set null',
 		}),
 		status: textEnum(FEEDBACK_STATUSES).notNull(),
-		// Nullable: existing rows have no priority (read as 'none'); editors set it
+		// Nullable: existing rows have no priority (read as 'none'); moderators set it
 		// explicitly. Will gain a `by_projectId_priority` (staged) index when priority
 		// filtering lands elsewhere.
 		priority: textEnum(FEEDBACK_PRIORITIES),
@@ -729,8 +622,8 @@ export const updateTable = convexTable(
 		index('by_projectId_updatedTime').on(table.projectId, table.updatedTime),
 		index('by_projectId_status_publishedAt').on(table.projectId, table.status, table.publishedAt),
 		// Supports the public updates list when filtered by category. Ordered so a
-		// category-scoped read can still page by publishedAt (non-editor, published
-		// only) or by status then publishedAt (editor, all statuses).
+		// category-scoped read can still page by publishedAt (visitor, published
+		// only) or by status then publishedAt (content manager, all statuses).
 		index('by_projectId_category_status_publishedAt').on(
 			table.projectId,
 			table.category,
@@ -989,6 +882,8 @@ export const tables = {
 	profile: profileTable,
 	project: projectTable,
 	projectMember: projectMemberTable,
+	projectModeratorAccess: projectModeratorAccessTable,
+	pendingModeratorProjectAccess: pendingModeratorProjectAccessTable,
 	projectTheme: projectThemeTable,
 	orgStorageUsage: orgStorageUsageTable,
 	feedback: feedbackTable,
@@ -1053,6 +948,10 @@ export default defineSchema(tables)
 				from: r.organization.id,
 				to: r.invitation.organizationId,
 			}),
+			moderatorProjectAccess: r.many.projectModeratorAccess({
+				from: r.organization.id,
+				to: r.projectModeratorAccess.organizationId,
+			}),
 			githubInstallations: r.many.githubInstallation({
 				from: r.organization.id,
 				to: r.githubInstallation.orgId,
@@ -1071,6 +970,10 @@ export default defineSchema(tables)
 				from: r.member.userId,
 				to: r.user.id,
 			}),
+			projectAccess: r.many.projectModeratorAccess({
+				from: r.member.id,
+				to: r.projectModeratorAccess.memberId,
+			}),
 		},
 		invitation: {
 			organization: r.one.organization({
@@ -1080,6 +983,10 @@ export default defineSchema(tables)
 			inviter: r.one.user({
 				from: r.invitation.inviterId,
 				to: r.user.id,
+			}),
+			pendingProjectAccess: r.many.pendingModeratorProjectAccess({
+				from: r.invitation.id,
+				to: r.pendingModeratorProjectAccess.invitationId,
 			}),
 		},
 		profile: {
@@ -1104,6 +1011,14 @@ export default defineSchema(tables)
 			memberships: r.many.projectMember({
 				from: r.project.id,
 				to: r.projectMember.projectId,
+			}),
+			moderatorAccess: r.many.projectModeratorAccess({
+				from: r.project.id,
+				to: r.projectModeratorAccess.projectId,
+			}),
+			pendingModeratorAccess: r.many.pendingModeratorProjectAccess({
+				from: r.project.id,
+				to: r.pendingModeratorProjectAccess.projectId,
 			}),
 			githubRepositoryConnections: r.many.githubRepositoryConnection({
 				from: r.project.id,
@@ -1131,6 +1046,34 @@ export default defineSchema(tables)
 			}),
 			project: r.one.project({
 				from: r.projectMember.projectId,
+				to: r.project.id,
+			}),
+		},
+		projectModeratorAccess: {
+			member: r.one.member({
+				from: r.projectModeratorAccess.memberId,
+				to: r.member.id,
+			}),
+			organization: r.one.organization({
+				from: r.projectModeratorAccess.organizationId,
+				to: r.organization.id,
+			}),
+			project: r.one.project({
+				from: r.projectModeratorAccess.projectId,
+				to: r.project.id,
+			}),
+		},
+		pendingModeratorProjectAccess: {
+			invitation: r.one.invitation({
+				from: r.pendingModeratorProjectAccess.invitationId,
+				to: r.invitation.id,
+			}),
+			organization: r.one.organization({
+				from: r.pendingModeratorProjectAccess.organizationId,
+				to: r.organization.id,
+			}),
+			project: r.one.project({
+				from: r.pendingModeratorProjectAccess.projectId,
 				to: r.project.id,
 			}),
 		},
@@ -1204,34 +1147,32 @@ export default defineSchema(tables)
 		},
 	}))
 	.triggers({
+		invitation: {
+			change: async (change, ctx) => {
+				if (change.operation === 'delete') {
+					await deletePendingModeratorAccessForInvitation(ctx, change.oldDoc.id);
+					return;
+				}
+				if (change.newDoc.status !== 'pending') {
+					await deletePendingModeratorAccessForInvitation(ctx, change.newDoc.id);
+				}
+			},
+		},
 		member: {
 			change: async (change, ctx) => {
 				if (change.operation === 'delete') {
-					await syncProjectMembershipsForOrgMember(ctx, {
-						organizationId: change.oldDoc.organizationId,
-						role: null,
-						userId: change.oldDoc.userId,
-					});
+					await deleteModeratorAccessForMember(ctx, change.oldDoc.id);
 					return;
 				}
 
-				await syncProjectMembershipsForOrgMember(ctx, {
-					organizationId: change.newDoc.organizationId,
-					role: change.newDoc.role,
-					userId: change.newDoc.userId,
-				});
+				if (change.newDoc.role !== 'moderator') {
+					await deleteModeratorAccessForMember(ctx, change.newDoc.id);
+				}
 			},
 		},
 		project: {
 			change: async (change, ctx) => {
 				if (change.operation === 'insert') {
-					await syncProjectMembershipsForProject(ctx, {
-						_id: change.newDoc.id,
-						orgSlug: change.newDoc.orgSlug,
-						slug: change.newDoc.slug,
-						visibility: change.newDoc.visibility,
-					});
-
 					const boards = ['Bugs', 'Feature Requests', 'Improvements'] as const;
 					await Promise.all(
 						boards.map((name) =>

@@ -120,7 +120,7 @@ export const create = authMutation
 
 export const update = authMutation
 	// NOTE: `orgSlug` is intentionally NOT updatable here. Allowing it would let
-	// an editor re-parent a project into another org's slug namespace without any
+	// a moderator re-parent a project into another org's slug namespace without any
 	// permission check on the destination org. A project's org is fixed at
 	// creation; the org slug only ever changes via the org-rename trigger, which
 	// re-denormalizes every project's `orgSlug` server-side.
@@ -143,9 +143,11 @@ export const update = authMutation
 			throw new CRPCError({ code: 'NOT_FOUND', message: 'Project not found' });
 		}
 
-		// Archiving/un-archiving is an admin-only action (org:admin or system:admin).
+		// Archiving/un-archiving is an organization-admin or system-admin action.
 		const isAdmin =
-			access.profile?.role === 'system:admin' || access.projectMember?.role === 'org:admin';
+			access.profile?.role === 'system:admin' ||
+			access.organizationMember?.role === 'owner' ||
+			access.organizationMember?.role === 'admin';
 
 		if (access.isArchived) {
 			// The project is frozen. The only permitted change is an admin lifting
@@ -161,7 +163,7 @@ export const update = authMutation
 				});
 			}
 		} else {
-			if (!access.permissions.canEdit) {
+			if (!access.permissions.canEditSettings) {
 				throw new CRPCError({
 					code: 'FORBIDDEN',
 					message: 'User does not have permission',
@@ -260,10 +262,9 @@ export const getManyByOrg = optionalAuthQuery
 			? await verifyOrgAccess(ctx, { slug: input.orgSlug, userId: ctx.userId })
 			: null;
 
-		// Org managers (admin/editor/owner) and system roles see every project.
-		// A public org's canView does NOT imply private-project visibility, so we
-		// gate private/archived on canEdit, not canView.
-		if (access?.permissions.canEdit) {
+		// Owners/admins and system admins see every project. Moderators are
+		// handled below through explicit project assignments.
+		if (access?.permissions.canCreate) {
 			const [privateProjects, archivedProjects] = await Promise.all([
 				ctx.orm.query.project.findMany({
 					where: { orgSlug: input.orgSlug, visibility: 'private' },
@@ -297,20 +298,41 @@ export const getManyByOrg = optionalAuthQuery
 			where: { profileId: asId<'profile'>(profile._id) },
 			limit: 500,
 		});
-		const memberProjectIds = memberships.map((membership: any) =>
-			asId<'project'>(membership.projectId)
+		const memberProjectIds = memberships
+			.filter(
+				(membership: any) =>
+					membership.role === undefined || membership.role === null || membership.role === 'member'
+			)
+			.map((membership: any) => asId<'project'>(membership.projectId));
+
+		const moderatorAssignments =
+			access?.member?.role === 'moderator'
+				? await ctx.db
+						.query('projectModeratorAccess')
+						.withIndex('by_organizationId_and_memberId', (q) =>
+							q.eq('organizationId', access.organization?.id ?? '').eq('memberId', access.member.id)
+						)
+						.take(500)
+				: [];
+		const assignedProjectIds = moderatorAssignments.map((assignment: any) =>
+			asId<'project'>(assignment.projectId)
 		);
 
 		// Load the member's projects directly by id (point lookups) so visibility
 		// doesn't depend on a recency window of the org's private projects.
 		let memberPrivateProjects: typeof publicProjects = [];
-		if (memberProjectIds.length > 0) {
+		const accessibleProjectIds = [...new Set([...memberProjectIds, ...assignedProjectIds])];
+		if (accessibleProjectIds.length > 0) {
 			const memberProjects = await ctx.orm.query.project.findMany({
-				where: { id: { in: memberProjectIds } },
+				where: { id: { in: accessibleProjectIds } },
 				limit: 500,
 			});
 			memberPrivateProjects = memberProjects.filter(
-				(project: any) => project.orgSlug === input.orgSlug && project.visibility === 'private'
+				(project: any) =>
+					project.orgSlug === input.orgSlug &&
+					(project.visibility === 'private' ||
+						(project.visibility === 'archived' &&
+							assignedProjectIds.includes(asId<'project'>(project.id))))
 			);
 		}
 
@@ -370,7 +392,7 @@ export const getDetails = optionalAuthQuery
 	});
 
 // Lightweight, client-facing check powering the "import from GitHub" notice:
-// does this project have a connected repo the current editor could import from?
+// Does this project have a connected repo the current content manager could import from?
 export const getGithubImportInfo = authQuery
 	.input(z.object({ id: idSchema }))
 	.query(async ({ ctx, input }) => {
@@ -378,7 +400,7 @@ export const getGithubImportInfo = authQuery
 			id: input.id,
 			userId: ctx.userId,
 		});
-		if (!access.project || !access.permissions.canEdit) {
+		if (!access.project || !access.permissions.canEditSettings) {
 			return { connected: false, repoFullName: null };
 		}
 		const connection = await getActiveRepoConnection(ctx, access.project._id);
@@ -400,7 +422,7 @@ export const prepareGithubUrlImport = privateQuery
 		if (!access.project) {
 			throw new CRPCError({ code: 'NOT_FOUND', message: 'Project not found' });
 		}
-		if (!access.permissions.canEdit) {
+		if (!access.permissions.canEditSettings) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
 				message: 'User does not have permission',

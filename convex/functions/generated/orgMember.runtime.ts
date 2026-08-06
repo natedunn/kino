@@ -14,12 +14,17 @@ import type { ActionCtx, MutationCtx, QueryCtx } from './server';
 import type { OrmTriggerContext } from 'kitcn/orm';
 
 const procedureRegistry = {
+  "acceptInvitation": ["mutation", typedProcedureResolver(createGeneratedFunctionReference<"mutation", "public", typeof import("../orgMember").acceptInvitation>("orgMember:acceptInvitation"), () => (require("../orgMember") as Record<string, unknown>)["acceptInvitation"])],
   "cancelInvitation": ["mutation", typedProcedureResolver(createGeneratedFunctionReference<"mutation", "public", typeof import("../orgMember").cancelInvitation>("orgMember:cancelInvitation"), () => (require("../orgMember") as Record<string, unknown>)["cancelInvitation"])],
+  "getInvitationState": ["query", typedProcedureResolver(createGeneratedFunctionReference<"query", "public", typeof import("../orgMember").getInvitationState>("orgMember:getInvitationState"), () => (require("../orgMember") as Record<string, unknown>)["getInvitationState"])],
+  "getModeratorProjectAccess": ["query", typedProcedureResolver(createGeneratedFunctionReference<"query", "public", typeof import("../orgMember").getModeratorProjectAccess>("orgMember:getModeratorProjectAccess"), () => (require("../orgMember") as Record<string, unknown>)["getModeratorProjectAccess"])],
   "inviteMember": ["mutation", typedProcedureResolver(createGeneratedFunctionReference<"mutation", "public", typeof import("../orgMember").inviteMember>("orgMember:inviteMember"), () => (require("../orgMember") as Record<string, unknown>)["inviteMember"])],
   "leaveOrganization": ["mutation", typedProcedureResolver(createGeneratedFunctionReference<"mutation", "public", typeof import("../orgMember").leaveOrganization>("orgMember:leaveOrganization"), () => (require("../orgMember") as Record<string, unknown>)["leaveOrganization"])],
   "listMembers": ["query", typedProcedureResolver(createGeneratedFunctionReference<"query", "public", typeof import("../orgMember").listMembers>("orgMember:listMembers"), () => (require("../orgMember") as Record<string, unknown>)["listMembers"])],
   "listPendingInvitations": ["query", typedProcedureResolver(createGeneratedFunctionReference<"query", "public", typeof import("../orgMember").listPendingInvitations>("orgMember:listPendingInvitations"), () => (require("../orgMember") as Record<string, unknown>)["listPendingInvitations"])],
+  "rejectInvitation": ["mutation", typedProcedureResolver(createGeneratedFunctionReference<"mutation", "public", typeof import("../orgMember").rejectInvitation>("orgMember:rejectInvitation"), () => (require("../orgMember") as Record<string, unknown>)["rejectInvitation"])],
   "removeMember": ["mutation", typedProcedureResolver(createGeneratedFunctionReference<"mutation", "public", typeof import("../orgMember").removeMember>("orgMember:removeMember"), () => (require("../orgMember") as Record<string, unknown>)["removeMember"])],
+  "setModeratorProjectAccess": ["mutation", typedProcedureResolver(createGeneratedFunctionReference<"mutation", "public", typeof import("../orgMember").setModeratorProjectAccess>("orgMember:setModeratorProjectAccess"), () => (require("../orgMember") as Record<string, unknown>)["setModeratorProjectAccess"])],
   "updateMemberRole": ["mutation", typedProcedureResolver(createGeneratedFunctionReference<"mutation", "public", typeof import("../orgMember").updateMemberRole>("orgMember:updateMemberRole"), () => (require("../orgMember") as Record<string, unknown>)["updateMemberRole"])],
 } as const;
 

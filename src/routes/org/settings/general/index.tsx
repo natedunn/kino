@@ -182,7 +182,7 @@ function GeneralSettingsRoute() {
 		return (
 			<EmptyState
 				title='Organization editing unavailable'
-				description='Only organization editors can edit this workspace.'
+				description='Only organization owners and admins can edit this workspace.'
 			/>
 		);
 	}

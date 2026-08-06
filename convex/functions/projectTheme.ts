@@ -36,7 +36,7 @@ const presetSchema = z.enum(PROJECT_THEME_PRESET_IDS);
 async function requireEditableProject(ctx: any, projectId: string) {
 	const access = await verifyProjectAccess(ctx, { id: projectId, userId: ctx.userId });
 	if (!access.project) throw new CRPCError({ code: 'NOT_FOUND', message: 'Project not found' });
-	if (!access.permissions.canEdit) {
+	if (!access.permissions.canEditSettings) {
 		throw new CRPCError({ code: 'FORBIDDEN', message: 'User does not have permission' });
 	}
 	if (access.project.visibility === 'archived') {

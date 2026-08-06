@@ -149,7 +149,7 @@ function UpdatesListRoute() {
 	}
 
 	const projectId = projectData.project.id;
-	const canEdit = projectData.permissions.canEdit;
+	const canEdit = projectData.permissions.canManageContent;
 
 	const currentProfileQuery = useQuery(
 		crpc.profile.findMyProfile.queryOptions({}, { skipUnauth: true, subscribe: false })

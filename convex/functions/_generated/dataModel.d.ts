@@ -1009,6 +1009,44 @@ export type DataModel = {
     searchIndexes: {};
     vectorIndexes: {};
   };
+  pendingModeratorProjectAccess: {
+    document: {
+      invitationId: string;
+      organizationId: string;
+      projectId: Id<"project">;
+      updatedTime: number;
+      _id: Id<"pendingModeratorProjectAccess">;
+      _creationTime: number;
+    };
+    fieldPaths:
+      | "_creationTime"
+      | "_id"
+      | "invitationId"
+      | "organizationId"
+      | "projectId"
+      | "updatedTime";
+    indexes: {
+      by_id: ["_id"];
+      by_creation_time: ["_creationTime"];
+      by_invitationId_and_projectId: [
+        "invitationId",
+        "projectId",
+        "_creationTime",
+      ];
+      by_organizationId_and_projectId: [
+        "organizationId",
+        "projectId",
+        "_creationTime",
+      ];
+      by_projectId_and_invitationId: [
+        "projectId",
+        "invitationId",
+        "_creationTime",
+      ];
+    };
+    searchIndexes: {};
+    vectorIndexes: {};
+  };
   profile: {
     document: {
       bio?: null | string;
@@ -1102,7 +1140,7 @@ export type DataModel = {
       projectId: Id<"project">;
       projectSlug: string;
       projectVisibility: "public" | "private" | "archived";
-      role: "member" | "org:admin" | "org:editor";
+      role?: null | "member" | "org:admin" | "org:editor";
       updatedTime?: null | number;
       _id: Id<"projectMember">;
       _creationTime: number;
@@ -1135,6 +1173,41 @@ export type DataModel = {
         "_creationTime",
       ];
       by_projectId: ["projectId", "_creationTime"];
+    };
+    searchIndexes: {};
+    vectorIndexes: {};
+  };
+  projectModeratorAccess: {
+    document: {
+      memberId: string;
+      organizationId: string;
+      projectId: Id<"project">;
+      updatedTime: number;
+      _id: Id<"projectModeratorAccess">;
+      _creationTime: number;
+    };
+    fieldPaths:
+      | "_creationTime"
+      | "_id"
+      | "memberId"
+      | "organizationId"
+      | "projectId"
+      | "updatedTime";
+    indexes: {
+      by_id: ["_id"];
+      by_creation_time: ["_creationTime"];
+      by_memberId_and_projectId: ["memberId", "projectId", "_creationTime"];
+      by_organizationId_and_memberId: [
+        "organizationId",
+        "memberId",
+        "_creationTime",
+      ];
+      by_organizationId_and_projectId: [
+        "organizationId",
+        "projectId",
+        "_creationTime",
+      ];
+      by_projectId_and_memberId: ["projectId", "memberId", "_creationTime"];
     };
     searchIndexes: {};
     vectorIndexes: {};

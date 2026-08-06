@@ -1,13 +1,8 @@
 import { oAuthProxy, organization, username } from 'better-auth/plugins';
 import { convex } from 'kitcn/auth';
 
+import { sendResetPasswordEmail, sendVerificationEmail } from '../emails/send';
 import {
-	sendOrganizationInvitationEmail,
-	sendResetPasswordEmail,
-	sendVerificationEmail,
-} from '../emails/send';
-import {
-	getBentoEnv,
 	getBetterAuthAllowedHosts,
 	getEnv,
 	getGitHubAuthEnv,
@@ -15,6 +10,7 @@ import {
 	getOAuthProxyProductionUrlEnv,
 	getOAuthProxySecretEnv,
 	getTrustedOrigins,
+	isEmailConfigured,
 } from '../lib/get-env';
 import { ensureUniqueUsername, ensureUserBootstrap, sanitizeSystemRole } from '../lib/kino';
 import { ac, roles } from '../shared/auth-roles';
@@ -49,10 +45,7 @@ export default defineAuth(() => {
 	// send would throw, and requiring verification with no way to verify would
 	// lock password users out permanently). The send callbacks render our React
 	// Email templates and dispatch via Bento (see convex/emails/send.ts).
-	const bento = getBentoEnv();
-	const emailConfigured = Boolean(
-		bento.publishableKey && bento.secretKey && bento.siteUuid && bento.from
-	);
+	const emailConfigured = isEmailConfigured();
 	if (!emailConfigured) {
 		console.warn(
 			'[bento] Email is DISABLED (auth verification, reset, invitations). Add ' +
@@ -71,6 +64,14 @@ export default defineAuth(() => {
 			},
 		},
 		advanced: {
+			database: {
+				// Convex owns document IDs. The kitcn adapter already disables
+				// better-auth's automatic id generation, but plugins that mint an
+				// explicit id (e.g. the organization plugin's createInvitation) check
+				// this option instead — without it they write a custom `_id` and the
+				// insert fails.
+				generateId: false as const,
+			},
 			trustedProxyHeaders: true,
 			useSecureCookies: !isLocalHttp,
 		},
@@ -120,6 +121,16 @@ export default defineAuth(() => {
 			fallback: env.SITE_URL,
 			protocol: baseURLProtocol,
 		},
+		// Membership is mutated exclusively through the cRPC orgMember mutations,
+		// which enforce Kino's guards (frozen owner role, moderator-assignment
+		// cleanup) before calling ctx.auth.api server-side. Server-side api calls
+		// bypass the HTTP router, so disabling the raw routes closes the only
+		// path around those guards (e.g. an owner minting a second owner).
+		disabledPaths: [
+			'/organization/invite-member',
+			'/organization/remove-member',
+			'/organization/update-member-role',
+		],
 		plugins: [
 			username({
 				minUsernameLength: 3,
@@ -138,23 +149,9 @@ export default defineAuth(() => {
 						},
 					},
 				},
-				...(emailConfigured
-					? {
-							sendInvitationEmail: async (data: {
-								email: string;
-								organization: { name: string };
-								inviter: { user: { name?: string | null; email: string } };
-								invitation: { id: string; role: string };
-							}) => {
-								await sendOrganizationInvitationEmail({
-									email: data.email,
-									organization: data.organization,
-									inviter: data.inviter,
-									invitation: data.invitation,
-								});
-							},
-						}
-					: {}),
+				// No sendInvitationEmail here: invitation email is sent by
+				// orgMember.inviteMember, which knows the inviter's browsing origin
+				// (Better Auth callbacks inside a Convex mutation do not).
 			}),
 			...(oauthProxySecret && oauthProxyProductionUrl
 				? [

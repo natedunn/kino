@@ -124,7 +124,7 @@ function ProjectGeneralSettingsRoute() {
 	const importMutation = useMutation(crpc.projectExternal.importGithubUrls.mutationOptions());
 
 	const project = detailsQuery.data?.project;
-	const canEdit = detailsQuery.data?.permissions.canEdit ?? false;
+	const canEdit = detailsQuery.data?.permissions.canEditSettings ?? false;
 	const initialUrls = (project?.urls ?? []) as Array<ProjectUrl>;
 
 	const importInfoQuery = useQuery(
@@ -237,7 +237,7 @@ function ProjectGeneralSettingsRoute() {
 		return (
 			<EmptyState
 				title='Project editing unavailable'
-				description='Only project and organization editors can change these settings.'
+				description='Only project admins and assigned moderators can change these settings.'
 			/>
 		);
 	}

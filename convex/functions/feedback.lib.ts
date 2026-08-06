@@ -10,7 +10,7 @@ import {
 	getCurrentProfileOrThrow,
 	getDoc,
 	getDocOrThrow,
-	isProjectEditorRole,
+	isProjectTeamMember,
 	toPublicDoc,
 	verifyProjectAccess,
 } from '../lib/kino';
@@ -34,8 +34,8 @@ export function hasOverlap(left: Array<string>, right: Array<string>) {
 	return left.some((value) => right.includes(value));
 }
 
-export function assertCanAdminFeedback(permissions: { canEdit: boolean }) {
-	if (!permissions.canEdit) {
+export function assertCanAdminFeedback(permissions: { canManageContent: boolean }) {
+	if (!permissions.canManageContent) {
 		throw new CRPCError({
 			code: 'FORBIDDEN',
 			message: 'You do not have permission to manage this feedback',
@@ -96,15 +96,7 @@ export function getCachedIsTeamMember(
 	const key = String(author._id);
 	let cached = cache.teamMember.get(key);
 	if (!cached) {
-		cached = (async () => {
-			const projectMember = await ctx.db
-				.query('projectMember')
-				.withIndex('by_profileId_projectId', (q: any) =>
-					q.eq('profileId', author._id).eq('projectId', asId<'project'>(projectId))
-				)
-				.first();
-			return !!projectMember && isProjectEditorRole(projectMember.role);
-		})();
+		cached = isProjectTeamMember(ctx, { profile: author, projectId });
 		cache.teamMember.set(key, cached);
 	}
 	return cached;

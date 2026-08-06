@@ -71,7 +71,7 @@ export const Route = createFileRoute('/@{$org}/$project/updates/$slug/edit')({
 			throw notFound();
 		}
 
-		if (!projectData.permissions.canEdit) {
+		if (!projectData.permissions.canManageContent) {
 			throw redirect({
 				to: '/@{$org}/$project/updates/$slug',
 				params: {
@@ -243,7 +243,7 @@ function EditUpdateRoute() {
 
 	if (
 		!projectQuery.data?.project ||
-		!projectQuery.data.permissions.canEdit ||
+		!projectQuery.data.permissions.canManageContent ||
 		!update ||
 		!updateData.canEdit
 	) {
@@ -431,30 +431,26 @@ function EditUpdateRoute() {
 							</form.Field>
 						</SidebarSection>
 
-						{projectQuery.data.permissions.canDelete ? (
-							<>
-								<Separator />
-								<Button
-									className='w-full gap-2 text-muted-foreground hover:text-destructive'
-									disabled={deleteMutation.isPending}
-									onClick={() => {
-										if (
-											window.confirm(
-												'Are you sure you want to delete this update? This cannot be undone.'
-											)
-										) {
-											deleteMutation.mutate({ id: update.id });
-										}
-									}}
-									size='sm'
-									type='button'
-									variant='ghost'
-								>
-									<Trash2 className='size-3.5' />
-									{deleteMutation.isPending ? 'Deleting...' : 'Delete Update'}
-								</Button>
-							</>
-						) : null}
+						<Separator />
+						<Button
+							className='w-full gap-2 text-muted-foreground hover:text-destructive'
+							disabled={deleteMutation.isPending}
+							onClick={() => {
+								if (
+									window.confirm(
+										'Are you sure you want to delete this update? This cannot be undone.'
+									)
+								) {
+									deleteMutation.mutate({ id: update.id });
+								}
+							}}
+							size='sm'
+							type='button'
+							variant='ghost'
+						>
+							<Trash2 className='size-3.5' />
+							{deleteMutation.isPending ? 'Deleting...' : 'Delete Update'}
+						</Button>
 					</div>
 				</div>
 

@@ -29,9 +29,14 @@ export const Route = createFileRoute('/@{$org}/$project/settings/members/')({
 		);
 		const projectId = (details as { project?: { id?: string } } | null)?.project?.id;
 		if (projectId && context.loaderToken) {
-			await context.queryClient.ensureQueryData(
-				crpcServer.projectMember.listProjectMembers.queryOptions({ projectId })
-			);
+			await Promise.all([
+				context.queryClient.ensureQueryData(
+					crpcServer.projectMember.listProjectMembers.queryOptions({ projectId })
+				),
+				context.queryClient.ensureQueryData(
+					crpcServer.projectAccess.getManagementState.queryOptions({ projectId })
+				),
+			]);
 		}
 	},
 	component: ProjectMembersRoute,
@@ -55,17 +60,24 @@ function ProjectMembersRoute() {
 
 	const project = detailsQuery.data?.project;
 	const projectId = project?.id;
-	const canEdit = detailsQuery.data?.permissions.canEdit ?? false;
+	const canManageAccess = detailsQuery.data?.permissions.canManageAccess ?? false;
 
 	const membersQuery = useQuery(
 		crpc.projectMember.listProjectMembers.queryOptions(
 			{ projectId: projectId ?? '' },
-			{ enabled: !!projectId && canEdit }
+			{ enabled: !!projectId && canManageAccess }
+		)
+	);
+	const accessQuery = useQuery(
+		crpc.projectAccess.getManagementState.queryOptions(
+			{ projectId: projectId ?? '' },
+			{ enabled: !!projectId && canManageAccess }
 		)
 	);
 
 	const invite = useMutation(crpc.projectMember.inviteProjectMember.mutationOptions());
 	const removeMember = useMutation(crpc.projectMember.removeProjectMember.mutationOptions());
+	const setModeratorAccess = useMutation(crpc.projectAccess.setModeratorAccess.mutationOptions());
 
 	const [email, setEmail] = useState('');
 	const [formError, setFormError] = useState<string | null>(null);
@@ -83,11 +95,11 @@ function ProjectMembersRoute() {
 		);
 	}
 
-	if (!canEdit) {
+	if (!canManageAccess) {
 		return (
 			<EmptyState
 				title='Member management unavailable'
-				description='Only organization admins and editors can manage project members.'
+				description='Only organization owners and admins can manage project access.'
 			/>
 		);
 	}
@@ -95,8 +107,11 @@ function ProjectMembersRoute() {
 	const isPrivate = project.visibility === 'private';
 	const isArchived = project.visibility === 'archived';
 	const members = membersQuery.data?.members ?? [];
+	const moderators = accessQuery.data?.moderators ?? [];
 	const actionError =
-		mutationErrorMessage(invite.error) ?? mutationErrorMessage(removeMember.error);
+		mutationErrorMessage(invite.error) ??
+		mutationErrorMessage(removeMember.error) ??
+		mutationErrorMessage(setModeratorAccess.error);
 
 	return (
 		<section className='max-w-3xl'>
@@ -105,10 +120,59 @@ function ProjectMembersRoute() {
 				<h2 className='text-xl font-semibold'>Project members</h2>
 				<p className='mt-1 text-sm text-muted-foreground'>
 					Give specific people access to this project when it is private. They get normal access —
-					view, comment, and submit feedback — just like any user on a public project. Org admins
-					and editors already have access via the organization.
+					view, comment, and submit feedback — just like any user on a public project. Moderator
+					access is managed separately below.
 				</p>
 			</header>
+
+			<div className='mt-8'>
+				<h3 className='text-sm font-bold text-muted-foreground'>Moderators</h3>
+				<p className='mt-1 text-sm text-muted-foreground'>
+					Assigned moderators can manage content and ordinary project settings, but not members,
+					integrations, archiving, or deletion.
+				</p>
+				{moderators.length === 0 ? (
+					<p className='mt-3 text-sm text-muted-foreground'>This organization has no moderators.</p>
+				) : (
+					<div className='mt-3 flex flex-col divide-y rounded-xl border bg-card'>
+						{moderators.map((moderator) => (
+							<div key={moderator.memberId} className='flex items-center gap-3 px-4 py-3'>
+								<Avatar className='size-8 shrink-0'>
+									{moderator.profile.imageUrl ? (
+										<AvatarImage src={moderator.profile.imageUrl} />
+									) : null}
+									<AvatarFallback className='text-xs font-semibold'>
+										{(moderator.profile.name ?? moderator.profile.username)[0]?.toUpperCase()}
+									</AvatarFallback>
+								</Avatar>
+								<div className='min-w-0 flex-1'>
+									<p className='truncate text-sm font-medium'>
+										{moderator.profile.name ?? moderator.profile.username}
+									</p>
+									<p className='truncate text-xs text-muted-foreground'>
+										@{moderator.profile.username}
+									</p>
+								</div>
+								<Button
+									type='button'
+									variant={moderator.assigned ? 'outline' : 'default'}
+									size='sm'
+									disabled={setModeratorAccess.isPending}
+									onClick={() =>
+										setModeratorAccess.mutate({
+											enabled: !moderator.assigned,
+											memberId: moderator.memberId,
+											projectId,
+										})
+									}
+								>
+									{moderator.assigned ? 'Remove access' : 'Grant access'}
+								</Button>
+							</div>
+						))}
+					</div>
+				)}
+			</div>
 
 			{!isPrivate ? (
 				<div className='mt-4'>
@@ -119,9 +183,9 @@ function ProjectMembersRoute() {
 				</div>
 			) : null}
 
-			{/* Invite */}
+			{/* Direct members */}
 			<form
-				className='mt-6 flex flex-col gap-3 rounded-xl border bg-card p-6 sm:flex-row sm:items-end'
+				className='mt-8 flex flex-col gap-3 rounded-xl border bg-card p-6 sm:flex-row sm:items-end'
 				onSubmit={(event) => {
 					event.preventDefault();
 					setFormError(null);

@@ -50,7 +50,7 @@ export const Route = createFileRoute('/@{$org}/$project/updates/new/')({
 			})
 		);
 
-		if (!projectData?.permissions.canEdit) {
+		if (!projectData?.permissions.canManageContent) {
 			throw redirect({
 				to: '/@{$org}/$project/updates',
 				params: { org: params.org, project: params.project },

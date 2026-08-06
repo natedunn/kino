@@ -39,7 +39,7 @@ export const create = authMutation
 			userId: ctx.userId,
 		});
 		assertProjectWritable(access);
-		if (!access.permissions.canEdit) {
+		if (!access.permissions.canManageContent) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
 				message: 'User does not have permission',
@@ -90,7 +90,7 @@ export const update = authMutation
 			userId: ctx.userId,
 		});
 		assertProjectWritable(access);
-		if (!access.permissions.canEdit) {
+		if (!access.permissions.canManageContent) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
 				message: 'User does not have permission',
@@ -204,7 +204,7 @@ export const _delete = authMutation
 			userId: ctx.userId,
 		});
 		assertProjectWritable(access);
-		if (!access.permissions.canDelete) {
+		if (!access.permissions.canManageContent) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
 				message: 'User does not have permission',

@@ -31,7 +31,7 @@ export function persistSettingsOrg(slug: string) {
 	writeStoredOrg(slug);
 }
 
-/** Loads the orgs the signed-in user can edit (owner/admin/editor). */
+/** Loads the organizations the signed-in user can manage (owner/admin). */
 export function useEditableOrgs() {
 	const crpc = useCRPC();
 	return useSuspenseQuery(crpc.org.findMyEditableOrgs.queryOptions({}, { skipUnauth: true }));
