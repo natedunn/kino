@@ -160,7 +160,7 @@ export const ClickableContainer = forwardRef<HTMLDivElement, ClickableContainerP
 				onFocus={handlePreload}
 				onPointerDownCapture={handlePointerDownCapture}
 				onPointerEnter={handlePreload}
-				className={`relative ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 ${className} `}
+				className={`relative ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${className} `}
 				{...props}
 			>
 				{children}

@@ -1,11 +1,16 @@
 import { useQuery } from '@tanstack/react-query';
-import { createFileRoute, notFound, Outlet, useParams } from '@tanstack/react-router';
+import { createFileRoute, notFound, Outlet, useMatches, useParams } from '@tanstack/react-router';
 
 import { DefaultCatchBoundary } from '@/components/_default-catch-boundary';
 import { NotFound } from '@/components/_not-found';
 import { MainNav } from '@/components/site-nav/main-nav';
 import { useCRPC } from '@/lib/convex/crpc';
 import { crpcServer } from '@/lib/convex/crpc-server';
+import {
+	isThemedProjectRoute,
+	ProjectThemeBoundary,
+	resolveProjectTheme,
+} from '@/lib/project-theme';
 import { titleFromSlug, titleMeta } from '@/lib/seo';
 
 import { DynamicNavigation } from './$project/-components/dynamic-nav';
@@ -42,6 +47,14 @@ function OrganizationShell() {
 	const orgQuery = useQuery(
 		crpc.org.getDetails.queryOptions({ slug: params.org }, { subscribe: false })
 	);
+	const routeId = useMatches({ select: (matches) => matches.at(-1)?.routeId });
+	const projectSlug = projectParams?.project;
+	const projectQuery = useQuery(
+		crpc.project.getDetails.queryOptions(
+			{ orgSlug: params.org, slug: projectSlug ?? '' },
+			{ enabled: !!projectSlug }
+		)
+	);
 
 	if (orgQuery.isSuccess && !orgQuery.data?.org) {
 		throw notFound();
@@ -49,7 +62,6 @@ function OrganizationShell() {
 
 	const isUserPending =
 		!!loaderToken && (profileQuery.isPending || profileQuery.data === undefined);
-	const projectSlug = projectParams?.project;
 	const org =
 		orgQuery.data?.org ??
 		({
@@ -68,7 +80,7 @@ function OrganizationShell() {
 				type: 'org',
 			} as const);
 
-	return (
+	const shell = (
 		<div className='flex min-h-screen w-full flex-col'>
 			<div className='flex w-full flex-1 flex-col'>
 				<MainNav
@@ -91,5 +103,14 @@ function OrganizationShell() {
 				</div>
 			</footer>
 		</div>
+	);
+	if (!isThemedProjectRoute(routeId)) return shell;
+	const publishedTheme = projectQuery.data?.publishedTheme
+		? resolveProjectTheme(projectQuery.data.publishedTheme)
+		: null;
+	return (
+		<ProjectThemeBoundary key={projectSlug} theme={publishedTheme}>
+			{shell}
+		</ProjectThemeBoundary>
 	);
 }

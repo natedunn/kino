@@ -19,10 +19,19 @@
 	--popover-foreground: oklch(0.1448 0 0);
 	--primary: oklch(0.5461 0.2152 262.8809);
 	--primary-foreground: oklch(1 0 0);
+	--primary-button-from: var(--primary);
+	--primary-button-to: oklch(0.707 0.165 254.624);
+	--primary-button-border: oklch(0.623 0.214 259.815);
+	--primary-button-hover-border: oklch(0.424 0.199 265.638);
+	--primary-button-hover-to: oklch(0.546 0.245 262.881);
+	--primary-button-active-border: oklch(0.379 0.146 265.522);
+	--primary-button-active-from: var(--primary);
+	--primary-button-active-to: oklch(0.424 0.199 265.638);
 	--secondary: oklch(0.9702 0 0);
 	--secondary-foreground: oklch(0.1448 0 0);
 	--muted: oklch(0.985 0 0);
 	--muted-foreground: oklch(0.5555 0 0);
+	--nav: var(--muted);
 	--accent: oklch(0.97 0 0);
 	--accent-foreground: oklch(0.1448 0 0);
 	--destructive: oklch(0.5771 0.2152 27.325);
@@ -76,10 +85,19 @@
 	--popover-foreground: oklch(0.9842 0.0034 247.8575);
 	--primary: oklch(0.6231 0.188 259.8145);
 	--primary-foreground: oklch(1 0 0);
+	--primary-button-from: var(--primary);
+	--primary-button-to: oklch(0.707 0.165 254.624);
+	--primary-button-border: oklch(0.809 0.105 251.813);
+	--primary-button-hover-border: oklch(0.707 0.165 254.624);
+	--primary-button-hover-to: oklch(0.546 0.245 262.881);
+	--primary-button-active-border: oklch(0.623 0.214 259.815);
+	--primary-button-active-from: oklch(0.546 0.245 262.881);
+	--primary-button-active-to: oklch(0.488 0.243 264.376);
 	--secondary: oklch(0.2046 0 0);
 	--secondary-foreground: oklch(0.9842 0.0034 247.8575);
 	--muted: oklch(0.18 0 0);
 	--muted-foreground: oklch(0.7155 0 0);
+	--nav: oklch(0 0 0);
 	--accent: oklch(0.22 0 0);
 	--accent-foreground: oklch(0.9842 0.0034 247.8575);
 	--destructive: oklch(0.6368 0.2078 25.3313);
@@ -134,6 +152,7 @@
 	--color-secondary-foreground: var(--secondary-foreground);
 	--color-muted: var(--muted);
 	--color-muted-foreground: var(--muted-foreground);
+	--color-nav: var(--nav);
 	--color-accent: var(--accent);
 	--color-accent-foreground: var(--accent-foreground);
 	--color-destructive: var(--destructive);
@@ -221,6 +240,54 @@
 
 .disable-transitions * {
 	transition: none !important;
+}
+
+/* Project themes carry both palettes in the SSR HTML. The existing pre-paint
+   `.dark` class selects the right mapping before the project shell is painted. */
+[data-project-theme] {
+	color-scheme: light;
+	--primary: var(--project-light-primary);
+	--primary-foreground: var(--project-light-primary-foreground);
+	--primary-button-from: var(--project-light-primary-button-from);
+	--primary-button-to: var(--project-light-primary-button-to);
+	--primary-button-border: var(--project-light-primary-button-border);
+	--primary-button-hover-border: var(--project-light-primary-button-hover-border);
+	--primary-button-hover-to: var(--project-light-primary-button-hover-to);
+	--primary-button-active-border: var(--project-light-primary-button-active-border);
+	--primary-button-active-from: var(--project-light-primary-button-active-from);
+	--primary-button-active-to: var(--project-light-primary-button-active-to);
+	--muted: var(--project-light-muted);
+	--muted-foreground: var(--project-light-muted-foreground);
+	--nav: var(--project-light-nav);
+	--ring: var(--project-light-ring);
+	--ring-accent: var(--project-light-ring-accent);
+	--chart-1: var(--project-light-chart-1);
+	--sidebar-primary: var(--project-light-sidebar-primary);
+	--sidebar-primary-foreground: var(--project-light-sidebar-primary-foreground);
+	--sidebar-ring: var(--project-light-sidebar-ring);
+}
+
+.dark [data-project-theme] {
+	color-scheme: dark;
+	--primary: var(--project-dark-primary);
+	--primary-foreground: var(--project-dark-primary-foreground);
+	--primary-button-from: var(--project-dark-primary-button-from);
+	--primary-button-to: var(--project-dark-primary-button-to);
+	--primary-button-border: var(--project-dark-primary-button-border);
+	--primary-button-hover-border: var(--project-dark-primary-button-hover-border);
+	--primary-button-hover-to: var(--project-dark-primary-button-hover-to);
+	--primary-button-active-border: var(--project-dark-primary-button-active-border);
+	--primary-button-active-from: var(--project-dark-primary-button-active-from);
+	--primary-button-active-to: var(--project-dark-primary-button-active-to);
+	--muted: var(--project-dark-muted);
+	--muted-foreground: var(--project-dark-muted-foreground);
+	--nav: var(--project-dark-nav);
+	--ring: var(--project-dark-ring);
+	--ring-accent: var(--project-dark-ring-accent);
+	--chart-1: var(--project-dark-chart-1);
+	--sidebar-primary: var(--project-dark-sidebar-primary);
+	--sidebar-primary-foreground: var(--project-dark-sidebar-primary-foreground);
+	--sidebar-ring: var(--project-dark-sidebar-ring);
 }
 
 /* Link text that only reveals its underline on hover. */
@@ -363,7 +430,7 @@
 }
 
 @utility text-gradient-primary {
-	@apply inline-block bg-linear-to-r from-blue-300 to-blue-400 bg-clip-text text-transparent dark:to-primary;
+	@apply inline-block bg-linear-to-r from-[var(--primary-button-border)] to-[var(--primary-button-to)] bg-clip-text text-transparent dark:to-primary;
 }
 
 /* Layered, soft shadow used by cards.

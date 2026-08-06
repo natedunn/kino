@@ -45,7 +45,7 @@ function TabsTrigger({ className, ...props }: TabsPrimitive.Tab.Props) {
 		<TabsPrimitive.Tab
 			data-slot='tabs-trigger'
 			className={cn(
-				"z-10 inline-flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-1 text-sm font-medium whitespace-nowrap text-muted-foreground transition-colors outline-none select-none data-active:text-foreground not-data-active:hover:bg-foreground/10 not-data-active:hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-3.5",
+				"z-10 inline-flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-1 text-sm font-medium whitespace-nowrap text-muted-foreground transition-colors outline-none select-none not-data-active:hover:bg-foreground/10 not-data-active:hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 data-active:text-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-3.5",
 				className
 			)}
 			{...props}
@@ -62,7 +62,7 @@ function TabsIndicator({ className, ...props }: TabsPrimitive.Indicator.Props) {
 			data-slot='tabs-indicator'
 			renderBeforeHydration
 			className={cn(
-				'absolute top-1/2 left-0 z-0 h-[calc(var(--active-tab-height)-0.25rem)] w-(--active-tab-width) -translate-y-1/2 translate-x-(--active-tab-left) rounded-md bg-background shadow-sm ring-1 ring-foreground/5 transition-[translate,width] duration-200 ease-out',
+				'absolute top-1/2 left-0 z-0 h-[calc(var(--active-tab-height)-0.25rem)] w-(--active-tab-width) translate-x-(--active-tab-left) -translate-y-1/2 rounded-md bg-background shadow-sm ring-1 ring-foreground/5 transition-[translate,width] duration-200 ease-out',
 				className
 			)}
 			{...props}
@@ -74,7 +74,10 @@ function TabsContent({ className, ...props }: TabsPrimitive.Panel.Props) {
 	return (
 		<TabsPrimitive.Panel
 			data-slot='tabs-content'
-			className={cn('flex-1 outline-none focus-visible:ring-2 focus-visible:ring-ring/50', className)}
+			className={cn(
+				'flex-1 outline-none focus-visible:ring-2 focus-visible:ring-ring/50',
+				className
+			)}
 			{...props}
 		/>
 	);

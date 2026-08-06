@@ -635,6 +635,50 @@ export declare const api: {
       any
     >;
   };
+  projectTheme: {
+    getEditorState: FunctionReference<
+      "query",
+      "public",
+      { projectId: string },
+      any
+    >;
+    publish: FunctionReference<
+      "mutation",
+      "public",
+      {
+        dark: {
+          background: string;
+          foreground: string;
+          primary: string;
+          primaryForeground: string;
+          surface: string;
+          surfaceForeground: string;
+        };
+        expectedPublishedRevision: number;
+        light: {
+          background: string;
+          foreground: string;
+          primary: string;
+          primaryForeground: string;
+          surface: string;
+          surfaceForeground: string;
+        };
+        presetId:
+          | "kino"
+          | "red"
+          | "orange"
+          | "golden"
+          | "forest"
+          | "teal"
+          | "purple"
+          | "sunset"
+          | "monochrome"
+          | "custom";
+        projectId: string;
+      },
+      any
+    >;
+  };
   update: {
     bulkPublish: FunctionReference<
       "mutation",

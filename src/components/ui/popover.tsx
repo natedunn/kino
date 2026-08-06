@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Popover as PopoverPrimitive } from '@base-ui/react/popover';
 
+import { useProjectThemeStyle } from '@/lib/project-theme';
 import { cn } from '@/lib/utils';
 
 function Popover({ ...props }: React.ComponentProps<typeof PopoverPrimitive.Root>) {
@@ -35,9 +36,12 @@ function PopoverContent({
 	side?: 'top' | 'bottom' | 'left' | 'right';
 	sideOffset?: number;
 }) {
+	const themeStyle = useProjectThemeStyle();
 	return (
 		<PopoverPrimitive.Portal>
 			<PopoverPrimitive.Positioner
+				data-project-theme={themeStyle ? '' : undefined}
+				style={themeStyle}
 				align={align}
 				side={side}
 				sideOffset={sideOffset}

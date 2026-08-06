@@ -12,7 +12,7 @@ const buttonVariants = cva(
 		variants: {
 			variant: {
 				default:
-					'border border-blue-500 bg-gradient-to-tl from-primary to-blue-400 text-background dark:border-blue-300 dark:text-foreground hocus:border-blue-800 hocus:to-blue-600 hocus:dark:border-blue-400 [&:active]:border-blue-900 [&:active]:from-primary [&:active]:to-blue-800 dark:[&:active]:border-blue-500 dark:[&:active]:from-blue-600 dark:[&:active]:to-blue-700 [&:is(:hover,:focus-visible):active]:border-blue-900 [&:is(:hover,:focus-visible):active]:to-blue-800 dark:[&:is(:hover,:focus-visible):active]:border-blue-500 dark:[&:is(:hover,:focus-visible):active]:from-blue-600 dark:[&:is(:hover,:focus-visible):active]:to-blue-700',
+					'border border-[var(--primary-button-border)] bg-gradient-to-tl from-[var(--primary-button-from)] to-[var(--primary-button-to)] text-primary-foreground hocus:border-[var(--primary-button-hover-border)] hocus:to-[var(--primary-button-hover-to)] [&:active]:border-[var(--primary-button-active-border)] [&:active]:from-[var(--primary-button-active-from)] [&:active]:to-[var(--primary-button-active-to)] [&:is(:hover,:focus-visible):active]:border-[var(--primary-button-active-border)] [&:is(:hover,:focus-visible):active]:from-[var(--primary-button-active-from)] [&:is(:hover,:focus-visible):active]:to-[var(--primary-button-active-to)]',
 				destructive: [
 					'border bg-gradient-to-tl',
 					'border-red-800 from-red-500 via-red-700 to-red-700 text-red-50',
