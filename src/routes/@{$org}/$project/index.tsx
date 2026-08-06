@@ -32,13 +32,14 @@ function ProjectIndexRoute() {
 	);
 
 	const project = projectQuery.data?.project;
-	const canEdit = projectQuery.data?.permissions.canEdit ?? false;
+	const canEditSettings = projectQuery.data?.permissions.canEditSettings ?? false;
+	const canManageAccess = projectQuery.data?.permissions.canManageAccess ?? false;
 
 	return (
 		<div className='container flex flex-1 flex-col'>
 			{/* Header + KPIs span the full width above the feed. */}
 			<div className='flex flex-col gap-6 py-8'>
-				{project && <OverviewHeader project={project} params={params} canEdit={canEdit} />}
+				{project && <OverviewHeader project={project} params={params} canEdit={canEditSettings} />}
 				<OverviewStats />
 			</div>
 
@@ -48,7 +49,7 @@ function ProjectIndexRoute() {
 			<div className='flex flex-1 flex-col gap-8 border-t md:grid md:grid-cols-12'>
 				{/* Secondary context — right sidebar */}
 				<aside className='order-last flex flex-col gap-6 py-8 md:col-span-4 md:border-l md:border-border/75 md:pl-8'>
-					<OverviewTeam params={params} canEdit={canEdit} />
+					<OverviewTeam params={params} canEdit={canManageAccess} />
 					<OverviewRecentUpdates params={params} />
 				</aside>
 

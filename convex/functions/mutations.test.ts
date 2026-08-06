@@ -20,8 +20,7 @@ type Ctx = Awaited<ReturnType<typeof runCtx>>;
 
 // Seed a full authenticated org-admin: user + profile + org + admin membership +
 // a session row (so the kitcn auth chain — getHeaders → session.token → Bearer →
-// auth.api.getSession — resolves), then a project (its insert trigger derives the
-// org:admin projectMember granting canEdit) and a feedback row.
+// auth.api.getSession — resolves), then a project and a feedback row.
 async function seedAuthedOrgAdmin(ctx: Ctx) {
 	const [user] = await ctx.orm
 		.insert(userTable)
@@ -95,12 +94,277 @@ async function seedAuthedOrgAdmin(ctx: Ctx) {
 		.returning();
 	return {
 		feedbackId: feedback.id,
+		organizationId: organization.id,
 		profileId: profile.id,
 		projectId: project.id,
 		sessionId: session.id,
 		userId: user.id,
 	};
 }
+
+async function seedAuthedUser(ctx: Ctx, email: string) {
+	const [user] = await ctx.orm
+		.insert(userTable)
+		.values({
+			createdAt: new Date(),
+			email,
+			emailVerified: true,
+			name: 'Invitee',
+			updatedAt: new Date(),
+		})
+		.returning();
+	await ctx.orm.insert(profileTable).values({
+		email,
+		name: 'Invitee',
+		role: 'user',
+		userId: user.id,
+		username: `invitee_${user.id.slice(-6)}`,
+	});
+	const [session] = await ctx.orm
+		.insert(sessionTable)
+		.values({
+			createdAt: new Date(),
+			expiresAt: new Date(Date.now() + 86_400_000),
+			token: `test-session-${user.id}`,
+			updatedAt: new Date(),
+			userId: user.id,
+		})
+		.returning();
+	return { sessionId: session.id, userId: user.id };
+}
+
+async function seedProjectAccessFixture(ctx: Ctx) {
+	const admin = await seedAuthedOrgAdmin(ctx);
+	const moderatorUser = await seedAuthedUser(ctx, 'moderator@example.com');
+	const regularUser = await seedAuthedUser(ctx, 'regular@example.com');
+	const outsiderUser = await seedAuthedUser(ctx, 'outsider@example.com');
+	const [moderator, regular, otherOrganization] = await Promise.all([
+		ctx.orm
+			.insert(memberTable)
+			.values({
+				createdAt: new Date(),
+				organizationId: admin.organizationId,
+				role: 'moderator',
+				userId: moderatorUser.userId,
+			})
+			.returning()
+			.then(([row]) => row),
+		ctx.orm
+			.insert(memberTable)
+			.values({
+				createdAt: new Date(),
+				organizationId: admin.organizationId,
+				role: 'member',
+				userId: regularUser.userId,
+			})
+			.returning()
+			.then(([row]) => row),
+		ctx.orm
+			.insert(organizationTable)
+			.values({
+				createdAt: new Date(),
+				name: 'Other',
+				slug: 'other',
+				visibility: 'public',
+			})
+			.returning()
+			.then(([row]) => row),
+	]);
+	const [outsider] = await ctx.orm
+		.insert(memberTable)
+		.values({
+			createdAt: new Date(),
+			organizationId: otherOrganization.id,
+			role: 'moderator',
+			userId: outsiderUser.userId,
+		})
+		.returning();
+	return {
+		admin,
+		moderatorId: moderator.id,
+		outsiderId: outsider.id,
+		regularId: regular.id,
+		regularUser,
+	};
+}
+
+describe('organization invitations (authenticated end-to-end)', () => {
+	// Invitees are identified by email only — they do not need a Kino account
+	// yet. This exercises the full better-auth createInvitation path, which
+	// broke when the org plugin passed its own generated id to the Convex
+	// adapter (Convex owns document IDs).
+	it('creates a pending invitation for an email without a Kino account', async () => {
+		const t = convexTest();
+		const seed = await t.run((baseCtx) => runCtx(baseCtx).then(seedAuthedOrgAdmin));
+		const asUser = t.withIdentity({
+			sessionId: seed.sessionId,
+			subject: seed.userId,
+		});
+
+		await asUser.mutation(api.orgMember.inviteMember, {
+			email: 'newcomer@example.com',
+			organizationId: seed.organizationId,
+			// Untrusted origin: the server must fall back to SITE_URL rather than
+			// reject the invite or trust the value.
+			origin: 'https://evil.example.com',
+			role: 'admin',
+		});
+
+		const invitations = await t.run(async (baseCtx) => {
+			const ctx = await runCtx(baseCtx);
+			const rows = await ctx.orm.query.invitation.findMany({
+				where: { organizationId: seed.organizationId },
+				limit: 10,
+			});
+			// ORM rows carry Date objects, which t.run can't serialize back out.
+			return rows.map((row: any) => ({ email: row.email, status: row.status }));
+		});
+		expect(invitations).toHaveLength(1);
+		expect(invitations[0].email).toBe('newcomer@example.com');
+		expect(invitations[0].status).toBe('pending');
+	});
+
+	it('rejects a moderator invite with no projects', async () => {
+		const t = convexTest();
+		const seed = await t.run((baseCtx) => runCtx(baseCtx).then(seedAuthedOrgAdmin));
+		const asUser = t.withIdentity({
+			sessionId: seed.sessionId,
+			subject: seed.userId,
+		});
+
+		await expect(
+			asUser.mutation(api.orgMember.inviteMember, {
+				email: 'mod@example.com',
+				organizationId: seed.organizationId,
+				projectIds: [],
+				role: 'moderator',
+			})
+		).rejects.toThrow(/at least one project/i);
+	});
+
+	it('exposes actions only to the invited account and rejects direct mismatched calls', async () => {
+		const t = convexTest();
+		const { admin, invitee } = await t.run(async (baseCtx) => {
+			const ctx = await runCtx(baseCtx);
+			return {
+				admin: await seedAuthedOrgAdmin(ctx),
+				invitee: await seedAuthedUser(ctx, 'invitee@example.com'),
+			};
+		});
+		const asAdmin = t.withIdentity({
+			sessionId: admin.sessionId,
+			subject: admin.userId,
+		});
+		const asInvitee = t.withIdentity({
+			sessionId: invitee.sessionId,
+			subject: invitee.userId,
+		});
+
+		await asAdmin.mutation(api.orgMember.inviteMember, {
+			email: 'invitee@example.com',
+			organizationId: admin.organizationId,
+			role: 'admin',
+		});
+		const invitationId = await t.run(async (baseCtx) => {
+			const ctx = await runCtx(baseCtx);
+			const invitation = await ctx.orm.query.invitation.findFirst({
+				where: { email: 'invitee@example.com', organizationId: admin.organizationId },
+			});
+			return invitation?.id;
+		});
+		expect(invitationId).toBeTruthy();
+
+		await expect(
+			asAdmin.query(api.orgMember.getInvitationState, { invitationId: invitationId! })
+		).resolves.toEqual({ state: 'wrong_account' });
+		await expect(
+			asInvitee.query(api.orgMember.getInvitationState, { invitationId: invitationId! })
+		).resolves.toEqual({ state: 'pending' });
+		await expect(
+			asAdmin.mutation(api.orgMember.acceptInvitation, { invitationId: invitationId! })
+		).rejects.toThrow(/different account/i);
+		await expect(
+			asAdmin.mutation(api.orgMember.rejectInvitation, { invitationId: invitationId! })
+		).rejects.toThrow(/different account/i);
+	});
+});
+
+describe('project moderator access (authenticated end-to-end)', () => {
+	it('enables and disables access idempotently', async () => {
+		const t = convexTest();
+		const fixture = await t.run((baseCtx) => runCtx(baseCtx).then(seedProjectAccessFixture));
+		const asAdmin = t.withIdentity({
+			sessionId: fixture.admin.sessionId,
+			subject: fixture.admin.userId,
+		});
+		const args = {
+			memberId: fixture.moderatorId,
+			projectId: fixture.admin.projectId,
+		};
+
+		await asAdmin.mutation(api.projectAccess.setModeratorAccess, { ...args, enabled: true });
+		await asAdmin.mutation(api.projectAccess.setModeratorAccess, { ...args, enabled: true });
+		const enabledCount = await t.run(async (baseCtx) => {
+			const ctx = await runCtx(baseCtx);
+			return (
+				await ctx.orm.query.projectModeratorAccess.findMany({
+					where: args,
+					limit: 5,
+				})
+			).length;
+		});
+		expect(enabledCount).toBe(1);
+
+		await asAdmin.mutation(api.projectAccess.setModeratorAccess, { ...args, enabled: false });
+		await asAdmin.mutation(api.projectAccess.setModeratorAccess, { ...args, enabled: false });
+		const disabledCount = await t.run(async (baseCtx) => {
+			const ctx = await runCtx(baseCtx);
+			return (
+				await ctx.orm.query.projectModeratorAccess.findMany({
+					where: args,
+					limit: 5,
+				})
+			).length;
+		});
+		expect(disabledCount).toBe(0);
+	});
+
+	it('rejects callers without access-management permission', async () => {
+		const t = convexTest();
+		const fixture = await t.run((baseCtx) => runCtx(baseCtx).then(seedProjectAccessFixture));
+		const asRegularMember = t.withIdentity({
+			sessionId: fixture.regularUser.sessionId,
+			subject: fixture.regularUser.userId,
+		});
+
+		await expect(
+			asRegularMember.mutation(api.projectAccess.setModeratorAccess, {
+				enabled: true,
+				memberId: fixture.moderatorId,
+				projectId: fixture.admin.projectId,
+			})
+		).rejects.toThrow(/owners and admins/i);
+	});
+
+	it('rejects cross-organization and non-moderator members', async () => {
+		const t = convexTest();
+		const fixture = await t.run((baseCtx) => runCtx(baseCtx).then(seedProjectAccessFixture));
+		const asAdmin = t.withIdentity({
+			sessionId: fixture.admin.sessionId,
+			subject: fixture.admin.userId,
+		});
+
+		for (const memberId of [fixture.outsiderId, fixture.regularId]) {
+			await expect(
+				asAdmin.mutation(api.projectAccess.setModeratorAccess, {
+					enabled: true,
+					memberId,
+					projectId: fixture.admin.projectId,
+				})
+			).rejects.toThrow(/not a moderator in this organization/i);
+		}
+	});
+});
 
 describe('feedback remove (authenticated end-to-end)', () => {
 	it('permanently deletes the feedback', async () => {

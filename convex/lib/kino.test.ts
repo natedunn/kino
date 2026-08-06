@@ -12,15 +12,28 @@ import {
 } from './kino';
 
 function makeAccessCtx(opts: {
-	project?: { id: string; slug: string; visibility: string } | null;
+	organizationMember?: { id: string; role: string; userId?: string } | null;
+	moderatorAssigned?: boolean;
+	project?: { id: string; orgSlug?: string; slug: string; visibility: string } | null;
 	profile?: { id: string; role: string; userId: string } | null;
-	projectMember?: { id: string; role: string } | null;
+	projectMember?: { id: string; role?: string } | null;
 }) {
+	const organization = { id: 'org_1', slug: opts.project?.orgSlug ?? 'acme' };
 	return {
 		orm: {
 			query: {
+				member: {
+					findMany: async () =>
+						opts.organizationMember
+							? [{ userId: 'user_1', ...opts.organizationMember, organizationId: 'org_1' }]
+							: [],
+				},
+				organization: {
+					findMany: async () => (opts.project ? [organization] : []),
+				},
 				project: {
-					findMany: async () => (opts.project ? [opts.project] : []),
+					findMany: async () =>
+						opts.project ? [{ orgSlug: organization.slug, ...opts.project }] : [],
 				},
 				profile: {
 					findMany: async () => (opts.profile ? [opts.profile] : []),
@@ -28,6 +41,16 @@ function makeAccessCtx(opts: {
 				projectMember: {
 					findMany: async () =>
 						opts.projectMember ? [{ ...opts.projectMember, projectId: opts.project?.id }] : [],
+				},
+				projectModeratorAccess: {
+					findFirst: async () =>
+						opts.moderatorAssigned
+							? {
+									memberId: opts.organizationMember?.id,
+									organizationId: organization.id,
+									projectId: opts.project?.id,
+								}
+							: null,
 				},
 			},
 		},
@@ -88,59 +111,114 @@ describe('ensureUniqueOrgSlug', () => {
 });
 
 describe('verifyProjectAccess', () => {
-	it('treats org:editor members as project editors (but not deleters)', async () => {
-		const ctx = {
-			orm: {
-				query: {
-					project: {
-						findMany: async () => [
-							{
-								id: 'project_1',
-								slug: 'feedback',
-								visibility: 'public',
-							},
-						],
-					},
-					profile: {
-						findMany: async () => [
-							{
-								id: 'profile_1',
-								role: 'user',
-								userId: 'user_1',
-							},
-						],
-					},
-					projectMember: {
-						findMany: async () => [
-							{
-								id: 'member_1',
-								profileId: 'profile_1',
-								projectId: 'project_1',
-								role: 'org:editor',
-							},
-						],
-					},
-				},
-			},
-		};
-
-		const access = await verifyProjectAccess(ctx as any, {
+	it('grants an assigned moderator content and settings, but not access or integrations', async () => {
+		const ctx = makeAccessCtx({
+			moderatorAssigned: true,
+			organizationMember: { id: 'member_1', role: 'moderator' },
+			project: { id: 'project_1', slug: 'feedback', visibility: 'private' },
+			profile: { id: 'profile_1', role: 'user', userId: 'user_1' },
+		});
+		const access = await verifyProjectAccess(ctx, {
 			id: 'project_1',
 			userId: 'user_1',
 		});
 
-		expect(access.permissions.canEdit).toBe(true);
-		expect(access.permissions.canView).toBe(true);
-		expect(access.permissions.canDelete).toBe(false);
+		expect(access.permissions).toEqual({
+			canDelete: false,
+			canEditSettings: true,
+			canManageAccess: false,
+			canManageContent: true,
+			canManageIntegrations: false,
+			canView: true,
+		});
 	});
 
-	it('lets anyone view a public project but not edit it', async () => {
+	it('does not let an unassigned moderator manage a public project', async () => {
+		const ctx = makeAccessCtx({
+			moderatorAssigned: false,
+			organizationMember: { id: 'member_1', role: 'moderator' },
+			project: { id: 'project_1', slug: 'feedback', visibility: 'public' },
+			profile: { id: 'profile_1', role: 'user', userId: 'user_1' },
+		});
+		const access = await verifyProjectAccess(ctx, {
+			id: 'project_1',
+			userId: 'user_1',
+		});
+
+		expect(access.permissions.canView).toBe(true);
+		expect(access.permissions.canManageContent).toBe(false);
+		expect(access.permissions.canEditSettings).toBe(false);
+	});
+
+	it('hides an unassigned private project from a moderator', async () => {
+		const ctx = makeAccessCtx({
+			organizationMember: { id: 'member_1', role: 'moderator' },
+			project: { id: 'project_1', slug: 'feedback', visibility: 'private' },
+			profile: { id: 'profile_1', role: 'user', userId: 'user_1' },
+		});
+		const access = await verifyProjectAccess(ctx, {
+			id: 'project_1',
+			userId: 'user_1',
+		});
+		expect(access.project).toBeNull();
+		expect(access.permissions.canView).toBe(false);
+	});
+
+	it('ignores a stale assignment when the organization member is no longer a moderator', async () => {
+		const ctx = makeAccessCtx({
+			moderatorAssigned: true,
+			organizationMember: { id: 'member_1', role: 'member' },
+			project: { id: 'project_1', slug: 'feedback', visibility: 'private' },
+			profile: { id: 'profile_1', role: 'user', userId: 'user_1' },
+		});
+		const access = await verifyProjectAccess(ctx, {
+			id: 'project_1',
+			userId: 'user_1',
+		});
+		expect(access.project).toBeNull();
+		expect(access.permissions.canView).toBe(false);
+		expect(access.permissions.canManageContent).toBe(false);
+	});
+
+	it('ignores legacy organization-derived project-member roles', async () => {
+		const ctx = makeAccessCtx({
+			project: { id: 'project_1', slug: 'feedback', visibility: 'private' },
+			profile: { id: 'profile_1', role: 'user', userId: 'user_1' },
+			projectMember: { id: 'legacy_1', role: 'org:admin' },
+		});
+		const access = await verifyProjectAccess(ctx, {
+			id: 'project_1',
+			userId: 'user_1',
+		});
+		expect(access.project).toBeNull();
+		expect(access.permissions.canView).toBe(false);
+	});
+
+	it('treats a legacy system editor as an ordinary user', async () => {
+		const ctx = makeAccessCtx({
+			project: { id: 'project_1', slug: 'feedback', visibility: 'private' },
+			profile: {
+				id: 'profile_1',
+				role: 'system:editor',
+				userId: 'user_1',
+			},
+		});
+		const access = await verifyProjectAccess(ctx, {
+			id: 'project_1',
+			userId: 'user_1',
+		});
+		expect(access.project).toBeNull();
+		expect(access.permissions.canView).toBe(false);
+	});
+
+	it('lets anyone view a public project but not manage it', async () => {
 		const ctx = makeAccessCtx({
 			project: { id: 'p1', slug: 's', visibility: 'public' },
 		});
 		const access = await verifyProjectAccess(ctx, { id: 'p1' });
 		expect(access.permissions.canView).toBe(true);
-		expect(access.permissions.canEdit).toBe(false);
+		expect(access.permissions.canManageContent).toBe(false);
+		expect(access.permissions.canEditSettings).toBe(false);
 		expect(access.permissions.canDelete).toBe(false);
 	});
 
@@ -158,7 +236,7 @@ describe('verifyProjectAccess', () => {
 		expect(access.project).toBeNull();
 	});
 
-	it('lets a private-project member view but not edit', async () => {
+	it('lets a private-project member view but not manage it', async () => {
 		const ctx = makeAccessCtx({
 			project: { id: 'p1', slug: 's', visibility: 'private' },
 			profile: { id: 'profile_1', role: 'user', userId: 'user_1' },
@@ -169,7 +247,8 @@ describe('verifyProjectAccess', () => {
 			userId: 'user_1',
 		});
 		expect(access.permissions.canView).toBe(true);
-		expect(access.permissions.canEdit).toBe(false);
+		expect(access.permissions.canManageContent).toBe(false);
+		expect(access.permissions.canEditSettings).toBe(false);
 	});
 
 	it('grants system admins full access to a private project', async () => {
@@ -182,20 +261,25 @@ describe('verifyProjectAccess', () => {
 			id: 'p1',
 			userId: 'user_1',
 		});
-		expect(access.permissions.canView).toBe(true);
-		expect(access.permissions.canEdit).toBe(true);
-		expect(access.permissions.canDelete).toBe(true);
+		expect(access.permissions).toEqual({
+			canDelete: true,
+			canEditSettings: true,
+			canManageAccess: true,
+			canManageContent: true,
+			canManageIntegrations: true,
+			canView: true,
+		});
 	});
 
 	// Archived projects report `isArchived: true` but KEEP role-derived
-	// permissions so editors/admins still see the settings UI. The read-only
+	// permissions so moderators/admins still see the settings UI. The read-only
 	// freeze is enforced by `assertProjectWritable` at the mutations, not by
-	// zeroing `canEdit` here.
-	it('flags archived and keeps org:admin edit/delete permissions', async () => {
+	// zeroing capabilities here.
+	it('flags archived and keeps organization-admin full permissions', async () => {
 		const ctx = makeAccessCtx({
+			organizationMember: { id: 'm1', role: 'admin' },
 			project: { id: 'p1', slug: 's', visibility: 'archived' },
 			profile: { id: 'profile_1', role: 'user', userId: 'user_1' },
-			projectMember: { id: 'm1', role: 'org:admin' },
 		});
 		const access = await verifyProjectAccess(ctx, {
 			id: 'p1',
@@ -203,20 +287,24 @@ describe('verifyProjectAccess', () => {
 		});
 		expect(access.isArchived).toBe(true);
 		expect(access.permissions.canView).toBe(true);
-		expect(access.permissions.canEdit).toBe(true);
+		expect(access.permissions.canManageContent).toBe(true);
+		expect(access.permissions.canManageAccess).toBe(true);
 		expect(access.permissions.canDelete).toBe(true);
 	});
 
-	it('flags archived and keeps org:editor edit permission (no delete)', async () => {
+	it('flags archived and keeps assigned-moderator content/settings permissions', async () => {
 		const ctx = makeAccessCtx({
+			moderatorAssigned: true,
+			organizationMember: { id: 'm1', role: 'moderator' },
 			project: { id: 'p1', slug: 's', visibility: 'archived' },
 			profile: { id: 'profile_1', role: 'user', userId: 'user_1' },
-			projectMember: { id: 'm1', role: 'org:editor' },
 		});
 		const access = await verifyProjectAccess(ctx, { id: 'p1', userId: 'user_1' });
 		expect(access.isArchived).toBe(true);
 		expect(access.permissions.canView).toBe(true);
-		expect(access.permissions.canEdit).toBe(true);
+		expect(access.permissions.canManageContent).toBe(true);
+		expect(access.permissions.canEditSettings).toBe(true);
+		expect(access.permissions.canManageAccess).toBe(false);
 		expect(access.permissions.canDelete).toBe(false);
 	});
 
@@ -228,7 +316,8 @@ describe('verifyProjectAccess', () => {
 		});
 		const access = await verifyProjectAccess(ctx, { id: 'p1', userId: 'user_1' });
 		expect(access.isArchived).toBe(true);
-		expect(access.permissions.canEdit).toBe(true);
+		expect(access.permissions.canManageContent).toBe(true);
+		expect(access.permissions.canManageIntegrations).toBe(true);
 		expect(access.permissions.canDelete).toBe(true);
 	});
 
@@ -264,9 +353,9 @@ describe('assertProjectWritable', () => {
 });
 
 describe('sanitizeSystemRole', () => {
-	it('passes through the three valid system roles', () => {
+	it('passes through valid roles and downgrades the legacy system editor', () => {
 		expect(sanitizeSystemRole('system:admin')).toBe('system:admin');
-		expect(sanitizeSystemRole('system:editor')).toBe('system:editor');
+		expect(sanitizeSystemRole('system:editor')).toBe('user');
 		expect(sanitizeSystemRole('user')).toBe('user');
 	});
 
@@ -393,5 +482,21 @@ describe('verifyOrgAccess', () => {
 		expect(access.organization).not.toBeNull();
 		expect(access.permissions.canView).toBe(true);
 		expect(access.permissions.canEdit).toBe(false);
+	});
+
+	it('lets a moderator view the organization without managing it', async () => {
+		const ctx = makeOrgCtx({
+			member: { id: 'm1', role: 'moderator' },
+			organization: { id: 'o1', slug: 'acme', visibility: 'private' },
+			profile: { id: 'p1', role: 'user', userId: 'u1' },
+		});
+		const access = await verifyOrgAccess(ctx, { slug: 'acme', userId: 'u1' });
+		expect(access.organization).not.toBeNull();
+		expect(access.permissions).toEqual({
+			canCreate: false,
+			canDelete: false,
+			canEdit: false,
+			canView: true,
+		});
 	});
 });

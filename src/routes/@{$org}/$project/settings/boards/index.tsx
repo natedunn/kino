@@ -59,11 +59,11 @@ function BoardsIndexRoute() {
 		return <div className='h-64 animate-pulse rounded-xl border bg-muted/30' />;
 	}
 
-	if (!projectQuery.data?.project || !projectQuery.data.permissions.canEdit) {
+	if (!projectQuery.data?.project || !projectQuery.data.permissions.canManageContent) {
 		return (
 			<EmptyState
 				title='Board management unavailable'
-				description='Only project editors can manage feedback boards.'
+				description='Only project admins and assigned moderators can manage feedback boards.'
 			/>
 		);
 	}

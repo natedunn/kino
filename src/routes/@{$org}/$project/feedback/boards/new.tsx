@@ -25,7 +25,7 @@ export const Route = createFileRoute('/@{$org}/$project/feedback/boards/new')({
 				slug: params.project,
 			})
 		);
-		if (!projectData?.permissions.canEdit) {
+		if (!projectData?.permissions.canManageContent) {
 			throw redirect({
 				to: '/@{$org}/$project/feedback',
 				params: { org: params.org, project: params.project },
@@ -92,11 +92,11 @@ function NewBoardRoute() {
 		},
 	});
 
-	if (!projectQuery.data?.project || !projectQuery.data.permissions.canEdit) {
+	if (!projectQuery.data?.project || !projectQuery.data.permissions.canManageContent) {
 		return (
 			<EmptyState
 				title='Board creation unavailable'
-				description='Only project editors can create new feedback boards.'
+				description='Only project admins and assigned moderators can create feedback boards.'
 			/>
 		);
 	}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 
 import { AuthFooter, AuthHeader } from '@/components/auth/auth-card';
@@ -8,6 +9,7 @@ import { InlineAlert } from '@/components/inline-alert';
 import { Button } from '@/components/ui/button';
 import { trackAuthError, trackAuthSuccess } from '@/lib/auth-analytics';
 import { authClient } from '@/lib/convex/auth-client';
+import { useCRPC } from '@/lib/convex/crpc';
 import { titleMeta } from '@/lib/seo';
 
 export const Route = createFileRoute('/auth/accept-invitation')({
@@ -20,6 +22,18 @@ export const Route = createFileRoute('/auth/accept-invitation')({
 function AcceptInvitationPage() {
 	const { invitationId } = Route.useSearch();
 	const session = authClient.useSession();
+	const crpc = useCRPC();
+	const invitationState = useQuery(
+		crpc.orgMember.getInvitationState.queryOptions(
+			{ invitationId: invitationId ?? '' },
+			{
+				enabled: !!invitationId && !!session.data?.user,
+				subscribe: false,
+			}
+		)
+	);
+	const acceptInvitation = useMutation(crpc.orgMember.acceptInvitation.mutationOptions());
+	const rejectInvitation = useMutation(crpc.orgMember.rejectInvitation.mutationOptions());
 	const navigate = useNavigate();
 	const [pending, setPending] = useState(false);
 	const [error, setError] = useState<string | null>(null);
@@ -34,9 +48,18 @@ function AcceptInvitationPage() {
 		);
 	}
 
+	if (session.isPending) {
+		return (
+			<>
+				<AuthHeader title='Accept your invitation' description='Checking your account…' />
+				<div className='h-24 animate-pulse rounded-xl border bg-muted/30' />
+			</>
+		);
+	}
+
 	// Accepting requires an authenticated account. Send the user to sign in and
 	// back here.
-	if (!session.isPending && !session.data?.user) {
+	if (!session.data?.user) {
 		const back = `/auth/accept-invitation?invitationId=${encodeURIComponent(invitationId)}`;
 		return (
 			<>
@@ -61,23 +84,83 @@ function AcceptInvitationPage() {
 		);
 	}
 
+	if (invitationState.isPending) {
+		return (
+			<>
+				<AuthHeader title='Accept your invitation' description='Checking your invitation…' />
+				<div className='h-24 animate-pulse rounded-xl border bg-muted/30' />
+			</>
+		);
+	}
+
+	const state = invitationState.data?.state;
+	if (
+		invitationState.isError ||
+		!state ||
+		state === 'unavailable' ||
+		state === 'wrong_account'
+	) {
+		return (
+			<>
+				<AuthHeader title='Invalid invitation link' />
+				<InlineAlert variant='danger'>
+					This invitation is invalid, expired, or no longer available.
+				</InlineAlert>
+				<AuthFooter>
+					<Link className='link-text font-medium text-foreground' to='/dashboard'>
+						Go to dashboard
+					</Link>
+				</AuthFooter>
+			</>
+		);
+	}
+
+	if (state === 'already_accepted') {
+		return (
+			<>
+				<AuthHeader title='Invitation already accepted' />
+				<InlineAlert variant='success'>You’ve already joined this organization.</InlineAlert>
+				<AuthFooter>
+					<Link className='link-text font-medium text-foreground' to='/dashboard'>
+						Go to dashboard
+					</Link>
+				</AuthFooter>
+			</>
+		);
+	}
+
 	async function onAccept() {
 		setError(null);
 		setPending(true);
 		try {
-			const res = await authClient.organization.acceptInvitation({
-				invitationId: invitationId!,
-			});
-			if (res.error) {
-				trackAuthError('invitation_accept', res.error);
-				setError(res.error.message ?? 'Could not accept the invitation.');
-			} else {
-				trackAuthSuccess('invitation_accept');
-				setAccepted(true);
-				setTimeout(() => navigate({ to: '/dashboard' }), 1200);
-			}
+			const result = await acceptInvitation.mutateAsync({ invitationId: invitationId! });
+			trackAuthSuccess('invitation_accept');
+			setAccepted(true);
+			setTimeout(() => {
+				if (result.organizationSlug) {
+					void navigate({
+						params: { org: result.organizationSlug },
+						to: '/@{$org}',
+					});
+					return;
+				}
+				void navigate({ to: '/dashboard' });
+			}, 1200);
 		} catch (err) {
 			trackAuthError('invitation_accept', err);
+			setError(err instanceof Error ? err.message : 'Something went wrong.');
+		} finally {
+			setPending(false);
+		}
+	}
+
+	async function onReject() {
+		setError(null);
+		setPending(true);
+		try {
+			await rejectInvitation.mutateAsync({ invitationId: invitationId! });
+			await navigate({ to: '/dashboard' });
+		} catch (err) {
 			setError(err instanceof Error ? err.message : 'Something went wrong.');
 		} finally {
 			setPending(false);
@@ -94,6 +177,9 @@ function AcceptInvitationPage() {
 					{error ? <InlineAlert variant='danger'>{error}</InlineAlert> : null}
 					<Button disabled={pending} onClick={onAccept} size='lg' type='button'>
 						{pending ? 'Joining…' : 'Accept invitation'}
+					</Button>
+					<Button disabled={pending} onClick={onReject} size='lg' type='button' variant='outline'>
+						Decline
 					</Button>
 				</div>
 			)}

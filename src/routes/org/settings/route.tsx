@@ -49,9 +49,12 @@ export const Route = createFileRoute('/org/settings')({
 			return;
 		}
 
-		await context.queryClient.ensureQueryData(
+		const editableOrgs = await context.queryClient.ensureQueryData(
 			crpcServer.org.findMyEditableOrgs.queryOptions({}, { skipUnauth: true })
 		);
+		if (editableOrgs.length === 0) {
+			throw redirect({ to: '/dashboard' });
+		}
 
 		// The whole org-settings area is an edit-only surface. Gate `canEdit` once
 		// here so the child pages (general/members/integrations) inherit it instead
@@ -88,9 +91,8 @@ function AuthenticatedOrgSettingsShell() {
 		crpc.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
 	);
 	const { activeOrg, activeSlug, isEmpty, orgs, setOrg } = useSettingsOrgController();
-	// Whole settings area is an org editing surface. `findMyEditableOrgs` (backing
-	// `activeOrg`) is filtered by the same `canEditOrgRole` helper that
-	// `verifyOrgAccess` uses, so an org appearing here already means edit access.
+	// Whole settings area is an organization-management surface.
+	// `findMyEditableOrgs` returns owner/admin memberships only.
 
 	const selectItems = navItems.map((item) => {
 		const Icon = item.icon;

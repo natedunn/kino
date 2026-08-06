@@ -10,7 +10,7 @@ import {
 	getCurrentProfileOrThrow,
 	getDoc,
 	getDocOrThrow,
-	isProjectEditorRole,
+	isProjectTeamMember,
 	toPublicDoc,
 	verifyProjectAccess,
 } from '../lib/kino';
@@ -83,13 +83,15 @@ export const remove = authMutation
 		const comment = await getDocOrThrow(ctx, asId<'updateComment'>(input._id), 'Comment not found');
 		const item = await getDocOrThrow(ctx, comment.updateId, 'Update not found');
 		const project = await getDocOrThrow(ctx, item.projectId, 'Project not found');
-		assertProjectWritable(
-			await verifyProjectAccess(ctx, { slug: project.slug, userId: ctx.userId })
-		);
-		if (comment.authorProfileId !== profile._id) {
+		const access = await verifyProjectAccess(ctx, {
+			slug: project.slug,
+			userId: ctx.userId,
+		});
+		assertProjectWritable(access);
+		if (comment.authorProfileId !== profile._id && !access.permissions.canManageContent) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
-				message: 'You can only delete your own comments',
+				message: 'You do not have permission to moderate this comment',
 			});
 		}
 
@@ -116,7 +118,7 @@ export const listByUpdate = optionalAuthQuery
 			userId: ctx.userId,
 		});
 		if (!access.permissions.canView) return [];
-		if (item.status === 'draft' && !access.permissions.canEdit) return [];
+		if (item.status === 'draft' && !access.permissions.canManageContent) return [];
 
 		const currentProfile = await getCurrentProfile(ctx, ctx.userId);
 		const comments = await ctx.db
@@ -124,6 +126,7 @@ export const listByUpdate = optionalAuthQuery
 			.withIndex('by_updateId', (q: any) => q.eq('updateId', item._id))
 			.order('asc')
 			.collect();
+		const teamMemberByAuthorId = new Map<string, Promise<boolean>>();
 
 		return await Promise.all(
 			comments.map(async (comment) => {
@@ -131,13 +134,15 @@ export const listByUpdate = optionalAuthQuery
 				let isTeamMember = false;
 
 				if (author) {
-					const projectMember = await ctx.db
-						.query('projectMember')
-						.withIndex('by_profileId_projectId', (q: any) =>
-							q.eq('profileId', author._id).eq('projectId', item.projectId)
-						)
-						.first();
-					isTeamMember = !!projectMember && isProjectEditorRole(projectMember.role);
+					let membership = teamMemberByAuthorId.get(author._id);
+					if (!membership) {
+						membership = isProjectTeamMember(ctx, {
+							profile: author,
+							projectId: item.projectId,
+						});
+						teamMemberByAuthorId.set(author._id, membership);
+					}
+					isTeamMember = await membership;
 				}
 
 				const emotes = await ctx.db
@@ -163,7 +168,9 @@ export const listByUpdate = optionalAuthQuery
 								username: author.username,
 							}
 						: null,
-					canDelete: !!currentProfile && comment.authorProfileId === currentProfile._id,
+					canDelete:
+						!!currentProfile &&
+						(comment.authorProfileId === currentProfile._id || access.permissions.canManageContent),
 					canEdit: !!currentProfile && comment.authorProfileId === currentProfile._id,
 					emoteCounts,
 					isTeamMember,

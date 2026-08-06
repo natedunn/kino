@@ -82,7 +82,7 @@ function BoardCard({
 				</span>
 			</div>
 
-			{/* Grab handle — admin / editor only */}
+			{/* Grab handle — admin / assigned moderator only */}
 			{dragHandle && (
 				<div
 					{...dragHandle.listeners}

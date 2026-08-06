@@ -1,5 +1,3 @@
-import type { IconName } from '@/icons';
-
 import { useMemo, useState } from 'react';
 import { useForm } from '@tanstack/react-form';
 import { useMutation, useQuery } from '@tanstack/react-query';
@@ -33,7 +31,7 @@ export const Route = createFileRoute('/@{$org}/$project/feedback/boards/$board/e
 				slug: params.project,
 			})
 		);
-		if (!projectData?.permissions.canEdit) {
+		if (!projectData?.permissions.canManageContent) {
 			throw redirect({
 				to: '/@{$org}/$project/feedback',
 				params: { org: params.org, project: params.project },
@@ -103,7 +101,7 @@ function EditBoardRoute() {
 			icon: resolveBoardIconName({
 				icon: boardQuery.data?.icon,
 				name: boardQuery.data?.name,
-			}) as IconName,
+			}),
 			name: boardQuery.data?.name ?? '',
 			slug: boardQuery.data?.slug ?? '',
 		}),
@@ -138,11 +136,11 @@ function EditBoardRoute() {
 		},
 	});
 
-	if (!projectQuery.data?.permissions.canEdit) {
+	if (!projectQuery.data?.permissions.canManageContent) {
 		return (
 			<EmptyState
 				title='Board editing unavailable'
-				description='Only project editors can edit feedback boards.'
+				description='Only project admins and assigned moderators can edit feedback boards.'
 			/>
 		);
 	}

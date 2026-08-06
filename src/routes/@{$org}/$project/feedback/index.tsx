@@ -320,7 +320,7 @@ function FeedbackListRoute() {
 									<BoardsNav boards={boards} />
 								</div>
 							</div>
-							{projectData.permissions.canEdit ? (
+							{projectData.permissions.canManageContent ? (
 								<div className='mt-6 pb-6 md:pr-6'>
 									<h2 className='mx-2 text-sm font-bold text-muted-foreground'>Options</h2>
 									<div className='mt-2'>

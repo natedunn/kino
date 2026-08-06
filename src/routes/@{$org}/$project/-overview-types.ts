@@ -31,7 +31,7 @@ export interface UpdatePreview {
 export interface Member {
 	id: string;
 	name: string;
-	role: 'Owner' | 'Admin' | 'Editor' | 'Member';
+	role: 'Owner' | 'Admin' | 'Moderator' | 'Member';
 	imageUrl?: string;
 }
 

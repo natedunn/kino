@@ -1,3 +1,4 @@
+import { useQuery } from '@tanstack/react-query';
 import {
 	createFileRoute,
 	Link,
@@ -10,6 +11,7 @@ import { GitBranch, LayoutDashboard, Settings, TriangleAlert, Users } from 'luci
 
 import { SidebarNavGroup, SidebarNavItem, SidebarNavSelect } from '@/components/sidebar-nav';
 import { EditingBar } from '@/components/site-nav/editing-bar';
+import { useCRPC } from '@/lib/convex/crpc';
 import { crpcServer } from '@/lib/convex/crpc-server';
 import { titleMeta } from '@/lib/seo';
 
@@ -17,12 +19,9 @@ export const Route = createFileRoute('/@{$org}/$project/settings')({
 	head: () => ({
 		meta: [titleMeta(['Settings'])],
 	}),
-	// The entire project settings area is edit-only. Gate the whole layout here
-	// so every child page (general/boards/members/integrations/danger) is
-	// protected in one explicit place. Archived projects keep role-derived
-	// `canEdit`, so editors/admins still reach settings (read-only, enforced
-	// server-side). `getDetails` is cached by the `$project` loader, so this is a
-	// free read. Server procedures remain the real boundary.
+	// Gate the settings shell on the content/settings capabilities. Child
+	// navigation is filtered further for access, integration, and deletion
+	// capabilities. Archived projects remain read-only server-side.
 	loader: async ({ context, params }) => {
 		const projectData = await context.queryClient.ensureQueryData(
 			crpcServer.project.getDetails.queryOptions({
@@ -35,7 +34,7 @@ export const Route = createFileRoute('/@{$org}/$project/settings')({
 			throw notFound();
 		}
 
-		if (!projectData.permissions.canEdit) {
+		if (!projectData.permissions.canEditSettings && !projectData.permissions.canManageContent) {
 			throw redirect({
 				to: '/@{$org}/$project',
 				params: { org: params.org, project: params.project },
@@ -47,6 +46,17 @@ export const Route = createFileRoute('/@{$org}/$project/settings')({
 
 function ProjectSettingsRoute() {
 	const params = Route.useParams();
+	const crpc = useCRPC();
+	const projectQuery = useQuery(
+		crpc.project.getDetails.queryOptions(
+			{
+				orgSlug: params.org,
+				slug: params.project,
+			},
+			{ subscribe: false }
+		)
+	);
+	const permissions = projectQuery.data?.permissions;
 	const linkParams = {
 		org: params.org,
 		project: params.project,
@@ -60,28 +70,33 @@ function ProjectSettingsRoute() {
 			icon: Settings,
 			label: 'General',
 			to: '/@{$org}/$project/settings/general' as const,
+			visible: permissions?.canEditSettings,
 		},
 		{
 			icon: LayoutDashboard,
 			label: 'Boards',
 			to: '/@{$org}/$project/settings/boards' as const,
+			visible: permissions?.canManageContent,
 		},
 		{
 			icon: Users,
 			label: 'Members',
 			to: '/@{$org}/$project/settings/members' as const,
+			visible: permissions?.canManageAccess,
 		},
 		{
 			icon: GitBranch,
 			label: 'Integrations',
 			to: '/@{$org}/$project/settings/integrations' as const,
+			visible: permissions?.canManageIntegrations,
 		},
 		{
 			icon: TriangleAlert,
 			label: 'Danger',
 			to: '/@{$org}/$project/settings/danger' as const,
+			visible: permissions?.canDelete,
 		},
-	];
+	].filter((item) => item.visible);
 	const navItems = items.map((item) => {
 		const Icon = item.icon;
 		const path = item.to.replace('/@{$org}', `/@${params.org}`).replace('$project', params.project);

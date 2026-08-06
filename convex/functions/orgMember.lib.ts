@@ -3,13 +3,11 @@ import { z } from 'zod';
 
 import { verifyOrgAccess } from '../lib/kino';
 
-// Org membership is for the team that runs the org (and, by cascade, all its
-// projects). owner/admin manage; editor edits content. There is no plain org
-// "member" role — public users participate in public projects without org
-// membership, and private-project access is granted per-project (see
-// projectMember). So org roles are only owner/admin/editor.
-export const assignableRoleSchema = z.enum(['admin', 'editor']);
-export const updatableRoleSchema = z.enum(['owner', 'admin', 'editor']);
+// Moderators are organization identities with explicit project assignments;
+// the Better Auth role itself grants no organization-management permissions.
+// `owner` is deliberately absent: it can never be granted or revoked through
+// role management, only through a future ownership-transfer flow.
+export const assignableRoleSchema = z.enum(['admin', 'moderator']);
 
 export async function requireOrgManage(ctx: any, args: { id?: string; slug?: string }) {
 	const access = await verifyOrgAccess(ctx, { ...args, userId: ctx.userId });

@@ -17,8 +17,8 @@ export const emoteContentSchema = z.enum(EMOTE_CONTENTS);
 
 /**
  * Shared access guard for reacting to an update (or its comments). Draft
- * updates are visible only to editors, so reacting to one requires edit
- * access; published updates only require view access. Returns the resolved
+ * updates are visible only to project content managers, so reacting requires
+ * content access; published updates only require view access. Returns the resolved
  * update document so callers can reuse it.
  */
 export async function ensureUpdateReactionAccess(
@@ -34,7 +34,7 @@ export async function ensureUpdateReactionAccess(
 	assertProjectWritable(access);
 
 	if (item.status === 'draft') {
-		if (!access.permissions.canEdit) {
+		if (!access.permissions.canManageContent) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
 				message: options?.draftMessage ?? 'You cannot react to draft updates',

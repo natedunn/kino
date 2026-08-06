@@ -6,8 +6,9 @@ import { authMutation, authQuery } from '../lib/crpc';
 import {
 	asId,
 	assertProjectWritable,
+	findOrganization,
+	getCurrentProfile,
 	getDoc,
-	isProjectEditorRole,
 	verifyProjectAccess,
 } from '../lib/kino';
 import { createProfileImageUrlCache, resolveProfileImageUrl } from '../lib/storage';
@@ -25,38 +26,46 @@ export const listAssignableMembers = authQuery
 			id: input.projectId,
 			userId: ctx.userId,
 		});
-		if (!access.permissions.canView) return [];
-
-		const projectMembers = await ctx.orm.query.projectMember.findMany({
-			where: { projectId: asId<'project'>(input.projectId) },
-			with: { profile: true },
-			limit: 200,
-		});
-
-		const membersWithProfiles = await Promise.all(
-			projectMembers.map((member: any) => ({
-				profile: member.profile ?? null,
-				profileId: member.profileId,
-				role: member.role,
-			}))
+		if (!access.project || !access.permissions.canManageContent) return [];
+		const organization = await findOrganization(ctx, { slug: access.project.orgSlug });
+		if (!organization) return [];
+		const [organizationMembers, assignments] = await Promise.all([
+			ctx.db
+				.query('member')
+				.withIndex('organizationId', (q) => q.eq('organizationId', organization.id))
+				.take(200),
+			ctx.db
+				.query('projectModeratorAccess')
+				.withIndex('by_organizationId_and_projectId', (q) =>
+					q.eq('organizationId', organization.id).eq('projectId', asId<'project'>(input.projectId))
+				)
+				.take(200),
+		]);
+		const assignedModeratorIds = new Set(assignments.map((row: any) => row.memberId));
+		const teamMembers = organizationMembers.filter(
+			(member: any) =>
+				member.role === 'owner' ||
+				member.role === 'admin' ||
+				(member.role === 'moderator' && assignedModeratorIds.has(member._id))
 		);
 
 		const imageUrlCache = createProfileImageUrlCache();
 		const rows = await Promise.all(
-			membersWithProfiles
-				.filter((member) => isProjectEditorRole(member.role))
-				.map(async (member) => ({
-					profile: member.profile
+			teamMembers.map(async (member: any) => {
+				const profile = await getCurrentProfile(ctx, member.userId);
+				return {
+					profile: profile
 						? {
-								id: member.profile._id,
-								imageUrl: await resolveProfileImageUrl(member.profile, imageUrlCache),
-								name: member.profile.name ?? null,
-								username: member.profile.username,
+								id: profile.id,
+								imageUrl: await resolveProfileImageUrl(profile, imageUrlCache),
+								name: profile.name ?? null,
+								username: profile.username,
 							}
 						: null,
-					profileId: member.profileId,
+					profileId: profile?.id ?? null,
 					role: member.role,
-				}))
+				};
+			})
 		);
 
 		return rows.filter((member) => member.profile !== null);
@@ -65,10 +74,10 @@ export const listAssignableMembers = authQuery
 /**
  * Direct, per-project members (role "member"). These exist for PRIVATE projects:
  * an invited user gets normal user-level access to an otherwise-hidden project.
- * Org admins/editors get project access via the derived org:admin/org:editor
- * rows instead and are not listed here. Member rows are kept even when a project
- * is public (harmless — everyone can view) so access is restored if it goes
- * private again.
+ * Organization owners/admins are resolved from organization membership, while
+ * moderators use explicit assignments. Neither is represented or listed here.
+ * Member rows are kept when a project is public so access is restored if it
+ * becomes private again.
  */
 export const listProjectMembers = authQuery
 	.input(z.object({ projectId: idSchema }))
@@ -77,7 +86,7 @@ export const listProjectMembers = authQuery
 			id: input.projectId,
 			userId: ctx.userId,
 		});
-		if (!access.project || !access.permissions.canEdit) {
+		if (!access.project || !access.permissions.canManageAccess) {
 			return { canManage: false, isPrivate: false, members: [] };
 		}
 
@@ -91,7 +100,11 @@ export const listProjectMembers = authQuery
 		const members = (
 			await Promise.all(
 				rows
-					.filter((member: any) => member.role === 'member' && member.profile)
+					.filter(
+						(member: any) =>
+							(member.role === undefined || member.role === null || member.role === 'member') &&
+							member.profile
+					)
 					.map(async (member: any) => ({
 						id: member.id,
 						profile: {
@@ -123,7 +136,7 @@ export const inviteProjectMember = authMutation
 			throw new CRPCError({ code: 'NOT_FOUND', message: 'Project not found' });
 		}
 		assertProjectWritable(access);
-		if (!access.permissions.canEdit) {
+		if (!access.permissions.canManageAccess) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
 				message: 'You do not have permission to manage this project',
@@ -170,7 +183,6 @@ export const inviteProjectMember = authMutation
 			projectId: access.project.id,
 			projectSlug: access.project.slug,
 			projectVisibility: access.project.visibility,
-			role: 'member',
 		});
 
 		return { success: true };
@@ -186,9 +198,9 @@ export const removeProjectMember = authMutation
 		if (!membership) {
 			throw new CRPCError({ code: 'NOT_FOUND', message: 'Member not found' });
 		}
-		// Only direct project members can be removed here; org-derived access
-		// (org:admin/org:editor) is managed at the org level.
-		if (membership.role !== 'member') {
+		// Only direct project members can be removed here. Organization roles and
+		// moderator assignments are managed through their dedicated APIs.
+		if (membership.role !== undefined && membership.role !== null && membership.role !== 'member') {
 			throw new CRPCError({
 				code: 'BAD_REQUEST',
 				message: 'That access is managed at the organization level',
@@ -200,7 +212,7 @@ export const removeProjectMember = authMutation
 			userId: ctx.userId,
 		});
 		assertProjectWritable(access);
-		if (!access.permissions.canEdit) {
+		if (!access.permissions.canManageAccess) {
 			throw new CRPCError({
 				code: 'FORBIDDEN',
 				message: 'You do not have permission to manage this project',

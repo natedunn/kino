@@ -485,7 +485,7 @@ function FeedbackDetailContent({
 			{
 				projectId: projectData.project.id,
 			},
-			{ enabled: !!projectData.permissions.canEdit, skipUnauth: true }
+			{ enabled: !!projectData.permissions.canManageContent, skipUnauth: true }
 		)
 	);
 
@@ -493,9 +493,9 @@ function FeedbackDetailContent({
 	const assignedProfile = interactiveQuery.data?.assignedProfile;
 	const isAuthenticated = auth.hasSession || auth.isAuthenticated;
 	const canEditStatus =
-		feedback.authorProfileId === currentProfile?.id || projectData.permissions.canEdit;
-	// Priority is editor/admin-only — the feedback author cannot change it.
-	const canEditPriority = projectData.permissions.canEdit;
+		feedback.authorProfileId === currentProfile?.id || projectData.permissions.canManageContent;
+	// Priority is assigned-moderator/admin-only — the feedback author cannot change it.
+	const canEditPriority = projectData.permissions.canManageContent;
 	const canMarkAnswer = interactiveQuery.data?.canMarkAnswer ?? false;
 	// The pinned "opened this feedback" comment, already enriched (author, emote
 	// counts, permissions) by `getDetailCritical`.
@@ -594,7 +594,7 @@ function FeedbackDetailContent({
 
 	const visibleGithubConnections = githubConnectionsQuery.data ?? [];
 	const showGithubConnectionsSection =
-		projectData.permissions.canEdit || visibleGithubConnections.length > 0;
+		projectData.permissions.canManageContent || visibleGithubConnections.length > 0;
 
 	async function handleLoadMiddleComments() {
 		if (!middleCursor || isLoadingMiddleComments) return;
@@ -659,7 +659,7 @@ function FeedbackDetailContent({
 	}
 
 	useEffect(() => {
-		if (!projectData.permissions.canEdit) return;
+		if (!projectData.permissions.canManageContent) return;
 		if (visibleGithubConnections.length === 0) return;
 		if (refreshGithubConnectionsMutation.isPending) return;
 
@@ -669,7 +669,7 @@ function FeedbackDetailContent({
 		// `refreshGithubConnectionsMutation` is a mutation object (unstable ref);
 		// key this off the feedback/connection state, not the mutation identity.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [feedback.id, visibleGithubConnections.length, projectData.permissions.canEdit]);
+	}, [feedback.id, visibleGithubConnections.length, projectData.permissions.canManageContent]);
 
 	// The merged timeline is already ordered server-side (head → middle → tail);
 	// dedupe overlaps (short threads share head/tail) and sort defensively.
@@ -877,7 +877,7 @@ function FeedbackDetailContent({
 
 					<div className='flex items-center justify-between py-1.5'>
 						<span className='text-sm text-muted-foreground'>Target</span>
-						{projectData.permissions.canEdit ? (
+						{projectData.permissions.canManageContent ? (
 							<Button
 								className='max-w-52 justify-end'
 								onClick={() => setTargetDrawerOpen(true)}
@@ -938,7 +938,7 @@ function FeedbackDetailContent({
 						) : (
 							<p className='py-2 text-sm text-muted-foreground'>No GitHub items connected.</p>
 						)}
-						{projectData.permissions.canEdit ? (
+						{projectData.permissions.canManageContent ? (
 							<Button
 								className='mt-1 h-8 w-full justify-start gap-1.5 px-0 text-xs text-muted-foreground'
 								onClick={() => setConnectionDialogOpen(true)}
@@ -1089,7 +1089,7 @@ function FeedbackDetailContent({
 					<CircleSlash className='size-4' />
 					Close
 				</Button>
-				{projectData.permissions.canEdit ? (
+				{projectData.permissions.canManageContent ? (
 					<Button
 						className='flex-1'
 						onClick={() => setDeleteOpen(true)}
