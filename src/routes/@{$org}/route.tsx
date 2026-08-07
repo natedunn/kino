@@ -1,16 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
-import { createFileRoute, notFound, Outlet, useMatches, useParams } from '@tanstack/react-router';
+import { createFileRoute, notFound, Outlet, useParams } from '@tanstack/react-router';
 
 import { DefaultCatchBoundary } from '@/components/_default-catch-boundary';
 import { NotFound } from '@/components/_not-found';
 import { MainNav } from '@/components/site-nav/main-nav';
 import { useCRPC } from '@/lib/convex/crpc';
 import { crpcServer } from '@/lib/convex/crpc-server';
-import {
-	isThemedProjectRoute,
-	ProjectThemeBoundary,
-	resolveProjectTheme,
-} from '@/lib/project-theme';
+import { ProjectThemeBoundary, resolveProjectTheme } from '@/lib/project-theme';
 import { titleFromSlug, titleMeta } from '@/lib/seo';
 
 import { DynamicNavigation } from './$project/-components/dynamic-nav';
@@ -47,7 +43,6 @@ function OrganizationShell() {
 	const orgQuery = useQuery(
 		crpc.org.getDetails.queryOptions({ slug: params.org }, { subscribe: false })
 	);
-	const routeId = useMatches({ select: (matches) => matches.at(-1)?.routeId });
 	const projectSlug = projectParams?.project;
 	const projectQuery = useQuery(
 		crpc.project.getDetails.queryOptions(
@@ -104,7 +99,7 @@ function OrganizationShell() {
 			</footer>
 		</div>
 	);
-	if (!isThemedProjectRoute(routeId)) return shell;
+	if (!projectSlug) return shell;
 	const publishedTheme = projectQuery.data?.publishedTheme
 		? resolveProjectTheme(projectQuery.data.publishedTheme)
 		: null;
