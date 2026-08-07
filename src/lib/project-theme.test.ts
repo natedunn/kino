@@ -14,7 +14,7 @@ import {
 } from '@convex/project-theme';
 import { describe, expect, it } from 'vitest';
 
-import { isThemedProjectRoute, resolveProjectTheme } from './project-theme';
+import { resolveProjectTheme } from './project-theme';
 
 describe('project theme tokens', () => {
 	it('normalizes only bounded hex colors', () => {
@@ -135,15 +135,7 @@ describe('project theme tokens', () => {
 	});
 });
 
-describe('project theme route boundary', () => {
-	it('themes visitor routes and excludes management routes', () => {
-		expect(isThemedProjectRoute('/@{$org}/$project/feedback/$slug/')).toBe(true);
-		expect(isThemedProjectRoute('/@{$org}/$project/settings/appearance/')).toBe(true);
-		expect(isThemedProjectRoute('/@{$org}/$project/settings/general/')).toBe(true);
-		expect(isThemedProjectRoute('/@{$org}/$project/updates/new/')).toBe(false);
-		expect(isThemedProjectRoute('/@{$org}/$project/integrations/github/')).toBe(false);
-	});
-
+describe('project theme resolution', () => {
 	it('falls back for unknown persisted versions', () => {
 		expect(resolveProjectTheme({ ...PROJECT_THEME_PRESETS.golden, version: 99 })).toBe(
 			PROJECT_THEME_PRESETS.kino
