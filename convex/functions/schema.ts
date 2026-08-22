@@ -18,6 +18,15 @@ import {
 } from 'kitcn/orm';
 
 import { normalizeSlug, VALIDATION_LIMITS } from '../lib/validation';
+import {
+	FILE_ACCESS_LEVELS,
+	FILE_CATEGORIES,
+	FILE_CREATION_METHODS,
+	FILE_LISTINGS,
+	FILE_ORIGIN_FEATURES,
+	FILE_SOURCE_PROVIDERS,
+	FILE_UPLOADER_CLASSES,
+} from '../shared/files';
 import { targetGranularities } from '../shared/target';
 
 // Compatibility-deploy shape: `system:editor` remains schema-valid until the
@@ -62,6 +71,11 @@ const GITHUB_SYNC_MODES = ['read', 'read_write'] as const;
 const GITHUB_CONNECTION_STATE_STATUSES = ['pending', 'consumed', 'expired'] as const;
 const GITHUB_INSTALLATION_STATUSES = ['active', 'suspended', 'stale', 'deleted'] as const;
 const FEEDBACK_GITHUB_CONNECTION_KINDS = ['issue'] as const;
+const FILE_OBJECT_STATUSES = ['pending', 'ready', 'rejected', 'deleted'] as const;
+const FILE_STORAGE_PROVIDERS = ['r2', 'external'] as const;
+const FILE_BUCKET_KINDS = ['org_uploads', 'user_uploads', 'external'] as const;
+const FILE_THUMBNAIL_BUCKET_KINDS = ['org_uploads', 'user_uploads'] as const;
+const FILE_THUMBNAIL_STATUSES = ['pending', 'ready', 'failed'] as const;
 export const EMOTE_CONTENTS = [
 	'thumbsUp',
 	'thumbsDown',
@@ -412,6 +426,285 @@ export const pendingModeratorProjectAccessTable = convexTable(
 		// composite cannot service a projectId-only incoming-FK lookup.
 		index('by_projectId_and_invitationId').on(table.projectId, table.invitationId),
 	]
+);
+
+export const fileFolderTable = convexTable(
+	'fileFolder',
+	{
+		projectId: id('project')
+			.notNull()
+			.references(() => projectTable.id, { onDelete: 'cascade' }),
+		parentFolderId: id('fileFolder').references((): AnyColumn => fileFolderTable.id, {
+			onDelete: 'restrict',
+		}),
+		name: text().notNull(),
+		normalizedName: text().notNull(),
+		systemKey: text(),
+		createdByProfileId: id('profile').references(() => profileTable.id, {
+			onDelete: 'set null',
+		}),
+		createdTime: integer().notNull(),
+		updatedTime: integer().notNull(),
+	},
+	(table) => [
+		index('by_projectId').on(table.projectId),
+		index('by_parentFolderId').on(table.parentFolderId),
+		index('by_projectId_parentFolderId_normalizedName').on(
+			table.projectId,
+			table.parentFolderId,
+			table.normalizedName
+		),
+		index('by_projectId_systemKey').on(table.projectId, table.systemKey),
+	]
+);
+
+export const fileAssetTable = convexTable(
+	'fileAsset',
+	{
+		projectId: id('project')
+			.notNull()
+			.references(() => projectTable.id, { onDelete: 'cascade' }),
+		// Compatibility field: existing assets predate stable public delivery.
+		// Only public, project-listed assets receive this value on new writes.
+		publicId: text(),
+		folderId: id('fileFolder').references(() => fileFolderTable.id, { onDelete: 'set null' }),
+		name: text().notNull(),
+		normalizedName: text().notNull(),
+		extension: text().notNull(),
+		category: textEnum(FILE_CATEGORIES).notNull(),
+		mimeType: text().notNull(),
+		sizeBytes: integer(),
+		access: textEnum(FILE_ACCESS_LEVELS).notNull(),
+		listing: textEnum(FILE_LISTINGS).notNull(),
+		creationMethod: textEnum(FILE_CREATION_METHODS).notNull(),
+		originFeature: textEnum(FILE_ORIGIN_FEATURES).notNull(),
+		uploaderClass: textEnum(FILE_UPLOADER_CLASSES).notNull(),
+		sourceProvider: textEnum(FILE_SOURCE_PROVIDERS).notNull(),
+		uploadedByProfileId: id('profile').references(() => profileTable.id, {
+			onDelete: 'set null',
+		}),
+		status: textEnum(FILE_OBJECT_STATUSES).notNull(),
+		searchContent: text().notNull(),
+		extractedText: text(),
+		thumbnailStatus: textEnum(FILE_THUMBNAIL_STATUSES),
+		thumbnailObjectKey: text(),
+		thumbnailBucketKind: textEnum(FILE_THUMBNAIL_BUCKET_KINDS),
+		thumbnailMimeType: text(),
+		thumbnailBytes: integer(),
+		createdTime: integer().notNull(),
+		updatedTime: integer().notNull(),
+		deletedTime: integer(),
+	},
+	(table) => [
+		index('by_publicId').on(table.publicId),
+		index('by_projectId').on(table.projectId),
+		index('by_folderId').on(table.folderId),
+		index('by_uploadedByProfileId').on(table.uploadedByProfileId),
+		index('by_projectId_status_createdTime').on(table.projectId, table.status, table.createdTime),
+		index('by_projectId_status_updatedTime').on(table.projectId, table.status, table.updatedTime),
+		index('by_projectId_status_normalizedName').on(
+			table.projectId,
+			table.status,
+			table.normalizedName
+		),
+		index('by_projectId_listing_status_createdTime').on(
+			table.projectId,
+			table.listing,
+			table.status,
+			table.createdTime
+		),
+		index('by_projectId_listing_status_updatedTime').on(
+			table.projectId,
+			table.listing,
+			table.status,
+			table.updatedTime
+		),
+		index('by_projectId_listing_status_normalizedName').on(
+			table.projectId,
+			table.listing,
+			table.status,
+			table.normalizedName
+		),
+		index('by_projectId_listing_status_sizeBytes').on(
+			table.projectId,
+			table.listing,
+			table.status,
+			table.sizeBytes
+		),
+		index('by_projectId_listing_folderId_status_createdTime').on(
+			table.projectId,
+			table.listing,
+			table.folderId,
+			table.status,
+			table.createdTime
+		),
+		index('by_projectId_listing_folderId_status_updatedTime').on(
+			table.projectId,
+			table.listing,
+			table.folderId,
+			table.status,
+			table.updatedTime
+		),
+		index('by_projectId_listing_folderId_status_normalizedName').on(
+			table.projectId,
+			table.listing,
+			table.folderId,
+			table.status,
+			table.normalizedName
+		),
+		index('by_projectId_listing_folderId_status_sizeBytes').on(
+			table.projectId,
+			table.listing,
+			table.folderId,
+			table.status,
+			table.sizeBytes
+		),
+		index('by_projectId_listing_folderId_category_status_createdTime').on(
+			table.projectId,
+			table.listing,
+			table.folderId,
+			table.category,
+			table.status,
+			table.createdTime
+		),
+		index('by_projectId_listing_folderId_extension_status_createdTime').on(
+			table.projectId,
+			table.listing,
+			table.folderId,
+			table.extension,
+			table.status,
+			table.createdTime
+		),
+		index('by_projectId_listing_category_status_createdTime').on(
+			table.projectId,
+			table.listing,
+			table.category,
+			table.status,
+			table.createdTime
+		),
+		index('by_projectId_listing_extension_status_createdTime').on(
+			table.projectId,
+			table.listing,
+			table.extension,
+			table.status,
+			table.createdTime
+		),
+		index('by_projectId_listing_sourceProvider_status_createdTime').on(
+			table.projectId,
+			table.listing,
+			table.sourceProvider,
+			table.status,
+			table.createdTime
+		),
+		index('by_projectId_listing_category_sourceProvider_status_createdTime').on(
+			table.projectId,
+			table.listing,
+			table.category,
+			table.sourceProvider,
+			table.status,
+			table.createdTime
+		),
+		index('by_projectId_listing_extension_sourceProvider_status_createdTime').on(
+			table.projectId,
+			table.listing,
+			table.extension,
+			table.sourceProvider,
+			table.status,
+			table.createdTime
+		),
+		searchIndex('by_projectId_listing_status_searchContent')
+			.on(table.searchContent)
+			.filter(
+				table.projectId,
+				table.listing,
+				table.status,
+				table.category,
+				table.extension,
+				table.folderId,
+				table.sourceProvider
+			),
+	]
+);
+
+export const fileObjectTable = convexTable(
+	'fileObject',
+	{
+		assetId: id('fileAsset')
+			.notNull()
+			.references(() => fileAssetTable.id, { onDelete: 'cascade' }),
+		projectId: id('project')
+			.notNull()
+			.references(() => projectTable.id, { onDelete: 'cascade' }),
+		orgSlug: text().notNull(),
+		storageProvider: textEnum(FILE_STORAGE_PROVIDERS).notNull(),
+		bucketKind: textEnum(FILE_BUCKET_KINDS).notNull(),
+		objectKey: text().notNull(),
+		externalId: text(),
+		declaredBytes: integer().notNull(),
+		maxBytes: integer(),
+		actualBytes: integer(),
+		declaredMimeType: text().notNull(),
+		actualMimeType: text(),
+		status: textEnum(FILE_OBJECT_STATUSES).notNull(),
+		expiresAt: integer(),
+		readyTime: integer(),
+		deletedTime: integer(),
+		createdTime: integer().notNull(),
+		updatedTime: integer().notNull(),
+	},
+	(table) => [
+		index('by_assetId').on(table.assetId),
+		index('by_projectId').on(table.projectId),
+		index('by_projectId_status_createdTime').on(table.projectId, table.status, table.createdTime),
+		index('by_objectKey').on(table.objectKey),
+		index('by_status_expiresAt').on(table.status, table.expiresAt),
+	]
+);
+
+export const fileReferenceTable = convexTable(
+	'fileReference',
+	{
+		assetId: id('fileAsset')
+			.notNull()
+			.references(() => fileAssetTable.id, { onDelete: 'cascade' }),
+		projectId: id('project')
+			.notNull()
+			.references(() => projectTable.id, { onDelete: 'cascade' }),
+		feature: textEnum(FILE_ORIGIN_FEATURES).notNull(),
+		entityType: text().notNull(),
+		entityId: text().notNull(),
+		field: text().notNull(),
+		createdTime: integer().notNull(),
+	},
+	(table) => [
+		index('by_assetId').on(table.assetId),
+		index('by_projectId').on(table.projectId),
+		index('by_projectId_feature').on(table.projectId, table.feature),
+		index('by_feature_entityType_entityId_field').on(
+			table.feature,
+			table.entityType,
+			table.entityId,
+			table.field
+		),
+	]
+);
+
+export const projectStorageUsageTable = convexTable(
+	'projectStorageUsage',
+	{
+		projectId: id('project')
+			.notNull()
+			.references(() => projectTable.id, { onDelete: 'cascade' }),
+		orgSlug: text().notNull(),
+		usedBytes: integer().notNull(),
+		reservedBytes: integer().notNull(),
+		fileCount: integer().notNull(),
+		byCategory: json().notNull(),
+		byOrigin: json().notNull(),
+		byUploaderClass: json().notNull(),
+		updatedTime: integer().notNull(),
+	},
+	(table) => [index('by_projectId').on(table.projectId), index('by_orgSlug').on(table.orgSlug)]
 );
 
 export const orgStorageUsageTable = convexTable(
@@ -885,6 +1178,11 @@ export const tables = {
 	projectModeratorAccess: projectModeratorAccessTable,
 	pendingModeratorProjectAccess: pendingModeratorProjectAccessTable,
 	projectTheme: projectThemeTable,
+	fileFolder: fileFolderTable,
+	fileAsset: fileAssetTable,
+	fileObject: fileObjectTable,
+	fileReference: fileReferenceTable,
+	projectStorageUsage: projectStorageUsageTable,
 	orgStorageUsage: orgStorageUsageTable,
 	feedback: feedbackTable,
 	feedbackBoard: feedbackBoardTable,

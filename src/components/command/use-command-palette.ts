@@ -14,6 +14,7 @@ export function useCommandPalette() {
 	return {
 		close: context.close,
 		open: context.open,
+		openFileSearch: context.openFileSearch,
 	};
 }
 

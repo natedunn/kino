@@ -10,7 +10,7 @@ import {
 	DialogTitle,
 } from '@/components/ui/dialog';
 
-const GROUP_ORDER: Array<ShortcutGroupName> = ['Global', 'Feedback'];
+const GROUP_ORDER: Array<ShortcutGroupName> = ['Global', 'Feedback', 'Files'];
 
 type ShortcutsDialogProps = {
 	open: boolean;

@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 
-export type IconSelectorTone = 'duo' | 'outline';
+export type IconSelectorTone = 'glyph-duo' | 'outline';
 
 export type IconSelectorOption<TValue extends string = string> = {
 	icon: ComponentType<SVGProps<SVGSVGElement> & { size?: string }>;
@@ -32,7 +32,7 @@ type IconSelectorProps<TValue extends string = string> = {
 };
 
 const TONE_LABELS: Record<IconSelectorTone, string> = {
-	duo: 'Duo',
+	'glyph-duo': 'Glyph Duo',
 	outline: 'Outline',
 };
 
@@ -74,7 +74,7 @@ function IconSelectorInner<TValue extends string = string>({
 	);
 	const groupedOptions = useMemo(
 		() =>
-			(['duo', 'outline'] as const)
+			(['glyph-duo', 'outline'] as const)
 				.map((groupTone) => ({
 					options: filteredOptions.filter((option) => option.tone === groupTone),
 					tone: groupTone,
@@ -275,7 +275,7 @@ function IconSelectorInner<TValue extends string = string>({
 	);
 }
 
-const IconOptionButton = memo(function IconOptionButton<TValue extends string>({
+const IconOptionButton = memo(function IconOptionButtonInner<TValue extends string>({
 	active,
 	id,
 	onActivate,

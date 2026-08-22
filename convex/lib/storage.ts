@@ -1,7 +1,14 @@
-import type { MutationCtx } from '../functions/generated/server';
+import type { MutationCtx, QueryCtx } from '../functions/generated/server';
 
 import { CRPCError } from 'kitcn/server';
 
+import { env } from '../functions/_generated/server';
+import {
+	getPublicFileDeliveryUrl,
+	getPublicFileObjectKey,
+	isPublicFileId,
+} from '../shared/file-delivery';
+import { deleteRegisteredFileByObjectKey } from './file-registry';
 import { orgUploadsR2, userUploadsR2 } from './r2';
 
 export const MAX_COVER_IMAGE_BYTES = 5 * 1024 * 1024;
@@ -127,8 +134,35 @@ function validateImageMetadata(
 	}
 }
 
-export async function resolveCoverImageUrl(key: string | null | undefined) {
+export async function resolveCoverImageUrl(
+	ctx: Pick<QueryCtx, 'db'>,
+	key: string | null | undefined
+) {
 	if (!key) return null;
+	if (key.startsWith('PUBLIC_FILE.')) {
+		const object = await ctx.db
+			.query('fileObject')
+			.withIndex('by_objectKey', (query) => query.eq('objectKey', key))
+			.unique();
+		const asset = object ? await ctx.db.get('fileAsset', object.assetId) : null;
+		if (
+			object?.status === 'ready' &&
+			object.bucketKind === 'org_uploads' &&
+			asset?.status === 'ready' &&
+			asset.access === 'public' &&
+			asset.listing === 'project_files' &&
+			asset.publicId &&
+			isPublicFileId(asset.publicId) &&
+			key === getPublicFileObjectKey(asset.publicId)
+		) {
+			const stableUrl = getPublicFileDeliveryUrl({
+				fileName: asset.name,
+				origin: env.FILES_ORIGIN,
+				publicId: asset.publicId,
+			});
+			if (stableUrl) return stableUrl;
+		}
+	}
 	return await orgUploadsR2.getUrl(key, { expiresIn: 60 * 60 * 24 });
 }
 
@@ -170,6 +204,7 @@ export async function deleteCoverImageAttachment(
 ) {
 	const coverImageId = args.coverImageId ?? null;
 	if (!coverImageId) return;
+	if (await deleteRegisteredFileByObjectKey(ctx, coverImageId)) return;
 
 	const metadata = await getCoverImageR2Metadata(ctx, coverImageId);
 	if (metadata) {

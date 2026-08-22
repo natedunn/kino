@@ -5,11 +5,12 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react
 import { useNavigate, useParams, useRouterState } from '@tanstack/react-router';
 import { Home, MoonStar, Settings, User } from 'lucide-react';
 
-import ArchivePencil from '@/icons/archive-pencil';
-import CalendarDays from '@/icons/calendar-days';
-import HomeIcon from '@/icons/home';
-import Interview from '@/icons/interview';
-import Roadmap from '@/icons/roadmap';
+import { ArchivePencilOutline18 } from '@/icons/nucleo/ArchivePencilOutline18';
+import { CalendarDaysOutline18 } from '@/icons/nucleo/CalendarDaysOutline18';
+import { Folder5OpenOutline18 } from '@/icons/nucleo/Folder5OpenOutline18';
+import { House4Outline18 } from '@/icons/nucleo/House4Outline18';
+import { InterviewOutline18 } from '@/icons/nucleo/InterviewOutline18';
+import { Roadmap2Outline18 } from '@/icons/nucleo/Roadmap2Outline18';
 import { authClient } from '@/lib/auth/auth-client';
 import { toggleThemePreference } from '@/lib/theme';
 
@@ -21,6 +22,8 @@ const CommandPalette = lazy(() =>
 
 export function CommandProvider({ children }: { children: ReactNode }) {
 	const [open, setOpen] = useState(false);
+	const [mode, setMode] = useState<'commands' | 'files'>('commands');
+	const [initialQuery, setInitialQuery] = useState('');
 	const [registrations, setRegistrations] = useState<Array<CommandRegistration>>([]);
 	const navigate = useNavigate();
 	const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -113,7 +116,7 @@ export function CommandProvider({ children }: { children: ReactNode }) {
 			commands.push(
 				{
 					group: 'Navigation',
-					icon: HomeIcon,
+					icon: House4Outline18,
 					id: 'project.overview',
 					keywords: ['project', 'overview'],
 					title: 'Go to overview',
@@ -121,7 +124,7 @@ export function CommandProvider({ children }: { children: ReactNode }) {
 				},
 				{
 					group: 'Navigation',
-					icon: ArchivePencil,
+					icon: ArchivePencilOutline18,
 					id: 'project.feedback',
 					keywords: ['project', 'feedback'],
 					title: 'Go to feedback',
@@ -129,7 +132,7 @@ export function CommandProvider({ children }: { children: ReactNode }) {
 				},
 				{
 					group: 'Navigation',
-					icon: CalendarDays,
+					icon: CalendarDaysOutline18,
 					id: 'project.updates',
 					keywords: ['project', 'updates', 'changelog'],
 					title: 'Go to updates',
@@ -137,7 +140,7 @@ export function CommandProvider({ children }: { children: ReactNode }) {
 				},
 				{
 					group: 'Navigation',
-					icon: Roadmap,
+					icon: Roadmap2Outline18,
 					id: 'project.roadmap',
 					keywords: ['project', 'roadmap'],
 					title: 'Go to roadmap',
@@ -145,7 +148,15 @@ export function CommandProvider({ children }: { children: ReactNode }) {
 				},
 				{
 					group: 'Navigation',
-					icon: Interview,
+					icon: Folder5OpenOutline18,
+					id: 'project.files',
+					keywords: ['project', 'files', 'assets', 'documents'],
+					title: 'Go to files',
+					run: () => navigate({ params, to: '/@{$org}/$project/files' }),
+				},
+				{
+					group: 'Navigation',
+					icon: InterviewOutline18,
 					id: 'project.discussions',
 					keywords: ['project', 'discussions'],
 					title: 'Go to discussions',
@@ -179,7 +190,13 @@ export function CommandProvider({ children }: { children: ReactNode }) {
 		const handleKeyDown = (event: KeyboardEvent) => {
 			if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
 				event.preventDefault();
-				setOpen((current) => !current);
+				setOpen((current) => {
+					if (!current) {
+						setInitialQuery('');
+						setMode('commands');
+					}
+					return !current;
+				});
 			}
 		};
 
@@ -191,7 +208,7 @@ export function CommandProvider({ children }: { children: ReactNode }) {
 	const isOpen = open && !isAuthRoute;
 
 	const runCommand = useCallback((command: AppCommand) => {
-		setOpen(false);
+		if (command.closeOnRun !== false) setOpen(false);
 		Promise.resolve(command.run()).catch((error) => {
 			console.error(`Command "${command.id}" failed:`, error);
 		});
@@ -200,7 +217,16 @@ export function CommandProvider({ children }: { children: ReactNode }) {
 	const contextValue = useMemo(
 		() => ({
 			close: () => setOpen(false),
-			open: () => setOpen(true),
+			open: () => {
+				setInitialQuery('');
+				setMode('commands');
+				setOpen(true);
+			},
+			openFileSearch: (query = '') => {
+				setInitialQuery(query);
+				setMode('files');
+				setOpen(true);
+			},
 			registerCommands,
 		}),
 		[registerCommands]
@@ -209,16 +235,34 @@ export function CommandProvider({ children }: { children: ReactNode }) {
 	return (
 		<CommandContext.Provider value={contextValue}>
 			{children}
-			{isOpen ? (
-				<Suspense fallback={null}>
-					<CommandPalette
-						commands={commands}
-						onOpenChange={setOpen}
-						onRunCommand={runCommand}
-						open={isOpen}
-					/>
-				</Suspense>
-			) : null}
+			<Suspense fallback={null}>
+				<CommandPalette
+					commands={commands}
+					fileSearchContext={orgSlug && projectSlug ? { orgSlug, projectSlug } : undefined}
+					initialQuery={initialQuery}
+					mode={mode}
+					onModeChange={setMode}
+					onOpenChange={(nextOpen) => {
+						setOpen(nextOpen);
+						if (!nextOpen) {
+							setInitialQuery('');
+							setMode('commands');
+						}
+					}}
+					onOpenFile={(fileId) => {
+						if (!orgSlug || !projectSlug) return;
+						setOpen(false);
+						setInitialQuery('');
+						setMode('commands');
+						void navigate({
+							params: { fileId, org: orgSlug, project: projectSlug },
+							to: '/@{$org}/$project/files/file/$fileId',
+						});
+					}}
+					onRunCommand={runCommand}
+					open={isOpen}
+				/>
+			</Suspense>
 		</CommandContext.Provider>
 	);
 }

@@ -600,6 +600,394 @@ export type DataModel = {
     searchIndexes: {};
     vectorIndexes: {};
   };
+  fileAsset: {
+    document: {
+      access: "public" | "project_staff" | "private_user";
+      category:
+        | "image"
+        | "video"
+        | "document"
+        | "text"
+        | "data"
+        | "package"
+        | "design";
+      createdTime: number;
+      creationMethod: "direct" | "feature" | "integration";
+      deletedTime?: null | number;
+      extension: string;
+      extractedText?: null | string;
+      folderId?: null | Id<"fileFolder">;
+      listing: "project_files" | "staff_only" | "unlisted";
+      mimeType: string;
+      name: string;
+      normalizedName: string;
+      originFeature:
+        | "files"
+        | "update_cover"
+        | "update_body"
+        | "wiki_attachment"
+        | "project_header"
+        | "feedback_attachment"
+        | "user_avatar"
+        | "org_avatar"
+        | "integration";
+      projectId: Id<"project">;
+      publicId?: null | string;
+      searchContent: string;
+      sizeBytes?: null | number;
+      sourceProvider: "kino" | "github" | "google_drive" | "youtube" | "s3";
+      status: "pending" | "ready" | "rejected" | "deleted";
+      thumbnailBucketKind?: null | "org_uploads" | "user_uploads";
+      thumbnailBytes?: null | number;
+      thumbnailMimeType?: null | string;
+      thumbnailObjectKey?: null | string;
+      thumbnailStatus?: null | "pending" | "ready" | "failed";
+      updatedTime: number;
+      uploadedByProfileId?: null | Id<"profile">;
+      uploaderClass: "staff" | "user" | "system" | "integration";
+      _id: Id<"fileAsset">;
+      _creationTime: number;
+    };
+    fieldPaths:
+      | "_creationTime"
+      | "_id"
+      | "access"
+      | "category"
+      | "createdTime"
+      | "creationMethod"
+      | "deletedTime"
+      | "extension"
+      | "extractedText"
+      | "folderId"
+      | "listing"
+      | "mimeType"
+      | "name"
+      | "normalizedName"
+      | "originFeature"
+      | "projectId"
+      | "publicId"
+      | "searchContent"
+      | "sizeBytes"
+      | "sourceProvider"
+      | "status"
+      | "thumbnailBucketKind"
+      | "thumbnailBytes"
+      | "thumbnailMimeType"
+      | "thumbnailObjectKey"
+      | "thumbnailStatus"
+      | "updatedTime"
+      | "uploadedByProfileId"
+      | "uploaderClass";
+    indexes: {
+      by_id: ["_id"];
+      by_creation_time: ["_creationTime"];
+      by_folderId: ["folderId", "_creationTime"];
+      by_projectId: ["projectId", "_creationTime"];
+      by_projectId_listing_category_sourceProvider_status_createdTime: [
+        "projectId",
+        "listing",
+        "category",
+        "sourceProvider",
+        "status",
+        "createdTime",
+        "_creationTime",
+      ];
+      by_projectId_listing_category_status_createdTime: [
+        "projectId",
+        "listing",
+        "category",
+        "status",
+        "createdTime",
+        "_creationTime",
+      ];
+      by_projectId_listing_extension_sourceProvider_status_createdTime: [
+        "projectId",
+        "listing",
+        "extension",
+        "sourceProvider",
+        "status",
+        "createdTime",
+        "_creationTime",
+      ];
+      by_projectId_listing_extension_status_createdTime: [
+        "projectId",
+        "listing",
+        "extension",
+        "status",
+        "createdTime",
+        "_creationTime",
+      ];
+      by_projectId_listing_folderId_category_status_createdTime: [
+        "projectId",
+        "listing",
+        "folderId",
+        "category",
+        "status",
+        "createdTime",
+        "_creationTime",
+      ];
+      by_projectId_listing_folderId_extension_status_createdTime: [
+        "projectId",
+        "listing",
+        "folderId",
+        "extension",
+        "status",
+        "createdTime",
+        "_creationTime",
+      ];
+      by_projectId_listing_folderId_status_createdTime: [
+        "projectId",
+        "listing",
+        "folderId",
+        "status",
+        "createdTime",
+        "_creationTime",
+      ];
+      by_projectId_listing_folderId_status_normalizedName: [
+        "projectId",
+        "listing",
+        "folderId",
+        "status",
+        "normalizedName",
+        "_creationTime",
+      ];
+      by_projectId_listing_folderId_status_sizeBytes: [
+        "projectId",
+        "listing",
+        "folderId",
+        "status",
+        "sizeBytes",
+        "_creationTime",
+      ];
+      by_projectId_listing_folderId_status_updatedTime: [
+        "projectId",
+        "listing",
+        "folderId",
+        "status",
+        "updatedTime",
+        "_creationTime",
+      ];
+      by_projectId_listing_sourceProvider_status_createdTime: [
+        "projectId",
+        "listing",
+        "sourceProvider",
+        "status",
+        "createdTime",
+        "_creationTime",
+      ];
+      by_projectId_listing_status_createdTime: [
+        "projectId",
+        "listing",
+        "status",
+        "createdTime",
+        "_creationTime",
+      ];
+      by_projectId_listing_status_normalizedName: [
+        "projectId",
+        "listing",
+        "status",
+        "normalizedName",
+        "_creationTime",
+      ];
+      by_projectId_listing_status_sizeBytes: [
+        "projectId",
+        "listing",
+        "status",
+        "sizeBytes",
+        "_creationTime",
+      ];
+      by_projectId_listing_status_updatedTime: [
+        "projectId",
+        "listing",
+        "status",
+        "updatedTime",
+        "_creationTime",
+      ];
+      by_projectId_status_createdTime: [
+        "projectId",
+        "status",
+        "createdTime",
+        "_creationTime",
+      ];
+      by_projectId_status_normalizedName: [
+        "projectId",
+        "status",
+        "normalizedName",
+        "_creationTime",
+      ];
+      by_projectId_status_updatedTime: [
+        "projectId",
+        "status",
+        "updatedTime",
+        "_creationTime",
+      ];
+      by_publicId: ["publicId", "_creationTime"];
+      by_uploadedByProfileId: ["uploadedByProfileId", "_creationTime"];
+    };
+    searchIndexes: {
+      by_projectId_listing_status_searchContent: {
+        searchField: "searchContent";
+        filterFields:
+          | "category"
+          | "extension"
+          | "folderId"
+          | "listing"
+          | "projectId"
+          | "sourceProvider"
+          | "status";
+      };
+    };
+    vectorIndexes: {};
+  };
+  fileFolder: {
+    document: {
+      createdByProfileId?: null | Id<"profile">;
+      createdTime: number;
+      name: string;
+      normalizedName: string;
+      parentFolderId?: null | Id<"fileFolder">;
+      projectId: Id<"project">;
+      systemKey?: null | string;
+      updatedTime: number;
+      _id: Id<"fileFolder">;
+      _creationTime: number;
+    };
+    fieldPaths:
+      | "_creationTime"
+      | "_id"
+      | "createdByProfileId"
+      | "createdTime"
+      | "name"
+      | "normalizedName"
+      | "parentFolderId"
+      | "projectId"
+      | "systemKey"
+      | "updatedTime";
+    indexes: {
+      by_id: ["_id"];
+      by_creation_time: ["_creationTime"];
+      by_parentFolderId: ["parentFolderId", "_creationTime"];
+      by_projectId: ["projectId", "_creationTime"];
+      by_projectId_parentFolderId_normalizedName: [
+        "projectId",
+        "parentFolderId",
+        "normalizedName",
+        "_creationTime",
+      ];
+      by_projectId_systemKey: ["projectId", "systemKey", "_creationTime"];
+    };
+    searchIndexes: {};
+    vectorIndexes: {};
+  };
+  fileObject: {
+    document: {
+      actualBytes?: null | number;
+      actualMimeType?: null | string;
+      assetId: Id<"fileAsset">;
+      bucketKind: "org_uploads" | "user_uploads" | "external";
+      createdTime: number;
+      declaredBytes: number;
+      declaredMimeType: string;
+      deletedTime?: null | number;
+      expiresAt?: null | number;
+      externalId?: null | string;
+      maxBytes?: null | number;
+      objectKey: string;
+      orgSlug: string;
+      projectId: Id<"project">;
+      readyTime?: null | number;
+      status: "pending" | "ready" | "rejected" | "deleted";
+      storageProvider: "r2" | "external";
+      updatedTime: number;
+      _id: Id<"fileObject">;
+      _creationTime: number;
+    };
+    fieldPaths:
+      | "_creationTime"
+      | "_id"
+      | "actualBytes"
+      | "actualMimeType"
+      | "assetId"
+      | "bucketKind"
+      | "createdTime"
+      | "declaredBytes"
+      | "declaredMimeType"
+      | "deletedTime"
+      | "expiresAt"
+      | "externalId"
+      | "maxBytes"
+      | "objectKey"
+      | "orgSlug"
+      | "projectId"
+      | "readyTime"
+      | "status"
+      | "storageProvider"
+      | "updatedTime";
+    indexes: {
+      by_id: ["_id"];
+      by_creation_time: ["_creationTime"];
+      by_assetId: ["assetId", "_creationTime"];
+      by_objectKey: ["objectKey", "_creationTime"];
+      by_projectId: ["projectId", "_creationTime"];
+      by_projectId_status_createdTime: [
+        "projectId",
+        "status",
+        "createdTime",
+        "_creationTime",
+      ];
+      by_status_expiresAt: ["status", "expiresAt", "_creationTime"];
+    };
+    searchIndexes: {};
+    vectorIndexes: {};
+  };
+  fileReference: {
+    document: {
+      assetId: Id<"fileAsset">;
+      createdTime: number;
+      entityId: string;
+      entityType: string;
+      feature:
+        | "files"
+        | "update_cover"
+        | "update_body"
+        | "wiki_attachment"
+        | "project_header"
+        | "feedback_attachment"
+        | "user_avatar"
+        | "org_avatar"
+        | "integration";
+      field: string;
+      projectId: Id<"project">;
+      _id: Id<"fileReference">;
+      _creationTime: number;
+    };
+    fieldPaths:
+      | "_creationTime"
+      | "_id"
+      | "assetId"
+      | "createdTime"
+      | "entityId"
+      | "entityType"
+      | "feature"
+      | "field"
+      | "projectId";
+    indexes: {
+      by_id: ["_id"];
+      by_creation_time: ["_creationTime"];
+      by_assetId: ["assetId", "_creationTime"];
+      by_feature_entityType_entityId_field: [
+        "feature",
+        "entityType",
+        "entityId",
+        "field",
+        "_creationTime",
+      ];
+      by_projectId: ["projectId", "_creationTime"];
+      by_projectId_feature: ["projectId", "feature", "_creationTime"];
+    };
+    searchIndexes: {};
+    vectorIndexes: {};
+  };
   githubConnectionState: {
     document: {
       consumedAt?: null | number;
@@ -1208,6 +1596,41 @@ export type DataModel = {
         "_creationTime",
       ];
       by_projectId_and_memberId: ["projectId", "memberId", "_creationTime"];
+    };
+    searchIndexes: {};
+    vectorIndexes: {};
+  };
+  projectStorageUsage: {
+    document: {
+      byCategory: any;
+      byOrigin: any;
+      byUploaderClass: any;
+      fileCount: number;
+      orgSlug: string;
+      projectId: Id<"project">;
+      reservedBytes: number;
+      updatedTime: number;
+      usedBytes: number;
+      _id: Id<"projectStorageUsage">;
+      _creationTime: number;
+    };
+    fieldPaths:
+      | "_creationTime"
+      | "_id"
+      | "byCategory"
+      | "byOrigin"
+      | "byUploaderClass"
+      | "fileCount"
+      | "orgSlug"
+      | "projectId"
+      | "reservedBytes"
+      | "updatedTime"
+      | "usedBytes";
+    indexes: {
+      by_id: ["_id"];
+      by_creation_time: ["_creationTime"];
+      by_orgSlug: ["orgSlug", "_creationTime"];
+      by_projectId: ["projectId", "_creationTime"];
     };
     searchIndexes: {};
     vectorIndexes: {};

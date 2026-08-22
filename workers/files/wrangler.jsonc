@@ -1,0 +1,29 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "kino-files",
+	"main": "src/index.ts",
+	"compatibility_date": "2026-08-14",
+	"compatibility_flags": ["nodejs_compat"],
+	"observability": {
+		"enabled": true,
+		"head_sampling_rate": 1,
+	},
+	"workers_dev": false,
+
+	// The root binding exists for local Wrangler development. Always specify
+	// --env dev or --env production when deploying this Worker.
+	"r2_buckets": [{ "binding": "ORG_UPLOADS", "bucket_name": "kino-dev-org-uploads" }],
+
+	"env": {
+		"dev": {
+			"name": "kino-files-dev",
+			"routes": [{ "pattern": "files-dev.usekino.com", "custom_domain": true }],
+			"r2_buckets": [{ "binding": "ORG_UPLOADS", "bucket_name": "kino-dev-org-uploads" }],
+		},
+		"production": {
+			"name": "kino-files",
+			"routes": [{ "pattern": "files.usekino.com", "custom_domain": true }],
+			"r2_buckets": [{ "binding": "ORG_UPLOADS", "bucket_name": "kino-org-uploads" }],
+		},
+	},
+}

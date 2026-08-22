@@ -15,6 +15,7 @@ import {
 	SelectValue,
 } from '@/components/ui/select';
 import Filter from '@/icons/filter';
+import { Filter2Outline18 } from '@/icons/nucleo/Filter2Outline18';
 
 const FROM_ROUTE = '/@{$org}/$project/feedback/';
 const TO_ROUTE = '/@{$org}/$project/feedback';
@@ -136,7 +137,7 @@ export function FeedbackToolbar() {
 			},
 			{
 				group: 'Feedback' as const,
-				icon: Filter,
+				icon: Filter2Outline18,
 				id: 'feedback.toggle-filters',
 				keywords: ['filter', 'status', 'options'],
 				shortcut: 'I',

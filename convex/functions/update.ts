@@ -8,6 +8,12 @@ import { z } from 'zod';
 
 import { authMutation, authQuery, optionalAuthQuery } from '../lib/crpc';
 import {
+	createProjectUploadIntents,
+	deleteRegisteredFileByObjectKey,
+	ensureSystemFileFolder,
+	UPLOAD_INTENT_TTL_MS,
+} from '../lib/file-registry';
+import {
 	asId,
 	assertProjectWritable,
 	generateRandomSlug,
@@ -23,6 +29,7 @@ import { orgUploadsR2 } from '../lib/r2';
 import {
 	deleteCoverImageAttachment,
 	getCoverImageR2Metadata,
+	MAX_COVER_IMAGE_BYTES,
 	resolveCoverImageUrl,
 	resolveProfileImageUrl,
 	updateOrgStorageUsage,
@@ -38,6 +45,7 @@ import {
 	updateContentSchema,
 	updateTitleSchema,
 } from '../lib/validation';
+import { getFileFormatPolicy } from '../shared/files';
 import { internal } from './_generated/api';
 import { internalMutation } from './generated/server';
 import { UPDATE_CATEGORIES, updateTable } from './schema';
@@ -107,7 +115,6 @@ export const update = authMutation
 			id: idSchema,
 			category: updateCategorySchema.optional(),
 			content: updateContentSchema.optional(),
-			coverImageId: storageKeySchema.nullable().optional(),
 			relatedFeedbackIds: idArraySchema.optional(),
 			tags: tagListSchema.optional(),
 			title: updateTitleSchema.optional(),
@@ -129,14 +136,10 @@ export const update = authMutation
 			});
 		}
 
-		const nextCoverImageId =
-			input.coverImageId === undefined ? (existingUpdate.coverImageId ?? null) : input.coverImageId;
-
 		const patch = Object.fromEntries(
 			Object.entries({
 				category: input.category,
 				content: input.content,
-				coverImageId: input.coverImageId === undefined ? undefined : nextCoverImageId,
 				relatedFeedbackIds: input.relatedFeedbackIds?.map((id) => asId<'feedback'>(id)),
 				tags: input.tags,
 				title: input.title,
@@ -386,6 +389,11 @@ export const bulkRemove = authMutation
 export const generateCoverImageUploadUrl = authMutation
 	.input(
 		z.object({
+			file: z.object({
+				mimeType: z.string().trim().min(1).max(160),
+				name: z.string().trim().min(1).max(255),
+				sizeBytes: z.number().int().positive(),
+			}),
 			updateId: idSchema,
 		})
 	)
@@ -408,8 +416,63 @@ export const generateCoverImageUploadUrl = authMutation
 				message: 'You do not have permission to upload cover images for this update',
 			});
 		}
-
-		return await orgUploadsR2.generateUploadUrl(`UPDATE_COVER_PHOTO.${input.updateId}`);
+		const policy = getFileFormatPolicy(input.file.name);
+		if (!policy || policy.category !== 'image' || policy.preview !== 'image') {
+			throw new CRPCError({
+				code: 'BAD_REQUEST',
+				message: 'Cover images must use an allowed image format',
+			});
+		}
+		const profile = await getCurrentProfileOrThrow(ctx, ctx.userId);
+		const pendingReferences = await ctx.db
+			.query('fileReference')
+			.withIndex('by_feature_entityType_entityId_field', (query) =>
+				query
+					.eq('feature', 'update_cover')
+					.eq('entityType', 'update')
+					.eq('entityId', String(existingUpdate._id))
+					.eq('field', 'coverImageId')
+			)
+			.take(20);
+		for (const reference of pendingReferences) {
+			const objects = await ctx.db
+				.query('fileObject')
+				.withIndex('by_assetId', (query) => query.eq('assetId', reference.assetId))
+				.take(5);
+			const pending = objects.find((object) => object.status === 'pending');
+			if (pending) await deleteRegisteredFileByObjectKey(ctx, pending.objectKey);
+		}
+		const folderId = await ensureSystemFileFolder(ctx, {
+			createdByProfileId: profile.id,
+			name: 'Updates',
+			projectId: project._id,
+			systemKey: 'updates',
+		});
+		const intents = await createProjectUploadIntents(ctx, {
+			access: 'public',
+			bucketKind: 'org_uploads',
+			creationMethod: 'feature',
+			files: [input.file],
+			folderId,
+			listing: 'project_files',
+			maxBytes: MAX_COVER_IMAGE_BYTES,
+			orgSlug: project.orgSlug,
+			originFeature: 'update_cover',
+			projectId: project._id,
+			reference: {
+				entityId: String(existingUpdate._id),
+				entityType: 'update',
+				feature: 'update_cover',
+				field: 'coverImageId',
+			},
+			uploadedByProfileId: profile.id,
+			uploaderClass: 'staff',
+		});
+		const intent = intents[0];
+		await ctx.scheduler.runAfter(UPLOAD_INTENT_TTL_MS, internal.file.expireUploadIntent, {
+			objectId: asId<'fileObject'>(intent.objectId),
+		});
+		return intent;
 	});
 
 export const syncMetadata = authMutation
@@ -419,15 +482,39 @@ export const syncMetadata = authMutation
 		})
 	)
 	.mutation(async ({ ctx, input }) => {
-		const parts = input.key.split('.');
-		if (parts[0] !== 'UPDATE_COVER_PHOTO' || !parts[1]) {
-			throw new ConvexError({
-				code: '400',
-				message: 'Invalid key format for cover image upload',
-			});
+		const registeredObject = await ctx.db
+			.query('fileObject')
+			.withIndex('by_objectKey', (query) => query.eq('objectKey', input.key))
+			.unique();
+		let updateId: Id<'update'>;
+		if (registeredObject) {
+			const references = await ctx.db
+				.query('fileReference')
+				.withIndex('by_assetId', (query) => query.eq('assetId', registeredObject.assetId))
+				.take(20);
+			const reference = references.find(
+				(item) =>
+					item.feature === 'update_cover' &&
+					item.entityType === 'update' &&
+					item.field === 'coverImageId'
+			);
+			if (!reference) {
+				throw new CRPCError({
+					code: 'BAD_REQUEST',
+					message: 'Upload is not an update cover image',
+				});
+			}
+			updateId = reference.entityId as Id<'update'>;
+		} else {
+			const parts = input.key.split('.');
+			if (parts[0] !== 'UPDATE_COVER_PHOTO' || !parts[1]) {
+				throw new ConvexError({
+					code: '400',
+					message: 'Invalid key format for cover image upload',
+				});
+			}
+			updateId = parts[1] as Id<'update'>;
 		}
-
-		const updateId = parts[1] as Id<'update'>;
 		const existingUpdate = await ctx.db.get('update', updateId);
 		if (!existingUpdate) {
 			throw new ConvexError({
@@ -455,19 +542,31 @@ export const syncMetadata = authMutation
 				message: 'You do not have permission to upload cover images for this update',
 			});
 		}
+		if (!registeredObject) {
+			if (existingUpdate.coverImageId && existingUpdate.coverImageId !== input.key) {
+				await deleteCoverImageAttachment(ctx, {
+					coverImageId: existingUpdate.coverImageId,
+					orgSlug: project.orgSlug,
+				});
+			}
 
-		await ctx.orm
-			.update(updateTable)
-			.set({
-				coverImageId: input.key,
-				updatedTime: Date.now(),
-			})
-			.where(eq(updateTable.id, updateId));
+			await ctx.orm
+				.update(updateTable)
+				.set({
+					coverImageId: input.key,
+					updatedTime: Date.now(),
+				})
+				.where(eq(updateTable.id, updateId));
+		}
 
 		await ctx.scheduler.runAfter(0, orgUploadsR2.component.lib.syncMetadata, {
 			...orgUploadsR2.config,
 			key: input.key,
-			onComplete: await createFunctionHandle(internal.update.onCoverImageMetadataSynced),
+			onComplete: await createFunctionHandle(
+				registeredObject
+					? internal.file.onMetadataSynced
+					: internal.update.onCoverImageMetadataSynced
+			),
 		});
 
 		return null;
@@ -497,6 +596,27 @@ export const clearCoverImage = authMutation
 				code: 'FORBIDDEN',
 				message: 'You do not have permission to clear this update cover image',
 			});
+		}
+		const references = await ctx.db
+			.query('fileReference')
+			.withIndex('by_feature_entityType_entityId_field', (query) =>
+				query
+					.eq('feature', 'update_cover')
+					.eq('entityType', 'update')
+					.eq('entityId', String(existingUpdate._id))
+					.eq('field', 'coverImageId')
+			)
+			.take(20);
+		for (const reference of references) {
+			const objects = await ctx.db
+				.query('fileObject')
+				.withIndex('by_assetId', (query) => query.eq('assetId', reference.assetId))
+				.take(5);
+			for (const object of objects) {
+				if (object.status === 'pending' || object.status === 'ready') {
+					await deleteRegisteredFileByObjectKey(ctx, object.objectKey);
+				}
+			}
 		}
 
 		await deleteCoverImageAttachment(ctx, {
@@ -552,12 +672,28 @@ export const getCoverImageUrl = optionalAuthQuery
 		})
 	)
 	.query(async ({ ctx, input }) => {
-		// Keys are `UPDATE_COVER_PHOTO.<updateId>`. Only resolve a signed URL for a
-		// caller who can actually view the owning update — never trust the raw key.
-		const parts = input.key.split('.');
-		if (parts[0] !== 'UPDATE_COVER_PHOTO' || !parts[1]) return null;
-
-		const updateDoc = await getDoc<'update'>(ctx, asId<'update'>(parts[1]));
+		// Resolve either the stable public Files URL or a legacy signed URL only for
+		// callers who can view the owning update — never trust the raw object key.
+		const registeredObject = await ctx.db
+			.query('fileObject')
+			.withIndex('by_objectKey', (query) => query.eq('objectKey', input.key))
+			.unique();
+		let updateId: Id<'update'> | null = null;
+		if (registeredObject) {
+			const references = await ctx.db
+				.query('fileReference')
+				.withIndex('by_assetId', (query) => query.eq('assetId', registeredObject.assetId))
+				.take(20);
+			const reference = references.find(
+				(item) => item.feature === 'update_cover' && item.entityType === 'update'
+			);
+			updateId = reference ? (reference.entityId as Id<'update'>) : null;
+		} else {
+			const parts = input.key.split('.');
+			if (parts[0] === 'UPDATE_COVER_PHOTO' && parts[1]) updateId = asId<'update'>(parts[1]);
+		}
+		if (!updateId) return null;
+		const updateDoc = await getDoc<'update'>(ctx, updateId);
 		if (!updateDoc) return null;
 
 		const access = await getProjectViewAccess(ctx, {
@@ -567,7 +703,7 @@ export const getCoverImageUrl = optionalAuthQuery
 		if (!access.permissions.canView) return null;
 		if (updateDoc.status === 'draft' && !access.permissions.canManageContent) return null;
 
-		return await resolveCoverImageUrl(input.key);
+		return await resolveCoverImageUrl(ctx, input.key);
 	});
 
 export const getBySlug = optionalAuthQuery
@@ -652,7 +788,7 @@ export const getBySlug = optionalAuthQuery
 				: null,
 			canEdit: access.permissions.canManageContent,
 			commentCount: comments.length,
-			coverImageUrl: await resolveCoverImageUrl(item.coverImageId ?? null),
+			coverImageUrl: await resolveCoverImageUrl(ctx, item.coverImageId ?? null),
 			emoteCounts,
 			relatedFeedback: relatedFeedback.filter(
 				(value): value is NonNullable<typeof value> => value !== null
@@ -686,7 +822,7 @@ export const getDetailCritical = optionalAuthQuery
 
 		const [author, coverImageUrl, commentWindow, heartCount] = await Promise.all([
 			getDoc<'profile'>(ctx, item.authorProfileId),
-			resolveCoverImageUrl(item.coverImageId ?? null),
+			resolveCoverImageUrl(ctx, item.coverImageId ?? null),
 			getUpdateCommentWindow(ctx, { updateId: item._id }),
 			ctx.orm.query.updateEmote.count({
 				where: { content: 'heart', updateId: item._id },
@@ -960,7 +1096,7 @@ export const listByProject = optionalAuthQuery
 						category: item.category,
 						commentCount,
 						contentPreview,
-						coverImageUrl: await resolveCoverImageUrl(item.coverImageId ?? null),
+						coverImageUrl: await resolveCoverImageUrl(ctx, item.coverImageId ?? null),
 						emoteCounts,
 						id: item._id,
 						publishedAt: item.publishedAt,

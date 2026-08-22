@@ -291,6 +291,141 @@ export declare const api: {
       any
     >;
   };
+  file: {
+    completeUpload: FunctionReference<
+      "mutation",
+      "public",
+      { assetId: string; key: string },
+      any
+    >;
+    createDirectUploadBatch: FunctionReference<
+      "mutation",
+      "public",
+      {
+        files: Array<{ mimeType: string; name: string; sizeBytes: number }>;
+        folderId?: string | null;
+        projectId: string;
+      },
+      any
+    >;
+    createFolder: FunctionReference<
+      "mutation",
+      "public",
+      { name: string; parentFolderId?: string | null; projectId: string },
+      any
+    >;
+    ensureThumbnails: FunctionReference<
+      "mutation",
+      "public",
+      { assetIds: Array<string>; projectId: string },
+      any
+    >;
+    getDownloadUrl: FunctionReference<
+      "query",
+      "public",
+      { assetId: string },
+      any
+    >;
+    getFileDetail: FunctionReference<
+      "query",
+      "public",
+      { assetId: string; projectId: string },
+      any
+    >;
+    getOrgUsage: FunctionReference<"query", "public", { orgSlug: string }, any>;
+    getPolicy: FunctionReference<"query", "public", {}, any>;
+    getProjectUsage: FunctionReference<
+      "query",
+      "public",
+      { projectId: string },
+      any
+    >;
+    getUploadStatus: FunctionReference<
+      "query",
+      "public",
+      { assetId: string },
+      any
+    >;
+    listFileTreeItems: FunctionReference<
+      "query",
+      "public",
+      { projectId: string },
+      any
+    >;
+    listFolders: FunctionReference<
+      "query",
+      "public",
+      { projectId: string },
+      any
+    >;
+    listProjectFiles: FunctionReference<
+      "query",
+      "public",
+      {
+        category?:
+          | "image"
+          | "video"
+          | "document"
+          | "text"
+          | "data"
+          | "package"
+          | "design";
+        cursor?: string | null;
+        extension?: string;
+        folderId?: string | null;
+        limit?: number;
+        projectId: string;
+        search?: string;
+        sort?:
+          | "created_desc"
+          | "created_asc"
+          | "edited_desc"
+          | "edited_asc"
+          | "name_asc"
+          | "name_desc"
+          | "size_asc"
+          | "size_desc";
+        sourceProvider?: "kino" | "github" | "google_drive" | "youtube" | "s3";
+      },
+      { continueCursor: string | null; isDone: boolean; page: Array<any> }
+    >;
+    moveAsset: FunctionReference<
+      "mutation",
+      "public",
+      { assetId: string; folderId?: string | null },
+      any
+    >;
+    moveFolder: FunctionReference<
+      "mutation",
+      "public",
+      { folderId: string; parentFolderId?: string | null },
+      any
+    >;
+    removeAsset: FunctionReference<
+      "mutation",
+      "public",
+      { assetId: string },
+      any
+    >;
+    removeFolder: FunctionReference<
+      "mutation",
+      "public",
+      { folderId: string },
+      any
+    >;
+    renameAsset: FunctionReference<
+      "mutation",
+      "public",
+      { assetId: string; name: string },
+      any
+    >;
+    renameFolder: FunctionReference<
+      "mutation",
+      "public",
+      { folderId: string; name: string },
+      any
+    >;
+  };
   github: {
     disconnectRepository: FunctionReference<
       "mutation",
@@ -721,7 +856,10 @@ export declare const api: {
     generateCoverImageUploadUrl: FunctionReference<
       "mutation",
       "public",
-      { updateId: string },
+      {
+        file: { mimeType: string; name: string; sizeBytes: number };
+        updateId: string;
+      },
       any
     >;
     getBySlug: FunctionReference<
@@ -786,7 +924,6 @@ export declare const api: {
       {
         category?: "changelog" | "article" | "announcement";
         content?: string;
-        coverImageId?: string | null;
         id: string;
         relatedFeedbackIds?: Array<string>;
         tags?: Array<string>;
@@ -969,6 +1106,74 @@ export declare const internal: {
       "internal",
       { connectionId: string; state: string; title: string; url: string },
       any
+    >;
+  };
+  file: {
+    expireUploadIntent: FunctionReference<
+      "mutation",
+      "internal",
+      { objectId: Id<"fileObject"> },
+      null
+    >;
+    extractTextContent: FunctionReference<
+      "action",
+      "internal",
+      { assetId: Id<"fileAsset"> },
+      null
+    >;
+    getTextExtractionSource: FunctionReference<
+      "query",
+      "internal",
+      { assetId: Id<"fileAsset"> },
+      { bucketKind: "org_uploads" | "user_uploads"; objectKey: string } | null
+    >;
+    getThumbnailSource: FunctionReference<
+      "query",
+      "internal",
+      { assetId: Id<"fileAsset"> },
+      {
+        bucketKind: "org_uploads" | "user_uploads";
+        objectKey: string;
+        publicId?: string;
+        sizeBytes: number;
+      } | null
+    >;
+    markThumbnailFailed: FunctionReference<
+      "mutation",
+      "internal",
+      { assetId: Id<"fileAsset"> },
+      null
+    >;
+    onMetadataSynced: FunctionReference<
+      "mutation",
+      "internal",
+      { bucket: string; isNew: boolean; key: string },
+      null
+    >;
+    saveExtractedText: FunctionReference<
+      "mutation",
+      "internal",
+      { assetId: Id<"fileAsset">; text: string },
+      null
+    >;
+    saveThumbnail: FunctionReference<
+      "mutation",
+      "internal",
+      {
+        assetId: Id<"fileAsset">;
+        bucketKind: "org_uploads" | "user_uploads";
+        bytes: number;
+        objectKey: string;
+      },
+      { accepted: boolean }
+    >;
+  };
+  fileThumbnail: {
+    generate: FunctionReference<
+      "action",
+      "internal",
+      { assetId: Id<"fileAsset"> },
+      null
     >;
   };
   generated: {

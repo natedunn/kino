@@ -1,0 +1,111 @@
+import type { SVGProps } from 'react';
+
+export type Sliders2Outline18Props = SVGProps<SVGSVGElement> & {
+	strokeWidth?: number | string;
+};
+
+export function Sliders2Outline18({ strokeWidth = 1.5, ...props }: Sliders2Outline18Props) {
+	return (
+		<svg xmlns='http://www.w3.org/2000/svg' width={18} height={18} viewBox='0 0 18 18' {...props}>
+			<line
+				x1='15.25'
+				y1='9'
+				x2='16.25'
+				y2='9'
+				fill='none'
+				stroke='currentColor'
+				strokeLinecap='round'
+				strokeLinejoin='round'
+				strokeWidth={strokeWidth}
+				data-color='color-2'
+			></line>
+			<line
+				x1='1.75'
+				y1='9'
+				x2='9'
+				y2='9'
+				fill='none'
+				stroke='currentColor'
+				strokeLinecap='round'
+				strokeLinejoin='round'
+				strokeWidth={strokeWidth}
+				data-color='color-2'
+			></line>
+			<line
+				x1='5'
+				y1='3.75'
+				x2='1.75'
+				y2='3.75'
+				fill='none'
+				stroke='currentColor'
+				strokeLinecap='round'
+				strokeLinejoin='round'
+				strokeWidth={strokeWidth}
+			></line>
+			<line
+				x1='16.25'
+				y1='3.75'
+				x2='11.25'
+				y2='3.75'
+				fill='none'
+				stroke='currentColor'
+				strokeLinecap='round'
+				strokeLinejoin='round'
+				strokeWidth={strokeWidth}
+			></line>
+			<line
+				x1='5'
+				y1='14.25'
+				x2='1.75'
+				y2='14.25'
+				fill='none'
+				stroke='currentColor'
+				strokeLinecap='round'
+				strokeLinejoin='round'
+				strokeWidth={strokeWidth}
+			></line>
+			<line
+				x1='16.25'
+				y1='14.25'
+				x2='11.25'
+				y2='14.25'
+				fill='none'
+				stroke='currentColor'
+				strokeLinecap='round'
+				strokeLinejoin='round'
+				strokeWidth={strokeWidth}
+			></line>
+			<circle
+				cx='11'
+				cy='9'
+				r='1.75'
+				fill='none'
+				stroke='currentColor'
+				strokeLinecap='round'
+				strokeLinejoin='round'
+				strokeWidth={strokeWidth}
+				data-color='color-2'
+			></circle>
+			<circle
+				cx='6.75'
+				cy='3.75'
+				r='1.75'
+				fill='none'
+				stroke='currentColor'
+				strokeLinecap='round'
+				strokeLinejoin='round'
+				strokeWidth={strokeWidth}
+			></circle>
+			<circle
+				cx='6.75'
+				cy='14.25'
+				r='1.75'
+				fill='none'
+				stroke='currentColor'
+				strokeLinecap='round'
+				strokeLinejoin='round'
+				strokeWidth={strokeWidth}
+			></circle>
+		</svg>
+	);
+}
