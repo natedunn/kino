@@ -1,48 +1,7 @@
 #!/usr/bin/env sh
 set -eu
 
-# Cloudflare Workers Builds invokes this command for the production branch.
-# Deploy the file-delivery tiers when their source changed, on their first run,
-# or when a health check shows that either Worker is missing. A shallow checkout
-# cannot prove that the files are unchanged, so it safely redeploys them.
-files_worker_changed=1
-files_worker_reason="the previous commit is unavailable"
-
-if [ "${FORCE_FILES_WORKER_DEPLOY:-0}" = "1" ]; then
-	files_worker_reason="FORCE_FILES_WORKER_DEPLOY is set"
-elif git rev-parse --verify HEAD^ >/dev/null 2>&1; then
-	if git diff --quiet HEAD^ HEAD -- workers/files; then
-		files_worker_changed=0
-		files_worker_reason=""
-	else
-		files_worker_reason="workers/files changed"
-	fi
-fi
-
-deploy_files_worker() {
-	environment="$1"
-	health_url="$2"
-
-	if [ "$files_worker_changed" = "1" ]; then
-		echo "Deploying Files Worker ($environment): $files_worker_reason."
-	elif ! command -v curl >/dev/null 2>&1; then
-		echo "Deploying Files Worker ($environment): curl is unavailable for its health check."
-	elif ! curl --fail --silent --show-error --max-time 10 "$health_url" >/dev/null; then
-		echo "Deploying Files Worker ($environment): $health_url is not healthy."
-	else
-		echo "Skipping Files Worker ($environment): source is unchanged and $health_url is healthy."
-		return
-	fi
-
-	# Workers Builds pins Wrangler to the Git-connected Worker through
-	# WRANGLER_CI_OVERRIDE_NAME. These are intentional sibling deployments, so
-	# remove that override and let each Wrangler environment supply its own name.
-	env -u WRANGLER_CI_OVERRIDE_NAME pnpm exec wrangler deploy \
-		--config workers/files/wrangler.jsonc \
-		--env "$environment"
-}
-
-deploy_files_worker preview "https://files-preview.usekino.com/health"
-deploy_files_worker production "https://files.usekino.com/health"
-
+# Cloudflare Workers Builds invokes this command for the Git-connected `kino`
+# Worker. That build credential is intentionally scoped to `kino`; standalone
+# infrastructure Workers under workers/ are deployed from their own packages.
 pnpm exec wrangler deploy --config dist/server/wrangler.json --keep-vars
