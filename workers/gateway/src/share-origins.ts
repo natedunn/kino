@@ -26,7 +26,13 @@ export async function handleShareOriginsApi(env: GatewayEnv, request: Request) {
 	let origin: string | null;
 	try {
 		const body = await request.json();
-		origin = typeof body.origin === 'string' ? normalizeQuickTunnelOrigin(body.origin) : null;
+		origin =
+			typeof body === 'object' &&
+			body !== null &&
+			'origin' in body &&
+			typeof body.origin === 'string'
+				? normalizeQuickTunnelOrigin(body.origin)
+				: null;
 	} catch {
 		origin = null;
 	}
