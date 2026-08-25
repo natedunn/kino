@@ -71,7 +71,10 @@ origin feature, search text, creator, and created/edited timestamps.
 New public project assets also receive an immutable, high-entropy `publicId`.
 This is the only database identity exposed by public delivery URLs. Convex ids,
 project ids, R2 object keys, and provider credentials are never placed in those
-URLs. Existing assets may omit `publicId` until a bounded backfill is run.
+URLs. Public assets without a valid `publicId` and matching deterministic object
+key are intentionally unavailable; this first pass does not support legacy
+public delivery URLs. Test assets created before this contract should be
+deleted and reuploaded.
 
 Access and listing are intentionally independent:
 
@@ -208,12 +211,14 @@ https://files.usekino.com/<publicId>/thumb-128.webp
 
 Development and preview deployments use `files-dev.usekino.com` once that
 Worker is deployed and `FILES_ORIGIN` is explicitly configured. When the
-variable is unset (including ordinary local development), reads fall back to
-authorized, short-lived R2 URLs instead of emitting a URL for a host that may
-not exist yet. The public id is authoritative and the filename is
-presentation-only, so an old stable URL continues to work after a rename. The
-immutable extension and stored object metadata—not the requested URL
-suffix—determine the response content type and disposition.
+variable is unset, assets that already satisfy the current `publicId` and
+deterministic object-key contract use authorized, short-lived signed delivery
+so local and unconfigured development remains usable. Legacy public objects do
+not receive this fallback. Private and unlisted assets continue to use their
+authorized, short-lived signed delivery path. The public id is authoritative
+and the filename is presentation-only, so a stable URL continues to work after
+a rename. The immutable extension and stored object metadata—not the requested
+URL suffix—determine the response content type and disposition.
 
 The dedicated `workers/files` Cloudflare Worker is the origin for these
 hostnames. It streams from a private R2 binding and can address only the
@@ -271,7 +276,8 @@ provider credentials.
 
 The first pass connects new direct Files uploads and new update-cover uploads.
 Update covers are registered in the protected Updates folder and count against
-the project quota. Existing covers remain readable through the legacy path.
+the project quota. Existing legacy covers without the stable public-delivery
+metadata are intentionally not rendered and may be reuploaded.
 
 Organization and profile avatars are account/global objects and remain on their
 existing path in this pass; they must not be assigned to an arbitrary project.
@@ -280,9 +286,9 @@ the user-upload bucket, `uploaderClass=user`, and an unlisted/private access
 policy. Those records count against the project quota even though they are not
 returned by the Files list query.
 
-A later bounded reconciliation action may inspect current R2 metadata and
-create missing object/reference rows for legacy uploads. Do not infer historical
-bytes from the old `orgStorageUsage` counter; it may have drifted on overwrites.
+Do not infer historical bytes from the old `orgStorageUsage` counter; it may
+have drifted on overwrites. This first pass does not reconcile legacy public
+uploads into the Files delivery contract.
 
 ## First-pass implementation map
 
@@ -301,12 +307,11 @@ bytes from the old `orgStorageUsage` counter; it may have drifted on overwrites.
 - Update-cover adoption: `convex/functions/update.ts`.
 - Project and organization reporting: the Storage settings routes.
 
-Deferred work includes legacy reconciliation and public-id backfill,
-authenticated clean-domain delivery for private files, cache-tag purging on
-access-policy changes, staff-only inspection of hidden user files,
-virus/malware scanning, provider adapters and sync state, paid-tier assignment,
-and organization-global usage rollups. These are designed seams, not implicit
-behavior in the first pass.
+Deferred work includes authenticated clean-domain delivery for private files,
+cache-tag purging on access-policy changes, staff-only inspection of hidden
+user files, virus/malware scanning, provider adapters and sync state,
+paid-tier assignment, and organization-global usage rollups. These are designed
+seams, not implicit behavior in the first pass.
 
 Required verification includes classification, quota boundaries, staff/user
 attribution, cross-project authorization, hidden-user-file isolation, search

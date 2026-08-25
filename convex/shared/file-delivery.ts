@@ -21,6 +21,14 @@ export function getPublicFileObjectKey(publicId: string): string {
 	return `PUBLIC_FILE.${publicId}`;
 }
 
+export function getCurrentPublicFileId(args: {
+	objectKey: string;
+	publicId: string | null | undefined;
+}): string | null {
+	if (!args.publicId || !isPublicFileId(args.publicId)) return null;
+	return args.objectKey === getPublicFileObjectKey(args.publicId) ? args.publicId : null;
+}
+
 export function getPublicFileThumbnailObjectKey(publicId: string): string {
 	assertPublicFileId(publicId);
 	return `PUBLIC_FILE_THUMBNAIL.${publicId}.webp`;

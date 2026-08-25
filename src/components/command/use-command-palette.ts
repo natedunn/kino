@@ -15,6 +15,7 @@ export function useCommandPalette() {
 		close: context.close,
 		open: context.open,
 		openFileSearch: context.openFileSearch,
+		preload: context.preload,
 	};
 }
 

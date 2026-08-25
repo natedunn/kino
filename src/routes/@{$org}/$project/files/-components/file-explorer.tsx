@@ -15,6 +15,7 @@ import {
 	Folder,
 	FolderInput,
 	MoreHorizontal,
+	Trash2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -25,10 +26,12 @@ import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
+	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useCRPC, useCRPCClient } from '@/lib/convex/crpc';
 import { extractErrorMessage } from '@/lib/errors';
+import { capturePostHogEvent } from '@/lib/posthog';
 
 import { useFilesWorkspace } from './files-workspace-context';
 
@@ -121,9 +124,9 @@ export function FileExplorer({
 	};
 
 	return (
-		<div className='flex min-h-0 w-full min-w-0 max-w-full flex-1 flex-col overflow-x-hidden py-6'>
-			<div className='w-full min-w-0 max-w-full overflow-hidden rounded-xl border bg-card shadow-xs'>
-				<div className='w-full max-w-full contain-paint overflow-x-auto overscroll-x-contain'>
+		<div className='flex min-h-0 w-full max-w-full min-w-0 flex-1 flex-col overflow-x-hidden py-6'>
+			<div className='w-full max-w-full min-w-0 overflow-hidden rounded-xl border bg-card shadow-xs'>
+				<div className='w-full max-w-full overflow-x-auto overscroll-x-contain contain-paint'>
 					<table className='w-full min-w-[660px] border-collapse text-sm'>
 						<thead>
 							<tr className='border-b bg-muted/35 text-left text-xs tracking-wider text-muted-foreground uppercase'>
@@ -261,10 +264,25 @@ function FileRow({
 	onDownload: () => void;
 	params: { org: string; project: string };
 }) {
+	const crpc = useCRPC();
+	const removeMutation = useMutation(crpc.file.removeAsset.mutationOptions());
 	const [moveOpen, setMoveOpen] = useState(false);
 	const [thumbnailFailed, setThumbnailFailed] = useState(false);
 	const Icon = fileIcon(file.category);
 	useEffect(() => setThumbnailFailed(false), [file.thumbnailUrl]);
+	const remove = async () => {
+		if (!window.confirm(`Delete ${file.name}? This cannot be undone.`)) return;
+		try {
+			await removeMutation.mutateAsync({ assetId: file.id });
+			capturePostHogEvent('file_deleted', {
+				category: file.category,
+				origin_feature: file.originFeature,
+			});
+			toast.success('File deleted');
+		} catch (error) {
+			toast.error(extractErrorMessage(error, 'Unable to delete file'));
+		}
+	};
 	return (
 		<>
 			<tr className='group border-b border-border/40 last:border-0 hover:bg-muted/30'>
@@ -316,9 +334,19 @@ function FileRow({
 								<Download /> Download
 							</DropdownMenuItem>
 							{canManage ? (
-								<DropdownMenuItem onClick={() => setMoveOpen(true)}>
-									<FolderInput /> Move to folder
-								</DropdownMenuItem>
+								<>
+									<DropdownMenuItem onClick={() => setMoveOpen(true)}>
+										<FolderInput /> Move to folder
+									</DropdownMenuItem>
+									<DropdownMenuSeparator />
+									<DropdownMenuItem
+										disabled={removeMutation.isPending}
+										onClick={remove}
+										variant='destructive'
+									>
+										<Trash2 /> {removeMutation.isPending ? 'Deleting…' : 'Delete'}
+									</DropdownMenuItem>
+								</>
 							) : null}
 						</DropdownMenuContent>
 					</DropdownMenu>

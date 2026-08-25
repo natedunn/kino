@@ -66,7 +66,12 @@ async function seedFileManager(t: ReturnType<typeof convexTest>) {
 				visibility: 'public',
 			})
 			.returning();
-		return { projectId: project.id, sessionId: session.id, userId: user.id };
+		return {
+			orgSlug: organization.slug,
+			projectId: project.id,
+			sessionId: session.id,
+			userId: user.id,
+		};
 	});
 }
 
@@ -185,9 +190,102 @@ describe('project file storage accounting', () => {
 			});
 		});
 	});
+
+	it('joins organization projects to usage without per-project lookups', async () => {
+		const t = convexTest();
+		const seed = await seedFileManager(t);
+		const secondProjectId = await t.run(async (baseCtx) => {
+			const ctx = await runCtx(baseCtx);
+			const [project] = await ctx.orm
+				.insert(projectTable)
+				.values({
+					name: 'Second project',
+					orgSlug: seed.orgSlug,
+					slug: 'second-project',
+					visibility: 'public',
+				})
+				.returning();
+			await reserveProjectStorage(ctx, {
+				bytes: 1234,
+				orgSlug: seed.orgSlug,
+				projectId: project.id as never,
+			});
+			return project.id;
+		});
+		const asManager = t.withIdentity({ sessionId: seed.sessionId, subject: seed.userId });
+
+		const usage = await asManager.query(api.file.getOrgUsage, { orgSlug: seed.orgSlug });
+
+		expect(usage.totalReservedBytes).toBe(1234);
+		expect(usage.projects).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({ fileCount: 0, id: seed.projectId, usedBytes: 0 }),
+				expect.objectContaining({ id: secondProjectId, reservedBytes: 1234 }),
+			])
+		);
+	});
 });
 
 describe('file folder hierarchy', () => {
+	it('does not generate signed fallback URLs for legacy public files', async () => {
+		const t = convexTest();
+		const seed = await seedFileManager(t);
+		const assetId = await t.run(async (baseCtx) => {
+			const ctx = await runCtx(baseCtx);
+			const now = Date.now();
+			const [asset] = await ctx.orm
+				.insert(fileAssetTable)
+				.values({
+					access: 'public',
+					category: 'text',
+					createdTime: now,
+					creationMethod: 'direct',
+					extension: 'txt',
+					listing: 'project_files',
+					mimeType: 'text/plain',
+					name: 'legacy.txt',
+					normalizedName: 'legacy.txt',
+					originFeature: 'files',
+					projectId: seed.projectId as never,
+					searchContent: 'legacy txt text',
+					sourceProvider: 'kino',
+					status: 'ready',
+					updatedTime: now,
+					uploaderClass: 'staff',
+				})
+				.returning();
+			await ctx.orm.insert(fileObjectTable).values({
+				actualBytes: 10,
+				assetId: asset.id as never,
+				bucketKind: 'org_uploads',
+				createdTime: now,
+				declaredBytes: 10,
+				declaredMimeType: 'text/plain',
+				objectKey: 'PROJECT_FILE.legacy.txt',
+				orgSlug: seed.orgSlug,
+				projectId: seed.projectId as never,
+				status: 'ready',
+				storageProvider: 'r2',
+				updatedTime: now,
+			});
+			return asset.id;
+		});
+
+		const listing = await t.query(api.file.listProjectFiles, {
+			cursor: null,
+			limit: 50,
+			projectId: seed.projectId,
+		});
+		expect(listing.page.find((file: any) => file.id === assetId)?.deliveryUrl).toBeNull();
+		expect(
+			await t.query(api.file.getFileDetail, {
+				assetId,
+				projectId: seed.projectId,
+			})
+		).toBeNull();
+		expect(await t.query(api.file.getDownloadUrl, { assetId })).toBeNull();
+	});
+
 	it('returns lightweight visible file leaves for the reactive tree', async () => {
 		const t = convexTest();
 		const seed = await seedFileManager(t);

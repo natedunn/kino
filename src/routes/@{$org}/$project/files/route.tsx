@@ -349,7 +349,7 @@ function FilesWorkspaceRoute() {
 		? Math.min(100 - usedPercent, (usage.reservedBytes / Math.max(1, usage.limitBytes)) * 100)
 		: 0;
 	const storageUsage = canManage ? (
-		<div className='shrink-0 border-t py-4 pr-5'>
+		<div className='mt-auto shrink-0 border-t bg-background py-4 pr-5'>
 			<div className='flex items-center justify-between gap-3'>
 				<p className='text-[11px] font-semibold tracking-wider text-muted-foreground uppercase'>
 					Storage usage
@@ -461,7 +461,7 @@ function FilesWorkspaceRoute() {
 				</div>
 			) : (
 				<>
-					<div className='relative flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-x-hidden'>
+					<div className='relative flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-x-hidden lg:h-[calc(100dvh-9.75rem)] lg:flex-none'>
 						<div
 							aria-hidden='true'
 							className='pointer-events-none absolute inset-x-0 top-20 border-b'
@@ -481,7 +481,7 @@ function FilesWorkspaceRoute() {
 									data-files-sidebar-aside
 									id='files-tree-sidebar'
 									className={cn(
-										'hidden min-w-0 overflow-hidden transition-colors duration-200 lg:block',
+										'hidden h-full min-h-0 min-w-0 overflow-hidden transition-colors duration-200 lg:block',
 										sidebarOpen
 											? 'border-r border-border/75'
 											: 'pointer-events-none border-r border-transparent'
@@ -516,7 +516,7 @@ function FilesWorkspaceRoute() {
 									</div>
 								</aside>
 
-								<div className='flex w-full max-w-full min-w-0 flex-1 flex-col'>
+								<div className='flex h-full min-h-0 w-full max-w-full min-w-0 flex-1 flex-col overflow-hidden'>
 									<div
 										data-files-sidebar-main
 										className={cn(
@@ -566,7 +566,7 @@ function FilesWorkspaceRoute() {
 									<div
 										data-files-sidebar-main
 										className={cn(
-											'flex min-h-0 w-full max-w-full min-w-0 flex-1 flex-col overflow-x-hidden transition-[padding] duration-200 ease-out motion-reduce:transition-none',
+											'flex min-h-0 w-full max-w-full min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto transition-[padding] duration-200 ease-out motion-reduce:transition-none',
 											sidebarOpen ? 'lg:pl-7' : 'lg:pl-0'
 										)}
 									>
@@ -584,13 +584,13 @@ function FilesWorkspaceRoute() {
 							showCloseButton={false}
 						>
 							<ResponsiveDialogHeader icon={<FolderTreeIcon />} title='Browse files' />
-								<ResponsiveDialogBody className='p-3'>
-									<div className='mb-3 border-b pb-3'>{controls}</div>
-									{fileTreeActions}
-									<p className='mb-2 px-1.5 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase'>
-										File tree
-									</p>
-									<FolderTree
+							<ResponsiveDialogBody className='p-3'>
+								<div className='mb-3 border-b pb-3'>{controls}</div>
+								{fileTreeActions}
+								<p className='mb-2 px-1.5 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase'>
+									File tree
+								</p>
+								<FolderTree
 									activeFolderId={currentFolderId}
 									files={treeFiles}
 									isLoading={foldersQuery.isPending || treeFilesQuery.isPending}

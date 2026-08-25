@@ -2,7 +2,7 @@
 
 import type { ApiOutputs } from '@convex/api';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { hotkeysCoreFeature, selectionFeature, syncDataLoaderFeature } from '@headless-tree/core';
 import { useTree } from '@headless-tree/react';
 import { useNavigate, useParams } from '@tanstack/react-router';
@@ -72,10 +72,7 @@ export function FolderTree({
 		() => (selectedItemId.startsWith('folder:') ? selectedPath.slice(0, -1) : selectedPath),
 		[selectedItemId, selectedPath]
 	);
-	const [expandedItems, setExpandedItems] = useState<Array<string>>([
-		ROOT_ID,
-		...foldersToReveal,
-	]);
+	const [expandedItems, setExpandedItems] = useState<Array<string>>([ROOT_ID, ...foldersToReveal]);
 	const [hasHydrated, setHasHydrated] = useState(false);
 	const [loadedStorageKey, setLoadedStorageKey] = useState<string | null>(null);
 	const expandedFoldersStorageKey = `${EXPANDED_FOLDERS_STORAGE_PREFIX}${projectId}`;
@@ -159,6 +156,14 @@ export function FolderTree({
 		setExpandedItems,
 		state: { expandedItems, selectedItems: [selectedItemId] },
 	});
+	const previousItems = useRef(items);
+	if (previousItems.current !== items) {
+		// Headless Tree only rebuilds its synchronous item metadata when controlled
+		// expansion state changes. Convex can remove a file while that state stays
+		// identical, so schedule the rebuild before getItems reads the old item ID.
+		tree.scheduleRebuildTree();
+		previousItems.current = items;
+	}
 	const visibleItems = tree.getItems();
 	const isTreeInitializing =
 		!hasHydrated || ((folders.length > 0 || files.length > 0) && visibleItems.length === 0);
@@ -235,11 +240,7 @@ export function FolderTreeSkeleton({ className }: { className?: string }) {
 	] as const;
 
 	return (
-		<div
-			aria-label='Loading file tree'
-			className={cn('space-y-0.5 p-1', className)}
-			role='status'
-		>
+		<div aria-label='Loading file tree' className={cn('space-y-0.5 p-1', className)} role='status'>
 			{rows.map((row, index) => (
 				<div
 					className='relative flex h-8 items-center gap-2 px-1.5'

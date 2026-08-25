@@ -56,11 +56,12 @@ Set the Convex `FILES_ORIGIN` environment variable alongside the deployment:
 - Development and preview, after the Worker is live: `https://files-dev.usekino.com`
 - Production: `https://files.usekino.com`
 
-When `FILES_ORIGIN` is unset, Convex falls back to authorized, short-lived R2
-URLs. This keeps local and unconfigured preview deployments working before the
-custom hostname exists. Set the variable only after the corresponding Worker
-is deployed and healthy. Production configuration must set the production
-value explicitly.
+When `FILES_ORIGIN` is unset, assets that already satisfy the current public ID
+and deterministic object-key contract use authorized, short-lived signed R2
+delivery. Legacy public objects do not receive this fallback. Private and
+unlisted assets retain their authorized, short-lived signed delivery path. Set
+the variable only after the corresponding Worker is deployed and healthy;
+production configuration must set the production value explicitly.
 
 Do not add application session cookies to this hostname. Public delivery uses
 cross-origin-safe responses; future private delivery must use a separate,

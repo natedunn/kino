@@ -32,9 +32,9 @@ import { orgUploadsR2, userUploadsR2 } from '../lib/r2';
 import { deleteCoverImageAttachment } from '../lib/storage';
 import { idSchema, orgSlugSchema } from '../lib/validation';
 import {
+	getCurrentPublicFileId,
 	getPublicFileDeliveryUrl,
 	getPublicFileDownloadUrl,
-	getPublicFileObjectKey,
 	getPublicFileThumbnailObjectKey,
 	getPublicFileThumbnailUrl,
 	isPublicFileId,
@@ -795,75 +795,42 @@ export const listProjectFiles = optionalAuthQuery
 		return {
 			continueCursor: result.continueCursor,
 			isDone: result.isDone,
-			page: await Promise.all(
-				result.page.map(async (asset) => {
-					const uploader = asset.uploadedByProfileId
-						? await getDoc<'profile'>(ctx, asset.uploadedByProfileId)
+			page: result.page.map((asset) => {
+				const deliveryUrl =
+					asset.publicId && isPublicFileId(asset.publicId)
+						? getPublicFileDeliveryUrl({
+								fileName: asset.name,
+								origin: env.FILES_ORIGIN,
+								publicId: asset.publicId,
+							})
 						: null;
-					let deliveryUrl =
-						asset.publicId && isPublicFileId(asset.publicId)
-							? getPublicFileDeliveryUrl({
-									fileName: asset.name,
-									origin: env.FILES_ORIGIN,
-									publicId: asset.publicId,
-								})
-							: null;
-					if (!deliveryUrl) {
-						const objects = await ctx.db
-							.query('fileObject')
-							.withIndex('by_assetId', (query) => query.eq('assetId', asset._id))
-							.order('desc')
-							.take(5);
-						const ready = objects.find(
-							(candidate) => candidate.status === 'ready' && candidate.bucketKind === 'org_uploads'
-						);
-						if (ready) {
-							deliveryUrl = await orgUploadsR2.getUrl(ready.objectKey, {
-								expiresIn: 60 * 15,
-							});
-						}
-					}
-					const stableThumbnailUrl =
-						asset.publicId &&
-						isPublicFileId(asset.publicId) &&
-						asset.thumbnailObjectKey === getPublicFileThumbnailObjectKey(asset.publicId) &&
-						asset.thumbnailBucketKind === 'org_uploads'
-							? getPublicFileThumbnailUrl({
-									origin: env.FILES_ORIGIN,
-									publicId: asset.publicId,
-								})
-							: null;
-					const thumbnailR2 =
-						asset.thumbnailBucketKind === 'user_uploads' ? userUploadsR2 : orgUploadsR2;
-					const thumbnailUrl =
-						asset.thumbnailStatus === 'ready' && stableThumbnailUrl
-							? stableThumbnailUrl
-							: asset.thumbnailStatus === 'ready' && asset.thumbnailObjectKey
-								? await thumbnailR2.getUrl(asset.thumbnailObjectKey, {
-										expiresIn: 60 * 60 * 24 * 7,
-									})
-								: null;
-					return {
-						category: asset.category,
-						createdTime: asset.createdTime,
-						deliveryUrl,
-						extension: asset.extension,
-						folderId: asset.folderId,
-						id: asset._id,
-						mimeType: asset.mimeType,
-						name: asset.name,
-						originFeature: asset.originFeature,
-						publicId: asset.publicId ?? null,
-						sizeBytes: asset.sizeBytes,
-						thumbnailStatus: asset.thumbnailStatus,
-						thumbnailUrl,
-						updatedTime: asset.updatedTime,
-						uploadedBy: uploader
-							? { id: uploader._id, name: uploader.name, username: uploader.username }
-							: null,
-					};
-				})
-			),
+				const thumbnailUrl =
+					asset.publicId &&
+					isPublicFileId(asset.publicId) &&
+					asset.thumbnailObjectKey === getPublicFileThumbnailObjectKey(asset.publicId) &&
+					asset.thumbnailBucketKind === 'org_uploads'
+						? getPublicFileThumbnailUrl({
+								origin: env.FILES_ORIGIN,
+								publicId: asset.publicId,
+							})
+						: null;
+				return {
+					category: asset.category,
+					createdTime: asset.createdTime,
+					deliveryUrl,
+					extension: asset.extension,
+					folderId: asset.folderId,
+					id: asset._id,
+					mimeType: asset.mimeType,
+					name: asset.name,
+					originFeature: asset.originFeature,
+					publicId: asset.publicId ?? null,
+					sizeBytes: asset.sizeBytes,
+					thumbnailStatus: asset.thumbnailStatus,
+					thumbnailUrl,
+					updatedTime: asset.updatedTime,
+				};
+			}),
 		};
 	});
 
@@ -905,19 +872,20 @@ export const getFileDetail = optionalAuthQuery
 		);
 		if (!readyObject) return null;
 
-		let deliveryUrl =
-			asset.publicId &&
-			isPublicFileId(asset.publicId) &&
-			readyObject.objectKey === getPublicFileObjectKey(asset.publicId)
-				? getPublicFileDeliveryUrl({
-						fileName: asset.name,
-						origin: env.FILES_ORIGIN,
-						publicId: asset.publicId,
-					})
-				: null;
-		if (!deliveryUrl) {
-			deliveryUrl = await orgUploadsR2.getUrl(readyObject.objectKey, { expiresIn: 60 * 15 });
-		}
+		const publicId = getCurrentPublicFileId({
+			objectKey: readyObject.objectKey,
+			publicId: asset.publicId,
+		});
+		if (!publicId) return null;
+		const deliveryUrl =
+			getPublicFileDeliveryUrl({
+				fileName: asset.name,
+				origin: env.FILES_ORIGIN,
+				publicId,
+			}) ??
+			(await orgUploadsR2.getUrl(readyObject.objectKey, {
+				expiresIn: 60 * 15,
+			}));
 
 		return {
 			canManage,
@@ -978,18 +946,19 @@ export const getDownloadUrl = optionalAuthQuery
 			.take(5);
 		const ready = object.find((item) => item.status === 'ready');
 		if (!ready || ready.bucketKind !== 'org_uploads') return null;
-		if (
-			publiclyAvailable &&
-			asset.publicId &&
-			isPublicFileId(asset.publicId) &&
-			ready.objectKey === getPublicFileObjectKey(asset.publicId)
-		) {
-			const stableUrl = getPublicFileDownloadUrl({
-				fileName: asset.name,
-				origin: env.FILES_ORIGIN,
+		if (publiclyAvailable) {
+			const publicId = getCurrentPublicFileId({
+				objectKey: ready.objectKey,
 				publicId: asset.publicId,
 			});
-			if (stableUrl) return stableUrl;
+			if (!publicId) return null;
+			return (
+				getPublicFileDownloadUrl({
+					fileName: asset.name,
+					origin: env.FILES_ORIGIN,
+					publicId,
+				}) ?? (await orgUploadsR2.getUrl(ready.objectKey, { expiresIn: 60 * 15 }))
+			);
 		}
 		return await orgUploadsR2.getUrl(ready.objectKey, { expiresIn: 60 * 15 });
 	});
@@ -1367,30 +1336,31 @@ export const getOrgUsage = authQuery
 		const access = await verifyOrgAccess(ctx, { slug: input.orgSlug, userId: ctx.userId });
 		if (!access.organization || !access.permissions.canEdit)
 			throw new CRPCError({ code: 'FORBIDDEN', message: 'You cannot view organization storage' });
-		const rows = await ctx.db
-			.query('projectStorageUsage')
-			.withIndex('by_orgSlug', (query) => query.eq('orgSlug', input.orgSlug))
-			.take(200);
-		const projects = await Promise.all(
-			rows.map(async (row) => {
-				const project = await getDoc<'project'>(ctx, row.projectId);
-				return project
-					? {
-							fileCount: row.fileCount,
-							id: project._id,
-							limitBytes: getProjectStorageLimitBytes(),
-							name: project.name,
-							reservedBytes: row.reservedBytes,
-							slug: project.slug,
-							usedBytes: row.usedBytes,
-						}
-					: null;
-			})
-		);
+		const [rows, orgProjects] = await Promise.all([
+			ctx.db
+				.query('projectStorageUsage')
+				.withIndex('by_orgSlug', (query) => query.eq('orgSlug', input.orgSlug))
+				.take(200),
+			ctx.db
+				.query('project')
+				.withIndex('by_orgSlug', (query) => query.eq('orgSlug', input.orgSlug))
+				.take(200),
+		]);
+		const usageByProjectId = new Map(rows.map((row) => [row.projectId, row]));
+		const projects = orgProjects.map((project) => {
+			const usage = usageByProjectId.get(project._id);
+			return {
+				fileCount: usage?.fileCount ?? 0,
+				id: project._id,
+				limitBytes: getProjectStorageLimitBytes(),
+				name: project.name,
+				reservedBytes: usage?.reservedBytes ?? 0,
+				slug: project.slug,
+				usedBytes: usage?.usedBytes ?? 0,
+			};
+		});
 		return {
-			projects: projects.filter(
-				(project): project is NonNullable<typeof project> => project !== null
-			),
+			projects,
 			totalFiles: rows.reduce((sum, row) => sum + row.fileCount, 0),
 			totalReservedBytes: rows.reduce((sum, row) => sum + row.reservedBytes, 0),
 			totalUsedBytes: rows.reduce((sum, row) => sum + row.usedBytes, 0),

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
 	createPublicFileId,
+	getCurrentPublicFileId,
 	getFilesOrigin,
 	getPublicFileDeliveryUrl,
 	getPublicFileDownloadUrl,
@@ -28,6 +29,23 @@ describe('public file delivery contract', () => {
 		expect(getPublicFileThumbnailObjectKey(publicId)).toBe(
 			`PUBLIC_FILE_THUMBNAIL.${publicId}.webp`
 		);
+	});
+
+	it('recognizes only the current public ID and object-key contract', () => {
+		const publicId = '0123456789abcdef0123456789abcdef';
+		expect(
+			getCurrentPublicFileId({
+				objectKey: getPublicFileObjectKey(publicId),
+				publicId,
+			})
+		).toBe(publicId);
+		expect(getCurrentPublicFileId({ objectKey: 'PROJECT_FILE.legacy.txt', publicId })).toBeNull();
+		expect(
+			getCurrentPublicFileId({
+				objectKey: getPublicFileObjectKey(publicId),
+				publicId: undefined,
+			})
+		).toBeNull();
 	});
 
 	it('builds clean delivery URLs while treating the filename as one path segment', () => {

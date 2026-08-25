@@ -672,26 +672,21 @@ export const getCoverImageUrl = optionalAuthQuery
 		})
 	)
 	.query(async ({ ctx, input }) => {
-		// Resolve either the stable public Files URL or a legacy signed URL only for
-		// callers who can view the owning update — never trust the raw object key.
+		// Resolve only registered stable public Files URLs, and never trust the raw
+		// object key supplied by the caller.
 		const registeredObject = await ctx.db
 			.query('fileObject')
 			.withIndex('by_objectKey', (query) => query.eq('objectKey', input.key))
 			.unique();
-		let updateId: Id<'update'> | null = null;
-		if (registeredObject) {
-			const references = await ctx.db
-				.query('fileReference')
-				.withIndex('by_assetId', (query) => query.eq('assetId', registeredObject.assetId))
-				.take(20);
-			const reference = references.find(
-				(item) => item.feature === 'update_cover' && item.entityType === 'update'
-			);
-			updateId = reference ? (reference.entityId as Id<'update'>) : null;
-		} else {
-			const parts = input.key.split('.');
-			if (parts[0] === 'UPDATE_COVER_PHOTO' && parts[1]) updateId = asId<'update'>(parts[1]);
-		}
+		if (!registeredObject) return null;
+		const references = await ctx.db
+			.query('fileReference')
+			.withIndex('by_assetId', (query) => query.eq('assetId', registeredObject.assetId))
+			.take(20);
+		const reference = references.find(
+			(item) => item.feature === 'update_cover' && item.entityType === 'update'
+		);
+		const updateId = reference ? (reference.entityId as Id<'update'>) : null;
 		if (!updateId) return null;
 		const updateDoc = await getDoc<'update'>(ctx, updateId);
 		if (!updateDoc) return null;
