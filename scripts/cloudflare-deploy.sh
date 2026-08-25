@@ -34,7 +34,12 @@ deploy_files_worker() {
 		return
 	fi
 
-	pnpm exec wrangler deploy --config workers/files/wrangler.jsonc --env "$environment"
+	# Workers Builds pins Wrangler to the Git-connected Worker through
+	# WRANGLER_CI_OVERRIDE_NAME. These are intentional sibling deployments, so
+	# remove that override and let each Wrangler environment supply its own name.
+	env -u WRANGLER_CI_OVERRIDE_NAME pnpm exec wrangler deploy \
+		--config workers/files/wrangler.jsonc \
+		--env "$environment"
 }
 
 deploy_files_worker preview "https://files-preview.usekino.com/health"
