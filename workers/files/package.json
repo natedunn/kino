@@ -3,12 +3,12 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"dev": "wrangler dev --config wrangler.jsonc --env dev",
-		"deploy:dev": "wrangler deploy --config wrangler.jsonc --env dev",
+		"dev": "wrangler dev --config wrangler.jsonc --env preview",
+		"deploy:preview": "wrangler deploy --config wrangler.jsonc --env preview",
 		"deploy:production": "wrangler deploy --config wrangler.jsonc --env production",
 		"typecheck": "tsc --noEmit",
 		"test": "vitest run",
-		"types": "wrangler types --config wrangler.jsonc --env dev"
+		"types": "wrangler types --config wrangler.jsonc --env preview"
 	},
 	"devDependencies": {
 		"typescript": "^5.9.3",
