@@ -30,9 +30,14 @@ Routes:
 
 ```sh
 pnpm install
-pnpm typecheck && pnpm test            # includes the better-auth version-lock test
-npx wrangler deploy --env dev          # always verify on dev tier first
-npx wrangler deploy --env production
+pnpm types
+pnpm typecheck && pnpm test # includes the better-auth version-lock test
+
+pnpm deploy:preview         # always verify on the shared dev/preview tier first
+curl https://gateway-dev.usekino.com/health
+
+pnpm deploy:production
+curl https://gateway.usekino.com/health
 ```
 
 Secrets live in the gitignored `secrets.dev.local` / `secrets.production.local`

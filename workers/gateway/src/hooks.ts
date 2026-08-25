@@ -150,7 +150,14 @@ export async function handleTargetsApi(env: GatewayEnv, request: Request) {
 	let url: string;
 	try {
 		const parsed = await request.json();
-		if (typeof parsed.url !== 'string') throw new Error('missing url');
+		if (
+			typeof parsed !== 'object' ||
+			parsed === null ||
+			!('url' in parsed) ||
+			typeof parsed.url !== 'string'
+		) {
+			throw new Error('missing url');
+		}
 		url = parsed.url;
 	} catch {
 		return new Response('Body must be JSON with a `url` string', {
