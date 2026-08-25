@@ -34,10 +34,19 @@ deploy_files_worker() {
 		return
 	fi
 
-	# Workers Builds pins Wrangler to the Git-connected Worker through
-	# WRANGLER_CI_OVERRIDE_NAME. These are intentional sibling deployments, so
-	# remove that override and let each Wrangler environment supply its own name.
-	env -u WRANGLER_CI_OVERRIDE_NAME pnpm exec wrangler deploy \
+	if [ -z "${FILES_WORKERS_CLOUDFLARE_API_TOKEN:-}" ]; then
+		echo "Missing required Cloudflare build secret: FILES_WORKERS_CLOUDFLARE_API_TOKEN." >&2
+		echo "The Git-connected kino credential can deploy only the kino Worker; the Files Workers require a separate account-scoped token." >&2
+		exit 1
+	fi
+
+	# Workers Builds pins its generated credential and Worker name to the
+	# Git-connected kino Worker. Use the dedicated token for these intentional
+	# sibling deployments, while leaving the generated credential untouched for
+	# the main application deployment below.
+	env -u WRANGLER_CI_OVERRIDE_NAME \
+		CLOUDFLARE_API_TOKEN="$FILES_WORKERS_CLOUDFLARE_API_TOKEN" \
+		pnpm exec wrangler deploy \
 		--config workers/files/wrangler.jsonc \
 		--env "$environment"
 }
