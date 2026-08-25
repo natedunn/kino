@@ -11,19 +11,19 @@
 	"workers_dev": false,
 
 	// The root binding exists for local Wrangler development. Always specify
-	// --env dev or --env production when deploying this Worker.
+	// --env preview or --env production when deploying this Worker.
 	"r2_buckets": [{ "binding": "ORG_UPLOADS", "bucket_name": "kino-dev-org-uploads" }],
 
 	"env": {
-		"dev": {
-			"name": "kino-files-dev",
-			"routes": [{ "pattern": "files-dev.usekino.com", "custom_domain": true }],
+		"preview": {
+			"name": "kino-files-preview",
+			"routes": [{ "pattern": "files-preview.usekino.com", "custom_domain": true }],
 			"r2_buckets": [{ "binding": "ORG_UPLOADS", "bucket_name": "kino-dev-org-uploads" }],
 		},
 		"production": {
 			"name": "kino-files",
 			"routes": [{ "pattern": "files.usekino.com", "custom_domain": true }],
-			"r2_buckets": [{ "binding": "ORG_UPLOADS", "bucket_name": "kino-org-uploads" }],
+			"r2_buckets": [{ "binding": "ORG_UPLOADS", "bucket_name": "kino-prod-org-uploads" }],
 		},
 	},
 }

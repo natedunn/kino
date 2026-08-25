@@ -2,7 +2,8 @@
 
 This Worker owns `files.usekino.com` and streams public project assets from the
 private organization-upload R2 bucket. Development and preview assets use
-`files-dev.usekino.com`.
+`files-preview.usekino.com` once the shared preview Worker is deployed. Local
+development falls back to signed R2 URLs.
 
 It deliberately serves only deterministic public object namespaces:
 
@@ -39,8 +40,8 @@ pnpm dev
 Always deploy and verify development before production:
 
 ```sh
-pnpm deploy:dev
-curl https://files-dev.usekino.com/health
+pnpm deploy:preview
+curl https://files-preview.usekino.com/health
 
 pnpm deploy:production
 curl https://files.usekino.com/health
@@ -48,12 +49,12 @@ curl https://files.usekino.com/health
 
 Cloudflare creates the DNS record and certificate from the Wrangler custom
 domain declaration. Before the first production deployment, verify that
-`kino-org-uploads` is the production value of `R2_ORG_UPLOADS_BUCKET`; the
+`kino-prod-org-uploads` is the production organization-upload bucket; the
 development bucket is `kino-dev-org-uploads`.
 
 Set the Convex `FILES_ORIGIN` environment variable alongside the deployment:
 
-- Development and preview, after the Worker is live: `https://files-dev.usekino.com`
+- Shared preview deployments, after the Worker is live: `https://files-preview.usekino.com`
 - Production: `https://files.usekino.com`
 
 When `FILES_ORIGIN` is unset, assets that already satisfy the current public ID

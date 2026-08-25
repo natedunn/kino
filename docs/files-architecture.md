@@ -209,8 +209,9 @@ https://files.usekino.com/<publicId>/<display-filename.ext>
 https://files.usekino.com/<publicId>/thumb-128.webp
 ```
 
-Development and preview deployments use `files-dev.usekino.com` once that
-Worker is deployed and `FILES_ORIGIN` is explicitly configured. When the
+Preview deployments use `files-preview.usekino.com` once that shared Worker is
+deployed and `FILES_ORIGIN` is explicitly configured. Local development uses
+signed R2 delivery unless a delivery origin is explicitly configured. When the
 variable is unset, assets that already satisfy the current `publicId` and
 deterministic object-key contract use authorized, short-lived signed delivery
 so local and unconfigured development remains usable. Legacy public objects do
