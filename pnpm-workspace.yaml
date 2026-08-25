@@ -1,16 +1,2 @@
 packages:
   - .
-
-# Convex Node actions run on Linux ARM64, while installs can happen on macOS
-# locally or Linux x64 in Cloudflare. Keep Sharp's optional native binaries for
-# both the install host and Convex's runtime in the same dependency tree.
-supportedArchitectures:
-  os:
-    - current
-    - linux
-  cpu:
-    - current
-    - arm64
-  libc:
-    - current
-    - glibc
