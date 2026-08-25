@@ -697,6 +697,28 @@
 	color: #a0a0a0;
 }
 
+/* Apply persisted desktop sidebar state before React hydrates so a hard refresh
+   never paints the Files layout in the opposite state. */
+@media (min-width: 64rem) {
+	html[data-files-sidebar='closed'] [data-files-sidebar-grid] {
+		grid-template-columns: 0 minmax(0, 1fr);
+	}
+
+	html[data-files-sidebar='closed'] [data-files-sidebar-aside] {
+		pointer-events: none;
+		border-right-color: transparent;
+	}
+
+	html[data-files-sidebar='closed'] [data-files-sidebar-panel] {
+		transform: translateX(-100%);
+		opacity: 0;
+	}
+
+	html[data-files-sidebar='closed'] [data-files-sidebar-main] {
+		padding-left: 0;
+	}
+}
+
 @keyframes heart-pop {
 	0% {
 		transform: scale(1);

@@ -3,7 +3,7 @@ import { createFileRoute, Outlet, useNavigate } from '@tanstack/react-router';
 
 import { useRegisterCommands } from '@/components/command';
 import { useRegisterShortcuts } from '@/components/shortcuts';
-import CirclePlusOutline from '@/icons/circle-plus-outline';
+import { CirclePlusOutline18 } from '@/icons/nucleo/CirclePlusOutline18';
 import { projectTitle, titleMeta } from '@/lib/seo';
 
 export const Route = createFileRoute('/@{$org}/$project/feedback')({
@@ -30,7 +30,7 @@ function FeedbackRoute() {
 		() => [
 			{
 				group: 'Feedback' as const,
-				icon: CirclePlusOutline,
+				icon: CirclePlusOutline18,
 				id: 'feedback.add',
 				keywords: ['create', 'new', 'request'],
 				shortcut: 'N',

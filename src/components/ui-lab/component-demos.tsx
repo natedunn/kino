@@ -560,7 +560,7 @@ function IconSelectorDemo() {
 				</div>
 			</Demo>
 			<Demo title='Tone distinction'>
-				{(['duo', 'outline'] as const).map((tone) => (
+				{(['glyph-duo', 'outline'] as const).map((tone) => (
 					<div className='min-w-52 space-y-2' key={tone}>
 						<div className='text-xs font-medium text-muted-foreground uppercase'>{tone}</div>
 						<div className='grid grid-cols-4 gap-1'>
@@ -1146,7 +1146,7 @@ export const COMPONENT_ITEMS: Array<LabItem> = [
 	{
 		id: 'icon-selector',
 		name: 'Icon Selector',
-		description: 'A searchable icon picker with duo and outline tone groups.',
+		description: 'A searchable icon picker with glyph-duo and outline variant groups.',
 		importCode: `import { IconSelector } from "@/components/icon-selector"`,
 		render: () => <IconSelectorDemo />,
 	},

@@ -186,6 +186,9 @@ export const MainNav = ({ context, isUserPending = false, subNav, user }: MainNa
 										aria-keyshortcuts='Meta+K Control+K'
 										className='w-64 max-w-xs justify-start px-3 text-muted-foreground'
 										onClick={commandPalette.open}
+										onFocus={commandPalette.preload}
+										onPointerDown={commandPalette.preload}
+										onPointerEnter={commandPalette.preload}
 									>
 										<SearchSparkle className='mr-2 size-4 shrink-0' />
 										<span className='truncate text-muted-foreground/75'>Search or jump to...</span>
@@ -202,6 +205,8 @@ export const MainNav = ({ context, isUserPending = false, subNav, user }: MainNa
 									aria-keyshortcuts='Meta+K Control+K'
 									className='text-muted-foreground md:hidden'
 									onClick={commandPalette.open}
+									onFocus={commandPalette.preload}
+									onPointerDown={commandPalette.preload}
 								>
 									<SearchSparkle className='size-4' />
 									<span className='sr-only'>Search</span>

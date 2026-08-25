@@ -7,7 +7,15 @@ import {
 	redirect,
 	useRouterState,
 } from '@tanstack/react-router';
-import { GitBranch, LayoutDashboard, Palette, Settings, TriangleAlert, Users } from 'lucide-react';
+import {
+	GitBranch,
+	HardDrive,
+	LayoutDashboard,
+	Palette,
+	Settings,
+	TriangleAlert,
+	Users,
+} from 'lucide-react';
 
 import { SidebarNavGroup, SidebarNavItem, SidebarNavSelect } from '@/components/sidebar-nav';
 import { EditingBar } from '@/components/site-nav/editing-bar';
@@ -89,6 +97,12 @@ function ProjectSettingsRoute() {
 			label: 'Members',
 			to: '/@{$org}/$project/settings/members' as const,
 			visible: permissions?.canManageAccess,
+		},
+		{
+			icon: HardDrive,
+			label: 'Storage',
+			to: '/@{$org}/$project/settings/storage' as const,
+			visible: permissions?.canEditSettings || permissions?.canManageContent,
 		},
 		{
 			icon: GitBranch,

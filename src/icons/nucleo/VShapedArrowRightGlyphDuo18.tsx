@@ -1,0 +1,14 @@
+import type { SVGProps } from 'react';
+
+export type VShapedArrowRightGlyphDuo18Props = SVGProps<SVGSVGElement>;
+
+export function VShapedArrowRightGlyphDuo18(props: VShapedArrowRightGlyphDuo18Props) {
+	return (
+		<svg xmlns='http://www.w3.org/2000/svg' width={18} height={18} viewBox='0 0 18 18' {...props}>
+			<path
+				d='M8.12001 2.32795C7.88801 1.98595 7.42102 1.89495 7.07802 2.12995C6.73502 2.36295 6.64602 2.82894 6.88002 3.17194L10.843 8.99994L6.88002 14.8279C6.64702 15.1709 6.73502 15.6369 7.07802 15.8699C7.20702 15.9579 7.35401 15.9999 7.49901 15.9999C7.73901 15.9999 7.97501 15.8849 8.12001 15.6719L12.37 9.42194C12.543 9.16694 12.543 8.83295 12.37 8.57795L8.12001 2.32795Z'
+				fill='currentColor'
+			></path>
+		</svg>
+	);
+}

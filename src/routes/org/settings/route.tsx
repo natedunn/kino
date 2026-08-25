@@ -1,6 +1,6 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { createFileRoute, Link, Outlet, redirect, useRouterState } from '@tanstack/react-router';
-import { GitBranch, Settings, Users } from 'lucide-react';
+import { GitBranch, HardDrive, Settings, Users } from 'lucide-react';
 
 import { EmptyState } from '@/components/kino/common';
 import { SidebarNavGroup, SidebarNavItem, SidebarNavSelect } from '@/components/sidebar-nav';
@@ -27,6 +27,11 @@ const navItems = [
 		icon: Users,
 		label: 'Members',
 		to: '/org/settings/members' as const,
+	},
+	{
+		icon: HardDrive,
+		label: 'Storage',
+		to: '/org/settings/storage' as const,
 	},
 	{
 		icon: GitBranch,

@@ -29,6 +29,7 @@ import { Route as AuthVerifyEmailRouteImport } from './routes/auth.verify-email'
 import { Route as OrgSettingsRouteRouteImport } from './routes/org/settings/route'
 import { Route as AtChar123orgChar125ProjectIndexRouteImport } from './routes/@{$org}/$project/index'
 import { Route as AtChar123orgChar125ProjectFeedbackRouteRouteImport } from './routes/@{$org}/$project/feedback/route'
+import { Route as AtChar123orgChar125ProjectFilesRouteRouteImport } from './routes/@{$org}/$project/files/route'
 import { Route as AtChar123orgChar125ProjectSettingsRouteRouteImport } from './routes/@{$org}/$project/settings/route'
 import { Route as AtChar123orgChar125CreateProjectIndexRouteImport } from './routes/@{$org}/create-project/index'
 import { Route as AccountAppearanceIndexRouteImport } from './routes/account/appearance/index'
@@ -43,6 +44,7 @@ import { Route as CreateTeamIndexRouteImport } from './routes/create/team/index'
 import { Route as OrgSettingsIndexRouteImport } from './routes/org/settings/index'
 import { Route as ProfileSettingsIndexRouteImport } from './routes/profile/settings/index'
 import { Route as UUsernameIndexRouteImport } from './routes/u/$username/index'
+import { Route as AtChar123orgChar125ProjectAssetLibraryIndexRouteImport } from './routes/@{$org}/$project/asset-library/index'
 import { Route as AtChar123orgChar125ProjectDiscussionsIndexRouteImport } from './routes/@{$org}/$project/discussions/index'
 import { Route as AtChar123orgChar125ProjectFeedbackIndexRouteImport } from './routes/@{$org}/$project/feedback/index'
 import { Route as AtChar123orgChar125ProjectFilesIndexRouteImport } from './routes/@{$org}/$project/files/index'
@@ -53,10 +55,13 @@ import { Route as AtChar123orgChar125IntegrationsGithubIndexRouteImport } from '
 import { Route as OrgSettingsGeneralIndexRouteImport } from './routes/org/settings/general/index'
 import { Route as OrgSettingsIntegrationsIndexRouteImport } from './routes/org/settings/integrations/index'
 import { Route as OrgSettingsMembersIndexRouteImport } from './routes/org/settings/members/index'
+import { Route as OrgSettingsStorageIndexRouteImport } from './routes/org/settings/storage/index'
+import { Route as AtChar123orgChar125ProjectAssetLibraryFileIdIndexRouteImport } from './routes/@{$org}/$project/asset-library/$fileId/index'
 import { Route as AtChar123orgChar125ProjectFeedbackSlugIndexRouteImport } from './routes/@{$org}/$project/feedback/$slug/index'
 import { Route as AtChar123orgChar125ProjectFeedbackBoardsIndexRouteImport } from './routes/@{$org}/$project/feedback/boards/index'
 import { Route as AtChar123orgChar125ProjectFeedbackBoardsNewRouteImport } from './routes/@{$org}/$project/feedback/boards/new'
 import { Route as AtChar123orgChar125ProjectFeedbackNewIndexRouteImport } from './routes/@{$org}/$project/feedback/new/index'
+import { Route as AtChar123orgChar125ProjectFilesSearchIndexRouteImport } from './routes/@{$org}/$project/files/search/index'
 import { Route as AtChar123orgChar125ProjectIntegrationsGithubIndexRouteImport } from './routes/@{$org}/$project/integrations/github/index'
 import { Route as AtChar123orgChar125ProjectSettingsAppearanceIndexRouteImport } from './routes/@{$org}/$project/settings/appearance/index'
 import { Route as AtChar123orgChar125ProjectSettingsBoardsIndexRouteImport } from './routes/@{$org}/$project/settings/boards/index'
@@ -64,12 +69,15 @@ import { Route as AtChar123orgChar125ProjectSettingsDangerIndexRouteImport } fro
 import { Route as AtChar123orgChar125ProjectSettingsGeneralIndexRouteImport } from './routes/@{$org}/$project/settings/general/index'
 import { Route as AtChar123orgChar125ProjectSettingsIntegrationsIndexRouteImport } from './routes/@{$org}/$project/settings/integrations/index'
 import { Route as AtChar123orgChar125ProjectSettingsMembersIndexRouteImport } from './routes/@{$org}/$project/settings/members/index'
+import { Route as AtChar123orgChar125ProjectSettingsStorageIndexRouteImport } from './routes/@{$org}/$project/settings/storage/index'
 import { Route as AtChar123orgChar125ProjectUpdatesSlugIndexRouteImport } from './routes/@{$org}/$project/updates/$slug/index'
 import { Route as AtChar123orgChar125ProjectUpdatesSlugEditRouteImport } from './routes/@{$org}/$project/updates/$slug/edit'
 import { Route as AtChar123orgChar125ProjectUpdatesEditIndexRouteImport } from './routes/@{$org}/$project/updates/edit/index'
 import { Route as AtChar123orgChar125ProjectUpdatesNewIndexRouteImport } from './routes/@{$org}/$project/updates/new/index'
 import { Route as AtChar123orgChar125ProjectFeedbackBoardsBoardIndexRouteImport } from './routes/@{$org}/$project/feedback/boards/$board/index'
 import { Route as AtChar123orgChar125ProjectFeedbackBoardsBoardEditRouteImport } from './routes/@{$org}/$project/feedback/boards/$board/edit'
+import { Route as AtChar123orgChar125ProjectFilesFileFileIdIndexRouteImport } from './routes/@{$org}/$project/files/file/$fileId/index'
+import { Route as AtChar123orgChar125ProjectFilesFolderFolderIdIndexRouteImport } from './routes/@{$org}/$project/files/folder/$folderId/index'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -176,6 +184,12 @@ const AtChar123orgChar125ProjectFeedbackRouteRoute =
     path: '/feedback',
     getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
   } as any)
+const AtChar123orgChar125ProjectFilesRouteRoute =
+  AtChar123orgChar125ProjectFilesRouteRouteImport.update({
+    id: '/files',
+    path: '/files',
+    getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
+  } as any)
 const AtChar123orgChar125ProjectSettingsRouteRoute =
   AtChar123orgChar125ProjectSettingsRouteRouteImport.update({
     id: '/settings',
@@ -249,6 +263,12 @@ const UUsernameIndexRoute = UUsernameIndexRouteImport.update({
   path: '/u/$username/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AtChar123orgChar125ProjectAssetLibraryIndexRoute =
+  AtChar123orgChar125ProjectAssetLibraryIndexRouteImport.update({
+    id: '/asset-library/',
+    path: '/asset-library/',
+    getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
+  } as any)
 const AtChar123orgChar125ProjectDiscussionsIndexRoute =
   AtChar123orgChar125ProjectDiscussionsIndexRouteImport.update({
     id: '/discussions/',
@@ -263,9 +283,9 @@ const AtChar123orgChar125ProjectFeedbackIndexRoute =
   } as any)
 const AtChar123orgChar125ProjectFilesIndexRoute =
   AtChar123orgChar125ProjectFilesIndexRouteImport.update({
-    id: '/files/',
-    path: '/files/',
-    getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
+    id: '/',
+    path: '/',
+    getParentRoute: () => AtChar123orgChar125ProjectFilesRouteRoute,
   } as any)
 const AtChar123orgChar125ProjectRoadmapIndexRoute =
   AtChar123orgChar125ProjectRoadmapIndexRouteImport.update({
@@ -307,6 +327,17 @@ const OrgSettingsMembersIndexRoute = OrgSettingsMembersIndexRouteImport.update({
   path: '/members/',
   getParentRoute: () => OrgSettingsRouteRoute,
 } as any)
+const OrgSettingsStorageIndexRoute = OrgSettingsStorageIndexRouteImport.update({
+  id: '/storage/',
+  path: '/storage/',
+  getParentRoute: () => OrgSettingsRouteRoute,
+} as any)
+const AtChar123orgChar125ProjectAssetLibraryFileIdIndexRoute =
+  AtChar123orgChar125ProjectAssetLibraryFileIdIndexRouteImport.update({
+    id: '/asset-library/$fileId/',
+    path: '/asset-library/$fileId/',
+    getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
+  } as any)
 const AtChar123orgChar125ProjectFeedbackSlugIndexRoute =
   AtChar123orgChar125ProjectFeedbackSlugIndexRouteImport.update({
     id: '/$slug/',
@@ -330,6 +361,12 @@ const AtChar123orgChar125ProjectFeedbackNewIndexRoute =
     id: '/new/',
     path: '/new/',
     getParentRoute: () => AtChar123orgChar125ProjectFeedbackRouteRoute,
+  } as any)
+const AtChar123orgChar125ProjectFilesSearchIndexRoute =
+  AtChar123orgChar125ProjectFilesSearchIndexRouteImport.update({
+    id: '/search/',
+    path: '/search/',
+    getParentRoute: () => AtChar123orgChar125ProjectFilesRouteRoute,
   } as any)
 const AtChar123orgChar125ProjectIntegrationsGithubIndexRoute =
   AtChar123orgChar125ProjectIntegrationsGithubIndexRouteImport.update({
@@ -373,6 +410,12 @@ const AtChar123orgChar125ProjectSettingsMembersIndexRoute =
     path: '/members/',
     getParentRoute: () => AtChar123orgChar125ProjectSettingsRouteRoute,
   } as any)
+const AtChar123orgChar125ProjectSettingsStorageIndexRoute =
+  AtChar123orgChar125ProjectSettingsStorageIndexRouteImport.update({
+    id: '/storage/',
+    path: '/storage/',
+    getParentRoute: () => AtChar123orgChar125ProjectSettingsRouteRoute,
+  } as any)
 const AtChar123orgChar125ProjectUpdatesSlugIndexRoute =
   AtChar123orgChar125ProjectUpdatesSlugIndexRouteImport.update({
     id: '/updates/$slug/',
@@ -409,6 +452,18 @@ const AtChar123orgChar125ProjectFeedbackBoardsBoardEditRoute =
     path: '/boards/$board/edit',
     getParentRoute: () => AtChar123orgChar125ProjectFeedbackRouteRoute,
   } as any)
+const AtChar123orgChar125ProjectFilesFileFileIdIndexRoute =
+  AtChar123orgChar125ProjectFilesFileFileIdIndexRouteImport.update({
+    id: '/file/$fileId/',
+    path: '/file/$fileId/',
+    getParentRoute: () => AtChar123orgChar125ProjectFilesRouteRoute,
+  } as any)
+const AtChar123orgChar125ProjectFilesFolderFolderIdIndexRoute =
+  AtChar123orgChar125ProjectFilesFolderFolderIdIndexRouteImport.update({
+    id: '/folder/$folderId/',
+    path: '/folder/$folderId/',
+    getParentRoute: () => AtChar123orgChar125ProjectFilesRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -430,6 +485,7 @@ export interface FileRoutesByFullPath {
   '/account/': typeof AccountIndexRoute
   '/auth/': typeof AuthIndexRoute
   '/@{$org}/$project/feedback': typeof AtChar123orgChar125ProjectFeedbackRouteRouteWithChildren
+  '/@{$org}/$project/files': typeof AtChar123orgChar125ProjectFilesRouteRouteWithChildren
   '/@{$org}/$project/settings': typeof AtChar123orgChar125ProjectSettingsRouteRouteWithChildren
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/github/$': typeof ApiGithubSplatRoute
@@ -445,6 +501,7 @@ export interface FileRoutesByFullPath {
   '/org/settings/': typeof OrgSettingsIndexRoute
   '/profile/settings/': typeof ProfileSettingsIndexRoute
   '/u/$username/': typeof UUsernameIndexRoute
+  '/@{$org}/$project/asset-library/': typeof AtChar123orgChar125ProjectAssetLibraryIndexRoute
   '/@{$org}/$project/discussions/': typeof AtChar123orgChar125ProjectDiscussionsIndexRoute
   '/@{$org}/$project/feedback/': typeof AtChar123orgChar125ProjectFeedbackIndexRoute
   '/@{$org}/$project/files/': typeof AtChar123orgChar125ProjectFilesIndexRoute
@@ -455,11 +512,14 @@ export interface FileRoutesByFullPath {
   '/org/settings/general/': typeof OrgSettingsGeneralIndexRoute
   '/org/settings/integrations/': typeof OrgSettingsIntegrationsIndexRoute
   '/org/settings/members/': typeof OrgSettingsMembersIndexRoute
+  '/org/settings/storage/': typeof OrgSettingsStorageIndexRoute
   '/@{$org}/$project/feedback/boards/new': typeof AtChar123orgChar125ProjectFeedbackBoardsNewRoute
   '/@{$org}/$project/updates/$slug/edit': typeof AtChar123orgChar125ProjectUpdatesSlugEditRoute
+  '/@{$org}/$project/asset-library/$fileId/': typeof AtChar123orgChar125ProjectAssetLibraryFileIdIndexRoute
   '/@{$org}/$project/feedback/$slug/': typeof AtChar123orgChar125ProjectFeedbackSlugIndexRoute
   '/@{$org}/$project/feedback/boards/': typeof AtChar123orgChar125ProjectFeedbackBoardsIndexRoute
   '/@{$org}/$project/feedback/new/': typeof AtChar123orgChar125ProjectFeedbackNewIndexRoute
+  '/@{$org}/$project/files/search/': typeof AtChar123orgChar125ProjectFilesSearchIndexRoute
   '/@{$org}/$project/integrations/github/': typeof AtChar123orgChar125ProjectIntegrationsGithubIndexRoute
   '/@{$org}/$project/settings/appearance/': typeof AtChar123orgChar125ProjectSettingsAppearanceIndexRoute
   '/@{$org}/$project/settings/boards/': typeof AtChar123orgChar125ProjectSettingsBoardsIndexRoute
@@ -467,11 +527,14 @@ export interface FileRoutesByFullPath {
   '/@{$org}/$project/settings/general/': typeof AtChar123orgChar125ProjectSettingsGeneralIndexRoute
   '/@{$org}/$project/settings/integrations/': typeof AtChar123orgChar125ProjectSettingsIntegrationsIndexRoute
   '/@{$org}/$project/settings/members/': typeof AtChar123orgChar125ProjectSettingsMembersIndexRoute
+  '/@{$org}/$project/settings/storage/': typeof AtChar123orgChar125ProjectSettingsStorageIndexRoute
   '/@{$org}/$project/updates/$slug/': typeof AtChar123orgChar125ProjectUpdatesSlugIndexRoute
   '/@{$org}/$project/updates/edit/': typeof AtChar123orgChar125ProjectUpdatesEditIndexRoute
   '/@{$org}/$project/updates/new/': typeof AtChar123orgChar125ProjectUpdatesNewIndexRoute
   '/@{$org}/$project/feedback/boards/$board/edit': typeof AtChar123orgChar125ProjectFeedbackBoardsBoardEditRoute
   '/@{$org}/$project/feedback/boards/$board/': typeof AtChar123orgChar125ProjectFeedbackBoardsBoardIndexRoute
+  '/@{$org}/$project/files/file/$fileId/': typeof AtChar123orgChar125ProjectFilesFileFileIdIndexRoute
+  '/@{$org}/$project/files/folder/$folderId/': typeof AtChar123orgChar125ProjectFilesFolderFolderIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -501,6 +564,7 @@ export interface FileRoutesByTo {
   '/org/settings': typeof OrgSettingsIndexRoute
   '/profile/settings': typeof ProfileSettingsIndexRoute
   '/u/$username': typeof UUsernameIndexRoute
+  '/@{$org}/$project/asset-library': typeof AtChar123orgChar125ProjectAssetLibraryIndexRoute
   '/@{$org}/$project/discussions': typeof AtChar123orgChar125ProjectDiscussionsIndexRoute
   '/@{$org}/$project/feedback': typeof AtChar123orgChar125ProjectFeedbackIndexRoute
   '/@{$org}/$project/files': typeof AtChar123orgChar125ProjectFilesIndexRoute
@@ -511,11 +575,14 @@ export interface FileRoutesByTo {
   '/org/settings/general': typeof OrgSettingsGeneralIndexRoute
   '/org/settings/integrations': typeof OrgSettingsIntegrationsIndexRoute
   '/org/settings/members': typeof OrgSettingsMembersIndexRoute
+  '/org/settings/storage': typeof OrgSettingsStorageIndexRoute
   '/@{$org}/$project/feedback/boards/new': typeof AtChar123orgChar125ProjectFeedbackBoardsNewRoute
   '/@{$org}/$project/updates/$slug/edit': typeof AtChar123orgChar125ProjectUpdatesSlugEditRoute
+  '/@{$org}/$project/asset-library/$fileId': typeof AtChar123orgChar125ProjectAssetLibraryFileIdIndexRoute
   '/@{$org}/$project/feedback/$slug': typeof AtChar123orgChar125ProjectFeedbackSlugIndexRoute
   '/@{$org}/$project/feedback/boards': typeof AtChar123orgChar125ProjectFeedbackBoardsIndexRoute
   '/@{$org}/$project/feedback/new': typeof AtChar123orgChar125ProjectFeedbackNewIndexRoute
+  '/@{$org}/$project/files/search': typeof AtChar123orgChar125ProjectFilesSearchIndexRoute
   '/@{$org}/$project/integrations/github': typeof AtChar123orgChar125ProjectIntegrationsGithubIndexRoute
   '/@{$org}/$project/settings/appearance': typeof AtChar123orgChar125ProjectSettingsAppearanceIndexRoute
   '/@{$org}/$project/settings/boards': typeof AtChar123orgChar125ProjectSettingsBoardsIndexRoute
@@ -523,11 +590,14 @@ export interface FileRoutesByTo {
   '/@{$org}/$project/settings/general': typeof AtChar123orgChar125ProjectSettingsGeneralIndexRoute
   '/@{$org}/$project/settings/integrations': typeof AtChar123orgChar125ProjectSettingsIntegrationsIndexRoute
   '/@{$org}/$project/settings/members': typeof AtChar123orgChar125ProjectSettingsMembersIndexRoute
+  '/@{$org}/$project/settings/storage': typeof AtChar123orgChar125ProjectSettingsStorageIndexRoute
   '/@{$org}/$project/updates/$slug': typeof AtChar123orgChar125ProjectUpdatesSlugIndexRoute
   '/@{$org}/$project/updates/edit': typeof AtChar123orgChar125ProjectUpdatesEditIndexRoute
   '/@{$org}/$project/updates/new': typeof AtChar123orgChar125ProjectUpdatesNewIndexRoute
   '/@{$org}/$project/feedback/boards/$board/edit': typeof AtChar123orgChar125ProjectFeedbackBoardsBoardEditRoute
   '/@{$org}/$project/feedback/boards/$board': typeof AtChar123orgChar125ProjectFeedbackBoardsBoardIndexRoute
+  '/@{$org}/$project/files/file/$fileId': typeof AtChar123orgChar125ProjectFilesFileFileIdIndexRoute
+  '/@{$org}/$project/files/folder/$folderId': typeof AtChar123orgChar125ProjectFilesFolderFolderIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -550,6 +620,7 @@ export interface FileRoutesById {
   '/account/': typeof AccountIndexRoute
   '/auth/': typeof AuthIndexRoute
   '/@{$org}/$project/feedback': typeof AtChar123orgChar125ProjectFeedbackRouteRouteWithChildren
+  '/@{$org}/$project/files': typeof AtChar123orgChar125ProjectFilesRouteRouteWithChildren
   '/@{$org}/$project/settings': typeof AtChar123orgChar125ProjectSettingsRouteRouteWithChildren
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/github/$': typeof ApiGithubSplatRoute
@@ -565,6 +636,7 @@ export interface FileRoutesById {
   '/org/settings/': typeof OrgSettingsIndexRoute
   '/profile/settings/': typeof ProfileSettingsIndexRoute
   '/u/$username/': typeof UUsernameIndexRoute
+  '/@{$org}/$project/asset-library/': typeof AtChar123orgChar125ProjectAssetLibraryIndexRoute
   '/@{$org}/$project/discussions/': typeof AtChar123orgChar125ProjectDiscussionsIndexRoute
   '/@{$org}/$project/feedback/': typeof AtChar123orgChar125ProjectFeedbackIndexRoute
   '/@{$org}/$project/files/': typeof AtChar123orgChar125ProjectFilesIndexRoute
@@ -575,11 +647,14 @@ export interface FileRoutesById {
   '/org/settings/general/': typeof OrgSettingsGeneralIndexRoute
   '/org/settings/integrations/': typeof OrgSettingsIntegrationsIndexRoute
   '/org/settings/members/': typeof OrgSettingsMembersIndexRoute
+  '/org/settings/storage/': typeof OrgSettingsStorageIndexRoute
   '/@{$org}/$project/feedback/boards/new': typeof AtChar123orgChar125ProjectFeedbackBoardsNewRoute
   '/@{$org}/$project/updates/$slug/edit': typeof AtChar123orgChar125ProjectUpdatesSlugEditRoute
+  '/@{$org}/$project/asset-library/$fileId/': typeof AtChar123orgChar125ProjectAssetLibraryFileIdIndexRoute
   '/@{$org}/$project/feedback/$slug/': typeof AtChar123orgChar125ProjectFeedbackSlugIndexRoute
   '/@{$org}/$project/feedback/boards/': typeof AtChar123orgChar125ProjectFeedbackBoardsIndexRoute
   '/@{$org}/$project/feedback/new/': typeof AtChar123orgChar125ProjectFeedbackNewIndexRoute
+  '/@{$org}/$project/files/search/': typeof AtChar123orgChar125ProjectFilesSearchIndexRoute
   '/@{$org}/$project/integrations/github/': typeof AtChar123orgChar125ProjectIntegrationsGithubIndexRoute
   '/@{$org}/$project/settings/appearance/': typeof AtChar123orgChar125ProjectSettingsAppearanceIndexRoute
   '/@{$org}/$project/settings/boards/': typeof AtChar123orgChar125ProjectSettingsBoardsIndexRoute
@@ -587,11 +662,14 @@ export interface FileRoutesById {
   '/@{$org}/$project/settings/general/': typeof AtChar123orgChar125ProjectSettingsGeneralIndexRoute
   '/@{$org}/$project/settings/integrations/': typeof AtChar123orgChar125ProjectSettingsIntegrationsIndexRoute
   '/@{$org}/$project/settings/members/': typeof AtChar123orgChar125ProjectSettingsMembersIndexRoute
+  '/@{$org}/$project/settings/storage/': typeof AtChar123orgChar125ProjectSettingsStorageIndexRoute
   '/@{$org}/$project/updates/$slug/': typeof AtChar123orgChar125ProjectUpdatesSlugIndexRoute
   '/@{$org}/$project/updates/edit/': typeof AtChar123orgChar125ProjectUpdatesEditIndexRoute
   '/@{$org}/$project/updates/new/': typeof AtChar123orgChar125ProjectUpdatesNewIndexRoute
   '/@{$org}/$project/feedback/boards/$board/edit': typeof AtChar123orgChar125ProjectFeedbackBoardsBoardEditRoute
   '/@{$org}/$project/feedback/boards/$board/': typeof AtChar123orgChar125ProjectFeedbackBoardsBoardIndexRoute
+  '/@{$org}/$project/files/file/$fileId/': typeof AtChar123orgChar125ProjectFilesFileFileIdIndexRoute
+  '/@{$org}/$project/files/folder/$folderId/': typeof AtChar123orgChar125ProjectFilesFolderFolderIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -615,6 +693,7 @@ export interface FileRouteTypes {
     | '/account/'
     | '/auth/'
     | '/@{$org}/$project/feedback'
+    | '/@{$org}/$project/files'
     | '/@{$org}/$project/settings'
     | '/api/auth/$'
     | '/api/github/$'
@@ -630,6 +709,7 @@ export interface FileRouteTypes {
     | '/org/settings/'
     | '/profile/settings/'
     | '/u/$username/'
+    | '/@{$org}/$project/asset-library/'
     | '/@{$org}/$project/discussions/'
     | '/@{$org}/$project/feedback/'
     | '/@{$org}/$project/files/'
@@ -640,11 +720,14 @@ export interface FileRouteTypes {
     | '/org/settings/general/'
     | '/org/settings/integrations/'
     | '/org/settings/members/'
+    | '/org/settings/storage/'
     | '/@{$org}/$project/feedback/boards/new'
     | '/@{$org}/$project/updates/$slug/edit'
+    | '/@{$org}/$project/asset-library/$fileId/'
     | '/@{$org}/$project/feedback/$slug/'
     | '/@{$org}/$project/feedback/boards/'
     | '/@{$org}/$project/feedback/new/'
+    | '/@{$org}/$project/files/search/'
     | '/@{$org}/$project/integrations/github/'
     | '/@{$org}/$project/settings/appearance/'
     | '/@{$org}/$project/settings/boards/'
@@ -652,11 +735,14 @@ export interface FileRouteTypes {
     | '/@{$org}/$project/settings/general/'
     | '/@{$org}/$project/settings/integrations/'
     | '/@{$org}/$project/settings/members/'
+    | '/@{$org}/$project/settings/storage/'
     | '/@{$org}/$project/updates/$slug/'
     | '/@{$org}/$project/updates/edit/'
     | '/@{$org}/$project/updates/new/'
     | '/@{$org}/$project/feedback/boards/$board/edit'
     | '/@{$org}/$project/feedback/boards/$board/'
+    | '/@{$org}/$project/files/file/$fileId/'
+    | '/@{$org}/$project/files/folder/$folderId/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -686,6 +772,7 @@ export interface FileRouteTypes {
     | '/org/settings'
     | '/profile/settings'
     | '/u/$username'
+    | '/@{$org}/$project/asset-library'
     | '/@{$org}/$project/discussions'
     | '/@{$org}/$project/feedback'
     | '/@{$org}/$project/files'
@@ -696,11 +783,14 @@ export interface FileRouteTypes {
     | '/org/settings/general'
     | '/org/settings/integrations'
     | '/org/settings/members'
+    | '/org/settings/storage'
     | '/@{$org}/$project/feedback/boards/new'
     | '/@{$org}/$project/updates/$slug/edit'
+    | '/@{$org}/$project/asset-library/$fileId'
     | '/@{$org}/$project/feedback/$slug'
     | '/@{$org}/$project/feedback/boards'
     | '/@{$org}/$project/feedback/new'
+    | '/@{$org}/$project/files/search'
     | '/@{$org}/$project/integrations/github'
     | '/@{$org}/$project/settings/appearance'
     | '/@{$org}/$project/settings/boards'
@@ -708,11 +798,14 @@ export interface FileRouteTypes {
     | '/@{$org}/$project/settings/general'
     | '/@{$org}/$project/settings/integrations'
     | '/@{$org}/$project/settings/members'
+    | '/@{$org}/$project/settings/storage'
     | '/@{$org}/$project/updates/$slug'
     | '/@{$org}/$project/updates/edit'
     | '/@{$org}/$project/updates/new'
     | '/@{$org}/$project/feedback/boards/$board/edit'
     | '/@{$org}/$project/feedback/boards/$board'
+    | '/@{$org}/$project/files/file/$fileId'
+    | '/@{$org}/$project/files/folder/$folderId'
   id:
     | '__root__'
     | '/'
@@ -734,6 +827,7 @@ export interface FileRouteTypes {
     | '/account/'
     | '/auth/'
     | '/@{$org}/$project/feedback'
+    | '/@{$org}/$project/files'
     | '/@{$org}/$project/settings'
     | '/api/auth/$'
     | '/api/github/$'
@@ -749,6 +843,7 @@ export interface FileRouteTypes {
     | '/org/settings/'
     | '/profile/settings/'
     | '/u/$username/'
+    | '/@{$org}/$project/asset-library/'
     | '/@{$org}/$project/discussions/'
     | '/@{$org}/$project/feedback/'
     | '/@{$org}/$project/files/'
@@ -759,11 +854,14 @@ export interface FileRouteTypes {
     | '/org/settings/general/'
     | '/org/settings/integrations/'
     | '/org/settings/members/'
+    | '/org/settings/storage/'
     | '/@{$org}/$project/feedback/boards/new'
     | '/@{$org}/$project/updates/$slug/edit'
+    | '/@{$org}/$project/asset-library/$fileId/'
     | '/@{$org}/$project/feedback/$slug/'
     | '/@{$org}/$project/feedback/boards/'
     | '/@{$org}/$project/feedback/new/'
+    | '/@{$org}/$project/files/search/'
     | '/@{$org}/$project/integrations/github/'
     | '/@{$org}/$project/settings/appearance/'
     | '/@{$org}/$project/settings/boards/'
@@ -771,11 +869,14 @@ export interface FileRouteTypes {
     | '/@{$org}/$project/settings/general/'
     | '/@{$org}/$project/settings/integrations/'
     | '/@{$org}/$project/settings/members/'
+    | '/@{$org}/$project/settings/storage/'
     | '/@{$org}/$project/updates/$slug/'
     | '/@{$org}/$project/updates/edit/'
     | '/@{$org}/$project/updates/new/'
     | '/@{$org}/$project/feedback/boards/$board/edit'
     | '/@{$org}/$project/feedback/boards/$board/'
+    | '/@{$org}/$project/files/file/$fileId/'
+    | '/@{$org}/$project/files/folder/$folderId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -938,6 +1039,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AtChar123orgChar125ProjectFeedbackRouteRouteImport
       parentRoute: typeof AtChar123orgChar125ProjectRouteRoute
     }
+    '/@{$org}/$project/files': {
+      id: '/@{$org}/$project/files'
+      path: '/files'
+      fullPath: '/@{$org}/$project/files'
+      preLoaderRoute: typeof AtChar123orgChar125ProjectFilesRouteRouteImport
+      parentRoute: typeof AtChar123orgChar125ProjectRouteRoute
+    }
     '/@{$org}/$project/settings': {
       id: '/@{$org}/$project/settings'
       path: '/settings'
@@ -1036,6 +1144,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UUsernameIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/@{$org}/$project/asset-library/': {
+      id: '/@{$org}/$project/asset-library/'
+      path: '/asset-library'
+      fullPath: '/@{$org}/$project/asset-library/'
+      preLoaderRoute: typeof AtChar123orgChar125ProjectAssetLibraryIndexRouteImport
+      parentRoute: typeof AtChar123orgChar125ProjectRouteRoute
+    }
     '/@{$org}/$project/discussions/': {
       id: '/@{$org}/$project/discussions/'
       path: '/discussions'
@@ -1052,10 +1167,10 @@ declare module '@tanstack/react-router' {
     }
     '/@{$org}/$project/files/': {
       id: '/@{$org}/$project/files/'
-      path: '/files'
+      path: '/'
       fullPath: '/@{$org}/$project/files/'
       preLoaderRoute: typeof AtChar123orgChar125ProjectFilesIndexRouteImport
-      parentRoute: typeof AtChar123orgChar125ProjectRouteRoute
+      parentRoute: typeof AtChar123orgChar125ProjectFilesRouteRoute
     }
     '/@{$org}/$project/roadmap/': {
       id: '/@{$org}/$project/roadmap/'
@@ -1106,6 +1221,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OrgSettingsMembersIndexRouteImport
       parentRoute: typeof OrgSettingsRouteRoute
     }
+    '/org/settings/storage/': {
+      id: '/org/settings/storage/'
+      path: '/storage'
+      fullPath: '/org/settings/storage/'
+      preLoaderRoute: typeof OrgSettingsStorageIndexRouteImport
+      parentRoute: typeof OrgSettingsRouteRoute
+    }
+    '/@{$org}/$project/asset-library/$fileId/': {
+      id: '/@{$org}/$project/asset-library/$fileId/'
+      path: '/asset-library/$fileId'
+      fullPath: '/@{$org}/$project/asset-library/$fileId/'
+      preLoaderRoute: typeof AtChar123orgChar125ProjectAssetLibraryFileIdIndexRouteImport
+      parentRoute: typeof AtChar123orgChar125ProjectRouteRoute
+    }
     '/@{$org}/$project/feedback/$slug/': {
       id: '/@{$org}/$project/feedback/$slug/'
       path: '/$slug'
@@ -1133,6 +1262,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/@{$org}/$project/feedback/new/'
       preLoaderRoute: typeof AtChar123orgChar125ProjectFeedbackNewIndexRouteImport
       parentRoute: typeof AtChar123orgChar125ProjectFeedbackRouteRoute
+    }
+    '/@{$org}/$project/files/search/': {
+      id: '/@{$org}/$project/files/search/'
+      path: '/search'
+      fullPath: '/@{$org}/$project/files/search/'
+      preLoaderRoute: typeof AtChar123orgChar125ProjectFilesSearchIndexRouteImport
+      parentRoute: typeof AtChar123orgChar125ProjectFilesRouteRoute
     }
     '/@{$org}/$project/integrations/github/': {
       id: '/@{$org}/$project/integrations/github/'
@@ -1183,6 +1319,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AtChar123orgChar125ProjectSettingsMembersIndexRouteImport
       parentRoute: typeof AtChar123orgChar125ProjectSettingsRouteRoute
     }
+    '/@{$org}/$project/settings/storage/': {
+      id: '/@{$org}/$project/settings/storage/'
+      path: '/storage'
+      fullPath: '/@{$org}/$project/settings/storage/'
+      preLoaderRoute: typeof AtChar123orgChar125ProjectSettingsStorageIndexRouteImport
+      parentRoute: typeof AtChar123orgChar125ProjectSettingsRouteRoute
+    }
     '/@{$org}/$project/updates/$slug/': {
       id: '/@{$org}/$project/updates/$slug/'
       path: '/updates/$slug'
@@ -1225,6 +1368,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AtChar123orgChar125ProjectFeedbackBoardsBoardEditRouteImport
       parentRoute: typeof AtChar123orgChar125ProjectFeedbackRouteRoute
     }
+    '/@{$org}/$project/files/file/$fileId/': {
+      id: '/@{$org}/$project/files/file/$fileId/'
+      path: '/file/$fileId'
+      fullPath: '/@{$org}/$project/files/file/$fileId/'
+      preLoaderRoute: typeof AtChar123orgChar125ProjectFilesFileFileIdIndexRouteImport
+      parentRoute: typeof AtChar123orgChar125ProjectFilesRouteRoute
+    }
+    '/@{$org}/$project/files/folder/$folderId/': {
+      id: '/@{$org}/$project/files/folder/$folderId/'
+      path: '/folder/$folderId'
+      fullPath: '/@{$org}/$project/files/folder/$folderId/'
+      preLoaderRoute: typeof AtChar123orgChar125ProjectFilesFolderFolderIdIndexRouteImport
+      parentRoute: typeof AtChar123orgChar125ProjectFilesRouteRoute
+    }
   }
 }
 
@@ -1261,6 +1418,30 @@ const AtChar123orgChar125ProjectFeedbackRouteRouteWithChildren =
     AtChar123orgChar125ProjectFeedbackRouteRouteChildren,
   )
 
+interface AtChar123orgChar125ProjectFilesRouteRouteChildren {
+  AtChar123orgChar125ProjectFilesIndexRoute: typeof AtChar123orgChar125ProjectFilesIndexRoute
+  AtChar123orgChar125ProjectFilesSearchIndexRoute: typeof AtChar123orgChar125ProjectFilesSearchIndexRoute
+  AtChar123orgChar125ProjectFilesFileFileIdIndexRoute: typeof AtChar123orgChar125ProjectFilesFileFileIdIndexRoute
+  AtChar123orgChar125ProjectFilesFolderFolderIdIndexRoute: typeof AtChar123orgChar125ProjectFilesFolderFolderIdIndexRoute
+}
+
+const AtChar123orgChar125ProjectFilesRouteRouteChildren: AtChar123orgChar125ProjectFilesRouteRouteChildren =
+  {
+    AtChar123orgChar125ProjectFilesIndexRoute:
+      AtChar123orgChar125ProjectFilesIndexRoute,
+    AtChar123orgChar125ProjectFilesSearchIndexRoute:
+      AtChar123orgChar125ProjectFilesSearchIndexRoute,
+    AtChar123orgChar125ProjectFilesFileFileIdIndexRoute:
+      AtChar123orgChar125ProjectFilesFileFileIdIndexRoute,
+    AtChar123orgChar125ProjectFilesFolderFolderIdIndexRoute:
+      AtChar123orgChar125ProjectFilesFolderFolderIdIndexRoute,
+  }
+
+const AtChar123orgChar125ProjectFilesRouteRouteWithChildren =
+  AtChar123orgChar125ProjectFilesRouteRoute._addFileChildren(
+    AtChar123orgChar125ProjectFilesRouteRouteChildren,
+  )
+
 interface AtChar123orgChar125ProjectSettingsRouteRouteChildren {
   AtChar123orgChar125ProjectSettingsIndexRoute: typeof AtChar123orgChar125ProjectSettingsIndexRoute
   AtChar123orgChar125ProjectSettingsAppearanceIndexRoute: typeof AtChar123orgChar125ProjectSettingsAppearanceIndexRoute
@@ -1269,6 +1450,7 @@ interface AtChar123orgChar125ProjectSettingsRouteRouteChildren {
   AtChar123orgChar125ProjectSettingsGeneralIndexRoute: typeof AtChar123orgChar125ProjectSettingsGeneralIndexRoute
   AtChar123orgChar125ProjectSettingsIntegrationsIndexRoute: typeof AtChar123orgChar125ProjectSettingsIntegrationsIndexRoute
   AtChar123orgChar125ProjectSettingsMembersIndexRoute: typeof AtChar123orgChar125ProjectSettingsMembersIndexRoute
+  AtChar123orgChar125ProjectSettingsStorageIndexRoute: typeof AtChar123orgChar125ProjectSettingsStorageIndexRoute
 }
 
 const AtChar123orgChar125ProjectSettingsRouteRouteChildren: AtChar123orgChar125ProjectSettingsRouteRouteChildren =
@@ -1287,6 +1469,8 @@ const AtChar123orgChar125ProjectSettingsRouteRouteChildren: AtChar123orgChar125P
       AtChar123orgChar125ProjectSettingsIntegrationsIndexRoute,
     AtChar123orgChar125ProjectSettingsMembersIndexRoute:
       AtChar123orgChar125ProjectSettingsMembersIndexRoute,
+    AtChar123orgChar125ProjectSettingsStorageIndexRoute:
+      AtChar123orgChar125ProjectSettingsStorageIndexRoute,
   }
 
 const AtChar123orgChar125ProjectSettingsRouteRouteWithChildren =
@@ -1296,13 +1480,15 @@ const AtChar123orgChar125ProjectSettingsRouteRouteWithChildren =
 
 interface AtChar123orgChar125ProjectRouteRouteChildren {
   AtChar123orgChar125ProjectFeedbackRouteRoute: typeof AtChar123orgChar125ProjectFeedbackRouteRouteWithChildren
+  AtChar123orgChar125ProjectFilesRouteRoute: typeof AtChar123orgChar125ProjectFilesRouteRouteWithChildren
   AtChar123orgChar125ProjectSettingsRouteRoute: typeof AtChar123orgChar125ProjectSettingsRouteRouteWithChildren
   AtChar123orgChar125ProjectIndexRoute: typeof AtChar123orgChar125ProjectIndexRoute
+  AtChar123orgChar125ProjectAssetLibraryIndexRoute: typeof AtChar123orgChar125ProjectAssetLibraryIndexRoute
   AtChar123orgChar125ProjectDiscussionsIndexRoute: typeof AtChar123orgChar125ProjectDiscussionsIndexRoute
-  AtChar123orgChar125ProjectFilesIndexRoute: typeof AtChar123orgChar125ProjectFilesIndexRoute
   AtChar123orgChar125ProjectRoadmapIndexRoute: typeof AtChar123orgChar125ProjectRoadmapIndexRoute
   AtChar123orgChar125ProjectUpdatesIndexRoute: typeof AtChar123orgChar125ProjectUpdatesIndexRoute
   AtChar123orgChar125ProjectUpdatesSlugEditRoute: typeof AtChar123orgChar125ProjectUpdatesSlugEditRoute
+  AtChar123orgChar125ProjectAssetLibraryFileIdIndexRoute: typeof AtChar123orgChar125ProjectAssetLibraryFileIdIndexRoute
   AtChar123orgChar125ProjectIntegrationsGithubIndexRoute: typeof AtChar123orgChar125ProjectIntegrationsGithubIndexRoute
   AtChar123orgChar125ProjectUpdatesSlugIndexRoute: typeof AtChar123orgChar125ProjectUpdatesSlugIndexRoute
   AtChar123orgChar125ProjectUpdatesEditIndexRoute: typeof AtChar123orgChar125ProjectUpdatesEditIndexRoute
@@ -1313,19 +1499,23 @@ const AtChar123orgChar125ProjectRouteRouteChildren: AtChar123orgChar125ProjectRo
   {
     AtChar123orgChar125ProjectFeedbackRouteRoute:
       AtChar123orgChar125ProjectFeedbackRouteRouteWithChildren,
+    AtChar123orgChar125ProjectFilesRouteRoute:
+      AtChar123orgChar125ProjectFilesRouteRouteWithChildren,
     AtChar123orgChar125ProjectSettingsRouteRoute:
       AtChar123orgChar125ProjectSettingsRouteRouteWithChildren,
     AtChar123orgChar125ProjectIndexRoute: AtChar123orgChar125ProjectIndexRoute,
+    AtChar123orgChar125ProjectAssetLibraryIndexRoute:
+      AtChar123orgChar125ProjectAssetLibraryIndexRoute,
     AtChar123orgChar125ProjectDiscussionsIndexRoute:
       AtChar123orgChar125ProjectDiscussionsIndexRoute,
-    AtChar123orgChar125ProjectFilesIndexRoute:
-      AtChar123orgChar125ProjectFilesIndexRoute,
     AtChar123orgChar125ProjectRoadmapIndexRoute:
       AtChar123orgChar125ProjectRoadmapIndexRoute,
     AtChar123orgChar125ProjectUpdatesIndexRoute:
       AtChar123orgChar125ProjectUpdatesIndexRoute,
     AtChar123orgChar125ProjectUpdatesSlugEditRoute:
       AtChar123orgChar125ProjectUpdatesSlugEditRoute,
+    AtChar123orgChar125ProjectAssetLibraryFileIdIndexRoute:
+      AtChar123orgChar125ProjectAssetLibraryFileIdIndexRoute,
     AtChar123orgChar125ProjectIntegrationsGithubIndexRoute:
       AtChar123orgChar125ProjectIntegrationsGithubIndexRoute,
     AtChar123orgChar125ProjectUpdatesSlugIndexRoute:
@@ -1411,6 +1601,7 @@ interface OrgSettingsRouteRouteChildren {
   OrgSettingsGeneralIndexRoute: typeof OrgSettingsGeneralIndexRoute
   OrgSettingsIntegrationsIndexRoute: typeof OrgSettingsIntegrationsIndexRoute
   OrgSettingsMembersIndexRoute: typeof OrgSettingsMembersIndexRoute
+  OrgSettingsStorageIndexRoute: typeof OrgSettingsStorageIndexRoute
 }
 
 const OrgSettingsRouteRouteChildren: OrgSettingsRouteRouteChildren = {
@@ -1418,6 +1609,7 @@ const OrgSettingsRouteRouteChildren: OrgSettingsRouteRouteChildren = {
   OrgSettingsGeneralIndexRoute: OrgSettingsGeneralIndexRoute,
   OrgSettingsIntegrationsIndexRoute: OrgSettingsIntegrationsIndexRoute,
   OrgSettingsMembersIndexRoute: OrgSettingsMembersIndexRoute,
+  OrgSettingsStorageIndexRoute: OrgSettingsStorageIndexRoute,
 }
 
 const OrgSettingsRouteRouteWithChildren =

@@ -1,26 +1,49 @@
 import type { ReactNode } from 'react';
 import type { AppCommand, CommandRegistration } from './types';
 
-import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams, useRouterState } from '@tanstack/react-router';
 import { Home, MoonStar, Settings, User } from 'lucide-react';
 
-import ArchivePencil from '@/icons/archive-pencil';
-import CalendarDays from '@/icons/calendar-days';
-import HomeIcon from '@/icons/home';
-import Interview from '@/icons/interview';
-import Roadmap from '@/icons/roadmap';
+import { ArchivePencilOutline18 } from '@/icons/nucleo/ArchivePencilOutline18';
+import { CalendarDaysOutline18 } from '@/icons/nucleo/CalendarDaysOutline18';
+import { Folder5OpenOutline18 } from '@/icons/nucleo/Folder5OpenOutline18';
+import { House4Outline18 } from '@/icons/nucleo/House4Outline18';
+import { InterviewOutline18 } from '@/icons/nucleo/InterviewOutline18';
+import { Roadmap2Outline18 } from '@/icons/nucleo/Roadmap2Outline18';
 import { authClient } from '@/lib/auth/auth-client';
 import { toggleThemePreference } from '@/lib/theme';
 
 import { CommandContext } from './command-context';
 
-const CommandPalette = lazy(() =>
-	import('./command-palette').then((m) => ({ default: m.CommandPalette }))
-);
+const COMMAND_PALETTE_IDLE_TIMEOUT_MS = 2_000;
+const COMMAND_PALETTE_FALLBACK_DELAY_MS = 1_500;
+
+function importCommandPaletteModule() {
+	return import('./command-palette');
+}
+
+let commandPaletteModulePromise: ReturnType<typeof importCommandPaletteModule> | undefined;
+
+function loadCommandPaletteModule() {
+	commandPaletteModulePromise ??= importCommandPaletteModule();
+	return commandPaletteModulePromise;
+}
+
+type CommandPaletteModule = Awaited<ReturnType<typeof importCommandPaletteModule>>;
+type LoadedCommandPalette = CommandPaletteModule['CommandPalette'];
+
+type IdleCallbackApi = {
+	cancelIdleCallback?: (handle: number) => void;
+	requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number;
+};
 
 export function CommandProvider({ children }: { children: ReactNode }) {
 	const [open, setOpen] = useState(false);
+	const [isPaletteMounted, setPaletteMounted] = useState(false);
+	const [CommandPalette, setCommandPalette] = useState<LoadedCommandPalette | null>(null);
+	const [mode, setMode] = useState<'commands' | 'files'>('commands');
+	const [initialQuery, setInitialQuery] = useState('');
 	const [registrations, setRegistrations] = useState<Array<CommandRegistration>>([]);
 	const navigate = useNavigate();
 	const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -39,6 +62,17 @@ export function CommandProvider({ children }: { children: ReactNode }) {
 	const orgSlug = orgParams?.org;
 	const projectSlug = projectParams?.project;
 	const isAuthenticated = !!session.data?.user;
+	const preloadPalette = useCallback(() => {
+		void loadCommandPaletteModule().then((module) => {
+			setCommandPalette(
+				(current: LoadedCommandPalette | null) => current ?? module.CommandPalette
+			);
+		});
+	}, []);
+	const preparePalette = useCallback(() => {
+		preloadPalette();
+		setPaletteMounted(true);
+	}, [preloadPalette]);
 
 	const registerCommands = useCallback((scopeId: string, commands: Array<AppCommand>) => {
 		setRegistrations((current) => [
@@ -113,7 +147,7 @@ export function CommandProvider({ children }: { children: ReactNode }) {
 			commands.push(
 				{
 					group: 'Navigation',
-					icon: HomeIcon,
+					icon: House4Outline18,
 					id: 'project.overview',
 					keywords: ['project', 'overview'],
 					title: 'Go to overview',
@@ -121,7 +155,7 @@ export function CommandProvider({ children }: { children: ReactNode }) {
 				},
 				{
 					group: 'Navigation',
-					icon: ArchivePencil,
+					icon: ArchivePencilOutline18,
 					id: 'project.feedback',
 					keywords: ['project', 'feedback'],
 					title: 'Go to feedback',
@@ -129,7 +163,7 @@ export function CommandProvider({ children }: { children: ReactNode }) {
 				},
 				{
 					group: 'Navigation',
-					icon: CalendarDays,
+					icon: CalendarDaysOutline18,
 					id: 'project.updates',
 					keywords: ['project', 'updates', 'changelog'],
 					title: 'Go to updates',
@@ -137,7 +171,7 @@ export function CommandProvider({ children }: { children: ReactNode }) {
 				},
 				{
 					group: 'Navigation',
-					icon: Roadmap,
+					icon: Roadmap2Outline18,
 					id: 'project.roadmap',
 					keywords: ['project', 'roadmap'],
 					title: 'Go to roadmap',
@@ -145,7 +179,15 @@ export function CommandProvider({ children }: { children: ReactNode }) {
 				},
 				{
 					group: 'Navigation',
-					icon: Interview,
+					icon: Folder5OpenOutline18,
+					id: 'project.files',
+					keywords: ['project', 'files', 'assets', 'documents'],
+					title: 'Go to files',
+					run: () => navigate({ params, to: '/@{$org}/$project/files' }),
+				},
+				{
+					group: 'Navigation',
+					icon: InterviewOutline18,
 					id: 'project.discussions',
 					keywords: ['project', 'discussions'],
 					title: 'Go to discussions',
@@ -175,23 +217,44 @@ export function CommandProvider({ children }: { children: ReactNode }) {
 	// on auth routes is handled by deriving `isOpen` below — no state sync here.)
 	useEffect(() => {
 		if (isAuthRoute) return;
+		const idleApi = window as unknown as IdleCallbackApi;
+		if (idleApi.requestIdleCallback) {
+			const handle = idleApi.requestIdleCallback(preloadPalette, {
+				timeout: COMMAND_PALETTE_IDLE_TIMEOUT_MS,
+			});
+			return () => idleApi.cancelIdleCallback?.(handle);
+		}
+
+		const timeout = window.setTimeout(preloadPalette, COMMAND_PALETTE_FALLBACK_DELAY_MS);
+		return () => window.clearTimeout(timeout);
+	}, [isAuthRoute, preloadPalette]);
+
+	useEffect(() => {
+		if (isAuthRoute) return;
 
 		const handleKeyDown = (event: KeyboardEvent) => {
 			if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
 				event.preventDefault();
-				setOpen((current) => !current);
+				preparePalette();
+				setOpen((current) => {
+					if (!current) {
+						setInitialQuery('');
+						setMode('commands');
+					}
+					return !current;
+				});
 			}
 		};
 
 		document.addEventListener('keydown', handleKeyDown);
 		return () => document.removeEventListener('keydown', handleKeyDown);
-	}, [isAuthRoute]);
+	}, [isAuthRoute, preparePalette]);
 
 	// Force the palette closed on auth routes without writing state in an effect.
 	const isOpen = open && !isAuthRoute;
 
 	const runCommand = useCallback((command: AppCommand) => {
-		setOpen(false);
+		if (command.closeOnRun !== false) setOpen(false);
 		Promise.resolve(command.run()).catch((error) => {
 			console.error(`Command "${command.id}" failed:`, error);
 		});
@@ -200,24 +263,54 @@ export function CommandProvider({ children }: { children: ReactNode }) {
 	const contextValue = useMemo(
 		() => ({
 			close: () => setOpen(false),
-			open: () => setOpen(true),
+			open: () => {
+				preparePalette();
+				setInitialQuery('');
+				setMode('commands');
+				setOpen(true);
+			},
+			openFileSearch: (query = '') => {
+				preparePalette();
+				setInitialQuery(query);
+				setMode('files');
+				setOpen(true);
+			},
+			preload: preloadPalette,
 			registerCommands,
 		}),
-		[registerCommands]
+		[preloadPalette, preparePalette, registerCommands]
 	);
 
 	return (
 		<CommandContext.Provider value={contextValue}>
 			{children}
-			{isOpen ? (
-				<Suspense fallback={null}>
-					<CommandPalette
-						commands={commands}
-						onOpenChange={setOpen}
-						onRunCommand={runCommand}
-						open={isOpen}
-					/>
-				</Suspense>
+			{isPaletteMounted && CommandPalette ? (
+				<CommandPalette
+					commands={commands}
+					fileSearchContext={orgSlug && projectSlug ? { orgSlug, projectSlug } : undefined}
+					initialQuery={initialQuery}
+					mode={mode}
+					onModeChange={setMode}
+					onOpenChange={(nextOpen) => {
+						setOpen(nextOpen);
+						if (!nextOpen) {
+							setInitialQuery('');
+							setMode('commands');
+						}
+					}}
+					onOpenFile={(fileId) => {
+						if (!orgSlug || !projectSlug) return;
+						setOpen(false);
+						setInitialQuery('');
+						setMode('commands');
+						void navigate({
+							params: { fileId, org: orgSlug, project: projectSlug },
+							to: '/@{$org}/$project/files/file/$fileId',
+						});
+					}}
+					onRunCommand={runCommand}
+					open={isOpen}
+				/>
 			) : null}
 		</CommandContext.Provider>
 	);

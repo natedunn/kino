@@ -1,6 +1,6 @@
 import type { ComponentType } from 'react';
 
-export type CommandGroupName = 'Global' | 'Navigation' | 'Feedback';
+export type CommandGroupName = 'Global' | 'Navigation' | 'Feedback' | 'Files';
 
 export type AppCommand = {
 	id: string;
@@ -11,6 +11,7 @@ export type AppCommand = {
 	keywords?: Array<string>;
 	shortcut?: string;
 	disabled?: boolean;
+	closeOnRun?: boolean;
 	run: () => void | Promise<void>;
 };
 

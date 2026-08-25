@@ -16,26 +16,37 @@ import Github from './github';
 import GridDots from './grid-dots';
 import Improvements from './improvements';
 import Lightbulb from './lightbulb';
+import { Box2Outline18 } from './nucleo/Box2Outline18';
+import { BugOutline18 } from './nucleo/BugOutline18';
+import { ChartTrendUpOutline18 } from './nucleo/ChartTrendUpOutline18';
+import { CircleOpenArrowUpOutline18 } from './nucleo/CircleOpenArrowUpOutline18';
+import { GridDotsOutline18 } from './nucleo/GridDotsOutline18';
+import { Lightbulb2Outline18 } from './nucleo/Lightbulb2Outline18';
+import { PenOutline18 } from './nucleo/PenOutline18';
+import { SettingsWrenchOutline18 } from './nucleo/SettingsWrenchOutline18';
+import { VShapedArrowUpOutline18 } from './nucleo/VShapedArrowUpOutline18';
 import UpArrowCircle from './up-arrow-circle';
 
 export const iconRegistry = {
-	lightbulb: Lightbulb,
-	bug: Bug,
-	improvements: Improvements,
-	gridDots: GridDots,
-	box: Box,
-	chartUp: ChartUp,
-	github: Github,
-	edit: Edit,
-	upArrowCircle: UpArrowCircle,
-	upChevron: UpChevron,
+	lightbulb: { 'glyph-duo': Lightbulb, outline: Lightbulb2Outline18 },
+	bug: { 'glyph-duo': Bug, outline: BugOutline18 },
+	improvements: { 'glyph-duo': Improvements, outline: SettingsWrenchOutline18 },
+	gridDots: { 'glyph-duo': GridDots, outline: GridDotsOutline18 },
+	box: { 'glyph-duo': Box, outline: Box2Outline18 },
+	chartUp: { 'glyph-duo': ChartUp, outline: ChartTrendUpOutline18 },
+	github: { outline: Github },
+	edit: { 'glyph-duo': Edit, outline: PenOutline18 },
+	upArrowCircle: { 'glyph-duo': UpArrowCircle, outline: CircleOpenArrowUpOutline18 },
+	upChevron: { 'glyph-duo': UpChevron, outline: VShapedArrowUpOutline18 },
 } as const;
 
-export type IconValue = (typeof iconRegistry)[keyof typeof iconRegistry];
+export type IconValue = React.ComponentType<React.SVGProps<SVGSVGElement>>;
 
 export type IconName = keyof typeof iconRegistry;
 
-export type IconTone = 'duo' | 'outline';
+export type IconVariant = 'glyph-duo' | 'outline';
+
+export type IconTone = IconVariant;
 
 export type IconRegistryOption = {
 	icon: IconValue;
@@ -47,55 +58,73 @@ export type IconRegistryOption = {
 
 export const iconRegistryOptions: Array<IconRegistryOption> = [
 	{
-		icon: Lightbulb,
+		icon: iconRegistry.lightbulb['glyph-duo'],
 		keywords: ['idea', 'feature request'],
 		label: 'Feature Requests',
-		tone: 'duo',
+		tone: 'glyph-duo',
 		value: 'lightbulb',
 	},
-	{ icon: Bug, keywords: ['issue', 'defect'], label: 'Bugs', tone: 'duo', value: 'bug' },
 	{
-		icon: Improvements,
+		icon: iconRegistry.bug['glyph-duo'],
+		keywords: ['issue', 'defect'],
+		label: 'Bugs',
+		tone: 'glyph-duo',
+		value: 'bug',
+	},
+	{
+		icon: iconRegistry.improvements['glyph-duo'],
 		keywords: ['iteration', 'enhancement', 'wrench'],
 		label: 'Improvements',
-		tone: 'duo',
+		tone: 'glyph-duo',
 		value: 'improvements',
 	},
-	{ icon: Box, keywords: ['default', 'package'], label: 'Box', tone: 'duo', value: 'box' },
 	{
-		icon: ChartUp,
+		icon: iconRegistry.box['glyph-duo'],
+		keywords: ['default', 'package'],
+		label: 'Box',
+		tone: 'glyph-duo',
+		value: 'box',
+	},
+	{
+		icon: iconRegistry.chartUp['glyph-duo'],
 		keywords: ['trend', 'metrics', 'growth'],
 		label: 'Chart Up',
-		tone: 'duo',
+		tone: 'glyph-duo',
 		value: 'chartUp',
 	},
 	{
-		icon: GridDots,
+		icon: iconRegistry.gridDots['glyph-duo'],
 		keywords: ['grid', 'apps'],
 		label: 'Grid Dots',
-		tone: 'duo',
+		tone: 'glyph-duo',
 		value: 'gridDots',
 	},
-	{ icon: Edit, keywords: ['write', 'pencil'], label: 'Edit', tone: 'duo', value: 'edit' },
 	{
-		icon: Github,
+		icon: iconRegistry.edit['glyph-duo'],
+		keywords: ['write', 'pencil'],
+		label: 'Edit',
+		tone: 'glyph-duo',
+		value: 'edit',
+	},
+	{
+		icon: iconRegistry.github.outline,
 		keywords: ['repository', 'code'],
 		label: 'GitHub',
 		tone: 'outline',
 		value: 'github',
 	},
 	{
-		icon: UpArrowCircle,
+		icon: iconRegistry.upArrowCircle['glyph-duo'],
 		keywords: ['scroll to top', 'back to top', 'arrow up'],
 		label: 'Up Arrow Circle',
-		tone: 'duo',
+		tone: 'glyph-duo',
 		value: 'upArrowCircle',
 	},
 	{
-		icon: UpChevron,
+		icon: iconRegistry.upChevron['glyph-duo'],
 		keywords: ['up', 'expand', 'top', 'chevron'],
 		label: 'Up Chevron',
-		tone: 'outline',
+		tone: 'glyph-duo',
 		value: 'upChevron',
 	},
 ];
@@ -103,11 +132,14 @@ export const iconRegistryOptions: Array<IconRegistryOption> = [
 type IconProps = {
 	name?: IconName;
 	size?: string;
+	variant?: IconVariant;
 } & React.SVGProps<SVGSVGElement>;
 
 export function Icon({
 	name,
 	fallback,
+	size,
+	variant = 'glyph-duo',
 	...rest
 }: IconProps & {
 	fallback?: IconName;
@@ -119,9 +151,13 @@ export function Icon({
 	// Callers cast dynamic strings (e.g. DB-stored board icons) to `IconName`, so
 	// the lookup can miss the registry at runtime; widen the type to reflect that
 	// and guard against a bad key.
-	const I = (name ? iconRegistry[name] : undefined) ?? iconRegistry[fallback ?? 'box'];
+	const registry = iconRegistry as Partial<Record<string, (typeof iconRegistry)[IconName]>>;
+	const entry = (name ? registry[name] : undefined) ?? registry[fallback ?? 'box'];
+	if (!entry) return null;
+	const variants = entry as Partial<Record<IconVariant, IconValue>>;
+	const I = variants[variant] ?? variants['glyph-duo'] ?? variants.outline;
 	if (!I) return null;
-	return <I {...rest} />;
+	return <I height={size} width={size} {...rest} />;
 }
 
 export const StatusIcon = ({

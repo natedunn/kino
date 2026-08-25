@@ -5,6 +5,8 @@ import { createContext } from 'react';
 export type CommandContextValue = {
 	close: () => void;
 	open: () => void;
+	openFileSearch: (query?: string) => void;
+	preload: () => void;
 	registerCommands: (scopeId: string, commands: Array<AppCommand>) => () => void;
 };
 

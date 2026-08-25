@@ -220,7 +220,6 @@ function EditUpdateRoute() {
 			await saveMutation.mutateAsync({
 				category: value.category,
 				content: parsed.data.content,
-				coverImageId: value.coverImageId,
 				id: update.id,
 				relatedFeedbackIds: value.relatedFeedbackIds,
 				tags: parsed.data.tags,

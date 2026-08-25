@@ -44,7 +44,10 @@ export function CoverImageUpload({
 		onError?.('');
 
 		try {
-			const { key, url } = await uploadUrlMutation.mutateAsync({ updateId });
+			const { key, url } = await uploadUrlMutation.mutateAsync({
+				file: { mimeType: file.type, name: file.name, sizeBytes: file.size },
+				updateId,
+			});
 			const response = await fetch(url, {
 				body: file,
 				headers: { 'Content-Type': file.type },
