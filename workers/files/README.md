@@ -5,6 +5,12 @@ private organization-upload R2 bucket. Development and preview assets use
 `files-preview.usekino.com` once the shared preview Worker is deployed. Local
 development falls back to signed R2 URLs.
 
+Like `workers/gateway`, this package is standalone infrastructure. It is not
+deployed by the Git-connected `kino` application build: Cloudflare pins that
+build's credential and Worker name to `kino`, so a nested Wrangler command
+cannot safely create or update sibling Workers. Deploy this package explicitly
+when its source or configuration changes.
+
 It deliberately serves only deterministic public object namespaces:
 
 - `PUBLIC_FILE.<publicId>` for originals.
