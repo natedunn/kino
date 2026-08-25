@@ -18,7 +18,7 @@
     "build": "pnpm run format:src && vite build",
     "format:src": "node scripts/format-source.mjs",
     "build:cloudflare": "sh scripts/cloudflare-build.sh",
-    "deploy": "wrangler deploy --config dist/server/wrangler.json --keep-vars",
+    "deploy": "sh scripts/cloudflare-deploy.sh",
     "deploy:preview": "sh scripts/cloudflare-preview-upload.sh",
     "preview:name": "sh scripts/preview-name.sh",
     "preview:cleanup": "node scripts/cleanup-stale-previews.mjs",
