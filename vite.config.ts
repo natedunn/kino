@@ -70,10 +70,7 @@ const config = defineConfig({
 		__KINO_BUILD_ID__: JSON.stringify(resolveBuildId()),
 	},
 	plugins: [
-		// The browser-only Devtools UI imports Solid's DOM runtime. Cloudflare's
-		// SSR optimizer resolves that import to solid-js/web's server build, which
-		// intentionally lacks DOM helpers. Neither integration is needed by the
-		// unit-test runner (edge suites select edge-runtime per file).
+		// Vitest needs neither the devtools event server nor a Cloudflare runtime.
 		...(isVitest ? [] : [devtools(), cloudflare({ viteEnvironment: { name: 'ssr' } })]),
 		// this is the plugin that enables path aliases
 		viteTsConfigPaths({
