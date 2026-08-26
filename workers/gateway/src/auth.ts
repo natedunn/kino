@@ -15,7 +15,7 @@ import { oAuthProxy } from 'better-auth/plugins';
  *      code with GitHub, fetches the user profile, encrypts it, and 302s to
  *      the originating env's `/api/auth/oauth-proxy-callback`.
  *
- * That leg never touches a database (verified against better-auth 1.6.9
+ * That leg never touches a database (verified against better-auth 1.7.1
  * plugin source). No `database` option is passed: better-auth then falls back
  * to its own per-instance in-memory adapter, which is what we want. (Do NOT
  * import `memoryAdapter` from "better-auth/adapters/memory" statically — its

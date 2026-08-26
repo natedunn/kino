@@ -1,3 +1,4 @@
+import { hydrate, QueryClient } from '@tanstack/react-query';
 import { describe, expect, it } from 'vitest';
 
 import { convexQueryKeyHashFn } from './query-client';
@@ -31,5 +32,11 @@ describe('convexQueryKeyHashFn', () => {
 		]);
 
 		expect(second).toBe(first);
+	});
+});
+
+describe('SSR query stream hydration', () => {
+	it('ignores an empty streamed value', () => {
+		expect(() => hydrate(new QueryClient(), undefined)).not.toThrow();
 	});
 });
