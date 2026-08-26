@@ -1,7 +1,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { ArrowRight, Cookie, FileWarning, ShieldCheck, Users } from 'lucide-react';
 
-import { LegalPage } from '@/components/legal/legal-page';
 import { titleMeta } from '@/lib/seo';
 
 export const Route = createFileRoute('/docs/notices')({
@@ -38,27 +37,67 @@ const NOTICES = [
 
 function NoticesPage() {
 	return (
-		<LegalPage title='Notices' description='Policies and guidelines for using Kino.'>
-			<div className='not-prose grid gap-3'>
-				{NOTICES.map(({ description, icon: Icon, label, to }) => (
-					<Link
-						key={to}
-						to={to}
-						className='group flex items-start gap-4 rounded-lg border border-border bg-card p-5 transition-colors hocus:border-foreground/25 hocus:bg-accent/40'
-					>
-						<span className='flex size-10 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground'>
-							<Icon className='size-5' aria-hidden='true' />
-						</span>
-						<span className='min-w-0 flex-1'>
-							<span className='font-semibold text-foreground'>{label}</span>
-							<span className='mt-1 block text-sm leading-6 text-muted-foreground'>
-								{description}
-							</span>
-						</span>
-						<ArrowRight className='mt-1 size-4 shrink-0 text-muted-foreground transition-transform group-hocus:translate-x-0.5' />
+		<div className='flex min-h-svh flex-col'>
+			<header className='border-b border-border/50'>
+				<div className='container flex items-center justify-between py-4'>
+					<Link to='/' className='flex items-center gap-2.5'>
+						<div className='flex size-7 items-center justify-center rounded-full bg-primary'>
+							<span className='text-xs font-bold text-primary-foreground'>K</span>
+						</div>
+						<span className='text-sm font-semibold tracking-tight'>Kino</span>
 					</Link>
-				))}
-			</div>
-		</LegalPage>
+				</div>
+			</header>
+
+			<main className='flex-1'>
+				<section className='container py-16 md:py-24'>
+					<div className='max-w-2xl'>
+						<h1 className='text-4xl font-bold tracking-tight md:text-5xl'>Notices</h1>
+						<p className='mt-4 max-w-xl text-lg leading-relaxed text-muted-foreground'>
+							Policies and guidelines for using Kino.
+						</p>
+					</div>
+				</section>
+
+				<div className='container pb-24'>
+					<div className='grid gap-px overflow-hidden rounded-lg border border-border bg-border'>
+						{NOTICES.map(({ description, icon: Icon, label, to }) => (
+							<Link
+								key={to}
+								to={to}
+								className='group flex items-center gap-4 bg-card p-5 transition-colors md:p-6 hocus:bg-accent'
+							>
+								<span className='flex size-12 shrink-0 items-center justify-center rounded-md border border-border bg-background text-foreground'>
+									<Icon className='size-6' aria-hidden='true' />
+								</span>
+								<span className='min-w-0 flex-1'>
+									<span className='flex items-center gap-1.5 font-semibold text-foreground'>
+										{label}
+										<ArrowRight className='size-3.5 text-muted-foreground opacity-0 transition-all group-hocus:translate-x-0.5 group-hocus:opacity-100' />
+									</span>
+									<span className='mt-0.5 block text-sm leading-relaxed text-muted-foreground'>
+										{description}
+									</span>
+								</span>
+							</Link>
+						))}
+					</div>
+				</div>
+			</main>
+
+			<footer className='border-t border-border py-6'>
+				<div className='container flex items-center justify-between text-sm text-muted-foreground'>
+					<p>&copy; {new Date().getFullYear()} Kino</p>
+					<div className='flex items-center gap-4'>
+						<Link to='/stack' className='transition-colors hocus:text-foreground'>
+							Tech Stack
+						</Link>
+						<Link to='/' className='transition-colors hocus:text-foreground'>
+							Home
+						</Link>
+					</div>
+				</div>
+			</footer>
+		</div>
 	);
 }
