@@ -19,6 +19,7 @@ import {
   waitForLocalBackendToStart,
 } from "./lib/local-convex.mjs"
 import { planAnonymousAuthEnv } from "./lib/anonymous-auth-env.mjs"
+import { backfillAccountIssuerContents } from "./lib/anonymous-seed-data.mjs"
 
 const workspaceRoot = process.cwd()
 const anonymousEnvFilePath = getAnonymousEnvFilePath(workspaceRoot)
@@ -313,8 +314,9 @@ function stopRunningLocalBackendIfRequested() {
 // that deployment, and the later `convex env set` (which copies JWKS and other
 // auth vars from shared dev) fails with "Could not find deployment with name
 // anonymous-agent". Reset the local state so init creates a clean anonymous-agent
-// deployment. Only acts on a mismatch, so the normal re-seed path is untouched.
-function resetMismatchedLocalDeployment() {
+// deployment. Setup also requests a reset explicitly because its contract is to
+// replace this worktree's anonymous data with a fresh shared-dev snapshot.
+function resetLocalDeploymentForSeed() {
   const configPath = getProjectLocalConfigPath(workspaceRoot)
   if (!fs.existsSync(configPath)) return
 
@@ -326,12 +328,14 @@ function resetMismatchedLocalDeployment() {
   }
 
   if (typeof existingName !== "string" || !existingName) return
-  if (existingName === "anonymous-agent") return
+  if (existingName === "anonymous-agent" && !options.stopRunningLocal) return
 
   const localStateDir = path.dirname(path.dirname(configPath)) // .convex/local
-  console.log(
-    `[seed] local deployment is "${existingName}", not "anonymous-agent"; resetting it for a clean anonymous seed`
-  )
+  const reason =
+    existingName === "anonymous-agent"
+      ? "setup replaces this worktree's anonymous seed data"
+      : `local deployment is "${existingName}", not "anonymous-agent"`
+  console.log(`[seed] ${reason}; resetting the local backend before bootstrap`)
   fs.rmSync(localStateDir, { recursive: true, force: true })
 }
 
@@ -558,6 +562,20 @@ function sanitizeExportForCurrentSchema(exportPath, { stripAuthSigningKeys = fal
     run("unzip", ["-q", exportPath, "-d", tempDir])
 
     let totalRows = 0
+    const accountPath = path.join(tempDir, "account", "documents.jsonl")
+    if (fs.existsSync(accountPath)) {
+      const original = fs.readFileSync(accountPath, "utf8")
+      const migrated = backfillAccountIssuerContents(original)
+      if (migrated !== original) {
+        fs.writeFileSync(accountPath, migrated)
+        const accountRows = migrated.split(/\r?\n/).filter(Boolean).length
+        totalRows += accountRows
+        console.log(
+          `[seed] account: installed Better Auth 1.7 issuer on ${accountRows} row(s)`
+        )
+      }
+    }
+
     if (stripAuthSigningKeys) {
       const jwksPath = path.join(tempDir, "jwks", "documents.jsonl")
       if (fs.existsSync(jwksPath)) {
@@ -628,7 +646,7 @@ const targetEnv = options.target ? process.env : anonymousConvexEnv()
 const isolateTargetSigningKeys = !options.target || options.target === "local"
 
 if (!options.target) {
-  resetMismatchedLocalDeployment()
+  resetLocalDeploymentForSeed()
   run("pnpm", ["exec", "convex", "init"], { env: targetEnv })
   stopRunningLocalBackendIfRequested()
   const ports = ensureWorktreeLocalBackendPorts(workspaceRoot)

@@ -50,4 +50,3 @@ export function createAggregateCaller<TCtx extends ProcedureCallerContext>(
     ctx as any
   ) as GeneratedProcedureCaller<TCtx>;
 }
-

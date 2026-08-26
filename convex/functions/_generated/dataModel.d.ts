@@ -1212,7 +1212,9 @@ export type DataModel = {
   };
   jwks: {
     document: {
+      alg?: null | string;
       createdAt: number;
+      crv?: null | string;
       expiresAt?: null | number;
       privateKey: string;
       publicKey: string;
@@ -1222,7 +1224,9 @@ export type DataModel = {
     fieldPaths:
       | "_creationTime"
       | "_id"
+      | "alg"
       | "createdAt"
+      | "crv"
       | "expiresAt"
       | "privateKey"
       | "publicKey";

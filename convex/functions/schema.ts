@@ -289,6 +289,10 @@ export const jwksTable = convexTable('jwks', {
 	privateKey: text().notNull(),
 	createdAt: timestamp().notNull(),
 	expiresAt: timestamp(),
+	// Better Auth 1.7 records the generated key algorithm/curve. Both remain
+	// optional so keys created by 1.6 stay valid during the rollout.
+	alg: text(),
+	crv: text(),
 });
 
 export const profileTable = convexTable(
