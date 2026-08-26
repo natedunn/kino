@@ -18,6 +18,7 @@ import {
   stopLocalBackendForWorkspace,
   waitForLocalBackendToStart,
 } from "./lib/local-convex.mjs"
+import { planAnonymousAuthEnv } from "./lib/anonymous-auth-env.mjs"
 
 const workspaceRoot = process.cwd()
 const anonymousEnvFilePath = getAnonymousEnvFilePath(workspaceRoot)
@@ -527,7 +528,7 @@ function stripUnknownFields(filePath, allowedFields) {
 // dev ("OG") deployment can be schema-ahead or schema-behind the current
 // branch; `convex import --replace-all` rejects unknown fields, so we drop them
 // generically rather than maintaining a hardcoded per-field list.
-function sanitizeExportForCurrentSchema(exportPath) {
+function sanitizeExportForCurrentSchema(exportPath, { stripAuthSigningKeys = false } = {}) {
   if (!exportPath.endsWith(".zip")) {
     throw new Error(`[seed] expected a .zip export path, got: ${exportPath}`)
   }
@@ -557,6 +558,23 @@ function sanitizeExportForCurrentSchema(exportPath) {
     run("unzip", ["-q", exportPath, "-d", tempDir])
 
     let totalRows = 0
+    if (stripAuthSigningKeys) {
+      const jwksPath = path.join(tempDir, "jwks", "documents.jsonl")
+      if (fs.existsSync(jwksPath)) {
+        const jwksRows = fs
+          .readFileSync(jwksPath, "utf8")
+          .split(/\r?\n/)
+          .filter(Boolean).length
+        if (jwksRows > 0) {
+          fs.writeFileSync(jwksPath, "")
+          totalRows += jwksRows
+          console.log(
+            `[seed] jwks: dropped ${jwksRows} source signing key row(s); anonymous workspaces use their own key`
+          )
+        }
+      }
+    }
+
     // Only touch tables the app schema owns. Tables present in the export but
     // not in dataModel (e.g. _storage, _tables) are imported verbatim.
     for (const [table, allowedFields] of schemaFields) {
@@ -607,6 +625,7 @@ const sourceDeployment =
   sharedDevState.KINO_CONVEX_SEED_SOURCE ??
   "dev"
 const targetEnv = options.target ? process.env : anonymousConvexEnv()
+const isolateTargetSigningKeys = !options.target || options.target === "local"
 
 if (!options.target) {
   resetMismatchedLocalDeployment()
@@ -620,13 +639,34 @@ if (!options.target) {
   }
 }
 
+let sourceEnvContents = ""
 if (options.copyEnv) {
-  const envPath = path.join(seedDir, `dev-env-${timestamp()}.env`)
-  const envContents = run(
+  sourceEnvContents = run(
     "pnpm",
     ["exec", "convex", "env", "list", "--deployment", sourceDeployment],
     { capture: true }
   )
+}
+
+let anonymousAuthPlan = null
+if (isolateTargetSigningKeys) {
+  const targetEnvContents = run(
+    "pnpm",
+    ["exec", "convex", "env", "list", ...targetArgs()],
+    {
+      capture: true,
+      env: targetEnv,
+    }
+  )
+  anonymousAuthPlan = await planAnonymousAuthEnv({
+    sourceEnvContents,
+    targetEnvContents,
+  })
+}
+
+if (options.copyEnv) {
+  const envPath = path.join(seedDir, `dev-env-${timestamp()}.env`)
+  const envContents = anonymousAuthPlan?.copiedEnvContents ?? sourceEnvContents
   fs.writeFileSync(envPath, envContents)
 
   if (envContents.trim()) {
@@ -645,6 +685,30 @@ if (options.copyEnv) {
       { env: targetEnv }
     )
   }
+}
+
+if (anonymousAuthPlan?.authEnvContents) {
+  const authEnvPath = path.join(seedDir, `anonymous-auth-${timestamp()}.env`)
+  fs.writeFileSync(authEnvPath, anonymousAuthPlan.authEnvContents)
+  run(
+    "pnpm",
+    [
+      "exec",
+      "convex",
+      "env",
+      "set",
+      "--from-file",
+      authEnvPath,
+      "--force",
+      ...targetArgs(),
+    ],
+    {
+      env: targetEnv,
+    }
+  )
+  console.log("[seed] installed a workspace-local JWKS before bootstrap")
+} else if (anonymousAuthPlan) {
+  console.log("[seed] preserved the existing workspace-local JWKS")
 }
 
 if (options.envOnly) {
@@ -690,7 +754,9 @@ run("pnpm", [
   exportPath,
   ...(options.includeFileStorage ? ["--include-file-storage"] : []),
 ])
-const importPath = sanitizeExportForCurrentSchema(exportPath)
+const importPath = sanitizeExportForCurrentSchema(exportPath, {
+  stripAuthSigningKeys: isolateTargetSigningKeys,
+})
 
 startTemporaryLocalBackend(targetEnv)
 

@@ -184,6 +184,10 @@ export const accountTable = convexTable(
 	'account',
 	{
 		accountId: text().notNull(),
+		// Better Auth 1.7 keys accounts by (issuer, accountId). This is optional
+		// during the first rollout so existing 1.6 rows can be backfilled before
+		// the dependency upgrade makes it required.
+		issuer: text(),
 		providerId: text().notNull(),
 		userId: text()
 			.notNull()
@@ -200,6 +204,7 @@ export const accountTable = convexTable(
 	},
 	(table) => [
 		index('accountId').on(table.accountId),
+		index('accountId_issuer').on(table.accountId, table.issuer),
 		index('accountId_providerId').on(table.accountId, table.providerId),
 		index('providerId_userId').on(table.providerId, table.userId),
 		index('userId').on(table.userId),

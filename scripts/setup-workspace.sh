@@ -40,7 +40,13 @@ step 1 "Sync local environment files from main worktree"
 
 # Required env files. .env.local is the canonical one (Convex CLI manages it);
 # .env is optional legacy, copied if it exists, but prefer .env.local.
-FILES=(".env.local" ".env" ".env.local.example" "convex/.env")
+FILES=(
+  ".env.local"
+  ".env"
+  ".env.local.example"
+  "convex/.env"
+  ".convex/shared-dev-deployment.env"
+)
 
 for f in "${FILES[@]}"; do
   if [ -f "$MAIN_ROOT/$f" ]; then
