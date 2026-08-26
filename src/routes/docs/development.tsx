@@ -24,8 +24,9 @@ function DevelopmentPage() {
 			<h2>Eligibility</h2>
 			<p>
 				You must be at least 16 years old to create an account or use Kino&apos;s interactive
-				features. If you are 16 or 17 and are not legally able to agree to service terms on your own
-				where you live, you may use Kino only with permission from a parent or legal guardian.
+				features. If you have not reached the age at which you may agree to service terms
+				independently where you live, you may use Kino only with permission from a parent or legal
+				guardian.
 			</p>
 
 			<h2>Production data preservation</h2>

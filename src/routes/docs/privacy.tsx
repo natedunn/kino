@@ -169,11 +169,11 @@ function PrivacyPage() {
 			<h2>Age requirements</h2>
 			<p>
 				You must be at least 16 years old to create an account or use interactive features of the
-				Service. If you are 16 or 17 and have not reached the age at which you may agree to these
-				terms independently where you live, you may use the Service only with permission from a
-				parent or legal guardian. The Service is not directed to anyone under 16, and we do not
-				knowingly collect personal information from anyone under 16. Contact us if you believe a
-				person under 16 has created an account or submitted personal information.
+				Service. If you have not reached the age at which you may agree to these terms independently
+				where you live, you may use the Service only with permission from a parent or legal
+				guardian. The Service is not directed to anyone under 16, and we do not knowingly collect
+				personal information from anyone under 16. Contact us if you believe a person under 16 has
+				created an account or submitted personal information.
 			</p>
 
 			<h2>Changes to this policy</h2>
