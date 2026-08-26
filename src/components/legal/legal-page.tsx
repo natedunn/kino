@@ -42,21 +42,12 @@ export function LegalPage({
 			<main className='container flex-1 py-12 md:py-20'>
 				<div>
 					<div className='border-b border-border pb-8'>
-						<p className='text-xs font-semibold tracking-wider text-primary uppercase'>Draft</p>
-						<h1 className='mt-3 text-3xl font-bold tracking-tight sm:text-4xl'>{title}</h1>
-						<p className='mt-4 text-base leading-7 text-muted-foreground'>
-							{description}
-						</p>
+						<h1 className='text-3xl font-bold tracking-tight sm:text-4xl'>{title}</h1>
+						<p className='mt-4 text-base leading-7 text-muted-foreground'>{description}</p>
 						<p className='mt-3 text-sm text-muted-foreground'>Last updated {LEGAL_LAST_UPDATED}</p>
 					</div>
 
-					<div className='my-8 rounded-lg border border-primary/25 bg-primary/5 p-4 text-sm leading-6'>
-						<strong>Review before publication.</strong> This working draft is not legal advice.
-						Confirm the legal contact address, retention periods, regional requirements, private
-						reporting channel, and that the document matches the production service.
-					</div>
-
-					<article className='prose max-w-none prose-neutral dark:prose-invert prose-headings:scroll-mt-24 prose-headings:tracking-tight prose-a:text-primary prose-a:decoration-primary/40 prose-a:underline-offset-4 prose-li:marker:text-muted-foreground'>
+					<article className='prose mt-8 max-w-none prose-neutral dark:prose-invert prose-headings:scroll-mt-24 prose-headings:tracking-tight prose-a:text-primary prose-a:decoration-primary/40 prose-a:underline-offset-4 prose-li:marker:text-muted-foreground'>
 						{children}
 					</article>
 				</div>
