@@ -34,6 +34,7 @@ export type DataModel = {
       accountId: string;
       createdAt: number;
       idToken?: null | string;
+      issuer: string;
       password?: null | string;
       providerId: string;
       refreshToken?: null | string;
@@ -52,6 +53,7 @@ export type DataModel = {
       | "accountId"
       | "createdAt"
       | "idToken"
+      | "issuer"
       | "password"
       | "providerId"
       | "refreshToken"
@@ -63,6 +65,7 @@ export type DataModel = {
       by_id: ["_id"];
       by_creation_time: ["_creationTime"];
       accountId: ["accountId", "_creationTime"];
+      accountId_issuer: ["accountId", "issuer", "_creationTime"];
       accountId_providerId: ["accountId", "providerId", "_creationTime"];
       providerId_userId: ["providerId", "userId", "_creationTime"];
       userId: ["userId", "_creationTime"];
@@ -297,6 +300,7 @@ export type DataModel = {
       by_creation_time: ["_creationTime"];
       by_kind_status: ["kind", "status", "_creationTime"];
       by_kind_table_index: ["kind", "tableKey", "indexName", "_creationTime"];
+      by_table_status: ["tableKey", "status", "_creationTime"];
     };
     searchIndexes: {};
     vectorIndexes: {};
@@ -1294,6 +1298,7 @@ export type DataModel = {
       by_id: ["_id"];
       by_creation_time: ["_creationTime"];
       by_run_id: ["runId", "_creationTime"];
+      by_started_at: ["startedAt", "_creationTime"];
       by_status: ["status", "_creationTime"];
     };
     searchIndexes: {};
