@@ -138,7 +138,7 @@ function StackPage() {
 						<div className='flex h-7 w-7 items-center justify-center rounded-full bg-primary'>
 							<span className='text-xs font-bold text-primary-foreground'>K</span>
 						</div>
-						<span className='text-sm font-semibold tracking-tight'>Kino</span>
+						<span className='text-sm font-semibold tracking-tight'>Kino™</span>
 					</Link>
 				</div>
 			</header>
@@ -180,9 +180,14 @@ function StackPage() {
 			<footer className='border-t border-border py-6'>
 				<div className='container flex items-center justify-between text-sm text-muted-foreground'>
 					<p>&copy; {new Date().getFullYear()} Kino</p>
-					<Link to='/' className='transition-colors hover:text-foreground'>
-						Home
-					</Link>
+					<div className='flex items-center gap-4'>
+						<Link to='/docs/notices' className='transition-colors hover:text-foreground'>
+							Notices
+						</Link>
+						<Link to='/' className='transition-colors hover:text-foreground'>
+							Home
+						</Link>
+					</div>
 				</div>
 			</footer>
 		</div>

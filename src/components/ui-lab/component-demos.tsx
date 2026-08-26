@@ -861,7 +861,7 @@ function SeparatorDemo() {
 		<Demo title='Horizontal & vertical'>
 			<div className='w-full max-w-sm space-y-3'>
 				<div className='space-y-0.5'>
-					<p className='text-sm font-medium'>Kino UI</p>
+					<p className='text-sm font-medium'>Kino™ UI</p>
 					<p className='text-xs text-muted-foreground'>A component library.</p>
 				</div>
 				<Separator />

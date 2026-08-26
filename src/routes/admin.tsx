@@ -59,7 +59,7 @@ function AuthedAdmin() {
 						<div className='flex h-7 w-7 items-center justify-center rounded-full bg-primary'>
 							<span className='text-xs font-bold text-primary-foreground'>K</span>
 						</div>
-						<span className='text-sm font-semibold tracking-tight'>Kino Admin</span>
+						<span className='text-sm font-semibold tracking-tight'>Kino™ Admin</span>
 					</Link>
 					<Link
 						to='/dashboard'
@@ -86,9 +86,12 @@ function AuthedAdmin() {
 				</div>
 			</main>
 
-			<footer className='mt-auto border-t border-border py-4 text-center text-sm text-muted-foreground'>
-				<div className='container'>
+			<footer className='mt-auto border-t border-border py-4 text-sm text-muted-foreground'>
+				<div className='container flex items-center justify-between gap-4'>
 					<p>&copy; {new Date().getFullYear()} Kino</p>
+					<Link to='/docs/notices' className='transition-colors hocus:text-foreground'>
+						Notices
+					</Link>
 				</div>
 			</footer>
 		</div>

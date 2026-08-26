@@ -124,9 +124,12 @@ function AuthenticatedAccountShell() {
 					</div>
 				</div>
 			</div>
-			<footer className='mt-auto w-full border-t border-border py-4 text-center text-sm text-muted-foreground'>
-				<div className='container'>
+			<footer className='mt-auto w-full border-t border-border py-4 text-sm text-muted-foreground'>
+				<div className='container flex items-center justify-between gap-4'>
 					<p>© {new Date().getFullYear()} Kino</p>
+					<Link to='/docs/notices' className='transition-colors hocus:text-foreground'>
+						Notices
+					</Link>
 				</div>
 			</footer>
 		</div>

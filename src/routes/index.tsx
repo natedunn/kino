@@ -37,7 +37,7 @@ function LandingPage() {
 						<div className='flex h-7 w-7 items-center justify-center rounded-full bg-primary'>
 							<span className='text-xs font-bold text-primary-foreground'>K</span>
 						</div>
-						<span className='text-sm font-semibold tracking-tight'>Kino</span>
+						<span className='text-sm font-semibold tracking-tight'>Kino™</span>
 					</div>
 					<div className='flex items-center gap-3'>
 						<Button asChild variant='ghost' size='sm'>
@@ -132,7 +132,10 @@ function LandingPage() {
 			<footer className='border-t border-border py-6'>
 				<div className='container flex items-center justify-between text-sm text-muted-foreground'>
 					<p>&copy; {new Date().getFullYear()} Kino</p>
-					<div className='flex items-center gap-4'>
+					<div className='flex flex-wrap items-center justify-end gap-x-4 gap-y-2'>
+						<Link to='/docs/notices' className='transition-colors hover:text-foreground'>
+							Notices
+						</Link>
 						<a
 							href='https://github.com'
 							target='_blank'

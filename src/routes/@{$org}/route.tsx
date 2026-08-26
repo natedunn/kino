@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { createFileRoute, notFound, Outlet, useParams } from '@tanstack/react-router';
+import { createFileRoute, Link, notFound, Outlet, useParams } from '@tanstack/react-router';
 
 import { DefaultCatchBoundary } from '@/components/_default-catch-boundary';
 import { NotFound } from '@/components/_not-found';
@@ -92,9 +92,12 @@ function OrganizationShell() {
 					<Outlet />
 				</div>
 			</div>
-			<footer className='mt-auto w-full border-t border-border py-4 text-center text-sm text-muted-foreground'>
-				<div className='container'>
+			<footer className='mt-auto w-full border-t border-border py-4 text-sm text-muted-foreground'>
+				<div className='container flex items-center justify-between gap-4'>
 					<p>© {new Date().getFullYear()} Kino</p>
+					<Link to='/docs/notices' className='transition-colors hocus:text-foreground'>
+						Notices
+					</Link>
 				</div>
 			</footer>
 		</div>

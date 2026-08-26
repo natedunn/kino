@@ -26,6 +26,11 @@ import { Route as AuthForgotPasswordRouteImport } from './routes/auth.forgot-pas
 import { Route as AuthResetPasswordRouteImport } from './routes/auth.reset-password'
 import { Route as AuthSignUpRouteImport } from './routes/auth.sign-up'
 import { Route as AuthVerifyEmailRouteImport } from './routes/auth.verify-email'
+import { Route as DocsCommunityGuidelinesRouteImport } from './routes/docs/community-guidelines'
+import { Route as DocsCookiesRouteImport } from './routes/docs/cookies'
+import { Route as DocsDevelopmentRouteImport } from './routes/docs/development'
+import { Route as DocsNoticesRouteImport } from './routes/docs/notices'
+import { Route as DocsPrivacyRouteImport } from './routes/docs/privacy'
 import { Route as OrgSettingsRouteRouteImport } from './routes/org/settings/route'
 import { Route as AtChar123orgChar125ProjectIndexRouteImport } from './routes/@{$org}/$project/index'
 import { Route as AtChar123orgChar125ProjectFeedbackRouteRouteImport } from './routes/@{$org}/$project/feedback/route'
@@ -166,6 +171,31 @@ const AuthVerifyEmailRoute = AuthVerifyEmailRouteImport.update({
   id: '/verify-email',
   path: '/verify-email',
   getParentRoute: () => AuthRoute,
+} as any)
+const DocsCommunityGuidelinesRoute = DocsCommunityGuidelinesRouteImport.update({
+  id: '/docs/community-guidelines',
+  path: '/docs/community-guidelines',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DocsCookiesRoute = DocsCookiesRouteImport.update({
+  id: '/docs/cookies',
+  path: '/docs/cookies',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DocsDevelopmentRoute = DocsDevelopmentRouteImport.update({
+  id: '/docs/development',
+  path: '/docs/development',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DocsNoticesRoute = DocsNoticesRouteImport.update({
+  id: '/docs/notices',
+  path: '/docs/notices',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DocsPrivacyRoute = DocsPrivacyRouteImport.update({
+  id: '/docs/privacy',
+  path: '/docs/privacy',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const OrgSettingsRouteRoute = OrgSettingsRouteRouteImport.update({
   id: '/org/settings',
@@ -481,6 +511,11 @@ export interface FileRoutesByFullPath {
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/auth/sign-up': typeof AuthSignUpRoute
   '/auth/verify-email': typeof AuthVerifyEmailRoute
+  '/docs/community-guidelines': typeof DocsCommunityGuidelinesRoute
+  '/docs/cookies': typeof DocsCookiesRoute
+  '/docs/development': typeof DocsDevelopmentRoute
+  '/docs/notices': typeof DocsNoticesRoute
+  '/docs/privacy': typeof DocsPrivacyRoute
   '/@{$org}/': typeof AtChar123orgChar125IndexRoute
   '/account/': typeof AccountIndexRoute
   '/auth/': typeof AuthIndexRoute
@@ -547,6 +582,11 @@ export interface FileRoutesByTo {
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/auth/sign-up': typeof AuthSignUpRoute
   '/auth/verify-email': typeof AuthVerifyEmailRoute
+  '/docs/community-guidelines': typeof DocsCommunityGuidelinesRoute
+  '/docs/cookies': typeof DocsCookiesRoute
+  '/docs/development': typeof DocsDevelopmentRoute
+  '/docs/notices': typeof DocsNoticesRoute
+  '/docs/privacy': typeof DocsPrivacyRoute
   '/@{$org}': typeof AtChar123orgChar125IndexRoute
   '/account': typeof AccountIndexRoute
   '/auth': typeof AuthIndexRoute
@@ -616,6 +656,11 @@ export interface FileRoutesById {
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/auth/sign-up': typeof AuthSignUpRoute
   '/auth/verify-email': typeof AuthVerifyEmailRoute
+  '/docs/community-guidelines': typeof DocsCommunityGuidelinesRoute
+  '/docs/cookies': typeof DocsCookiesRoute
+  '/docs/development': typeof DocsDevelopmentRoute
+  '/docs/notices': typeof DocsNoticesRoute
+  '/docs/privacy': typeof DocsPrivacyRoute
   '/@{$org}/': typeof AtChar123orgChar125IndexRoute
   '/account/': typeof AccountIndexRoute
   '/auth/': typeof AuthIndexRoute
@@ -689,6 +734,11 @@ export interface FileRouteTypes {
     | '/auth/reset-password'
     | '/auth/sign-up'
     | '/auth/verify-email'
+    | '/docs/community-guidelines'
+    | '/docs/cookies'
+    | '/docs/development'
+    | '/docs/notices'
+    | '/docs/privacy'
     | '/@{$org}/'
     | '/account/'
     | '/auth/'
@@ -755,6 +805,11 @@ export interface FileRouteTypes {
     | '/auth/reset-password'
     | '/auth/sign-up'
     | '/auth/verify-email'
+    | '/docs/community-guidelines'
+    | '/docs/cookies'
+    | '/docs/development'
+    | '/docs/notices'
+    | '/docs/privacy'
     | '/@{$org}'
     | '/account'
     | '/auth'
@@ -823,6 +878,11 @@ export interface FileRouteTypes {
     | '/auth/reset-password'
     | '/auth/sign-up'
     | '/auth/verify-email'
+    | '/docs/community-guidelines'
+    | '/docs/cookies'
+    | '/docs/development'
+    | '/docs/notices'
+    | '/docs/privacy'
     | '/@{$org}/'
     | '/account/'
     | '/auth/'
@@ -889,6 +949,11 @@ export interface RootRouteChildren {
   StackRoute: typeof StackRoute
   UiRoute: typeof UiRoute
   OrgSettingsRouteRoute: typeof OrgSettingsRouteRouteWithChildren
+  DocsCommunityGuidelinesRoute: typeof DocsCommunityGuidelinesRoute
+  DocsCookiesRoute: typeof DocsCookiesRoute
+  DocsDevelopmentRoute: typeof DocsDevelopmentRoute
+  DocsNoticesRoute: typeof DocsNoticesRoute
+  DocsPrivacyRoute: typeof DocsPrivacyRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiGithubSplatRoute: typeof ApiGithubSplatRoute
   ApiGithubCallbackRoute: typeof ApiGithubCallbackRoute
@@ -1017,6 +1082,41 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth/verify-email'
       preLoaderRoute: typeof AuthVerifyEmailRouteImport
       parentRoute: typeof AuthRoute
+    }
+    '/docs/community-guidelines': {
+      id: '/docs/community-guidelines'
+      path: '/docs/community-guidelines'
+      fullPath: '/docs/community-guidelines'
+      preLoaderRoute: typeof DocsCommunityGuidelinesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/docs/cookies': {
+      id: '/docs/cookies'
+      path: '/docs/cookies'
+      fullPath: '/docs/cookies'
+      preLoaderRoute: typeof DocsCookiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/docs/development': {
+      id: '/docs/development'
+      path: '/docs/development'
+      fullPath: '/docs/development'
+      preLoaderRoute: typeof DocsDevelopmentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/docs/notices': {
+      id: '/docs/notices'
+      path: '/docs/notices'
+      fullPath: '/docs/notices'
+      preLoaderRoute: typeof DocsNoticesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/docs/privacy': {
+      id: '/docs/privacy'
+      path: '/docs/privacy'
+      fullPath: '/docs/privacy'
+      preLoaderRoute: typeof DocsPrivacyRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/org/settings': {
       id: '/org/settings'
@@ -1625,6 +1725,11 @@ const rootRouteChildren: RootRouteChildren = {
   StackRoute: StackRoute,
   UiRoute: UiRoute,
   OrgSettingsRouteRoute: OrgSettingsRouteRouteWithChildren,
+  DocsCommunityGuidelinesRoute: DocsCommunityGuidelinesRoute,
+  DocsCookiesRoute: DocsCookiesRoute,
+  DocsDevelopmentRoute: DocsDevelopmentRoute,
+  DocsNoticesRoute: DocsNoticesRoute,
+  DocsPrivacyRoute: DocsPrivacyRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiGithubSplatRoute: ApiGithubSplatRoute,
   ApiGithubCallbackRoute: ApiGithubCallbackRoute,

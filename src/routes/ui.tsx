@@ -78,7 +78,7 @@ function UiLibraryPage() {
 							K
 						</span>
 						<div className='leading-tight'>
-							<p className='text-sm font-semibold tracking-tight'>Kino UI</p>
+							<p className='text-sm font-semibold tracking-tight'>Kino™ UI</p>
 							<p className='text-[11px] text-muted-foreground'>Component library</p>
 						</div>
 					</div>
