@@ -40,11 +40,11 @@ export function LegalPage({
 			</header>
 
 			<main className='container flex-1 py-12 md:py-20'>
-				<div className='mx-auto max-w-3xl'>
+				<div>
 					<div className='border-b border-border pb-8'>
 						<p className='text-xs font-semibold tracking-wider text-primary uppercase'>Draft</p>
 						<h1 className='mt-3 text-3xl font-bold tracking-tight sm:text-4xl'>{title}</h1>
-						<p className='mt-4 max-w-2xl text-base leading-7 text-muted-foreground'>
+						<p className='mt-4 text-base leading-7 text-muted-foreground'>
 							{description}
 						</p>
 						<p className='mt-3 text-sm text-muted-foreground'>Last updated {LEGAL_LAST_UPDATED}</p>
