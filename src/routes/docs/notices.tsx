@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { ArrowRight, Cookie, FileWarning, ShieldCheck, Users } from 'lucide-react';
+import { ArrowRight, Blocks, Cookie, FileWarning, ShieldCheck, Users } from 'lucide-react';
 
 import { titleMeta } from '@/lib/seo';
 
@@ -32,6 +32,12 @@ const NOTICES = [
 		icon: Cookie,
 		label: 'Cookie policy',
 		to: '/docs/cookies',
+	},
+	{
+		description: 'The tools and services used to build and run Kino.',
+		icon: Blocks,
+		label: 'Tech stack',
+		to: '/stack',
 	},
 ] as const;
 
