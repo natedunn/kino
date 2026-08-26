@@ -19,7 +19,11 @@ import {
   waitForLocalBackendToStart,
 } from "./lib/local-convex.mjs"
 import { planAnonymousAuthEnv } from "./lib/anonymous-auth-env.mjs"
-import { backfillAccountIssuerContents } from "./lib/anonymous-seed-data.mjs"
+import {
+  planLocalDeploymentReset,
+  shouldStopLocalBackend,
+} from "./lib/anonymous-local-state.mjs"
+import { backfillAccountIssuerContentsWithStats } from "./lib/anonymous-seed-data.mjs"
 
 const workspaceRoot = process.cwd()
 const anonymousEnvFilePath = getAnonymousEnvFilePath(workspaceRoot)
@@ -35,6 +39,7 @@ function parseArgs(args) {
     copyEnv: true,
     envOnly: false,
     includeFileStorage: false,
+    resetLocalState: false,
     skipDeploy: false,
     stopRunningLocal: false,
     source: null,
@@ -53,6 +58,8 @@ function parseArgs(args) {
       parsed.includeFileStorage = true
     } else if (arg === "--no-env") {
       parsed.copyEnv = false
+    } else if (arg === "--reset-local-state") {
+      parsed.resetLocalState = true
     } else if (arg === "--skip-deploy") {
       parsed.skipDeploy = true
     } else if (arg === "--stop-running-local") {
@@ -99,6 +106,8 @@ Options:
   --env-only                  Copy env vars only; skip data export/import.
   --skip-deploy               Skip the one-shot kitcn bootstrap before import.
   --stop-running-local        Stop an existing anonymous local backend first.
+  --reset-local-state         Delete the anonymous local backend state before
+                              seeding. Also stops a running local backend first.
   --allow-cloud-target        Required when --target is not "local".
 `)
 }
@@ -296,7 +305,7 @@ function startTemporaryLocalBackend(env) {
 }
 
 function stopRunningLocalBackendIfRequested() {
-  if (!options.stopRunningLocal || options.target) return
+  if (!shouldStopLocalBackend(options)) return
 
   if (
     !stopLocalBackendForWorkspace(workspaceRoot, {
@@ -314,8 +323,8 @@ function stopRunningLocalBackendIfRequested() {
 // that deployment, and the later `convex env set` (which copies JWKS and other
 // auth vars from shared dev) fails with "Could not find deployment with name
 // anonymous-agent". Reset the local state so init creates a clean anonymous-agent
-// deployment. Setup also requests a reset explicitly because its contract is to
-// replace this worktree's anonymous data with a fresh shared-dev snapshot.
+// deployment. Callers can also request a fresh local deployment explicitly when
+// their contract is to replace this worktree's anonymous seed data.
 function resetLocalDeploymentForSeed() {
   const configPath = getProjectLocalConfigPath(workspaceRoot)
   if (!fs.existsSync(configPath)) return
@@ -327,15 +336,13 @@ function resetLocalDeploymentForSeed() {
     return
   }
 
-  if (typeof existingName !== "string" || !existingName) return
-  if (existingName === "anonymous-agent" && !options.stopRunningLocal) return
+  const reset = planLocalDeploymentReset(existingName, options)
+  if (!reset) return
 
   const localStateDir = path.dirname(path.dirname(configPath)) // .convex/local
-  const reason =
-    existingName === "anonymous-agent"
-      ? "setup replaces this worktree's anonymous seed data"
-      : `local deployment is "${existingName}", not "anonymous-agent"`
-  console.log(`[seed] ${reason}; resetting the local backend before bootstrap`)
+  console.log(
+    `[seed] ${reset.reason}; resetting the local backend before bootstrap`
+  )
   fs.rmSync(localStateDir, { recursive: true, force: true })
 }
 
@@ -565,13 +572,12 @@ function sanitizeExportForCurrentSchema(exportPath, { stripAuthSigningKeys = fal
     const accountPath = path.join(tempDir, "account", "documents.jsonl")
     if (fs.existsSync(accountPath)) {
       const original = fs.readFileSync(accountPath, "utf8")
-      const migrated = backfillAccountIssuerContents(original)
-      if (migrated !== original) {
-        fs.writeFileSync(accountPath, migrated)
-        const accountRows = migrated.split(/\r?\n/).filter(Boolean).length
-        totalRows += accountRows
+      const migrated = backfillAccountIssuerContentsWithStats(original)
+      if (migrated.changedRows > 0) {
+        fs.writeFileSync(accountPath, migrated.contents)
+        totalRows += migrated.changedRows
         console.log(
-          `[seed] account: installed Better Auth 1.7 issuer on ${accountRows} row(s)`
+          `[seed] account: installed Better Auth 1.7 issuer on ${migrated.changedRows} row(s)`
         )
       }
     }

@@ -29,10 +29,22 @@ export function backfillAccountIssuerLine(line) {
 }
 
 export function backfillAccountIssuerContents(contents) {
-	return contents
+	return backfillAccountIssuerContentsWithStats(contents).contents;
+}
+
+export function backfillAccountIssuerContentsWithStats(contents) {
+	let changedRows = 0;
+	const lines = contents
 		.split(/\r?\n/)
 		.filter(Boolean)
-		.map(backfillAccountIssuerLine)
-		.join('\n')
-		.concat(contents.trim() ? '\n' : '');
+		.map((line) => {
+			const migrated = backfillAccountIssuerLine(line);
+			if (migrated !== line) changedRows += 1;
+			return migrated;
+		});
+
+	return {
+		contents: lines.join('\n').concat(contents.trim() ? '\n' : ''),
+		changedRows,
+	};
 }

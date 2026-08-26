@@ -118,8 +118,8 @@ detail "Running npx convex ai-files update (timeout 60s)"
 run_with_timeout 60 npx convex ai-files update
 
 step 4 "Resolve seed options"
-seed_args=(--stop-running-local)
-detail "Stopping this worktree's anonymous local Convex backend before seeding, if it is running"
+seed_args=(--reset-local-state)
+detail "Resetting this worktree's anonymous local Convex backend before seeding"
 
 # Accept the neutral KINO_* name; fall back to the legacy HELMOR_* name so older
 # bootstraps keep working.

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
 	backfillAccountIssuerContents,
+	backfillAccountIssuerContentsWithStats,
 	backfillAccountIssuerLine,
 } from './anonymous-seed-data.mjs';
 
@@ -46,5 +47,21 @@ describe('anonymous Better Auth account seeding', () => {
 		const contents =
 			'{"accountId":"1","providerId":"github","userId":"u1"}\n{"accountId":"2","providerId":"github","userId":"u2"}\n';
 		expect(backfillAccountIssuerContents(contents).split('\n')).toHaveLength(3);
+	});
+
+	it('counts only rows that receive an issuer', () => {
+		const contents =
+			'{"accountId":"1","providerId":"github","userId":"u1"}\n' +
+			'{"accountId":"2","providerId":"github","userId":"u2","issuer":"local:oauth:github"}\n';
+
+		const result = backfillAccountIssuerContentsWithStats(contents);
+
+		expect(result.changedRows).toBe(1);
+		expect(result.contents).toContain(
+			'{"accountId":"1","providerId":"github","userId":"u1","issuer":"local:oauth:github"}'
+		);
+		expect(result.contents).toContain(
+			'{"accountId":"2","providerId":"github","userId":"u2","issuer":"local:oauth:github"}'
+		);
 	});
 });
