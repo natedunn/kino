@@ -147,8 +147,7 @@ function StackPage() {
 				{/* Hero */}
 				<section className='container py-16 md:py-24'>
 					<div className='max-w-2xl'>
-						<p className='text-sm font-medium text-muted-foreground'>What powers Kino</p>
-						<h1 className='mt-3 text-4xl font-bold tracking-tight md:text-5xl'>Tech Stack</h1>
+						<h1 className='text-4xl font-bold tracking-tight md:text-5xl'>Tech Stack</h1>
 						<p className='mt-4 max-w-xl text-lg leading-relaxed text-muted-foreground'>
 							The tools and technologies we use to build and run Kino — and what each one does in
 							the project.
@@ -161,10 +160,8 @@ function StackPage() {
 					{SECTIONS.map((section) => (
 						<section key={section.title}>
 							<div className='max-w-xl'>
-								<h2 className='text-sm font-semibold tracking-wide text-muted-foreground uppercase'>
-									{section.title}
-								</h2>
-								<p className='mt-1.5 text-sm text-muted-foreground/80'>{section.description}</p>
+								<h2 className='text-xl font-semibold tracking-tight'>{section.title}</h2>
+								<p className='mt-2 text-sm text-muted-foreground'>{section.description}</p>
 							</div>
 							<div className='mt-5 grid gap-px overflow-hidden rounded-lg border border-border bg-border'>
 								{section.items.map((item) => (
