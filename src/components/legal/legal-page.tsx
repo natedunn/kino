@@ -28,7 +28,7 @@ export function LegalPage({
 						<div className='flex size-7 items-center justify-center rounded-full bg-primary'>
 							<span className='text-xs font-bold text-primary-foreground'>K</span>
 						</div>
-						<span className='text-sm font-semibold tracking-tight'>Kino™</span>
+						<span className='text-sm font-semibold tracking-tight'>Kino</span>
 					</Link>
 					<Link
 						to='/docs/notices'

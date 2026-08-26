@@ -59,7 +59,7 @@ function AuthedAdmin() {
 						<div className='flex h-7 w-7 items-center justify-center rounded-full bg-primary'>
 							<span className='text-xs font-bold text-primary-foreground'>K</span>
 						</div>
-						<span className='text-sm font-semibold tracking-tight'>Kino™ Admin</span>
+						<span className='text-sm font-semibold tracking-tight'>Kino Admin</span>
 					</Link>
 					<Link
 						to='/dashboard'
