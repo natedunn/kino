@@ -9,6 +9,7 @@ import { migration as migration_1 } from './20260729_220000_rename_editor_invita
 import { migration as migration_2 } from './20260729_220001_downgrade_system_editor_users';
 import { migration as migration_3 } from './20260729_220002_downgrade_system_editor_profiles';
 import { migration as migration_4 } from './20260729_220003_simplify_project_members';
+import { migration as migration_5 } from './20260825_000000_backfill_account_issuer';
 
 export const migrations = defineMigrationSet([
 	migration_0,
@@ -16,4 +17,5 @@ export const migrations = defineMigrationSet([
 	migration_2,
 	migration_3,
 	migration_4,
+	migration_5,
 ]);

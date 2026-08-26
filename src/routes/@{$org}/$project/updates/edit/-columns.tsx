@@ -1,7 +1,14 @@
 import type { DashboardUpdate } from './-types';
 
 import { Link } from '@tanstack/react-router';
-import { createColumnHelper } from '@tanstack/react-table';
+import {
+	columnSizingFeature,
+	columnVisibilityFeature,
+	createColumnHelper,
+	rowPaginationFeature,
+	rowSelectionFeature,
+	tableFeatures,
+} from '@tanstack/react-table';
 import { ChevronRight } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -11,7 +18,14 @@ import { formatFullDate, formatTimestamp } from '@/lib/utils/format-timestamp';
 import { CategoryBadge } from '../-components/category-badge';
 import { StatusBadge } from '../-components/status-badge';
 
-const columnHelper = createColumnHelper<DashboardUpdate>();
+export const updateTableFeatures = tableFeatures({
+	columnSizingFeature,
+	columnVisibilityFeature,
+	rowPaginationFeature,
+	rowSelectionFeature,
+});
+
+const columnHelper = createColumnHelper<typeof updateTableFeatures, DashboardUpdate>();
 
 /**
  * Builds the dashboard table columns. Kept as a factory because the title and
@@ -21,7 +35,7 @@ export function createUpdateColumns(
 	params: { org: string; project: string },
 	onOpenSheet: (id: string) => void
 ) {
-	return [
+	return columnHelper.columns([
 		columnHelper.display({
 			cell: ({ row }) => (
 				<Checkbox
@@ -128,5 +142,5 @@ export function createUpdateColumns(
 			size: 100,
 			enableHiding: false,
 		}),
-	];
+	]);
 }

@@ -80,7 +80,7 @@ async function seedUpdate(ctx: Ctx, profileId: string) {
 async function backfillAggregates(t: TestConvex) {
 	vi.useFakeTimers();
 	try {
-		await t.mutation(internal.generated.server.aggregateBackfill, {});
+		await t.mutation(internal.generated.aggregate.aggregateBackfill, {});
 		await t.finishAllScheduledFunctions(vi.runAllTimers);
 	} finally {
 		vi.useRealTimers();

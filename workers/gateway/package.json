@@ -3,16 +3,16 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev --env dev",
-    "deploy:preview": "wrangler deploy --env dev",
+    "dev": "wrangler dev --config wrangler.jsonc --env dev",
+    "deploy:preview": "wrangler deploy --config wrangler.jsonc --env dev",
     "deploy:dev": "pnpm run deploy:preview",
-    "deploy:production": "wrangler deploy --env production",
-    "types": "wrangler types --env dev",
+    "deploy:production": "wrangler deploy --config wrangler.jsonc --env production",
+    "types": "wrangler types --config wrangler.jsonc --env dev",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
   "dependencies": {
-    "better-auth": "1.6.23"
+    "better-auth": "1.7.1"
   },
   "devDependencies": {
     "typescript": "^5.8.0",

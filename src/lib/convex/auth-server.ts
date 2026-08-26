@@ -1,8 +1,10 @@
+import { api } from '@convex/api';
 import { splitSetCookieHeader } from 'better-auth/cookies';
 import { convexBetterAuthReactStart } from 'kitcn/auth/start/server';
 
 function createAuth() {
 	return convexBetterAuthReactStart({
+		api,
 		convexUrl: import.meta.env.VITE_CONVEX_URL!,
 		convexSiteUrl: import.meta.env.VITE_CONVEX_SITE_URL!,
 	});

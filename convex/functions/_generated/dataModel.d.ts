@@ -34,6 +34,7 @@ export type DataModel = {
       accountId: string;
       createdAt: number;
       idToken?: null | string;
+      issuer: string;
       password?: null | string;
       providerId: string;
       refreshToken?: null | string;
@@ -52,6 +53,7 @@ export type DataModel = {
       | "accountId"
       | "createdAt"
       | "idToken"
+      | "issuer"
       | "password"
       | "providerId"
       | "refreshToken"
@@ -63,6 +65,7 @@ export type DataModel = {
       by_id: ["_id"];
       by_creation_time: ["_creationTime"];
       accountId: ["accountId", "_creationTime"];
+      accountId_issuer: ["accountId", "issuer", "_creationTime"];
       accountId_providerId: ["accountId", "providerId", "_creationTime"];
       providerId_userId: ["providerId", "userId", "_creationTime"];
       userId: ["userId", "_creationTime"];
@@ -215,7 +218,7 @@ export type DataModel = {
   aggregate_rank_node: {
     document: {
       aggregate?: null | { count: number; sum: number };
-      items: Array<{ k: null | any; s: number; v: null | any }>;
+      items: Array<{ k: any; s: number; v: any }>;
       subtrees: Array<string>;
       _id: Id<"aggregate_rank_node">;
       _creationTime: number;
@@ -238,6 +241,7 @@ export type DataModel = {
   aggregate_rank_tree: {
     document: {
       aggregateName: string;
+      deletionStack?: null | Array<Id<"aggregate_rank_node">>;
       maxNodeSize: number;
       namespace?: null | any;
       root: Id<"aggregate_rank_node">;
@@ -248,6 +252,7 @@ export type DataModel = {
       | "_creationTime"
       | "_id"
       | "aggregateName"
+      | "deletionStack"
       | "maxNodeSize"
       | "namespace"
       | "root";
@@ -297,6 +302,7 @@ export type DataModel = {
       by_creation_time: ["_creationTime"];
       by_kind_status: ["kind", "status", "_creationTime"];
       by_kind_table_index: ["kind", "tableKey", "indexName", "_creationTime"];
+      by_table_status: ["tableKey", "status", "_creationTime"];
     };
     searchIndexes: {};
     vectorIndexes: {};
@@ -1208,7 +1214,9 @@ export type DataModel = {
   };
   jwks: {
     document: {
+      alg?: null | string;
       createdAt: number;
+      crv?: null | string;
       expiresAt?: null | number;
       privateKey: string;
       publicKey: string;
@@ -1218,7 +1226,9 @@ export type DataModel = {
     fieldPaths:
       | "_creationTime"
       | "_id"
+      | "alg"
       | "createdAt"
+      | "crv"
       | "expiresAt"
       | "privateKey"
       | "publicKey";
@@ -1294,6 +1304,7 @@ export type DataModel = {
       by_id: ["_id"];
       by_creation_time: ["_creationTime"];
       by_run_id: ["runId", "_creationTime"];
+      by_started_at: ["startedAt", "_creationTime"];
       by_status: ["status", "_creationTime"];
     };
     searchIndexes: {};

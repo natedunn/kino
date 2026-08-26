@@ -192,6 +192,8 @@ export const api = {
   },
   http: undefined as unknown as typeof httpRouter,
   _http: {
+    'github.callback': { path: "/api/github/callback", method: "GET" },
+    'github.webhook': { path: "/api/github/webhook", method: "POST" },
   },
 } as const;
 

@@ -18,6 +18,12 @@ import {
   stopLocalBackendForWorkspace,
   waitForLocalBackendToStart,
 } from "./lib/local-convex.mjs"
+import { planAnonymousAuthEnv } from "./lib/anonymous-auth-env.mjs"
+import {
+  planLocalDeploymentReset,
+  shouldStopLocalBackend,
+} from "./lib/anonymous-local-state.mjs"
+import { backfillAccountIssuerContentsWithStats } from "./lib/anonymous-seed-data.mjs"
 
 const workspaceRoot = process.cwd()
 const anonymousEnvFilePath = getAnonymousEnvFilePath(workspaceRoot)
@@ -33,6 +39,7 @@ function parseArgs(args) {
     copyEnv: true,
     envOnly: false,
     includeFileStorage: false,
+    resetLocalState: false,
     skipDeploy: false,
     stopRunningLocal: false,
     source: null,
@@ -51,6 +58,8 @@ function parseArgs(args) {
       parsed.includeFileStorage = true
     } else if (arg === "--no-env") {
       parsed.copyEnv = false
+    } else if (arg === "--reset-local-state") {
+      parsed.resetLocalState = true
     } else if (arg === "--skip-deploy") {
       parsed.skipDeploy = true
     } else if (arg === "--stop-running-local") {
@@ -97,6 +106,8 @@ Options:
   --env-only                  Copy env vars only; skip data export/import.
   --skip-deploy               Skip the one-shot kitcn bootstrap before import.
   --stop-running-local        Stop an existing anonymous local backend first.
+  --reset-local-state         Delete the anonymous local backend state before
+                              seeding. Also stops a running local backend first.
   --allow-cloud-target        Required when --target is not "local".
 `)
 }
@@ -294,7 +305,7 @@ function startTemporaryLocalBackend(env) {
 }
 
 function stopRunningLocalBackendIfRequested() {
-  if (!options.stopRunningLocal || options.target) return
+  if (!shouldStopLocalBackend(options)) return
 
   if (
     !stopLocalBackendForWorkspace(workspaceRoot, {
@@ -312,8 +323,9 @@ function stopRunningLocalBackendIfRequested() {
 // that deployment, and the later `convex env set` (which copies JWKS and other
 // auth vars from shared dev) fails with "Could not find deployment with name
 // anonymous-agent". Reset the local state so init creates a clean anonymous-agent
-// deployment. Only acts on a mismatch, so the normal re-seed path is untouched.
-function resetMismatchedLocalDeployment() {
+// deployment. Callers can also request a fresh local deployment explicitly when
+// their contract is to replace this worktree's anonymous seed data.
+function resetLocalDeploymentForSeed() {
   const configPath = getProjectLocalConfigPath(workspaceRoot)
   if (!fs.existsSync(configPath)) return
 
@@ -324,12 +336,12 @@ function resetMismatchedLocalDeployment() {
     return
   }
 
-  if (typeof existingName !== "string" || !existingName) return
-  if (existingName === "anonymous-agent") return
+  const reset = planLocalDeploymentReset(existingName, options)
+  if (!reset) return
 
   const localStateDir = path.dirname(path.dirname(configPath)) // .convex/local
   console.log(
-    `[seed] local deployment is "${existingName}", not "anonymous-agent"; resetting it for a clean anonymous seed`
+    `[seed] ${reset.reason}; resetting the local backend before bootstrap`
   )
   fs.rmSync(localStateDir, { recursive: true, force: true })
 }
@@ -527,7 +539,7 @@ function stripUnknownFields(filePath, allowedFields) {
 // dev ("OG") deployment can be schema-ahead or schema-behind the current
 // branch; `convex import --replace-all` rejects unknown fields, so we drop them
 // generically rather than maintaining a hardcoded per-field list.
-function sanitizeExportForCurrentSchema(exportPath) {
+function sanitizeExportForCurrentSchema(exportPath, { stripAuthSigningKeys = false } = {}) {
   if (!exportPath.endsWith(".zip")) {
     throw new Error(`[seed] expected a .zip export path, got: ${exportPath}`)
   }
@@ -557,6 +569,36 @@ function sanitizeExportForCurrentSchema(exportPath) {
     run("unzip", ["-q", exportPath, "-d", tempDir])
 
     let totalRows = 0
+    const accountPath = path.join(tempDir, "account", "documents.jsonl")
+    if (fs.existsSync(accountPath)) {
+      const original = fs.readFileSync(accountPath, "utf8")
+      const migrated = backfillAccountIssuerContentsWithStats(original)
+      if (migrated.changedRows > 0) {
+        fs.writeFileSync(accountPath, migrated.contents)
+        totalRows += migrated.changedRows
+        console.log(
+          `[seed] account: installed Better Auth 1.7 issuer on ${migrated.changedRows} row(s)`
+        )
+      }
+    }
+
+    if (stripAuthSigningKeys) {
+      const jwksPath = path.join(tempDir, "jwks", "documents.jsonl")
+      if (fs.existsSync(jwksPath)) {
+        const jwksRows = fs
+          .readFileSync(jwksPath, "utf8")
+          .split(/\r?\n/)
+          .filter(Boolean).length
+        if (jwksRows > 0) {
+          fs.writeFileSync(jwksPath, "")
+          totalRows += jwksRows
+          console.log(
+            `[seed] jwks: dropped ${jwksRows} source signing key row(s); anonymous workspaces use their own key`
+          )
+        }
+      }
+    }
+
     // Only touch tables the app schema owns. Tables present in the export but
     // not in dataModel (e.g. _storage, _tables) are imported verbatim.
     for (const [table, allowedFields] of schemaFields) {
@@ -607,9 +649,10 @@ const sourceDeployment =
   sharedDevState.KINO_CONVEX_SEED_SOURCE ??
   "dev"
 const targetEnv = options.target ? process.env : anonymousConvexEnv()
+const isolateTargetSigningKeys = !options.target || options.target === "local"
 
 if (!options.target) {
-  resetMismatchedLocalDeployment()
+  resetLocalDeploymentForSeed()
   run("pnpm", ["exec", "convex", "init"], { env: targetEnv })
   stopRunningLocalBackendIfRequested()
   const ports = ensureWorktreeLocalBackendPorts(workspaceRoot)
@@ -620,13 +663,34 @@ if (!options.target) {
   }
 }
 
+let sourceEnvContents = ""
 if (options.copyEnv) {
-  const envPath = path.join(seedDir, `dev-env-${timestamp()}.env`)
-  const envContents = run(
+  sourceEnvContents = run(
     "pnpm",
     ["exec", "convex", "env", "list", "--deployment", sourceDeployment],
     { capture: true }
   )
+}
+
+let anonymousAuthPlan = null
+if (isolateTargetSigningKeys) {
+  const targetEnvContents = run(
+    "pnpm",
+    ["exec", "convex", "env", "list", ...targetArgs()],
+    {
+      capture: true,
+      env: targetEnv,
+    }
+  )
+  anonymousAuthPlan = await planAnonymousAuthEnv({
+    sourceEnvContents,
+    targetEnvContents,
+  })
+}
+
+if (options.copyEnv) {
+  const envPath = path.join(seedDir, `dev-env-${timestamp()}.env`)
+  const envContents = anonymousAuthPlan?.copiedEnvContents ?? sourceEnvContents
   fs.writeFileSync(envPath, envContents)
 
   if (envContents.trim()) {
@@ -645,6 +709,30 @@ if (options.copyEnv) {
       { env: targetEnv }
     )
   }
+}
+
+if (anonymousAuthPlan?.authEnvContents) {
+  const authEnvPath = path.join(seedDir, `anonymous-auth-${timestamp()}.env`)
+  fs.writeFileSync(authEnvPath, anonymousAuthPlan.authEnvContents)
+  run(
+    "pnpm",
+    [
+      "exec",
+      "convex",
+      "env",
+      "set",
+      "--from-file",
+      authEnvPath,
+      "--force",
+      ...targetArgs(),
+    ],
+    {
+      env: targetEnv,
+    }
+  )
+  console.log("[seed] installed a workspace-local JWKS before bootstrap")
+} else if (anonymousAuthPlan) {
+  console.log("[seed] preserved the existing workspace-local JWKS")
 }
 
 if (options.envOnly) {
@@ -690,7 +778,9 @@ run("pnpm", [
   exportPath,
   ...(options.includeFileStorage ? ["--include-file-storage"] : []),
 ])
-const importPath = sanitizeExportForCurrentSchema(exportPath)
+const importPath = sanitizeExportForCurrentSchema(exportPath, {
+  stripAuthSigningKeys: isolateTargetSigningKeys,
+})
 
 startTemporaryLocalBackend(targetEnv)
 

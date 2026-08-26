@@ -40,7 +40,13 @@ step 1 "Sync local environment files from main worktree"
 
 # Required env files. .env.local is the canonical one (Convex CLI manages it);
 # .env is optional legacy, copied if it exists, but prefer .env.local.
-FILES=(".env.local" ".env" ".env.local.example" "convex/.env")
+FILES=(
+  ".env.local"
+  ".env"
+  ".env.local.example"
+  "convex/.env"
+  ".convex/shared-dev-deployment.env"
+)
 
 for f in "${FILES[@]}"; do
   if [ -f "$MAIN_ROOT/$f" ]; then
@@ -112,8 +118,8 @@ detail "Running npx convex ai-files update (timeout 60s)"
 run_with_timeout 60 npx convex ai-files update
 
 step 4 "Resolve seed options"
-seed_args=(--stop-running-local)
-detail "Stopping this worktree's anonymous local Convex backend before seeding, if it is running"
+seed_args=(--reset-local-state)
+detail "Resetting this worktree's anonymous local Convex backend before seeding"
 
 # Accept the neutral KINO_* name; fall back to the legacy HELMOR_* name so older
 # bootstraps keep working.

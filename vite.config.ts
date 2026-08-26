@@ -9,6 +9,7 @@ import { defineConfig } from 'vite';
 import viteTsConfigPaths from 'vite-tsconfig-paths';
 
 const port = process.env.PORT ? Number(process.env.PORT) : undefined;
+const isVitest = process.env.VITEST === 'true';
 const uploadPostHogSourcemaps = Boolean(
 	process.env.POSTHOG_CLI_API_KEY &&
 	process.env.POSTHOG_CLI_HOST &&
@@ -69,8 +70,8 @@ const config = defineConfig({
 		__KINO_BUILD_ID__: JSON.stringify(resolveBuildId()),
 	},
 	plugins: [
-		devtools(),
-		cloudflare({ viteEnvironment: { name: 'ssr' } }),
+		// Vitest needs neither the devtools event server nor a Cloudflare runtime.
+		...(isVitest ? [] : [devtools(), cloudflare({ viteEnvironment: { name: 'ssr' } })]),
 		// this is the plugin that enables path aliases
 		viteTsConfigPaths({
 			projects: ['./tsconfig.json'],

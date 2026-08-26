@@ -184,6 +184,8 @@ export const accountTable = convexTable(
 	'account',
 	{
 		accountId: text().notNull(),
+		// Better Auth 1.7 keys accounts by the stable compound identity.
+		issuer: text().notNull(),
 		providerId: text().notNull(),
 		userId: text()
 			.notNull()
@@ -200,6 +202,7 @@ export const accountTable = convexTable(
 	},
 	(table) => [
 		index('accountId').on(table.accountId),
+		index('accountId_issuer').on(table.accountId, table.issuer),
 		index('accountId_providerId').on(table.accountId, table.providerId),
 		index('providerId_userId').on(table.providerId, table.userId),
 		index('userId').on(table.userId),
@@ -286,6 +289,10 @@ export const jwksTable = convexTable('jwks', {
 	privateKey: text().notNull(),
 	createdAt: timestamp().notNull(),
 	expiresAt: timestamp(),
+	// Better Auth 1.7 records the generated key algorithm/curve. Both remain
+	// optional so keys created by 1.6 stay valid during the rollout.
+	alg: text(),
+	crv: text(),
 });
 
 export const profileTable = convexTable(

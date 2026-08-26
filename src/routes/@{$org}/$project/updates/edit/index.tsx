@@ -1,4 +1,4 @@
-import type { RowSelectionState, VisibilityState } from '@tanstack/react-table';
+import type { ColumnVisibilityState, RowSelectionState } from '@tanstack/react-table';
 import type { DeleteDialogState, StatusFilter } from './-types';
 
 import { useEffect, useMemo, useState } from 'react';
@@ -11,7 +11,7 @@ import {
 	redirect,
 	useNavigate,
 } from '@tanstack/react-router';
-import { flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
+import { flexRender, useTable } from '@tanstack/react-table';
 import { Columns3, ExternalLink, Globe, Pencil, Plus, Settings2, Trash2, X } from 'lucide-react';
 
 import { InlineAlert } from '@/components/inline-alert';
@@ -52,7 +52,7 @@ import { formatFullDate } from '@/lib/utils/format-timestamp';
 
 import { CategoryBadge } from '../-components/category-badge';
 import { StatusBadge } from '../-components/status-badge';
-import { createUpdateColumns } from './-columns';
+import { createUpdateColumns, updateTableFeatures } from './-columns';
 
 const DEFAULT_PAGE_SIZE = 20;
 const PAGE_SIZES = new Set([10, 20, 50]);
@@ -164,7 +164,7 @@ function UpdatesDashboard({ canDelete, pageSize }: { canDelete: boolean; pageSiz
 	});
 	const [cursorByPage, setCursorByPage] = useState<Record<number, string | null>>({ 0: null });
 	const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
-	const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+	const [columnVisibility, setColumnVisibility] = useState<ColumnVisibilityState>({});
 	const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
 	const [deleteDialog, setDeleteDialog] = useState<DeleteDialogState>(null);
 	const [actionError, setActionError] = useState('');
@@ -257,10 +257,10 @@ function UpdatesDashboard({ canDelete, pageSize }: { canDelete: boolean; pageSiz
 		[params.org, params.project]
 	);
 
-	const table = useReactTable({
+	const table = useTable({
 		columns,
 		data: rows,
-		getCoreRowModel: getCoreRowModel(),
+		features: updateTableFeatures,
 		getRowId: (row) => row.id,
 		manualPagination: true,
 		onRowSelectionChange: setRowSelection,

@@ -40,26 +40,31 @@ fs.mkdirSync(logDir, { recursive: true })
 
 function startProcess(name, command, args, env = process.env) {
   const logPath = path.join(logDir, `${name}.log`)
-  const logFd = fs.openSync(logPath, "w")
+  // Truncate synchronously so readiness checks can never observe a previous
+  // run's ready marker before the new child's log stream opens.
+  fs.writeFileSync(logPath, "")
+  const log = fs.createWriteStream(logPath, { flags: "a" })
   const child = spawn(command, args, {
-    stdio: ["ignore", logFd, logFd],
+    stdio: ["ignore", "pipe", "pipe"],
     detached: true,
     env,
     cwd: workspaceRoot,
   })
-  fs.closeSync(logFd)
+
+  // Tee output directly instead of following the log with `tail -f`. A
+  // force-killed supervisor can leave tail processes orphaned, and every later
+  // run would add another follower for the same file and duplicate every line.
+  child.stdout.pipe(process.stdout, { end: false })
+  child.stdout.pipe(log, { end: false })
+  child.stderr.pipe(process.stderr, { end: false })
+  child.stderr.pipe(log, { end: false })
+  child.on("close", () => log.end())
 
   child.on("error", (error) => {
     console.error(`[${name}] failed to start:`, error)
   })
 
-  const tail = spawn("tail", ["-n", "+1", "-f", logPath], {
-    stdio: "inherit",
-    env,
-    cwd: workspaceRoot,
-  })
-
-  return { child, tail }
+  return { child }
 }
 
 function prepareAnonymousConvex() {
@@ -173,9 +178,6 @@ function shutdown(signal = "SIGTERM") {
 
   for (const { child } of children) {
     killProcessGroup(child, signal)
-  }
-  for (const { tail } of children) {
-    tail.kill("SIGTERM")
   }
 }
 

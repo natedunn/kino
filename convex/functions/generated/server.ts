@@ -7,6 +7,8 @@ import {
   type GenericOrmCtx,
   type OrmFunctions,
 } from 'kitcn/orm';
+import { aggregateCapability } from 'kitcn/orm/aggregate-index';
+import { migrationCapability } from 'kitcn/orm/migrations';
 import {
   createGeneratedFunctionReference,
   initCRPC as baseInitCRPC,
@@ -18,57 +20,30 @@ import type {
   MutationCtx as ServerMutationCtx,
   QueryCtx as ServerQueryCtx,
 } from '../_generated/server';
-import { httpAction, internalMutation } from '../_generated/server';
+import { httpAction, internalMutation, internalQuery } from '../_generated/server';
 import schema from '../schema';
+import { procedureNames } from './procedure-names.gen';
 import { migrations } from '../migrations/manifest';
 
 
 const ormFunctions: OrmFunctions = {
   scheduledMutationBatch: createGeneratedFunctionReference<"mutation", "internal", unknown>("generated/server:scheduledMutationBatch"),
   scheduledDelete: createGeneratedFunctionReference<"mutation", "internal", unknown>("generated/server:scheduledDelete"),
-  aggregateBackfillChunk: createGeneratedFunctionReference<"mutation", "internal", unknown>("generated/server:aggregateBackfillChunk"),
+  aggregateBackfillChunk: createGeneratedFunctionReference<"mutation", "internal", unknown>("generated/aggregate:aggregateBackfillChunk"),
   migrationRunChunk: createGeneratedFunctionReference<"mutation", "internal", unknown>("generated/server:migrationRunChunk"),
   resetChunk: createGeneratedFunctionReference<"mutation", "internal", unknown>("generated/server:resetChunk"),
 };
 const ormSchema = schema;
 
-registerProcedureNameLookup(
-  {
-  "admin.ts": [{ column: 42, line: 5, name: "admin:getSystemMetrics" }],
-  "email.ts": [{ column: 2, line: 26, name: "email:sendTransactionalEmail" }],
-  "feedback.ts": [{ column: 2, line: 56, name: "feedback:create" }, { column: 2, line: 806, name: "feedback:getByIds" }, { column: 2, line: 508, name: "feedback:getDetailCritical" }, { column: 2, line: 577, name: "feedback:getDetailInteractive" }, { column: 2, line: 621, name: "feedback:getMiddleComments" }, { column: 2, line: 656, name: "feedback:listProjectFeedback" }, { column: 2, line: 131, name: "feedback:remove" }, { column: 2, line: 759, name: "feedback:searchForLinking" }, { column: 2, line: 308, name: "feedback:setAnswerComment" }, { column: 2, line: 378, name: "feedback:updateAssigned" }, { column: 2, line: 261, name: "feedback:updateBoard" }, { column: 2, line: 182, name: "feedback:updatePriority" }, { column: 2, line: 147, name: "feedback:updateStatus" }, { column: 2, line: 446, name: "feedback:updateTarget" }, { column: 2, line: 217, name: "feedback:updateTitle" }],
-  "feedbackBoard.ts": [{ column: 2, line: 36, name: "feedbackBoard:create" }, { column: 2, line: 149, name: "feedbackBoard:get" }, { column: 2, line: 173, name: "feedbackBoard:listProjectBoards" }, { column: 2, line: 87, name: "feedbackBoard:update" }],
-  "feedbackComment.ts": [{ column: 2, line: 29, name: "feedbackComment:create" }, { column: 2, line: 128, name: "feedbackComment:listByFeedback" }, { column: 2, line: 93, name: "feedbackComment:remove" }, { column: 2, line: 62, name: "feedbackComment:update" }],
-  "feedbackCommentEmote.ts": [{ column: 2, line: 25, name: "feedbackCommentEmote:toggle" }],
-  "feedbackEvent.ts": [{ column: 2, line: 20, name: "feedbackEvent:create" }],
-  "feedbackGithub.ts": [{ column: 2, line: 297, name: "feedbackGithub:connectExisting" }, { column: 2, line: 355, name: "feedbackGithub:createAndConnect" }, { column: 2, line: 149, name: "feedbackGithub:ensureNotConnected" }, { column: 2, line: 99, name: "feedbackGithub:getAvailability" }, { column: 2, line: 49, name: "feedbackGithub:getContextForAction" }, { column: 2, line: 57, name: "feedbackGithub:listByFeedback" }, { column: 2, line: 395, name: "feedbackGithub:refreshCounts" }, { column: 2, line: 184, name: "feedbackGithub:saveConnection" }, { column: 2, line: 265, name: "feedbackGithub:searchTargets" }, { column: 2, line: 243, name: "feedbackGithub:updateConnectionSnapshot" }],
-  "feedbackUpvote.ts": [{ column: 2, line: 84, name: "feedbackUpvote:getCount" }, { column: 2, line: 139, name: "feedbackUpvote:getUpvoteData" }, { column: 2, line: 109, name: "feedbackUpvote:hasUpvoted" }, { column: 2, line: 23, name: "feedbackUpvote:toggle" }],
-  "file.ts": [{ column: 2, line: 155, name: "file:completeUpload" }, { column: 2, line: 96, name: "file:createDirectUploadBatch" }, { column: 2, line: 1005, name: "file:createFolder" }, { column: 2, line: 544, name: "file:ensureThumbnails" }, { column: 2, line: 963, name: "file:getDownloadUrl" }, { column: 2, line: 872, name: "file:getFileDetail" }, { column: 2, line: 1366, name: "file:getOrgUsage" }, { column: 63, line: 81, name: "file:getPolicy" }, { column: 2, line: 1348, name: "file:getProjectUsage" }, { column: 2, line: 460, name: "file:getUploadStatus" }, { column: 2, line: 514, name: "file:listFileTreeItems" }, { column: 2, line: 500, name: "file:listFolders" }, { column: 2, line: 586, name: "file:listProjectFiles" }, { column: 2, line: 1283, name: "file:moveAsset" }, { column: 2, line: 1114, name: "file:moveFolder" }, { column: 2, line: 1308, name: "file:removeAsset" }, { column: 2, line: 1216, name: "file:removeFolder" }, { column: 2, line: 1249, name: "file:renameAsset" }, { column: 2, line: 1071, name: "file:renameFolder" }],
-  "github.ts": [{ column: 2, line: 571, name: "github:completeInstallationCallback" }, { column: 2, line: 686, name: "github:completeUserInstallationsCallback" }, { column: 2, line: 917, name: "github:disconnectRepository" }, { column: 2, line: 502, name: "github:getInstallationForExternal" }, { column: 2, line: 401, name: "github:getOrgIntegration" }, { column: 2, line: 350, name: "github:getProjectIntegration" }, { column: 2, line: 435, name: "github:getRefreshInstallationsForCallback" }, { column: 2, line: 539, name: "github:markInstallationStale" }, { column: 2, line: 967, name: "github:processWebhookEvent" }, { column: 2, line: 813, name: "github:saveRepositoryConnection" }, { column: 2, line: 268, name: "github:startInstallationRefresh" }, { column: 2, line: 227, name: "github:startOrgConnection" }, { column: 2, line: 311, name: "github:startOrgInstallationRefresh" }, { column: 2, line: 184, name: "github:startProjectConnection" }],
-  "githubExternal.ts": [{ column: 2, line: 57, name: "githubExternal:connectRepository" }, { column: 2, line: 22, name: "githubExternal:listInstallationRepositoriesForProject" }],
-  "githubRoutes.ts": [{ column: 2, line: 56, name: "githubRoutes:callback" }, { column: 63, line: 160, name: "githubRoutes:webhook" }],
-  "org.ts": [{ column: 2, line: 44, name: "org:create" }, { column: 44, line: 317, name: "org:findMyEditableOrgs" }, { column: 36, line: 301, name: "org:findMyOrgs" }, { column: 2, line: 155, name: "org:generateAvatarUploadUrl" }, { column: 2, line: 258, name: "org:getDetails" }, { column: 2, line: 277, name: "org:getMyPermission" }, { column: 2, line: 187, name: "org:syncAvatarMetadata" }, { column: 2, line: 92, name: "org:update" }],
-  "orgMember.ts": [{ column: 2, line: 388, name: "orgMember:acceptInvitation" }, { column: 2, line: 540, name: "orgMember:cancelInvitation" }, { column: 2, line: 369, name: "orgMember:getInvitationState" }, { column: 2, line: 316, name: "orgMember:getModeratorProjectAccess" }, { column: 2, line: 175, name: "orgMember:inviteMember" }, { column: 2, line: 474, name: "orgMember:leaveOrganization" }, { column: 2, line: 109, name: "orgMember:listMembers" }, { column: 2, line: 508, name: "orgMember:listPendingInvitations" }, { column: 2, line: 563, name: "orgMember:rejectInvitation" }, { column: 2, line: 444, name: "orgMember:removeMember" }, { column: 2, line: 354, name: "orgMember:setModeratorProjectAccess" }, { column: 2, line: 262, name: "orgMember:updateMemberRole" }],
-  "profile.ts": [{ column: 39, line: 29, name: "profile:findMyProfile" }, { column: 2, line: 59, name: "profile:generateAvatarUploadUrl" }, { column: 2, line: 45, name: "profile:getByUsername" }, { column: 2, line: 74, name: "profile:syncMetadata" }, { column: 2, line: 152, name: "profile:update" }],
-  "project.ts": [{ column: 2, line: 54, name: "project:create" }, { column: 2, line: 354, name: "project:getDetails" }, { column: 2, line: 398, name: "project:getGithubImportInfo" }, { column: 2, line: 253, name: "project:getManyByOrg" }, { column: 2, line: 417, name: "project:prepareGithubUrlImport" }, { column: 2, line: 456, name: "project:remove" }, { column: 2, line: 137, name: "project:update" }],
-  "projectAccess.ts": [{ column: 2, line: 18, name: "projectAccess:getManagementState" }, { column: 2, line: 73, name: "projectAccess:setModeratorAccess" }],
-  "projectExternal.ts": [{ column: 2, line: 19, name: "projectExternal:importGithubUrls" }],
-  "projectMember.ts": [{ column: 2, line: 130, name: "projectMember:inviteProjectMember" }, { column: 2, line: 24, name: "projectMember:listAssignableMembers" }, { column: 2, line: 84, name: "projectMember:listProjectMembers" }, { column: 2, line: 193, name: "projectMember:removeProjectMember" }],
-  "projectTheme.ts": [{ column: 2, line: 83, name: "projectTheme:getEditorState" }, { column: 2, line: 115, name: "projectTheme:publish" }],
-  "update.ts": [{ column: 2, line: 260, name: "update:bulkPublish" }, { column: 2, line: 351, name: "update:bulkRemove" }, { column: 2, line: 306, name: "update:bulkUnpublish" }, { column: 2, line: 581, name: "update:clearCoverImage" }, { column: 2, line: 76, name: "update:create" }, { column: 2, line: 400, name: "update:generateCoverImageUploadUrl" }, { column: 2, line: 716, name: "update:getBySlug" }, { column: 2, line: 674, name: "update:getCoverImageUrl" }, { column: 2, line: 807, name: "update:getDetailCritical" }, { column: 2, line: 878, name: "update:getDetailInteractive" }, { column: 2, line: 954, name: "update:getMiddleComments" }, { column: 2, line: 1005, name: "update:listByProject" }, { column: 2, line: 1119, name: "update:listProjectDashboard" }, { column: 2, line: 163, name: "update:publish" }, { column: 2, line: 228, name: "update:remove" }, { column: 2, line: 484, name: "update:syncMetadata" }, { column: 2, line: 196, name: "update:unpublish" }, { column: 2, line: 123, name: "update:update" }],
-  "updateComment.ts": [{ column: 2, line: 29, name: "updateComment:create" }, { column: 2, line: 110, name: "updateComment:listByUpdate" }, { column: 2, line: 81, name: "updateComment:remove" }, { column: 2, line: 50, name: "updateComment:update" }],
-  "updateCommentEmote.ts": [{ column: 2, line: 19, name: "updateCommentEmote:toggle" }],
-  "updateEmote.ts": [{ column: 2, line: 17, name: "updateEmote:toggle" }],
-  "userDataExport.ts": [{ column: 2, line: 39, name: "userDataExport:exportData" }, { column: 66, line: 21, name: "userDataExport:getAvailableSections" }],
-},
-  "convex/functions"
-);
+registerProcedureNameLookup(procedureNames, "convex/functions");
 
 export const orm = createOrm({
   schema: ormSchema,
   ormFunctions,
+  capabilities: [aggregateCapability(), migrationCapability()],
   migrations,
   internalMutation,
+  internalQuery,
 });
 
 export type OrmCtx<Ctx extends ServerQueryCtx | ServerMutationCtx = ServerQueryCtx> = GenericOrmCtx<Ctx, typeof ormSchema>;
@@ -91,9 +66,6 @@ export { httpAction, internalMutation };
 export const {
   scheduledMutationBatch,
   scheduledDelete,
-  aggregateBackfill,
-  aggregateBackfillChunk,
-  aggregateBackfillStatus,
   migrationRun,
   migrationRunChunk,
   migrationStatus,

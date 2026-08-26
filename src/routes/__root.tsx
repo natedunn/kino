@@ -25,27 +25,12 @@ import appCss from '../styles.css?url';
 
 const Devtools = import.meta.env.DEV
 	? lazy(async () => {
-			const [{ TanStackDevtools }, { TanStackRouterDevtoolsPanel }] = await Promise.all([
-				import('@tanstack/react-devtools'),
-				import('@tanstack/react-router-devtools'),
-			]);
+			// The universal react-devtools shell currently pulls a Solid DOM UI that
+			// Cloudflare's SSR optimizer resolves through Solid's server export.
+			const { TanStackRouterDevtools } = await import('@tanstack/react-router-devtools');
 
 			return {
-				default: function DevtoolsPanel() {
-					return (
-						<TanStackDevtools
-							config={{
-								position: 'bottom-right',
-							}}
-							plugins={[
-								{
-									name: 'Tanstack Router',
-									render: <TanStackRouterDevtoolsPanel />,
-								},
-							]}
-						/>
-					);
-				},
+				default: TanStackRouterDevtools,
 			};
 		})
 	: null;
