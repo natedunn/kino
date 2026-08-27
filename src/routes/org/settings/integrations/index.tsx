@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { useCRPC } from '@/lib/convex/crpc';
 import { crpcServer } from '@/lib/convex/crpc-server';
 import { titleMeta } from '@/lib/seo';
+import * as m from '@/paraglide/messages.js';
 
 import { SettingsSkeleton } from '../-components/settings-skeleton';
 import { useDelayedFlag } from '../-components/use-delayed-flag';
@@ -86,25 +87,22 @@ function IntegrationsSettingsRoute() {
 	if (!orgQuery.data?.org || !orgQuery.data.permissions.canEdit) {
 		return (
 			<EmptyState
-				title='Organization unavailable'
-				description='This organization no longer exists at this URL.'
+				title={m.org_integrations_unavailable()}
+				description={m.org_integrations_unavailable_description()}
 			/>
 		);
 	}
 
 	if (integrationQuery.error) {
 		return (
-			<EmptyState
-				title='GitHub integration unavailable'
-				description={integrationQuery.error.message}
-			/>
+			<EmptyState title={m.github_unavailable()} description={integrationQuery.error.message} />
 		);
 	}
 
 	return (
 		<div className='space-y-8'>
 			<header className='border-b pb-4'>
-				<h2 className='text-xl font-semibold'>Integrations</h2>
+				<h2 className='text-xl font-semibold'>{m.settings_integrations()}</h2>
 				<p className='mt-1 text-sm text-muted-foreground'>
 					Connect external services that power your projects. Install the Kino GitHub App on a
 					GitHub organization or user account once, then any project here can pick a repository from
@@ -119,7 +117,7 @@ function IntegrationsSettingsRoute() {
 				</InlineAlert>
 			) : null}
 			{search.github === 'error' ? (
-				<InlineAlert variant='danger'>GitHub installation could not be completed.</InlineAlert>
+				<InlineAlert variant='danger'>{m.github_install_failed()}</InlineAlert>
 			) : null}
 			<div className='grid gap-8 xl:grid-cols-[minmax(0,1fr)_320px]'>
 				<div className='space-y-6'>
@@ -165,7 +163,7 @@ function IntegrationsSettingsRoute() {
 								type='button'
 							>
 								<GitBranch className='size-4' />
-								{hasKnownInstallations ? 'Manage GitHub access' : 'Install GitHub App'}
+								{hasKnownInstallations ? m.org_github_manage() : m.org_github_install()}
 							</Button>
 							{hasKnownInstallations ? (
 								<Button
@@ -194,7 +192,7 @@ function IntegrationsSettingsRoute() {
 					) : null}
 					<section className='space-y-3'>
 						<div className='flex items-center justify-between'>
-							<h3 className='text-sm font-semibold'>Connected accounts</h3>
+							<h3 className='text-sm font-semibold'>{m.org_github_connected_accounts()}</h3>
 							{hasKnownInstallations ? (
 								<span className='text-xs text-muted-foreground'>
 									{knownInstallations.length}{' '}
@@ -208,7 +206,7 @@ function IntegrationsSettingsRoute() {
 								<div className='mx-auto flex size-10 items-center justify-center rounded-full bg-background shadow-sm'>
 									<GitBranch className='size-5 text-muted-foreground' />
 								</div>
-								<p className='mt-3 text-sm font-medium'>No GitHub accounts connected</p>
+								<p className='mt-3 text-sm font-medium'>{m.org_github_no_accounts()}</p>
 								<p className='mt-1 text-sm text-muted-foreground'>
 									Install the Kino GitHub App above to get started.
 								</p>
@@ -244,8 +242,8 @@ function IntegrationsSettingsRoute() {
 											</div>
 											<div className='mt-3 inline-flex items-center rounded-md bg-muted/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground'>
 												{installation.repositorySelection === 'all'
-													? 'All repositories'
-													: 'Selected repositories'}
+													? m.org_github_all_repositories()
+													: m.org_github_selected_repositories()}
 											</div>
 										</div>
 									);

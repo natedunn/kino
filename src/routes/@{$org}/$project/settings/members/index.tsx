@@ -13,6 +13,7 @@ import { crpcServer } from '@/lib/convex/crpc-server';
 import { extractErrorMessage } from '@/lib/errors';
 import { titleMeta } from '@/lib/seo';
 import { emailSchema, FORM_LIMITS } from '@/lib/validation';
+import * as m from '@/paraglide/messages.js';
 
 import { ArchivedSettingsNotice } from '../-components/archived-notice';
 
@@ -89,8 +90,8 @@ function ProjectMembersRoute() {
 	if (!project || !projectId) {
 		return (
 			<EmptyState
-				title='Project unavailable'
-				description='This project either does not exist or your session cannot view it.'
+				title={m.project_members_unavailable()}
+				description={m.project_members_unavailable_description()}
 			/>
 		);
 	}
@@ -98,8 +99,8 @@ function ProjectMembersRoute() {
 	if (!canManageAccess) {
 		return (
 			<EmptyState
-				title='Member management unavailable'
-				description='Only organization owners and admins can manage project access.'
+				title={m.project_member_management_unavailable()}
+				description={m.project_member_management_unavailable_description()}
 			/>
 		);
 	}
@@ -117,7 +118,7 @@ function ProjectMembersRoute() {
 		<section className='max-w-3xl'>
 			{isArchived ? <ArchivedSettingsNotice className='mb-6' /> : null}
 			<header className='border-b pb-4'>
-				<h2 className='text-xl font-semibold'>Project members</h2>
+				<h2 className='text-xl font-semibold'>{m.project_members_title()}</h2>
 				<p className='mt-1 text-sm text-muted-foreground'>
 					Give specific people access to this project when it is private. They get normal access —
 					view, comment, and submit feedback — just like any user on a public project. Moderator
@@ -126,13 +127,13 @@ function ProjectMembersRoute() {
 			</header>
 
 			<div className='mt-8'>
-				<h3 className='text-sm font-bold text-muted-foreground'>Moderators</h3>
+				<h3 className='text-sm font-bold text-muted-foreground'>{m.org_members_moderators()}</h3>
 				<p className='mt-1 text-sm text-muted-foreground'>
 					Assigned moderators can manage content and ordinary project settings, but not members,
 					integrations, archiving, or deletion.
 				</p>
 				{moderators.length === 0 ? (
-					<p className='mt-3 text-sm text-muted-foreground'>This organization has no moderators.</p>
+					<p className='mt-3 text-sm text-muted-foreground'>{m.project_members_no_moderators()}</p>
 				) : (
 					<div className='mt-3 flex flex-col divide-y rounded-xl border bg-card'>
 						{moderators.map((moderator) => (
@@ -166,7 +167,9 @@ function ProjectMembersRoute() {
 										})
 									}
 								>
-									{moderator.assigned ? 'Remove access' : 'Grant access'}
+									{moderator.assigned
+										? m.project_members_remove_access()
+										: m.project_members_grant_access()}
 								</Button>
 							</div>
 						))}
@@ -215,7 +218,7 @@ function ProjectMembersRoute() {
 					/>
 				</div>
 				<Button type='submit' disabled={invite.isPending || !email.trim()}>
-					{invite.isPending ? 'Adding...' : 'Add member'}
+					{invite.isPending ? m.project_members_adding() : m.project_members_add()}
 				</Button>
 			</form>
 			<p className='mt-2 text-xs text-muted-foreground'>
@@ -234,7 +237,7 @@ function ProjectMembersRoute() {
 					{members.length} member{members.length === 1 ? '' : 's'}
 				</h3>
 				{members.length === 0 ? (
-					<p className='mt-3 text-sm text-muted-foreground'>No project members yet.</p>
+					<p className='mt-3 text-sm text-muted-foreground'>{m.project_members_empty()}</p>
 				) : (
 					<div className='mt-3 flex flex-col divide-y rounded-xl border bg-card'>
 						{members.map((member) => (
@@ -270,7 +273,7 @@ function ProjectMembersRoute() {
 									}}
 								>
 									<Trash2 className='size-4' />
-									<span className='sr-only'>Remove member</span>
+									<span className='sr-only'>{m.project_members_remove()}</span>
 								</Button>
 							</div>
 						))}

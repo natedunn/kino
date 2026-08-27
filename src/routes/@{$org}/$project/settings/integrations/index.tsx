@@ -19,15 +19,16 @@ import { useCRPC } from '@/lib/convex/crpc';
 import { crpcServer } from '@/lib/convex/crpc-server';
 import { extractErrorMessage } from '@/lib/errors';
 import { titleMeta } from '@/lib/seo';
+import * as m from '@/paraglide/messages.js';
 
 import { ArchivedSettingsNotice } from '../-components/archived-notice';
 
 type ConnectionMode = 'read' | 'read_write';
 type Source = 'issues' | 'discussions';
 
-const connectionModeLabels: Record<ConnectionMode, string> = {
-	read: 'Read only',
-	read_write: 'Read and write',
+const connectionModeLabels: Record<ConnectionMode, () => string> = {
+	read: m.github_read_only,
+	read_write: m.github_read_write,
 };
 
 type RepositoryOption = {
@@ -193,7 +194,7 @@ function GitHubIntegrationRoute() {
 	if (integrationQuery.error) {
 		return (
 			<EmptyState
-				title='GitHub integration unavailable'
+				title={m.github_unavailable()}
 				description={extractErrorMessage(integrationQuery.error)}
 			/>
 		);
@@ -202,7 +203,7 @@ function GitHubIntegrationRoute() {
 	return (
 		<div className='space-y-8'>
 			<header className='border-b pb-4'>
-				<h2 className='text-xl font-semibold'>Integrations</h2>
+				<h2 className='text-xl font-semibold'>{m.settings_integrations()}</h2>
 				<p className='mt-1 text-sm text-muted-foreground'>
 					Choose which repository this project syncs with. GitHub accounts are managed at the
 					organization level.
@@ -217,7 +218,7 @@ function GitHubIntegrationRoute() {
 				</InlineAlert>
 			) : null}
 			{search.github === 'error' ? (
-				<InlineAlert variant='danger'>GitHub installation could not be completed.</InlineAlert>
+				<InlineAlert variant='danger'>{m.github_install_failed()}</InlineAlert>
 			) : null}
 			{needsGitHubRefresh ? (
 				<InlineAlert variant='warning'>
@@ -237,7 +238,7 @@ function GitHubIntegrationRoute() {
 							<GitBranch className='size-5' />
 						</div>
 						<div className='min-w-0 flex-1'>
-							<h3 className='text-base font-semibold'>Connect a GitHub repository</h3>
+							<h3 className='text-base font-semibold'>{m.github_connect_repository()}</h3>
 							<p className='mt-1 text-sm text-muted-foreground'>
 								Pick one repository from a connected GitHub account and verify API access before
 								enabling sync.
@@ -248,7 +249,7 @@ function GitHubIntegrationRoute() {
 					<div className='space-y-6 p-6'>
 						<div className='flex flex-col gap-2'>
 							<LabelWrapper>
-								<Label>GitHub account</Label>
+								<Label>{m.github_account()}</Label>
 								<LabelDescription>
 									Accounts are connected in organization settings.
 								</LabelDescription>
@@ -263,7 +264,7 @@ function GitHubIntegrationRoute() {
 									value={activeInstallationId ? String(activeInstallationId) : ''}
 								>
 									<SelectTrigger className='min-w-60'>
-										<SelectValue placeholder='No GitHub account connected' />
+										<SelectValue placeholder={m.github_no_account()} />
 									</SelectTrigger>
 									<SelectContent>
 										{installations.map((installation) => (
@@ -284,7 +285,7 @@ function GitHubIntegrationRoute() {
 
 						<div className='flex flex-col gap-2'>
 							<LabelWrapper>
-								<Label>Repository</Label>
+								<Label>{m.project_general_repository()}</Label>
 								<LabelDescription>
 									Choose the single repository this Kino project should sync with.
 								</LabelDescription>
@@ -303,8 +304,8 @@ function GitHubIntegrationRoute() {
 										<SelectValue
 											placeholder={
 												repositoriesQuery.isPending
-													? 'Loading repositories...'
-													: 'Select project repository'
+													? m.github_loading_repositories()
+													: m.github_select_repository()
 											}
 										/>
 									</SelectTrigger>
@@ -334,7 +335,7 @@ function GitHubIntegrationRoute() {
 
 						<div className='flex flex-col gap-2'>
 							<LabelWrapper>
-								<Label>Sources</Label>
+								<Label>{m.github_sources()}</Label>
 								<LabelDescription>
 									Issues are always available; Discussions require GitHub repository support.
 								</LabelDescription>
@@ -359,20 +360,20 @@ function GitHubIntegrationRoute() {
 
 						<div className='flex flex-col gap-2'>
 							<LabelWrapper>
-								<Label>Sync mode</Label>
-								<LabelDescription>Read mode imports from GitHub only.</LabelDescription>
+								<Label>{m.github_sync_mode()}</Label>
+								<LabelDescription>{m.github_sync_description()}</LabelDescription>
 							</LabelWrapper>
 							<Select onValueChange={(value) => setModeOverride(value)} value={mode}>
 								<SelectTrigger className='w-full sm:w-48'>
 									<SelectValue>
 										{(value: ConnectionMode | null) =>
-											value ? connectionModeLabels[value] : 'Select mode'
+											value ? connectionModeLabels[value]() : m.github_select_mode()
 										}
 									</SelectValue>
 								</SelectTrigger>
 								<SelectContent>
-									<SelectItem value='read'>Read only</SelectItem>
-									<SelectItem value='read_write'>Read and write</SelectItem>
+									<SelectItem value='read'>{m.github_read_only()}</SelectItem>
+									<SelectItem value='read_write'>{m.github_read_write()}</SelectItem>
 								</SelectContent>
 							</Select>
 						</div>
@@ -410,13 +411,13 @@ function GitHubIntegrationRoute() {
 					<InlineAlert variant='danger'>{extractErrorMessage(connectRepository.error)}</InlineAlert>
 				) : null}
 				{connectRepository.isSuccess ? (
-					<InlineAlert variant='success'>Repository settings saved.</InlineAlert>
+					<InlineAlert variant='success'>{m.github_settings_saved()}</InlineAlert>
 				) : null}
 
 				{activeConnection ? (
 					<section className='overflow-hidden rounded-xl border border-destructive/30 bg-card'>
 						<div className='p-6'>
-							<h3 className='text-sm font-semibold text-destructive'>Danger zone</h3>
+							<h3 className='text-sm font-semibold text-destructive'>{m.security_danger_zone()}</h3>
 							<p className='mt-1 text-sm text-muted-foreground'>
 								Disconnecting removes the GitHub sync for this project. You can reconnect at any
 								time.
@@ -446,7 +447,7 @@ function GitHubIntegrationRoute() {
 								variant='destructive'
 							>
 								<Unplug className='size-4' />
-								{disconnectRepository.isPending ? 'Disconnecting...' : 'Disconnect repository'}
+								{disconnectRepository.isPending ? m.github_disconnecting() : m.github_disconnect()}
 							</Button>
 						</div>
 						{disconnectRepository.error ? (
