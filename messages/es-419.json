@@ -92,5 +92,19 @@
 	"security_email_description": "El correo electrónico asociado con tu cuenta.",
 	"security_danger_zone": "Zona de peligro",
 	"security_delete_description": "Elimina permanentemente tu cuenta y todos los datos asociados. Esta acción no se puede deshacer.",
-	"security_delete_account": "Eliminar cuenta"
+	"security_delete_account": "Eliminar cuenta",
+	"nav_go_dashboard": "Ir al panel",
+	"nav_go_home": "Ir a la página de inicio",
+	"nav_show_organization": "Mostrar la organización {organization}",
+	"nav_search_jump": "Buscar o ir a…",
+	"nav_search": "Buscar",
+	"nav_open_notifications": "Abrir notificaciones ({count} sin leer)",
+	"nav_view_notifications": "Ver todas las notificaciones",
+	"nav_your_profile": "Tu perfil",
+	"nav_your_organizations": "Tus organizaciones",
+	"nav_your_projects": "Tus proyectos",
+	"nav_org_settings": "Configuración de la organización",
+	"nav_keyboard_shortcuts": "Atajos de teclado",
+	"nav_signing_out": "Cerrando sesión…",
+	"nav_sign_out": "Cerrar sesión"
 }

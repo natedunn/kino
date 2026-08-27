@@ -20,6 +20,7 @@ import SearchSparkle from '@/icons/search-sparkle';
 import { useProjectThemeStyle } from '@/lib/project-theme';
 import { cn } from '@/lib/utils';
 import { getInitial } from '@/lib/utils/get-initial';
+import { m } from '@/paraglide/messages.js';
 
 import { NavButton } from './nav-button';
 import { UserDropdown } from './user-dropdown';
@@ -94,7 +95,7 @@ export const MainNav = ({ context, isUserPending = false, subNav, user }: MainNa
 							<div className='flex min-w-0 flex-1 items-center gap-3'>
 								<div className='flex shrink-0 items-center gap-2'>
 									<Link
-										aria-label={user ? 'Go to dashboard' : 'Go to home page'}
+										aria-label={user ? m.nav_go_dashboard() : m.nav_go_home()}
 										className='flex h-8 w-8 items-center justify-center overflow-hidden rounded-md border border-foreground/15 transition-shadow dark:border-foreground/25 hocus:ring-2 hocus:ring-ring/50 hocus:ring-offset-2 hocus:ring-offset-background'
 										to={user ? '/dashboard' : '/'}
 									>
@@ -126,7 +127,7 @@ export const MainNav = ({ context, isUserPending = false, subNav, user }: MainNa
 											<DropdownMenu>
 												<DropdownMenuTrigger asChild>
 													<Button
-														aria-label={`Show ${orgSlug} organization`}
+														aria-label={m.nav_show_organization({ organization: orgSlug })}
 														variant='ghost'
 														size='xs'
 														className='h-6 px-1.5 text-muted-foreground min-[460px]:hidden'
@@ -191,7 +192,7 @@ export const MainNav = ({ context, isUserPending = false, subNav, user }: MainNa
 										onPointerEnter={commandPalette.preload}
 									>
 										<SearchSparkle className='mr-2 size-4 shrink-0' />
-										<span className='truncate text-muted-foreground/75'>Search or jump to...</span>
+										<span className='truncate text-muted-foreground/75'>{m.nav_search_jump()}</span>
 										<div className='ml-auto flex shrink-0 items-center gap-1'>
 											<kbd className='pointer-events-none inline-flex h-5 items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground select-none dark:border-border dark:bg-muted dark:text-muted-foreground'>
 												<Command className='size-2.5' />K
@@ -209,14 +210,14 @@ export const MainNav = ({ context, isUserPending = false, subNav, user }: MainNa
 									onPointerDown={commandPalette.preload}
 								>
 									<SearchSparkle className='size-4' />
-									<span className='sr-only'>Search</span>
+									<span className='sr-only'>{m.nav_search()}</span>
 								</NavButton>
 
 								{user ? (
 									<DropdownMenu>
 										<DropdownMenuTrigger asChild>
 											<NavButton
-												aria-label={`Open notifications (${notifications.length} unread)`}
+												aria-label={m.nav_open_notifications({ count: notifications.length })}
 												size='icon'
 												className='relative'
 											>
@@ -231,7 +232,9 @@ export const MainNav = ({ context, isUserPending = false, subNav, user }: MainNa
 											</NavButton>
 										</DropdownMenuTrigger>
 										<DropdownMenuContent align='end' className='z-20 w-80'>
-											<div className='px-3 py-2 text-sm font-semibold'>Notifications</div>
+											<div className='px-3 py-2 text-sm font-semibold'>
+												{m.account_notifications()}
+											</div>
 											<DropdownMenuSeparator />
 											{notifications.map((notification) => (
 												<DropdownMenuItem
@@ -249,7 +252,7 @@ export const MainNav = ({ context, isUserPending = false, subNav, user }: MainNa
 											))}
 											<DropdownMenuSeparator />
 											<DropdownMenuItem className='text-center text-sm text-muted-foreground'>
-												View all notifications
+												{m.nav_view_notifications()}
 											</DropdownMenuItem>
 										</DropdownMenuContent>
 									</DropdownMenu>
@@ -274,7 +277,7 @@ export const MainNav = ({ context, isUserPending = false, subNav, user }: MainNa
 											redirect: routerState.location.pathname,
 										}}
 									>
-										Sign In
+										{m.auth_sign_in_title()}
 									</Link>
 								)}
 							</div>

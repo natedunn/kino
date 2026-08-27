@@ -92,5 +92,19 @@
 	"security_email_description": "The email address associated with your account.",
 	"security_danger_zone": "Danger zone",
 	"security_delete_description": "Permanently delete your account and all associated data. This action cannot be undone.",
-	"security_delete_account": "Delete account"
+	"security_delete_account": "Delete account",
+	"nav_go_dashboard": "Go to dashboard",
+	"nav_go_home": "Go to home page",
+	"nav_show_organization": "Show {organization} organization",
+	"nav_search_jump": "Search or jump to…",
+	"nav_search": "Search",
+	"nav_open_notifications": "Open notifications ({count} unread)",
+	"nav_view_notifications": "View all notifications",
+	"nav_your_profile": "Your profile",
+	"nav_your_organizations": "Your organizations",
+	"nav_your_projects": "Your projects",
+	"nav_org_settings": "Organization settings",
+	"nav_keyboard_shortcuts": "Keyboard shortcuts",
+	"nav_signing_out": "Signing out…",
+	"nav_sign_out": "Sign out"
 }

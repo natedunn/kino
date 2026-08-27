@@ -92,5 +92,19 @@
 	"security_email_description": "与你的账户关联的邮箱地址。",
 	"security_danger_zone": "危险操作",
 	"security_delete_description": "永久删除你的账户及所有相关数据。此操作无法撤销。",
-	"security_delete_account": "删除账户"
+	"security_delete_account": "删除账户",
+	"nav_go_dashboard": "前往工作台",
+	"nav_go_home": "前往首页",
+	"nav_show_organization": "显示组织 {organization}",
+	"nav_search_jump": "搜索或跳转…",
+	"nav_search": "搜索",
+	"nav_open_notifications": "打开通知（{count} 条未读）",
+	"nav_view_notifications": "查看所有通知",
+	"nav_your_profile": "你的个人资料",
+	"nav_your_organizations": "你的组织",
+	"nav_your_projects": "你的项目",
+	"nav_org_settings": "组织设置",
+	"nav_keyboard_shortcuts": "键盘快捷键",
+	"nav_signing_out": "正在退出…",
+	"nav_sign_out": "退出登录"
 }
