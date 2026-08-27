@@ -48,8 +48,8 @@ function DevelopmentPage() {
 			<h2>Feedback and changes</h2>
 			<p>
 				Feedback, bug reports, and feature requests are welcome. We will try our best to attribute
-				those who contribute to the product. Please use Kino itself to provide said feedback. This
-				help us "dogfood" our own product as a means of improving it by using it.
+				those who contribute to the product. Please use Kino itself to provide that feedback. This
+				helps us dogfood our own product and improve it through real usage.
 			</p>
 
 			<h2>Contact</h2>
