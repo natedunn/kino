@@ -13,6 +13,7 @@ import { crpcServer } from '@/lib/convex/crpc-server';
 import { capturePostHogEvent } from '@/lib/posthog';
 import { titleMeta } from '@/lib/seo';
 import { cn } from '@/lib/utils';
+import * as m from '@/paraglide/messages.js';
 
 type ExportSection = ApiOutputs['userDataExport']['getAvailableSections'][number];
 type ExportSectionId = ExportSection['id'];
@@ -20,7 +21,7 @@ type ExportDocument = ApiOutputs['userDataExport']['exportData'];
 
 export const Route = createFileRoute('/account/data/')({
 	head: () => ({
-		meta: [titleMeta(['Data', 'Account'])],
+		meta: [titleMeta([m.account_data(), m.account_title()])],
 	}),
 	loader: async ({ context }) => {
 		if (!context.loaderToken) {
@@ -48,7 +49,7 @@ function getErrorMessage(error: unknown) {
 
 	if (error instanceof Error) return error.message;
 
-	return 'Unable to export your data';
+	return m.data_export_failed();
 }
 
 function getExportFailureReason(error: unknown) {
@@ -172,10 +173,8 @@ function AuthenticatedDataRoute() {
 	return (
 		<section className='flex max-w-3xl flex-col gap-6'>
 			<header className='border-b pb-4'>
-				<h2 className='text-xl font-semibold'>Data</h2>
-				<p className='mt-1 text-sm text-muted-foreground'>
-					Export a JSON copy of the data tied to your Kino account.
-				</p>
+				<h2 className='text-xl font-semibold'>{m.account_data()}</h2>
+				<p className='mt-1 text-sm text-muted-foreground'>{m.data_description()}</p>
 			</header>
 
 			<div className='rounded-xl border bg-card'>
@@ -185,10 +184,8 @@ function AuthenticatedDataRoute() {
 							<Database className='size-4' />
 						</div>
 						<LabelWrapper className='mb-0'>
-							<Label>Export sections</Label>
-							<LabelDescription>
-								Choose which available sections to include in the download.
-							</LabelDescription>
+							<Label>{m.data_export_sections()}</Label>
+							<LabelDescription>{m.data_export_sections_description()}</LabelDescription>
 						</LabelWrapper>
 					</div>
 
@@ -208,8 +205,10 @@ function AuthenticatedDataRoute() {
 									)}
 								>
 									<span className='flex flex-col gap-1'>
-										<span className='font-medium'>{section.label}</span>
-										<span className='text-sm text-muted-foreground'>{section.description}</span>
+										<span className='font-medium'>{m.data_comments()}</span>
+										<span className='text-sm text-muted-foreground'>
+											{m.data_comments_description()}
+										</span>
 									</span>
 									<span
 										className={cn(
@@ -227,9 +226,7 @@ function AuthenticatedDataRoute() {
 					{exportError ? <InlineAlert variant='danger'>{exportError}</InlineAlert> : null}
 				</div>
 				<div className='flex flex-col gap-3 border-t bg-muted/20 px-6 py-4 sm:flex-row sm:items-center sm:justify-between'>
-					<p className='text-sm text-muted-foreground'>
-						The export downloads immediately as a JSON file.
-					</p>
+					<p className='text-sm text-muted-foreground'>{m.data_download_description()}</p>
 					<Button
 						className='sm:self-end'
 						disabled={isExporting || activeSectionIds.length === 0}
@@ -237,7 +234,7 @@ function AuthenticatedDataRoute() {
 						type='button'
 					>
 						<Download data-icon='inline-start' className='size-4' />
-						{isExporting ? 'Preparing export' : 'Download JSON'}
+						{isExporting ? m.data_preparing_export() : m.data_download_json()}
 					</Button>
 				</div>
 			</div>

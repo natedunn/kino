@@ -1,3 +1,5 @@
+import * as m from '@/paraglide/messages.js';
+
 /**
  * Lightweight loading placeholder shown while an org's settings data loads
  * (e.g. when switching orgs). Mirrors the header + card rhythm of the settings
@@ -6,7 +8,7 @@
 export function SettingsSkeleton() {
 	return (
 		<section className='max-w-3xl animate-pulse' aria-busy='true'>
-			<span className='sr-only'>Loading…</span>
+			<span className='sr-only'>{m.common_loading()}</span>
 			{/* Header */}
 			<div className='border-b pb-4'>
 				<div className='h-6 w-40 rounded bg-muted' />

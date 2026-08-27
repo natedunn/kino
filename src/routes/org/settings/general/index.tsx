@@ -20,6 +20,7 @@ import {
 	SLUG_INPUT_PATTERN,
 	validationMessage,
 } from '@/lib/validation';
+import * as m from '@/paraglide/messages.js';
 
 import { SettingsSkeleton } from '../-components/settings-skeleton';
 import { useDelayedFlag } from '../-components/use-delayed-flag';
@@ -181,8 +182,8 @@ function GeneralSettingsRoute() {
 	if (!orgQuery.data?.org || !orgQuery.data.permissions.canEdit) {
 		return (
 			<EmptyState
-				title='Organization editing unavailable'
-				description='Only organization owners and admins can edit this workspace.'
+				title={m.org_edit_unavailable()}
+				description={m.org_edit_unavailable_description()}
 			/>
 		);
 	}
@@ -190,10 +191,8 @@ function GeneralSettingsRoute() {
 	return (
 		<section className='max-w-3xl'>
 			<header className='border-b pb-4'>
-				<h2 className='text-xl font-semibold'>General</h2>
-				<p className='mt-1 text-sm text-muted-foreground'>
-					Update your organization name and the slug used in URLs across Kino.
-				</p>
+				<h2 className='text-xl font-semibold'>{m.settings_general()}</h2>
+				<p className='mt-1 text-sm text-muted-foreground'>{m.org_general_description()}</p>
 			</header>
 
 			<form
@@ -215,11 +214,8 @@ function GeneralSettingsRoute() {
 							{(field) => (
 								<div className='flex flex-col gap-2'>
 									<LabelWrapper>
-										<Label>Avatar</Label>
-										<LabelDescription>
-											Used anywhere this organization appears in Kino. JPEG, PNG, or WebP, up to 5
-											MB.
-										</LabelDescription>
+										<Label>{m.profile_avatar()}</Label>
+										<LabelDescription>{m.org_avatar_description()}</LabelDescription>
 									</LabelWrapper>
 									<div className='flex items-center gap-4'>
 										<AvatarPreview
@@ -260,10 +256,8 @@ function GeneralSettingsRoute() {
 							{(field) => (
 								<div className='flex flex-col gap-2'>
 									<LabelWrapper>
-										<Label>Name</Label>
-										<LabelDescription>
-											Displayed across Kino on profiles and project pages.
-										</LabelDescription>
+										<Label>{m.auth_name()}</Label>
+										<LabelDescription>{m.org_name_description()}</LabelDescription>
 									</LabelWrapper>
 									<Input
 										autoFocus
@@ -279,10 +273,8 @@ function GeneralSettingsRoute() {
 							{(field) => (
 								<div className='flex flex-col gap-2'>
 									<LabelWrapper>
-										<Label>Slug</Label>
-										<LabelDescription>
-											Unique identifier used in your organization URL.
-										</LabelDescription>
+										<Label>{m.settings_slug()}</Label>
+										<LabelDescription>{m.org_slug_description()}</LabelDescription>
 									</LabelWrapper>
 									<div className='flex items-stretch overflow-hidden rounded-md border bg-background focus-within:ring-1 focus-within:ring-ring'>
 										<span className='flex items-center bg-muted/60 px-3 font-mono text-sm text-muted-foreground'>
@@ -306,9 +298,7 @@ function GeneralSettingsRoute() {
 					</div>
 
 					<div className='flex items-center justify-between gap-3 border-t bg-muted/30 px-6 py-4'>
-						<p className='text-xs text-muted-foreground'>
-							Changing the slug will update every link to your organization.
-						</p>
+						<p className='text-xs text-muted-foreground'>{m.org_slug_change_notice()}</p>
 						<form.Subscribe
 							selector={(state) => ({
 								isSubmitting: state.isSubmitting,
@@ -331,7 +321,7 @@ function GeneralSettingsRoute() {
 										disabled={disabled}
 										type='submit'
 									>
-										{isSaving ? 'Saving...' : 'Save changes'}
+										{isSaving ? m.common_saving() : m.profile_save_changes()}
 									</Button>
 								);
 							}}
@@ -341,7 +331,7 @@ function GeneralSettingsRoute() {
 
 				{(formError ?? updateMutation.error) ? (
 					<InlineAlert variant='danger'>
-						Unable to update organization: {formError ?? updateMutation.error?.message}
+						{m.org_update_failed()}: {formError ?? updateMutation.error?.message}
 					</InlineAlert>
 				) : null}
 			</form>

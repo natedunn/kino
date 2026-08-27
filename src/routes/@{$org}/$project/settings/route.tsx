@@ -22,10 +22,11 @@ import { EditingBar } from '@/components/site-nav/editing-bar';
 import { useCRPC } from '@/lib/convex/crpc';
 import { crpcServer } from '@/lib/convex/crpc-server';
 import { titleMeta } from '@/lib/seo';
+import * as m from '@/paraglide/messages.js';
 
 export const Route = createFileRoute('/@{$org}/$project/settings')({
 	head: () => ({
-		meta: [titleMeta(['Settings'])],
+		meta: [titleMeta([m.project_nav_settings()])],
 	}),
 	// Gate the settings shell on the content/settings capabilities. Child
 	// navigation is filtered further for access, integration, and deletion
@@ -76,43 +77,43 @@ function ProjectSettingsRoute() {
 	const items = [
 		{
 			icon: Settings,
-			label: 'General',
+			label: m.settings_general(),
 			to: '/@{$org}/$project/settings/general' as const,
 			visible: permissions?.canEditSettings,
 		},
 		{
 			icon: LayoutDashboard,
-			label: 'Boards',
+			label: m.settings_boards(),
 			to: '/@{$org}/$project/settings/boards' as const,
 			visible: permissions?.canManageContent,
 		},
 		{
 			icon: Palette,
-			label: 'Appearance',
+			label: m.account_appearance(),
 			to: '/@{$org}/$project/settings/appearance' as const,
 			visible: permissions?.canEditSettings,
 		},
 		{
 			icon: Users,
-			label: 'Members',
+			label: m.settings_members(),
 			to: '/@{$org}/$project/settings/members' as const,
 			visible: permissions?.canManageAccess,
 		},
 		{
 			icon: HardDrive,
-			label: 'Storage',
+			label: m.settings_storage(),
 			to: '/@{$org}/$project/settings/storage' as const,
 			visible: permissions?.canEditSettings || permissions?.canManageContent,
 		},
 		{
 			icon: GitBranch,
-			label: 'Integrations',
+			label: m.settings_integrations(),
 			to: '/@{$org}/$project/settings/integrations' as const,
 			visible: permissions?.canManageIntegrations,
 		},
 		{
 			icon: TriangleAlert,
-			label: 'Danger',
+			label: m.settings_danger(),
 			to: '/@{$org}/$project/settings/danger' as const,
 			visible: permissions?.canDelete,
 		},
@@ -145,7 +146,7 @@ function ProjectSettingsRoute() {
 				<div className='flex flex-1 flex-col gap-8 md:grid md:grid-cols-12'>
 					<div className='hidden py-8 md:col-span-3 md:block md:border-r md:border-border/75'>
 						<div className='sticky top-6 flex flex-col overflow-hidden'>
-							<SidebarNavGroup className='border-b pb-6 md:pr-6' title='Settings'>
+							<SidebarNavGroup className='border-b pb-6 md:pr-6' title={m.project_nav_settings()}>
 								{items.map((item) => {
 									const Icon = item.icon;
 
