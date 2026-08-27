@@ -130,7 +130,7 @@ export function CommentCard({
 	onUnauthenticated,
 	onUpdate,
 	railClassName,
-	verb = 'commented',
+	verb = m.feedback_commented(),
 }: {
 	action?: ReactNode;
 	badges?: ReactNode;
