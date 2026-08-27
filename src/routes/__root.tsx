@@ -2,7 +2,7 @@ import type { QueryClient } from '@tanstack/react-query';
 import type { ConvexQueryClient } from 'kitcn/react';
 import type { ReactNode } from 'react';
 
-import { lazy, Suspense, useRef } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import {
 	createRootRouteWithContext,
 	HeadContent,
@@ -21,6 +21,7 @@ import { getAppInstallMetadata, getFaviconHref, inferAppEnvironment } from '@/li
 import { isClientAuthed } from '@/lib/auth/auth-snapshot';
 import { getServerAuthToken } from '@/lib/convex/auth-start-token';
 import { crpcServer } from '@/lib/convex/crpc-server';
+import { LOCALE_COOKIE_NAME } from '@/lib/i18n/locale';
 
 import '@/lib/i18n/runtime';
 
@@ -176,12 +177,17 @@ export const Route = createRootRouteWithContext<{
 });
 
 function RootDocument({ children }: { children: ReactNode }) {
+	const locale = getLocale();
+
 	return (
-		<html lang={getLocale()} suppressHydrationWarning>
+		<html lang={locale} suppressHydrationWarning>
 			<head>
 				<HeadContent />
 			</head>
 			<body>
+				<ScriptOnce>
+					{`document.cookie=${JSON.stringify(`${LOCALE_COOKIE_NAME}=${locale}; Path=/; Max-Age=34560000; SameSite=Lax`)}`}
+				</ScriptOnce>
 				<ScriptOnce>
 					{`document.documentElement.classList.toggle('dark', localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches))`}
 				</ScriptOnce>
@@ -190,14 +196,24 @@ function RootDocument({ children }: { children: ReactNode }) {
 				<Suspense fallback={null}>
 					<Toaster closeButton richColors />
 				</Suspense>
-				{Devtools ? (
-					<Suspense fallback={null}>
-						<Devtools />
-					</Suspense>
-				) : null}
+				<ClientDevtools />
 				<Scripts />
 			</body>
 		</html>
+	);
+}
+
+function ClientDevtools() {
+	const [mounted, setMounted] = useState(false);
+
+	useEffect(() => setMounted(true), []);
+
+	if (!mounted || !Devtools) return null;
+
+	return (
+		<Suspense fallback={null}>
+			<Devtools />
+		</Suspense>
 	);
 }
 
