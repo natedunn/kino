@@ -1,8 +1,8 @@
 import { Suspense } from 'react';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { createFileRoute, Link, Navigate, redirect } from '@tanstack/react-router';
-import { ArrowLeft } from 'lucide-react';
 
+import { MainNav } from '@/components/site-nav/main-nav';
 import { Skeleton } from '@/components/ui/skeleton';
 import { requireAuth } from '@/lib/auth/require-auth';
 import { useAuthLostRedirect } from '@/lib/auth/use-auth-lost';
@@ -53,23 +53,7 @@ function AuthedAdmin() {
 
 	return (
 		<div className='flex min-h-svh flex-col'>
-			<header className='border-b border-border/50 bg-background dark:bg-absolute'>
-				<div className='container flex items-center justify-between py-3'>
-					<Link to='/dashboard' className='flex items-center gap-2.5'>
-						<div className='flex h-7 w-7 items-center justify-center rounded-full bg-primary'>
-							<span className='text-xs font-bold text-primary-foreground'>K</span>
-						</div>
-						<span className='text-sm font-semibold tracking-tight'>Kino Admin</span>
-					</Link>
-					<Link
-						to='/dashboard'
-						className='flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground'
-					>
-						<ArrowLeft className='size-3.5' />
-						Back to dashboard
-					</Link>
-				</div>
-			</header>
+			<MainNav context={{ type: 'global' }} isUserPending={false} user={profile} />
 
 			<main className='flex-1'>
 				<div className='container py-10 md:py-14'>
@@ -86,9 +70,12 @@ function AuthedAdmin() {
 				</div>
 			</main>
 
-			<footer className='mt-auto border-t border-border py-4 text-center text-sm text-muted-foreground'>
-				<div className='container'>
+			<footer className='mt-auto border-t border-border py-4 text-sm text-muted-foreground'>
+				<div className='container flex items-center justify-between gap-4'>
 					<p>&copy; {new Date().getFullYear()} Kino</p>
+					<Link to='/docs/notices' className='transition-colors hocus:text-foreground'>
+						Notices
+					</Link>
 				</div>
 			</footer>
 		</div>

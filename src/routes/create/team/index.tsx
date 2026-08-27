@@ -4,6 +4,7 @@ import { useMutation, useSuspenseQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 
 import { InlineAlert } from '@/components/inline-alert';
+import { MainNav } from '@/components/site-nav/main-nav';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -37,9 +38,14 @@ export const Route = createFileRoute('/create/team/')({
 			return;
 		}
 
-		await context.queryClient.ensureQueryData(
-			crpcServer.org.findMyOrgs.queryOptions({}, { skipUnauth: true })
-		);
+		await Promise.all([
+			context.queryClient.ensureQueryData(
+				crpcServer.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
+			),
+			context.queryClient.ensureQueryData(
+				crpcServer.org.findMyOrgs.queryOptions({}, { skipUnauth: true })
+			),
+		]);
 	},
 	component: CreateTeamRoute,
 });
@@ -57,6 +63,9 @@ function AuthenticatedCreateTeamRoute() {
 	const navigate = useNavigate();
 	const crpc = useCRPC();
 	const [formError, setFormError] = useState<string>();
+	const { data: profile } = useSuspenseQuery(
+		crpc.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
+	);
 	const { data: orgsData } = useSuspenseQuery(
 		crpc.org.findMyOrgs.queryOptions({}, { skipUnauth: true })
 	);
@@ -96,10 +105,11 @@ function AuthenticatedCreateTeamRoute() {
 	const underLimit = orgsData.underLimit;
 
 	return (
-		<div className='relative w-full'>
-			<div className='absolute top-0 right-0 left-0 z-0 h-64 w-full bg-linear-to-t from-background to-muted' />
-			<div className='relative z-10 mx-auto max-w-2xl px-4 py-12 sm:px-6 md:px-10'>
-				<div>
+		<div className='flex min-h-svh flex-col'>
+			<MainNav context={{ type: 'global' }} isUserPending={false} user={profile} />
+			<main className='relative w-full flex-1'>
+				<div className='absolute top-0 right-0 left-0 z-0 h-64 w-full bg-linear-to-t from-background to-muted' />
+				<div className='relative z-10 mx-auto max-w-2xl px-4 py-12 sm:px-6 md:px-10'>
 					<h1 className='text-3xl font-bold'>Create a team</h1>
 					{!underLimit ? (
 						<InlineAlert className='mt-6' variant='warning'>
@@ -196,7 +206,7 @@ function AuthenticatedCreateTeamRoute() {
 						</div>
 					</form>
 				</div>
-			</div>
+			</main>
 		</div>
 	);
 }

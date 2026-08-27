@@ -94,9 +94,9 @@ export const MainNav = ({ context, isUserPending = false, subNav, user }: MainNa
 							<div className='flex min-w-0 flex-1 items-center gap-3'>
 								<div className='flex shrink-0 items-center gap-2'>
 									<Link
-										aria-label='Go to dashboard'
+										aria-label={user ? 'Go to dashboard' : 'Go to home page'}
 										className='flex h-8 w-8 items-center justify-center overflow-hidden rounded-md border border-foreground/15 transition-shadow dark:border-foreground/25 hocus:ring-2 hocus:ring-ring/50 hocus:ring-offset-2 hocus:ring-offset-background'
-										to='/dashboard'
+										to={user ? '/dashboard' : '/'}
 									>
 										<KinoMark
 											aria-hidden='true'

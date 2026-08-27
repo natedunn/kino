@@ -38,6 +38,8 @@
     "gateway:webhook:unregister": "node scripts/gateway-webhook-target.mjs unregister",
     "typecheck": "tsc --noEmit && pnpm run typecheck:convex",
     "codegen": "kitcn codegen",
+    "verify:generated": "bash scripts/verify-generated.sh",
+    "verify:pr": "pnpm run verify:generated && pnpm run typecheck",
     "typecheck:convex": "tsc --noEmit --project convex/functions/tsconfig.json"
   },
   "dependencies": {

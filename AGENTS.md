@@ -12,6 +12,22 @@ Convex agent skills for common tasks can be installed by running
 
 <!-- convex-ai-end -->
 
+## Pull request verification
+
+Before opening or updating a pull request, run `pnpm run verify:pr`. This
+regenerates the kitcn and Convex application files, fails if the committed
+generated output is stale, and then runs the TypeScript checks. If generation
+changes files, review and commit those files before rerunning the command.
+
+Workspace setup and Cloudflare builds also run `pnpm run verify:generated` so a
+fresh worktree or deploy cannot silently proceed with stale generated runtime
+code.
+
+Do not run `npx convex ai-files update` as part of normal setup or PR
+verification. Convex AI guidance and installed skills are tooling documentation,
+not application runtime output; update and commit them only as an explicit
+maintenance change.
+
 ## GitHub integration & gateway
 
 When working on anything involving GitHub auth (login), the Kino Relay GitHub

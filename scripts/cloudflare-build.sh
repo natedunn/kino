@@ -41,6 +41,7 @@ if [ "$branch" = "$production_branch" ]; then
   fi
 
   export CONVEX_DEPLOY_KEY="$CONVEX_PROD_DEPLOY_KEY"
+  pnpm run verify:generated
   # Use `kitcn deploy` (not `convex deploy`) so that, after pushing schema +
   # functions, kitcn runs pending migrations and the aggregateIndex/rankIndex
   # backfill against the just-deployed deployment. Plain `convex deploy` skips
@@ -56,6 +57,7 @@ else
   fi
 
   export CONVEX_DEPLOY_KEY="$CONVEX_PREVIEW_DEPLOY_KEY"
+  pnpm run verify:generated
   # `kitcn deploy` also runs migrations + aggregate backfill against the preview
   # deployment (targeted via --preview-name) after the convex push.
   npx kitcn deploy \

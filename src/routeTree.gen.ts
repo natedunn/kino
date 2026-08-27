@@ -15,7 +15,7 @@ import { Route as AccountRouteRouteImport } from './routes/account/route'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as DashboardRouteImport } from './routes/dashboard'
-import { Route as StackRouteImport } from './routes/stack'
+import { Route as DocsRouteRouteImport } from './routes/docs/route'
 import { Route as UiRouteImport } from './routes/ui'
 import { Route as AtChar123orgChar125IndexRouteImport } from './routes/@{$org}/index'
 import { Route as AtChar123orgChar125ProjectRouteRouteImport } from './routes/@{$org}/$project/route'
@@ -26,6 +26,12 @@ import { Route as AuthForgotPasswordRouteImport } from './routes/auth.forgot-pas
 import { Route as AuthResetPasswordRouteImport } from './routes/auth.reset-password'
 import { Route as AuthSignUpRouteImport } from './routes/auth.sign-up'
 import { Route as AuthVerifyEmailRouteImport } from './routes/auth.verify-email'
+import { Route as DocsCommunityGuidelinesRouteImport } from './routes/docs/community-guidelines'
+import { Route as DocsCookiesRouteImport } from './routes/docs/cookies'
+import { Route as DocsDevelopmentRouteImport } from './routes/docs/development'
+import { Route as DocsNoticesRouteImport } from './routes/docs/notices'
+import { Route as DocsPrivacyRouteImport } from './routes/docs/privacy'
+import { Route as DocsStackRouteImport } from './routes/docs/stack'
 import { Route as OrgSettingsRouteRouteImport } from './routes/org/settings/route'
 import { Route as AtChar123orgChar125ProjectIndexRouteImport } from './routes/@{$org}/$project/index'
 import { Route as AtChar123orgChar125ProjectFeedbackRouteRouteImport } from './routes/@{$org}/$project/feedback/route'
@@ -42,7 +48,6 @@ import { Route as ApiGithubSplatRouteImport } from './routes/api/github/$'
 import { Route as ApiGithubCallbackRouteImport } from './routes/api/github/callback'
 import { Route as CreateTeamIndexRouteImport } from './routes/create/team/index'
 import { Route as OrgSettingsIndexRouteImport } from './routes/org/settings/index'
-import { Route as ProfileSettingsIndexRouteImport } from './routes/profile/settings/index'
 import { Route as UUsernameIndexRouteImport } from './routes/u/$username/index'
 import { Route as AtChar123orgChar125ProjectAssetLibraryIndexRouteImport } from './routes/@{$org}/$project/asset-library/index'
 import { Route as AtChar123orgChar125ProjectDiscussionsIndexRouteImport } from './routes/@{$org}/$project/discussions/index'
@@ -110,9 +115,9 @@ const DashboardRoute = DashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
-const StackRoute = StackRouteImport.update({
-  id: '/stack',
-  path: '/stack',
+const DocsRouteRoute = DocsRouteRouteImport.update({
+  id: '/docs',
+  path: '/docs',
   getParentRoute: () => rootRouteImport,
 } as any)
 const UiRoute = UiRouteImport.update({
@@ -166,6 +171,36 @@ const AuthVerifyEmailRoute = AuthVerifyEmailRouteImport.update({
   id: '/verify-email',
   path: '/verify-email',
   getParentRoute: () => AuthRoute,
+} as any)
+const DocsCommunityGuidelinesRoute = DocsCommunityGuidelinesRouteImport.update({
+  id: '/community-guidelines',
+  path: '/community-guidelines',
+  getParentRoute: () => DocsRouteRoute,
+} as any)
+const DocsCookiesRoute = DocsCookiesRouteImport.update({
+  id: '/cookies',
+  path: '/cookies',
+  getParentRoute: () => DocsRouteRoute,
+} as any)
+const DocsDevelopmentRoute = DocsDevelopmentRouteImport.update({
+  id: '/development',
+  path: '/development',
+  getParentRoute: () => DocsRouteRoute,
+} as any)
+const DocsNoticesRoute = DocsNoticesRouteImport.update({
+  id: '/notices',
+  path: '/notices',
+  getParentRoute: () => DocsRouteRoute,
+} as any)
+const DocsPrivacyRoute = DocsPrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => DocsRouteRoute,
+} as any)
+const DocsStackRoute = DocsStackRouteImport.update({
+  id: '/stack',
+  path: '/stack',
+  getParentRoute: () => DocsRouteRoute,
 } as any)
 const OrgSettingsRouteRoute = OrgSettingsRouteRouteImport.update({
   id: '/org/settings',
@@ -252,11 +287,6 @@ const OrgSettingsIndexRoute = OrgSettingsIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => OrgSettingsRouteRoute,
-} as any)
-const ProfileSettingsIndexRoute = ProfileSettingsIndexRouteImport.update({
-  id: '/profile/settings/',
-  path: '/profile/settings/',
-  getParentRoute: () => rootRouteImport,
 } as any)
 const UUsernameIndexRoute = UUsernameIndexRouteImport.update({
   id: '/u/$username/',
@@ -469,10 +499,10 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/@{$org}': typeof AtChar123orgChar125RouteRouteWithChildren
   '/account': typeof AccountRouteRouteWithChildren
+  '/docs': typeof DocsRouteRouteWithChildren
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRouteWithChildren
   '/dashboard': typeof DashboardRoute
-  '/stack': typeof StackRoute
   '/ui': typeof UiRoute
   '/@{$org}/$project': typeof AtChar123orgChar125ProjectRouteRouteWithChildren
   '/org/settings': typeof OrgSettingsRouteRouteWithChildren
@@ -481,6 +511,12 @@ export interface FileRoutesByFullPath {
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/auth/sign-up': typeof AuthSignUpRoute
   '/auth/verify-email': typeof AuthVerifyEmailRoute
+  '/docs/community-guidelines': typeof DocsCommunityGuidelinesRoute
+  '/docs/cookies': typeof DocsCookiesRoute
+  '/docs/development': typeof DocsDevelopmentRoute
+  '/docs/notices': typeof DocsNoticesRoute
+  '/docs/privacy': typeof DocsPrivacyRoute
+  '/docs/stack': typeof DocsStackRoute
   '/@{$org}/': typeof AtChar123orgChar125IndexRoute
   '/account/': typeof AccountIndexRoute
   '/auth/': typeof AuthIndexRoute
@@ -499,7 +535,6 @@ export interface FileRoutesByFullPath {
   '/account/security/': typeof AccountSecurityIndexRoute
   '/create/team/': typeof CreateTeamIndexRoute
   '/org/settings/': typeof OrgSettingsIndexRoute
-  '/profile/settings/': typeof ProfileSettingsIndexRoute
   '/u/$username/': typeof UUsernameIndexRoute
   '/@{$org}/$project/asset-library/': typeof AtChar123orgChar125ProjectAssetLibraryIndexRoute
   '/@{$org}/$project/discussions/': typeof AtChar123orgChar125ProjectDiscussionsIndexRoute
@@ -538,15 +573,21 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/docs': typeof DocsRouteRouteWithChildren
   '/admin': typeof AdminRoute
   '/dashboard': typeof DashboardRoute
-  '/stack': typeof StackRoute
   '/ui': typeof UiRoute
   '/auth/accept-invitation': typeof AuthAcceptInvitationRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/auth/sign-up': typeof AuthSignUpRoute
   '/auth/verify-email': typeof AuthVerifyEmailRoute
+  '/docs/community-guidelines': typeof DocsCommunityGuidelinesRoute
+  '/docs/cookies': typeof DocsCookiesRoute
+  '/docs/development': typeof DocsDevelopmentRoute
+  '/docs/notices': typeof DocsNoticesRoute
+  '/docs/privacy': typeof DocsPrivacyRoute
+  '/docs/stack': typeof DocsStackRoute
   '/@{$org}': typeof AtChar123orgChar125IndexRoute
   '/account': typeof AccountIndexRoute
   '/auth': typeof AuthIndexRoute
@@ -562,7 +603,6 @@ export interface FileRoutesByTo {
   '/account/security': typeof AccountSecurityIndexRoute
   '/create/team': typeof CreateTeamIndexRoute
   '/org/settings': typeof OrgSettingsIndexRoute
-  '/profile/settings': typeof ProfileSettingsIndexRoute
   '/u/$username': typeof UUsernameIndexRoute
   '/@{$org}/$project/asset-library': typeof AtChar123orgChar125ProjectAssetLibraryIndexRoute
   '/@{$org}/$project/discussions': typeof AtChar123orgChar125ProjectDiscussionsIndexRoute
@@ -604,10 +644,10 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/@{$org}': typeof AtChar123orgChar125RouteRouteWithChildren
   '/account': typeof AccountRouteRouteWithChildren
+  '/docs': typeof DocsRouteRouteWithChildren
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRouteWithChildren
   '/dashboard': typeof DashboardRoute
-  '/stack': typeof StackRoute
   '/ui': typeof UiRoute
   '/@{$org}/$project': typeof AtChar123orgChar125ProjectRouteRouteWithChildren
   '/org/settings': typeof OrgSettingsRouteRouteWithChildren
@@ -616,6 +656,12 @@ export interface FileRoutesById {
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/auth/sign-up': typeof AuthSignUpRoute
   '/auth/verify-email': typeof AuthVerifyEmailRoute
+  '/docs/community-guidelines': typeof DocsCommunityGuidelinesRoute
+  '/docs/cookies': typeof DocsCookiesRoute
+  '/docs/development': typeof DocsDevelopmentRoute
+  '/docs/notices': typeof DocsNoticesRoute
+  '/docs/privacy': typeof DocsPrivacyRoute
+  '/docs/stack': typeof DocsStackRoute
   '/@{$org}/': typeof AtChar123orgChar125IndexRoute
   '/account/': typeof AccountIndexRoute
   '/auth/': typeof AuthIndexRoute
@@ -634,7 +680,6 @@ export interface FileRoutesById {
   '/account/security/': typeof AccountSecurityIndexRoute
   '/create/team/': typeof CreateTeamIndexRoute
   '/org/settings/': typeof OrgSettingsIndexRoute
-  '/profile/settings/': typeof ProfileSettingsIndexRoute
   '/u/$username/': typeof UUsernameIndexRoute
   '/@{$org}/$project/asset-library/': typeof AtChar123orgChar125ProjectAssetLibraryIndexRoute
   '/@{$org}/$project/discussions/': typeof AtChar123orgChar125ProjectDiscussionsIndexRoute
@@ -677,10 +722,10 @@ export interface FileRouteTypes {
     | '/'
     | '/@{$org}'
     | '/account'
+    | '/docs'
     | '/admin'
     | '/auth'
     | '/dashboard'
-    | '/stack'
     | '/ui'
     | '/@{$org}/$project'
     | '/org/settings'
@@ -689,6 +734,12 @@ export interface FileRouteTypes {
     | '/auth/reset-password'
     | '/auth/sign-up'
     | '/auth/verify-email'
+    | '/docs/community-guidelines'
+    | '/docs/cookies'
+    | '/docs/development'
+    | '/docs/notices'
+    | '/docs/privacy'
+    | '/docs/stack'
     | '/@{$org}/'
     | '/account/'
     | '/auth/'
@@ -707,7 +758,6 @@ export interface FileRouteTypes {
     | '/account/security/'
     | '/create/team/'
     | '/org/settings/'
-    | '/profile/settings/'
     | '/u/$username/'
     | '/@{$org}/$project/asset-library/'
     | '/@{$org}/$project/discussions/'
@@ -746,15 +796,21 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/docs'
     | '/admin'
     | '/dashboard'
-    | '/stack'
     | '/ui'
     | '/auth/accept-invitation'
     | '/auth/forgot-password'
     | '/auth/reset-password'
     | '/auth/sign-up'
     | '/auth/verify-email'
+    | '/docs/community-guidelines'
+    | '/docs/cookies'
+    | '/docs/development'
+    | '/docs/notices'
+    | '/docs/privacy'
+    | '/docs/stack'
     | '/@{$org}'
     | '/account'
     | '/auth'
@@ -770,7 +826,6 @@ export interface FileRouteTypes {
     | '/account/security'
     | '/create/team'
     | '/org/settings'
-    | '/profile/settings'
     | '/u/$username'
     | '/@{$org}/$project/asset-library'
     | '/@{$org}/$project/discussions'
@@ -811,10 +866,10 @@ export interface FileRouteTypes {
     | '/'
     | '/@{$org}'
     | '/account'
+    | '/docs'
     | '/admin'
     | '/auth'
     | '/dashboard'
-    | '/stack'
     | '/ui'
     | '/@{$org}/$project'
     | '/org/settings'
@@ -823,6 +878,12 @@ export interface FileRouteTypes {
     | '/auth/reset-password'
     | '/auth/sign-up'
     | '/auth/verify-email'
+    | '/docs/community-guidelines'
+    | '/docs/cookies'
+    | '/docs/development'
+    | '/docs/notices'
+    | '/docs/privacy'
+    | '/docs/stack'
     | '/@{$org}/'
     | '/account/'
     | '/auth/'
@@ -841,7 +902,6 @@ export interface FileRouteTypes {
     | '/account/security/'
     | '/create/team/'
     | '/org/settings/'
-    | '/profile/settings/'
     | '/u/$username/'
     | '/@{$org}/$project/asset-library/'
     | '/@{$org}/$project/discussions/'
@@ -883,17 +943,16 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AtChar123orgChar125RouteRoute: typeof AtChar123orgChar125RouteRouteWithChildren
   AccountRouteRoute: typeof AccountRouteRouteWithChildren
+  DocsRouteRoute: typeof DocsRouteRouteWithChildren
   AdminRoute: typeof AdminRoute
   AuthRoute: typeof AuthRouteWithChildren
   DashboardRoute: typeof DashboardRoute
-  StackRoute: typeof StackRoute
   UiRoute: typeof UiRoute
   OrgSettingsRouteRoute: typeof OrgSettingsRouteRouteWithChildren
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiGithubSplatRoute: typeof ApiGithubSplatRoute
   ApiGithubCallbackRoute: typeof ApiGithubCallbackRoute
   CreateTeamIndexRoute: typeof CreateTeamIndexRoute
-  ProfileSettingsIndexRoute: typeof ProfileSettingsIndexRoute
   UUsernameIndexRoute: typeof UUsernameIndexRoute
 }
 
@@ -941,11 +1000,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/stack': {
-      id: '/stack'
-      path: '/stack'
-      fullPath: '/stack'
-      preLoaderRoute: typeof StackRouteImport
+    '/docs': {
+      id: '/docs'
+      path: '/docs'
+      fullPath: '/docs'
+      preLoaderRoute: typeof DocsRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/ui': {
@@ -1017,6 +1076,48 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth/verify-email'
       preLoaderRoute: typeof AuthVerifyEmailRouteImport
       parentRoute: typeof AuthRoute
+    }
+    '/docs/community-guidelines': {
+      id: '/docs/community-guidelines'
+      path: '/community-guidelines'
+      fullPath: '/docs/community-guidelines'
+      preLoaderRoute: typeof DocsCommunityGuidelinesRouteImport
+      parentRoute: typeof DocsRouteRoute
+    }
+    '/docs/cookies': {
+      id: '/docs/cookies'
+      path: '/cookies'
+      fullPath: '/docs/cookies'
+      preLoaderRoute: typeof DocsCookiesRouteImport
+      parentRoute: typeof DocsRouteRoute
+    }
+    '/docs/development': {
+      id: '/docs/development'
+      path: '/development'
+      fullPath: '/docs/development'
+      preLoaderRoute: typeof DocsDevelopmentRouteImport
+      parentRoute: typeof DocsRouteRoute
+    }
+    '/docs/notices': {
+      id: '/docs/notices'
+      path: '/notices'
+      fullPath: '/docs/notices'
+      preLoaderRoute: typeof DocsNoticesRouteImport
+      parentRoute: typeof DocsRouteRoute
+    }
+    '/docs/privacy': {
+      id: '/docs/privacy'
+      path: '/privacy'
+      fullPath: '/docs/privacy'
+      preLoaderRoute: typeof DocsPrivacyRouteImport
+      parentRoute: typeof DocsRouteRoute
+    }
+    '/docs/stack': {
+      id: '/docs/stack'
+      path: '/stack'
+      fullPath: '/docs/stack'
+      preLoaderRoute: typeof DocsStackRouteImport
+      parentRoute: typeof DocsRouteRoute
     }
     '/org/settings': {
       id: '/org/settings'
@@ -1129,13 +1230,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/org/settings/'
       preLoaderRoute: typeof OrgSettingsIndexRouteImport
       parentRoute: typeof OrgSettingsRouteRoute
-    }
-    '/profile/settings/': {
-      id: '/profile/settings/'
-      path: '/profile/settings'
-      fullPath: '/profile/settings/'
-      preLoaderRoute: typeof ProfileSettingsIndexRouteImport
-      parentRoute: typeof rootRouteImport
     }
     '/u/$username/': {
       id: '/u/$username/'
@@ -1576,6 +1670,28 @@ const AccountRouteRouteWithChildren = AccountRouteRoute._addFileChildren(
   AccountRouteRouteChildren,
 )
 
+interface DocsRouteRouteChildren {
+  DocsCommunityGuidelinesRoute: typeof DocsCommunityGuidelinesRoute
+  DocsCookiesRoute: typeof DocsCookiesRoute
+  DocsDevelopmentRoute: typeof DocsDevelopmentRoute
+  DocsNoticesRoute: typeof DocsNoticesRoute
+  DocsPrivacyRoute: typeof DocsPrivacyRoute
+  DocsStackRoute: typeof DocsStackRoute
+}
+
+const DocsRouteRouteChildren: DocsRouteRouteChildren = {
+  DocsCommunityGuidelinesRoute: DocsCommunityGuidelinesRoute,
+  DocsCookiesRoute: DocsCookiesRoute,
+  DocsDevelopmentRoute: DocsDevelopmentRoute,
+  DocsNoticesRoute: DocsNoticesRoute,
+  DocsPrivacyRoute: DocsPrivacyRoute,
+  DocsStackRoute: DocsStackRoute,
+}
+
+const DocsRouteRouteWithChildren = DocsRouteRoute._addFileChildren(
+  DocsRouteRouteChildren,
+)
+
 interface AuthRouteChildren {
   AuthAcceptInvitationRoute: typeof AuthAcceptInvitationRoute
   AuthForgotPasswordRoute: typeof AuthForgotPasswordRoute
@@ -1619,17 +1735,16 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AtChar123orgChar125RouteRoute: AtChar123orgChar125RouteRouteWithChildren,
   AccountRouteRoute: AccountRouteRouteWithChildren,
+  DocsRouteRoute: DocsRouteRouteWithChildren,
   AdminRoute: AdminRoute,
   AuthRoute: AuthRouteWithChildren,
   DashboardRoute: DashboardRoute,
-  StackRoute: StackRoute,
   UiRoute: UiRoute,
   OrgSettingsRouteRoute: OrgSettingsRouteRouteWithChildren,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiGithubSplatRoute: ApiGithubSplatRoute,
   ApiGithubCallbackRoute: ApiGithubCallbackRoute,
   CreateTeamIndexRoute: CreateTeamIndexRoute,
-  ProfileSettingsIndexRoute: ProfileSettingsIndexRoute,
   UUsernameIndexRoute: UUsernameIndexRoute,
 }
 export const routeTree = rootRouteImport
