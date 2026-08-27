@@ -86,7 +86,7 @@ function CommunityGuidelinesPage() {
 			<p>
 				Project owners may enforce additional community rules and make moderation decisions that do
 				not amount to a violation of Kino&apos;s platform-wide rules. Kino plans to add
-				organization- level reporting tools for those local decisions. Until those tools exist,
+				organization-level reporting tools for those local decisions. Until those tools exist,
 				organization moderators may provide their own reporting process.
 			</p>
 
