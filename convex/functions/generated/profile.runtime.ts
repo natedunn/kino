@@ -19,6 +19,7 @@ const procedureRegistry = {
   "getByUsername": ["query", typedProcedureResolver(createGeneratedFunctionReference<"query", "public", typeof import("../profile").getByUsername>("profile:getByUsername"), () => (require("../profile") as Record<string, unknown>)["getByUsername"])],
   "syncMetadata": ["mutation", typedProcedureResolver(createGeneratedFunctionReference<"mutation", "public", typeof import("../profile").syncMetadata>("profile:syncMetadata"), () => (require("../profile") as Record<string, unknown>)["syncMetadata"])],
   "update": ["mutation", typedProcedureResolver(createGeneratedFunctionReference<"mutation", "public", typeof import("../profile").update>("profile:update"), () => (require("../profile") as Record<string, unknown>)["update"])],
+  "updateLocale": ["mutation", typedProcedureResolver(createGeneratedFunctionReference<"mutation", "public", typeof import("../profile").updateLocale>("profile:updateLocale"), () => (require("../profile") as Record<string, unknown>)["updateLocale"])],
 } as const;
 
   const handlerRegistry = procedureRegistry;

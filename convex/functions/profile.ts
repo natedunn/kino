@@ -21,6 +21,7 @@ import {
 	urlListSchema,
 	usernameSchema,
 } from '../lib/validation';
+import { APP_LOCALES } from '../shared/i18n';
 import { internal } from './_generated/api';
 import { internalMutation } from './generated/server';
 import { toPublicProfileSummary } from './profile.lib';
@@ -203,4 +204,20 @@ export const update = authMutation
 				ctx.user.image ??
 				null,
 		};
+	});
+
+export const updateLocale = authMutation
+	.input(z.object({ locale: z.enum(APP_LOCALES) }))
+	.mutation(async ({ ctx, input }) => {
+		const profile = await getCurrentProfile(ctx, ctx.userId);
+		if (!profile) {
+			throw new CRPCError({ code: 'NOT_FOUND', message: 'Profile not found' });
+		}
+
+		await ctx.orm
+			.update(profileTable)
+			.set({ locale: input.locale })
+			.where(eq(profileTable.id, profile._id));
+
+		return { locale: input.locale };
 	});

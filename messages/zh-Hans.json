@@ -1,0 +1,25 @@
+{
+	"$schema": "https://inlang.com/schema/inlang-message-format",
+	"spike_title": "国际化技术验证",
+	"spike_greeting": "你好，{name}！",
+	"spike_items": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "你有 {count} 个项目。",
+				"countPlural=other": "你有 {count} 个项目。"
+			}
+		}
+	],
+	"spike_rich_text": "在做出{#strong}上线决定{/strong}前，请阅读{#link}本地化说明{/link}。",
+	"spike_number": "方案总额：{amount}",
+	"spike_date": "评审日期：{date}",
+	"spike_email_subject": "你的 Kino 工作区已准备就绪",
+	"spike_email_body": "{name}，你好！你的工作区已准备好，可以开始检查了。",
+	"account_title": "账户",
+	"language_settings_title": "语言",
+	"language_settings_description": "选择 Kino 界面、邮件和通知所使用的语言。",
+	"language_settings_error": "无法保存语言偏好，请重试。",
+	"footer_notices": "声明"
+}

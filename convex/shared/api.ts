@@ -128,6 +128,7 @@ export const api = {
     getByUsername: createApiLeaf<"query", typeof import("../functions/profile").getByUsername>(createGeneratedFunctionReference<"query", "public", typeof import("../functions/profile").getByUsername>("profile:getByUsername"), { auth: "optional", type: "query" }),
     syncMetadata: createApiLeaf<"mutation", typeof import("../functions/profile").syncMetadata>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/profile").syncMetadata>("profile:syncMetadata"), { auth: "required", type: "mutation" }),
     update: createApiLeaf<"mutation", typeof import("../functions/profile").update>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/profile").update>("profile:update"), { auth: "required", type: "mutation" }),
+    updateLocale: createApiLeaf<"mutation", typeof import("../functions/profile").updateLocale>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/profile").updateLocale>("profile:updateLocale"), { auth: "required", type: "mutation" }),
   },
   project: {
     create: createApiLeaf<"mutation", typeof import("../functions/project").create>(createGeneratedFunctionReference<"mutation", "public", typeof import("../functions/project").create>("project:create"), { auth: "required", type: "mutation" }),

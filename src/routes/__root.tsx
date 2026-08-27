@@ -14,12 +14,17 @@ import { createServerFn } from '@tanstack/react-start';
 import { getRequest } from '@tanstack/react-start/server';
 
 import { DefaultCatchBoundary } from '@/components/_default-catch-boundary';
+import { AccountLocaleSync } from '@/components/account-locale-sync';
 import { Providers } from '@/components/providers';
 import { StaleBundleWatcher } from '@/components/stale-bundle-watcher';
 import { getAppInstallMetadata, getFaviconHref, inferAppEnvironment } from '@/lib/app-env';
 import { isClientAuthed } from '@/lib/auth/auth-snapshot';
 import { getServerAuthToken } from '@/lib/convex/auth-start-token';
 import { crpcServer } from '@/lib/convex/crpc-server';
+
+import '@/lib/i18n/runtime';
+
+import { getLocale } from '@/paraglide/runtime.js';
 
 import appCss from '../styles.css?url';
 
@@ -172,7 +177,7 @@ export const Route = createRootRouteWithContext<{
 
 function RootDocument({ children }: { children: ReactNode }) {
 	return (
-		<html lang='en' suppressHydrationWarning>
+		<html lang={getLocale()} suppressHydrationWarning>
 			<head>
 				<HeadContent />
 			</head>
@@ -211,6 +216,7 @@ function RootComponent() {
 			convexQueryClient={convexQueryClient}
 			initialToken={initialTokenRef.current}
 		>
+			<AccountLocaleSync />
 			<Outlet />
 		</Providers>
 	);

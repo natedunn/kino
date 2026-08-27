@@ -4,6 +4,7 @@ import { GitBranch, HardDrive, Settings, Users } from 'lucide-react';
 
 import { EmptyState } from '@/components/kino/common';
 import { SidebarNavGroup, SidebarNavItem, SidebarNavSelect } from '@/components/sidebar-nav';
+import { SiteFooter } from '@/components/site-footer';
 import { EditingBar } from '@/components/site-nav/editing-bar';
 import { MainNav } from '@/components/site-nav/main-nav';
 import { requireAuth } from '@/lib/auth/require-auth';
@@ -167,14 +168,7 @@ function AuthenticatedOrgSettingsShell() {
 					)}
 				</div>
 			</div>
-			<footer className='mt-auto w-full border-t border-border py-4 text-sm text-muted-foreground'>
-				<div className='container flex items-center justify-between gap-4'>
-					<p>© {new Date().getFullYear()} Kino</p>
-					<Link to='/docs/notices' className='transition-colors hocus:text-foreground'>
-						Notices
-					</Link>
-				</div>
-			</footer>
+			<SiteFooter />
 		</div>
 	);
 }

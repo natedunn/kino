@@ -1,6 +1,7 @@
 import { execSync } from 'node:child_process';
 
 import { cloudflare } from '@cloudflare/vite-plugin';
+import { paraglideVitePlugin } from '@inlang/paraglide-js';
 import tailwindcss from '@tailwindcss/vite';
 import { devtools } from '@tanstack/devtools-vite';
 import { tanstackStart } from '@tanstack/react-start/plugin/vite';
@@ -77,6 +78,12 @@ const config = defineConfig({
 			projects: ['./tsconfig.json'],
 		}),
 		tailwindcss(),
+		paraglideVitePlugin({
+			project: './project.inlang',
+			outdir: './src/paraglide',
+			outputStructure: 'message-modules',
+			strategy: ['custom-kino-locale', 'baseLocale'],
+		}),
 		tanstackStart(),
 		viteReact(),
 	],

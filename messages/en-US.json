@@ -1,0 +1,25 @@
+{
+	"$schema": "https://inlang.com/schema/inlang-message-format",
+	"spike_title": "Internationalization spike",
+	"spike_greeting": "Hello, {name}!",
+	"spike_items": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "You have one project.",
+				"countPlural=other": "You have {count} projects."
+			}
+		}
+	],
+	"spike_rich_text": "Read the {#link}localization notes{/link} before making a {#strong}production decision{/strong}.",
+	"spike_number": "Plan total: {amount}",
+	"spike_date": "Review date: {date}",
+	"spike_email_subject": "Your Kino workspace is ready",
+	"spike_email_body": "Hello {name}, your workspace is ready to review.",
+	"account_title": "Account",
+	"language_settings_title": "Language",
+	"language_settings_description": "Choose the language Kino uses for the interface, emails, and notifications.",
+	"language_settings_error": "We couldn't save your language preference. Please try again.",
+	"footer_notices": "Notices"
+}

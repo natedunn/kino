@@ -1,8 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
-import { createFileRoute, Link, notFound, Outlet, useParams } from '@tanstack/react-router';
+import { createFileRoute, notFound, Outlet, useParams } from '@tanstack/react-router';
 
 import { DefaultCatchBoundary } from '@/components/_default-catch-boundary';
 import { NotFound } from '@/components/_not-found';
+import { SiteFooter } from '@/components/site-footer';
 import { MainNav } from '@/components/site-nav/main-nav';
 import { useCRPC } from '@/lib/convex/crpc';
 import { crpcServer } from '@/lib/convex/crpc-server';
@@ -92,14 +93,7 @@ function OrganizationShell() {
 					<Outlet />
 				</div>
 			</div>
-			<footer className='mt-auto w-full border-t border-border py-4 text-sm text-muted-foreground'>
-				<div className='container flex items-center justify-between gap-4'>
-					<p>© {new Date().getFullYear()} Kino</p>
-					<Link to='/docs/notices' className='transition-colors hocus:text-foreground'>
-						Notices
-					</Link>
-				</div>
-			</footer>
+			<SiteFooter />
 		</div>
 	);
 	if (!projectSlug) return shell;

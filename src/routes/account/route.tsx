@@ -1,8 +1,9 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { createFileRoute, Link, Outlet, useRouterState } from '@tanstack/react-router';
-import { Bell, Database, Palette, ShieldCheck, User } from 'lucide-react';
+import { Bell, Database, Languages, Palette, ShieldCheck, User } from 'lucide-react';
 
 import { SidebarNavGroup, SidebarNavItem, SidebarNavSelect } from '@/components/sidebar-nav';
+import { SiteFooter } from '@/components/site-footer';
 import { MainNav } from '@/components/site-nav/main-nav';
 import { requireAuth } from '@/lib/auth/require-auth';
 import { useAuthLostRedirect } from '@/lib/auth/use-auth-lost';
@@ -42,6 +43,11 @@ const navItems = [
 		icon: Bell,
 		label: 'Notifications',
 		to: '/account/notifications' as const,
+	},
+	{
+		icon: Languages,
+		label: 'Language',
+		to: '/account/language' as const,
 	},
 	{
 		icon: Database,
@@ -124,14 +130,7 @@ function AuthenticatedAccountShell() {
 					</div>
 				</div>
 			</div>
-			<footer className='mt-auto w-full border-t border-border py-4 text-sm text-muted-foreground'>
-				<div className='container flex items-center justify-between gap-4'>
-					<p>© {new Date().getFullYear()} Kino</p>
-					<Link to='/docs/notices' className='transition-colors hocus:text-foreground'>
-						Notices
-					</Link>
-				</div>
-			</footer>
+			<SiteFooter />
 		</div>
 	);
 }
