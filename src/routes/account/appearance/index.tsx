@@ -12,30 +12,31 @@ import {
 	subscribeThemePreference,
 } from '@/lib/theme';
 import { cn } from '@/lib/utils';
+import { m } from '@/paraglide/messages.js';
 
 export const Route = createFileRoute('/account/appearance/')({
 	head: () => ({
-		meta: [titleMeta(['Appearance', 'Account'])],
+		meta: [titleMeta([m.account_appearance(), m.account_title()])],
 	}),
 	component: AppearanceRoute,
 });
 
 const themeOptions: Array<{
 	value: ThemePreference;
-	label: string;
-	description: string;
+	label: () => string;
+	description: () => string;
 	icon: typeof Sun;
 }> = [
 	{
 		value: 'light',
-		label: 'Light',
-		description: 'Bright theme for well-lit spaces.',
+		label: () => m.appearance_light(),
+		description: () => m.appearance_light_description(),
 		icon: Sun,
 	},
 	{
 		value: 'dark',
-		label: 'Dark',
-		description: "Dimmed theme that's easier on the eyes.",
+		label: () => m.appearance_dark(),
+		description: () => m.appearance_dark_description(),
 		icon: Moon,
 	},
 ];
@@ -56,8 +57,8 @@ function AppearanceRoute() {
 	return (
 		<section className='max-w-3xl'>
 			<header className='border-b pb-4'>
-				<h2 className='text-xl font-semibold'>Appearance</h2>
-				<p className='mt-1 text-sm text-muted-foreground'>Choose how Kino looks on this device.</p>
+				<h2 className='text-xl font-semibold'>{m.account_appearance()}</h2>
+				<p className='mt-1 text-sm text-muted-foreground'>{m.appearance_description()}</p>
 			</header>
 
 			<div className='mt-6 grid gap-4 sm:grid-cols-2'>
@@ -79,11 +80,11 @@ function AppearanceRoute() {
 							<div className='flex items-center justify-between'>
 								<span className='flex items-center gap-2 font-medium'>
 									<Icon className='size-4' />
-									{option.label}
+									{option.label()}
 								</span>
 								{isActive ? <Check className='size-4 text-foreground' /> : null}
 							</div>
-							<p className='text-sm text-muted-foreground'>{option.description}</p>
+							<p className='text-sm text-muted-foreground'>{option.description()}</p>
 						</button>
 					);
 				})}

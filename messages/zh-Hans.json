@@ -76,5 +76,21 @@
 	"auth_new_password": "新密码",
 	"auth_confirm_new_password": "确认新密码",
 	"auth_updating": "正在更新…",
-	"auth_update_password": "更新密码"
+	"auth_update_password": "更新密码",
+	"account_profile": "个人资料",
+	"account_appearance": "外观",
+	"account_notifications": "通知",
+	"account_language": "语言",
+	"account_data": "数据",
+	"account_security": "安全",
+	"appearance_description": "选择 Kino 在此设备上的显示方式。",
+	"appearance_light": "浅色",
+	"appearance_light_description": "适合明亮环境的清爽主题。",
+	"appearance_dark": "深色",
+	"appearance_dark_description": "柔和护眼的深色主题。",
+	"security_description": "管理账户邮箱和安全设置。",
+	"security_email_description": "与你的账户关联的邮箱地址。",
+	"security_danger_zone": "危险操作",
+	"security_delete_description": "永久删除你的账户及所有相关数据。此操作无法撤销。",
+	"security_delete_account": "删除账户"
 }

@@ -76,5 +76,21 @@
 	"auth_new_password": "Contraseña nueva",
 	"auth_confirm_new_password": "Confirmar contraseña nueva",
 	"auth_updating": "Actualizando…",
-	"auth_update_password": "Actualizar contraseña"
+	"auth_update_password": "Actualizar contraseña",
+	"account_profile": "Perfil",
+	"account_appearance": "Apariencia",
+	"account_notifications": "Notificaciones",
+	"account_language": "Idioma",
+	"account_data": "Datos",
+	"account_security": "Seguridad",
+	"appearance_description": "Elige cómo se ve Kino en este dispositivo.",
+	"appearance_light": "Claro",
+	"appearance_light_description": "Un tema luminoso para espacios bien iluminados.",
+	"appearance_dark": "Oscuro",
+	"appearance_dark_description": "Un tema tenue que descansa la vista.",
+	"security_description": "Administra el correo y la configuración de seguridad de tu cuenta.",
+	"security_email_description": "El correo electrónico asociado con tu cuenta.",
+	"security_danger_zone": "Zona de peligro",
+	"security_delete_description": "Elimina permanentemente tu cuenta y todos los datos asociados. Esta acción no se puede deshacer.",
+	"security_delete_account": "Eliminar cuenta"
 }

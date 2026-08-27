@@ -10,10 +10,11 @@ import { useAuthLostRedirect } from '@/lib/auth/use-auth-lost';
 import { useCRPC } from '@/lib/convex/crpc';
 import { crpcServer } from '@/lib/convex/crpc-server';
 import { titleMeta } from '@/lib/seo';
+import { m } from '@/paraglide/messages.js';
 
 export const Route = createFileRoute('/account')({
 	head: () => ({
-		meta: [titleMeta(['Account'])],
+		meta: [titleMeta([m.account_title()])],
 	}),
 	beforeLoad: ({ context, location }) => requireAuth(context, location),
 	loader: async ({ context }) => {
@@ -31,32 +32,32 @@ export const Route = createFileRoute('/account')({
 const navItems = [
 	{
 		icon: User,
-		label: 'Profile',
+		label: () => m.account_profile(),
 		to: '/account/profile' as const,
 	},
 	{
 		icon: Palette,
-		label: 'Appearance',
+		label: () => m.account_appearance(),
 		to: '/account/appearance' as const,
 	},
 	{
 		icon: Bell,
-		label: 'Notifications',
+		label: () => m.account_notifications(),
 		to: '/account/notifications' as const,
 	},
 	{
 		icon: Languages,
-		label: 'Language',
+		label: () => m.account_language(),
 		to: '/account/language' as const,
 	},
 	{
 		icon: Database,
-		label: 'Data',
+		label: () => m.account_data(),
 		to: '/account/data' as const,
 	},
 	{
 		icon: ShieldCheck,
-		label: 'Security',
+		label: () => m.account_security(),
 		to: '/account/security' as const,
 	},
 ];
@@ -88,7 +89,7 @@ function AuthenticatedAccountShell() {
 			active,
 			icon: <Icon className='size-4' />,
 			key: item.to,
-			label: item.label,
+			label: item.label(),
 			renderLink: (children: React.ReactNode) => <Link to={item.to}>{children}</Link>,
 		};
 	});
@@ -107,7 +108,7 @@ function AuthenticatedAccountShell() {
 						{/* Desktop: persistent sidebar. */}
 						<div className='hidden py-8 md:col-span-3 md:block md:border-r md:border-border/75'>
 							<div className='sticky top-6 flex flex-col overflow-hidden'>
-								<SidebarNavGroup className='border-b pb-6 md:pr-6' title='Account'>
+								<SidebarNavGroup className='border-b pb-6 md:pr-6' title={m.account_title()}>
 									{navItems.map((item) => {
 										const Icon = item.icon;
 
@@ -115,7 +116,7 @@ function AuthenticatedAccountShell() {
 											<Link key={item.to} to={item.to}>
 												{({ isActive }) => (
 													<SidebarNavItem active={isActive} icon={<Icon className='size-4' />}>
-														{item.label}
+														{item.label()}
 													</SidebarNavItem>
 												)}
 											</Link>
