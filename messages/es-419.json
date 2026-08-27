@@ -260,5 +260,6 @@
 	"feedback_month_october": "Octubre (10)",
 	"feedback_month_november": "Noviembre (11)",
 	"feedback_month_december": "Diciembre (12)",
-	"feedback_commented": "comentó"
+	"feedback_commented": "comentó",
+	"feedback_unscheduled": "Sin programar"
 }

@@ -151,6 +151,16 @@ const MONTH_OPTIONS = [
 // How far the granularity nav slides its panel in; index order mirrors the nav (L→R).
 const GRANULARITY_ORDER: Array<TargetGranularity> = ['day', 'month', 'quarter', 'year'];
 
+function formatFeedbackTarget(
+	target: string | null | undefined,
+	granularity: TargetGranularity | null | undefined
+) {
+	if (!target || !granularity || !isValidTarget(target, granularity)) {
+		return m.feedback_unscheduled();
+	}
+	return formatTargetOrUnscheduled(target, granularity);
+}
+
 // Local edit state for the target drawer. Each field persists independently so switching
 // granularity never wipes the others (year carries everywhere; month/day carry between the
 // day and month ranges; quarter keeps its own value).
@@ -890,7 +900,7 @@ function FeedbackDetailContent({
 							>
 								<CalendarIcon className='size-3.5' />
 								<span className='truncate'>
-									{formatTargetOrUnscheduled(
+									{formatFeedbackTarget(
 										feedback.target ?? null,
 										feedback.targetGranularity ?? null
 									)}
@@ -903,10 +913,7 @@ function FeedbackDetailContent({
 									!feedback.target && 'text-muted-foreground'
 								)}
 							>
-								{formatTargetOrUnscheduled(
-									feedback.target ?? null,
-									feedback.targetGranularity ?? null
-								)}
+								{formatFeedbackTarget(feedback.target ?? null, feedback.targetGranularity ?? null)}
 							</span>
 						)}
 					</div>
