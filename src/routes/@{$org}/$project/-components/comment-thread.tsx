@@ -27,6 +27,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { cn } from '@/lib/utils';
 import { formatFullDate, formatRelativeDay, toTimestamp } from '@/lib/utils/format-timestamp';
 import { FORM_LIMITS } from '@/lib/validation';
+import * as m from '@/paraglide/messages.js';
 
 const COLLAPSED_MAX_HEIGHT = 600;
 
@@ -189,7 +190,7 @@ export function CommentCard({
 
 	function handleDelete() {
 		if (!onDelete) return;
-		if (confirm('Are you sure you want to delete this comment?')) {
+		if (confirm(m.feedback_comment_delete_confirm())) {
 			onDelete(comment.id);
 		}
 	}
@@ -214,9 +215,7 @@ export function CommentCard({
 			setIsEditing(false);
 		} catch (updateError) {
 			setEditError(
-				updateError instanceof Error
-					? updateError.message
-					: 'Failed to save comment. Please try again.'
+				updateError instanceof Error ? updateError.message : m.feedback_comment_save_failed()
 			);
 		}
 	}
@@ -243,7 +242,7 @@ export function CommentCard({
 						</div>
 					</div>
 					<MarkdownEditor
-						ariaLabel='Edit comment'
+						ariaLabel={m.feedback_comment_edit()}
 						autoFocus
 						className='relative rounded-b-none'
 						disabled={isUpdating}
@@ -251,7 +250,7 @@ export function CommentCard({
 						minHeight='80px'
 						onChange={setEditContent}
 						onSubmitShortcut={handleSaveEdit}
-						placeholder='Edit your comment...'
+						placeholder={m.feedback_comment_edit_placeholder()}
 						ref={editEditorRef}
 						value={editContent}
 					/>
@@ -273,7 +272,7 @@ export function CommentCard({
 							Cancel
 						</Button>
 						<Button disabled={isUpdating} onClick={handleSaveEdit} size='sm' type='button'>
-							{isUpdating ? 'Saving...' : 'Save'}
+							{isUpdating ? m.common_saving() : m.common_save()}
 						</Button>
 					</div>
 				</div>
@@ -317,7 +316,7 @@ export function CommentCard({
 									@{comment.author.username}
 								</Link>
 							) : (
-								<span className='text-muted-foreground'>Unknown user</span>
+								<span className='text-muted-foreground'>{m.feedback_unknown_user()}</span>
 							)}{' '}
 							<span className='text-muted-foreground'>
 								{verb}{' '}
@@ -398,7 +397,7 @@ export function CommentCard({
 									<DropdownMenuTrigger asChild>
 										<Button disabled={isDeleting} size='sm' variant='ghost'>
 											<MoreHorizontal className='h-4 w-4' />
-											<span className='sr-only'>More Actions</span>
+											<span className='sr-only'>{m.feedback_more_actions()}</span>
 										</Button>
 									</DropdownMenuTrigger>
 									<DropdownMenuContent align='end'>
@@ -452,10 +451,10 @@ export function CommentForm({
 	isAuthenticated,
 	isSubmitting,
 	onSubmit,
-	placeholder = 'Write a comment...',
+	placeholder = m.feedback_write_comment(),
 	redirectTo,
 	signedOut = 'simple',
-	submitLabel = 'Post Comment',
+	submitLabel = m.feedback_post_comment(),
 }: {
 	isAuthenticated: boolean;
 	isSubmitting?: boolean;
@@ -490,7 +489,9 @@ export function CommentForm({
 			setContent('');
 			editorRef?.current?.clear();
 		} catch (submitError) {
-			setError(submitError instanceof Error ? submitError.message : 'Unable to post comment');
+			setError(
+				submitError instanceof Error ? submitError.message : m.feedback_comment_post_failed()
+			);
 		}
 	}
 
@@ -503,7 +504,9 @@ export function CommentForm({
 							<MessageCircle className='size-5 md:size-6' />
 						</GradientIconBadge>
 						<div className='flex flex-col gap-1 md:gap-1.5'>
-							<h3 className='font-semibold tracking-tight md:text-lg'>Join the conversation</h3>
+							<h3 className='font-semibold tracking-tight md:text-lg'>
+								{m.feedback_join_conversation()}
+							</h3>
 							<p className='text-xs text-balance text-muted-foreground md:text-sm'>
 								Sign in to share your thoughts and help improve this project.
 							</p>
@@ -562,7 +565,7 @@ export function CommentForm({
 					onClick={handleSubmit}
 					type='button'
 				>
-					{isSubmitting ? 'Posting...' : submitLabel}
+					{isSubmitting ? m.feedback_posting() : submitLabel}
 				</Button>
 			</div>
 		</div>

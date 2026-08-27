@@ -12,6 +12,7 @@ import {
 	ResponsiveDialogDescription,
 	ResponsiveDialogTitle,
 } from '@/components/ui/responsive-dialog';
+import * as m from '@/paraglide/messages.js';
 
 type SignInPromptAction = 'follow' | 'react' | 'upvote';
 
@@ -20,22 +21,22 @@ type SignInPromptAction = 'follow' | 'react' | 'upvote';
 // account.
 const ACTION_COPY: Record<
 	SignInPromptAction,
-	{ description: string; icon: ReactNode; title: string }
+	{ description: () => string; icon: ReactNode; title: () => string }
 > = {
 	follow: {
-		description: 'Sign in to follow this feedback and get notified when it changes.',
+		description: m.feedback_sign_in_follow_description,
 		icon: <Bell className='size-6' />,
-		title: 'Sign in to follow',
+		title: m.feedback_sign_in_follow_title,
 	},
 	react: {
-		description: 'Create a free account to react to comments and join the discussion.',
+		description: m.feedback_sign_in_react_description,
 		icon: <SmilePlus className='size-6' />,
-		title: 'Sign in to react',
+		title: m.feedback_sign_in_react_title,
 	},
 	upvote: {
-		description: 'Create a free account to upvote feedback and help shape what gets built next.',
+		description: m.feedback_sign_in_upvote_description,
 		icon: <ChevronUp className='size-6' />,
-		title: 'Sign in to upvote',
+		title: m.feedback_sign_in_upvote_title,
 	},
 };
 
@@ -64,29 +65,29 @@ export function SignInPromptDialog({
 						render={<Button className='absolute top-3 right-3' size='icon-sm' variant='ghost' />}
 					>
 						<XIcon className='size-4' />
-						<span className='sr-only'>Close</span>
+						<span className='sr-only'>{m.common_close()}</span>
 					</ResponsiveDialogClose>
 
 					<GradientIconBadge>{copy.icon}</GradientIconBadge>
 
 					<div className='flex flex-col gap-1.5'>
 						<ResponsiveDialogTitle className='text-lg font-semibold tracking-tight'>
-							{copy.title}
+							{copy.title()}
 						</ResponsiveDialogTitle>
 						<ResponsiveDialogDescription className='text-sm text-balance text-muted-foreground'>
-							{copy.description}
+							{copy.description()}
 						</ResponsiveDialogDescription>
 					</div>
 
 					<div className='flex w-full flex-col gap-2'>
 						<Button asChild size='lg'>
 							<Link search={{ redirect }} to='/auth'>
-								Sign in
+								{m.auth_sign_in_title()}
 							</Link>
 						</Button>
 						<Button asChild size='lg' variant='outline'>
 							<Link search={{ redirect }} to='/auth/sign-up'>
-								Create account
+								{m.auth_create_account_action()}
 							</Link>
 						</Button>
 					</div>

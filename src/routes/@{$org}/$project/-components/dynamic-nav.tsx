@@ -25,6 +25,7 @@ import Roadmap from '@/icons/roadmap';
 import SettingsSliders from '@/icons/settings-sliders';
 import { useCRPC } from '@/lib/convex/crpc';
 import { cn } from '@/lib/utils';
+import * as m from '@/paraglide/messages.js';
 
 const useIsomorphicLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect;
 
@@ -59,37 +60,37 @@ export function DynamicNavigation({ orgSlug, projectSlug }: DynamicNavigationPro
 
 	const items: Array<NavigationItem> = [
 		{
-			children: 'Overview',
+			children: m.project_nav_overview(),
 			icon: Home,
 			to: '/@{$org}/$project',
 			params: (prev) => ({ ...prev, ...params }),
 		},
 		{
-			children: 'Feedback',
+			children: m.project_nav_feedback(),
 			icon: ArchivePencil,
 			to: '/@{$org}/$project/feedback',
 			params: (prev) => ({ ...prev, ...params }),
 		},
 		{
-			children: 'Updates',
+			children: m.project_nav_updates(),
 			icon: CalendarDays,
 			to: '/@{$org}/$project/updates',
 			params: (prev) => ({ ...prev, ...params }),
 		},
 		{
-			children: 'Roadmap',
+			children: m.project_nav_roadmap(),
 			icon: Roadmap,
 			to: '/@{$org}/$project/roadmap',
 			params: (prev) => ({ ...prev, ...params }),
 		},
 		{
-			children: 'Files',
+			children: m.project_nav_files(),
 			icon: Folder,
 			to: '/@{$org}/$project/files',
 			params: (prev) => ({ ...prev, ...params }),
 		},
 		{
-			children: 'Discussions',
+			children: m.project_nav_discussions(),
 			icon: Interview,
 			to: '/@{$org}/$project/discussions',
 			params: (prev) => ({ ...prev, ...params }),
@@ -97,7 +98,7 @@ export function DynamicNavigation({ orgSlug, projectSlug }: DynamicNavigationPro
 		...(canManageSettings
 			? [
 					{
-						children: 'Settings',
+						children: m.project_nav_settings(),
 						icon: SettingsSliders,
 						to: '/@{$org}/$project/settings',
 						params: (prev) => ({ ...prev, ...params }),
@@ -247,7 +248,7 @@ export function DynamicNavigation({ orgSlug, projectSlug }: DynamicNavigationPro
 							<DropdownMenuTrigger asChild>
 								<Button variant='ghost' size='sm' className='shrink-0 self-center'>
 									<Dots className='size-4 text-muted-foreground' />
-									<span className='sr-only'>More features</span>
+									<span className='sr-only'>{m.project_nav_more_features()}</span>
 								</Button>
 							</DropdownMenuTrigger>
 							<DropdownMenuContent>

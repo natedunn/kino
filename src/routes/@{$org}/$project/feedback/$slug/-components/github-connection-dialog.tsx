@@ -21,6 +21,7 @@ import { useCRPC } from '@/lib/convex/crpc';
 import { extractErrorMessage } from '@/lib/errors';
 import { cn } from '@/lib/utils';
 import { FORM_LIMITS } from '@/lib/validation';
+import * as m from '@/paraglide/messages.js';
 
 export function GithubConnectionIcon() {
 	return <GithubIcon className='size-3.5 shrink-0 text-muted-foreground' />;
@@ -168,7 +169,7 @@ function GitHubConnectionDialogBody({
 		searchQuery.error;
 	const error =
 		localError ||
-		(requestError ? extractErrorMessage(requestError, 'Unable to connect GitHub') : '');
+		(requestError ? extractErrorMessage(requestError, m.feedback_github_connect_failed()) : '');
 	const feedbackUrl = typeof window === 'undefined' ? '' : window.location.href.split('#')[0];
 	const canCreate =
 		title.trim().length > 0 &&
@@ -221,7 +222,7 @@ function GitHubConnectionDialogBody({
 
 	return (
 		<>
-			<ResponsiveDialogHeader icon={<GithubIcon />} title='Connect GitHub' />
+			<ResponsiveDialogHeader icon={<GithubIcon />} title={m.feedback_github_connect()} />
 
 			{/* Mode nav — official Tabs, styled to match the target-timeframe dialog. */}
 			<div className='border-b px-5 py-3'>
@@ -237,13 +238,13 @@ function GitHubConnectionDialogBody({
 							className='h-8 rounded-md text-xs data-active:text-background'
 							value='existing'
 						>
-							Link existing
+							{m.feedback_github_link_existing()}
 						</TabsTrigger>
 						<TabsTrigger
 							className='h-8 rounded-md text-xs data-active:text-background'
 							value='create'
 						>
-							Create new
+							{m.feedback_github_create_new()}
 						</TabsTrigger>
 					</TabsList>
 				</Tabs>
@@ -260,24 +261,24 @@ function GitHubConnectionDialogBody({
 					</div>
 				) : sourceDisabled ? (
 					<GitHubConnectionNotice
-						description="Issues are not enabled for this project's connected GitHub repository."
+						description={m.feedback_github_issues_disabled_description()}
 						orgSlug={orgSlug}
 						projectSlug={projectSlug}
-						title='Enable GitHub Issues'
+						title={m.feedback_github_enable_issues()}
 					/>
 				) : repoMissing ? (
 					<GitHubConnectionNotice
-						description='Connect a GitHub repository before linking feedback to issues.'
+						description={m.feedback_github_repo_missing_description()}
 						orgSlug={orgSlug}
 						projectSlug={projectSlug}
-						title='Connect a GitHub repository'
+						title={m.feedback_github_connect_repo()}
 					/>
 				) : writeDisabled ? (
 					<GitHubConnectionNotice
-						description='This GitHub repository is connected read-only. Reconnect it with read/write access before linking feedback.'
+						description={m.feedback_github_readonly_description()}
 						orgSlug={orgSlug}
 						projectSlug={projectSlug}
-						title='Reconnect with write access'
+						title={m.feedback_github_reconnect_write()}
 					/>
 				) : mode === 'existing' ? (
 					<div
@@ -293,7 +294,7 @@ function GitHubConnectionDialogBody({
 								className='h-9 pl-9 text-sm'
 								maxLength={FORM_LIMITS.feedbackSearch}
 								onChange={(event) => handleQueryChange(event.target.value)}
-								placeholder='Search issues...'
+								placeholder={m.feedback_github_search_issues()}
 								value={query}
 							/>
 						</div>
@@ -340,7 +341,9 @@ function GitHubConnectionDialogBody({
 								))
 							) : (
 								<div className='rounded-lg border border-dashed py-8 text-center text-sm text-muted-foreground'>
-									{searchQuery.isFetched ? 'No issues found.' : 'Loading issues...'}
+									{searchQuery.isFetched
+										? m.feedback_github_no_issues()
+										: m.feedback_github_loading_issues()}
 								</div>
 							)}
 						</div>
@@ -353,19 +356,20 @@ function GitHubConnectionDialogBody({
 						)}
 						key='create'
 					>
-						<Field description='A short summary for the new GitHub issue.' label='Title'>
+						<Field description={m.feedback_github_title_description()} label={m.feedback_title()}>
 							<Input
 								maxLength={FORM_LIMITS.githubTitle}
 								onChange={(event) => setTitle(event.target.value)}
-								placeholder='Issue title'
+								placeholder={m.feedback_github_issue_title()}
 								value={title}
 							/>
 						</Field>
 						<Field
-							description='Add context or details for whoever picks this up.'
+							description={m.feedback_github_body_description()}
 							label={
 								<>
-									Body <span className='font-normal text-muted-foreground'>(optional)</span>
+									{m.feedback_github_body()}{' '}
+									<span className='font-normal text-muted-foreground'>{m.feedback_optional()}</span>
 								</>
 							}
 						>
@@ -373,7 +377,7 @@ function GitHubConnectionDialogBody({
 								className='min-h-28 resize-none'
 								maxLength={FORM_LIMITS.githubBody}
 								onChange={(event) => setBody(event.target.value)}
-								placeholder='Add a description…'
+								placeholder={m.feedback_github_add_description()}
 								value={body}
 							/>
 						</Field>
@@ -385,17 +389,17 @@ function GitHubConnectionDialogBody({
 				{error ? <p className='text-xs text-destructive'>{error}</p> : <span />}
 				<div className='flex items-center gap-2'>
 					<Button onClick={onClose} size='sm' type='button' variant='outline'>
-						Cancel
+						{m.common_cancel()}
 					</Button>
 					{mode === 'existing' ? (
 						<Button disabled={!canConnect} onClick={handleConnectExisting} size='sm' type='button'>
 							<LinkIcon className='size-3.5' />
-							Connect
+							{m.feedback_github_connect_action()}
 						</Button>
 					) : (
 						<Button disabled={!canCreate} onClick={handleCreate} size='sm' type='button'>
 							<Plus className='size-3.5' />
-							Create & connect
+							{m.feedback_github_create_connect()}
 						</Button>
 					)}
 				</div>
