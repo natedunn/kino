@@ -11,8 +11,9 @@ set -euo pipefail
 # seed), which tripped the worktree-creation timeouts in tools like T3 Code /
 # Conductor. Worktree creation is now instant; setup is a deliberate manual step.
 #
-# Steps: sync env files from the main worktree, install deps, refresh Convex AI
-# files, and seed a worktree-local anonymous Convex backend from shared dev.
+# Steps: sync env files from the main worktree, install deps, seed a
+# worktree-local anonymous Convex backend from shared dev, and verify generated
+# application files against that local backend.
 
 readonly TOTAL_STEPS=5
 
@@ -113,11 +114,7 @@ step 2 "Install dependencies"
 detail "Running pnpm install (timeout 180s)"
 run_with_timeout 180 pnpm install
 
-step 3 "Refresh Convex AI files"
-detail "Running npx convex ai-files update (timeout 60s)"
-run_with_timeout 60 npx convex ai-files update
-
-step 4 "Resolve seed options"
+step 3 "Resolve seed options"
 seed_args=(--reset-local-state)
 detail "Resetting this worktree's anonymous local Convex backend before seeding"
 
@@ -138,8 +135,12 @@ else
   detail "Using the saved/shared dev seed source"
 fi
 
-step 5 "Seed anonymous Convex workspace from shared dev"
+step 4 "Seed anonymous Convex workspace from shared dev"
 detail "This creates/resets the worktree-local anonymous Convex database"
 pnpm convex:seed:from-dev "${seed_args[@]}"
+
+step 5 "Verify generated application files"
+detail "Running pnpm run verify:generated (timeout 120s)"
+run_with_timeout 120 pnpm run verify:generated
 
 printf "\n==> Setup complete. Run pnpm dev to start Portless, Vite, and Convex.\n"
