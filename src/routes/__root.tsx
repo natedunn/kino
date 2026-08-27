@@ -14,7 +14,6 @@ import { createServerFn } from '@tanstack/react-start';
 import { getRequest } from '@tanstack/react-start/server';
 
 import { DefaultCatchBoundary } from '@/components/_default-catch-boundary';
-import { AccountLocaleSync } from '@/components/account-locale-sync';
 import { Providers } from '@/components/providers';
 import { StaleBundleWatcher } from '@/components/stale-bundle-watcher';
 import { getAppInstallMetadata, getFaviconHref, inferAppEnvironment } from '@/lib/app-env';
@@ -232,7 +231,6 @@ function RootComponent() {
 			convexQueryClient={convexQueryClient}
 			initialToken={initialTokenRef.current}
 		>
-			<AccountLocaleSync />
 			<Outlet />
 		</Providers>
 	);
