@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { createFileRoute, Link, redirect } from '@tanstack/react-router';
 import { ArrowRight, MessageSquare, Newspaper, Route as RouteIcon } from 'lucide-react';
 
+import { PublicMainNav } from '@/components/site-nav/public-main-nav';
 import { Button } from '@/components/ui/button';
 import { isClientDefinitelyAuthed } from '@/lib/auth/auth-snapshot';
 import { titleMeta } from '@/lib/seo';
@@ -30,25 +31,7 @@ export const Route = createFileRoute('/')({
 function LandingPage() {
 	return (
 		<div className='flex min-h-svh flex-col'>
-			{/* Nav */}
-			<header className='border-b border-border/50'>
-				<div className='container flex items-center justify-between py-4'>
-					<div className='flex items-center gap-2.5'>
-						<div className='flex h-7 w-7 items-center justify-center rounded-full bg-primary'>
-							<span className='text-xs font-bold text-primary-foreground'>K</span>
-						</div>
-						<span className='text-sm font-semibold tracking-tight'>Kino</span>
-					</div>
-					<div className='flex items-center gap-3'>
-						<Button asChild variant='ghost' size='sm'>
-							<Link to='/auth'>Sign in</Link>
-						</Button>
-						<Button asChild size='sm'>
-							<Link to='/auth'>Get started</Link>
-						</Button>
-					</div>
-				</div>
-			</header>
+			<PublicMainNav />
 
 			{/* Hero */}
 			<main className='flex-1'>

@@ -12,14 +12,13 @@ function CommunityGuidelinesPage() {
 	return (
 		<LegalPage
 			title='Community guidelines'
-			description='These guidelines help keep Kino’s public and shared spaces useful, safe, and welcoming.'
+			description='Guidelines for keeping Kino a safe and welcoming product.'
 		>
 			<h2>Where these guidelines apply</h2>
 			<p>
-				These guidelines apply to public profiles, feedback boards, comments, reactions, updates,
-				roadmaps, links, files, and other content or interactions hosted by Kino. They also apply to
-				private or team spaces when conduct threatens people, the Service, or the wider community.
-				Project owners may adopt additional rules for their spaces, provided those rules do not
+				These guidelines apply to anywhere in Kino where user created content or communication is
+				possible. They also apply to private or team spaces that are not defaulted for public view.
+				Organization owners may adopt additional rules for their spaces, provided those rules do not
 				conflict with these guidelines.
 			</p>
 
@@ -28,13 +27,6 @@ function CommunityGuidelinesPage() {
 				<li>Discuss ideas and work without attacking the people behind them.</li>
 				<li>Give clear, relevant feedback and assume good faith where reasonable.</li>
 				<li>Respect project scope, moderation decisions, and other people&apos;s boundaries.</li>
-				<li>
-					Label conflicts of interest, affiliations, and synthetic or automated content when
-					relevant.
-				</li>
-				<li>
-					Use titles, tags, and reactions accurately so others can understand and find content.
-				</li>
 			</ul>
 
 			<h2>Do not harm or harass people</h2>

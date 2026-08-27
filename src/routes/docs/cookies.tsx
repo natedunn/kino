@@ -14,7 +14,7 @@ function CookiePolicyPage() {
 			title='Cookie policy'
 			description='This policy explains how Kino uses cookies and similar browser storage technologies.'
 		>
-			<h2>What these technologies are</h2>
+			<h2>What are "cookies"?</h2>
 			<p>
 				Cookies are small text files stored by a website in your browser. Kino also uses similar
 				technologies, including local storage, to remember information on your device. Some are set
@@ -47,7 +47,7 @@ function CookiePolicyPage() {
 				attributes, and input values to be masked in recordings.
 			</p>
 
-			<h2>Current technology summary</h2>
+			<h2>Current cookie summary</h2>
 			<div className='not-prose overflow-x-auto'>
 				<table className='w-full min-w-xl border-collapse text-left text-sm'>
 					<thead>

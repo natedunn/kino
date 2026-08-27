@@ -1,10 +1,11 @@
 import type { IconProps } from '@/icons/types';
 import type { ComponentType } from 'react';
 
-import { createFileRoute, Link } from '@tanstack/react-router';
+import { createFileRoute } from '@tanstack/react-router';
 import { ArrowUpRight } from 'lucide-react';
 
 import { ClickableContainer } from '@/components/clickable-container';
+import { DocsPageHeader } from '@/components/docs/docs-page-header';
 import {
 	BaseUiLogo,
 	BentoLogo,
@@ -20,7 +21,7 @@ import {
 } from '@/components/stack/logos';
 import { titleMeta } from '@/lib/seo';
 
-export const Route = createFileRoute('/stack')({
+export const Route = createFileRoute('/docs/stack')({
 	head: () => ({
 		meta: [titleMeta(['Tech Stack'])],
 	}),
@@ -130,63 +131,27 @@ const SECTIONS: Array<TechSection> = [
 
 function StackPage() {
 	return (
-		<div className='flex min-h-svh flex-col'>
-			{/* Nav */}
-			<header className='border-b border-border/50'>
-				<div className='container flex items-center justify-between py-4'>
-					<Link to='/' className='flex items-center gap-2.5'>
-						<div className='flex h-7 w-7 items-center justify-center rounded-full bg-primary'>
-							<span className='text-xs font-bold text-primary-foreground'>K</span>
+		<div>
+			<DocsPageHeader
+				description='The tools and technologies we use to build and run Kino — and what each one does in the project.'
+				title='Tech Stack'
+			/>
+
+			<div className='mt-12 space-y-12'>
+				{SECTIONS.map((section) => (
+					<section key={section.title}>
+						<div className='max-w-xl'>
+							<h2 className='text-xl font-semibold tracking-tight'>{section.title}</h2>
+							<p className='mt-2 text-sm text-muted-foreground'>{section.description}</p>
 						</div>
-						<span className='text-sm font-semibold tracking-tight'>Kino</span>
-					</Link>
-				</div>
-			</header>
-
-			<main className='flex-1'>
-				{/* Hero */}
-				<section className='container py-16 md:py-24'>
-					<div className='max-w-2xl'>
-						<h1 className='text-4xl font-bold tracking-tight md:text-5xl'>Tech Stack</h1>
-						<p className='mt-4 max-w-xl text-lg leading-relaxed text-muted-foreground'>
-							The tools and technologies we use to build and run Kino — and what each one does in
-							the project.
-						</p>
-					</div>
-				</section>
-
-				{/* Sections */}
-				<div className='container space-y-16 pb-24'>
-					{SECTIONS.map((section) => (
-						<section key={section.title}>
-							<div className='max-w-xl'>
-								<h2 className='text-xl font-semibold tracking-tight'>{section.title}</h2>
-								<p className='mt-2 text-sm text-muted-foreground'>{section.description}</p>
-							</div>
-							<div className='mt-5 grid gap-px overflow-hidden rounded-lg border border-border bg-border'>
-								{section.items.map((item) => (
-									<TechRow key={item.name} item={item} />
-								))}
-							</div>
-						</section>
-					))}
-				</div>
-			</main>
-
-			{/* Footer */}
-			<footer className='border-t border-border py-6'>
-				<div className='container flex items-center justify-between text-sm text-muted-foreground'>
-					<p>&copy; {new Date().getFullYear()} Kino</p>
-					<div className='flex items-center gap-4'>
-						<Link to='/docs/notices' className='transition-colors hover:text-foreground'>
-							Notices
-						</Link>
-						<Link to='/' className='transition-colors hover:text-foreground'>
-							Home
-						</Link>
-					</div>
-				</div>
-			</footer>
+						<div className='mt-5 grid gap-px overflow-hidden rounded-lg border border-border bg-border'>
+							{section.items.map((item) => (
+								<TechRow key={item.name} item={item} />
+							))}
+						</div>
+					</section>
+				))}
+			</div>
 		</div>
 	);
 }

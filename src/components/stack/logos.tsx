@@ -1,7 +1,7 @@
 import type { IconProps } from '@/icons/types';
 
 /**
- * Monochrome brand logos for the /stack page.
+ * Monochrome brand logos for the /docs/stack page.
  *
  * Each logo follows the repo icon convention (see `src/icons/*`): it takes
  * `IconProps`, renders a 24x24 `viewBox` SVG, and uses `fill="currentColor"`
