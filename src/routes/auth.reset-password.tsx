@@ -10,9 +10,10 @@ import { Input } from '@/components/ui/input';
 import { trackAuthError, trackAuthSuccess } from '@/lib/auth-analytics';
 import { authClient } from '@/lib/convex/auth-client';
 import { titleMeta } from '@/lib/seo';
+import { m } from '@/paraglide/messages.js';
 
 export const Route = createFileRoute('/auth/reset-password')({
-	head: () => ({ meta: [titleMeta(['Set a new password'])] }),
+	head: () => ({ meta: [titleMeta([m.auth_set_password_meta()])] }),
 	validateSearch: (search: Record<string, unknown>): { token?: string; error?: string } => ({
 		...(typeof search.token === 'string' ? { token: search.token } : {}),
 		...(typeof search.error === 'string' ? { error: search.error } : {}),
@@ -36,7 +37,7 @@ function ResetPasswordPage() {
 		e.preventDefault();
 		if (!token) return;
 		if (!passwordsMatch) {
-			setError('Passwords don’t match.');
+			setError(m.auth_password_mismatch());
 			return;
 		}
 		setError(null);
@@ -48,7 +49,7 @@ function ResetPasswordPage() {
 			});
 			if (res.error) {
 				trackAuthError('password_reset', res.error);
-				setError(res.error.message ?? 'Could not reset your password.');
+				setError(m.auth_reset_failed());
 			} else {
 				trackAuthSuccess('password_reset');
 				setDone(true);
@@ -56,7 +57,7 @@ function ResetPasswordPage() {
 			}
 		} catch (err) {
 			trackAuthError('password_reset', err);
-			setError(err instanceof Error ? err.message : 'Something went wrong.');
+			setError(m.common_something_went_wrong());
 		} finally {
 			setPending(false);
 		}
@@ -66,15 +67,13 @@ function ResetPasswordPage() {
 		return (
 			<>
 				<AuthHeader
-					title='Invalid or expired link'
-					description='This password reset link is no longer valid.'
+					title={m.auth_invalid_reset_title()}
+					description={m.auth_invalid_reset_description()}
 				/>
-				<InlineAlert variant='danger'>
-					Please request a fresh password reset email and try again.
-				</InlineAlert>
+				<InlineAlert variant='danger'>{m.auth_request_fresh_reset()}</InlineAlert>
 				<AuthFooter>
 					<Link className='link-text font-medium text-foreground' to='/auth/forgot-password'>
-						Request a new link
+						{m.auth_request_new_link()}
 					</Link>
 				</AuthFooter>
 			</>
@@ -84,14 +83,14 @@ function ResetPasswordPage() {
 	return (
 		<>
 			<AuthHeader
-				title='Set a new password'
-				description='Choose a new password for your account.'
+				title={m.auth_set_password_title()}
+				description={m.auth_set_password_description()}
 			/>
 			{done ? (
-				<InlineAlert variant='success'>Password updated. Redirecting you to sign in…</InlineAlert>
+				<InlineAlert variant='success'>{m.auth_password_updated()}</InlineAlert>
 			) : (
 				<form className='flex flex-col gap-4' onSubmit={onSubmit}>
-					<AuthField id='password' label='New password'>
+					<AuthField id='password' label={m.auth_new_password()}>
 						<Input
 							size='lg'
 							autoComplete='new-password'
@@ -103,7 +102,7 @@ function ResetPasswordPage() {
 							value={password}
 						/>
 					</AuthField>
-					<AuthField id='confirm-password' label='Confirm new password'>
+					<AuthField id='confirm-password' label={m.auth_confirm_new_password()}>
 						<Input
 							size='lg'
 							aria-invalid={showPasswordMismatch}
@@ -116,7 +115,7 @@ function ResetPasswordPage() {
 							value={confirmPassword}
 						/>
 						{showPasswordMismatch ? (
-							<p className='text-xs text-destructive'>Passwords don’t match.</p>
+							<p className='text-xs text-destructive'>{m.auth_password_mismatch()}</p>
 						) : null}
 					</AuthField>
 					{error ? <InlineAlert variant='danger'>{error}</InlineAlert> : null}
@@ -127,7 +126,7 @@ function ResetPasswordPage() {
 						size='lg'
 						type='submit'
 					>
-						{pending ? 'Updating…' : 'Update password'}
+						{pending ? m.auth_updating() : m.auth_update_password()}
 					</Button>
 				</form>
 			)}

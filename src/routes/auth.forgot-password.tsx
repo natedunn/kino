@@ -10,9 +10,10 @@ import { Input } from '@/components/ui/input';
 import { trackAuthError, trackAuthSuccess } from '@/lib/auth-analytics';
 import { authClient } from '@/lib/convex/auth-client';
 import { titleMeta } from '@/lib/seo';
+import { m } from '@/paraglide/messages.js';
 
 export const Route = createFileRoute('/auth/forgot-password')({
-	head: () => ({ meta: [titleMeta(['Reset password'])] }),
+	head: () => ({ meta: [titleMeta([m.auth_reset_password_meta()])] }),
 	component: ForgotPasswordPage,
 });
 
@@ -33,14 +34,14 @@ function ForgotPasswordPage() {
 			});
 			if (res.error) {
 				trackAuthError('password_reset_request', res.error);
-				setError(res.error.message ?? 'Could not send the reset email.');
+				setError(m.auth_reset_email_failed());
 			} else {
 				trackAuthSuccess('password_reset_request');
 				setSent(true);
 			}
 		} catch (err) {
 			trackAuthError('password_reset_request', err);
-			setError(err instanceof Error ? err.message : 'Something went wrong.');
+			setError(m.common_something_went_wrong());
 		} finally {
 			setPending(false);
 		}
@@ -49,16 +50,14 @@ function ForgotPasswordPage() {
 	return (
 		<>
 			<AuthHeader
-				title='Reset your password'
-				description='We’ll email you a link to choose a new password.'
+				title={m.auth_reset_password_title()}
+				description={m.auth_reset_password_description()}
 			/>
 			{sent ? (
-				<InlineAlert variant='success'>
-					If an account exists for {email}, a reset link is on its way.
-				</InlineAlert>
+				<InlineAlert variant='success'>{m.auth_reset_email_sent({ email })}</InlineAlert>
 			) : (
 				<form className='flex flex-col gap-4' onSubmit={onSubmit}>
-					<AuthField id='email' label='Email'>
+					<AuthField id='email' label={m.common_email()}>
 						<Input
 							size='lg'
 							autoComplete='email'
@@ -71,13 +70,13 @@ function ForgotPasswordPage() {
 					</AuthField>
 					{error ? <InlineAlert variant='danger'>{error}</InlineAlert> : null}
 					<Button disabled={pending} size='lg' type='submit'>
-						{pending ? 'Sending…' : 'Send reset link'}
+						{pending ? m.auth_sending() : m.auth_send_reset_link()}
 					</Button>
 				</form>
 			)}
 			<AuthFooter>
 				<Link className='link-text font-medium text-foreground' to='/auth'>
-					Back to sign in
+					{m.auth_back_to_sign_in()}
 				</Link>
 			</AuthFooter>
 		</>
