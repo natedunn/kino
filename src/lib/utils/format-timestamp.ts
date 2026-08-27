@@ -1,3 +1,5 @@
+import { getLocale } from '@/paraglide/runtime.js';
+
 /**
  * Coerce a Date, ISO string, or epoch-ms number to epoch milliseconds.
  * Use this to normalize the various timestamp shapes coming back from the
@@ -57,24 +59,24 @@ export function formatRelativeDay(timestamp: number): string {
 	const diffDays = Math.floor((today.getTime() - dateDay.getTime()) / (1000 * 60 * 60 * 24));
 
 	if (diffDays === 0) {
-		return 'today';
+		return formatRelative(0, 'day');
 	} else if (diffDays === 1) {
-		return 'yesterday';
+		return formatRelative(-1, 'day');
 	} else if (diffDays < 7) {
-		return `${diffDays} days ago`;
+		return formatRelative(-diffDays, 'day');
 	} else if (diffDays < 14) {
-		return '1 week ago';
+		return formatRelative(-1, 'week');
 	} else if (diffDays < 30) {
 		const weeks = Math.floor(diffDays / 7);
-		return `${weeks} weeks ago`;
+		return formatRelative(-weeks, 'week');
 	} else if (diffDays < 60) {
-		return '1 month ago';
+		return formatRelative(-1, 'month');
 	} else if (diffDays < 365) {
 		const months = Math.floor(diffDays / 30);
-		return `${months} months ago`;
+		return formatRelative(-months, 'month');
 	} else {
 		const years = Math.floor(diffDays / 365);
-		return years === 1 ? '1 year ago' : `${years} years ago`;
+		return formatRelative(-years, 'year');
 	}
 }
 
@@ -106,13 +108,13 @@ export function formatTimestamp(
 
 	if (opts.relative && diff < DAYS) {
 		if (diff < MINUTES) {
-			return 'just now';
+			return formatRelative(0, 'second');
 		} else if (diff < HOURS) {
 			const minutes = Math.floor(diff / MINUTES);
-			return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+			return formatRelative(-minutes, 'minute');
 		} else {
 			const hours = Math.floor(diff / HOURS);
-			return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+			return formatRelative(-hours, 'hour');
 		}
 	}
 	opts = { ordinal: false, alwaysIncludeYear: false, yearComma: true, ...opts };
@@ -166,4 +168,8 @@ export function formatTimestamp(
 			? `${month} ${ordinalDay}${yearComma} ${dateYear}`
 			: `${month} ${ordinalDay}`;
 	}
+}
+
+function formatRelative(value: number, unit: Intl.RelativeTimeFormatUnit): string {
+	return new Intl.RelativeTimeFormat(getLocale(), { numeric: 'auto' }).format(value, unit);
 }
