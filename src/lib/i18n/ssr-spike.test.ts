@@ -18,6 +18,10 @@ async function renderRequest(headers: HeadersInit = {}) {
 }
 
 describe('request-scoped SSR locale', () => {
+	it('falls back safely when rendering outside request middleware on the server', () => {
+		expect(getLocale()).toBe('en-US');
+	});
+
 	it.each([
 		['es-ES', 'es-419', 'Prueba de internacionalización'],
 		['zh-Hant', 'zh-Hans', '国际化技术验证'],

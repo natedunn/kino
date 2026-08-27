@@ -18,7 +18,7 @@ defineCustomServerStrategy('custom-kino-locale', {
 	},
 });
 
-if (typeof navigator !== 'undefined') {
+if (typeof navigator !== 'undefined' && typeof document !== 'undefined') {
 	defineCustomClientStrategy('custom-kino-locale', {
 		getLocale() {
 			return (
