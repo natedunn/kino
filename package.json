@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "i18n:check": "node scripts/check-i18n-catalogs.mjs",
-    "i18n:compile": "pnpm run i18n:check && paraglide-js compile --project ./project.inlang --outdir ./src/paraglide --strategy custom-kino-locale baseLocale --output-structure message-modules --emit-ts-declarations --silent",
+    "i18n:compile": "pnpm run i18n:check && paraglide-js compile --project ./project.inlang --outdir ./src/paraglide --strategy cookie preferredLanguage baseLocale --output-structure message-modules --emit-ts-declarations --silent",
     "dev": "pnpm run dev:anonymous",
     "dev:clean": "node scripts/dev-clean.mjs",
     "dev:stop": "node scripts/dev-stop.mjs",

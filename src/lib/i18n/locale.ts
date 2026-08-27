@@ -56,6 +56,16 @@ export function getRequestCountry(request: Request | undefined): string | undefi
 	return request.headers.get('cf-ipcountry') ?? undefined;
 }
 
+/** Normalizes region/browser detection to a canonical locale before Paraglide resolves it. */
+export function withDetectedLocalePreference(request: Request): Request {
+	const locale =
+		resolveRegionLocale(getRequestCountry(request)) ??
+		resolvePreferredLocale(request.headers.get('accept-language'));
+	const headers = new Headers(request.headers);
+	headers.set('accept-language', locale);
+	return new Request(request, { headers });
+}
+
 /** Maps supported language families to the closest catalog Kino ships today. */
 export function resolveAppLocale(languageTag: string | null | undefined): AppLocale {
 	if (!languageTag) return DEFAULT_LOCALE;

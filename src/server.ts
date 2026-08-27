@@ -1,11 +1,11 @@
-import handler from '@tanstack/react-start/server-entry';
+import handler, { createServerEntry } from '@tanstack/react-start/server-entry';
 
-import '@/lib/i18n/runtime';
-
+import { withDetectedLocalePreference } from '@/lib/i18n/locale';
 import { paraglideMiddleware } from '@/paraglide/server.js';
 
-export default {
+export default createServerEntry({
 	fetch(request: Request): Promise<Response> {
-		return paraglideMiddleware(request, () => handler.fetch(request));
+		const localizedRequest = withDetectedLocalePreference(request);
+		return paraglideMiddleware(localizedRequest, () => handler.fetch(localizedRequest));
 	},
-};
+});

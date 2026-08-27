@@ -1,13 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
-import './runtime';
-
 import { m } from '@/paraglide/messages.js';
 import { getLocale } from '@/paraglide/runtime.js';
 import { paraglideMiddleware } from '@/paraglide/server.js';
 
+import { withDetectedLocalePreference } from './locale';
+
 async function renderRequest(headers: HeadersInit = {}) {
-	const request = new Request('https://kino.test/i18n-spike', { headers });
+	const request = withDetectedLocalePreference(
+		new Request('https://kino.test/i18n-spike', { headers })
+	);
 
 	return paraglideMiddleware(request, () => {
 		const locale = getLocale();

@@ -78,14 +78,15 @@ const config = defineConfig({
 			projects: ['./tsconfig.json'],
 		}),
 		tailwindcss(),
+		tanstackStart(),
+		viteReact(),
 		paraglideVitePlugin({
 			project: './project.inlang',
 			outdir: './src/paraglide',
 			outputStructure: 'message-modules',
-			strategy: ['custom-kino-locale', 'baseLocale'],
+			cookieName: 'PARAGLIDE_LOCALE',
+			strategy: ['cookie', 'preferredLanguage', 'baseLocale'],
 		}),
-		tanstackStart(),
-		viteReact(),
 	],
 	server: {
 		...(process.env.KINO_SHARE === '1' ? { allowedHosts: ['.trycloudflare.com'] } : {}),

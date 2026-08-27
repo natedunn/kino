@@ -22,8 +22,6 @@ import { getServerAuthToken } from '@/lib/convex/auth-start-token';
 import { crpcServer } from '@/lib/convex/crpc-server';
 import { LOCALE_COOKIE_NAME } from '@/lib/i18n/locale';
 
-import '@/lib/i18n/runtime';
-
 import { getLocale } from '@/paraglide/runtime.js';
 
 import appCss from '../styles.css?url';
