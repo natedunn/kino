@@ -16,17 +16,18 @@ import {
 } from '@/components/ui/select';
 import Filter from '@/icons/filter';
 import { Filter2Outline18 } from '@/icons/nucleo/Filter2Outline18';
+import * as m from '@/paraglide/messages.js';
 
 const FROM_ROUTE = '/@{$org}/$project/feedback/';
 const TO_ROUTE = '/@{$org}/$project/feedback';
 const SEARCH_INPUT_ID = 'feedback-search';
 const STATUS_FILTER_ID = 'status-filter';
 const STATUS_OPTIONS = [
-	{ label: 'All statuses', value: null },
-	{ label: 'Open', value: 'open' },
-	{ label: 'In Progress', value: 'in-progress' },
-	{ label: 'Completed', value: 'completed' },
-	{ label: 'Closed', value: 'closed' },
+	{ label: m.feedback_index_all_statuses, value: null },
+	{ label: m.feedback_status_open, value: 'open' },
+	{ label: m.feedback_status_in_progress, value: 'in-progress' },
+	{ label: m.feedback_status_completed, value: 'completed' },
+	{ label: m.feedback_status_closed, value: 'closed' },
 ] as const;
 
 export function FeedbackToolbar() {
@@ -41,6 +42,7 @@ export function FeedbackToolbar() {
 	const [searchTerm, setSearchTerm] = useState(!search ? '' : search);
 	const filtersPanelRef = useRef<HTMLDivElement>(null);
 	const searchTimeoutRef = useRef<number | null>(null);
+	const statusOptions = STATUS_OPTIONS.map((option) => ({ ...option, label: option.label() }));
 
 	const setSearchParams = useCallback(
 		(next: Omit<typeof searchParams, 'board'>) => {
@@ -110,14 +112,14 @@ export function FeedbackToolbar() {
 				group: 'Feedback' as const,
 				id: 'feedback.search',
 				keys: ['f'],
-				description: 'Focus search',
+				description: m.feedback_index_focus_search(),
 				run: focusSearch,
 			},
 			{
 				group: 'Feedback' as const,
 				id: 'feedback.filters',
 				keys: ['i'],
-				description: 'Toggle filters',
+				description: m.feedback_index_toggle_filters(),
 				run: toggleFilters,
 			},
 		],
@@ -132,7 +134,7 @@ export function FeedbackToolbar() {
 				id: 'feedback.focus-search',
 				keywords: ['find', 'search', 'filter'],
 				shortcut: 'F',
-				title: 'Focus search',
+				title: m.feedback_index_focus_search(),
 				run: focusSearch,
 			},
 			{
@@ -141,7 +143,7 @@ export function FeedbackToolbar() {
 				id: 'feedback.toggle-filters',
 				keywords: ['filter', 'status', 'options'],
 				shortcut: 'I',
-				title: 'Toggle filters',
+				title: m.feedback_index_toggle_filters(),
 				run: toggleFilters,
 			},
 		],
@@ -164,7 +166,7 @@ export function FeedbackToolbar() {
 						variant={showFilters || hasActiveFilters ? 'default' : 'outline'}
 					>
 						<Filter className='mr-2 h-4 w-4' />
-						Filters
+						{m.feedback_index_filters()}
 						{hasActiveFilters ? (
 							<Badge
 								className='ml-2 flex h-5 w-5 items-center justify-center rounded-full p-0 pr-px text-[10px]'
@@ -184,7 +186,7 @@ export function FeedbackToolbar() {
 							variant='outline'
 						>
 							<X className='mr-2 h-4 w-4' />
-							Clear All
+							{m.feedback_index_clear_all()}
 						</Button>
 					) : null}
 				</div>
@@ -196,7 +198,7 @@ export function FeedbackToolbar() {
 							setSearchTerm(event.target.value);
 							scheduleSearch(event.target.value);
 						}}
-						placeholder='Search...'
+						placeholder={m.feedback_index_search_placeholder()}
 						value={searchTerm}
 					/>
 				</div>
@@ -205,7 +207,7 @@ export function FeedbackToolbar() {
 			{showFilters ? (
 				<div
 					ref={filtersPanelRef}
-					aria-label='Filters'
+					aria-label={m.feedback_index_filters()}
 					className='rounded-lg border bg-muted/50 p-4 outline-none focus-visible:ring-2 focus-visible:ring-ring/50'
 					role='region'
 					tabIndex={-1}
@@ -213,10 +215,10 @@ export function FeedbackToolbar() {
 					<div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4'>
 						<div className='space-y-2'>
 							<label className='text-muted-foreground' htmlFor={STATUS_FILTER_ID}>
-								Status
+								{m.feedback_status()}
 							</label>
 							<Select
-								items={STATUS_OPTIONS}
+								items={statusOptions}
 								onValueChange={(value) => {
 									setSearchParams({
 										status: value ?? undefined,
@@ -225,10 +227,10 @@ export function FeedbackToolbar() {
 								value={!status ? null : status}
 							>
 								<SelectTrigger id={STATUS_FILTER_ID}>
-									<SelectValue placeholder='All statuses' />
+									<SelectValue placeholder={m.feedback_index_all_statuses()} />
 								</SelectTrigger>
 								<SelectContent>
-									{STATUS_OPTIONS.map(({ label, value }) => (
+									{statusOptions.map(({ label, value }) => (
 										<SelectItem key={`value-${value ?? 'undefined'}`} value={value}>
 											{label}
 										</SelectItem>

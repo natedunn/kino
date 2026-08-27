@@ -4,6 +4,7 @@ import { Link, useNavigate, useParams, useSearch } from '@tanstack/react-router'
 import { BoardIcon } from '@/components/board-icon';
 import { useRegisterShortcuts } from '@/components/shortcuts';
 import { SidebarNavGroup, SidebarNavItem } from '@/components/sidebar-nav';
+import * as m from '@/paraglide/messages.js';
 
 // Single shortcut covering 1–9; the digit pressed selects the board at that
 // position in the list below (1 = All).
@@ -26,7 +27,10 @@ export function BoardsNav({ boards }: { boards: Array<FeedbackBoardNavItem> | nu
 	const navigate = useNavigate();
 
 	const allBoards = useMemo(
-		() => [{ id: 'all', name: 'All', icon: 'box', slug: 'all' }, ...(boards ?? [])],
+		() => [
+			{ id: 'all', name: m.feedback_index_all_boards(), icon: 'box', slug: 'all' },
+			...(boards ?? []),
+		],
 		[boards]
 	);
 
@@ -37,7 +41,7 @@ export function BoardsNav({ boards }: { boards: Array<FeedbackBoardNavItem> | nu
 				id: 'feedback.select-board',
 				keys: BOARD_SELECT_KEYS,
 				label: '1–9',
-				description: 'Select board by position',
+				description: m.feedback_index_select_board_shortcut(),
 				run: ({ key }: { key: string }) => {
 					const target = allBoards.at(Number(key) - 1);
 					if (!target) return;
@@ -54,7 +58,7 @@ export function BoardsNav({ boards }: { boards: Array<FeedbackBoardNavItem> | nu
 
 	useRegisterShortcuts('feedback-boards', shortcuts);
 
-	if (!boards) return <div>No boards</div>;
+	if (!boards) return <div>{m.feedback_index_no_boards()}</div>;
 
 	return (
 		<SidebarNavGroup>
