@@ -9,8 +9,14 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from '@/components/ui/dialog';
+import * as m from '@/paraglide/messages.js';
 
 const GROUP_ORDER: Array<ShortcutGroupName> = ['Global', 'Feedback', 'Files'];
+const GROUP_LABELS: Record<ShortcutGroupName, () => string> = {
+	Feedback: m.shortcuts_group_feedback,
+	Files: m.shortcuts_group_files,
+	Global: m.shortcuts_group_global,
+};
 
 type ShortcutsDialogProps = {
 	open: boolean;
@@ -44,16 +50,14 @@ export function ShortcutsDialog({ open, onOpenChange, shortcuts }: ShortcutsDial
 		<Dialog open={open} onOpenChange={onOpenChange}>
 			<DialogContent className='sm:max-w-md'>
 				<DialogHeader className='-mx-4 -mt-4 rounded-t-xl border-b bg-muted px-4 pt-4 pb-4'>
-					<DialogTitle>Keyboard shortcuts</DialogTitle>
-					<DialogDescription>
-						Shortcuts available here. Press a single key — no modifiers needed.
-					</DialogDescription>
+					<DialogTitle>{m.shortcuts_title()}</DialogTitle>
+					<DialogDescription>{m.shortcuts_description()}</DialogDescription>
 				</DialogHeader>
 				<div className='flex flex-col gap-5'>
 					{groups.map(({ group, items }) => (
 						<section key={group} className='flex flex-col gap-1'>
 							<h3 className='text-xs font-semibold tracking-wide text-muted-foreground uppercase'>
-								{group}
+								{GROUP_LABELS[group]()}
 							</h3>
 							<ul className='flex flex-col'>
 								{items.map((shortcut) => (
@@ -74,7 +78,7 @@ export function ShortcutsDialog({ open, onOpenChange, shortcuts }: ShortcutsDial
 function ShortcutKeys({ shortcut }: { shortcut: Shortcut }) {
 	const tokens = shortcut.label
 		? [shortcut.label]
-		: shortcut.keys.map((key) => (key === ' ' ? 'Space' : key));
+		: shortcut.keys.map((key) => (key === ' ' ? m.shortcuts_space() : key));
 
 	return (
 		<span className='flex shrink-0 items-center gap-1'>

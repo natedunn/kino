@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/drawer';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { cn } from '@/lib/utils';
+import * as m from '@/paraglide/messages.js';
 
 // A responsive overlay that renders a centered Dialog on desktop and a
 // bottom-anchored Drawer (slides up from the bottom, swipe down to dismiss) on
@@ -191,7 +192,7 @@ function ResponsiveDialogHeader({
 					render={<Button className='-mr-1.5' size='icon-sm' variant='ghost' />}
 				>
 					<XIcon className='size-4' />
-					<span className='sr-only'>Close</span>
+					<span className='sr-only'>{m.common_close()}</span>
 				</ResponsiveDialogClose>
 			) : null}
 		</Wrapper>

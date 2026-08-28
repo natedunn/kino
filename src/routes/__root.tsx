@@ -21,7 +21,7 @@ import { isClientAuthed } from '@/lib/auth/auth-snapshot';
 import { getServerAuthToken } from '@/lib/convex/auth-start-token';
 import { crpcServer } from '@/lib/convex/crpc-server';
 import { LOCALE_COOKIE_NAME } from '@/lib/i18n/locale';
-
+import * as m from '@/paraglide/messages.js';
 import { getLocale } from '@/paraglide/runtime.js';
 
 import appCss from '../styles.css?url';
@@ -169,7 +169,7 @@ export const Route = createRootRouteWithContext<{
 	},
 	component: RootComponent,
 	errorComponent: DefaultCatchBoundary,
-	notFoundComponent: () => <div>Not found</div>,
+	notFoundComponent: () => <div>{m.common_not_found()}</div>,
 	shellComponent: RootDocument,
 });
 

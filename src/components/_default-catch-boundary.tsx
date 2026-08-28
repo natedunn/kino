@@ -7,6 +7,7 @@ import { ErrorComponent, Link, rootRouteId, useMatch, useRouter } from '@tanstac
 import { RoutePending } from '@/components/route-pending';
 import { Button } from '@/components/ui/button';
 import { captureAppError } from '@/lib/posthog';
+import * as m from '@/paraglide/messages.js';
 
 function isTransientQueryCancellation(error: unknown) {
 	return isCancelledError(error) || (error instanceof Error && error.message === 'CancelledError');
@@ -57,11 +58,11 @@ export function DefaultCatchBoundary({ error }: ErrorComponentProps) {
 						router.invalidate();
 					}}
 				>
-					Try Again
+					{m.error_try_again()}
 				</Button>
 				{isRoot ? (
 					<Button asChild variant='outline'>
-						<Link to='/'>Home</Link>
+						<Link to='/'>{m.common_home()}</Link>
 					</Button>
 				) : (
 					<Button asChild variant='outline'>
@@ -72,7 +73,7 @@ export function DefaultCatchBoundary({ error }: ErrorComponentProps) {
 								window.history.back();
 							}}
 						>
-							Go Back
+							{m.common_go_back()}
 						</Link>
 					</Button>
 				)}

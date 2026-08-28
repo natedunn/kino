@@ -1,6 +1,8 @@
 import { useEffect, useRef } from 'react';
 import { createServerFn } from '@tanstack/react-start';
 
+import * as m from '@/paraglide/messages.js';
+
 // Runs in the currently deployed server bundle, so it always returns the live
 // build id — even when the client tab is running an older, cached bundle.
 // POST (not GET) so the response can never be edge/browser cached: a cached id
@@ -55,11 +57,11 @@ export function StaleBundleWatcher() {
 
 			lastPromptedIdRef.current = deployedBuildId;
 			const { toast } = await import('sonner');
-			toast('A new version of Kino is available', {
-				description: 'Reload to get the latest updates.',
+			toast(m.update_available(), {
+				description: m.update_available_description(),
 				duration: Number.POSITIVE_INFINITY,
 				action: {
-					label: 'Reload',
+					label: m.update_reload(),
 					onClick: () => window.location.reload(),
 				},
 			});

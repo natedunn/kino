@@ -14,6 +14,7 @@ import {
 import { RESPONSIVE_DIALOG_CARD, RESPONSIVE_DIALOG_RING } from '@/components/ui/responsive-dialog';
 import { useIsBelow } from '@/lib/hooks/use-mobile';
 import { cn } from '@/lib/utils';
+import * as m from '@/paraglide/messages.js';
 
 // A drawer that slides in from the right on ≥640px and up from the bottom on
 // phones (<640px). Styled like `ResponsiveDialog` (the glass ring + card). The
@@ -113,7 +114,7 @@ function ResponsiveSideDrawerHeader({
 			{showClose ? (
 				<DrawerClose render={<Button className='-mr-1.5' size='icon-sm' variant='ghost' />}>
 					<XIcon className='size-4' />
-					<span className='sr-only'>Close</span>
+					<span className='sr-only'>{m.common_close()}</span>
 				</DrawerClose>
 			) : null}
 		</DrawerHeader>

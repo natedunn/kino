@@ -3,6 +3,8 @@ import type { Shortcut, ShortcutRegistration } from './types';
 
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 
+import * as m from '@/paraglide/messages.js';
+
 import { hasReservedModifier, isEditableTarget, isOverlayOpen, normalizeKey } from './keys';
 import { ShortcutsContext } from './shortcuts-context';
 
@@ -47,13 +49,13 @@ export function ShortcutsProvider({ children }: { children: ReactNode }) {
 				group: 'Global',
 				keys: [],
 				label: '⌘ K',
-				description: 'Open command menu',
+				description: m.shortcuts_open_commands(),
 			},
 			{
 				id: 'global.shortcuts',
 				group: 'Global',
 				keys: ['?'],
-				description: 'Show keyboard shortcuts',
+				description: m.shortcuts_show(),
 				run: () => setOpen((current) => !current),
 			},
 		],
