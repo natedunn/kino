@@ -18,7 +18,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { GithubIcon } from '@/icons';
 import { useCRPC } from '@/lib/convex/crpc';
-import { extractErrorMessage } from '@/lib/errors';
+import { localizeGitHubError } from '@/lib/i18n/github-errors';
 import { cn } from '@/lib/utils';
 import { FORM_LIMITS } from '@/lib/validation';
 import * as m from '@/paraglide/messages.js';
@@ -30,6 +30,11 @@ export function GithubConnectionIcon() {
 export function GithubIssueStateBadge({ state }: { state: string }) {
 	const normalizedState = state.trim().toLowerCase();
 	const isOpen = normalizedState === 'open';
+	const label = isOpen
+		? m.github_state_open()
+		: normalizedState === 'closed'
+			? m.github_state_closed()
+			: m.github_state_unknown();
 
 	return (
 		<span
@@ -40,7 +45,7 @@ export function GithubIssueStateBadge({ state }: { state: string }) {
 					: 'bg-muted text-muted-foreground'
 			)}
 		>
-			{normalizedState || 'unknown'}
+			{label}
 		</span>
 	);
 }
@@ -167,9 +172,7 @@ function GitHubConnectionDialogBody({
 		connectExistingMutation.error ??
 		createMutation.error ??
 		searchQuery.error;
-	const error =
-		localError ||
-		(requestError ? extractErrorMessage(requestError, m.feedback_github_connect_failed()) : '');
+	const error = localError || (requestError ? localizeGitHubError(requestError) : '');
 	const feedbackUrl = typeof window === 'undefined' ? '' : window.location.href.split('#')[0];
 	const canCreate =
 		title.trim().length > 0 &&
@@ -203,11 +206,11 @@ function GitHubConnectionDialogBody({
 		setLocalError('');
 		if (!feedbackUrl) return;
 		if (title.trim().length > FORM_LIMITS.githubTitle) {
-			setLocalError(`GitHub issue titles must be ${FORM_LIMITS.githubTitle} characters or fewer.`);
+			setLocalError(m.github_issue_title_too_long({ count: FORM_LIMITS.githubTitle }));
 			return;
 		}
 		if (body.trim().length > FORM_LIMITS.githubBody) {
-			setLocalError(`GitHub issue bodies must be ${FORM_LIMITS.githubBody} characters or fewer.`);
+			setLocalError(m.github_issue_body_too_long({ count: FORM_LIMITS.githubBody }));
 			return;
 		}
 
@@ -331,7 +334,11 @@ function GitHubConnectionDialogBody({
 														target.state === 'open' ? 'bg-green-500' : 'bg-muted-foreground/50'
 													)}
 												/>
-												{target.state}
+												{target.state.trim().toLowerCase() === 'open'
+													? m.github_state_open()
+													: target.state.trim().toLowerCase() === 'closed'
+														? m.github_state_closed()
+														: m.github_state_unknown()}
 											</span>
 										</span>
 										{selectedTarget?.nodeId === target.nodeId ? (
@@ -436,7 +443,7 @@ function GitHubConnectionNotice({
 							to='/@{$org}/$project/settings/integrations'
 						>
 							<GithubIcon className='size-3.5' />
-							Open GitHub settings
+							{m.github_open_settings()}
 						</Link>
 					</Button>
 				</div>

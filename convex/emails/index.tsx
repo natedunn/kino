@@ -1,3 +1,6 @@
+import type { AppLocale } from '../shared/i18n';
+
+import { getEmailCopy } from './i18n';
 import { EmailButton, EmailFallbackLink, EmailHeading, EmailLayout, EmailText } from './layout';
 
 /**
@@ -9,9 +12,10 @@ import { EmailButton, EmailFallbackLink, EmailHeading, EmailLayout, EmailText } 
 
 type EmailUser = { name?: string | null; email: string };
 
-export type VerificationEmailProps = { user: EmailUser; url: string };
-export type ResetPasswordEmailProps = { user: EmailUser; url: string };
+export type VerificationEmailProps = { locale: AppLocale; user: EmailUser; url: string };
+export type ResetPasswordEmailProps = { locale: AppLocale; user: EmailUser; url: string };
 export type OrganizationInvitationEmailProps = {
+	locale: AppLocale;
 	organization: { name: string };
 	inviter: { user: EmailUser };
 	invitation: { id: string; role: string };
@@ -23,31 +27,28 @@ export type OrganizationInvitationEmailProps = {
 	siteUrl: string;
 };
 
-export function VerificationEmail({ user, url }: VerificationEmailProps) {
+export function VerificationEmail({ locale, user, url }: VerificationEmailProps) {
 	const name = user.name || user.email;
+	const copy = getEmailCopy(locale);
 	return (
-		<EmailLayout preview='Verify your email address'>
-			<EmailHeading>Verify your email</EmailHeading>
-			<EmailText>
-				Hi {name}, confirm your email address to finish setting up your account.
-			</EmailText>
-			<EmailButton href={url}>Verify email</EmailButton>
-			<EmailFallbackLink url={url} />
+		<EmailLayout locale={locale} preview={copy.verification.preview}>
+			<EmailHeading>{copy.verification.heading}</EmailHeading>
+			<EmailText>{copy.verification.body(name)}</EmailText>
+			<EmailButton href={url}>{copy.verification.button}</EmailButton>
+			<EmailFallbackLink label={copy.fallbackLink} url={url} />
 		</EmailLayout>
 	);
 }
 
-export function ResetPasswordEmail({ user, url }: ResetPasswordEmailProps) {
+export function ResetPasswordEmail({ locale, user, url }: ResetPasswordEmailProps) {
 	const name = user.name || user.email;
+	const copy = getEmailCopy(locale);
 	return (
-		<EmailLayout preview='Reset your password'>
-			<EmailHeading>Reset your password</EmailHeading>
-			<EmailText>
-				Hi {name}, we received a request to reset your password. Click below to choose a new one. If
-				you didn’t ask for this, you can ignore this email.
-			</EmailText>
-			<EmailButton href={url}>Reset password</EmailButton>
-			<EmailFallbackLink url={url} />
+		<EmailLayout locale={locale} preview={copy.reset.preview}>
+			<EmailHeading>{copy.reset.heading}</EmailHeading>
+			<EmailText>{copy.reset.body(name)}</EmailText>
+			<EmailButton href={url}>{copy.reset.button}</EmailButton>
+			<EmailFallbackLink label={copy.fallbackLink} url={url} />
 		</EmailLayout>
 	);
 }
@@ -56,27 +57,23 @@ export function OrganizationInvitationEmail({
 	organization,
 	inviter,
 	invitation,
+	locale,
 	siteUrl,
 }: OrganizationInvitationEmailProps) {
-	const inviterName = inviter.user.name || inviter.user.email || 'Someone';
+	const copy = getEmailCopy(locale);
+	const inviterName = inviter.user.name || inviter.user.email || copy.invitation.someone;
+	const role = copy.roles[invitation.role as keyof typeof copy.roles] ?? invitation.role;
 	// Better Auth's acceptInvitation is keyed by the invitation id; the frontend
 	// route reads it from the URL.
 	const acceptUrl = `${siteUrl.replace(/\/$/, '')}/auth/accept-invitation?invitationId=${invitation.id}`;
 	return (
-		<EmailLayout preview={`Join ${organization.name} on Kino`}>
-			<EmailHeading>Join {organization.name}</EmailHeading>
+		<EmailLayout locale={locale} preview={copy.invitation.preview(organization.name)}>
+			<EmailHeading>{copy.invitation.heading(organization.name)}</EmailHeading>
 			<EmailText>
-				{inviterName} invited you to join <strong>{organization.name}</strong> on Kino as{' '}
-				{invitation.role}.
+				{copy.invitation.body({ inviter: inviterName, organization: organization.name, role })}
 			</EmailText>
-			<EmailButton href={acceptUrl}>Accept invitation</EmailButton>
-			<EmailFallbackLink url={acceptUrl} />
+			<EmailButton href={acceptUrl}>{copy.invitation.button}</EmailButton>
+			<EmailFallbackLink label={copy.fallbackLink} url={acceptUrl} />
 		</EmailLayout>
 	);
 }
-
-export const emailSubjects = {
-	verification: 'Verify your email',
-	resetPassword: 'Reset your password',
-	organizationInvitation: (organizationName: string) => `Join ${organizationName} on Kino`,
-};

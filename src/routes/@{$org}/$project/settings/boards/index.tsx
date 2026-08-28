@@ -16,7 +16,7 @@ import { ArchivedSettingsNotice } from '../-components/archived-notice';
 
 export const Route = createFileRoute('/@{$org}/$project/settings/boards/')({
 	head: () => ({
-		meta: [titleMeta(['Boards'])],
+		meta: [titleMeta([m.meta_boards()])],
 	}),
 	loader: async ({ context, params }) => {
 		const details = await context.queryClient.ensureQueryData(
@@ -88,7 +88,7 @@ function BoardsIndexRoute() {
 			{boards.length === 0 ? (
 				<div className='rounded-xl border border-dashed bg-muted/20 p-10 text-center'>
 					<div className='mx-auto flex size-10 items-center justify-center rounded-full bg-background shadow-sm'>
-						<BoardIcon icon='box' name='All' size='20px' />
+						<BoardIcon icon='box' name={m.common_all()} size='20px' />
 					</div>
 					<p className='mt-3 text-sm font-medium'>{m.project_boards_empty()}</p>
 					<p className='mt-1 text-sm text-muted-foreground'>

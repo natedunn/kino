@@ -27,10 +27,18 @@ import {
 	SLUG_INPUT_PATTERN,
 	validationMessage,
 } from '@/lib/validation';
+import * as m from '@/paraglide/messages.js';
+
+type Visibility = 'public' | 'private';
+const VISIBILITY_VALUES: Array<Visibility> = ['public', 'private'];
+const VISIBILITY_LABELS: Record<Visibility, () => string> = {
+	private: m.project_visibility_private,
+	public: m.project_visibility_public,
+};
 
 export const Route = createFileRoute('/create/team/')({
 	head: () => ({
-		meta: [titleMeta(['Create Team'])],
+		meta: [titleMeta([m.create_team_meta()])],
 	}),
 	beforeLoad: ({ context, location }) => requireAuth(context, location),
 	loader: async ({ context }) => {
@@ -103,6 +111,10 @@ function AuthenticatedCreateTeamRoute() {
 	});
 
 	const underLimit = orgsData.underLimit;
+	const visibilityItems = VISIBILITY_VALUES.map((value) => ({
+		label: VISIBILITY_LABELS[value](),
+		value,
+	}));
 
 	return (
 		<div className='flex min-h-svh flex-col'>
@@ -110,14 +122,14 @@ function AuthenticatedCreateTeamRoute() {
 			<main className='relative w-full flex-1'>
 				<div className='absolute top-0 right-0 left-0 z-0 h-64 w-full bg-linear-to-t from-background to-muted' />
 				<div className='relative z-10 mx-auto max-w-2xl px-4 py-12 sm:px-6 md:px-10'>
-					<h1 className='text-3xl font-bold'>Create a team</h1>
+					<h1 className='text-3xl font-bold'>{m.create_team_title()}</h1>
 					{!underLimit ? (
 						<InlineAlert className='mt-6' variant='warning'>
-							Maximum teams created. Please{' '}
+							{m.create_team_limit_prefix()}{' '}
 							<a className='link-text' href='#'>
-								change your plan
+								{m.create_team_change_plan()}
 							</a>{' '}
-							or contact support.
+							{m.create_team_limit_suffix()}
 						</InlineAlert>
 					) : null}
 					<form
@@ -134,7 +146,7 @@ function AuthenticatedCreateTeamRoute() {
 							{(field) => (
 								<div className='flex items-end gap-3'>
 									<div className='flex flex-1 flex-col gap-2'>
-										<label className='text-sm font-medium'>Team name</label>
+										<label className='text-sm font-medium'>{m.create_team_name()}</label>
 										<Input
 											maxLength={FORM_LIMITS.orgName}
 											onChange={(event) => field.handleChange(event.target.value)}
@@ -149,7 +161,7 @@ function AuthenticatedCreateTeamRoute() {
 							{(field) => (
 								<div className='flex items-end gap-3'>
 									<div className='flex flex-1 flex-col gap-2'>
-										<label className='text-sm font-medium'>Slug</label>
+										<label className='text-sm font-medium'>{m.create_team_slug()}</label>
 										<Input
 											autoCapitalize='none'
 											maxLength={FORM_LIMITS.orgSlug}
@@ -169,17 +181,25 @@ function AuthenticatedCreateTeamRoute() {
 							{(field) => (
 								<div className='flex items-end gap-3'>
 									<div className='flex flex-1 flex-col gap-2'>
-										<label className='text-sm font-medium'>Visibility</label>
+										<label className='text-sm font-medium'>{m.create_visibility()}</label>
 										<Select
-											defaultValue='public'
-											onValueChange={(value) => field.handleChange(value as 'public' | 'private')}
+											items={visibilityItems}
+											value={field.state.value}
+											onValueChange={(value) => field.handleChange(value as Visibility)}
 										>
 											<SelectTrigger className='w-full sm:w-48'>
-												<SelectValue placeholder='Select visibility' />
+												<SelectValue placeholder={m.create_select_visibility()}>
+													{(value: Visibility | null) =>
+														value ? VISIBILITY_LABELS[value]() : m.create_select_visibility()
+													}
+												</SelectValue>
 											</SelectTrigger>
 											<SelectContent>
-												<SelectItem value='public'>Public</SelectItem>
-												<SelectItem value='private'>Private</SelectItem>
+												{visibilityItems.map((item) => (
+													<SelectItem key={item.value} value={item.value}>
+														{item.label}
+													</SelectItem>
+												))}
 											</SelectContent>
 										</Select>
 									</div>
@@ -199,7 +219,9 @@ function AuthenticatedCreateTeamRoute() {
 										disabled={!underLimit || createMutation.isPending}
 										type='submit'
 									>
-										{isSubmitting || createMutation.isPending ? 'Creating...' : 'Create Team'}
+										{isSubmitting || createMutation.isPending
+											? m.create_team_creating()
+											: m.create_team_action()}
 									</Button>
 								)}
 							</form.Subscribe>

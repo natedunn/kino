@@ -4,10 +4,11 @@ import { createFileRoute, Outlet } from '@tanstack/react-router';
 
 import { AuthBackground } from '@/components/auth/auth-background';
 import { titleMeta } from '@/lib/seo';
+import * as m from '@/paraglide/messages.js';
 
 export const Route = createFileRoute('/auth')({
 	head: () => ({
-		meta: [titleMeta(['Sign in'])],
+		meta: [titleMeta([m.auth_sign_in_title()])],
 	}),
 	component: AuthLayout,
 });

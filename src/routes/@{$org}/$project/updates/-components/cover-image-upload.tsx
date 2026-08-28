@@ -5,6 +5,7 @@ import { ImagePlus, Loader2, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCRPC } from '@/lib/convex/crpc';
 import { cn } from '@/lib/utils';
+import * as m from '@/paraglide/messages.js';
 
 export function CoverImageUpload({
 	currentCoverImageUrl,
@@ -30,12 +31,12 @@ export function CoverImageUpload({
 		if (!file) return;
 
 		if (!file.type.startsWith('image/')) {
-			onError?.('Please select an image file');
+			onError?.(m.updates_cover_select_image());
 			return;
 		}
 
 		if (file.size > 5 * 1024 * 1024) {
-			onError?.('Image must be less than 5MB');
+			onError?.(m.updates_cover_too_large());
 			return;
 		}
 
@@ -55,13 +56,13 @@ export function CoverImageUpload({
 			});
 
 			if (!response.ok) {
-				throw new Error('Upload failed');
+				throw new Error(m.updates_cover_upload_failed());
 			}
 
 			await syncMetadataMutation.mutateAsync({ key });
 			onChange(key);
 		} catch (error) {
-			onError?.(error instanceof Error ? error.message : 'Failed to upload image');
+			onError?.(error instanceof Error ? error.message : m.updates_cover_failed());
 			setPreviewUrl(null);
 		} finally {
 			setIsUploading(false);
@@ -83,7 +84,7 @@ export function CoverImageUpload({
 			setPreviewUrl(null);
 			onChange(null);
 		} catch (error) {
-			onError?.(error instanceof Error ? error.message : 'Failed to clear image');
+			onError?.(error instanceof Error ? error.message : m.updates_cover_clear_failed());
 		} finally {
 			setIsUploading(false);
 			if (fileInputRef.current) {
@@ -94,11 +95,15 @@ export function CoverImageUpload({
 
 	return (
 		<div className='flex flex-col gap-2'>
-			<label className='text-sm font-medium'>Cover Image</label>
+			<label className='text-sm font-medium'>{m.updates_cover_image()}</label>
 
 			{displayUrl ? (
 				<div className='relative'>
-					<img alt='Cover image' className='w-full bg-muted object-cover' src={displayUrl} />
+					<img
+						alt={m.updates_cover_alt()}
+						className='w-full bg-muted object-cover'
+						src={displayUrl}
+					/>
 					{isBusy ? (
 						<div className='absolute inset-0 flex items-center justify-center bg-black/50'>
 							<Loader2 className='h-8 w-8 animate-spin text-white' />
@@ -111,11 +116,11 @@ export function CoverImageUpload({
 								type='button'
 								variant='secondary'
 							>
-								Change
+								{m.updates_cover_change()}
 							</Button>
 							<Button onClick={handleClear} size='sm' type='button' variant='secondary'>
 								<Trash2 className='size-3.5' />
-								Clear
+								{m.updates_cover_clear()}
 							</Button>
 						</div>
 					)}
@@ -133,13 +138,13 @@ export function CoverImageUpload({
 					{isBusy ? (
 						<>
 							<Loader2 className='h-8 w-8 animate-spin' />
-							<span>Uploading...</span>
+							<span>{m.updates_cover_uploading()}</span>
 						</>
 					) : (
 						<>
 							<ImagePlus className='h-8 w-8' />
-							<span>Click to upload cover image</span>
-							<span className='text-xs'>PNG, JPG up to 5MB</span>
+							<span>{m.updates_cover_choose()}</span>
+							<span className='text-xs'>{m.updates_cover_formats()}</span>
 						</>
 					)}
 				</button>
@@ -153,9 +158,7 @@ export function CoverImageUpload({
 				type='file'
 			/>
 
-			<p className='text-xs text-muted-foreground'>
-				Recommended size: 1200x500px for best display across devices.
-			</p>
+			<p className='text-xs text-muted-foreground'>{m.updates_cover_recommended()}</p>
 		</div>
 	);
 }

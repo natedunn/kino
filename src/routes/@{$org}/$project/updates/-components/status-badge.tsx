@@ -1,4 +1,5 @@
 import { Badge } from '@/components/ui/badge';
+import * as m from '@/paraglide/messages.js';
 
 export function StatusBadge({ status }: { status: 'draft' | 'published' }) {
 	if (status === 'published') {
@@ -7,7 +8,7 @@ export function StatusBadge({ status }: { status: 'draft' | 'published' }) {
 				className='bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
 				variant='outline'
 			>
-				Published
+				{m.updates_status_published()}
 			</Badge>
 		);
 	}
@@ -17,7 +18,7 @@ export function StatusBadge({ status }: { status: 'draft' | 'published' }) {
 			className='bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
 			variant='outline'
 		>
-			Draft
+			{m.updates_status_draft()}
 		</Badge>
 	);
 }

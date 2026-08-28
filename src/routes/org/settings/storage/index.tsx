@@ -9,7 +9,7 @@ import * as m from '@/paraglide/messages.js';
 import { useSettingsOrgSlug } from '../-components/use-settings-org';
 
 export const Route = createFileRoute('/org/settings/storage/')({
-	head: () => ({ meta: [titleMeta(['Organization Storage'])] }),
+	head: () => ({ meta: [titleMeta([m.meta_organization_storage()])] }),
 	component: OrganizationStorageSettings,
 });
 

@@ -1,10 +1,11 @@
 import { createFileRoute, Navigate } from '@tanstack/react-router';
 
 import { titleFromSlug, titleMeta } from '@/lib/seo';
+import * as m from '@/paraglide/messages.js';
 
 export const Route = createFileRoute('/@{$org}/integrations/github/')({
 	head: ({ params }) => ({
-		meta: [titleMeta(['GitHub Integration', titleFromSlug(params.org)])],
+		meta: [titleMeta([m.github_integration_meta(), titleFromSlug(params.org)])],
 	}),
 	component: GitHubIntegrationRedirectRoute,
 });

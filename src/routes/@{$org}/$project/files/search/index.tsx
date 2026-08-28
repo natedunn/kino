@@ -30,6 +30,7 @@ import {
 	SelectValue,
 } from '@/components/ui/select';
 import { useCRPC } from '@/lib/convex/crpc';
+import * as m from '@/paraglide/messages.js';
 
 import { formatBytes, formatDate } from '../-components/file-explorer';
 import { useFilesWorkspace } from '../-components/files-workspace-context';
@@ -110,11 +111,9 @@ function AdvancedFilesSearch() {
 		<div className='flex min-h-0 flex-1 flex-col py-6'>
 			<div className='mb-5'>
 				<div className='flex items-center gap-2 text-sm font-medium'>
-					<SlidersHorizontal className='size-4' /> Advanced search
+					<SlidersHorizontal className='size-4' /> {m.files_advanced_search()}
 				</div>
-				<p className='mt-1 text-sm text-muted-foreground'>
-					Search file names, metadata, and extracted text across this project.
-				</p>
+				<p className='mt-1 text-sm text-muted-foreground'>{m.files_search_description()}</p>
 			</div>
 			<form className='rounded-xl border bg-card p-4 shadow-xs' onSubmit={submit}>
 				<div className='relative'>
@@ -122,12 +121,12 @@ function AdvancedFilesSearch() {
 					<Input
 						className='h-10 pr-10 pl-9'
 						onChange={(event) => setQuery(event.target.value)}
-						placeholder='Search all project files…'
+						placeholder={m.files_search_placeholder()}
 						value={query}
 					/>
 					{query ? (
 						<button
-							aria-label='Clear query'
+							aria-label={m.files_clear_query()}
 							className='absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground hover:text-foreground'
 							onClick={() => setQuery('')}
 							type='button'
@@ -155,12 +154,12 @@ function AdvancedFilesSearch() {
 						<SelectTrigger className='min-w-40'>
 							<SelectValue>
 								{(value: string | null) =>
-									value && value !== 'all' ? categoryLabel(value) : 'All categories'
+									value && value !== 'all' ? categoryLabel(value) : m.files_all_categories()
 								}
 							</SelectValue>
 						</SelectTrigger>
 						<SelectContent>
-							<SelectItem value='all'>All categories</SelectItem>
+							<SelectItem value='all'>{m.files_all_categories()}</SelectItem>
 							{FILE_CATEGORIES.map((category) => (
 								<SelectItem key={category} value={category}>
 									{categoryLabel(category)}
@@ -186,12 +185,12 @@ function AdvancedFilesSearch() {
 						<SelectTrigger className='min-w-36'>
 							<SelectValue>
 								{(value: string | null) =>
-									value && value !== 'all' ? `.${value}` : 'All extensions'
+									value && value !== 'all' ? `.${value}` : m.files_all_extensions()
 								}
 							</SelectValue>
 						</SelectTrigger>
 						<SelectContent>
-							<SelectItem value='all'>All extensions</SelectItem>
+							<SelectItem value='all'>{m.files_all_extensions()}</SelectItem>
 							{extensions.map((extension) => (
 								<SelectItem key={extension} value={extension}>
 									.{extension}
@@ -216,12 +215,12 @@ function AdvancedFilesSearch() {
 						<SelectTrigger className='min-w-36'>
 							<SelectValue>
 								{(value: string | null) =>
-									value && value !== 'all' ? sourceLabel(value) : 'All sources'
+									value && value !== 'all' ? sourceLabel(value) : m.files_all_sources()
 								}
 							</SelectValue>
 						</SelectTrigger>
 						<SelectContent>
-							<SelectItem value='all'>All sources</SelectItem>
+							<SelectItem value='all'>{m.files_all_sources()}</SelectItem>
 							{FILE_SOURCE_PROVIDERS.map((source) => (
 								<SelectItem key={source} value={source}>
 									{sourceLabel(source)}
@@ -233,19 +232,21 @@ function AdvancedFilesSearch() {
 				<div className='mt-3 flex justify-end gap-2'>
 					{activeFilters ? (
 						<Button onClick={clear} type='button' variant='ghost'>
-							Clear
+							{m.files_clear()}
 						</Button>
 					) : null}
 					<Button type='submit'>
-						<Search /> Search
+						<Search /> {m.files_search()}
 					</Button>
 				</div>
 			</form>
 
 			<div className='mt-5 overflow-hidden rounded-xl border bg-card shadow-xs'>
 				<div className='flex h-11 items-center justify-between border-b bg-muted/20 px-4'>
-					<p className='text-sm font-medium'>Results</p>
-					<p className='text-xs text-muted-foreground'>{files.length} on this page</p>
+					<p className='text-sm font-medium'>{m.files_results()}</p>
+					<p className='text-xs text-muted-foreground'>
+						{m.files_on_page({ count: files.length })}
+					</p>
 				</div>
 				<div className='divide-y'>
 					{filesQuery.isPending
@@ -258,16 +259,15 @@ function AdvancedFilesSearch() {
 					{!filesQuery.isPending && !files.length ? (
 						<div className='py-20 text-center'>
 							<File className='mx-auto mb-3 size-8 text-muted-foreground/45' />
-							<p className='font-medium'>No matching files</p>
-							<p className='mt-1 text-sm text-muted-foreground'>
-								Try a broader query or remove a filter.
-							</p>
+							<p className='font-medium'>{m.files_no_matches()}</p>
+							<p className='mt-1 text-sm text-muted-foreground'>{m.files_no_matches_help()}</p>
 						</div>
 					) : null}
 					{files.map((file) => {
 						const folderName = file.folderId
-							? (folders.find((folder) => folder.id === file.folderId)?.name ?? 'Unknown folder')
-							: 'Root';
+							? (folders.find((folder) => folder.id === file.folderId)?.name ??
+								m.files_unknown_folder())
+							: m.files_root();
 						return (
 							<SearchResultRow file={file} folderName={folderName} key={file.id} params={params} />
 						);
@@ -285,7 +285,7 @@ function AdvancedFilesSearch() {
 						size='sm'
 						variant='outline'
 					>
-						Next page
+						{m.files_next_page()}
 					</Button>
 				</div>
 			</div>
@@ -348,7 +348,16 @@ function SearchResultRow({
 
 const extensions = Array.from(new Set(FILE_INPUT_ACCEPT.split(',').map((item) => item.slice(1))));
 function categoryLabel(value: string) {
-	return value === 'package' ? 'Packages' : `${value.charAt(0).toUpperCase()}${value.slice(1)}s`;
+	const labels: Record<string, () => string> = {
+		data: m.storage_label_data,
+		design: m.storage_label_design,
+		document: m.storage_label_document,
+		image: m.storage_label_image,
+		package: m.storage_label_package,
+		text: m.storage_label_text,
+		video: m.storage_label_video,
+	};
+	return labels[value]?.() ?? value;
 }
 function sourceLabel(value: string) {
 	return value

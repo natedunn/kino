@@ -1,6 +1,30 @@
 import { HardDrive } from 'lucide-react';
 
+import * as m from '@/paraglide/messages.js';
+
 type Breakdown = Record<string, { bytes: number; files: number }>;
+
+const STORAGE_LABELS: Record<string, () => string> = {
+	data: m.storage_label_data,
+	design: m.storage_label_design,
+	document: m.storage_label_document,
+	feedback_attachment: m.storage_label_feedback_attachment,
+	files: m.storage_label_files,
+	image: m.storage_label_image,
+	integration: m.storage_label_integration,
+	org_avatar: m.storage_label_org_avatar,
+	package: m.storage_label_package,
+	project_header: m.storage_label_project_header,
+	staff: m.storage_label_staff,
+	system: m.storage_label_system,
+	text: m.storage_label_text,
+	update_body: m.storage_label_update_body,
+	update_cover: m.storage_label_update_cover,
+	user: m.storage_label_user,
+	user_avatar: m.storage_label_user_avatar,
+	video: m.storage_label_video,
+	wiki_attachment: m.storage_label_wiki_attachment,
+};
 
 export function StorageSummary({
 	fileCount,
@@ -25,10 +49,13 @@ export function StorageSummary({
 					<HardDrive className='size-5' />
 				</span>
 				<div>
-					<h3 className='font-semibold'>Project storage</h3>
+					<h3 className='font-semibold'>{m.storage_project()}</h3>
 					<p className='mt-1 text-sm text-muted-foreground'>
-						{formatBytes(usedBytes)} used of {formatBytes(limitBytes)} · {fileCount} file
-						{fileCount === 1 ? '' : 's'}
+						{m.storage_usage_summary({
+							count: fileCount,
+							limit: formatBytes(limitBytes),
+							used: formatBytes(usedBytes),
+						})}
 					</p>
 				</div>
 			</div>
@@ -44,11 +71,17 @@ export function StorageSummary({
 					/>
 				</div>
 				<div className='mt-2 flex justify-between text-xs text-muted-foreground'>
-					<span>{committedPercent.toFixed(committedPercent < 1 ? 1 : 0)}% used</span>
+					<span>
+						{m.storage_percent_used({
+							percent: committedPercent.toFixed(committedPercent < 1 ? 1 : 0),
+						})}
+					</span>
 					<span>
 						{reservedBytes
-							? `${formatBytes(reservedBytes)} uploading`
-							: `${formatBytes(Math.max(0, limitBytes - usedBytes))} available`}
+							? m.storage_uploading_amount({ amount: formatBytes(reservedBytes) })
+							: m.storage_available_amount({
+									amount: formatBytes(Math.max(0, limitBytes - usedBytes)),
+								})}
 					</span>
 				</div>
 			</div>
@@ -70,7 +103,7 @@ export function StorageBreakdown({ breakdown, title }: { breakdown: Breakdown; t
 							<div>
 								<p className='text-sm font-medium capitalize'>{label(key)}</p>
 								<p className='text-xs text-muted-foreground'>
-									{value.files} file{value.files === 1 ? '' : 's'}
+									{m.storage_file_count({ count: value.files })}
 								</p>
 							</div>
 							<span className='font-mono text-xs text-muted-foreground'>
@@ -80,7 +113,7 @@ export function StorageBreakdown({ breakdown, title }: { breakdown: Breakdown; t
 					))}
 				</div>
 			) : (
-				<p className='px-5 py-8 text-center text-sm text-muted-foreground'>No storage usage yet.</p>
+				<p className='px-5 py-8 text-center text-sm text-muted-foreground'>{m.storage_empty()}</p>
 			)}
 		</section>
 	);
@@ -104,11 +137,11 @@ export function ProjectStorageTable({
 			<table className='w-full min-w-[620px] text-sm'>
 				<thead>
 					<tr className='border-b bg-muted/30 text-left text-xs tracking-wide text-muted-foreground uppercase'>
-						<th className='px-5 py-3'>Project</th>
-						<th className='px-4 py-3'>Files</th>
-						<th className='px-4 py-3'>Used</th>
-						<th className='px-4 py-3'>Reserved</th>
-						<th className='px-5 py-3'>Limit</th>
+						<th className='px-5 py-3'>{m.storage_table_project()}</th>
+						<th className='px-4 py-3'>{m.storage_table_files()}</th>
+						<th className='px-4 py-3'>{m.storage_table_used()}</th>
+						<th className='px-4 py-3'>{m.storage_table_reserved()}</th>
+						<th className='px-5 py-3'>{m.storage_table_limit()}</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -130,7 +163,7 @@ export function ProjectStorageTable({
 					) : (
 						<tr>
 							<td colSpan={5} className='px-5 py-10 text-center text-muted-foreground'>
-								No project storage usage yet.
+								{m.storage_projects_empty()}
 							</td>
 						</tr>
 					)}
@@ -148,5 +181,5 @@ export function formatBytes(bytes: number) {
 }
 
 function label(value: string) {
-	return value.replaceAll('_', ' ');
+	return STORAGE_LABELS[value]?.() ?? value.replaceAll('_', ' ');
 }

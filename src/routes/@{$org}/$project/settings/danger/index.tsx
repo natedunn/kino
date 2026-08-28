@@ -23,7 +23,7 @@ import * as m from '@/paraglide/messages.js';
 
 export const Route = createFileRoute('/@{$org}/$project/settings/danger/')({
 	head: () => ({
-		meta: [titleMeta(['Danger Zone'])],
+		meta: [titleMeta([m.meta_danger_zone()])],
 	}),
 	loader: async ({ context, params }) => {
 		await context.queryClient.ensureQueryData(

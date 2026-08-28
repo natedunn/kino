@@ -6,8 +6,9 @@ import { z } from 'zod';
 import { renderOrganizationInvitationEmail } from '../emails/send';
 import { authMutation, authQuery } from '../lib/crpc';
 import { isEmailConfigured, resolveTrustedSiteUrl } from '../lib/get-env';
-import { asId, findOrganization, getDoc, verifyOrgAccess } from '../lib/kino';
+import { asId, findOrganization, getCurrentProfile, getDoc, verifyOrgAccess } from '../lib/kino';
 import { emailSchema, idSchema, orgSlugSchema } from '../lib/validation';
+import { DEFAULT_LOCALE } from '../shared/i18n';
 import { createEmailCaller } from './generated/email.runtime';
 import { assignableRoleSchema, requireOrgManage } from './orgMember.lib';
 import { pendingModeratorProjectAccessTable, projectModeratorAccessTable } from './schema';
@@ -92,10 +93,7 @@ function emailsMatch(left: string | null | undefined, right: string | null | und
 	return !!left && !!right && left.trim().toLowerCase() === right.trim().toLowerCase();
 }
 
-function assertInvitationRecipient(
-	invitation: { email: string },
-	user: { email?: string | null }
-) {
+function assertInvitationRecipient(invitation: { email: string }, user: { email?: string | null }) {
 	if (!emailsMatch(user.email, invitation.email)) {
 		throw new CRPCError({
 			code: 'FORBIDDEN',
@@ -231,9 +229,11 @@ export const inviteMember = authMutation
 		// sent from (dev worktree, preview, prod). Render inline (mutations can't
 		// fetch) and schedule the send — transactional with the invite itself.
 		if (isEmailConfigured()) {
+			const inviterProfile = await getCurrentProfile(ctx, ctx.userId);
 			const { html, subject } = renderOrganizationInvitationEmail({
 				invitation: { id: invitationId, role: input.role },
 				inviter: { user: { email: ctx.user.email ?? '', name: ctx.user.name } },
+				locale: inviterProfile?.locale ?? DEFAULT_LOCALE,
 				organization: { name: access.organization.name },
 				siteUrl: resolveTrustedSiteUrl(input.origin),
 			});

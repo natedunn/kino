@@ -1,10 +1,11 @@
 import { createFileRoute, Navigate } from '@tanstack/react-router';
 
 import { titleMeta } from '@/lib/seo';
+import * as m from '@/paraglide/messages.js';
 
 export const Route = createFileRoute('/org/settings/')({
 	head: () => ({
-		meta: [titleMeta(['Settings'])],
+		meta: [titleMeta([m.meta_settings()])],
 	}),
 	component: OrgSettingsIndexRoute,
 });

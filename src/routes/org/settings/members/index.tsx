@@ -32,7 +32,7 @@ import { useSettingsOrgSlug } from '../-components/use-settings-org';
 
 export const Route = createFileRoute('/org/settings/members/')({
 	head: () => ({
-		meta: [titleMeta(['Members'])],
+		meta: [titleMeta([m.meta_members()])],
 	}),
 	loader: ({ context, location }) => {
 		const orgSlug = (location.search as { org?: string }).org;
@@ -156,9 +156,7 @@ function MembersSettingsRoute() {
 		<section className='max-w-3xl'>
 			<header className='border-b pb-4'>
 				<h2 className='text-xl font-semibold'>{m.settings_members()}</h2>
-				<p className='mt-1 text-sm text-muted-foreground'>
-					Invite people to your organization and manage their roles.
-				</p>
+				<p className='mt-1 text-sm text-muted-foreground'>{m.org_members_description()}</p>
 			</header>
 
 			{/* Invite */}
@@ -252,7 +250,7 @@ function MembersSettingsRoute() {
 							? m.org_members_admin_description()
 							: inviteProjectIds.length === 0
 								? m.org_members_select_project()
-								: `This moderator will have access to ${inviteProjectIds.length} project${inviteProjectIds.length === 1 ? '' : 's'}.`}
+								: m.org_members_moderator_access_count({ count: inviteProjectIds.length })}
 					</p>
 					<Button
 						type='submit'
@@ -276,7 +274,7 @@ function MembersSettingsRoute() {
 			{/* Members */}
 			<div className='mt-10'>
 				<h3 className='text-base font-semibold'>
-					Existing members{' '}
+					{m.org_members_existing()}{' '}
 					<span className='text-sm font-normal text-muted-foreground'>({data.members.length})</span>
 				</h3>
 				<div className='mt-3 flex flex-col divide-y rounded-xl border bg-card'>
@@ -301,8 +299,8 @@ function MembersSettingsRoute() {
 											{isModerator
 												? ` · ${
 														member.assignedProjectCount === 0
-															? 'no project access'
-															: `${member.assignedProjectCount} project${member.assignedProjectCount === 1 ? '' : 's'}`
+															? m.org_members_no_project_access()
+															: m.org_members_project_count({ count: member.assignedProjectCount })
 													}`
 												: ''}
 										</p>
@@ -339,9 +337,7 @@ function MembersSettingsRoute() {
 											if (
 												member.role === 'moderator' &&
 												value === 'admin' &&
-												!window.confirm(
-													'Promoting this moderator clears their explicit project assignments. Continue?'
-												)
+												!window.confirm(m.org_members_promote_confirm())
 											) {
 												return;
 											}
@@ -360,7 +356,9 @@ function MembersSettingsRoute() {
 										onClick={() => {
 											if (
 												window.confirm(
-													`Remove ${member.user.name || member.user.email} from this organization?`
+													m.org_members_remove_confirm({
+														name: member.user.name || member.user.email,
+													})
 												)
 											) {
 												removeMember.mutate({ memberId: member.id });
@@ -368,7 +366,7 @@ function MembersSettingsRoute() {
 										}}
 									>
 										<Trash2 />
-										Remove
+										{m.common_remove()}
 									</Button>
 								</div>
 								{isModerator && editingModeratorId === member.id ? (
@@ -392,7 +390,7 @@ function MembersSettingsRoute() {
 												size='sm'
 												onClick={() => setTransitioningModeratorId(null)}
 											>
-												Cancel
+												{m.common_cancel()}
 											</Button>
 											<Button
 												type='button'
@@ -436,7 +434,7 @@ function MembersSettingsRoute() {
 									<p className='text-xs text-muted-foreground capitalize'>
 										{inv.role}
 										{inv.role === 'moderator'
-											? ` · ${inv.assignedProjectCount} project${inv.assignedProjectCount === 1 ? '' : 's'}`
+											? ` · ${m.org_members_project_count({ count: inv.assignedProjectCount })}`
 											: ''}
 									</p>
 								</div>
@@ -448,14 +446,13 @@ function MembersSettingsRoute() {
 									disabled={cancelInvite.isPending}
 									onClick={() => cancelInvite.mutate({ invitationId: inv.id })}
 								>
-									Cancel invite
+									{m.org_members_cancel_invite()}
 								</Button>
 							</div>
 						))}
 					</div>
 					<p className='mt-2 text-xs text-muted-foreground'>
-						Invitations are created but email delivery isn’t configured yet — share the invite link
-						manually for now.
+						{m.org_members_invite_delivery_notice()}
 					</p>
 				</div>
 			) : null}
@@ -521,9 +518,7 @@ function ProjectPicker({
 				<LabelDescription>{description}</LabelDescription>
 			</LabelWrapper>
 			{projects.length === 0 ? (
-				<p className='text-sm text-muted-foreground'>
-					This organization doesn’t have any projects yet.
-				</p>
+				<p className='text-sm text-muted-foreground'>{m.org_members_no_projects()}</p>
 			) : (
 				<div className='grid gap-2 sm:grid-cols-2'>
 					{projects.map((project) => {

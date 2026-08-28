@@ -38,7 +38,7 @@ import { cn } from '@/lib/utils';
 import * as m from '@/paraglide/messages.js';
 
 export const Route = createFileRoute('/@{$org}/$project/settings/appearance/')({
-	head: () => ({ meta: [titleMeta(['Appearance', 'Project Settings'])] }),
+	head: () => ({ meta: [titleMeta([m.meta_appearance(), m.meta_project_settings()])] }),
 	loader: async ({ context, params }) => {
 		const details = await context.queryClient.ensureQueryData(
 			crpcServer.project.getDetails.queryOptions({ orgSlug: params.org, slug: params.project })
@@ -287,8 +287,12 @@ function ProjectAppearanceRoute() {
 							{issues.length ? (
 								issues.map((issue) => (
 									<p key={`${issue.mode}-${issue.label}`} className='text-sm text-destructive'>
-										{issue.mode}: {issue.label} is {issue.actual.toFixed(2)}:1; {issue.minimum}:1
-										required.
+										{m.theme_contrast_issue({
+											actual: issue.actual.toFixed(2),
+											label: issue.label,
+											minimum: issue.minimum,
+											mode: issue.mode,
+										})}
 									</p>
 								))
 							) : (

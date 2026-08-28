@@ -48,6 +48,7 @@ import { crpcServer } from '@/lib/convex/crpc-server';
 import { useIsBelow } from '@/lib/hooks/use-mobile';
 import { projectTitle, titleMeta } from '@/lib/seo';
 import { cn } from '@/lib/utils';
+import * as m from '@/paraglide/messages.js';
 
 import { buildFolderPath, FilesWorkspaceProvider } from './-components/files-workspace-context';
 import { FolderTree } from './-components/folder-tree';
@@ -129,7 +130,7 @@ export const Route = createFileRoute('/@{$org}/$project/files')({
 	pendingComponent: () => <RoutePending variant='page' />,
 	validateSearch: validateFilesWorkspaceSearch,
 	head: ({ params }) => ({
-		meta: [titleMeta(['Files', projectTitle(params.org, params.project)])],
+		meta: [titleMeta([m.project_nav_files(), projectTitle(params.org, params.project)])],
 	}),
 });
 
@@ -239,7 +240,7 @@ function FilesWorkspaceRoute() {
 				icon: FileSearch,
 				id: 'files.search',
 				keywords: ['find', 'search', 'assets', 'documents', 'images'],
-				title: 'Search files',
+				title: m.files_command_search(),
 				run: () => openWorkspaceFileSearch(),
 			},
 		];
@@ -250,7 +251,7 @@ function FilesWorkspaceRoute() {
 				id: 'files.toggle-sidebar',
 				keywords: ['folders', 'navigation', 'tree', 'collapse', 'expand'],
 				shortcut: '[',
-				title: 'Toggle sidebar',
+				title: m.files_command_toggle_sidebar(),
 				run: toggleSidebar,
 			});
 		}
@@ -261,7 +262,7 @@ function FilesWorkspaceRoute() {
 					icon: Upload,
 					id: 'files.upload',
 					keywords: ['add', 'upload', 'asset'],
-					title: 'Upload a file',
+					title: m.files_command_upload(),
 					run: () => openFileAction('upload'),
 				},
 				{
@@ -269,7 +270,7 @@ function FilesWorkspaceRoute() {
 					icon: FolderPlus,
 					id: 'files.new-folder',
 					keywords: ['add', 'create', 'directory'],
-					title: 'Add a folder',
+					title: m.files_command_add_folder(),
 					run: () => openFileAction('new-folder'),
 				}
 			);
@@ -279,7 +280,7 @@ function FilesWorkspaceRoute() {
 	const fileShortcuts = useMemo(
 		() => [
 			{
-				description: 'Toggle sidebar',
+				description: m.files_command_toggle_sidebar(),
 				enabled: () => !isBelowLg,
 				group: 'Files' as const,
 				id: 'files.toggle-sidebar',
@@ -302,23 +303,24 @@ function FilesWorkspaceRoute() {
 	const controls = (
 		<div className='flex w-full items-center gap-2'>
 			<Button className='min-w-0 flex-1' onClick={() => openWorkspaceFileSearch()}>
-				<Search className='size-3.5' /> Search
+				<Search className='size-3.5' /> {m.files_search()}
 			</Button>
 			<Tooltip>
 				<TooltipTrigger asChild delay={200}>
-					<Button aria-label='Advanced Search' asChild size='icon' variant='outline'>
+					<Button aria-label={m.files_advanced_search_aria()} asChild size='icon' variant='outline'>
 						<Link params={params} to='/@{$org}/$project/files/search'>
 							<SlidersHorizontal className='size-3.5' />
 						</Link>
 					</Button>
 				</TooltipTrigger>
-				<TooltipContent side='bottom'>Advanced Search</TooltipContent>
+				<TooltipContent side='bottom'>{m.files_advanced_search()}</TooltipContent>
 			</Tooltip>
 		</div>
 	);
 	const fileTreeActions = canManage ? (
 		<div className='mb-4 flex w-full items-center gap-2'>
 			<Button
+				aria-label={m.files_new_folder_button()}
 				className='min-w-0 flex-1 px-2'
 				onClick={() => {
 					setMobileTreeOpen(false);
@@ -326,7 +328,7 @@ function FilesWorkspaceRoute() {
 				}}
 			>
 				<Upload className='size-3.5' />
-				Upload file
+				{m.files_upload_button()}
 			</Button>
 			<Button
 				className='min-w-0 flex-1 px-2'
@@ -334,10 +336,11 @@ function FilesWorkspaceRoute() {
 					setMobileTreeOpen(false);
 					openFileAction('new-folder');
 				}}
+				title={m.files_new_folder_button()}
 				variant='outline'
 			>
 				<FolderPlus className='size-3.5' />
-				Add folder
+				{m.files_folder_button()}
 			</Button>
 		</div>
 	) : null;
@@ -352,21 +355,23 @@ function FilesWorkspaceRoute() {
 		<div className='mt-auto shrink-0 border-t bg-background py-4 pr-5'>
 			<div className='flex items-center justify-between gap-3'>
 				<p className='text-[11px] font-semibold tracking-wider text-muted-foreground uppercase'>
-					Storage usage
+					{m.files_storage_usage()}
 				</p>
 				<Link
 					className='inline-flex shrink-0 items-center gap-0.5 text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline'
 					params={params}
 					to='/@{$org}/$project/settings/storage'
 				>
-					View usage
+					{m.files_view_usage()}
 					<ChevronRight className='size-3' />
 				</Link>
 			</div>
 			{usage ? (
 				<>
 					<div
-						aria-label={`${usedPercent.toFixed(usedPercent < 1 ? 1 : 0)}% of project storage used`}
+						aria-label={m.files_storage_progress({
+							percent: usedPercent.toFixed(usedPercent < 1 ? 1 : 0),
+						})}
 						aria-valuemax={100}
 						aria-valuemin={0}
 						aria-valuenow={Math.round(usedPercent)}
@@ -380,28 +385,31 @@ function FilesWorkspaceRoute() {
 						/>
 					</div>
 					<p className='mt-2 text-xs text-muted-foreground'>
-						{formatBytes(usage.usedBytes)} of {formatBytes(usage.limitBytes)} · {usage.fileCount}{' '}
-						file{usage.fileCount === 1 ? '' : 's'}
+						{m.storage_usage_summary({
+							count: usage.fileCount,
+							limit: formatBytes(usage.limitBytes),
+							used: formatBytes(usage.usedBytes),
+						})}
 					</p>
 					{usage.reservedBytes ? (
 						<p className='mt-0.5 text-xs text-muted-foreground'>
-							{formatBytes(usage.reservedBytes)} currently uploading
+							{m.files_currently_uploading({ amount: formatBytes(usage.reservedBytes) })}
 						</p>
 					) : null}
 				</>
 			) : usageQuery.isPending ? (
-				<div className='mt-3 space-y-2' aria-label='Loading storage usage'>
+				<div className='mt-3 space-y-2' aria-label={m.files_loading_usage()}>
 					<div className='h-1.5 animate-pulse rounded-full bg-muted' />
 					<div className='h-3 w-32 animate-pulse rounded bg-muted' />
 				</div>
 			) : (
-				<p className='mt-2 text-xs text-muted-foreground'>Usage unavailable</p>
+				<p className='mt-2 text-xs text-muted-foreground'>{m.files_usage_unavailable()}</p>
 			)}
 		</div>
 	) : null;
 	const location = (
 		<nav
-			aria-label='Current file location'
+			aria-label={m.files_current_location()}
 			className='flex min-w-0 flex-1 justify-end overflow-hidden'
 		>
 			<div className='flex w-max min-w-full shrink-0 items-center text-sm whitespace-nowrap'>
@@ -414,7 +422,7 @@ function FilesWorkspaceRoute() {
 					onClick={() => void navigate({ params, to: '/@{$org}/$project/files' })}
 					type='button'
 				>
-					Root
+					{m.files_root()}
 				</button>
 				{locationFolders.map((folder, index) => {
 					const isCurrent = !activeFileId && index === locationFolders.length - 1;
@@ -444,7 +452,7 @@ function FilesWorkspaceRoute() {
 					<span className='flex items-center'>
 						<ChevronRight className='size-3.5 shrink-0 text-muted-foreground/55' />
 						<span aria-current='location' className='px-1.5 py-1 text-foreground'>
-							{activeFileName ?? 'File'}
+							{activeFileName ?? m.files_file()}
 						</span>
 					</span>
 				) : null}
@@ -498,7 +506,7 @@ function FilesWorkspaceRoute() {
 										<div className='mt-4 min-h-0 flex-1 overflow-y-auto pr-5 pb-6'>
 											{fileTreeActions}
 											<p className='mb-2 px-1.5 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase'>
-												File tree
+												{m.files_tree()}
 											</p>
 											<FolderTree
 												activeFolderId={currentFolderId}
@@ -508,7 +516,7 @@ function FilesWorkspaceRoute() {
 											/>
 											{treeFilesQuery.data?.truncated ? (
 												<p className='mt-2 px-1.5 text-xs text-muted-foreground'>
-													Showing the first 500 files.
+													{m.files_showing_first({ count: 500 })}
 												</p>
 											) : null}
 										</div>
@@ -536,7 +544,7 @@ function FilesWorkspaceRoute() {
 													aria-controls='files-tree-sidebar'
 													aria-expanded={sidebarOpen}
 													aria-keyshortcuts='['
-													aria-label={sidebarOpen ? 'Hide folders' : 'Show folders'}
+													aria-label={sidebarOpen ? m.files_hide_folders() : m.files_show_folders()}
 													className='hidden lg:inline-flex'
 													onClick={toggleSidebar}
 													size='icon'
@@ -546,14 +554,14 @@ function FilesWorkspaceRoute() {
 												</Button>
 											</TooltipTrigger>
 											<TooltipContent className='flex items-center gap-2' side='bottom'>
-												<span>Toggle Sidebar</span>
+												<span>{m.files_toggle_sidebar()}</span>
 												<kbd className='rounded border border-white/20 bg-black/45 px-1.5 py-0.5 font-sans text-[10px] text-white'>
 													[
 												</kbd>
 											</TooltipContent>
 										</Tooltip>
 										<Button
-											aria-label='Browse files'
+											aria-label={m.files_browse()}
 											className='lg:hidden'
 											onClick={() => setMobileTreeOpen(true)}
 											size='icon'
@@ -583,12 +591,12 @@ function FilesWorkspaceRoute() {
 							dialogClassName='sm:max-w-md'
 							showCloseButton={false}
 						>
-							<ResponsiveDialogHeader icon={<FolderTreeIcon />} title='Browse files' />
+							<ResponsiveDialogHeader icon={<FolderTreeIcon />} title={m.files_browse()} />
 							<ResponsiveDialogBody className='p-3'>
 								<div className='mb-3 border-b pb-3'>{controls}</div>
 								{fileTreeActions}
 								<p className='mb-2 px-1.5 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase'>
-									File tree
+									{m.files_tree()}
 								</p>
 								<FolderTree
 									activeFolderId={currentFolderId}
@@ -598,7 +606,7 @@ function FilesWorkspaceRoute() {
 								/>
 								{treeFilesQuery.data?.truncated ? (
 									<p className='mt-2 px-1.5 text-xs text-muted-foreground'>
-										Showing the first 500 files.
+										{m.files_showing_first({ count: 500 })}
 									</p>
 								) : null}
 							</ResponsiveDialogBody>

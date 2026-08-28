@@ -666,6 +666,12 @@ export declare const api: {
       },
       any
     >;
+    updateLocale: FunctionReference<
+      "mutation",
+      "public",
+      { locale: "en-US" | "es-419" | "zh-Hans" },
+      any
+    >;
   };
   project: {
     create: FunctionReference<

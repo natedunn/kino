@@ -5,6 +5,7 @@ import { Calendar, Heart, MessageSquare } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { formatFullDate } from '@/lib/utils/format-timestamp';
+import * as m from '@/paraglide/messages.js';
 
 import { CategoryBadge } from './category-badge';
 import { useEmoteToggle } from './use-emote-toggle';
@@ -82,7 +83,7 @@ function UpdateCardImpl({
 					) : null}
 					{status === 'draft' ? (
 						<Badge className='text-yellow-600 dark:text-yellow-400' variant='outline'>
-							Draft
+							{m.updates_status_draft()}
 						</Badge>
 					) : null}
 				</div>
@@ -132,14 +133,18 @@ function UpdateCardImpl({
 								)}
 							/>
 							<span className='font-medium'>
-								{likeCount} {likeCount === 1 ? 'like' : 'likes'}
+								{likeCount === 1
+									? m.updates_like_count({ count: likeCount })
+									: m.updates_like_count_plural({ count: likeCount })}
 							</span>
 						</button>
 
 						<div className='flex items-center gap-2 text-sm text-muted-foreground'>
 							<MessageSquare className='size-4' />
 							<span className='font-medium'>
-								{commentCount} {commentCount === 1 ? 'comment' : 'comments'}
+								{commentCount === 1
+									? m.updates_comment_count({ count: commentCount })
+									: m.updates_comment_count_plural({ count: commentCount })}
 							</span>
 						</div>
 					</div>
@@ -149,7 +154,7 @@ function UpdateCardImpl({
 						params={{ org: orgSlug, project: projectSlug, slug }}
 						to='/@{$org}/$project/updates/$slug'
 					>
-						View More
+						{m.updates_view_more()}
 					</Link>
 				</div>
 			</div>

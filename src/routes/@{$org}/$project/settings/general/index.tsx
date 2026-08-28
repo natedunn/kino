@@ -94,7 +94,7 @@ function SectionCard({
 
 export const Route = createFileRoute('/@{$org}/$project/settings/general/')({
 	head: () => ({
-		meta: [titleMeta(['General Settings'])],
+		meta: [titleMeta([m.meta_general_settings()])],
 	}),
 	loader: async ({ context, params }) => {
 		await context.queryClient.ensureQueryData(
@@ -251,10 +251,7 @@ function ProjectGeneralSettingsRoute() {
 		<section className='max-w-3xl'>
 			{isArchived ? (
 				<InlineAlert className='mb-6' variant='warning'>
-					This project is archived and read-only —{' '}
-					{isAdmin
-						? 'change its visibility below to un-archive it before making other changes.'
-						: 'an admin must un-archive it before changes can be saved.'}
+					{isAdmin ? m.project_archived_admin_notice() : m.project_archived_member_notice()}
 				</InlineAlert>
 			) : null}
 			<form
@@ -325,7 +322,7 @@ function ProjectGeneralSettingsRoute() {
 					</SectionCard>
 
 					<SectionCard
-						description={<>Website, docs, socials, or anything else. Up to {MAX_PROJECT_URLS}.</>}
+						description={m.project_links_description({ count: MAX_PROJECT_URLS })}
 						label={m.project_general_links()}
 					>
 						<form.Field mode='array' name='urls'>
@@ -350,7 +347,7 @@ function ProjectGeneralSettingsRoute() {
 													<div className='relative w-full sm:w-40 sm:shrink-0'>
 														<ShieldCheck className='pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-emerald-600' />
 														<Input
-															aria-label='Verified link label'
+															aria-label={m.project_verified_link_label()}
 															className='w-full pl-8'
 															readOnly
 															value={entry.text}
@@ -358,13 +355,13 @@ function ProjectGeneralSettingsRoute() {
 													</div>
 													<div className='flex gap-2 sm:flex-1'>
 														<Input
-															aria-label='Verified link URL'
+															aria-label={m.project_verified_link_url()}
 															className='flex-1'
 															readOnly
 															value={entry.url}
 														/>
 														<Button
-															aria-label='Remove verified link'
+															aria-label={m.project_remove_verified_link()}
 															onClick={() => field.removeValue(index)}
 															size='icon'
 															type='button'
@@ -379,7 +376,7 @@ function ProjectGeneralSettingsRoute() {
 													<form.Field name={`urls[${index}].text`}>
 														{(sub) => (
 															<Input
-																aria-label='Link label'
+																aria-label={m.project_link_label_aria()}
 																className='w-full sm:w-40 sm:shrink-0'
 																maxLength={FORM_LIMITS.urlLabel}
 																onChange={(event) => sub.handleChange(event.target.value)}
@@ -392,7 +389,7 @@ function ProjectGeneralSettingsRoute() {
 														<form.Field name={`urls[${index}].url`}>
 															{(sub) => (
 																<Input
-																	aria-label='Link URL'
+																	aria-label={m.project_link_url_aria()}
 																	className='flex-1'
 																	inputMode='url'
 																	maxLength={FORM_LIMITS.url}
@@ -403,7 +400,7 @@ function ProjectGeneralSettingsRoute() {
 															)}
 														</form.Field>
 														<Button
-															aria-label='Remove link'
+															aria-label={m.project_remove_link()}
 															onClick={() => field.removeValue(index)}
 															size='icon'
 															type='button'
@@ -431,7 +428,7 @@ function ProjectGeneralSettingsRoute() {
 												variant='outline'
 											>
 												<Plus className='size-4' />
-												Add link
+												{m.project_add_link()}
 											</Button>
 											{canImport ? (
 												<Button
@@ -480,7 +477,9 @@ function ProjectGeneralSettingsRoute() {
 													<GithubIcon className='size-4' />
 													{importMutation.isPending
 														? m.project_general_adding()
-														: `Add from ${importInfoQuery.data?.repoFullName ?? 'GitHub'}`}
+														: m.project_add_from({
+																source: importInfoQuery.data?.repoFullName ?? 'GitHub',
+															})}
 												</Button>
 											) : null}
 										</div>
@@ -553,7 +552,7 @@ function ProjectGeneralSettingsRoute() {
 										type='button'
 										variant='ghost'
 									>
-										Reset
+										{m.common_reset()}
 									</Button>
 									<Button
 										className={cn({
@@ -581,17 +580,14 @@ function ProjectGeneralSettingsRoute() {
 					<DialogContent>
 						<DialogHeader>
 							<DialogTitle>{m.project_general_discard_title()}</DialogTitle>
-							<DialogDescription>
-								You have unsaved changes to this project. If you leave now, your changes will be
-								lost.
-							</DialogDescription>
+							<DialogDescription>{m.project_unsaved_description()}</DialogDescription>
 						</DialogHeader>
 						<DialogFooter>
 							<Button onClick={() => blocker.reset()} type='button' variant='outline'>
-								Stay
+								{m.common_stay()}
 							</Button>
 							<Button onClick={() => blocker.proceed()} type='button' variant='destructive'>
-								Leave
+								{m.common_leave()}
 							</Button>
 						</DialogFooter>
 					</DialogContent>

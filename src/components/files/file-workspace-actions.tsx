@@ -29,6 +29,7 @@ import { useCRPC, useCRPCClient } from '@/lib/convex/crpc';
 import { extractErrorMessage } from '@/lib/errors';
 import { capturePostHogEvent } from '@/lib/posthog';
 import { cn } from '@/lib/utils';
+import * as m from '@/paraglide/messages.js';
 
 export type FileWorkspaceAction = 'new-folder' | 'upload';
 
@@ -71,21 +72,21 @@ export function ManageFolderDialog({
 				await moveMutation.mutateAsync({ folderId: folder.id, parentFolderId });
 			}
 			onOpenChange(false);
-			toast.success('Folder updated');
+			toast.success(m.files_folder_updated());
 		} catch (error) {
-			toast.error(extractErrorMessage(error, 'Unable to update folder'));
+			toast.error(extractErrorMessage(error, m.files_folder_update_failed()));
 		}
 	};
 
 	const remove = async () => {
-		if (!window.confirm(`Delete the empty folder ${folder.name}?`)) return;
+		if (!window.confirm(m.files_folder_delete_confirm({ name: folder.name }))) return;
 		try {
 			await removeMutation.mutateAsync({ folderId: folder.id });
 			onOpenChange(false);
 			onDeleted();
-			toast.success('Folder deleted');
+			toast.success(m.files_folder_deleted());
 		} catch (error) {
-			toast.error(extractErrorMessage(error, 'Unable to delete folder'));
+			toast.error(extractErrorMessage(error, m.files_folder_delete_failed()));
 		}
 	};
 
@@ -98,14 +99,14 @@ export function ManageFolderDialog({
 			>
 				<ResponsiveDialogHeader
 					icon={<FolderInput />}
-					subtitle='Rename, move, or remove this folder'
-					title='Manage folder'
+					subtitle={m.files_manage_folder_description()}
+					title={m.files_manage_folder_title()}
 				/>
 				<form onSubmit={save}>
 					<ResponsiveDialogBody className='space-y-4'>
 						<div className='space-y-2'>
 							<label className='text-xs font-medium tracking-wide text-muted-foreground uppercase'>
-								Folder name
+								{m.files_folder_name()}
 							</label>
 							<Input
 								disabled={renameMutation.isPending || moveMutation.isPending}
@@ -116,7 +117,7 @@ export function ManageFolderDialog({
 						</div>
 						<div className='space-y-2'>
 							<label className='text-xs font-medium tracking-wide text-muted-foreground uppercase'>
-								Move to
+								{m.files_move_to()}
 							</label>
 							<FolderPicker
 								disabled={renameMutation.isPending || moveMutation.isPending}
@@ -136,18 +137,20 @@ export function ManageFolderDialog({
 							type='button'
 							variant='destructive'
 						>
-							<Trash2 /> Delete
+							<Trash2 /> {m.files_delete()}
 						</Button>
 						<div className='flex gap-2'>
 							<Button onClick={() => onOpenChange(false)} size='sm' type='button' variant='outline'>
-								Cancel
+								{m.common_cancel()}
 							</Button>
 							<Button
 								disabled={!name.trim() || renameMutation.isPending || moveMutation.isPending}
 								size='sm'
 								type='submit'
 							>
-								{renameMutation.isPending || moveMutation.isPending ? 'Saving…' : 'Save'}
+								{renameMutation.isPending || moveMutation.isPending
+									? m.common_saving()
+									: m.profile_save_changes()}
 							</Button>
 						</div>
 					</ResponsiveDialogFooter>
@@ -231,21 +234,23 @@ function UploadFilesDialog({
 		setError(null);
 		setSelectedFiles([]);
 		if (nextFiles.length > MAX_DIRECT_UPLOAD_BATCH_FILES) {
-			setError(`Choose at most ${MAX_DIRECT_UPLOAD_BATCH_FILES} files.`);
+			setError(m.files_too_many({ count: MAX_DIRECT_UPLOAD_BATCH_FILES }));
 			return;
 		}
 		if (nextFiles.reduce((sum, file) => sum + file.size, 0) > MAX_DIRECT_UPLOAD_BATCH_BYTES) {
-			setError('The selected batch is larger than 50 MiB.');
+			setError(m.files_batch_too_large());
 			return;
 		}
 		for (const file of nextFiles) {
 			const policy = getFileFormatPolicy(file.name);
 			if (!policy) {
-				setError(`${file.name} is not an allowed format.`);
+				setError(m.files_format_not_allowed({ name: file.name }));
 				return;
 			}
 			if (file.size > policy.maxBytes) {
-				setError(`${file.name} exceeds its ${formatBytes(policy.maxBytes)} limit.`);
+				setError(
+					m.files_size_limit_exceeded({ limit: formatBytes(policy.maxBytes), name: file.name })
+				);
 				return;
 			}
 		}
@@ -279,12 +284,10 @@ function UploadFilesDialog({
 					uploader_class: 'staff',
 				});
 			}
-			toast.success(
-				`${selectedFiles.length} file${selectedFiles.length === 1 ? '' : 's'} uploaded`
-			);
+			toast.success(m.files_uploaded({ count: selectedFiles.length }));
 			onOpenChange(false);
 		} catch (uploadError) {
-			setError(extractErrorMessage(uploadError, 'Unable to upload files'));
+			setError(extractErrorMessage(uploadError, m.files_upload_failed()));
 			capturePostHogEvent('file_upload_failed', {
 				failure_reason: 'upload_or_completion',
 				origin_feature: 'files',
@@ -308,8 +311,8 @@ function UploadFilesDialog({
 			>
 				<ResponsiveDialogHeader
 					icon={<Upload />}
-					subtitle='Public project files · free-tier limits apply'
-					title='Upload files'
+					subtitle={m.files_upload_description()}
+					title={m.files_upload_title()}
 				/>
 				<UploadStepIndicator step={step} />
 				<ResponsiveDialogBody>
@@ -319,8 +322,10 @@ function UploadFilesDialog({
 								<span className='flex size-11 items-center justify-center rounded-xl border bg-background text-muted-foreground shadow-xs transition-transform group-hover:-translate-y-0.5 group-hover:text-foreground'>
 									<Upload className='size-5' />
 								</span>
-								<span className='font-medium'>Choose up to 10 files</span>
-								<span className='text-xs text-muted-foreground'>50 MiB maximum per batch</span>
+								<span className='font-medium'>
+									{m.files_choose_up_to({ count: MAX_DIRECT_UPLOAD_BATCH_FILES })}
+								</span>
+								<span className='text-xs text-muted-foreground'>{m.files_batch_max()}</span>
 								<input
 									accept={FILE_INPUT_ACCEPT}
 									className='sr-only'
@@ -332,7 +337,7 @@ function UploadFilesDialog({
 							{selectedFiles.length ? (
 								<div className='overflow-hidden rounded-xl border bg-card'>
 									<div className='flex items-center justify-between border-b bg-muted/25 px-3 py-2 text-xs text-muted-foreground'>
-										<span>{selectedFiles.length} selected</span>
+										<span>{m.files_selected_count({ count: selectedFiles.length })}</span>
 										<span>{formatBytes(selectedBytes)}</span>
 									</div>
 									<div className='max-h-40 overflow-y-auto p-1.5'>
@@ -355,7 +360,7 @@ function UploadFilesDialog({
 					) : (
 						<div className='space-y-2'>
 							<p className='text-xs font-medium tracking-wide text-muted-foreground uppercase'>
-								Choose destination
+								{m.files_choose_destination()}
 							</p>
 							<FolderPicker
 								disabled={uploading}
@@ -374,7 +379,7 @@ function UploadFilesDialog({
 						size='sm'
 						variant='outline'
 					>
-						{step === 'destination' ? 'Back' : 'Cancel'}
+						{step === 'destination' ? m.files_back() : m.common_cancel()}
 					</Button>
 					{step === 'files' ? (
 						<Button
@@ -382,11 +387,11 @@ function UploadFilesDialog({
 							onClick={() => setStep('destination')}
 							size='sm'
 						>
-							Choose destination <ChevronRight />
+							{m.files_choose_destination()} <ChevronRight />
 						</Button>
 					) : (
 						<Button disabled={uploading} onClick={upload} size='sm'>
-							<Upload /> {uploading ? 'Uploading…' : 'Upload'}
+							<Upload /> {uploading ? m.files_uploading() : m.files_upload()}
 						</Button>
 					)}
 				</ResponsiveDialogFooter>
@@ -429,9 +434,9 @@ function CreateFolderDialog({
 				projectId,
 			});
 			onOpenChange(false);
-			toast.success('Folder created');
+			toast.success(m.files_folder_created());
 		} catch (error) {
-			toast.error(extractErrorMessage(error, 'Unable to create folder'));
+			toast.error(extractErrorMessage(error, m.files_folder_create_failed()));
 		}
 	};
 
@@ -444,27 +449,27 @@ function CreateFolderDialog({
 			>
 				<ResponsiveDialogHeader
 					icon={<FolderPlus />}
-					subtitle='Choose a name and confirm its location'
-					title='New folder'
+					subtitle={m.files_new_folder_description()}
+					title={m.files_new_folder()}
 				/>
 				<form onSubmit={create}>
 					<ResponsiveDialogBody className='space-y-4'>
 						<div className='space-y-2'>
 							<label className='text-xs font-medium tracking-wide text-muted-foreground uppercase'>
-								Folder name
+								{m.files_folder_name()}
 							</label>
 							<Input
 								autoFocus
 								disabled={mutation.isPending}
 								maxLength={80}
 								onChange={(event) => setName(event.target.value)}
-								placeholder='Folder name'
+								placeholder={m.files_folder_name()}
 								value={name}
 							/>
 						</div>
 						<div className='space-y-2'>
 							<p className='text-xs font-medium tracking-wide text-muted-foreground uppercase'>
-								Choose location
+								{m.files_choose_location()}
 							</p>
 							<FolderPicker
 								disabled={mutation.isPending}
@@ -476,10 +481,10 @@ function CreateFolderDialog({
 					</ResponsiveDialogBody>
 					<ResponsiveDialogFooter>
 						<Button onClick={() => onOpenChange(false)} size='sm' type='button' variant='outline'>
-							Cancel
+							{m.common_cancel()}
 						</Button>
 						<Button disabled={!name.trim() || mutation.isPending} size='sm' type='submit'>
-							{mutation.isPending ? 'Adding…' : 'Add folder'}
+							{mutation.isPending ? m.files_adding() : m.files_add_folder()}
 						</Button>
 					</ResponsiveDialogFooter>
 				</form>
@@ -496,7 +501,7 @@ function UploadStepIndicator({ step }: { step: 'files' | 'destination' }) {
 					<span className='flex size-5 items-center justify-center rounded-full bg-primary text-[11px] font-semibold text-primary-foreground'>
 						{step === 'destination' ? '✓' : '1'}
 					</span>
-					Files
+					{m.project_nav_files()}
 				</li>
 				<span
 					aria-hidden='true'
@@ -518,7 +523,7 @@ function UploadStepIndicator({ step }: { step: 'files' | 'destination' }) {
 					>
 						2
 					</span>
-					Destination
+					{m.files_destination()}
 				</li>
 			</ol>
 		</div>
@@ -528,7 +533,7 @@ function UploadStepIndicator({ step }: { step: 'files' | 'destination' }) {
 async function uploadFileToSignedUrl(url: string, file: globalThis.File) {
 	const body = await file.arrayBuffer();
 	if (body.byteLength !== file.size) {
-		throw new Error(`Could not read all of ${file.name}. Please choose the file again.`);
+		throw new Error(m.files_read_failed({ name: file.name }));
 	}
 	await new Promise<void>((resolve, reject) => {
 		const request = new XMLHttpRequest();
@@ -553,11 +558,11 @@ async function waitForUploadReady(
 		const status = await crpcClient.file.getUploadStatus.query({ assetId });
 		if (status === 'ready') return;
 		if (status === 'rejected' || status === 'deleted' || status === null) {
-			throw new Error(`${fileName} could not be verified after upload. Please try again.`);
+			throw new Error(m.files_verification_failed({ name: fileName }));
 		}
 		await new Promise((resolve) => window.setTimeout(resolve, 250));
 	}
-	throw new Error(`${fileName} is still being verified. Please try again in a moment.`);
+	throw new Error(m.files_verification_pending({ name: fileName }));
 }
 
 function formatBytes(bytes: number) {

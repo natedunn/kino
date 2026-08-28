@@ -8,7 +8,7 @@ import { titleMeta } from '@/lib/seo';
 import * as m from '@/paraglide/messages.js';
 
 export const Route = createFileRoute('/@{$org}/$project/settings/storage/')({
-	head: () => ({ meta: [titleMeta(['Storage Settings'])] }),
+	head: () => ({ meta: [titleMeta([m.meta_storage_settings()])] }),
 	loader: async ({ context, params }) => {
 		const data = await context.queryClient.ensureQueryData(
 			crpcServer.project.getDetails.queryOptions({ orgSlug: params.org, slug: params.project })

@@ -64,9 +64,7 @@ export function CommandProvider({ children }: { children: ReactNode }) {
 	const isAuthenticated = !!session.data?.user;
 	const preloadPalette = useCallback(() => {
 		void loadCommandPaletteModule().then((module) => {
-			setCommandPalette(
-				(current: LoadedCommandPalette | null) => current ?? module.CommandPalette
-			);
+			setCommandPalette((current: LoadedCommandPalette | null) => current ?? module.CommandPalette);
 		});
 	}, []);
 	const preparePalette = useCallback(() => {

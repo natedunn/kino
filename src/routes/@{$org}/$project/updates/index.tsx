@@ -13,6 +13,7 @@ import Missing from '@/icons/missing';
 import { useCRPC } from '@/lib/convex/crpc';
 import { crpcServer } from '@/lib/convex/crpc-server';
 import { projectTitle, titleMeta } from '@/lib/seo';
+import * as m from '@/paraglide/messages.js';
 
 import { CategoriesNav } from './-components/categories-nav';
 import { UpdateCard } from './-components/update-card';
@@ -99,7 +100,7 @@ export const Route = createFileRoute('/@{$org}/$project/updates/')({
 	pendingComponent: () => <RoutePending variant='page' />,
 	validateSearch: validateUpdatesSearch,
 	head: ({ params }) => ({
-		meta: [titleMeta(['Updates', projectTitle(params.org, params.project)])],
+		meta: [titleMeta([m.updates_meta(), projectTitle(params.org, params.project)])],
 	}),
 });
 
@@ -219,7 +220,7 @@ function UpdatesListRoute() {
 			}));
 		} catch (error) {
 			setLoadMoreErrorState({
-				error: error instanceof Error ? error : new Error('Failed to load more updates'),
+				error: error instanceof Error ? error : new Error(m.updates_load_failed()),
 				key: firstPageKey,
 			});
 		} finally {
@@ -233,21 +234,25 @@ function UpdatesListRoute() {
 				<div className='order-last py-6 md:order-first md:col-span-3 md:border-r md:border-border/75'>
 					<div className='sticky top-6 flex flex-col overflow-hidden'>
 						<div className='pb-6 md:pr-6'>
-							<h2 className='mx-2 text-sm font-bold text-muted-foreground'>Categories</h2>
+							<h2 className='mx-2 text-sm font-bold text-muted-foreground'>
+								{m.updates_categories()}
+							</h2>
 							<div className='mt-2'>
 								<CategoriesNav />
 							</div>
 						</div>
 						{canEdit ? (
 							<div className='border-t pt-6 md:pr-6'>
-								<h2 className='mx-2 text-sm font-bold text-muted-foreground'>Actions</h2>
+								<h2 className='mx-2 text-sm font-bold text-muted-foreground'>
+									{m.updates_actions()}
+								</h2>
 								<div className='mt-2 flex flex-col gap-3'>
 									<Button asChild className='w-full'>
 										<Link
 											params={{ org: orgSlug, project: projectSlug }}
 											to='/@{$org}/$project/updates/new'
 										>
-											<CirclePlusOutline size='16px' /> New Update
+											<CirclePlusOutline size='16px' /> {m.updates_new()}
 										</Link>
 									</Button>
 									<Button asChild className='w-full' variant='outline'>
@@ -256,7 +261,7 @@ function UpdatesListRoute() {
 											search={{ pageSize: 20 }}
 											to='/@{$org}/$project/updates/edit'
 										>
-											<Settings2 className='size-4' /> Manage Updates
+											<Settings2 className='size-4' /> {m.updates_manage()}
 										</Link>
 									</Button>
 								</div>
@@ -272,12 +277,12 @@ function UpdatesListRoute() {
 				>
 					{isInitialUpdatesLoading ? (
 						<>
-							<span className='sr-only'>Loading updates...</span>
+							<span className='sr-only'>{m.updates_loading()}</span>
 							<UpdatesListSkeleton />
 						</>
 					) : null}
 					{!isInitialUpdatesLoading && updates.length === 0 ? (
-						<Notice icon={<Missing aria-hidden='true' size='32px' />}>No updates yet.</Notice>
+						<Notice icon={<Missing aria-hidden='true' size='32px' />}>{m.updates_empty()}</Notice>
 					) : null}
 					{updates.length > 0 ? (
 						<>
@@ -300,7 +305,7 @@ function UpdatesListRoute() {
 										onClick={() => void loadMoreUpdates()}
 										variant='outline'
 									>
-										{loadingMore ? 'Loading…' : 'Load more updates'}
+										{loadingMore ? m.updates_loading_more() : m.updates_load_more()}
 									</Button>
 								</div>
 							) : null}

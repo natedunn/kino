@@ -16,6 +16,7 @@ import {
 	SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
+import * as m from '@/paraglide/messages.js';
 
 import { CategoryBadge } from './category-badge';
 import { FeedbackSelector } from './feedback-selector';
@@ -61,13 +62,13 @@ export function UpdateTitleInput({
 }) {
 	return (
 		<Input
-			aria-label='Update title'
+			aria-label={m.updates_title()}
 			autoFocus={autoFocus}
 			className='h-auto border-none bg-transparent p-4 text-lg font-semibold tracking-tight shadow-none ring-0 focus-visible:ring-0 md:text-xl dark:bg-transparent'
 			id='update-title'
 			maxLength={maxLength}
 			onChange={(event) => onChange(event.target.value)}
-			placeholder='Update title...'
+			placeholder={m.updates_title_placeholder()}
 			size='xl'
 			value={value}
 			autoComplete='off'
@@ -85,7 +86,7 @@ export function CategoryField({
 }) {
 	return (
 		<div className='flex flex-col gap-1.5'>
-			<label className='text-xs text-muted-foreground'>Category</label>
+			<label className='text-xs text-muted-foreground'>{m.updates_category()}</label>
 			<Select
 				items={UPDATE_CATEGORY_ITEMS}
 				onValueChange={(next) => onValueChange(next as UpdateCategory)}
@@ -134,7 +135,7 @@ export function TagsField({
 						<Badge className='gap-1 pr-1' key={tag} variant='secondary'>
 							{tag}
 							<Button
-								aria-label={`Remove tag ${tag}`}
+								aria-label={m.updates_remove_tag({ tag })}
 								variant='ghost'
 								size='icon-xs'
 								className='ml-0.5 size-4 hover:text-destructive'
@@ -157,11 +158,11 @@ export function TagsField({
 							addTag();
 						}
 					}}
-					placeholder='Add tag...'
+					placeholder={m.updates_add_tag()}
 					value={tagInput}
 				/>
 				<Button onClick={addTag} size='sm' type='button' variant='outline'>
-					Add
+					{m.updates_add()}
 				</Button>
 			</div>
 		</div>
@@ -181,7 +182,7 @@ export function RelatedFeedbackField({
 	return (
 		<div className='flex flex-col gap-2'>
 			<FeedbackSelector onChange={onChange} projectId={projectId} selectedIds={selectedIds} />
-			<p className='text-xs text-muted-foreground'>Link feedback items addressed by this update.</p>
+			<p className='text-xs text-muted-foreground'>{m.updates_link_feedback_help()}</p>
 		</div>
 	);
 }

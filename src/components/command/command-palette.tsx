@@ -161,8 +161,7 @@ export function CommandPalette({
 				}))
 				.sort((a, b) => {
 					const scoreDifference =
-						scoreCommand(b.commands[0], trimmedQuery) -
-						scoreCommand(a.commands[0], trimmedQuery);
+						scoreCommand(b.commands[0], trimmedQuery) - scoreCommand(a.commands[0], trimmedQuery);
 					if (scoreDifference !== 0) return scoreDifference;
 					return GROUP_ORDER.indexOf(a.group) - GROUP_ORDER.indexOf(b.group);
 				});

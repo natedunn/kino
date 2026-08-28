@@ -49,6 +49,7 @@ import { crpcServer } from '@/lib/convex/crpc-server';
 import { projectTitle, titleMeta } from '@/lib/seo';
 import { cn } from '@/lib/utils';
 import { formatFullDate } from '@/lib/utils/format-timestamp';
+import * as m from '@/paraglide/messages.js';
 
 import { CategoryBadge } from '../-components/category-badge';
 import { StatusBadge } from '../-components/status-badge';
@@ -99,7 +100,7 @@ export const Route = createFileRoute('/@{$org}/$project/updates/edit/')({
 	pendingComponent: () => <RoutePending variant='page' />,
 	validateSearch: validateDashboardSearch,
 	head: ({ params }) => ({
-		meta: [titleMeta(['Manage Updates', projectTitle(params.org, params.project)])],
+		meta: [titleMeta([m.updates_manage_meta(), projectTitle(params.org, params.project)])],
 	}),
 });
 
@@ -110,11 +111,11 @@ const UPDATE_STATUS_ITEMS = [
 	{ label: <StatusBadge status='published' />, value: 'published' },
 ] as const;
 
-const COLUMN_LABELS: Record<string, string> = {
-	author: 'Author',
-	category: 'Category',
-	activity: 'Last Activity',
-	status: 'Status',
+const COLUMN_LABELS: Record<string, () => string> = {
+	author: m.updates_author,
+	category: m.updates_category,
+	activity: m.updates_last_activity,
+	status: m.updates_status,
 };
 
 const routeApi = getRouteApi('/@{$org}/$project/updates/edit/');
@@ -345,11 +346,11 @@ function UpdatesDashboard({ canDelete, pageSize }: { canDelete: boolean; pageSiz
 			<Dialog onOpenChange={(open) => !open && setDeleteDialog(null)} open={deleteDialog !== null}>
 				<DialogContent>
 					<DialogHeader>
-						<DialogTitle>Delete update{deleteDialog?.ids.length === 1 ? '' : 's'}?</DialogTitle>
+						<DialogTitle>{m.updates_delete_question()}</DialogTitle>
 						<DialogDescription>
-							This action cannot be undone.
+							{m.updates_delete_warning()}
 							{deleteDialog && deleteDialog.updates.length > 0
-								? ' These posts will be removed:'
+								? ` ${m.updates_delete_list()}`
 								: null}
 						</DialogDescription>
 					</DialogHeader>
@@ -366,7 +367,7 @@ function UpdatesDashboard({ canDelete, pageSize }: { canDelete: boolean; pageSiz
 					) : null}
 					<DialogFooter>
 						<Button onClick={() => setDeleteDialog(null)} type='button' variant='outline'>
-							Cancel
+							{m.updates_cancel()}
 						</Button>
 						<Button
 							disabled={deleteMutation.isPending}
@@ -374,7 +375,7 @@ function UpdatesDashboard({ canDelete, pageSize }: { canDelete: boolean; pageSiz
 							type='button'
 							variant='destructive'
 						>
-							{deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+							{deleteMutation.isPending ? m.updates_deleting() : m.updates_delete_short()}
 						</Button>
 					</DialogFooter>
 				</DialogContent>
@@ -391,19 +392,19 @@ function UpdatesDashboard({ canDelete, pageSize }: { canDelete: boolean; pageSiz
 						<>
 							<DrawerClose className='absolute top-4 right-4 z-10 rounded-xs opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-hidden disabled:pointer-events-none'>
 								<X className='size-4' />
-								<span className='sr-only'>Close</span>
+								<span className='sr-only'>{m.updates_close()}</span>
 							</DrawerClose>
 							<div className='flex min-h-0 flex-1 flex-col gap-4'>
 								<div className='flex flex-col gap-1.5 p-4'>
 									<div className='flex items-center gap-2 text-xs font-medium tracking-wide text-muted-foreground uppercase'>
 										<Settings2 className='size-3.5' />
-										Update Options
+										{m.updates_options()}
 									</div>
 									<DrawerTitle className='pr-6 text-lg leading-snug'>
 										{sheetUpdate.title}
 									</DrawerTitle>
 									<DrawerDescription className='sr-only'>
-										Options for {sheetUpdate.title}
+										{m.updates_options_for({ title: sheetUpdate.title })}
 									</DrawerDescription>
 									<div className='flex flex-col gap-2'>
 										<div className='flex flex-wrap items-center gap-2'>
@@ -411,11 +412,13 @@ function UpdatesDashboard({ canDelete, pageSize }: { canDelete: boolean; pageSiz
 											<CategoryBadge category={sheetUpdate.category} />
 										</div>
 										<div className='text-xs text-muted-foreground'>
-											{sheetUpdate.author?.name ?? sheetUpdate.author?.username ?? 'Unknown'}
+											{sheetUpdate.author?.name ??
+												sheetUpdate.author?.username ??
+												m.updates_unknown()}
 											{' · '}
 											{sheetUpdate.status === 'published' && sheetUpdate.publishedAt
-												? `Published ${formatFullDate(sheetUpdate.publishedAt)}`
-												: `Updated ${formatFullDate(sheetUpdate.updatedTime ?? sheetUpdate.createdAt)}`}
+												? `${m.updates_status_published()} ${formatFullDate(sheetUpdate.publishedAt)}`
+												: `${m.updates_status_updated()} ${formatFullDate(sheetUpdate.updatedTime ?? sheetUpdate.createdAt)}`}
 										</div>
 									</div>
 								</div>
@@ -426,7 +429,7 @@ function UpdatesDashboard({ canDelete, pageSize }: { canDelete: boolean; pageSiz
 									{/* Links */}
 									<div className='flex flex-col gap-2'>
 										<p className='text-[11px] font-medium tracking-wide text-muted-foreground/70 uppercase'>
-											Links
+											{m.updates_links()}
 										</p>
 										<div className='flex flex-col gap-1.5'>
 											<Link
@@ -440,7 +443,7 @@ function UpdatesDashboard({ canDelete, pageSize }: { canDelete: boolean; pageSiz
 												to='/@{$org}/$project/updates/$slug'
 											>
 												<ExternalLink className='size-3.5' />
-												View update
+												{m.updates_view()}
 											</Link>
 											<Link
 												className='inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground'
@@ -453,7 +456,7 @@ function UpdatesDashboard({ canDelete, pageSize }: { canDelete: boolean; pageSiz
 												to='/@{$org}/$project/updates/$slug/edit'
 											>
 												<Pencil className='size-3.5' />
-												Edit update
+												{m.updates_edit()}
 											</Link>
 										</div>
 									</div>
@@ -463,7 +466,7 @@ function UpdatesDashboard({ canDelete, pageSize }: { canDelete: boolean; pageSiz
 									{/* Status */}
 									<div className='flex flex-col gap-2'>
 										<p className='text-[11px] font-medium tracking-wide text-muted-foreground/70 uppercase'>
-											Status
+											{m.updates_status()}
 										</p>
 										<Select
 											items={UPDATE_STATUS_ITEMS}
@@ -514,7 +517,7 @@ function UpdatesDashboard({ canDelete, pageSize }: { canDelete: boolean; pageSiz
 											variant='ghost'
 										>
 											<Trash2 className='size-4' />
-											Delete Update
+											{m.updates_delete()}
 										</Button>
 									</div>
 								) : null}
@@ -530,10 +533,8 @@ function UpdatesDashboard({ canDelete, pageSize }: { canDelete: boolean; pageSiz
 				<div className='flex flex-col gap-4 pb-4 md:gap-6 md:pb-6'>
 					<div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4'>
 						<div className='flex flex-col gap-1'>
-							<h1 className='text-2xl font-bold md:text-3xl'>Manage Updates</h1>
-							<p className='text-sm text-muted-foreground'>
-								Drafting, publishing, and reviewing project updates.
-							</p>
+							<h1 className='text-2xl font-bold md:text-3xl'>{m.updates_manage()}</h1>
+							<p className='text-sm text-muted-foreground'>{m.updates_manage_description()}</p>
 						</div>
 						<div className='flex items-center gap-2'>
 							<Button asChild size='sm' variant='outline'>
@@ -542,7 +543,7 @@ function UpdatesDashboard({ canDelete, pageSize }: { canDelete: boolean; pageSiz
 									to='/@{$org}/$project/updates'
 								>
 									<Globe className='size-3.5' />
-									<span className='hidden sm:inline'>Public Feed</span>
+									<span className='hidden sm:inline'>{m.updates_public_feed()}</span>
 								</Link>
 							</Button>
 							<Button asChild size='sm'>
@@ -551,7 +552,7 @@ function UpdatesDashboard({ canDelete, pageSize }: { canDelete: boolean; pageSiz
 									to='/@{$org}/$project/updates/new'
 								>
 									<Plus className='size-3.5' />
-									New Update
+									{m.updates_new()}
 								</Link>
 							</Button>
 						</div>
@@ -572,7 +573,8 @@ function UpdatesDashboard({ canDelete, pageSize }: { canDelete: boolean; pageSiz
 									onClick={() => handleStatusFilterChange('all')}
 									type='button'
 								>
-									All <span className='ml-0.5 text-muted-foreground sm:ml-1'>{allRows.length}</span>
+									{m.updates_all()}{' '}
+									<span className='ml-0.5 text-muted-foreground sm:ml-1'>{allRows.length}</span>
 								</button>
 								<button
 									className={cn(
@@ -584,7 +586,7 @@ function UpdatesDashboard({ canDelete, pageSize }: { canDelete: boolean; pageSiz
 									onClick={() => handleStatusFilterChange('published')}
 									type='button'
 								>
-									Published{' '}
+									{m.updates_status_published()}{' '}
 									<span className='ml-0.5 text-muted-foreground sm:ml-1'>{publishedCount}</span>
 								</button>
 								<button
@@ -597,7 +599,8 @@ function UpdatesDashboard({ canDelete, pageSize }: { canDelete: boolean; pageSiz
 									onClick={() => handleStatusFilterChange('draft')}
 									type='button'
 								>
-									Draft <span className='ml-0.5 text-muted-foreground sm:ml-1'>{draftCount}</span>
+									{m.updates_status_draft()}{' '}
+									<span className='ml-0.5 text-muted-foreground sm:ml-1'>{draftCount}</span>
 								</button>
 							</div>
 
@@ -608,7 +611,7 @@ function UpdatesDashboard({ canDelete, pageSize }: { canDelete: boolean; pageSiz
 								<PopoverTrigger asChild>
 									<Button size='sm' variant='outline'>
 										<Columns3 className='size-3.5' />
-										<span className='hidden sm:inline'>Columns</span>
+										<span className='hidden sm:inline'>{m.updates_columns()}</span>
 									</Button>
 								</PopoverTrigger>
 								<PopoverContent align='start' className='w-48 p-2'>
@@ -622,7 +625,7 @@ function UpdatesDashboard({ canDelete, pageSize }: { canDelete: boolean; pageSiz
 													checked={column.getIsVisible()}
 													onCheckedChange={(checked) => column.toggleVisibility(checked === true)}
 												/>
-												{COLUMN_LABELS[column.id] ?? column.id}
+												{COLUMN_LABELS[column.id]?.() ?? column.id}
 											</label>
 										))}
 									</div>
@@ -632,7 +635,7 @@ function UpdatesDashboard({ canDelete, pageSize }: { canDelete: boolean; pageSiz
 							{/* Rows per page */}
 							<div className='ml-auto flex items-center gap-1.5'>
 								<label className='text-xs text-muted-foreground' htmlFor='updates-page-size'>
-									Rows
+									{m.updates_rows()}
 								</label>
 								<select
 									className='h-7 rounded-md border border-input bg-background px-2 text-xs'
@@ -652,7 +655,9 @@ function UpdatesDashboard({ canDelete, pageSize }: { canDelete: boolean; pageSiz
 						{/* Toolbar — row 2: bulk actions (only when selected) */}
 						{selectedCount > 0 ? (
 							<div className='flex flex-wrap items-center gap-2'>
-								<Badge variant='outline'>{selectedCount} selected</Badge>
+								<Badge variant='outline'>
+									{m.updates_selected_count({ count: selectedCount })}
+								</Badge>
 								<Button
 									disabled={pendingAction}
 									onClick={handleBulkPublish}
@@ -660,7 +665,7 @@ function UpdatesDashboard({ canDelete, pageSize }: { canDelete: boolean; pageSiz
 									type='button'
 									variant='outline'
 								>
-									Publish
+									{m.updates_publish()}
 								</Button>
 								<Button
 									disabled={pendingAction}
@@ -669,7 +674,7 @@ function UpdatesDashboard({ canDelete, pageSize }: { canDelete: boolean; pageSiz
 									type='button'
 									variant='outline'
 								>
-									Unpublish
+									{m.updates_unpublish()}
 								</Button>
 								{canDelete ? (
 									<Button
@@ -687,7 +692,7 @@ function UpdatesDashboard({ canDelete, pageSize }: { canDelete: boolean; pageSiz
 										type='button'
 										variant='destructive'
 									>
-										Delete
+										{m.updates_delete_short()}
 									</Button>
 								) : null}
 							</div>
@@ -705,8 +710,13 @@ function UpdatesDashboard({ canDelete, pageSize }: { canDelete: boolean; pageSiz
 				{rows.length === 0 ? (
 					<div className='rounded-lg border bg-muted/30 p-10 text-center text-muted-foreground'>
 						{statusFilter !== 'all'
-							? `No ${statusFilter} updates on this page.`
-							: 'No updates yet.'}
+							? m.updates_filtered_empty({
+									status:
+										statusFilter === 'draft'
+											? m.updates_status_draft()
+											: m.updates_status_published(),
+								})
+							: m.updates_empty()}
 					</div>
 				) : (
 					<div className='overflow-hidden rounded-lg border'>
@@ -778,11 +788,10 @@ function UpdatesDashboard({ canDelete, pageSize }: { canDelete: boolean; pageSiz
 						type='button'
 						variant='outline'
 					>
-						Previous
+						{m.updates_previous()}
 					</Button>
 					<div className='text-center text-xs text-muted-foreground sm:text-sm'>
-						Page {pagination.pageIndex + 1} · {rows.length} update
-						{rows.length === 1 ? '' : 's'}
+						{m.updates_page_summary({ page: pagination.pageIndex + 1, count: rows.length })}
 					</div>
 					<Button
 						disabled={!table.getCanNextPage()}
@@ -790,7 +799,7 @@ function UpdatesDashboard({ canDelete, pageSize }: { canDelete: boolean; pageSiz
 						size='sm'
 						type='button'
 					>
-						Next
+						{m.updates_next()}
 					</Button>
 				</div>
 			</div>

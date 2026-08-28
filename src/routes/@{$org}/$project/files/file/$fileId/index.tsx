@@ -27,6 +27,8 @@ import { crpcServer } from '@/lib/convex/crpc-server';
 import { extractErrorMessage } from '@/lib/errors';
 import { capturePostHogEvent } from '@/lib/posthog';
 import { cn } from '@/lib/utils';
+import * as m from '@/paraglide/messages.js';
+import { getLocale } from '@/paraglide/runtime.js';
 
 import { formatBytes } from '../../-components/file-explorer';
 import { fileCategoryIcon, FilePreviewBody } from '../../-components/file-preview-body';
@@ -90,10 +92,10 @@ function FileWorkspacePreview() {
 	const download = async () => {
 		try {
 			const url = await crpcClient.file.getDownloadUrl.query({ assetId: file.id });
-			if (!url) throw new Error('Download is unavailable');
+			if (!url) throw new Error(m.files_download_unavailable());
 			window.location.assign(url);
 		} catch (error) {
-			toast.error(extractErrorMessage(error, 'Unable to download file'));
+			toast.error(extractErrorMessage(error, m.files_download_failed()));
 		}
 	};
 
@@ -110,21 +112,21 @@ function FileWorkspacePreview() {
 		try {
 			await renameMutation.mutateAsync({ assetId: file.id, name: trimmedDraftName });
 			setRenameOpen(false);
-			toast.success('File renamed');
+			toast.success(m.files_renamed());
 		} catch (error) {
-			setRenameError(extractErrorMessage(error, 'Unable to rename file'));
+			setRenameError(extractErrorMessage(error, m.files_rename_failed()));
 		}
 	};
 
 	const remove = async () => {
-		if (!window.confirm(`Delete ${file.name}? This cannot be undone.`)) return;
+		if (!window.confirm(m.files_delete_confirm({ name: file.name }))) return;
 		try {
 			await removeMutation.mutateAsync({ assetId: file.id });
 			capturePostHogEvent('file_deleted', {
 				category: file.category,
 				origin_feature: file.sourceAndUsage?.originFeature ?? 'files',
 			});
-			toast.success('File deleted');
+			toast.success(m.files_deleted());
 			if (file.folder?.id) {
 				await navigate({
 					params: { folderId: file.folder.id, org: params.org, project: params.project },
@@ -137,7 +139,7 @@ function FileWorkspacePreview() {
 				});
 			}
 		} catch (error) {
-			toast.error(extractErrorMessage(error, 'Unable to delete file'));
+			toast.error(extractErrorMessage(error, m.files_delete_failed()));
 		}
 	};
 
@@ -150,10 +152,10 @@ function FileWorkspacePreview() {
 						dialogClassName='max-h-[85vh] sm:max-w-md'
 						showCloseButton={false}
 					>
-						<ResponsiveDialogHeader icon={<Pencil />} title='Rename file' />
+						<ResponsiveDialogHeader icon={<Pencil />} title={m.files_rename_title()} />
 						<form className='flex min-h-0 flex-1 flex-col' onSubmit={saveRename}>
 							<ResponsiveDialogBody>
-								<Field error={renameError} label='File name'>
+								<Field error={renameError} label={m.files_file_name()}>
 									<div className='flex items-stretch'>
 										<Input
 											autoFocus
@@ -174,10 +176,10 @@ function FileWorkspacePreview() {
 							</ResponsiveDialogBody>
 							<ResponsiveDialogFooter>
 								<Button onClick={() => setRenameOpen(false)} type='button' variant='outline'>
-									Cancel
+									{m.common_cancel()}
 								</Button>
 								<Button disabled={!canSaveRename} type='submit'>
-									{renameMutation.isPending ? 'Saving…' : 'Save'}
+									{renameMutation.isPending ? m.common_saving() : m.profile_save_changes()}
 								</Button>
 							</ResponsiveDialogFooter>
 						</form>
@@ -198,30 +200,30 @@ function FileWorkspacePreview() {
 				</div>
 				<div className='flex flex-wrap gap-2'>
 					<Button onClick={download} size='sm'>
-						<Download /> Download
+						<Download /> {m.files_download()}
 					</Button>
 					<Button asChild size='sm' variant='outline'>
 						<a href={file.deliveryUrl} rel='noreferrer' target='_blank'>
-							<ExternalLink /> Open original
+							<ExternalLink /> {m.files_open_original()}
 						</a>
 					</Button>
 					<Button
 						onClick={() => {
 							void navigator.clipboard.writeText(window.location.href);
-							toast.success('Preview link copied');
+							toast.success(m.files_link_copied());
 						}}
 						size='sm'
 						variant='outline'
 					>
-						<Copy /> Copy link
+						<Copy /> {m.files_copy_link()}
 					</Button>
 					{file.canManage ? (
 						<>
 							<Button onClick={openRename} size='sm' variant='outline'>
-								<Pencil /> Rename
+								<Pencil /> {m.files_rename()}
 							</Button>
 							<Button onClick={() => setMoveOpen(true)} size='sm' variant='outline'>
-								<FolderInput /> Move
+								<FolderInput /> {m.files_move()}
 							</Button>
 						</>
 					) : null}
@@ -249,7 +251,7 @@ function FileWorkspacePreview() {
 						}
 						type='button'
 					>
-						{nextTab === 'preview' ? 'Preview' : 'Details'}
+						{nextTab === 'preview' ? m.files_preview() : m.files_details()}
 					</button>
 				))}
 			</div>
@@ -291,11 +293,11 @@ function FileDetails({
 	return (
 		<div className='grid gap-5 xl:grid-cols-2'>
 			<section className='rounded-xl border bg-card p-5 shadow-xs'>
-				<h2 className='mb-4 text-sm font-semibold'>File information</h2>
+				<h2 className='mb-4 text-sm font-semibold'>{m.files_information()}</h2>
 				<dl className='space-y-3 text-sm'>
-					<Detail label='MIME type'>{file.mimeType}</Detail>
-					<Detail label='Size'>{formatBytes(file.sizeBytes)}</Detail>
-					<Detail label='Folder'>
+					<Detail label={m.files_mime_type()}>{file.mimeType}</Detail>
+					<Detail label={m.files_size()}>{formatBytes(file.sizeBytes)}</Detail>
+					<Detail label={m.files_folder()}>
 						<Link
 							className='inline-flex items-center gap-1.5 hover:underline'
 							params={
@@ -309,34 +311,38 @@ function FileDetails({
 									: '/@{$org}/$project/files'
 							}
 						>
-							<Folder className='size-3.5' /> {file.folder?.name ?? 'Root'}
+							<Folder className='size-3.5' /> {file.folder?.name ?? m.files_root()}
 						</Link>
 					</Detail>
-					<Detail label='Created'>{formatDateTime(file.createdTime)}</Detail>
-					<Detail label='Last edited'>{formatDateTime(file.updatedTime)}</Detail>
+					<Detail label={m.files_created()}>{formatDateTime(file.createdTime)}</Detail>
+					<Detail label={m.files_last_edited()}>{formatDateTime(file.updatedTime)}</Detail>
 				</dl>
 			</section>
 			{file.sourceAndUsage ? (
 				<section className='rounded-xl border bg-card p-5 shadow-xs'>
-					<h2 className='mb-4 text-sm font-semibold'>Source and usage</h2>
+					<h2 className='mb-4 text-sm font-semibold'>{m.files_source_usage()}</h2>
 					<dl className='space-y-3 text-sm'>
-						<Detail label='Added through'>{formatLabel(file.sourceAndUsage.originFeature)}</Detail>
-						<Detail label='Creation method'>
+						<Detail label={m.files_added_through()}>
+							{formatLabel(file.sourceAndUsage.originFeature)}
+						</Detail>
+						<Detail label={m.files_creation_method()}>
 							{formatLabel(file.sourceAndUsage.creationMethod)}
 						</Detail>
-						<Detail label='Source provider'>
+						<Detail label={m.files_source_provider()}>
 							{formatLabel(file.sourceAndUsage.sourceProvider)}
 						</Detail>
-						<Detail label='Storage provider'>
+						<Detail label={m.files_storage_provider()}>
 							{formatLabel(file.sourceAndUsage.storageProvider)}
 						</Detail>
-						<Detail label='Uploader class'>{formatLabel(file.sourceAndUsage.uploaderClass)}</Detail>
-						<Detail label='Visibility'>{formatLabel(file.sourceAndUsage.access)}</Detail>
-						<Detail label='References'>
+						<Detail label={m.files_uploader_class()}>
+							{formatLabel(file.sourceAndUsage.uploaderClass)}
+						</Detail>
+						<Detail label={m.files_visibility()}>{formatLabel(file.sourceAndUsage.access)}</Detail>
+						<Detail label={m.files_references()}>
 							{file.sourceAndUsage.referenceCount}
 							{file.sourceAndUsage.referencesTruncated ? '+' : ''}
 						</Detail>
-						<Detail label='File ID'>
+						<Detail label={m.files_id()}>
 							<code className='text-[11px] break-all'>{file.id}</code>
 						</Detail>
 					</dl>
@@ -362,13 +368,11 @@ function FileDetails({
 				<section className='rounded-xl border border-destructive/25 bg-card p-5 xl:col-span-2'>
 					<div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
 						<div>
-							<h2 className='text-sm font-semibold'>Delete file</h2>
-							<p className='mt-1 text-sm text-muted-foreground'>
-								Permanently remove this file and its stored object.
-							</p>
+							<h2 className='text-sm font-semibold'>{m.files_delete_file()}</h2>
+							<p className='mt-1 text-sm text-muted-foreground'>{m.files_delete_description()}</p>
 						</div>
 						<Button disabled={removePending} onClick={() => void onDelete()} variant='destructive'>
-							<Trash2 /> {removePending ? 'Deleting…' : 'Delete file'}
+							<Trash2 /> {removePending ? m.files_deleting() : m.files_delete_file()}
 						</Button>
 					</div>
 				</section>
@@ -387,12 +391,36 @@ function Detail({ children, label }: { children: React.ReactNode; label: string 
 }
 
 function formatDateTime(timestamp: number) {
-	return new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(
+	return new Intl.DateTimeFormat(getLocale(), { dateStyle: 'medium', timeStyle: 'short' }).format(
 		new Date(timestamp)
 	);
 }
 
 function formatLabel(value: string) {
+	const labels: Record<string, () => string> = {
+		direct: m.files_label_direct,
+		feature: m.files_label_feature,
+		feedback_attachment: m.storage_label_feedback_attachment,
+		files: m.storage_label_files,
+		google_drive: m.files_label_google_drive,
+		integration: m.storage_label_integration,
+		kino: () => 'Kino',
+		org_avatar: m.storage_label_org_avatar,
+		private_user: m.files_label_private_user,
+		project_header: m.storage_label_project_header,
+		project_staff: m.files_label_project_staff,
+		public: m.files_label_public,
+		s3: m.files_label_s3,
+		staff: m.storage_label_staff,
+		system: m.storage_label_system,
+		update_body: m.storage_label_update_body,
+		update_cover: m.storage_label_update_cover,
+		user: m.storage_label_user,
+		user_avatar: m.storage_label_user_avatar,
+		wiki_attachment: m.storage_label_wiki_attachment,
+		youtube: m.files_label_youtube,
+	};
+	if (labels[value]) return labels[value]();
 	return value
 		.split('_')
 		.map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)

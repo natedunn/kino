@@ -14,6 +14,7 @@ import { ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { formatFullDate, formatTimestamp } from '@/lib/utils/format-timestamp';
+import * as m from '@/paraglide/messages.js';
 
 import { CategoryBadge } from '../-components/category-badge';
 import { StatusBadge } from '../-components/status-badge';
@@ -39,14 +40,14 @@ export function createUpdateColumns(
 		columnHelper.display({
 			cell: ({ row }) => (
 				<Checkbox
-					aria-label={`Select ${row.original.title}`}
+					aria-label={m.updates_select_row({ title: row.original.title })}
 					checked={row.getIsSelected()}
 					onCheckedChange={(checked) => row.toggleSelected(checked === true)}
 				/>
 			),
 			header: ({ table }) => (
 				<Checkbox
-					aria-label='Select all rows on this page'
+					aria-label={m.updates_select_all()}
 					checked={table.getIsAllPageRowsSelected()}
 					onCheckedChange={(checked) => table.toggleAllPageRowsSelected(checked === true)}
 				/>
@@ -72,16 +73,16 @@ export function createUpdateColumns(
 					<span className='truncate text-xs text-muted-foreground'>{row.original.slug}</span>
 				</div>
 			),
-			header: 'Title',
+			header: m.updates_title(),
 			enableHiding: false,
 		}),
 		columnHelper.display({
 			cell: ({ row }) => (
 				<span className='text-sm text-muted-foreground'>
-					{row.original.author?.name ?? row.original.author?.username ?? 'Unknown'}
+					{row.original.author?.name ?? row.original.author?.username ?? m.updates_unknown()}
 				</span>
 			),
-			header: 'Author',
+			header: m.updates_author(),
 			id: 'author',
 			meta: {
 				headerClassName: 'hidden lg:table-cell',
@@ -90,7 +91,7 @@ export function createUpdateColumns(
 		}),
 		columnHelper.accessor('category', {
 			cell: ({ getValue }) => <CategoryBadge category={getValue()} />,
-			header: 'Category',
+			header: m.updates_category(),
 			meta: {
 				headerClassName: 'hidden md:table-cell',
 				cellClassName: 'hidden md:table-cell',
@@ -98,7 +99,7 @@ export function createUpdateColumns(
 		}),
 		columnHelper.accessor('status', {
 			cell: ({ getValue }) => <StatusBadge status={getValue()} />,
-			header: 'Status',
+			header: m.updates_status(),
 			meta: {
 				headerClassName: 'hidden sm:table-cell',
 				cellClassName: 'hidden sm:table-cell',
@@ -107,7 +108,10 @@ export function createUpdateColumns(
 		columnHelper.display({
 			cell: ({ row }) => {
 				const timestamp = row.original.updatedTime ?? row.original.createdAt;
-				const label = row.original.status === 'published' ? 'Published' : 'Updated';
+				const label =
+					row.original.status === 'published'
+						? m.updates_status_published()
+						: m.updates_status_updated();
 				return (
 					<div className='flex min-w-0 flex-col gap-0.5 text-sm'>
 						<span>{formatTimestamp(timestamp, { relative: false })}</span>
@@ -117,7 +121,7 @@ export function createUpdateColumns(
 					</div>
 				);
 			},
-			header: 'Last Activity',
+			header: m.updates_last_activity(),
 			id: 'activity',
 			meta: {
 				headerClassName: 'hidden lg:table-cell',
@@ -133,11 +137,11 @@ export function createUpdateColumns(
 					type='button'
 					variant='ghost'
 				>
-					Options
+					{m.updates_options()}
 					<ChevronRight className='size-3.5' />
 				</Button>
 			),
-			header: () => <span className='sr-only'>Actions</span>,
+			header: () => <span className='sr-only'>{m.updates_actions()}</span>,
 			id: 'actions',
 			size: 100,
 			enableHiding: false,

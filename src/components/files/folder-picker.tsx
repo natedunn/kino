@@ -6,11 +6,9 @@ import type { ReactNode } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { Check, ChevronRight, Folder, FolderOpen } from 'lucide-react';
 
-import {
-	buildFolderPath,
-	folderPickerPathLabel,
-} from '@/components/files/folder-picker-utils';
+import { buildFolderPath, folderPickerPathLabel } from '@/components/files/folder-picker-utils';
 import { cn } from '@/lib/utils';
+import * as m from '@/paraglide/messages.js';
 
 type FolderPickerProps = {
 	className?: string;
@@ -100,7 +98,7 @@ export function FolderPicker({
 			)}
 		>
 			<div
-				aria-label='Project folders'
+				aria-label={m.files_project_folders()}
 				className='max-h-64 min-h-44 overflow-y-auto p-1.5'
 				role='tree'
 			>
@@ -124,7 +122,9 @@ export function FolderPicker({
 				</p>
 				<div className='mt-1 flex items-start gap-2 text-sm font-medium'>
 					<FolderOpen className='mt-0.5 size-3.5 shrink-0 text-primary' />
-					<span className='break-words'>{folderPickerPathLabel(folders, value)}</span>
+					<span className='break-words'>
+						{folderPickerPathLabel(folders, value, m.files_root())}
+					</span>
 				</div>
 			</div>
 		</div>
@@ -159,9 +159,7 @@ function FolderTreeRow({
 			className={cn(
 				'group relative flex min-h-9 items-center rounded-lg border border-transparent transition-colors',
 				disabled && 'opacity-50',
-				selected
-					? 'border-primary/20 bg-primary/9 text-foreground'
-					: 'hover:bg-muted/65'
+				selected ? 'border-primary/20 bg-primary/9 text-foreground' : 'hover:bg-muted/65'
 			)}
 			role='treeitem'
 			style={{ paddingLeft: `${depth * 14 + 4}px` }}
@@ -179,7 +177,11 @@ function FolderTreeRow({
 			) : null}
 			{hasChildren ? (
 				<button
-					aria-label={`${expanded ? 'Collapse' : 'Expand'} ${label}`}
+					aria-label={
+						expanded
+							? m.files_collapse_folder({ name: label })
+							: m.files_expand_folder({ name: label })
+					}
 					className={cn(
 						'relative z-10 flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-muted-foreground disabled:cursor-not-allowed',
 						selected

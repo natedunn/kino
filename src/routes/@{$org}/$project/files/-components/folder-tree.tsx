@@ -19,6 +19,7 @@ import {
 import { Tree, TreeItem, TreeItemLabel } from '@/components/reui/tree';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import * as m from '@/paraglide/messages.js';
 
 import { buildFolderPath, useFilesWorkspace } from './files-workspace-context';
 
@@ -240,7 +241,11 @@ export function FolderTreeSkeleton({ className }: { className?: string }) {
 	] as const;
 
 	return (
-		<div aria-label='Loading file tree' className={cn('space-y-0.5 p-1', className)} role='status'>
+		<div
+			aria-label={m.files_loading_tree()}
+			className={cn('space-y-0.5 p-1', className)}
+			role='status'
+		>
 			{rows.map((row, index) => (
 				<div
 					className='relative flex h-8 items-center gap-2 px-1.5'
@@ -267,7 +272,7 @@ function buildTreeItems(
 	files: Array<FileTreeFile>
 ) {
 	const items: Record<string, FolderTreeItem> = {
-		[ROOT_ID]: { children: [], id: ROOT_ID, kind: 'root', name: 'Root', system: true },
+		[ROOT_ID]: { children: [], id: ROOT_ID, kind: 'root', name: m.files_root(), system: true },
 	};
 	for (const folder of folders) {
 		items[folderNodeId(folder.id)] = {

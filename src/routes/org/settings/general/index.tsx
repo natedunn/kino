@@ -67,7 +67,7 @@ function AvatarPreview({
 
 export const Route = createFileRoute('/org/settings/general/')({
 	head: () => ({
-		meta: [titleMeta(['General Settings'])],
+		meta: [titleMeta([m.meta_general_settings()])],
 	}),
 	// Access is gated once on the `/org/settings` layout loader (canEdit).
 	component: GeneralSettingsRoute,

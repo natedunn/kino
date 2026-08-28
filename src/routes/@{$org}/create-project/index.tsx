@@ -28,10 +28,18 @@ import {
 	SLUG_INPUT_PATTERN,
 	validationMessage,
 } from '@/lib/validation';
+import * as m from '@/paraglide/messages.js';
+
+type Visibility = 'public' | 'private';
+const VISIBILITY_VALUES: Array<Visibility> = ['public', 'private'];
+const VISIBILITY_LABELS: Record<Visibility, () => string> = {
+	private: m.project_visibility_private,
+	public: m.project_visibility_public,
+};
 
 export const Route = createFileRoute('/@{$org}/create-project/')({
 	head: ({ params }) => ({
-		meta: [titleMeta(['Create Project', titleFromSlug(params.org)])],
+		meta: [titleMeta([m.create_project_meta(), titleFromSlug(params.org)])],
 	}),
 	loader: async ({ context, params }) => {
 		const orgData = await context.queryClient.ensureQueryData(
@@ -109,8 +117,8 @@ function CreateProjectRoute() {
 		return (
 			<div className='container py-10'>
 				<EmptyState
-					title='Project creation unavailable'
-					description='Only organization admins can create projects here.'
+					title={m.create_project_unavailable()}
+					description={m.create_project_unavailable_description()}
 				/>
 			</div>
 		);
@@ -118,6 +126,10 @@ function CreateProjectRoute() {
 
 	const { org } = orgQuery.data;
 	const enabled = !!limitsQuery.data?.canAddProjects;
+	const visibilityItems = VISIBILITY_VALUES.map((value) => ({
+		label: VISIBILITY_LABELS[value](),
+		value,
+	}));
 
 	return (
 		<div className='flex flex-auto flex-col'>
@@ -128,7 +140,7 @@ function CreateProjectRoute() {
 							{(values) => (
 								<div className='relative flex flex-col pr-6'>
 									<div className='relative z-10 mx-auto rounded-b-lg bg-foreground/10 px-2 py-0.5 text-sm text-muted-foreground'>
-										Preview
+										{m.create_preview()}
 									</div>
 									<div className='absolute inset-x-0 top-0 h-64 bg-linear-to-tr from-background to-foreground/10' />
 									<div className='z-10 flex w-full flex-col items-center justify-center pt-10'>
@@ -142,18 +154,18 @@ function CreateProjectRoute() {
 												'text-muted-foreground': !enabled || !values.name,
 											})}
 										>
-											{values.name || 'Unnamed'}
+											{values.name || m.create_unnamed()}
 										</div>
 										<div className='mt-1 flex items-center gap-1 text-sm'>
 											{values.visibility === 'public' ? (
 												<>
 													<Eye className='size-4' />
-													<span>Public</span>
+													<span>{m.project_visibility_public()}</span>
 												</>
 											) : (
 												<>
 													<EyeClosed className='size-4' />
-													<span>Private</span>
+													<span>{m.project_visibility_private()}</span>
 												</>
 											)}
 										</div>
@@ -168,7 +180,7 @@ function CreateProjectRoute() {
 					</div>
 					<div className='p-4 sm:p-6 md:col-span-9 md:p-12'>
 						<h1 className='inline-flex flex-wrap items-center gap-y-1 text-2xl font-bold md:text-3xl'>
-							<span className='mr-2 inline-block'>Create a new project for</span>
+							<span className='mr-2 inline-block'>{m.create_project_title_prefix()}</span>
 							<span className='inline-flex items-center gap-2 rounded-lg px-2 text-foreground'>
 								<Avatar className='size-6 rounded-full border border-primary'>
 									<AvatarFallback className='rounded-lg'>{getInitial(org.name)}</AvatarFallback>
@@ -180,11 +192,11 @@ function CreateProjectRoute() {
 						<div className='mt-10'>
 							{!enabled ? (
 								<InlineAlert className='mb-6' variant='warning'>
-									Maximum projects created. Please{' '}
+									{m.create_project_limit_prefix()}{' '}
 									<a className='link-text' href='#'>
-										change your plan
+										{m.create_team_change_plan()}
 									</a>{' '}
-									or contact support if you believe this is an error.
+									{m.create_project_limit_suffix()}
 								</InlineAlert>
 							) : null}
 
@@ -202,8 +214,10 @@ function CreateProjectRoute() {
 									{(field) => (
 										<div className='flex items-end gap-3'>
 											<div className='flex flex-1 flex-col gap-2'>
-												<label className='text-sm font-medium'>Project name</label>
-												<p className='text-sm text-muted-foreground'>Name of your project.</p>
+												<label className='text-sm font-medium'>{m.create_project_name()}</label>
+												<p className='text-sm text-muted-foreground'>
+													{m.create_project_name_description()}
+												</p>
 												<Input
 													autoFocus
 													disabled={!enabled}
@@ -220,9 +234,9 @@ function CreateProjectRoute() {
 									{(field) => (
 										<div className='flex items-end gap-3'>
 											<div className='flex flex-1 flex-col gap-2'>
-												<label className='text-sm font-medium'>Project Slug</label>
+												<label className='text-sm font-medium'>{m.create_project_slug()}</label>
 												<p className='text-sm text-muted-foreground'>
-													Will be used in URL of your project. Must be unique to your organization.
+													{m.create_project_slug_description()}
 												</p>
 												<div className='flex items-stretch'>
 													<div className='flex items-center rounded-l-lg border-y border-l border-border bg-muted px-3 text-sm'>
@@ -254,11 +268,12 @@ function CreateProjectRoute() {
 									{(field) => (
 										<div className='flex items-end gap-3'>
 											<div className='flex flex-1 flex-col gap-2'>
-												<label className='text-sm font-medium'>Visibility</label>
+												<label className='text-sm font-medium'>{m.create_visibility()}</label>
 												<p className='text-sm text-muted-foreground'>
-													Make your project public or private.
+													{m.create_project_visibility_description()}
 												</p>
 												<Select
+													items={visibilityItems}
 													value={field.state.value}
 													disabled={!enabled}
 													onValueChange={(value) =>
@@ -266,11 +281,18 @@ function CreateProjectRoute() {
 													}
 												>
 													<SelectTrigger className='w-full sm:w-48'>
-														<SelectValue placeholder='Select visibility' />
+														<SelectValue placeholder={m.create_select_visibility()}>
+															{(value: Visibility | null) =>
+																value ? VISIBILITY_LABELS[value]() : m.create_select_visibility()
+															}
+														</SelectValue>
 													</SelectTrigger>
 													<SelectContent>
-														<SelectItem value='public'>Public</SelectItem>
-														<SelectItem value='private'>Private</SelectItem>
+														{visibilityItems.map((item) => (
+															<SelectItem key={item.value} value={item.value}>
+																{item.label}
+															</SelectItem>
+														))}
 													</SelectContent>
 												</Select>
 											</div>
@@ -280,7 +302,7 @@ function CreateProjectRoute() {
 
 								{(formError ?? createMutation.error) ? (
 									<InlineAlert variant='danger'>
-										Unable to create project: {formError ?? createMutation.error?.message}
+										{m.create_project_failed()}: {formError ?? createMutation.error?.message}
 									</InlineAlert>
 								) : null}
 
@@ -308,7 +330,9 @@ function CreateProjectRoute() {
 													disabled={disabled}
 													type='submit'
 												>
-													{createMutation.isPending ? 'Creating...' : 'Create Project'}
+													{createMutation.isPending
+														? m.create_project_creating()
+														: m.create_project_action()}
 												</Button>
 											</div>
 										);

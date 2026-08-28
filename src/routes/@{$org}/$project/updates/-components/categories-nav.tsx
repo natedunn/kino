@@ -1,11 +1,12 @@
 import { Link, useParams, useSearch } from '@tanstack/react-router';
 
 import { SidebarNavGroup, SidebarNavItem } from '@/components/sidebar-nav';
+import * as m from '@/paraglide/messages.js';
 
 import { CATEGORY_CONFIG } from './category-badge';
 
 const categories = [
-	{ label: 'All', slug: 'all' },
+	{ label: m.updates_all, slug: 'all' },
 	{ label: CATEGORY_CONFIG.changelog.label, slug: 'changelog' },
 	{ label: CATEGORY_CONFIG.article.label, slug: 'article' },
 	{ label: CATEGORY_CONFIG.announcement.label, slug: 'announcement' },
@@ -30,7 +31,7 @@ export function CategoriesNav() {
 						})}
 						to='/@{$org}/$project/updates'
 					>
-						<SidebarNavItem active={active}>{category.label}</SidebarNavItem>
+						<SidebarNavItem active={active}>{category.label()}</SidebarNavItem>
 					</Link>
 				);
 			})}

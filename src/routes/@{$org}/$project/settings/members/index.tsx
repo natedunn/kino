@@ -19,7 +19,7 @@ import { ArchivedSettingsNotice } from '../-components/archived-notice';
 
 export const Route = createFileRoute('/@{$org}/$project/settings/members/')({
 	head: () => ({
-		meta: [titleMeta(['Members'])],
+		meta: [titleMeta([m.meta_members()])],
 	}),
 	loader: async ({ context, params }) => {
 		const details = await context.queryClient.ensureQueryData(
@@ -119,19 +119,12 @@ function ProjectMembersRoute() {
 			{isArchived ? <ArchivedSettingsNotice className='mb-6' /> : null}
 			<header className='border-b pb-4'>
 				<h2 className='text-xl font-semibold'>{m.project_members_title()}</h2>
-				<p className='mt-1 text-sm text-muted-foreground'>
-					Give specific people access to this project when it is private. They get normal access —
-					view, comment, and submit feedback — just like any user on a public project. Moderator
-					access is managed separately below.
-				</p>
+				<p className='mt-1 text-sm text-muted-foreground'>{m.project_members_description()}</p>
 			</header>
 
 			<div className='mt-8'>
 				<h3 className='text-sm font-bold text-muted-foreground'>{m.org_members_moderators()}</h3>
-				<p className='mt-1 text-sm text-muted-foreground'>
-					Assigned moderators can manage content and ordinary project settings, but not members,
-					integrations, archiving, or deletion.
-				</p>
+				<p className='mt-1 text-sm text-muted-foreground'>{m.project_moderators_description()}</p>
 				{moderators.length === 0 ? (
 					<p className='mt-3 text-sm text-muted-foreground'>{m.project_members_no_moderators()}</p>
 				) : (
@@ -179,10 +172,7 @@ function ProjectMembersRoute() {
 
 			{!isPrivate ? (
 				<div className='mt-4'>
-					<InlineAlert variant='info'>
-						This project is public, so anyone can already participate — members aren’t required.
-						People you add here are saved and take effect if you switch the project to private.
-					</InlineAlert>
+					<InlineAlert variant='info'>{m.project_members_public_notice()}</InlineAlert>
 				</div>
 			) : null}
 
@@ -202,7 +192,7 @@ function ProjectMembersRoute() {
 			>
 				<div className='flex flex-1 flex-col gap-2'>
 					<label className='text-sm font-medium' htmlFor='member-email'>
-						Add a member by email
+						{m.project_members_add_by_email()}
 					</label>
 					<Input
 						autoCapitalize='none'
@@ -221,9 +211,7 @@ function ProjectMembersRoute() {
 					{invite.isPending ? m.project_members_adding() : m.project_members_add()}
 				</Button>
 			</form>
-			<p className='mt-2 text-xs text-muted-foreground'>
-				The person must already have a Kino account.
-			</p>
+			<p className='mt-2 text-xs text-muted-foreground'>{m.project_members_account_required()}</p>
 
 			{(formError ?? actionError) ? (
 				<div className='mt-4'>
@@ -234,7 +222,7 @@ function ProjectMembersRoute() {
 			{/* Members */}
 			<div className='mt-8'>
 				<h3 className='text-sm font-bold text-muted-foreground'>
-					{members.length} member{members.length === 1 ? '' : 's'}
+					{m.project_members_count({ count: members.length })}
 				</h3>
 				{members.length === 0 ? (
 					<p className='mt-3 text-sm text-muted-foreground'>{m.project_members_empty()}</p>
@@ -265,7 +253,9 @@ function ProjectMembersRoute() {
 									onClick={() => {
 										if (
 											window.confirm(
-												`Remove ${member.profile.name ?? member.profile.username} from this project?`
+												m.project_members_remove_confirm({
+													name: member.profile.name ?? member.profile.username,
+												})
 											)
 										) {
 											removeMember.mutate({ projectMemberId: member.id });
