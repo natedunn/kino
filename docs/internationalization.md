@@ -91,7 +91,7 @@ terminology decisions:
 | ----------------------------------------------- | --------------------------- | ------------------------------------------------------------------------------------- |
 | Kino Feedback item/area                         | `feedback` / `Feedback`     | Common product-team term and keeps the entity distinct from its nested `comentarios`. |
 | A comment on feedback or an update              | `comentario`                | Ordinary Spanish; never use it as the Feedback entity name.                           |
-| URL slug                                        | `identificador URL`         | Clear to non-developers; `slug` is implementation jargon.                             |
+| URL slug                                        | `slug`                      | Familiar product and web terminology for Kino's audience.                             |
 | roadmap                                         | `hoja de ruta`              | Established, understandable Spanish.                                                  |
 | dashboard                                       | `panel`                     | Familiar interface term.                                                              |
 | settings                                        | `configuración`             | Standard interface term.                                                              |
