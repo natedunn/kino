@@ -208,7 +208,7 @@ export function CommandPalette({
 	return (
 		<CommandDialog
 			commandValue={mode === 'commands' ? selectedCommandId : undefined}
-			description={mode === 'files' ? 'Search all files in this project' : undefined}
+			description={mode === 'files' ? m.command_search_project_files_description() : undefined}
 			initialFocus={inputRef}
 			onCommandValueChange={mode === 'commands' ? setSelectedCommandId : undefined}
 			onOpenChange={handleOpenChange}
@@ -289,7 +289,7 @@ function FileSearchResults({
 	return (
 		<CommandList className='px-1.5 sm:scroll-pb-12 sm:px-2 sm:pb-12'>
 			<CommandGroup>
-				<CommandItem forceMount onSelect={onBack} value='Back to commands'>
+				<CommandItem forceMount onSelect={onBack} value={m.command_back()}>
 					<ArrowLeft />
 					<span>{m.command_back()}</span>
 					<CommandShortcut>Esc</CommandShortcut>

@@ -184,7 +184,7 @@ function ProjectMembersRoute() {
 					setFormError(null);
 					const parsed = emailSchema.safeParse(email);
 					if (!parsed.success) {
-						setFormError(parsed.error.issues[0]?.message ?? 'Invalid email');
+						setFormError(m.project_members_invalid_email());
 						return;
 					}
 					invite.mutate({ email: parsed.data, projectId }, { onSuccess: () => setEmail('') });

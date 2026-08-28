@@ -6,6 +6,7 @@ import { eq } from 'kitcn/orm';
 import { CRPCError } from 'kitcn/server';
 import { z } from 'zod';
 
+import { appError } from '../lib/app-error';
 import { authMutation, authQuery, optionalAuthQuery } from '../lib/crpc';
 import {
 	createProjectUploadIntents,
@@ -418,7 +419,8 @@ export const generateCoverImageUploadUrl = authMutation
 		}
 		const policy = getFileFormatPolicy(input.file.name);
 		if (!policy || policy.category !== 'image' || policy.preview !== 'image') {
-			throw new CRPCError({
+			throw appError({
+				appCode: 'INVALID_IMAGE_FORMAT',
 				code: 'BAD_REQUEST',
 				message: 'Cover images must use an allowed image format',
 			});

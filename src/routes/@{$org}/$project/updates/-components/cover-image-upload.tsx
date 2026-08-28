@@ -4,6 +4,7 @@ import { ImagePlus, Loader2, Trash2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { useCRPC } from '@/lib/convex/crpc';
+import { localizeError } from '@/lib/errors';
 import { cn } from '@/lib/utils';
 import * as m from '@/paraglide/messages.js';
 
@@ -62,7 +63,7 @@ export function CoverImageUpload({
 			await syncMetadataMutation.mutateAsync({ key });
 			onChange(key);
 		} catch (error) {
-			onError?.(error instanceof Error ? error.message : m.updates_cover_failed());
+			onError?.(localizeError(error, m.updates_cover_failed()));
 			setPreviewUrl(null);
 		} finally {
 			setIsUploading(false);
@@ -84,7 +85,7 @@ export function CoverImageUpload({
 			setPreviewUrl(null);
 			onChange(null);
 		} catch (error) {
-			onError?.(error instanceof Error ? error.message : m.updates_cover_clear_failed());
+			onError?.(localizeError(error, m.updates_cover_clear_failed()));
 		} finally {
 			setIsUploading(false);
 			if (fileInputRef.current) {

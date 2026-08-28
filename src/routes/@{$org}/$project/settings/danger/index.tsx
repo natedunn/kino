@@ -18,6 +18,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { useCRPC } from '@/lib/convex/crpc';
 import { crpcServer } from '@/lib/convex/crpc-server';
+import { localizeError } from '@/lib/errors';
 import { titleMeta } from '@/lib/seo';
 import * as m from '@/paraglide/messages.js';
 
@@ -180,7 +181,7 @@ function DangerZone({
 								try {
 									await onDelete();
 								} catch (err) {
-									setDialogError(err instanceof Error ? err.message : m.project_delete_failed());
+									setDialogError(localizeError(err, m.project_delete_failed()));
 									setDeleting(false);
 								}
 							}}

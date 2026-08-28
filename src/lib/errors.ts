@@ -62,6 +62,28 @@ function translateAppError(code: unknown, values: unknown): string | undefined {
 			return m.server_error_project_slug_taken({ slug: String(parsed.slug ?? '') });
 		case 'USERNAME_TAKEN':
 			return m.server_error_username_taken();
+		case 'ACCOUNT_NOT_FOUND_FOR_EMAIL':
+			return m.server_error_account_not_found_for_email();
+		case 'ACCOUNT_NOT_READY':
+			return m.server_error_account_not_ready();
+		case 'PROJECT_MEMBER_ALREADY_HAS_ACCESS':
+			return m.server_error_project_member_already_has_access();
+		case 'PROJECT_MEMBER_ORG_MANAGED':
+			return m.server_error_project_member_org_managed();
+		case 'FILE_UPLOAD_BATCH_TOO_LARGE':
+			return m.server_error_file_upload_batch_too_large();
+		case 'FOLDER_LIMIT_REACHED':
+			return m.server_error_folder_limit_reached();
+		case 'FOLDER_DEPTH_EXCEEDED':
+			return m.server_error_folder_depth_exceeded({ count: String(parsed.count ?? '') });
+		case 'FOLDER_NAME_TAKEN':
+			return m.server_error_folder_name_taken();
+		case 'FOLDER_NOT_EMPTY':
+			return m.server_error_folder_not_empty();
+		case 'FILE_IN_USE':
+			return m.server_error_file_in_use();
+		case 'INVALID_IMAGE_FORMAT':
+			return m.server_error_invalid_image_format();
 	}
 }
 

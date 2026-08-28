@@ -12,6 +12,7 @@ import {
 import { InputGroup, InputGroupAddon } from '@/components/ui/input-group';
 import { RESPONSIVE_DIALOG_CARD, RESPONSIVE_DIALOG_RING } from '@/components/ui/responsive-dialog';
 import { cn } from '@/lib/utils';
+import * as m from '@/paraglide/messages.js';
 
 function Command({ className, ...props }: React.ComponentProps<typeof CommandPrimitive>) {
 	return (
@@ -27,8 +28,8 @@ function Command({ className, ...props }: React.ComponentProps<typeof CommandPri
 }
 
 function CommandDialog({
-	title = 'Command Palette',
-	description = 'Search for a command to run...',
+	title = m.command_palette(),
+	description = m.command_palette_description(),
 	children,
 	className,
 	initialFocus,

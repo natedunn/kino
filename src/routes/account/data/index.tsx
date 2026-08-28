@@ -10,6 +10,7 @@ import { Label, LabelDescription, LabelWrapper } from '@/components/label';
 import { Button } from '@/components/ui/button';
 import { useCRPC, useCRPCClient } from '@/lib/convex/crpc';
 import { crpcServer } from '@/lib/convex/crpc-server';
+import { localizeError } from '@/lib/errors';
 import { capturePostHogEvent } from '@/lib/posthog';
 import { titleMeta } from '@/lib/seo';
 import { cn } from '@/lib/utils';
@@ -42,18 +43,16 @@ export const Route = createFileRoute('/account/data/')({
 });
 
 function getErrorMessage(error: unknown) {
-	if (typeof error === 'object' && error && 'data' in error) {
-		const data = (error as { data?: { message?: unknown } }).data;
-		if (typeof data?.message === 'string') return data.message;
-	}
-
-	if (error instanceof Error) return error.message;
-
-	return m.data_export_failed();
+	return localizeError(error, m.data_export_failed());
 }
 
 function getExportFailureReason(error: unknown) {
-	const message = getErrorMessage(error).toLowerCase();
+	const data =
+		typeof error === 'object' && error && 'data' in error
+			? (error as { data?: { code?: unknown; message?: unknown } }).data
+			: undefined;
+	if (data?.code === 'UNAUTHORIZED') return 'unauthorized';
+	const message = typeof data?.message === 'string' ? data.message.toLowerCase() : '';
 
 	if (message.includes('too large')) return 'too_large';
 	if (message.includes('not authenticated') || message.includes('unauthorized')) {
