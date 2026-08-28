@@ -17,6 +17,7 @@ import { Separator } from '@/components/ui/separator';
 import { authClient } from '@/lib/convex/auth-client';
 import { useCRPC } from '@/lib/convex/crpc';
 import { crpcServer } from '@/lib/convex/crpc-server';
+import { localizeError } from '@/lib/errors';
 import { useSidebarState } from '@/lib/hooks/use-sidebar-state';
 import { projectTitle, titleMeta } from '@/lib/seo';
 import { cn } from '@/lib/utils';
@@ -83,7 +84,7 @@ function NewUpdateRoute() {
 	);
 	const createMutation = useMutation(
 		crpc.update.create.mutationOptions({
-			onError: (error) => setFormError(error.message),
+			onError: (error) => setFormError(localizeError(error, m.common_try_again())),
 		})
 	);
 	const publishMutation = useMutation(
@@ -97,7 +98,7 @@ function NewUpdateRoute() {
 					to: '/@{$org}/$project/updates/$slug',
 				});
 			},
-			onError: (error) => setFormError(error.message),
+			onError: (error) => setFormError(localizeError(error, m.common_try_again())),
 		})
 	);
 

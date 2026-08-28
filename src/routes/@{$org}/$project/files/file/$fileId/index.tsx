@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/responsive-dialog';
 import { useCRPC, useCRPCClient } from '@/lib/convex/crpc';
 import { crpcServer } from '@/lib/convex/crpc-server';
-import { extractErrorMessage } from '@/lib/errors';
+import { localizeError } from '@/lib/errors';
 import { capturePostHogEvent } from '@/lib/posthog';
 import { cn } from '@/lib/utils';
 import * as m from '@/paraglide/messages.js';
@@ -95,7 +95,7 @@ function FileWorkspacePreview() {
 			if (!url) throw new Error(m.files_download_unavailable());
 			window.location.assign(url);
 		} catch (error) {
-			toast.error(extractErrorMessage(error, m.files_download_failed()));
+			toast.error(localizeError(error, m.files_download_failed()));
 		}
 	};
 
@@ -114,7 +114,7 @@ function FileWorkspacePreview() {
 			setRenameOpen(false);
 			toast.success(m.files_renamed());
 		} catch (error) {
-			setRenameError(extractErrorMessage(error, m.files_rename_failed()));
+			setRenameError(localizeError(error, m.files_rename_failed()));
 		}
 	};
 
@@ -139,7 +139,7 @@ function FileWorkspacePreview() {
 				});
 			}
 		} catch (error) {
-			toast.error(extractErrorMessage(error, m.files_delete_failed()));
+			toast.error(localizeError(error, m.files_delete_failed()));
 		}
 	};
 

@@ -952,5 +952,21 @@
 	"update_reload": "重新加载",
 	"common_breadcrumb": "面包屑导航",
 	"editor_plain_text": "纯文本",
-	"feedback_new_shortcut": "新建反馈"
+	"feedback_new_shortcut": "新建反馈",
+	"server_error_auth_required": "请登录后继续。",
+	"server_error_profile_not_found": "找不到您的个人资料。",
+	"server_error_user_not_found": "找不到该用户。",
+	"server_error_organization_not_found": "找不到该组织。",
+	"server_error_project_not_found": "找不到该项目。",
+	"server_error_project_archived": "此项目已归档且为只读。管理员必须先取消归档才能进行更改。",
+	"server_error_permission_denied": "您没有执行此操作的权限。",
+	"server_error_project_archive_admin_only": "只有组织管理员才能归档或取消归档此项目。",
+	"server_error_organization_limit_reached": "您已达到组织数量上限。",
+	"server_error_project_limit_reached": "您已达到项目数量上限。",
+	"server_error_project_slug_taken": "此组织中已存在地址为“{slug}”的项目。",
+	"server_error_username_taken": "该用户名已被使用。",
+	"server_error_not_found": "找不到请求的项目。",
+	"server_error_conflict": "此更改与现有数据冲突。",
+	"server_error_invalid_request": "请检查信息后重试。",
+	"server_error_rate_limited": "请求过多，请稍后重试。"
 }

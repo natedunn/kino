@@ -71,7 +71,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { EditIcon, StatusIcon, UpChevronIcon } from '@/icons';
 import { useCRPC } from '@/lib/convex/crpc';
 import { crpcServer } from '@/lib/convex/crpc-server';
-import { extractErrorMessage } from '@/lib/errors';
+import { localizeError } from '@/lib/errors';
 import { useIsBelow } from '@/lib/hooks/use-mobile';
 import { useSidebarState } from '@/lib/hooks/use-sidebar-state';
 import { projectTitle, titleFromSlug, titleMeta } from '@/lib/seo';
@@ -1567,7 +1567,7 @@ function FeedbackTargetDrawer({
 			await onSave({ target: nextTarget, targetGranularity: granularity });
 			onOpenChange(false);
 		} catch (saveError) {
-			setError(extractErrorMessage(saveError, m.feedback_target_save_failed()));
+			setError(localizeError(saveError, m.feedback_target_save_failed()));
 		}
 	}
 
@@ -1577,7 +1577,7 @@ function FeedbackTargetDrawer({
 			await onSave(null);
 			onOpenChange(false);
 		} catch (clearError) {
-			setError(extractErrorMessage(clearError, m.feedback_target_clear_failed()));
+			setError(localizeError(clearError, m.feedback_target_clear_failed()));
 		}
 	}
 
@@ -1848,7 +1848,7 @@ function EditTitleDialog({
 			await onSave(trimmedTitle);
 			onOpenChange(false);
 		} catch (error) {
-			setTitleError(extractErrorMessage(error, m.feedback_title_save_failed()));
+			setTitleError(localizeError(error, m.feedback_title_save_failed()));
 		}
 	}
 
@@ -1928,7 +1928,7 @@ function DeleteFeedbackDialog({
 			// Resolves into a navigation away from this page on success.
 			await onDelete();
 		} catch (error) {
-			setDeleteError(extractErrorMessage(error, m.feedback_delete_failed()));
+			setDeleteError(localizeError(error, m.feedback_delete_failed()));
 		}
 	}
 
@@ -2008,7 +2008,7 @@ function CloseFeedbackDialog({
 			await onClose();
 			onOpenChange(false);
 		} catch (error) {
-			setCloseError(extractErrorMessage(error, m.feedback_close_failed()));
+			setCloseError(localizeError(error, m.feedback_close_failed()));
 		}
 	}
 

@@ -18,6 +18,7 @@ import { requireAuth } from '@/lib/auth/require-auth';
 import { useAuthLostRedirect } from '@/lib/auth/use-auth-lost';
 import { useCRPC } from '@/lib/convex/crpc';
 import { crpcServer } from '@/lib/convex/crpc-server';
+import { localizeError } from '@/lib/errors';
 import { titleMeta } from '@/lib/seo';
 import { cn } from '@/lib/utils';
 import {
@@ -79,7 +80,7 @@ function AuthenticatedCreateTeamRoute() {
 	);
 	const createMutation = useMutation(
 		crpc.org.create.mutationOptions({
-			onError: (error) => setFormError(error.message),
+			onError: (error) => setFormError(localizeError(error, m.common_try_again())),
 			onSuccess: (org) => {
 				form.reset();
 				navigate({ params: { org: org.slug }, to: '/@{$org}' });

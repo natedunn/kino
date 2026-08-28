@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { extractErrorMessage } from './errors';
+import * as m from '@/paraglide/messages.js';
+
+import { extractErrorMessage, localizeError } from './errors';
 
 describe('extractErrorMessage', () => {
 	it('pulls the clean message out of a Convex-wrapped CRPCError', () => {
@@ -29,5 +31,27 @@ describe('extractErrorMessage', () => {
 	it('falls back when there is no error or message', () => {
 		expect(extractErrorMessage(null, 'Fallback')).toBe('Fallback');
 		expect(extractErrorMessage({}, 'Fallback')).toBe('Fallback');
+	});
+});
+
+describe('localizeError', () => {
+	it('decodes a domain error and its interpolation values', () => {
+		expect(
+			localizeError({
+				data: { appErrorCode: 'PROJECT_SLUG_TAKEN', appErrorValues: '{"slug":"kino"}' },
+			})
+		).toContain('kino');
+	});
+
+	it('uses the cRPC category for an unmigrated server error', () => {
+		expect(localizeError({ data: { code: 'FORBIDDEN', message: 'English server copy' } })).toBe(
+			m.server_error_permission_denied()
+		);
+	});
+
+	it('does not expose a legacy Convex-framed error', () => {
+		expect(localizeError({ message: '[CONVEX M(foo)] Server Error' }, 'Safe fallback')).toBe(
+			'Safe fallback'
+		);
 	});
 });

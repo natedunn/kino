@@ -1,10 +1,10 @@
 import type { ActionCtx, MutationCtx, QueryCtx } from '../functions/generated/server';
 
 import { getHeaders } from 'kitcn/auth';
-import { CRPCError } from 'kitcn/server';
 
 import { getAuth } from '../functions/generated/auth';
 import { initCRPC } from '../functions/generated/server';
+import { appError } from './app-error';
 
 const c = initCRPC
 	.meta<{
@@ -24,7 +24,11 @@ type SessionUser = {
 
 function requireAuth<T>(user: T | null): T {
 	if (!user) {
-		throw new CRPCError({ code: 'UNAUTHORIZED', message: 'Not authenticated' });
+		throw appError({
+			appCode: 'AUTH_REQUIRED',
+			code: 'UNAUTHORIZED',
+			message: 'Not authenticated',
+		});
 	}
 
 	return user;

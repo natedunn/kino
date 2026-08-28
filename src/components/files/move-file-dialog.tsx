@@ -18,7 +18,7 @@ import {
 	ResponsiveDialogHeader,
 } from '@/components/ui/responsive-dialog';
 import { useCRPC } from '@/lib/convex/crpc';
-import { extractErrorMessage } from '@/lib/errors';
+import { localizeError } from '@/lib/errors';
 import * as m from '@/paraglide/messages.js';
 
 type MoveFileDialogProps = {
@@ -53,7 +53,7 @@ export function MoveFileDialog({ file, folders, onOpenChange, open }: MoveFileDi
 				})
 			);
 		} catch (error) {
-			toast.error(extractErrorMessage(error, m.files_move_failed()));
+			toast.error(localizeError(error, m.files_move_failed()));
 		}
 	};
 

@@ -1012,5 +1012,21 @@
 	"update_reload": "Recargar",
 	"common_breadcrumb": "Ruta de navegación",
 	"editor_plain_text": "Texto sin formato",
-	"feedback_new_shortcut": "Nuevo feedback"
+	"feedback_new_shortcut": "Nuevo feedback",
+	"server_error_auth_required": "Inicia sesión para continuar.",
+	"server_error_profile_not_found": "No se pudo encontrar tu perfil.",
+	"server_error_user_not_found": "No se pudo encontrar al usuario.",
+	"server_error_organization_not_found": "No se pudo encontrar la organización.",
+	"server_error_project_not_found": "No se pudo encontrar el proyecto.",
+	"server_error_project_archived": "Este proyecto está archivado y es de solo lectura. Un administrador debe desarchivarlo antes de realizar cambios.",
+	"server_error_permission_denied": "No tienes permiso para hacer eso.",
+	"server_error_project_archive_admin_only": "Solo un administrador de la organización puede archivar o desarchivar este proyecto.",
+	"server_error_organization_limit_reached": "Alcanzaste el límite de organizaciones.",
+	"server_error_project_limit_reached": "Alcanzaste el límite de proyectos.",
+	"server_error_project_slug_taken": "Ya existe un proyecto con la dirección “{slug}” en esta organización.",
+	"server_error_username_taken": "Ese nombre de usuario ya está en uso.",
+	"server_error_not_found": "No se pudo encontrar el elemento solicitado.",
+	"server_error_conflict": "Ese cambio entra en conflicto con datos existentes.",
+	"server_error_invalid_request": "Revisa la información e inténtalo de nuevo.",
+	"server_error_rate_limited": "Demasiadas solicitudes. Espera un momento e inténtalo de nuevo."
 }

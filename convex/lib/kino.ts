@@ -3,6 +3,7 @@ import type { Doc, Id, TableNames } from '../functions/_generated/dataModel';
 import { CRPCError } from 'kitcn/server';
 
 import { memberTable, organizationTable, profileTable } from '../functions/schema';
+import { appError } from './app-error';
 import { isReservedHandle, normalizeSlug, VALIDATION_LIMITS } from './validation';
 
 export const DEFAULT_FEEDBACK_BOARDS = ['Bugs', 'Feature Requests', 'Improvements'] as const;
@@ -209,7 +210,11 @@ export async function getCurrentProfile(ctx: OrmCtx, userId: string | null | und
 export async function getCurrentProfileOrThrow(ctx: OrmCtx, userId: string | null | undefined) {
 	const profile = await getCurrentProfile(ctx, userId);
 	if (!profile) {
-		throw new CRPCError({ code: 'NOT_FOUND', message: 'Profile not found' });
+		throw appError({
+			appCode: 'PROFILE_NOT_FOUND',
+			code: 'NOT_FOUND',
+			message: 'Profile not found',
+		});
 	}
 	return profile;
 }
@@ -219,7 +224,7 @@ export async function getUserOrThrow(ctx: OrmCtx, userId: string) {
 		where: { id: userId },
 	});
 	if (!user) {
-		throw new CRPCError({ code: 'NOT_FOUND', message: 'User not found' });
+		throw appError({ appCode: 'USER_NOT_FOUND', code: 'NOT_FOUND', message: 'User not found' });
 	}
 	return user;
 }
@@ -245,7 +250,8 @@ export async function findOrganization(ctx: OrmCtx, args: { id?: string; slug?: 
 export async function getOrganizationOrThrow(ctx: OrmCtx, args: { id?: string; slug?: string }) {
 	const organization = await findOrganization(ctx, args);
 	if (!organization) {
-		throw new CRPCError({
+		throw appError({
+			appCode: 'ORGANIZATION_NOT_FOUND',
 			code: 'NOT_FOUND',
 			message: 'Organization not found',
 		});
@@ -290,7 +296,11 @@ export async function findProject(ctx: OrmCtx, args: { id?: string; slug?: strin
 export async function getProjectOrThrow(ctx: OrmCtx, args: { id?: string; slug?: string }) {
 	const project = await findProject(ctx, args);
 	if (!project) {
-		throw new CRPCError({ code: 'NOT_FOUND', message: 'Project not found' });
+		throw appError({
+			appCode: 'PROJECT_NOT_FOUND',
+			code: 'NOT_FOUND',
+			message: 'Project not found',
+		});
 	}
 	return project;
 }
@@ -587,7 +597,8 @@ export async function getProjectViewAccess(
  */
 export function assertProjectWritable(access: { isArchived?: boolean }) {
 	if (access.isArchived) {
-		throw new CRPCError({
+		throw appError({
+			appCode: 'PROJECT_ARCHIVED',
 			code: 'FORBIDDEN',
 			message: 'This project is archived and read-only. An admin must un-archive it first.',
 		});

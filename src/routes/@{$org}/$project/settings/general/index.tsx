@@ -30,7 +30,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { GithubIcon } from '@/icons';
 import { useCRPC } from '@/lib/convex/crpc';
 import { crpcServer } from '@/lib/convex/crpc-server';
-import { extractErrorMessage } from '@/lib/errors';
+import { localizeError } from '@/lib/errors';
 import { titleMeta } from '@/lib/seo';
 import { cn } from '@/lib/utils';
 import {
@@ -210,7 +210,7 @@ function ProjectGeneralSettingsRoute() {
 					bypassBlockerRef.current = false;
 				}
 			} catch (error) {
-				setFormError(extractErrorMessage(error, m.project_general_update_failed()));
+				setFormError(localizeError(error, m.project_general_update_failed()));
 			}
 		},
 	});
@@ -465,9 +465,7 @@ function ProjectGeneralSettingsRoute() {
 																});
 															}
 														} catch (error) {
-															setFormError(
-																extractErrorMessage(error, m.project_general_import_failed())
-															);
+															setFormError(localizeError(error, m.project_general_import_failed()));
 														}
 													}}
 													size='sm'
@@ -525,7 +523,7 @@ function ProjectGeneralSettingsRoute() {
 				{(formError ?? updateMutation.error) ? (
 					<InlineAlert variant='danger'>
 						Unable to update project:{' '}
-						{formError ?? extractErrorMessage(updateMutation.error, m.common_try_again())}
+						{formError ?? localizeError(updateMutation.error, m.common_try_again())}
 					</InlineAlert>
 				) : null}
 

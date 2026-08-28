@@ -26,7 +26,7 @@ import {
 	ResponsiveDialogHeader,
 } from '@/components/ui/responsive-dialog';
 import { useCRPC, useCRPCClient } from '@/lib/convex/crpc';
-import { extractErrorMessage } from '@/lib/errors';
+import { localizeError } from '@/lib/errors';
 import { capturePostHogEvent } from '@/lib/posthog';
 import { cn } from '@/lib/utils';
 import * as m from '@/paraglide/messages.js';
@@ -74,7 +74,7 @@ export function ManageFolderDialog({
 			onOpenChange(false);
 			toast.success(m.files_folder_updated());
 		} catch (error) {
-			toast.error(extractErrorMessage(error, m.files_folder_update_failed()));
+			toast.error(localizeError(error, m.files_folder_update_failed()));
 		}
 	};
 
@@ -86,7 +86,7 @@ export function ManageFolderDialog({
 			onDeleted();
 			toast.success(m.files_folder_deleted());
 		} catch (error) {
-			toast.error(extractErrorMessage(error, m.files_folder_delete_failed()));
+			toast.error(localizeError(error, m.files_folder_delete_failed()));
 		}
 	};
 
@@ -287,7 +287,7 @@ function UploadFilesDialog({
 			toast.success(m.files_uploaded({ count: selectedFiles.length }));
 			onOpenChange(false);
 		} catch (uploadError) {
-			setError(extractErrorMessage(uploadError, m.files_upload_failed()));
+			setError(localizeError(uploadError, m.files_upload_failed()));
 			capturePostHogEvent('file_upload_failed', {
 				failure_reason: 'upload_or_completion',
 				origin_feature: 'files',
@@ -436,7 +436,7 @@ function CreateFolderDialog({
 			onOpenChange(false);
 			toast.success(m.files_folder_created());
 		} catch (error) {
-			toast.error(extractErrorMessage(error, m.files_folder_create_failed()));
+			toast.error(localizeError(error, m.files_folder_create_failed()));
 		}
 	};
 

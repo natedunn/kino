@@ -1012,5 +1012,21 @@
 	"update_reload": "Reload",
 	"common_breadcrumb": "Breadcrumb",
 	"editor_plain_text": "Plain text",
-	"feedback_new_shortcut": "New feedback"
+	"feedback_new_shortcut": "New feedback",
+	"server_error_auth_required": "Please sign in to continue.",
+	"server_error_profile_not_found": "Your profile could not be found.",
+	"server_error_user_not_found": "The user could not be found.",
+	"server_error_organization_not_found": "The organization could not be found.",
+	"server_error_project_not_found": "The project could not be found.",
+	"server_error_project_archived": "This project is archived and read-only. An admin must unarchive it before making changes.",
+	"server_error_permission_denied": "You don't have permission to do that.",
+	"server_error_project_archive_admin_only": "Only an organization admin can archive or unarchive this project.",
+	"server_error_organization_limit_reached": "Your organization limit has been reached.",
+	"server_error_project_limit_reached": "Your project limit has been reached.",
+	"server_error_project_slug_taken": "A project with the address “{slug}” already exists in this organization.",
+	"server_error_username_taken": "That username is already taken.",
+	"server_error_not_found": "The requested item could not be found.",
+	"server_error_conflict": "That change conflicts with existing data.",
+	"server_error_invalid_request": "Check the information and try again.",
+	"server_error_rate_limited": "Too many requests. Please wait and try again."
 }

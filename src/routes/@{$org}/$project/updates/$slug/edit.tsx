@@ -23,6 +23,7 @@ import { Separator } from '@/components/ui/separator';
 import { authClient } from '@/lib/convex/auth-client';
 import { useCRPC } from '@/lib/convex/crpc';
 import { crpcServer } from '@/lib/convex/crpc-server';
+import { localizeError } from '@/lib/errors';
 import { useSidebarState } from '@/lib/hooks/use-sidebar-state';
 import { projectTitle, titleFromSlug, titleMeta } from '@/lib/seo';
 import { cn } from '@/lib/utils';
@@ -137,7 +138,7 @@ function EditUpdateRoute() {
 
 	const saveMutation = useMutation(
 		crpc.update.update.mutationOptions({
-			onError: (error) => setFormError(error.message),
+			onError: (error) => setFormError(localizeError(error, m.common_try_again())),
 			onSuccess: () => {
 				navigate({
 					params,
@@ -148,7 +149,7 @@ function EditUpdateRoute() {
 	);
 	const publishMutation = useMutation(
 		crpc.update.publish.mutationOptions({
-			onError: (error) => setFormError(error.message),
+			onError: (error) => setFormError(localizeError(error, m.common_try_again())),
 			onSuccess: () => {
 				navigate({
 					params,
@@ -159,12 +160,12 @@ function EditUpdateRoute() {
 	);
 	const unpublishMutation = useMutation(
 		crpc.update.unpublish.mutationOptions({
-			onError: (error) => setFormError(error.message),
+			onError: (error) => setFormError(localizeError(error, m.common_try_again())),
 		})
 	);
 	const deleteMutation = useMutation(
 		crpc.update.remove.mutationOptions({
-			onError: (error) => setFormError(error.message),
+			onError: (error) => setFormError(localizeError(error, m.common_try_again())),
 			onSuccess: () => {
 				navigate({
 					params: { org: params.org, project: params.project },

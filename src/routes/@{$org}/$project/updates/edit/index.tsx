@@ -46,6 +46,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { useCRPC } from '@/lib/convex/crpc';
 import { crpcServer } from '@/lib/convex/crpc-server';
+import { localizeError } from '@/lib/errors';
 import { projectTitle, titleMeta } from '@/lib/seo';
 import { cn } from '@/lib/utils';
 import { formatFullDate } from '@/lib/utils/format-timestamp';
@@ -204,7 +205,7 @@ function UpdatesDashboard({ canDelete, pageSize }: { canDelete: boolean; pageSiz
 
 	const publishMutation = useMutation(
 		crpc.update.bulkPublish.mutationOptions({
-			onError: (error) => setActionError(error.message),
+			onError: (error) => setActionError(localizeError(error, m.common_try_again())),
 			onSuccess: () => {
 				setActionError('');
 				setRowSelection({});
@@ -213,7 +214,7 @@ function UpdatesDashboard({ canDelete, pageSize }: { canDelete: boolean; pageSiz
 	);
 	const unpublishMutation = useMutation(
 		crpc.update.bulkUnpublish.mutationOptions({
-			onError: (error) => setActionError(error.message),
+			onError: (error) => setActionError(localizeError(error, m.common_try_again())),
 			onSuccess: () => {
 				setActionError('');
 				setRowSelection({});
@@ -222,7 +223,7 @@ function UpdatesDashboard({ canDelete, pageSize }: { canDelete: boolean; pageSiz
 	);
 	const deleteMutation = useMutation(
 		crpc.update.bulkRemove.mutationOptions({
-			onError: (error) => setActionError(error.message),
+			onError: (error) => setActionError(localizeError(error, m.common_try_again())),
 			onSuccess: () => {
 				setActionError('');
 				setDeleteDialog(null);

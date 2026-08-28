@@ -30,7 +30,7 @@ import {
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useCRPC, useCRPCClient } from '@/lib/convex/crpc';
-import { extractErrorMessage } from '@/lib/errors';
+import { localizeError } from '@/lib/errors';
 import { capturePostHogEvent } from '@/lib/posthog';
 import * as m from '@/paraglide/messages.js';
 import { getLocale } from '@/paraglide/runtime.js';
@@ -121,7 +121,7 @@ export function FileExplorer({
 			if (!url) throw new Error(m.files_download_unavailable());
 			window.location.assign(url);
 		} catch (error) {
-			toast.error(extractErrorMessage(error, m.files_download_failed()));
+			toast.error(localizeError(error, m.files_download_failed()));
 		}
 	};
 
@@ -282,7 +282,7 @@ function FileRow({
 			});
 			toast.success(m.files_deleted());
 		} catch (error) {
-			toast.error(extractErrorMessage(error, m.files_delete_failed()));
+			toast.error(localizeError(error, m.files_delete_failed()));
 		}
 	};
 	return (

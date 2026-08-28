@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useCRPC } from '@/lib/convex/crpc';
 import { crpcServer } from '@/lib/convex/crpc-server';
-import { extractErrorMessage } from '@/lib/errors';
+import { localizeError } from '@/lib/errors';
 import { titleMeta } from '@/lib/seo';
 import { emailSchema, FORM_LIMITS } from '@/lib/validation';
 import * as m from '@/paraglide/messages.js';
@@ -45,7 +45,7 @@ export const Route = createFileRoute('/@{$org}/$project/settings/members/')({
 
 function mutationErrorMessage(error: unknown) {
 	if (!error) return null;
-	return extractErrorMessage(error);
+	return localizeError(error);
 }
 
 function ProjectMembersRoute() {
