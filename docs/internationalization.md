@@ -48,6 +48,67 @@ sentences from fragments. Use Paraglide inputs for interpolation, selectors for
 pluralization, and `ParaglideMessage` when translators need to position links or
 emphasis.
 
+## Required feature workflow
+
+Every new or changed customer-facing feature must complete localization in the same
+pull request. Agents and contributors should:
+
+1. Inventory all visible and assistive copy: headings, labels, buttons, menus,
+   placeholders, empty/loading states, dialogs, toasts, validation, errors, email,
+   notifications, page titles, `aria-label`s, and screen-reader-only text.
+2. Add semantic keys to `messages/en-US.json`, `messages/es-419.json`, and
+   `messages/zh-Hans.json`. Do not add English literals as temporary UI copy.
+3. Translate the intended meaning and action, not the English words mechanically.
+   Keep the voice concise, direct, and natural for each locale.
+4. Keep values separate from labels in controls. Stable identifiers and enum values
+   stay language-neutral; only the displayed label is translated.
+5. Route expected server failures through the structured application-error contract
+   in `convex/shared/app-errors.ts` and `convex/lib/app-error.ts`. Decode them with
+   `localizeError`; do not surface `error.message` or Convex framing directly.
+6. Use locale-aware date, time, number, currency, and plural formatting. Never
+   hard-code `en-US` formatting in customer-facing code.
+7. Run `pnpm run i18n:check`, `pnpm run i18n:compile`, and the relevant tests. Before
+   updating a pull request, run `pnpm run verify:pr` as required by `AGENTS.md`.
+8. Manually check Spanish and Chinese at narrow and wide viewport sizes. Exercise
+   error, empty, loading, and signed-out states—not only the happy path.
+
+User-generated names and content remain unchanged in every locale. Internal logs,
+debug messages, admin tools, the UI lab, and explicitly temporary placeholder pages
+do not enter the production catalogs unless their scope changes.
+
+## Translation and terminology policy
+
+Natural usage wins over literal translation. Translate ordinary interface language
+by default; retain an English term only when it is a product or protocol name, a
+widely recognized technical token, or the English term is materially clearer to the
+target audience. Once chosen, use the same term throughout the product.
+
+For `es-419`, use conversational, region-neutral Latin American Spanish and avoid
+Spain-specific vocabulary. Prefer short everyday words over formal calques. Current
+terminology decisions:
+
+| Concept                                         | `es-419` term               | Reason                                                                                |
+| ----------------------------------------------- | --------------------------- | ------------------------------------------------------------------------------------- |
+| Kino Feedback item/area                         | `feedback` / `Feedback`     | Common product-team term and keeps the entity distinct from its nested `comentarios`. |
+| A comment on feedback or an update              | `comentario`                | Ordinary Spanish; never use it as the Feedback entity name.                           |
+| URL slug                                        | `identificador URL`         | Clear to non-developers; `slug` is implementation jargon.                             |
+| roadmap                                         | `hoja de ruta`              | Established, understandable Spanish.                                                  |
+| dashboard                                       | `panel`                     | Familiar interface term.                                                              |
+| settings                                        | `configuración`             | Standard interface term.                                                              |
+| GitHub App / GitHub Issues / GitHub Discussions | Keep official product names | Proper feature names used by GitHub.                                                  |
+| API, URL, JSON, CSV, OAuth, Markdown            | Keep the technical token    | Recognized standards or formats. Explain only when the surrounding audience needs it. |
+| avatar                                          | `avatar`                    | Established Spanish usage.                                                            |
+
+Do not assume that common developer jargon is common to customers. When introducing
+a disputed loanword, check an authoritative language reference and established UI
+usage, record the decision in this table, and review the whole catalog for consistency.
+Useful references include the
+[Microsoft Spanish localization style guides](https://learn.microsoft.com/globalization/reference/microsoft-style-guides),
+[Microsoft internationalization guidance](https://learn.microsoft.com/globalization/methodology/software-internationalization),
+[FundéuRAE terminology recommendations](https://www.fundeu.es/recomendacion/feedback-en-espanol-respuesta-reaccionesimpresiones-retorno-932/),
+and the localized documentation for third-party product names such as
+[GitHub Apps](https://docs.github.com/es/apps/using-github-apps).
+
 ## Backend-generated content
 
 Emails and notifications must receive an explicit canonical locale. Account-related
