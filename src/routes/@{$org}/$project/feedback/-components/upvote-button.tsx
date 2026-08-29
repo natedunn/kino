@@ -6,6 +6,7 @@ import { ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCRPC } from '@/lib/convex/crpc';
 import { cn } from '@/lib/utils';
+import * as m from '@/paraglide/messages.js';
 
 export function UpvoteButton({
 	className,
@@ -63,7 +64,7 @@ export function UpvoteButton({
 	if (inline) {
 		return (
 			<Button
-				aria-label={hasUpvoted ? 'Remove upvote' : 'Upvote feedback'}
+				aria-label={hasUpvoted ? m.feedback_remove_upvote() : m.feedback_upvote_action()}
 				className={className}
 				disabled={disabled}
 				onClick={handleToggle}
@@ -73,14 +74,14 @@ export function UpvoteButton({
 			>
 				<ChevronUp className={cn('size-4', hasUpvoted && 'fill-current')} />
 				<span className='tabular-nums'>{count}</span>
-				{count === 1 ? 'Upvote' : 'Upvotes'}
+				{m.feedback_upvote_count({ count })}
 			</Button>
 		);
 	}
 
 	return (
 		<Button
-			aria-label={hasUpvoted ? 'Remove upvote' : 'Upvote feedback'}
+			aria-label={hasUpvoted ? m.feedback_remove_upvote() : m.feedback_upvote_action()}
 			className={cn('h-auto flex-col gap-0 px-2 py-1.5', hasUpvoted && 'text-primary', className)}
 			disabled={disabled}
 			onClick={handleToggle}

@@ -5,6 +5,7 @@ import { Link, useRouterState } from '@tanstack/react-router';
 import { Blocks, Cookie, FileWarning, ShieldCheck, Users } from 'lucide-react';
 
 import { SidebarNavGroup, SidebarNavItem, SidebarNavSelect } from '@/components/sidebar-nav';
+import { SiteFooter } from '@/components/site-footer';
 import { PublicMainNav } from '@/components/site-nav/public-main-nav';
 
 type DocsRoute =
@@ -103,14 +104,7 @@ export function DocsShell({ children }: { children: ReactNode }) {
 				</div>
 			</div>
 
-			<footer className='mt-auto w-full border-t border-border py-4 text-sm text-muted-foreground'>
-				<div className='container flex items-center justify-between gap-4'>
-					<p>© {new Date().getFullYear()} Kino</p>
-					<Link to='/docs/notices' className='transition-colors hocus:text-foreground'>
-						Notices
-					</Link>
-				</div>
-			</footer>
+			<SiteFooter />
 		</div>
 	);
 }

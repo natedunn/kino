@@ -1454,6 +1454,7 @@ export type DataModel = {
       email: string;
       imageKey?: null | string;
       imageUrl?: null | string;
+      locale?: null | "en-US" | "es-419" | "zh-Hans";
       location?: null | string;
       name: string;
       personalOrganizationId?: null | string;
@@ -1473,6 +1474,7 @@ export type DataModel = {
       | "email"
       | "imageKey"
       | "imageUrl"
+      | "locale"
       | "location"
       | "name"
       | "personalOrganizationId"

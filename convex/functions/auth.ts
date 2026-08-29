@@ -14,6 +14,7 @@ import {
 } from '../lib/get-env';
 import { ensureUniqueUsername, ensureUserBootstrap, sanitizeSystemRole } from '../lib/kino';
 import { ac, roles } from '../shared/auth-roles';
+import { resolveRequestLocale } from '../shared/i18n';
 import authConfig from './auth.config';
 import { isSuperAdminEmail } from './auth.lib';
 import { defineAuth } from './generated/auth';
@@ -86,14 +87,17 @@ export default defineAuth(() => {
 			...(emailConfigured
 				? {
 						requireEmailVerification: true,
-						sendResetPassword: async ({
-							user,
-							url,
-						}: {
-							user: { name?: string | null; email: string };
-							url: string;
-						}) => {
-							await sendResetPasswordEmail({ user, url });
+						sendResetPassword: async (
+							{
+								user,
+								url,
+							}: {
+								user: { name?: string | null; email: string };
+								url: string;
+							},
+							request: Request
+						) => {
+							await sendResetPasswordEmail({ locale: resolveRequestLocale(request), user, url });
 						},
 					}
 				: {}),
@@ -104,14 +108,17 @@ export default defineAuth(() => {
 			? {
 					emailVerification: {
 						sendOnSignUp: true,
-						sendVerificationEmail: async ({
-							user,
-							url,
-						}: {
-							user: { name?: string | null; email: string };
-							url: string;
-						}) => {
-							await sendVerificationEmail({ user, url });
+						sendVerificationEmail: async (
+							{
+								user,
+								url,
+							}: {
+								user: { name?: string | null; email: string };
+								url: string;
+							},
+							request: Request
+						) => {
+							await sendVerificationEmail({ locale: resolveRequestLocale(request), user, url });
 						},
 					},
 				}

@@ -30,7 +30,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { GithubIcon } from '@/icons';
 import { useCRPC } from '@/lib/convex/crpc';
 import { crpcServer } from '@/lib/convex/crpc-server';
-import { extractErrorMessage } from '@/lib/errors';
+import { localizeError } from '@/lib/errors';
 import { titleMeta } from '@/lib/seo';
 import { cn } from '@/lib/utils';
 import {
@@ -41,13 +41,14 @@ import {
 	SLUG_INPUT_PATTERN,
 	validationMessage,
 } from '@/lib/validation';
+import * as m from '@/paraglide/messages.js';
 
 type ProjectVisibility = 'public' | 'private' | 'archived';
 
-const VISIBILITY_LABELS: Record<ProjectVisibility, string> = {
-	archived: 'Archived',
-	private: 'Private',
-	public: 'Public',
+const VISIBILITY_LABELS: Record<ProjectVisibility, () => string> = {
+	archived: m.project_visibility_archived,
+	private: m.project_visibility_private,
+	public: m.project_visibility_public,
 };
 
 type ProjectUrl = {
@@ -93,7 +94,7 @@ function SectionCard({
 
 export const Route = createFileRoute('/@{$org}/$project/settings/general/')({
 	head: () => ({
-		meta: [titleMeta(['General Settings'])],
+		meta: [titleMeta([m.meta_general_settings()])],
 	}),
 	loader: async ({ context, params }) => {
 		await context.queryClient.ensureQueryData(
@@ -209,7 +210,7 @@ function ProjectGeneralSettingsRoute() {
 					bypassBlockerRef.current = false;
 				}
 			} catch (error) {
-				setFormError(extractErrorMessage(error, 'Unable to update project'));
+				setFormError(localizeError(error, m.project_general_update_failed()));
 			}
 		},
 	});
@@ -236,8 +237,8 @@ function ProjectGeneralSettingsRoute() {
 	if (!project || !canEdit) {
 		return (
 			<EmptyState
-				title='Project editing unavailable'
-				description='Only project admins and assigned moderators can change these settings.'
+				title={m.project_general_unavailable()}
+				description={m.project_general_unavailable_description()}
 			/>
 		);
 	}
@@ -250,10 +251,7 @@ function ProjectGeneralSettingsRoute() {
 		<section className='max-w-3xl'>
 			{isArchived ? (
 				<InlineAlert className='mb-6' variant='warning'>
-					This project is archived and read-only —{' '}
-					{isAdmin
-						? 'change its visibility below to un-archive it before making other changes.'
-						: 'an admin must un-archive it before changes can be saved.'}
+					{isAdmin ? m.project_archived_admin_notice() : m.project_archived_member_notice()}
 				</InlineAlert>
 			) : null}
 			<form
@@ -269,7 +267,7 @@ function ProjectGeneralSettingsRoute() {
 						'pointer-events-none opacity-50': isSaving,
 					})}
 				>
-					<SectionCard description='Displayed across Kino on your project pages.' label='Name'>
+					<SectionCard description={m.project_general_name_description()} label={m.auth_name()}>
 						<form.Field name='name'>
 							{(field) => (
 								<Input
@@ -282,10 +280,7 @@ function ProjectGeneralSettingsRoute() {
 						</form.Field>
 					</SectionCard>
 
-					<SectionCard
-						description='Unique identifier used in your project URL. Changing the slug will update every link to your project.'
-						label='Slug'
-					>
+					<SectionCard description={m.project_general_slug_description()} label={m.settings_slug()}>
 						<form.Field name='slug'>
 							{(field) => (
 								<div className='flex items-stretch overflow-hidden rounded-md border bg-background focus-within:ring-1 focus-within:ring-ring'>
@@ -311,8 +306,8 @@ function ProjectGeneralSettingsRoute() {
 					</SectionCard>
 
 					<SectionCard
-						description='A short summary of what this project is about.'
-						label='Description'
+						description={m.project_general_description_description()}
+						label={m.project_general_description()}
 					>
 						<form.Field name='description'>
 							{(field) => (
@@ -327,8 +322,8 @@ function ProjectGeneralSettingsRoute() {
 					</SectionCard>
 
 					<SectionCard
-						description={<>Website, docs, socials, or anything else. Up to {MAX_PROJECT_URLS}.</>}
-						label='Links'
+						description={m.project_links_description({ count: MAX_PROJECT_URLS })}
+						label={m.project_general_links()}
 					>
 						<form.Field mode='array' name='urls'>
 							{(field) => {
@@ -352,7 +347,7 @@ function ProjectGeneralSettingsRoute() {
 													<div className='relative w-full sm:w-40 sm:shrink-0'>
 														<ShieldCheck className='pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-emerald-600' />
 														<Input
-															aria-label='Verified link label'
+															aria-label={m.project_verified_link_label()}
 															className='w-full pl-8'
 															readOnly
 															value={entry.text}
@@ -360,13 +355,13 @@ function ProjectGeneralSettingsRoute() {
 													</div>
 													<div className='flex gap-2 sm:flex-1'>
 														<Input
-															aria-label='Verified link URL'
+															aria-label={m.project_verified_link_url()}
 															className='flex-1'
 															readOnly
 															value={entry.url}
 														/>
 														<Button
-															aria-label='Remove verified link'
+															aria-label={m.project_remove_verified_link()}
 															onClick={() => field.removeValue(index)}
 															size='icon'
 															type='button'
@@ -381,11 +376,11 @@ function ProjectGeneralSettingsRoute() {
 													<form.Field name={`urls[${index}].text`}>
 														{(sub) => (
 															<Input
-																aria-label='Link label'
+																aria-label={m.project_link_label_aria()}
 																className='w-full sm:w-40 sm:shrink-0'
 																maxLength={FORM_LIMITS.urlLabel}
 																onChange={(event) => sub.handleChange(event.target.value)}
-																placeholder='Label'
+																placeholder={m.project_general_link_label()}
 																value={sub.state.value}
 															/>
 														)}
@@ -394,7 +389,7 @@ function ProjectGeneralSettingsRoute() {
 														<form.Field name={`urls[${index}].url`}>
 															{(sub) => (
 																<Input
-																	aria-label='Link URL'
+																	aria-label={m.project_link_url_aria()}
 																	className='flex-1'
 																	inputMode='url'
 																	maxLength={FORM_LIMITS.url}
@@ -405,7 +400,7 @@ function ProjectGeneralSettingsRoute() {
 															)}
 														</form.Field>
 														<Button
-															aria-label='Remove link'
+															aria-label={m.project_remove_link()}
 															onClick={() => field.removeValue(index)}
 															size='icon'
 															type='button'
@@ -433,7 +428,7 @@ function ProjectGeneralSettingsRoute() {
 												variant='outline'
 											>
 												<Plus className='size-4' />
-												Add link
+												{m.project_add_link()}
 											</Button>
 											{canImport ? (
 												<Button
@@ -453,7 +448,7 @@ function ProjectGeneralSettingsRoute() {
 															) {
 																field.insertValue(0, {
 																	source: 'github',
-																	text: 'Repository',
+																	text: m.project_general_repository(),
 																	url: result.repoUrl,
 																});
 															}
@@ -465,14 +460,12 @@ function ProjectGeneralSettingsRoute() {
 															) {
 																field.pushValue({
 																	source: undefined,
-																	text: 'Website',
+																	text: m.project_general_website(),
 																	url: homepage,
 																});
 															}
 														} catch (error) {
-															setFormError(
-																extractErrorMessage(error, 'Unable to import from GitHub')
-															);
+															setFormError(localizeError(error, m.project_general_import_failed()));
 														}
 													}}
 													size='sm'
@@ -481,8 +474,10 @@ function ProjectGeneralSettingsRoute() {
 												>
 													<GithubIcon className='size-4' />
 													{importMutation.isPending
-														? 'Adding…'
-														: `Add from ${importInfoQuery.data?.repoFullName ?? 'GitHub'}`}
+														? m.project_general_adding()
+														: m.project_add_from({
+																source: importInfoQuery.data?.repoFullName ?? 'GitHub',
+															})}
 												</Button>
 											) : null}
 										</div>
@@ -495,10 +490,10 @@ function ProjectGeneralSettingsRoute() {
 					<SectionCard
 						description={
 							isAdmin
-								? 'Public projects are visible to everyone; private ones only to members. Archived projects are frozen and read-only until un-archived.'
-								: 'Public projects are visible to everyone. Private projects are only visible to members.'
+								? m.project_visibility_admin_description()
+								: m.project_visibility_description()
 						}
-						label='Visibility'
+						label={m.project_general_visibility()}
 					>
 						<form.Field name='visibility'>
 							{(field) => (
@@ -507,15 +502,17 @@ function ProjectGeneralSettingsRoute() {
 									value={field.state.value}
 								>
 									<SelectTrigger className='w-full sm:w-56'>
-										<SelectValue placeholder='Select visibility'>
-											{(value) => VISIBILITY_LABELS[value as ProjectVisibility]}
+										<SelectValue placeholder={m.project_general_select_visibility()}>
+											{(value) => VISIBILITY_LABELS[value as ProjectVisibility]()}
 										</SelectValue>
 									</SelectTrigger>
 									<SelectContent>
-										<SelectItem value='public'>Public</SelectItem>
-										<SelectItem value='private'>Private</SelectItem>
+										<SelectItem value='public'>{m.project_visibility_public()}</SelectItem>
+										<SelectItem value='private'>{m.project_visibility_private()}</SelectItem>
 										{/* Archiving/un-archiving is admin-only (enforced server-side too). */}
-										{isAdmin ? <SelectItem value='archived'>Archived</SelectItem> : null}
+										{isAdmin ? (
+											<SelectItem value='archived'>{m.project_visibility_archived()}</SelectItem>
+										) : null}
 									</SelectContent>
 								</Select>
 							)}
@@ -526,7 +523,7 @@ function ProjectGeneralSettingsRoute() {
 				{(formError ?? updateMutation.error) ? (
 					<InlineAlert variant='danger'>
 						Unable to update project:{' '}
-						{formError ?? extractErrorMessage(updateMutation.error, 'Please try again.')}
+						{formError ?? localizeError(updateMutation.error, m.common_try_again())}
 					</InlineAlert>
 				) : null}
 
@@ -553,7 +550,7 @@ function ProjectGeneralSettingsRoute() {
 										type='button'
 										variant='ghost'
 									>
-										Reset
+										{m.common_reset()}
 									</Button>
 									<Button
 										className={cn({
@@ -562,7 +559,7 @@ function ProjectGeneralSettingsRoute() {
 										disabled={cannotSave}
 										type='submit'
 									>
-										{saving ? 'Saving...' : 'Save changes'}
+										{saving ? m.common_saving() : m.profile_save_changes()}
 									</Button>
 								</>
 							);
@@ -580,18 +577,15 @@ function ProjectGeneralSettingsRoute() {
 				>
 					<DialogContent>
 						<DialogHeader>
-							<DialogTitle>Discard unsaved changes?</DialogTitle>
-							<DialogDescription>
-								You have unsaved changes to this project. If you leave now, your changes will be
-								lost.
-							</DialogDescription>
+							<DialogTitle>{m.project_general_discard_title()}</DialogTitle>
+							<DialogDescription>{m.project_unsaved_description()}</DialogDescription>
 						</DialogHeader>
 						<DialogFooter>
 							<Button onClick={() => blocker.reset()} type='button' variant='outline'>
-								Stay
+								{m.common_stay()}
 							</Button>
 							<Button onClick={() => blocker.proceed()} type='button' variant='destructive'>
-								Leave
+								{m.common_leave()}
 							</Button>
 						</DialogFooter>
 					</DialogContent>

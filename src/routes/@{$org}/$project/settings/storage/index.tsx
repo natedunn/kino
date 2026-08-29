@@ -5,9 +5,10 @@ import { StorageBreakdown, StorageSummary } from '@/components/storage-usage';
 import { useCRPC } from '@/lib/convex/crpc';
 import { crpcServer } from '@/lib/convex/crpc-server';
 import { titleMeta } from '@/lib/seo';
+import * as m from '@/paraglide/messages.js';
 
 export const Route = createFileRoute('/@{$org}/$project/settings/storage/')({
-	head: () => ({ meta: [titleMeta(['Storage Settings'])] }),
+	head: () => ({ meta: [titleMeta([m.meta_storage_settings()])] }),
 	loader: async ({ context, params }) => {
 		const data = await context.queryClient.ensureQueryData(
 			crpcServer.project.getDetails.queryOptions({ orgSlug: params.org, slug: params.project })
@@ -38,10 +39,8 @@ function ProjectStorageSettings() {
 	return (
 		<div className='space-y-6'>
 			<header className='border-b pb-4'>
-				<h2 className='text-xl font-semibold'>Storage</h2>
-				<p className='mt-1 text-sm text-muted-foreground'>
-					Hosted staff and user uploads share this project’s free-tier storage limit.
-				</p>
+				<h2 className='text-xl font-semibold'>{m.settings_storage()}</h2>
+				<p className='mt-1 text-sm text-muted-foreground'>{m.project_storage_description()}</p>
 			</header>
 			<StorageSummary
 				fileCount={data.fileCount}
@@ -50,9 +49,12 @@ function ProjectStorageSettings() {
 				usedBytes={data.usedBytes}
 			/>
 			<div className='grid gap-6 lg:grid-cols-3'>
-				<StorageBreakdown title='By file category' breakdown={data.byCategory} />
-				<StorageBreakdown title='By original feature' breakdown={data.byOrigin} />
-				<StorageBreakdown title='By uploader class' breakdown={data.byUploaderClass} />
+				<StorageBreakdown title={m.project_storage_by_category()} breakdown={data.byCategory} />
+				<StorageBreakdown title={m.project_storage_by_feature()} breakdown={data.byOrigin} />
+				<StorageBreakdown
+					title={m.project_storage_by_uploader()}
+					breakdown={data.byUploaderClass}
+				/>
 			</div>
 		</div>
 	);

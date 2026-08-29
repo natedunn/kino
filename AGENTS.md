@@ -47,3 +47,11 @@ or user-visible failures.
 
 Before adding or changing analytics events, read `docs/analytics.md` for naming,
 privacy, and event-shape rules.
+
+## Internationalization
+
+When adding or changing customer-facing UI, transactional emails, notifications,
+validation, or errors, **read `docs/internationalization.md` first**. New features
+must ship with complete `en-US`, `es-419`, and `zh-Hans` messages in the same PR.
+Do not translate user-generated content, internal developer errors, admin/UI-lab
+copy, or a deliberately deferred placeholder surface.

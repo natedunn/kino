@@ -7,7 +7,9 @@ import { EmptyState } from '@/components/kino/common';
 import { Button } from '@/components/ui/button';
 import { useCRPC } from '@/lib/convex/crpc';
 import { crpcServer } from '@/lib/convex/crpc-server';
+import { localizeGitHubError } from '@/lib/i18n/github-errors';
 import { titleMeta } from '@/lib/seo';
+import * as m from '@/paraglide/messages.js';
 
 import { SettingsSkeleton } from '../-components/settings-skeleton';
 import { useDelayedFlag } from '../-components/use-delayed-flag';
@@ -17,7 +19,7 @@ type IntegrationsSearch = { github?: string };
 
 export const Route = createFileRoute('/org/settings/integrations/')({
 	head: () => ({
-		meta: [titleMeta(['Integrations'])],
+		meta: [titleMeta([m.meta_integrations()])],
 	}),
 	validateSearch: (search: Record<string, unknown>): IntegrationsSearch => ({
 		github: typeof search.github === 'string' ? search.github : undefined,
@@ -86,8 +88,8 @@ function IntegrationsSettingsRoute() {
 	if (!orgQuery.data?.org || !orgQuery.data.permissions.canEdit) {
 		return (
 			<EmptyState
-				title='Organization unavailable'
-				description='This organization no longer exists at this URL.'
+				title={m.org_integrations_unavailable()}
+				description={m.org_integrations_unavailable_description()}
 			/>
 		);
 	}
@@ -95,8 +97,8 @@ function IntegrationsSettingsRoute() {
 	if (integrationQuery.error) {
 		return (
 			<EmptyState
-				title='GitHub integration unavailable'
-				description={integrationQuery.error.message}
+				title={m.github_unavailable()}
+				description={localizeGitHubError(integrationQuery.error)}
 			/>
 		);
 	}
@@ -104,22 +106,15 @@ function IntegrationsSettingsRoute() {
 	return (
 		<div className='space-y-8'>
 			<header className='border-b pb-4'>
-				<h2 className='text-xl font-semibold'>Integrations</h2>
-				<p className='mt-1 text-sm text-muted-foreground'>
-					Connect external services that power your projects. Install the Kino GitHub App on a
-					GitHub organization or user account once, then any project here can pick a repository from
-					those accounts.
-				</p>
+				<h2 className='text-xl font-semibold'>{m.settings_integrations()}</h2>
+				<p className='mt-1 text-sm text-muted-foreground'>{m.org_integrations_description()}</p>
 			</header>
 
 			{search.github === 'connected' ? (
-				<InlineAlert variant='success'>
-					GitHub access connected. Project admins can now select a repository from this
-					organization.
-				</InlineAlert>
+				<InlineAlert variant='success'>{m.org_github_connected_notice()}</InlineAlert>
 			) : null}
 			{search.github === 'error' ? (
-				<InlineAlert variant='danger'>GitHub installation could not be completed.</InlineAlert>
+				<InlineAlert variant='danger'>{m.github_install_failed()}</InlineAlert>
 			) : null}
 			<div className='grid gap-8 xl:grid-cols-[minmax(0,1fr)_320px]'>
 				<div className='space-y-6'>
@@ -134,22 +129,20 @@ function IntegrationsSettingsRoute() {
 									{hasStaleInstallations ? (
 										<span className='inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:bg-amber-500/10 dark:text-amber-300'>
 											<RefreshCw className='size-3' />
-											Needs attention
+											{m.github_needs_attention()}
 										</span>
 									) : hasInstallations ? (
 										<span className='inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-300'>
 											<CheckCircle2 className='size-3' />
-											Connected
+											{m.github_connected()}
 										</span>
 									) : (
 										<span className='inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground'>
-											Not connected
+											{m.github_not_connected()}
 										</span>
 									)}
 								</div>
-								<p className='mt-1 text-sm text-muted-foreground'>
-									Sync issues and discussions between GitHub repositories and Kino feedback boards.
-								</p>
+								<p className='mt-1 text-sm text-muted-foreground'>{m.github_description()}</p>
 							</div>
 						</div>
 
@@ -165,7 +158,7 @@ function IntegrationsSettingsRoute() {
 								type='button'
 							>
 								<GitBranch className='size-4' />
-								{hasKnownInstallations ? 'Manage GitHub access' : 'Install GitHub App'}
+								{hasKnownInstallations ? m.org_github_manage() : m.org_github_install()}
 							</Button>
 							{hasKnownInstallations ? (
 								<Button
@@ -180,25 +173,26 @@ function IntegrationsSettingsRoute() {
 									variant='outline'
 								>
 									<RefreshCw className='size-4' />
-									Refresh accounts
+									{m.github_refresh_accounts()}
 								</Button>
 							) : null}
 						</div>
 					</section>
 
 					{startConnection.error ? (
-						<InlineAlert variant='danger'>{startConnection.error.message}</InlineAlert>
+						<InlineAlert variant='danger'>{localizeGitHubError(startConnection.error)}</InlineAlert>
 					) : null}
 					{refreshInstallations.error ? (
-						<InlineAlert variant='danger'>{refreshInstallations.error.message}</InlineAlert>
+						<InlineAlert variant='danger'>
+							{localizeGitHubError(refreshInstallations.error)}
+						</InlineAlert>
 					) : null}
 					<section className='space-y-3'>
 						<div className='flex items-center justify-between'>
-							<h3 className='text-sm font-semibold'>Connected accounts</h3>
+							<h3 className='text-sm font-semibold'>{m.org_github_connected_accounts()}</h3>
 							{hasKnownInstallations ? (
 								<span className='text-xs text-muted-foreground'>
-									{knownInstallations.length}{' '}
-									{knownInstallations.length === 1 ? 'account' : 'accounts'}
+									{m.github_account_count({ count: knownInstallations.length })}
 								</span>
 							) : null}
 						</div>
@@ -208,10 +202,8 @@ function IntegrationsSettingsRoute() {
 								<div className='mx-auto flex size-10 items-center justify-center rounded-full bg-background shadow-sm'>
 									<GitBranch className='size-5 text-muted-foreground' />
 								</div>
-								<p className='mt-3 text-sm font-medium'>No GitHub accounts connected</p>
-								<p className='mt-1 text-sm text-muted-foreground'>
-									Install the Kino GitHub App above to get started.
-								</p>
+								<p className='mt-3 text-sm font-medium'>{m.org_github_no_accounts()}</p>
+								<p className='mt-1 text-sm text-muted-foreground'>{m.org_github_install_help()}</p>
 							</div>
 						) : (
 							<div className='grid gap-3 md:grid-cols-2'>
@@ -238,14 +230,14 @@ function IntegrationsSettingsRoute() {
 												{isStale ? (
 													<span className='inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:bg-amber-500/10 dark:text-amber-300'>
 														<RefreshCw className='size-3' />
-														Needs refresh
+														{m.github_needs_refresh()}
 													</span>
 												) : null}
 											</div>
 											<div className='mt-3 inline-flex items-center rounded-md bg-muted/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground'>
 												{installation.repositorySelection === 'all'
-													? 'All repositories'
-													: 'Selected repositories'}
+													? m.org_github_all_repositories()
+													: m.org_github_selected_repositories()}
 											</div>
 										</div>
 									);
@@ -258,11 +250,10 @@ function IntegrationsSettingsRoute() {
 				<aside className='space-y-6'>
 					<section className='rounded-xl border bg-card p-5'>
 						<h3 className='font-mono text-[11px] tracking-[0.18em] text-muted-foreground uppercase'>
-							Project setup
+							{m.org_github_project_setup()}
 						</h3>
 						<p className='mt-2 text-sm text-muted-foreground'>
-							Open a project&apos;s integrations page to select one repository from these connected
-							accounts.
+							{m.org_github_project_setup_description()}
 						</p>
 					</section>
 				</aside>

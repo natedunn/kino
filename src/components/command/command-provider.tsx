@@ -13,6 +13,7 @@ import { InterviewOutline18 } from '@/icons/nucleo/InterviewOutline18';
 import { Roadmap2Outline18 } from '@/icons/nucleo/Roadmap2Outline18';
 import { authClient } from '@/lib/auth/auth-client';
 import { toggleThemePreference } from '@/lib/theme';
+import * as m from '@/paraglide/messages.js';
 
 import { CommandContext } from './command-context';
 
@@ -64,9 +65,7 @@ export function CommandProvider({ children }: { children: ReactNode }) {
 	const isAuthenticated = !!session.data?.user;
 	const preloadPalette = useCallback(() => {
 		void loadCommandPaletteModule().then((module) => {
-			setCommandPalette(
-				(current: LoadedCommandPalette | null) => current ?? module.CommandPalette
-			);
+			setCommandPalette((current: LoadedCommandPalette | null) => current ?? module.CommandPalette);
 		});
 	}, []);
 	const preparePalette = useCallback(() => {
@@ -94,7 +93,7 @@ export function CommandProvider({ children }: { children: ReactNode }) {
 				icon: MoonStar,
 				id: 'theme.toggle',
 				keywords: ['appearance', 'dark', 'light'],
-				title: 'Toggle light/dark mode',
+				title: m.command_toggle_theme(),
 				run: toggleThemePreference,
 			},
 		];
@@ -106,7 +105,7 @@ export function CommandProvider({ children }: { children: ReactNode }) {
 					icon: Home,
 					id: 'global.dashboard',
 					keywords: ['home', 'teams'],
-					title: 'Go to dashboard',
+					title: m.command_go_dashboard(),
 					run: () => navigate({ to: '/dashboard' }),
 				},
 				{
@@ -114,7 +113,7 @@ export function CommandProvider({ children }: { children: ReactNode }) {
 					icon: User,
 					id: 'global.profile-settings',
 					keywords: ['account', 'settings', 'profile'],
-					title: 'Go to account settings',
+					title: m.command_go_account(),
 					run: () => navigate({ to: '/account/profile' }),
 				}
 			);
@@ -127,7 +126,7 @@ export function CommandProvider({ children }: { children: ReactNode }) {
 					icon: Home,
 					id: 'org.home',
 					keywords: ['organization', 'team'],
-					title: 'Go to organization home',
+					title: m.command_go_org(),
 					run: () => navigate({ params: { org: orgSlug }, to: '/@{$org}' }),
 				},
 				{
@@ -135,7 +134,7 @@ export function CommandProvider({ children }: { children: ReactNode }) {
 					icon: Settings,
 					id: 'org.settings',
 					keywords: ['organization', 'team', 'settings'],
-					title: 'Go to organization settings',
+					title: m.command_go_org_settings(),
 					run: () => navigate({ search: { org: orgSlug }, to: '/org/settings' }),
 				}
 			);
@@ -150,7 +149,7 @@ export function CommandProvider({ children }: { children: ReactNode }) {
 					icon: House4Outline18,
 					id: 'project.overview',
 					keywords: ['project', 'overview'],
-					title: 'Go to overview',
+					title: m.command_go_overview(),
 					run: () => navigate({ params, to: '/@{$org}/$project' }),
 				},
 				{
@@ -158,7 +157,7 @@ export function CommandProvider({ children }: { children: ReactNode }) {
 					icon: ArchivePencilOutline18,
 					id: 'project.feedback',
 					keywords: ['project', 'feedback'],
-					title: 'Go to feedback',
+					title: m.command_go_feedback(),
 					run: () => navigate({ params, to: '/@{$org}/$project/feedback' }),
 				},
 				{
@@ -166,7 +165,7 @@ export function CommandProvider({ children }: { children: ReactNode }) {
 					icon: CalendarDaysOutline18,
 					id: 'project.updates',
 					keywords: ['project', 'updates', 'changelog'],
-					title: 'Go to updates',
+					title: m.command_go_updates(),
 					run: () => navigate({ params, to: '/@{$org}/$project/updates' }),
 				},
 				{
@@ -174,7 +173,7 @@ export function CommandProvider({ children }: { children: ReactNode }) {
 					icon: Roadmap2Outline18,
 					id: 'project.roadmap',
 					keywords: ['project', 'roadmap'],
-					title: 'Go to roadmap',
+					title: m.command_go_roadmap(),
 					run: () => navigate({ params, to: '/@{$org}/$project/roadmap' }),
 				},
 				{
@@ -182,7 +181,7 @@ export function CommandProvider({ children }: { children: ReactNode }) {
 					icon: Folder5OpenOutline18,
 					id: 'project.files',
 					keywords: ['project', 'files', 'assets', 'documents'],
-					title: 'Go to files',
+					title: m.command_go_files(),
 					run: () => navigate({ params, to: '/@{$org}/$project/files' }),
 				},
 				{
@@ -190,7 +189,7 @@ export function CommandProvider({ children }: { children: ReactNode }) {
 					icon: InterviewOutline18,
 					id: 'project.discussions',
 					keywords: ['project', 'discussions'],
-					title: 'Go to discussions',
+					title: m.command_go_discussions(),
 					run: () => navigate({ params, to: '/@{$org}/$project/discussions' }),
 				}
 			);

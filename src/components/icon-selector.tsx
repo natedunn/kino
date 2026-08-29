@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
+import * as m from '@/paraglide/messages.js';
 
 export type IconSelectorTone = 'glyph-duo' | 'outline';
 
@@ -31,9 +32,9 @@ type IconSelectorProps<TValue extends string = string> = {
 	value?: TValue | null;
 };
 
-const TONE_LABELS: Record<IconSelectorTone, string> = {
-	'glyph-duo': 'Glyph Duo',
-	outline: 'Outline',
+const TONE_LABELS: Record<IconSelectorTone, () => string> = {
+	'glyph-duo': m.icon_tone_glyph_duo,
+	outline: m.icon_tone_outline,
 };
 
 const ICON_GRID_COLUMNS = 4;
@@ -48,11 +49,11 @@ function IconSelectorInner<TValue extends string = string>({
 	className,
 	contentClassName,
 	disabled,
-	emptyLabel = 'No icons found',
-	label = 'Icon',
+	emptyLabel = m.icon_empty(),
+	label = m.icon_label(),
 	onValueChange,
 	options,
-	placeholder = 'Select icon',
+	placeholder = m.icon_select(),
 	triggerClassName,
 	value,
 }: IconSelectorProps<TValue>) {
@@ -199,7 +200,7 @@ function IconSelectorInner<TValue extends string = string>({
 							<span className='truncate'>{selected?.label ?? placeholder}</span>
 							{selected ? (
 								<span className='shrink-0 text-[10px] leading-none font-medium text-muted-foreground uppercase'>
-									{TONE_LABELS[selected.tone]}
+									{TONE_LABELS[selected.tone]()}
 								</span>
 							) : null}
 						</span>
@@ -227,7 +228,7 @@ function IconSelectorInner<TValue extends string = string>({
 							autoFocus
 							className='pl-8'
 							onChange={(event) => setQuery(event.target.value)}
-							placeholder='Search icons...'
+							placeholder={m.icon_search()}
 							role='combobox'
 							size='sm'
 							value={query}
@@ -240,7 +241,7 @@ function IconSelectorInner<TValue extends string = string>({
 									<div className='space-y-1.5 pt-1' key={group.tone}>
 										<div className='flex items-center justify-between px-1'>
 											<span className='text-[11px] font-medium text-muted-foreground/60 uppercase'>
-												{TONE_LABELS[group.tone]}
+												{TONE_LABELS[group.tone]()}
 											</span>
 											<span className='inline-flex min-w-5 items-center justify-center rounded bg-muted px-1.5 py-0.5 text-[10px] leading-none font-medium text-muted-foreground/70'>
 												{group.options.length}
@@ -324,7 +325,7 @@ const IconOptionButton = memo(function IconOptionButtonInner<TValue extends stri
 					{option.label}
 				</span>
 				<span className='text-[9px] leading-none font-medium text-muted-foreground uppercase'>
-					{TONE_LABELS[option.tone]}
+					{TONE_LABELS[option.tone]()}
 				</span>
 			</span>
 			{selected ? (

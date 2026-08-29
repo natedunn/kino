@@ -17,6 +17,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { StatusIcon } from '@/icons';
 import { formatFullDate, formatRelativeDay, toTimestamp } from '@/lib/utils/format-timestamp';
+import * as m from '@/paraglide/messages.js';
 
 // Memoized: timeline event rows take only the stable `event` prop, so they
 // skip re-rendering when unrelated top-level state (dialogs, sheets) changes.
@@ -59,7 +60,7 @@ export const FeedbackEventItem = memo(function ({
 						@{event.actor.username}
 					</Link>
 				) : (
-					<span className='font-medium text-foreground'>Someone</span>
+					<span className='font-medium text-foreground'>{m.feedback_someone()}</span>
 				)}{' '}
 				{getEventDescription(event)}{' '}
 				<Tooltip>
@@ -110,43 +111,43 @@ function getEventDescription(event: FeedbackEventData) {
 		case 'status_changed':
 			return (
 				<span className='inline-flex flex-wrap items-center gap-1'>
-					changed status from <StatusPill status={metadata?.oldValue} /> to{' '}
-					<StatusPill status={metadata?.newValue} />
+					{m.feedback_changed_status_from()} <StatusPill status={metadata?.oldValue} />{' '}
+					{m.feedback_to()} <StatusPill status={metadata?.newValue} />
 				</span>
 			);
 		case 'priority_changed':
 			return (
 				<span className='inline-flex flex-wrap items-center gap-1'>
-					changed priority from <PriorityPill priority={metadata?.oldValue} /> to{' '}
-					<PriorityPill priority={metadata?.newValue} />
+					{m.feedback_changed_priority_from()} <PriorityPill priority={metadata?.oldValue} />{' '}
+					{m.feedback_to()} <PriorityPill priority={metadata?.newValue} />
 				</span>
 			);
 		case 'board_changed':
 			return (
 				<span>
-					moved to board{' '}
+					{m.feedback_moved_to_board()}{' '}
 					<span className='rounded bg-muted px-1.5 py-0.5 text-xs font-medium'>
-						{metadata?.newValue ?? 'Unknown'}
+						{metadata?.newValue ?? m.feedback_unknown()}
 					</span>
 				</span>
 			);
 		case 'title_changed':
 			return (
 				<span>
-					changed title from{' '}
+					{m.feedback_changed_title_from()}{' '}
 					<span className='rounded bg-muted px-1.5 py-0.5 text-xs font-medium'>
-						{metadata?.oldValue ?? 'Untitled'}
+						{metadata?.oldValue ?? m.feedback_untitled()}
 					</span>{' '}
-					to{' '}
+					{m.feedback_to()}{' '}
 					<span className='rounded bg-muted px-1.5 py-0.5 text-xs font-medium'>
-						{metadata?.newValue ?? 'Untitled'}
+						{metadata?.newValue ?? m.feedback_untitled()}
 					</span>
 				</span>
 			);
 		case 'assigned':
 			return (
 				<span>
-					assigned{' '}
+					{m.feedback_assigned()}{' '}
 					{targetProfile ? (
 						<Link
 							className='font-medium hocus:underline'
@@ -156,14 +157,14 @@ function getEventDescription(event: FeedbackEventData) {
 							@{targetProfile.username}
 						</Link>
 					) : (
-						<span className='text-muted-foreground'>unknown user</span>
+						<span className='text-muted-foreground'>{m.feedback_unknown_user()}</span>
 					)}
 				</span>
 			);
 		case 'unassigned':
 			return (
 				<span>
-					unassigned{' '}
+					{m.feedback_unassigned_action()}{' '}
 					{targetProfile ? (
 						<Link
 							className='font-medium hocus:underline'
@@ -173,16 +174,16 @@ function getEventDescription(event: FeedbackEventData) {
 							@{targetProfile.username}
 						</Link>
 					) : (
-						<span className='text-muted-foreground'>unknown user</span>
+						<span className='text-muted-foreground'>{m.feedback_unknown_user()}</span>
 					)}
 				</span>
 			);
 		case 'answer_marked':
-			return <span>marked a comment as the answer</span>;
+			return <span>{m.feedback_marked_comment_answer()}</span>;
 		case 'answer_unmarked':
-			return <span>unmarked the answer</span>;
+			return <span>{m.feedback_unmarked_answer()}</span>;
 		default:
-			return <span>made a change</span>;
+			return <span>{m.feedback_made_change()}</span>;
 	}
 }
 

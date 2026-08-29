@@ -18,11 +18,13 @@ import {
 import { Input } from '@/components/ui/input';
 import { useCRPC } from '@/lib/convex/crpc';
 import { crpcServer } from '@/lib/convex/crpc-server';
+import { localizeError } from '@/lib/errors';
 import { titleMeta } from '@/lib/seo';
+import * as m from '@/paraglide/messages.js';
 
 export const Route = createFileRoute('/@{$org}/$project/settings/danger/')({
 	head: () => ({
-		meta: [titleMeta(['Danger Zone'])],
+		meta: [titleMeta([m.meta_danger_zone()])],
 	}),
 	loader: async ({ context, params }) => {
 		await context.queryClient.ensureQueryData(
@@ -73,8 +75,8 @@ function ProjectDangerSettingsRoute() {
 	if (!project || !canDelete) {
 		return (
 			<EmptyState
-				title='Danger zone unavailable'
-				description='Only project and organization admins can delete this project.'
+				title={m.project_danger_unavailable()}
+				description={m.project_danger_unavailable_description()}
 			/>
 		);
 	}
@@ -82,10 +84,8 @@ function ProjectDangerSettingsRoute() {
 	return (
 		<section className='max-w-3xl'>
 			<header className='border-b pb-4'>
-				<h2 className='text-xl font-semibold'>Danger zone</h2>
-				<p className='mt-1 text-sm text-muted-foreground'>
-					Deleting a project is permanent and removes all boards, feedback, and updates.
-				</p>
+				<h2 className='text-xl font-semibold'>{m.security_danger_zone()}</h2>
+				<p className='mt-1 text-sm text-muted-foreground'>{m.project_danger_description()}</p>
 			</header>
 
 			<DangerZone
@@ -122,10 +122,9 @@ function DangerZone({
 			<div className='rounded-xl border border-destructive/40 p-6'>
 				<div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
 					<div>
-						<p className='text-sm font-medium'>Delete project</p>
+						<p className='text-sm font-medium'>{m.project_delete()}</p>
 						<p className='text-xs text-muted-foreground'>
-							Permanently delete <span className='font-medium text-foreground'>{projectName}</span>{' '}
-							and everything in it.
+							{m.project_delete_summary({ name: projectName })}
 						</p>
 					</div>
 					<Button
@@ -138,7 +137,7 @@ function DangerZone({
 						type='button'
 						variant='destructive'
 					>
-						Delete
+						{m.common_delete()}
 					</Button>
 				</div>
 			</div>
@@ -146,17 +145,16 @@ function DangerZone({
 			<Dialog onOpenChange={setOpen} open={open}>
 				<DialogContent>
 					<DialogHeader>
-						<DialogTitle>Delete this project?</DialogTitle>
+						<DialogTitle>{m.project_delete_confirm_title()}</DialogTitle>
 						<DialogDescription>
-							This permanently deletes{' '}
-							<span className='font-medium text-foreground'>{projectName}</span> along with all its
-							boards, feedback, and updates. This cannot be undone.
+							{m.project_delete_confirm_description({ name: projectName })}
 						</DialogDescription>
 					</DialogHeader>
 					<div className='flex flex-col gap-2'>
 						<LabelWrapper>
 							<Label>
-								Type <span className='font-mono'>{projectSlug}</span> to confirm
+								{m.project_delete_type_prefix()} <span className='font-mono'>{projectSlug}</span>{' '}
+								{m.project_delete_type_suffix()}
 							</Label>
 						</LabelWrapper>
 						<Input
@@ -172,7 +170,9 @@ function DangerZone({
 						) : null}
 					</div>
 					<DialogFooter>
-						<DialogClose render={<Button type='button' variant='outline' />}>Cancel</DialogClose>
+						<DialogClose render={<Button type='button' variant='outline' />}>
+							{m.common_cancel()}
+						</DialogClose>
 						<Button
 							disabled={!canConfirm}
 							onClick={async () => {
@@ -181,14 +181,14 @@ function DangerZone({
 								try {
 									await onDelete();
 								} catch (err) {
-									setDialogError(err instanceof Error ? err.message : 'Unable to delete project');
+									setDialogError(localizeError(err, m.project_delete_failed()));
 									setDeleting(false);
 								}
 							}}
 							type='button'
 							variant='destructive'
 						>
-							{deleting ? 'Deleting...' : 'Delete project'}
+							{deleting ? m.common_deleting() : m.project_delete()}
 						</Button>
 					</DialogFooter>
 				</DialogContent>

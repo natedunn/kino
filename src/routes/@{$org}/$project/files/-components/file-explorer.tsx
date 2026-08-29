@@ -30,8 +30,10 @@ import {
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useCRPC, useCRPCClient } from '@/lib/convex/crpc';
-import { extractErrorMessage } from '@/lib/errors';
+import { localizeError } from '@/lib/errors';
 import { capturePostHogEvent } from '@/lib/posthog';
+import * as m from '@/paraglide/messages.js';
+import { getLocale } from '@/paraglide/runtime.js';
 
 import { useFilesWorkspace } from './files-workspace-context';
 
@@ -97,7 +99,7 @@ export function FileExplorer({
 	if (folderId && !currentFolder && folders.length) {
 		return (
 			<div className='flex min-h-[50vh] items-center justify-center text-sm text-muted-foreground'>
-				This folder no longer exists.
+				{m.files_folder_missing()}
 			</div>
 		);
 	}
@@ -116,10 +118,10 @@ export function FileExplorer({
 	const download = async (file: ProjectFile) => {
 		try {
 			const url = await crpcClient.file.getDownloadUrl.query({ assetId: file.id });
-			if (!url) throw new Error('Download is unavailable');
+			if (!url) throw new Error(m.files_download_unavailable());
 			window.location.assign(url);
 		} catch (error) {
-			toast.error(extractErrorMessage(error, 'Unable to download file'));
+			toast.error(localizeError(error, m.files_download_failed()));
 		}
 	};
 
@@ -130,13 +132,13 @@ export function FileExplorer({
 					<table className='w-full min-w-[660px] border-collapse text-sm'>
 						<thead>
 							<tr className='border-b bg-muted/35 text-left text-xs tracking-wider text-muted-foreground uppercase'>
-								<th className='px-4 py-3'>Name</th>
-								<th className='px-4 py-3'>Category</th>
-								<th className='px-4 py-3'>Size</th>
-								<th className='px-4 py-3'>Date created</th>
-								<th className='px-4 py-3'>Date edited</th>
+								<th className='px-4 py-3'>{m.files_name()}</th>
+								<th className='px-4 py-3'>{m.files_category()}</th>
+								<th className='px-4 py-3'>{m.files_size()}</th>
+								<th className='px-4 py-3'>{m.files_created()}</th>
+								<th className='px-4 py-3'>{m.files_edited()}</th>
 								<th className='px-4 py-3'>
-									<span className='sr-only'>Actions</span>
+									<span className='sr-only'>{m.files_actions()}</span>
 								</th>
 							</tr>
 						</thead>
@@ -164,7 +166,7 @@ export function FileExplorer({
 										</button>
 									</td>
 									<td className='px-4 py-3'>
-										<Badge variant='outline'>Folder</Badge>
+										<Badge variant='outline'>{m.files_folder()}</Badge>
 									</td>
 									<td className='px-4 py-3 text-muted-foreground'>—</td>
 									<td className='px-4 py-3 text-muted-foreground'>
@@ -176,7 +178,7 @@ export function FileExplorer({
 									<td className='px-4 py-3 text-right'>
 										{canManage && !folder.systemKey ? (
 											<Button
-												aria-label={`Manage ${folder.name}`}
+												aria-label={m.files_manage_folder({ name: folder.name })}
 												onClick={() => manageFolder(folder.id)}
 												size='icon-sm'
 												variant='ghost'
@@ -192,9 +194,9 @@ export function FileExplorer({
 								<tr>
 									<td className='py-20 text-center' colSpan={6}>
 										<File className='mx-auto mb-3 size-8 text-muted-foreground/45' />
-										<p className='font-medium'>This folder is empty</p>
+										<p className='font-medium'>{m.files_folder_empty()}</p>
 										<p className='mt-1 text-sm text-muted-foreground'>
-											Use Cmd+K to upload a file or create a folder.
+											{m.files_folder_empty_help()}
 										</p>
 									</td>
 								</tr>
@@ -215,8 +217,8 @@ export function FileExplorer({
 
 				<div className='flex items-center justify-between border-t bg-muted/15 px-4 py-3'>
 					<p className='text-xs text-muted-foreground'>
-						{childFolders.length} folder{childFolders.length === 1 ? '' : 's'} · {files.length} file
-						{files.length === 1 ? '' : 's'}
+						{m.files_folder_count({ count: childFolders.length })} ·{' '}
+						{m.files_page_file_count({ count: files.length })}
 					</p>
 					<Button
 						disabled={!filesQuery.data || filesQuery.data.isDone}
@@ -243,7 +245,7 @@ export function FileExplorer({
 						size='sm'
 						variant='outline'
 					>
-						Next page
+						{m.files_next_page()}
 					</Button>
 				</div>
 			</div>
@@ -271,16 +273,16 @@ function FileRow({
 	const Icon = fileIcon(file.category);
 	useEffect(() => setThumbnailFailed(false), [file.thumbnailUrl]);
 	const remove = async () => {
-		if (!window.confirm(`Delete ${file.name}? This cannot be undone.`)) return;
+		if (!window.confirm(m.files_delete_confirm({ name: file.name }))) return;
 		try {
 			await removeMutation.mutateAsync({ assetId: file.id });
 			capturePostHogEvent('file_deleted', {
 				category: file.category,
 				origin_feature: file.originFeature,
 			});
-			toast.success('File deleted');
+			toast.success(m.files_deleted());
 		} catch (error) {
-			toast.error(extractErrorMessage(error, 'Unable to delete file'));
+			toast.error(localizeError(error, m.files_delete_failed()));
 		}
 	};
 	return (
@@ -312,7 +314,7 @@ function FileRow({
 				</td>
 				<td className='px-4 py-3'>
 					<Badge className='capitalize' variant='outline'>
-						{file.category}
+						{categoryLabel(file.category)}
 					</Badge>
 				</td>
 				<td className='px-4 py-3 font-mono text-xs text-muted-foreground'>
@@ -324,19 +326,23 @@ function FileRow({
 					<DropdownMenu>
 						<DropdownMenuTrigger
 							render={
-								<Button aria-label={`Actions for ${file.name}`} size='icon-sm' variant='ghost' />
+								<Button
+									aria-label={m.files_actions_for({ name: file.name })}
+									size='icon-sm'
+									variant='ghost'
+								/>
 							}
 						>
 							<MoreHorizontal />
 						</DropdownMenuTrigger>
 						<DropdownMenuContent align='end'>
 							<DropdownMenuItem onClick={onDownload}>
-								<Download /> Download
+								<Download /> {m.files_download()}
 							</DropdownMenuItem>
 							{canManage ? (
 								<>
 									<DropdownMenuItem onClick={() => setMoveOpen(true)}>
-										<FolderInput /> Move to folder
+										<FolderInput /> {m.files_move_to_folder()}
 									</DropdownMenuItem>
 									<DropdownMenuSeparator />
 									<DropdownMenuItem
@@ -344,7 +350,7 @@ function FileRow({
 										onClick={remove}
 										variant='destructive'
 									>
-										<Trash2 /> {removeMutation.isPending ? 'Deleting…' : 'Delete'}
+										<Trash2 /> {removeMutation.isPending ? m.files_deleting() : m.files_delete()}
 									</DropdownMenuItem>
 								</>
 							) : null}
@@ -376,6 +382,19 @@ function fileIcon(category: string) {
 	return FileText;
 }
 
+function categoryLabel(value: string) {
+	const labels: Record<string, () => string> = {
+		data: m.storage_label_data,
+		design: m.storage_label_design,
+		document: m.storage_label_document,
+		image: m.storage_label_image,
+		package: m.storage_label_package,
+		text: m.storage_label_text,
+		video: m.storage_label_video,
+	};
+	return labels[value]?.() ?? value;
+}
+
 export function formatBytes(bytes: number) {
 	if (bytes < 1024) return `${bytes} B`;
 	if (bytes < 1024 ** 2) return `${(bytes / 1024).toFixed(1)} KiB`;
@@ -383,7 +402,7 @@ export function formatBytes(bytes: number) {
 }
 
 export function formatDate(timestamp: number) {
-	return new Intl.DateTimeFormat('en-US', {
+	return new Intl.DateTimeFormat(getLocale(), {
 		day: 'numeric',
 		month: 'short',
 		year: 'numeric',

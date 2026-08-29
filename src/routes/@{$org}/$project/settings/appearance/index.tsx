@@ -35,9 +35,10 @@ import { capturePostHogEvent } from '@/lib/posthog';
 import { useProjectThemePreview } from '@/lib/project-theme';
 import { titleMeta } from '@/lib/seo';
 import { cn } from '@/lib/utils';
+import * as m from '@/paraglide/messages.js';
 
 export const Route = createFileRoute('/@{$org}/$project/settings/appearance/')({
-	head: () => ({ meta: [titleMeta(['Appearance', 'Project Settings'])] }),
+	head: () => ({ meta: [titleMeta([m.meta_appearance(), m.meta_project_settings()])] }),
 	loader: async ({ context, params }) => {
 		const details = await context.queryClient.ensureQueryData(
 			crpcServer.project.getDetails.queryOptions({ orgSlug: params.org, slug: params.project })
@@ -51,17 +52,17 @@ export const Route = createFileRoute('/@{$org}/$project/settings/appearance/')({
 	component: ProjectAppearanceRoute,
 });
 
-const THEME_LABELS: Record<ProjectThemePresetId, string> = {
-	custom: 'Custom',
-	forest: 'Green',
-	golden: 'Yellow',
-	kino: 'Kino',
-	monochrome: 'Gray',
-	orange: 'Orange',
-	purple: 'Purple',
-	red: 'Red',
-	sunset: 'Pink',
-	teal: 'Teal',
+const THEME_LABELS: Record<ProjectThemePresetId, () => string> = {
+	custom: m.theme_custom,
+	forest: m.theme_green,
+	golden: m.theme_yellow,
+	kino: () => 'Kino',
+	monochrome: m.theme_gray,
+	orange: m.theme_orange,
+	purple: m.theme_purple,
+	red: m.theme_red,
+	sunset: m.theme_pink,
+	teal: m.theme_teal,
 };
 
 function ThemeSwatch({
@@ -153,7 +154,7 @@ function ProjectAppearanceRoute() {
 			label: (
 				<>
 					<ThemeSwatch accent={accent} active={false} compact presetId={presetId} />
-					{THEME_LABELS[presetId]}
+					{THEME_LABELS[presetId]()}
 				</>
 			),
 			value: presetId,
@@ -195,7 +196,7 @@ function ProjectAppearanceRoute() {
 				project_id: projectId,
 				published_revision: result.publishedRevision,
 			});
-			toast.success('Project theme published');
+			toast.success(m.project_appearance_published());
 			await editor.refetch();
 		} catch {
 			// Global mutation error handling reports the detailed failure.
@@ -205,14 +206,12 @@ function ProjectAppearanceRoute() {
 	return (
 		<section className='max-w-5xl space-y-8'>
 			<header className='border-b pb-4'>
-				<h2 className='text-xl font-semibold'>Project appearance</h2>
-				<p className='mt-1 text-sm text-muted-foreground'>
-					Choose a theme to preview it across the project, then save when it looks right.
-				</p>
+				<h2 className='text-xl font-semibold'>{m.project_appearance_title()}</h2>
+				<p className='mt-1 text-sm text-muted-foreground'>{m.project_appearance_description()}</p>
 			</header>
 
 			<div>
-				<h3 className='text-sm font-semibold'>Themes</h3>
+				<h3 className='text-sm font-semibold'>{m.project_appearance_themes()}</h3>
 				<div className='mt-3 sm:hidden'>
 					<Select
 						items={mobileThemeItems}
@@ -221,8 +220,8 @@ function ProjectAppearanceRoute() {
 							if (value && value !== 'custom') selectPreset(value);
 						}}
 					>
-						<SelectTrigger aria-label='Theme' className='w-full'>
-							<SelectValue placeholder='Choose a theme' />
+						<SelectTrigger aria-label={m.project_appearance_theme()} className='w-full'>
+							<SelectValue placeholder={m.project_appearance_choose_theme()} />
 						</SelectTrigger>
 						<SelectContent>
 							{mobileThemeItems.map((item) => (
@@ -249,7 +248,7 @@ function ProjectAppearanceRoute() {
 								)}
 							>
 								<ThemeSwatch accent={accent} active={active} presetId={presetId} />
-								<span className='text-sm font-medium'>{THEME_LABELS[presetId]}</span>
+								<span className='text-sm font-medium'>{THEME_LABELS[presetId]()}</span>
 							</button>
 						);
 					})}
@@ -260,15 +259,14 @@ function ProjectAppearanceRoute() {
 				{canUseCustomAccent ? (
 					<div className='mb-6 space-y-2'>
 						<label className='text-sm font-medium' htmlFor='project-accent'>
-							Accent color
+							{m.project_appearance_accent()}
 						</label>
 						<p className='text-xs text-muted-foreground'>
-							Kino automatically creates accessible light and dark variants while keeping surfaces
-							neutral.
+							{m.project_appearance_accent_description()}
 						</p>
 						<div className='flex max-w-sm gap-2'>
 							<input
-								aria-label='Accent color picker'
+								aria-label={m.project_appearance_accent_picker()}
 								type='color'
 								value={normalizedAccent ?? '#000000'}
 								onChange={(event) => updateAccent(event.target.value)}
@@ -283,28 +281,30 @@ function ProjectAppearanceRoute() {
 							/>
 						</div>
 						{hasInvalidInput ? (
-							<p className='text-sm text-destructive'>Enter a valid 3- or 6-digit hex color.</p>
+							<p className='text-sm text-destructive'>{m.project_appearance_invalid_hex()}</p>
 						) : null}
 						<div className='space-y-2 pt-3'>
 							{issues.length ? (
 								issues.map((issue) => (
 									<p key={`${issue.mode}-${issue.label}`} className='text-sm text-destructive'>
-										{issue.mode}: {issue.label} is {issue.actual.toFixed(2)}:1; {issue.minimum}:1
-										required.
+										{m.theme_contrast_issue({
+											actual: issue.actual.toFixed(2),
+											label: issue.label,
+											minimum: issue.minimum,
+											mode: issue.mode,
+										})}
 									</p>
 								))
 							) : (
 								<p className='flex items-center gap-2 text-sm text-green-700 dark:text-green-400'>
 									<Check className='size-4' />
-									Both palettes meet publish requirements.
+									{m.project_appearance_valid_palettes()}
 								</p>
 							)}
 						</div>
 					</div>
 				) : customAccentLocked ? (
-					<p className='mb-6 text-xs text-muted-foreground'>
-						This custom accent is managed by a Kino administrator. Select a theme to replace it.
-					</p>
+					<p className='mb-6 text-xs text-muted-foreground'>{m.project_appearance_locked()}</p>
 				) : null}
 			</div>
 
@@ -315,7 +315,7 @@ function ProjectAppearanceRoute() {
 						!normalizedTheme || issues.length > 0 || publishMutation.isPending || customAccentLocked
 					}
 				>
-					{publishMutation.isPending ? 'Saving…' : 'Save changes'}
+					{publishMutation.isPending ? m.common_saving() : m.profile_save_changes()}
 				</Button>
 			</div>
 		</section>

@@ -4,6 +4,7 @@ import { GitBranch, HardDrive, Settings, Users } from 'lucide-react';
 
 import { EmptyState } from '@/components/kino/common';
 import { SidebarNavGroup, SidebarNavItem, SidebarNavSelect } from '@/components/sidebar-nav';
+import { SiteFooter } from '@/components/site-footer';
 import { EditingBar } from '@/components/site-nav/editing-bar';
 import { MainNav } from '@/components/site-nav/main-nav';
 import { requireAuth } from '@/lib/auth/require-auth';
@@ -11,38 +12,39 @@ import { useAuthLostRedirect } from '@/lib/auth/use-auth-lost';
 import { useCRPC } from '@/lib/convex/crpc';
 import { crpcServer } from '@/lib/convex/crpc-server';
 import { titleMeta } from '@/lib/seo';
+import * as m from '@/paraglide/messages.js';
 
 import { OrgSettingsSelector } from './-components/org-settings-selector';
 import { useSettingsOrgController } from './-components/use-settings-org';
 
 type SettingsSearch = { org?: string };
 
-const navItems = [
+const getNavItems = () => [
 	{
 		icon: Settings,
-		label: 'General',
+		label: m.settings_general(),
 		to: '/org/settings/general' as const,
 	},
 	{
 		icon: Users,
-		label: 'Members',
+		label: m.settings_members(),
 		to: '/org/settings/members' as const,
 	},
 	{
 		icon: HardDrive,
-		label: 'Storage',
+		label: m.settings_storage(),
 		to: '/org/settings/storage' as const,
 	},
 	{
 		icon: GitBranch,
-		label: 'Integrations',
+		label: m.settings_integrations(),
 		to: '/org/settings/integrations' as const,
 	},
 ];
 
 export const Route = createFileRoute('/org/settings')({
 	head: () => ({
-		meta: [titleMeta(['Settings'])],
+		meta: [titleMeta([m.project_nav_settings()])],
 	}),
 	validateSearch: (search: Record<string, unknown>): SettingsSearch => ({
 		org: typeof search.org === 'string' ? search.org : undefined,
@@ -88,6 +90,7 @@ function OrgSettingsRoute() {
 }
 
 function AuthenticatedOrgSettingsShell() {
+	const navItems = getNavItems();
 	const crpc = useCRPC();
 	const pathname = useRouterState({
 		select: (state) => state.location.pathname,
@@ -125,8 +128,8 @@ function AuthenticatedOrgSettingsShell() {
 					{isEmpty ? (
 						<div className='py-12'>
 							<EmptyState
-								title='No organizations to manage'
-								description="You don't have edit access to any organizations yet. Ask an owner or admin to invite you, or create a team of your own."
+								title={m.org_settings_none_title()}
+								description={m.org_settings_none_description()}
 							/>
 						</div>
 					) : (
@@ -142,7 +145,7 @@ function AuthenticatedOrgSettingsShell() {
 								<div className='hidden py-8 md:col-span-3 md:block md:border-r md:border-border/75'>
 									<div className='sticky top-6 flex flex-col gap-4 overflow-hidden md:pr-6'>
 										<OrgSettingsSelector activeSlug={activeSlug} onSelect={setOrg} orgs={orgs} />
-										<SidebarNavGroup className='border-b pb-6' title='Settings'>
+										<SidebarNavGroup className='border-b pb-6' title={m.project_nav_settings()}>
 											{navItems.map((item) => {
 												const Icon = item.icon;
 
@@ -167,14 +170,7 @@ function AuthenticatedOrgSettingsShell() {
 					)}
 				</div>
 			</div>
-			<footer className='mt-auto w-full border-t border-border py-4 text-sm text-muted-foreground'>
-				<div className='container flex items-center justify-between gap-4'>
-					<p>© {new Date().getFullYear()} Kino</p>
-					<Link to='/docs/notices' className='transition-colors hocus:text-foreground'>
-						Notices
-					</Link>
-				</div>
-			</footer>
+			<SiteFooter />
 		</div>
 	);
 }

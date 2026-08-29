@@ -1,6 +1,7 @@
 import { execSync } from 'node:child_process';
 
 import { cloudflare } from '@cloudflare/vite-plugin';
+import { paraglideVitePlugin } from '@inlang/paraglide-js';
 import tailwindcss from '@tailwindcss/vite';
 import { devtools } from '@tanstack/devtools-vite';
 import { tanstackStart } from '@tanstack/react-start/plugin/vite';
@@ -79,6 +80,13 @@ const config = defineConfig({
 		tailwindcss(),
 		tanstackStart(),
 		viteReact(),
+		paraglideVitePlugin({
+			project: './project.inlang',
+			outdir: './src/paraglide',
+			outputStructure: 'message-modules',
+			cookieName: 'PARAGLIDE_LOCALE',
+			strategy: ['cookie', 'preferredLanguage', 'baseLocale'],
+		}),
 	],
 	server: {
 		...(process.env.KINO_SHARE === '1' ? { allowedHosts: ['.trycloudflare.com'] } : {}),

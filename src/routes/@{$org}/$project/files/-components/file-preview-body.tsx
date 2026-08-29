@@ -23,6 +23,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
 import { cn } from '@/lib/utils';
+import * as m from '@/paraglide/messages.js';
 
 import css from 'highlight.js/lib/languages/css';
 
@@ -90,9 +91,9 @@ function TextPreview({
 		return (
 			<div className='max-w-md px-6 py-16 text-center'>
 				<FileText className='mx-auto mb-4 size-10 text-muted-foreground' />
-				<h2 className='font-semibold'>Text preview is being prepared</h2>
+				<h2 className='font-semibold'>{m.files_preview_preparing()}</h2>
 				<p className='mt-1 text-sm text-muted-foreground'>
-					Download {name} to view it immediately.
+					{m.files_preview_download_now({ name })}
 				</p>
 			</div>
 		);
@@ -158,7 +159,7 @@ function TextPreview({
 function PreviewLimitNotice() {
 	return (
 		<p className='mt-4 rounded-lg border bg-muted/50 px-3 py-2 text-xs text-muted-foreground'>
-			Preview limited to the first 30,000 characters. Download the file to view everything.
+			{m.files_preview_limited()}
 		</p>
 	);
 }
@@ -180,7 +181,7 @@ function DownloadOnlyPreview({
 			</span>
 			<h2 className='font-semibold'>{name}</h2>
 			<p className='mt-1 text-sm text-muted-foreground'>
-				.{extension} files are download-only in this preview version.
+				{m.files_preview_download_only({ extension })}
 			</p>
 		</div>
 	);

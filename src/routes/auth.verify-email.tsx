@@ -7,9 +7,10 @@ import { AuthFooter, AuthHeader } from '@/components/auth/auth-card';
 import { InlineAlert } from '@/components/inline-alert';
 import { trackAuthError, trackAuthSuccess } from '@/lib/auth-analytics';
 import { titleMeta } from '@/lib/seo';
+import * as m from '@/paraglide/messages.js';
 
 export const Route = createFileRoute('/auth/verify-email')({
-	head: () => ({ meta: [titleMeta(['Verify email'])] }),
+	head: () => ({ meta: [titleMeta([m.auth_verify_email_meta()])] }),
 	validateSearch: (
 		search: Record<string, unknown>
 	): { error?: string; redirect?: string; verified: boolean } => ({
@@ -35,26 +36,24 @@ function VerifyEmailPage() {
 	return (
 		<>
 			<AuthHeader
-				title={ok ? 'Email verified' : invalid ? 'Invalid verification link' : 'Verification failed'}
+				title={
+					ok
+						? m.auth_email_verified()
+						: invalid
+							? m.auth_invalid_verification_link()
+							: m.auth_verification_failed()
+				}
 			/>
 			{ok ? (
-				<InlineAlert variant='success'>
-					Your email address is confirmed. You’re all set.
-				</InlineAlert>
+				<InlineAlert variant='success'>{m.auth_email_confirmed()}</InlineAlert>
 			) : invalid ? (
-				<InlineAlert variant='danger'>
-					This verification link is invalid. Open the link from your verification email or
-					request a new one.
-				</InlineAlert>
+				<InlineAlert variant='danger'>{m.auth_verification_invalid()}</InlineAlert>
 			) : (
-				<InlineAlert variant='danger'>
-					We couldn’t verify your email — the link may have expired. Sign in to request a new
-					verification email.
-				</InlineAlert>
+				<InlineAlert variant='danger'>{m.auth_verification_expired()}</InlineAlert>
 			)}
 			<AuthFooter>
 				<Link className='link-text font-medium text-foreground' search={{ redirect }} to='/auth'>
-					Continue to sign in
+					{m.auth_continue_sign_in()}
 				</Link>
 			</AuthFooter>
 		</>

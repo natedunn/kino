@@ -16,6 +16,7 @@ import { StatusIcon } from '@/icons';
 import LoaderQuarter from '@/icons/loader-quarter';
 import { useCRPC } from '@/lib/convex/crpc';
 import { cn } from '@/lib/utils';
+import * as m from '@/paraglide/messages.js';
 
 export function FeedbackSelector({
 	projectId,
@@ -80,7 +81,7 @@ export function FeedbackSelector({
 								) : null}
 							</div>
 							<Button
-								aria-label={`Remove ${item.title}`}
+								aria-label={m.updates_remove_feedback({ title: item.title })}
 								variant='ghost'
 								size='icon-xs'
 								className='text-muted-foreground hover:text-destructive'
@@ -101,14 +102,12 @@ export function FeedbackSelector({
 					)}
 				>
 					<Plus className='h-4 w-4' />
-					Link Feedback
+					{m.updates_link_feedback_action()}
 				</DialogTrigger>
 				<DialogContent className='sm:max-w-lg'>
 					<DialogHeader>
-						<DialogTitle>Link Related Feedback</DialogTitle>
-						<DialogDescription>
-							Search and select feedback items that are addressed by this update.
-						</DialogDescription>
+						<DialogTitle>{m.updates_link_feedback()}</DialogTitle>
+						<DialogDescription>{m.updates_link_feedback_description()}</DialogDescription>
 					</DialogHeader>
 
 					<div className='relative'>
@@ -117,7 +116,7 @@ export function FeedbackSelector({
 							autoFocus
 							className='pl-9'
 							onChange={(event) => setSearchTerm(event.target.value)}
-							placeholder='Search feedback...'
+							placeholder={m.updates_search_feedback()}
 							value={searchTerm}
 						/>
 					</div>
@@ -164,14 +163,14 @@ export function FeedbackSelector({
 							</div>
 						) : (
 							<div className='py-8 text-center text-sm text-muted-foreground'>
-								{debouncedSearch ? 'No feedback found.' : 'Type to search feedback...'}
+								{debouncedSearch ? m.updates_no_feedback() : m.updates_type_search()}
 							</div>
 						)}
 					</div>
 
 					{selectedIds.length > 0 ? (
 						<div className='text-sm text-muted-foreground'>
-							{selectedIds.length} item{selectedIds.length !== 1 ? 's' : ''} selected
+							{m.updates_selected_count({ count: selectedIds.length })}
 						</div>
 					) : null}
 				</DialogContent>

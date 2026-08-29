@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { createFileRoute, Link, redirect } from '@tanstack/react-router';
 import { ArrowRight, MessageSquare, Newspaper, Route as RouteIcon } from 'lucide-react';
 
+import { SiteFooter } from '@/components/site-footer';
 import { PublicMainNav } from '@/components/site-nav/public-main-nav';
 import { Button } from '@/components/ui/button';
 import { isClientDefinitelyAuthed } from '@/lib/auth/auth-snapshot';
@@ -111,25 +112,7 @@ function LandingPage() {
 				</section>
 			</main>
 
-			{/* Footer */}
-			<footer className='border-t border-border py-6'>
-				<div className='container flex items-center justify-between text-sm text-muted-foreground'>
-					<p>&copy; {new Date().getFullYear()} Kino</p>
-					<div className='flex flex-wrap items-center justify-end gap-x-4 gap-y-2'>
-						<Link to='/docs/notices' className='transition-colors hover:text-foreground'>
-							Notices
-						</Link>
-						<a
-							href='https://github.com'
-							target='_blank'
-							rel='noopener noreferrer'
-							className='transition-colors hover:text-foreground'
-						>
-							GitHub
-						</a>
-					</div>
-				</div>
-			</footer>
+			<SiteFooter showGitHub />
 		</div>
 	);
 }

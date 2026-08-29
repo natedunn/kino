@@ -6,6 +6,7 @@ import { eq } from 'kitcn/orm';
 import { CRPCError } from 'kitcn/server';
 import { z } from 'zod';
 
+import { appError } from '../lib/app-error';
 import { authMutation, authQuery, optionalAuthQuery } from '../lib/crpc';
 import {
 	createProjectUploadIntents,
@@ -104,7 +105,8 @@ export const createDirectUploadBatch = authMutation
 		}
 		const totalBytes = input.files.reduce((sum, file) => sum + file.sizeBytes, 0);
 		if (totalBytes > MAX_DIRECT_UPLOAD_BATCH_BYTES) {
-			throw new CRPCError({
+			throw appError({
+				appCode: 'FILE_UPLOAD_BATCH_TOO_LARGE',
 				code: 'BAD_REQUEST',
 				message: 'This upload batch is larger than 50 MiB',
 			});
@@ -982,7 +984,8 @@ export const createFolder = authMutation
 			.withIndex('by_projectId', (query) => query.eq('projectId', access.project.id))
 			.take(500);
 		if (folderLimitCheck.length >= 500) {
-			throw new CRPCError({
+			throw appError({
+				appCode: 'FOLDER_LIMIT_REACHED',
 				code: 'BAD_REQUEST',
 				message: 'Projects can contain up to 500 folders',
 			});
@@ -998,9 +1001,11 @@ export const createFolder = authMutation
 					throw new CRPCError({ code: 'BAD_REQUEST', message: 'Parent folder is invalid' });
 				depth += 1;
 				if (depth > MAX_FILE_FOLDER_DEPTH) {
-					throw new CRPCError({
+					throw appError({
+						appCode: 'FOLDER_DEPTH_EXCEEDED',
 						code: 'BAD_REQUEST',
 						message: `Folders can be nested up to ${MAX_FILE_FOLDER_DEPTH} levels deep`,
+						values: { count: MAX_FILE_FOLDER_DEPTH },
 					});
 				}
 				parent = parent.parentFolderId
@@ -1015,7 +1020,8 @@ export const createFolder = authMutation
 				folder.normalizedName === normalizedName
 		);
 		if (duplicate)
-			throw new CRPCError({
+			throw appError({
+				appCode: 'FOLDER_NAME_TAKEN',
 				code: 'CONFLICT',
 				message: 'A folder with this name already exists here',
 			});
@@ -1066,7 +1072,8 @@ export const renameFolder = authMutation
 				candidate.normalizedName === normalizedName
 		);
 		if (duplicate && duplicate._id !== folder._id) {
-			throw new CRPCError({
+			throw appError({
+				appCode: 'FOLDER_NAME_TAKEN',
 				code: 'CONFLICT',
 				message: 'A folder with this name already exists here',
 			});
@@ -1155,9 +1162,11 @@ export const moveFolder = authMutation
 			}
 		}
 		if (parentDepth + subtreeDepth > MAX_FILE_FOLDER_DEPTH) {
-			throw new CRPCError({
+			throw appError({
+				appCode: 'FOLDER_DEPTH_EXCEEDED',
 				code: 'BAD_REQUEST',
 				message: `Folders can be nested up to ${MAX_FILE_FOLDER_DEPTH} levels deep`,
+				values: { count: MAX_FILE_FOLDER_DEPTH },
 			});
 		}
 
@@ -1168,7 +1177,8 @@ export const moveFolder = authMutation
 				candidate.normalizedName === folder.normalizedName
 		);
 		if (duplicate && duplicate._id !== folder._id) {
-			throw new CRPCError({
+			throw appError({
+				appCode: 'FOLDER_NAME_TAKEN',
 				code: 'CONFLICT',
 				message: 'A folder with this name already exists there',
 			});
@@ -1204,7 +1214,8 @@ export const removeFolder = authMutation
 				.take(1),
 		]);
 		if (child.length || asset.length) {
-			throw new CRPCError({
+			throw appError({
+				appCode: 'FOLDER_NOT_EMPTY',
 				code: 'CONFLICT',
 				message: 'Move this folder’s contents before deleting it',
 			});
@@ -1286,7 +1297,8 @@ export const removeAsset = authMutation
 			.withIndex('by_assetId', (query) => query.eq('assetId', asset._id))
 			.take(1);
 		if (reference.length)
-			throw new CRPCError({
+			throw appError({
+				appCode: 'FILE_IN_USE',
 				code: 'CONFLICT',
 				message: 'This file is still used by another feature',
 			});

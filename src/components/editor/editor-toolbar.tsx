@@ -27,6 +27,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
+import * as m from '@/paraglide/messages.js';
 
 type ToolbarItem = {
 	action: () => void;
@@ -132,7 +133,7 @@ export function EditorToolbar({ editor }: { editor: Editor | null }) {
 		if (flags.heading1) return 'H1';
 		if (flags.heading2) return 'H2';
 		if (flags.heading3) return 'H3';
-		return 'Body';
+		return m.editor_body();
 	};
 	const isBodyActive = () =>
 		isFocused &&
@@ -154,28 +155,28 @@ export function EditorToolbar({ editor }: { editor: Editor | null }) {
 							group: 1,
 							icon: <Bold size={16} />,
 							id: 'bold',
-							label: 'Bold',
+							label: m.editor_bold(),
 						},
 						{
 							action: () => chain()?.toggleItalic().run(),
 							group: 1,
 							icon: <Italic size={16} />,
 							id: 'italic',
-							label: 'Italic',
+							label: m.editor_italic(),
 						},
 						{
 							action: () => chain()?.toggleUnderline().run(),
 							group: 1,
 							icon: <Underline size={16} />,
 							id: 'underline',
-							label: 'Underline',
+							label: m.editor_underline(),
 						},
 						{
 							action: () => chain()?.toggleStrike().run(),
 							group: 1,
 							icon: <Strikethrough size={16} />,
 							id: 'strike',
-							label: 'Strikethrough',
+							label: m.editor_strikethrough(),
 						},
 						{
 							action: () => {
@@ -186,49 +187,49 @@ export function EditorToolbar({ editor }: { editor: Editor | null }) {
 							group: 2,
 							icon: <Link size={16} />,
 							id: 'link',
-							label: 'Link',
+							label: m.editor_link(),
 						},
 						{
 							action: () => chain()?.toggleCode().run(),
 							group: 3,
 							icon: <Code size={16} />,
 							id: 'code',
-							label: 'Inline Code',
+							label: m.editor_inline_code(),
 						},
 						{
 							action: () => chain()?.toggleCodeBlock().run(),
 							group: 3,
 							icon: <Code2 size={16} />,
 							id: 'codeBlock',
-							label: 'Code Block',
+							label: m.editor_code_block(),
 						},
 						{
 							action: () => chain()?.toggleBlockquote().run(),
 							group: 4,
 							icon: <Quote size={16} />,
 							id: 'blockquote',
-							label: 'Quote',
+							label: m.editor_quote(),
 						},
 						{
 							action: () => chain()?.toggleBulletList().run(),
 							group: 5,
 							icon: <List size={16} />,
 							id: 'bulletList',
-							label: 'Bullet List',
+							label: m.editor_bullet_list(),
 						},
 						{
 							action: () => chain()?.toggleOrderedList().run(),
 							group: 5,
 							icon: <ListOrdered size={16} />,
 							id: 'orderedList',
-							label: 'Numbered List',
+							label: m.editor_numbered_list(),
 						},
 						{
 							action: () => {},
 							group: 6,
 							icon: <Heading size={16} />,
 							id: 'heading',
-							label: 'Heading',
+							label: m.editor_heading(),
 							width: 56,
 						},
 					]
@@ -313,7 +314,7 @@ export function EditorToolbar({ editor }: { editor: Editor | null }) {
 							onClick={() => chain()?.setParagraph().run()}
 						>
 							<Check className={cn('mr-2 size-4', isBodyActive() ? 'opacity-100' : 'opacity-0')} />
-							Body
+							{m.editor_body()}
 						</DropdownMenuItem>
 						<DropdownMenuItem
 							className={cn(isFlagActive('heading1') && 'font-medium')}
@@ -325,7 +326,7 @@ export function EditorToolbar({ editor }: { editor: Editor | null }) {
 									isFlagActive('heading1') ? 'opacity-100' : 'opacity-0'
 								)}
 							/>
-							Heading 1
+							{m.editor_heading_level({ level: 1 })}
 						</DropdownMenuItem>
 						<DropdownMenuItem
 							className={cn(isFlagActive('heading2') && 'font-medium')}
@@ -337,7 +338,7 @@ export function EditorToolbar({ editor }: { editor: Editor | null }) {
 									isFlagActive('heading2') ? 'opacity-100' : 'opacity-0'
 								)}
 							/>
-							Heading 2
+							{m.editor_heading_level({ level: 2 })}
 						</DropdownMenuItem>
 						<DropdownMenuItem
 							className={cn(isFlagActive('heading3') && 'font-medium')}
@@ -349,7 +350,7 @@ export function EditorToolbar({ editor }: { editor: Editor | null }) {
 									isFlagActive('heading3') ? 'opacity-100' : 'opacity-0'
 								)}
 							/>
-							Heading 3
+							{m.editor_heading_level({ level: 3 })}
 						</DropdownMenuItem>
 					</DropdownMenuContent>
 				</DropdownMenu>
@@ -373,7 +374,7 @@ export function EditorToolbar({ editor }: { editor: Editor | null }) {
 					</PopoverTrigger>
 					<PopoverContent className='w-80'>
 						<div className='flex flex-col gap-2'>
-							<label className='text-sm font-medium'>Link URL</label>
+							<label className='text-sm font-medium'>{m.editor_link_url()}</label>
 							<input
 								className='h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none'
 								onChange={(event) => setLinkUrl(event.target.value)}
@@ -382,7 +383,7 @@ export function EditorToolbar({ editor }: { editor: Editor | null }) {
 							/>
 							<div className='flex gap-2'>
 								<Button onClick={applyLink} size='sm' type='button'>
-									Apply
+									{m.editor_apply()}
 								</Button>
 								<Button
 									onClick={() => {
@@ -394,7 +395,7 @@ export function EditorToolbar({ editor }: { editor: Editor | null }) {
 									type='button'
 									variant='outline'
 								>
-									Remove
+									{m.editor_remove()}
 								</Button>
 							</div>
 						</div>

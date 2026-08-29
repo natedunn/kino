@@ -27,6 +27,7 @@ import {
 	FILE_SOURCE_PROVIDERS,
 	FILE_UPLOADER_CLASSES,
 } from '../shared/files';
+import { APP_LOCALES } from '../shared/i18n';
 import { targetGranularities } from '../shared/target';
 
 // Compatibility-deploy shape: `system:editor` remains schema-valid until the
@@ -305,6 +306,7 @@ export const profileTable = convexTable(
 		imageUrl: text(),
 		bio: text(),
 		location: text(),
+		locale: textEnum(APP_LOCALES),
 		personalOrganizationId: text().references(() => organizationTable.id),
 		urls: urlField,
 		userId: text()

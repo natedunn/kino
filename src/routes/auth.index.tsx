@@ -15,6 +15,7 @@ import LoaderQuarter from '@/icons/loader-quarter';
 import { trackAuthError, trackAuthStarted, trackAuthSuccess } from '@/lib/auth-analytics';
 import { endSignOut, isSigningOut } from '@/lib/auth/sign-out-state';
 import { authClient } from '@/lib/convex/auth-client';
+import { m } from '@/paraglide/messages.js';
 
 import { getSafeRedirectTarget, getVerifyEmailCallbackUrl } from './auth';
 
@@ -102,7 +103,7 @@ function SignInPage() {
 		} catch (err) {
 			trackAuthError('email_verification', err, { method: 'resend' });
 			setResendState('idle');
-			setError(err instanceof Error ? err.message : 'Could not resend the email.');
+			setError(m.auth_resend_failed());
 		}
 	}
 
@@ -124,12 +125,12 @@ function SignInPage() {
 			// Success initiates an OAuth redirect — leave the spinner up.
 			if (res.error) {
 				trackAuthError('sign_in', res.error, { method: 'github' });
-				setError(res.error.message ?? 'Could not start GitHub sign-in.');
+				setError(m.auth_github_failed());
 				setSubmitting(null);
 			}
 		} catch (err) {
 			trackAuthError('sign_in', err, { method: 'github' });
-			setError(err instanceof Error ? err.message : 'Something went wrong.');
+			setError(m.common_something_went_wrong());
 			setSubmitting(null);
 		}
 	}
@@ -154,7 +155,7 @@ function SignInPage() {
 				if (res.error.code === 'EMAIL_NOT_VERIFIED' || res.error.status === 403) {
 					setNeedsVerification(true);
 				} else {
-					setError(res.error.message ?? 'Could not sign in.');
+					setError(m.auth_sign_in_failed());
 				}
 				setSubmitting(null);
 			} else {
@@ -165,7 +166,7 @@ function SignInPage() {
 			}
 		} catch (err) {
 			trackAuthError('sign_in', err, { method: 'password' });
-			setError(err instanceof Error ? err.message : 'Something went wrong.');
+			setError(m.common_something_went_wrong());
 			setSubmitting(null);
 		}
 	}
@@ -182,27 +183,27 @@ function SignInPage() {
 		return (
 			<div className='flex flex-col items-center justify-center gap-3 py-6 text-muted-foreground'>
 				<LoaderQuarter className='size-6 animate-spin' />
-				<p className='text-sm'>{busy ? 'Signing you in…' : 'Redirecting…'}</p>
+				<p className='text-sm'>{busy ? m.auth_signing_in() : m.auth_redirecting()}</p>
 			</div>
 		);
 	}
 
 	return (
 		<>
-			<AuthHeader title='Sign in' description='Welcome back. Sign in to continue to Kino.' />
+			<AuthHeader title={m.auth_sign_in_title()} description={m.auth_sign_in_description()} />
 			<div className='flex flex-col gap-4'>
 				<div className='flex flex-col gap-2'>
 					<Button disabled={busy} onClick={onGithub} size='lg' type='button' variant='outline'>
 						{submitting === 'github' ? <LoaderQuarter className='animate-spin' /> : <Github />}
-						Continue with GitHub
+						{m.auth_continue_github()}
 					</Button>
 					{/* Disabled for now — wired up later. */}
 					<div className='grid grid-cols-2 gap-2'>
-						<Button disabled size='lg' title='Coming soon' type='button' variant='outline'>
+						<Button disabled size='lg' title={m.auth_coming_soon()} type='button' variant='outline'>
 							<Google />
 							Google
 						</Button>
-						<Button disabled size='lg' title='Coming soon' type='button' variant='outline'>
+						<Button disabled size='lg' title={m.auth_coming_soon()} type='button' variant='outline'>
 							<Discord />
 							Discord
 						</Button>
@@ -211,12 +212,12 @@ function SignInPage() {
 
 				<div className='flex items-center gap-3 text-xs text-muted-foreground'>
 					<div className='h-px flex-1 bg-border' />
-					<span>or</span>
+					<span>{m.auth_or()}</span>
 					<div className='h-px flex-1 bg-border' />
 				</div>
 
 				<form className='flex flex-col gap-4' onSubmit={onSubmit}>
-					<AuthField id='email' label='Email'>
+					<AuthField id='email' label={m.common_email()}>
 						<Input
 							size='lg'
 							autoComplete='email'
@@ -228,7 +229,7 @@ function SignInPage() {
 						/>
 					</AuthField>
 
-					<AuthField id='password' label='Password'>
+					<AuthField id='password' label={m.common_password()}>
 						<Input
 							size='lg'
 							autoComplete='current-password'
@@ -245,10 +246,10 @@ function SignInPage() {
 					{needsVerification ? (
 						<InlineAlert variant='warning'>
 							{resendState === 'sent' ? (
-								<>Verification link sent to {email}. Check your inbox, then sign in.</>
+								<>{m.auth_verification_sent({ email })}</>
 							) : (
 								<div className='flex flex-col gap-2'>
-									<span>Your email isn’t verified yet. Verify it to finish signing in.</span>
+									<span>{m.auth_email_not_verified()}</span>
 									<Button
 										disabled={resendState === 'sending'}
 										onClick={onResendVerification}
@@ -256,7 +257,7 @@ function SignInPage() {
 										type='button'
 										variant='outline'
 									>
-										{resendState === 'sending' ? 'Sending…' : 'Resend verification email'}
+										{resendState === 'sending' ? m.auth_sending() : m.auth_resend_verification()}
 									</Button>
 								</div>
 							)}
@@ -267,10 +268,10 @@ function SignInPage() {
 						{submitting === 'password' ? (
 							<>
 								<LoaderQuarter className='animate-spin' />
-								Signing in…
+								{m.auth_signing_in()}
 							</>
 						) : (
-							'Sign in'
+							m.auth_sign_in_title()
 						)}
 					</Button>
 
@@ -278,18 +279,18 @@ function SignInPage() {
 						className='link-text text-center text-sm text-muted-foreground'
 						to='/auth/forgot-password'
 					>
-						Forgot your password?
+						{m.auth_forgot_password()}
 					</Link>
 				</form>
 			</div>
 			<AuthFooter>
-				Don’t have an account?{' '}
+				{m.auth_no_account()}{' '}
 				<Link
 					className='link-text font-medium text-foreground'
 					search={{ redirect }}
 					to='/auth/sign-up'
 				>
-					Create one
+					{m.auth_create_one()}
 				</Link>
 			</AuthFooter>
 		</>

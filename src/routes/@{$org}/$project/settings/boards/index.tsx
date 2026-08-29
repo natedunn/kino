@@ -10,12 +10,13 @@ import Pen from '@/icons/pen';
 import { useCRPC } from '@/lib/convex/crpc';
 import { crpcServer } from '@/lib/convex/crpc-server';
 import { titleMeta } from '@/lib/seo';
+import * as m from '@/paraglide/messages.js';
 
 import { ArchivedSettingsNotice } from '../-components/archived-notice';
 
 export const Route = createFileRoute('/@{$org}/$project/settings/boards/')({
 	head: () => ({
-		meta: [titleMeta(['Boards'])],
+		meta: [titleMeta([m.meta_boards()])],
 	}),
 	loader: async ({ context, params }) => {
 		const details = await context.queryClient.ensureQueryData(
@@ -62,8 +63,8 @@ function BoardsIndexRoute() {
 	if (!projectQuery.data?.project || !projectQuery.data.permissions.canManageContent) {
 		return (
 			<EmptyState
-				title='Board management unavailable'
-				description='Only project admins and assigned moderators can manage feedback boards.'
+				title={m.project_boards_unavailable()}
+				description={m.project_boards_unavailable_description()}
 			/>
 		);
 	}
@@ -73,15 +74,13 @@ function BoardsIndexRoute() {
 			{projectQuery.data.project.visibility === 'archived' ? <ArchivedSettingsNotice /> : null}
 			<header className='flex flex-col items-start gap-4 border-b pb-4 sm:flex-row sm:items-end sm:justify-between'>
 				<div>
-					<h2 className='text-xl font-semibold'>Boards</h2>
-					<p className='mt-1 text-sm text-muted-foreground'>
-						Manage the feedback boards available in this project.
-					</p>
+					<h2 className='text-xl font-semibold'>{m.settings_boards()}</h2>
+					<p className='mt-1 text-sm text-muted-foreground'>{m.project_boards_description()}</p>
 				</div>
 				<Button asChild>
 					<Link params={params} to='/@{$org}/$project/feedback/boards/new'>
 						<Plus className='size-4' />
-						Create board
+						{m.project_boards_create()}
 					</Link>
 				</Button>
 			</header>
@@ -89,11 +88,11 @@ function BoardsIndexRoute() {
 			{boards.length === 0 ? (
 				<div className='rounded-xl border border-dashed bg-muted/20 p-10 text-center'>
 					<div className='mx-auto flex size-10 items-center justify-center rounded-full bg-background shadow-sm'>
-						<BoardIcon icon='box' name='All' size='20px' />
+						<BoardIcon icon='box' name={m.common_all()} size='20px' />
 					</div>
-					<p className='mt-3 text-sm font-medium'>No boards yet</p>
+					<p className='mt-3 text-sm font-medium'>{m.project_boards_empty()}</p>
 					<p className='mt-1 text-sm text-muted-foreground'>
-						Create your first board to start collecting feedback.
+						{m.project_boards_empty_description()}
 					</p>
 					<Link
 						className={buttonVariants({ className: 'mt-4' })}
@@ -101,7 +100,7 @@ function BoardsIndexRoute() {
 						to='/@{$org}/$project/feedback/boards/new'
 					>
 						<Plus className='size-4' />
-						Create board
+						{m.project_boards_create()}
 					</Link>
 				</div>
 			) : (
@@ -119,7 +118,7 @@ function BoardsIndexRoute() {
 									<div className='truncate text-base font-semibold'>{board.name}</div>
 									<div className='mt-1 text-sm text-muted-foreground'>
 										{board.description ?? (
-											<span className='italic opacity-60'>No description added</span>
+											<span className='italic opacity-60'>{m.project_boards_no_description()}</span>
 										)}
 									</div>
 								</div>
@@ -132,7 +131,7 @@ function BoardsIndexRoute() {
 									to='/@{$org}/$project/feedback/boards/$board/edit'
 								>
 									<Pen className='text-muted-foreground' size='14px' />
-									Edit
+									{m.project_boards_edit()}
 								</Link>
 								<Link
 									className='link-text inline-flex items-center gap-1.5'
@@ -141,7 +140,7 @@ function BoardsIndexRoute() {
 									to='/@{$org}/$project/feedback'
 								>
 									<Eye className='text-muted-foreground' size='14px' />
-									View
+									{m.project_boards_view()}
 								</Link>
 							</div>
 						</div>

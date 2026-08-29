@@ -188,6 +188,30 @@ async function seedProjectAccessFixture(ctx: Ctx) {
 	};
 }
 
+describe('profile locale preference', () => {
+	it('stores only the signed-in user locale', async () => {
+		const t = convexTest();
+		const user = await t.run((baseCtx) =>
+			runCtx(baseCtx).then((ctx) => seedAuthedUser(ctx, 'locale@example.com'))
+		);
+		const asUser = t.withIdentity({ sessionId: user.sessionId, subject: user.userId });
+
+		await asUser.mutation(api.profile.updateLocale, { locale: 'es-419' });
+
+		const locale = await t.run(async (baseCtx) => {
+			const ctx = await runCtx(baseCtx);
+			return (await ctx.orm.query.profile.findFirst({ where: { userId: user.userId } }))?.locale;
+		});
+		expect(locale).toBe('es-419');
+	});
+
+	it('rejects unauthenticated updates', async () => {
+		await expect(
+			convexTest().mutation(api.profile.updateLocale, { locale: 'zh-Hans' })
+		).rejects.toThrow();
+	});
+});
+
 describe('organization invitations (authenticated end-to-end)', () => {
 	// Invitees are identified by email only — they do not need a Kino account
 	// yet. This exercises the full better-auth createInvitation path, which

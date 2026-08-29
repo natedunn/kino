@@ -2,6 +2,7 @@ import { Link, useParams } from '@tanstack/react-router';
 import { SquareArrowOutUpRight } from 'lucide-react';
 
 import { buttonVariants } from '@/components/ui/button';
+import * as m from '@/paraglide/messages.js';
 
 export function FeedbackOptions() {
 	const { org, project } = useParams({ from: '/@{$org}/$project/feedback/' });
@@ -16,7 +17,7 @@ export function FeedbackOptions() {
 				params={{ org, project }}
 				to='/@{$org}/$project/settings/boards'
 			>
-				<span>All boards</span>
+				<span>{m.feedback_index_all_boards()}</span>
 				<SquareArrowOutUpRight className='size-4 text-muted-foreground' />
 			</Link>
 			<Link
@@ -27,7 +28,7 @@ export function FeedbackOptions() {
 				params={{ org, project }}
 				to='/@{$org}/$project/settings/integrations'
 			>
-				<span>Integrations</span>
+				<span>{m.feedback_index_integrations()}</span>
 				<SquareArrowOutUpRight className='size-4 text-muted-foreground' />
 			</Link>
 		</div>

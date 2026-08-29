@@ -10,11 +10,12 @@ import { Input } from '@/components/ui/input';
 import { trackAuthError, trackAuthSuccess } from '@/lib/auth-analytics';
 import { authClient } from '@/lib/convex/auth-client';
 import { titleMeta } from '@/lib/seo';
+import { m } from '@/paraglide/messages.js';
 
 import { getVerifyEmailCallbackUrl } from './auth';
 
 export const Route = createFileRoute('/auth/sign-up')({
-	head: () => ({ meta: [titleMeta(['Create account'])] }),
+	head: () => ({ meta: [titleMeta([m.auth_create_account_meta()])] }),
 	validateSearch: (search: Record<string, unknown>): { redirect?: string } =>
 		typeof search.redirect === 'string' ? { redirect: search.redirect } : {},
 	component: SignUpPage,
@@ -39,11 +40,11 @@ function SignUpPage() {
 	async function onSubmit(e: React.FormEvent) {
 		e.preventDefault();
 		if (!emailsMatch) {
-			setError('Email addresses don’t match.');
+			setError(m.auth_email_mismatch());
 			return;
 		}
 		if (!passwordsMatch) {
-			setError('Passwords don’t match.');
+			setError(m.auth_password_mismatch());
 			return;
 		}
 		setError(null);
@@ -57,14 +58,14 @@ function SignUpPage() {
 			});
 			if (res.error) {
 				trackAuthError('sign_up', res.error);
-				setError(res.error.message ?? 'Could not create your account.');
+				setError(m.auth_create_account_failed());
 			} else {
 				trackAuthSuccess('sign_up');
 				setDone(true);
 			}
 		} catch (err) {
 			trackAuthError('sign_up', err);
-			setError(err instanceof Error ? err.message : 'Something went wrong.');
+			setError(m.common_something_went_wrong());
 		} finally {
 			setPending(false);
 		}
@@ -73,14 +74,14 @@ function SignUpPage() {
 	if (done) {
 		return (
 			<>
-				<AuthHeader title='Verify your email' description='One more step before you can sign in.' />
-				<InlineAlert variant='success'>
-					We sent a verification link to {email}. Click it to confirm your address, then sign in to
-					continue.
-				</InlineAlert>
+				<AuthHeader
+					title={m.auth_verify_email_title()}
+					description={m.auth_verify_email_description()}
+				/>
+				<InlineAlert variant='success'>{m.auth_verify_email_sent({ email })}</InlineAlert>
 				<AuthFooter>
 					<Link className='link-text font-medium text-foreground' search={{ redirect }} to='/auth'>
-						Back to sign in
+						{m.auth_back_to_sign_in()}
 					</Link>
 				</AuthFooter>
 			</>
@@ -100,11 +101,11 @@ function SignUpPage() {
 	return (
 		<>
 			<AuthHeader
-				title='Create your account'
-				description='Sign up with your email and a password.'
+				title={m.auth_create_account_title()}
+				description={m.auth_create_account_description()}
 			/>
 			<form className='flex flex-col gap-4' onSubmit={onSubmit}>
-				<AuthField id='name' label='Name'>
+				<AuthField id='name' label={m.auth_name()}>
 					<Input
 						size='lg'
 						autoComplete='name'
@@ -114,7 +115,7 @@ function SignUpPage() {
 						value={name}
 					/>
 				</AuthField>
-				<AuthField id='email' label='Email'>
+				<AuthField id='email' label={m.common_email()}>
 					<Input
 						size='lg'
 						autoComplete='email'
@@ -125,7 +126,7 @@ function SignUpPage() {
 						value={email}
 					/>
 				</AuthField>
-				<AuthField id='confirm-email' label='Confirm email'>
+				<AuthField id='confirm-email' label={m.auth_confirm_email()}>
 					<Input
 						size='lg'
 						aria-invalid={showEmailMismatch}
@@ -137,10 +138,10 @@ function SignUpPage() {
 						value={confirmEmail}
 					/>
 					{showEmailMismatch ? (
-						<p className='text-xs text-destructive'>Email addresses don’t match.</p>
+						<p className='text-xs text-destructive'>{m.auth_email_mismatch()}</p>
 					) : null}
 				</AuthField>
-				<AuthField id='password' label='Password'>
+				<AuthField id='password' label={m.common_password()}>
 					<Input
 						size='lg'
 						autoComplete='new-password'
@@ -152,7 +153,7 @@ function SignUpPage() {
 						value={password}
 					/>
 				</AuthField>
-				<AuthField id='confirm-password' label='Confirm password'>
+				<AuthField id='confirm-password' label={m.auth_confirm_password()}>
 					<Input
 						size='lg'
 						aria-invalid={showPasswordMismatch}
@@ -165,18 +166,18 @@ function SignUpPage() {
 						value={confirmPassword}
 					/>
 					{showPasswordMismatch ? (
-						<p className='text-xs text-destructive'>Passwords don’t match.</p>
+						<p className='text-xs text-destructive'>{m.auth_password_mismatch()}</p>
 					) : null}
 				</AuthField>
 				{error ? <InlineAlert variant='danger'>{error}</InlineAlert> : null}
 				<Button disabled={!canSubmit} size='lg' type='submit'>
-					{pending ? 'Creating account…' : 'Create account'}
+					{pending ? m.auth_creating_account() : m.auth_create_account_action()}
 				</Button>
 			</form>
 			<AuthFooter>
-				Already have an account?{' '}
+				{m.auth_have_account()}{' '}
 				<Link className='link-text font-medium text-foreground' search={{ redirect }} to='/auth'>
-					Sign in
+					{m.auth_sign_in_title()}
 				</Link>
 			</AuthFooter>
 		</>

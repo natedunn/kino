@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import type { AppLocale } from '../shared/i18n';
 
 import { createElement } from 'react';
 import {
@@ -86,9 +87,9 @@ const styles = {
 	},
 } as const;
 
-export function EmailLayout(props: { preview: string; children: ReactNode }) {
+export function EmailLayout(props: { preview: string; children: ReactNode; locale: AppLocale }) {
 	return (
-		<Html>
+		<Html lang={props.locale}>
 			<Head />
 			<Preview>{props.preview}</Preview>
 			<Body style={styles.body}>
@@ -127,12 +128,12 @@ export function EmailCode(props: { children: ReactNode }) {
 	);
 }
 
-export function EmailFallbackLink(props: { url: string }) {
+export function EmailFallbackLink(props: { label: string; url: string }) {
 	return (
 		<>
 			<Hr style={styles.hr} />
 			<Text style={styles.muted}>
-				If the button doesn’t work, copy and paste this link:
+				{props.label}
 				<br />
 				{props.url}
 			</Text>

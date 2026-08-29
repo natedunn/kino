@@ -11,12 +11,8 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server.edge';
 
 import { sendEmail } from '../lib/bento';
-import {
-	emailSubjects,
-	OrganizationInvitationEmail,
-	ResetPasswordEmail,
-	VerificationEmail,
-} from './index';
+import { getEmailCopy } from './i18n';
+import { OrganizationInvitationEmail, ResetPasswordEmail, VerificationEmail } from './index';
 
 /**
  * Render a React Email template to HTML. Uses react-dom's static renderer
@@ -38,17 +34,19 @@ function renderAndSend(args: { to: string; subject: string; element: React.React
 }
 
 export function sendVerificationEmail(props: VerificationEmailProps) {
+	const copy = getEmailCopy(props.locale);
 	return renderAndSend({
 		to: props.user.email,
-		subject: emailSubjects.verification,
+		subject: copy.verification.subject,
 		element: createElement(VerificationEmail, props),
 	});
 }
 
 export function sendResetPasswordEmail(props: ResetPasswordEmailProps) {
+	const copy = getEmailCopy(props.locale);
 	return renderAndSend({
 		to: props.user.email,
-		subject: emailSubjects.resetPassword,
+		subject: copy.reset.subject,
 		element: createElement(ResetPasswordEmail, props),
 	});
 }
@@ -59,8 +57,9 @@ export function sendResetPasswordEmail(props: ResetPasswordEmailProps) {
  * schedules the actual send through the `email.sendTransactionalEmail` action.
  */
 export function renderOrganizationInvitationEmail(props: OrganizationInvitationEmailProps) {
+	const copy = getEmailCopy(props.locale);
 	return {
 		html: renderEmail(createElement(OrganizationInvitationEmail, props)),
-		subject: emailSubjects.organizationInvitation(props.organization.name),
+		subject: copy.invitation.subject(props.organization.name),
 	};
 }

@@ -18,7 +18,8 @@ import {
 	ResponsiveDialogHeader,
 } from '@/components/ui/responsive-dialog';
 import { useCRPC } from '@/lib/convex/crpc';
-import { extractErrorMessage } from '@/lib/errors';
+import { localizeError } from '@/lib/errors';
+import * as m from '@/paraglide/messages.js';
 
 type MoveFileDialogProps = {
 	file: {
@@ -46,9 +47,13 @@ export function MoveFileDialog({ file, folders, onOpenChange, open }: MoveFileDi
 		try {
 			await moveMutation.mutateAsync({ assetId: file.id, folderId: destinationFolderId });
 			onOpenChange(false);
-			toast.success(`Moved to ${folderPickerPathLabel(folders, destinationFolderId)}`);
+			toast.success(
+				m.files_moved_to({
+					location: folderPickerPathLabel(folders, destinationFolderId, m.files_root()),
+				})
+			);
 		} catch (error) {
-			toast.error(extractErrorMessage(error, 'Unable to move file'));
+			toast.error(localizeError(error, m.files_move_failed()));
 		}
 	};
 
@@ -61,13 +66,13 @@ export function MoveFileDialog({ file, folders, onOpenChange, open }: MoveFileDi
 			>
 				<ResponsiveDialogHeader
 					icon={<FolderInput />}
-					subtitle='Choose a new location in this project'
-					title='Move file'
+					subtitle={m.files_move_description()}
+					title={m.files_move_title()}
 				/>
 				<ResponsiveDialogBody>
 					<div className='space-y-2'>
 						<p className='text-xs font-medium tracking-wide text-muted-foreground uppercase'>
-							Choose destination
+							{m.files_choose_destination()}
 						</p>
 						<FolderPicker
 							disabled={moveMutation.isPending}
@@ -84,7 +89,7 @@ export function MoveFileDialog({ file, folders, onOpenChange, open }: MoveFileDi
 						size='sm'
 						variant='outline'
 					>
-						Cancel
+						{m.common_cancel()}
 					</Button>
 					<Button
 						disabled={destinationFolderId === currentFolderId || moveMutation.isPending}
@@ -92,7 +97,7 @@ export function MoveFileDialog({ file, folders, onOpenChange, open }: MoveFileDi
 						size='sm'
 					>
 						<FolderInput />
-						{moveMutation.isPending ? 'Moving…' : 'Move here'}
+						{moveMutation.isPending ? m.files_moving() : m.files_move_here()}
 					</Button>
 				</ResponsiveDialogFooter>
 			</ResponsiveDialogContent>

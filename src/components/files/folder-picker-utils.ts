@@ -4,15 +4,19 @@ export type FolderPickerFolder = {
 	parentFolderId?: string | null;
 };
 
-export function folderPickerPathLabel(folders: Array<FolderPickerFolder>, folderId: string | null) {
-	if (!folderId) return 'Root';
+export function folderPickerPathLabel(
+	folders: Array<FolderPickerFolder>,
+	folderId: string | null,
+	rootLabel = 'Root'
+) {
+	if (!folderId) return rootLabel;
 	const breadcrumbs = buildFolderPath(
 		new Map(folders.map((folder) => [folder.id, folder])),
 		folderId
 	);
 	return breadcrumbs.length
-		? `Root / ${breadcrumbs.map((folder) => folder.name).join(' / ')}`
-		: 'Root';
+		? `${rootLabel} / ${breadcrumbs.map((folder) => folder.name).join(' / ')}`
+		: rootLabel;
 }
 
 export function buildFolderPath(

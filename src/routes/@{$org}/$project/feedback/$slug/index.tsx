@@ -71,13 +71,14 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { EditIcon, StatusIcon, UpChevronIcon } from '@/icons';
 import { useCRPC } from '@/lib/convex/crpc';
 import { crpcServer } from '@/lib/convex/crpc-server';
-import { extractErrorMessage } from '@/lib/errors';
+import { localizeError } from '@/lib/errors';
 import { useIsBelow } from '@/lib/hooks/use-mobile';
 import { useSidebarState } from '@/lib/hooks/use-sidebar-state';
 import { projectTitle, titleFromSlug, titleMeta } from '@/lib/seo';
 import { cn } from '@/lib/utils';
 import { formatTimestamp, toTimestamp } from '@/lib/utils/format-timestamp';
 import { FORM_LIMITS } from '@/lib/validation';
+import * as m from '@/paraglide/messages.js';
 
 import { SignInPromptDialog } from '../-components/sign-in-prompt-dialog';
 import { UpvoteButton } from '../-components/upvote-button';
@@ -100,55 +101,65 @@ const DEFAULT_SIDEBAR_STATE = {
 };
 
 const FEEDBACK_STATUS_OPTIONS = [
-	{ label: 'Open', value: 'open' },
-	{ label: 'In progress', value: 'in-progress' },
-	{ label: 'Paused', value: 'paused' },
-	{ label: 'Completed', value: 'completed' },
-	{ label: 'Closed', value: 'closed' },
+	{ label: m.feedback_status_open, value: 'open' },
+	{ label: m.feedback_status_in_progress, value: 'in-progress' },
+	{ label: m.feedback_status_paused, value: 'paused' },
+	{ label: m.feedback_status_completed, value: 'completed' },
+	{ label: m.feedback_status_closed, value: 'closed' },
 ] as const;
 
 const FEEDBACK_PRIORITY_OPTIONS = [
-	{ dotClass: 'bg-muted-foreground/40', label: 'None', value: 'none' },
-	{ dotClass: 'bg-sky-500', label: 'Low', value: 'low' },
-	{ dotClass: 'bg-amber-500', label: 'Medium', value: 'medium' },
-	{ dotClass: 'bg-orange-500', label: 'High', value: 'high' },
-	{ dotClass: 'bg-red-500', label: 'Urgent', value: 'urgent' },
+	{ dotClass: 'bg-muted-foreground/40', label: m.feedback_priority_none, value: 'none' },
+	{ dotClass: 'bg-sky-500', label: m.feedback_priority_low, value: 'low' },
+	{ dotClass: 'bg-amber-500', label: m.feedback_priority_medium, value: 'medium' },
+	{ dotClass: 'bg-orange-500', label: m.feedback_priority_high, value: 'high' },
+	{ dotClass: 'bg-red-500', label: m.feedback_priority_urgent, value: 'urgent' },
 ] as const;
 
 const TARGET_GRANULARITY_OPTIONS: Array<{
-	label: string;
+	label: () => string;
 	value: TargetGranularity;
 }> = [
-	{ label: 'Day', value: 'day' },
-	{ label: 'Month', value: 'month' },
-	{ label: 'Quarter', value: 'quarter' },
-	{ label: 'Year', value: 'year' },
+	{ label: m.feedback_target_day, value: 'day' },
+	{ label: m.feedback_target_month, value: 'month' },
+	{ label: m.feedback_target_quarter, value: 'quarter' },
+	{ label: m.feedback_target_year, value: 'year' },
 ];
 
 const QUARTER_OPTIONS = [
-	{ label: 'Quarter 1 (Q1)', value: 'Q1' },
-	{ label: 'Quarter 2 (Q2)', value: 'Q2' },
-	{ label: 'Quarter 3 (Q3)', value: 'Q3' },
-	{ label: 'Quarter 4 (Q4)', value: 'Q4' },
+	{ label: m.feedback_quarter_1, value: 'Q1' },
+	{ label: m.feedback_quarter_2, value: 'Q2' },
+	{ label: m.feedback_quarter_3, value: 'Q3' },
+	{ label: m.feedback_quarter_4, value: 'Q4' },
 ] as const;
 
 const MONTH_OPTIONS = [
-	{ label: 'January (01)', value: '01' },
-	{ label: 'February (02)', value: '02' },
-	{ label: 'March (03)', value: '03' },
-	{ label: 'April (04)', value: '04' },
-	{ label: 'May (05)', value: '05' },
-	{ label: 'June (06)', value: '06' },
-	{ label: 'July (07)', value: '07' },
-	{ label: 'August (08)', value: '08' },
-	{ label: 'September (09)', value: '09' },
-	{ label: 'October (10)', value: '10' },
-	{ label: 'November (11)', value: '11' },
-	{ label: 'December (12)', value: '12' },
+	{ label: m.feedback_month_january, value: '01' },
+	{ label: m.feedback_month_february, value: '02' },
+	{ label: m.feedback_month_march, value: '03' },
+	{ label: m.feedback_month_april, value: '04' },
+	{ label: m.feedback_month_may, value: '05' },
+	{ label: m.feedback_month_june, value: '06' },
+	{ label: m.feedback_month_july, value: '07' },
+	{ label: m.feedback_month_august, value: '08' },
+	{ label: m.feedback_month_september, value: '09' },
+	{ label: m.feedback_month_october, value: '10' },
+	{ label: m.feedback_month_november, value: '11' },
+	{ label: m.feedback_month_december, value: '12' },
 ] as const;
 
 // How far the granularity nav slides its panel in; index order mirrors the nav (L→R).
 const GRANULARITY_ORDER: Array<TargetGranularity> = ['day', 'month', 'quarter', 'year'];
+
+function formatFeedbackTarget(
+	target: string | null | undefined,
+	granularity: TargetGranularity | null | undefined
+) {
+	if (!target || !granularity || !isValidTarget(target, granularity)) {
+		return m.feedback_unscheduled();
+	}
+	return formatTargetOrUnscheduled(target, granularity);
+}
 
 // Local edit state for the target drawer. Each field persists independently so switching
 // granularity never wipes the others (year carries everywhere; month/day carry between the
@@ -523,7 +534,7 @@ function FeedbackDetailContent({
 		label: (
 			<span className='inline-flex items-center gap-1.5'>
 				<StatusIcon colored size='14' status={status.value} />
-				{status.label}
+				{status.label()}
 			</span>
 		),
 		value: status.value,
@@ -532,7 +543,7 @@ function FeedbackDetailContent({
 		label: (
 			<span className='inline-flex items-center gap-1.5'>
 				<span className={`size-2 rounded-full ${priority.dotClass}`} />
-				{priority.label}
+				{priority.label()}
 			</span>
 		),
 		value: priority.value,
@@ -542,9 +553,9 @@ function FeedbackDetailContent({
 		value: board.id,
 	}));
 	const assigneeSelectItems = [
-		{ label: 'Unassigned', value: '' },
+		{ label: m.feedback_unassigned(), value: '' },
 		...assigneeOptions.map((member: { profile?: ProfileSummary | null; profileId: string }) => ({
-			label: member.profile?.name ?? member.profile?.username ?? 'Unknown',
+			label: member.profile?.name ?? member.profile?.username ?? m.feedback_unknown(),
 			value: member.profileId,
 		})),
 	];
@@ -706,7 +717,7 @@ function FeedbackDetailContent({
 				type='button'
 				variant='outline'
 			>
-				{isLoadingMiddleComments ? 'Loading comments...' : 'Show more comments'}
+				{isLoadingMiddleComments ? m.feedback_loading_comments() : m.feedback_show_more_comments()}
 			</Button>
 		</li>
 	) : null;
@@ -740,7 +751,7 @@ function FeedbackDetailContent({
 				variant='outline'
 			>
 				<Bell className='size-4' />
-				Follow
+				{m.feedback_follow()}
 			</Button>
 		</>
 	);
@@ -751,11 +762,11 @@ function FeedbackDetailContent({
 				icon={<Info className='size-3.5' />}
 				onOpenChange={(open) => setSidebarSection('details', open)}
 				open={sidebarState.details}
-				title='Details'
+				title={m.feedback_details()}
 			>
 				<div className='flex flex-col'>
 					<div className='flex items-center justify-between py-1.5'>
-						<span className='text-sm text-muted-foreground'>Status</span>
+						<span className='text-sm text-muted-foreground'>{m.feedback_status()}</span>
 						{canEditStatus ? (
 							<Select
 								items={statusSelectItems}
@@ -774,7 +785,7 @@ function FeedbackDetailContent({
 									{FEEDBACK_STATUS_OPTIONS.map((status) => (
 										<SelectItem key={status.value} value={status.value}>
 											<StatusIcon colored size='14' status={status.value} />
-											{status.label}
+											{status.label()}
 										</SelectItem>
 									))}
 								</SelectContent>
@@ -789,7 +800,7 @@ function FeedbackDetailContent({
 					</div>
 
 					<div className='flex items-center justify-between py-1.5'>
-						<span className='text-sm text-muted-foreground'>Board</span>
+						<span className='text-sm text-muted-foreground'>{m.feedback_board()}</span>
 						{canEditStatus ? (
 							<Select
 								items={boardSelectItems}
@@ -802,7 +813,7 @@ function FeedbackDetailContent({
 								value={feedback.boardId}
 							>
 								<SelectTrigger className='max-w-56 min-w-32'>
-									<SelectValue placeholder='No board' />
+									<SelectValue placeholder={m.feedback_no_board()} />
 								</SelectTrigger>
 								<SelectContent>
 									{boardOptions.map((board: { id: string; name: string }) => (
@@ -826,13 +837,13 @@ function FeedbackDetailContent({
 										size='14px'
 									/>
 								) : null}
-								{feedbackData.board?.name ?? 'No board'}
+								{feedbackData.board?.name ?? m.feedback_no_board()}
 							</span>
 						)}
 					</div>
 
 					<div className='flex items-center justify-between py-1.5'>
-						<span className='text-sm text-muted-foreground'>Priority</span>
+						<span className='text-sm text-muted-foreground'>{m.feedback_priority()}</span>
 						{canEditPriority ? (
 							<Select
 								items={prioritySelectItems}
@@ -851,7 +862,7 @@ function FeedbackDetailContent({
 									{FEEDBACK_PRIORITY_OPTIONS.map((priority) => (
 										<SelectItem key={priority.value} value={priority.value}>
 											<span className={`size-2 rounded-full ${priority.dotClass}`} />
-											{priority.label}
+											{priority.label()}
 										</SelectItem>
 									))}
 								</SelectContent>
@@ -870,13 +881,15 @@ function FeedbackDetailContent({
 										)?.dotClass ?? 'bg-muted-foreground/40'
 									}`}
 								/>
-								{feedback.priority ?? 'none'}
+								{FEEDBACK_PRIORITY_OPTIONS.find(
+									(option) => option.value === (feedback.priority ?? 'none')
+								)?.label() ?? feedback.priority}
 							</span>
 						)}
 					</div>
 
 					<div className='flex items-center justify-between py-1.5'>
-						<span className='text-sm text-muted-foreground'>Target</span>
+						<span className='text-sm text-muted-foreground'>{m.feedback_target()}</span>
 						{projectData.permissions.canManageContent ? (
 							<Button
 								className='max-w-52 justify-end'
@@ -887,7 +900,7 @@ function FeedbackDetailContent({
 							>
 								<CalendarIcon className='size-3.5' />
 								<span className='truncate'>
-									{formatTargetOrUnscheduled(
+									{formatFeedbackTarget(
 										feedback.target ?? null,
 										feedback.targetGranularity ?? null
 									)}
@@ -900,10 +913,7 @@ function FeedbackDetailContent({
 									!feedback.target && 'text-muted-foreground'
 								)}
 							>
-								{formatTargetOrUnscheduled(
-									feedback.target ?? null,
-									feedback.targetGranularity ?? null
-								)}
+								{formatFeedbackTarget(feedback.target ?? null, feedback.targetGranularity ?? null)}
 							</span>
 						)}
 					</div>
@@ -915,7 +925,7 @@ function FeedbackDetailContent({
 					icon={<GitBranch className='size-3.5' />}
 					onOpenChange={(open) => setSidebarSection('connections', open)}
 					open={sidebarState.connections}
-					title='Connections'
+					title={m.feedback_connections()}
 				>
 					<div className='flex flex-col'>
 						{visibleGithubConnections.length > 0 ? (
@@ -936,7 +946,7 @@ function FeedbackDetailContent({
 								</a>
 							))
 						) : (
-							<p className='py-2 text-sm text-muted-foreground'>No GitHub items connected.</p>
+							<p className='py-2 text-sm text-muted-foreground'>{m.feedback_no_github_items()}</p>
 						)}
 						{projectData.permissions.canManageContent ? (
 							<Button
@@ -958,11 +968,11 @@ function FeedbackDetailContent({
 				icon={<Users className='size-3.5' />}
 				onOpenChange={(open) => setSidebarSection('people', open)}
 				open={sidebarState.people}
-				title='People'
+				title={m.feedback_people()}
 			>
 				<div className='flex flex-col'>
 					<div className='flex items-center justify-between py-1.5'>
-						<span className='text-sm text-muted-foreground'>Assignee</span>
+						<span className='text-sm text-muted-foreground'>{m.feedback_assignee()}</span>
 						{canEditStatus ? (
 							<Select
 								items={assigneeSelectItems}
@@ -975,10 +985,10 @@ function FeedbackDetailContent({
 								value={feedback.assignedProfileId ?? ''}
 							>
 								<SelectTrigger className='max-w-48 min-w-32'>
-									<SelectValue placeholder='Unassigned' />
+									<SelectValue placeholder={m.feedback_unassigned()} />
 								</SelectTrigger>
 								<SelectContent>
-									<SelectItem value=''>Unassigned</SelectItem>
+									<SelectItem value=''>{m.feedback_unassigned()}</SelectItem>
 									{assigneeOptions.map(
 										(member: { profile?: ProfileSummary | null; profileId: string }) => (
 											<SelectItem key={member.profileId} value={member.profileId}>
@@ -990,16 +1000,16 @@ function FeedbackDetailContent({
 							</Select>
 						) : (
 							<span className={cn('text-sm', !assignedProfile && 'text-muted-foreground')}>
-								{assignedProfile?.name ?? assignedProfile?.username ?? 'Unassigned'}
+								{assignedProfile?.name ?? assignedProfile?.username ?? m.feedback_unassigned()}
 							</span>
 						)}
 					</div>
 					<div className='flex items-center justify-between py-1.5'>
-						<span className='text-sm text-muted-foreground'>Author</span>
+						<span className='text-sm text-muted-foreground'>{m.feedback_author()}</span>
 						<ProfileLinkOrUnknown profile={feedbackData.author} display='name' />
 					</div>
 					<div className='flex items-center justify-between py-1.5'>
-						<span className='text-sm text-muted-foreground'>Watchers</span>
+						<span className='text-sm text-muted-foreground'>{m.feedback_watchers()}</span>
 						<div className='flex items-center -space-x-1.5'>
 							<div className='size-5 rounded-full border-2 border-background bg-emerald-500' />
 							<div className='size-5 rounded-full border-2 border-background bg-blue-500' />
@@ -1014,7 +1024,7 @@ function FeedbackDetailContent({
 				icon={<Tag className='size-3.5' />}
 				onOpenChange={(open) => setSidebarSection('labels', open)}
 				open={sidebarState.labels}
-				title='Labels'
+				title={m.feedback_labels()}
 			>
 				<div className='flex flex-wrap items-center gap-1.5'>
 					<Badge className='gap-1 font-normal' variant='secondary'>
@@ -1035,7 +1045,7 @@ function FeedbackDetailContent({
 						variant='ghost'
 					>
 						<Plus className='size-3' />
-						Add
+						{m.common_add()}
 					</Button>
 				</div>
 			</SidebarSection>
@@ -1044,7 +1054,7 @@ function FeedbackDetailContent({
 				icon={<LinkIcon className='size-3.5' />}
 				onOpenChange={(open) => setSidebarSection('related', open)}
 				open={sidebarState.related}
-				title='Related'
+				title={m.feedback_related()}
 			>
 				<div className='flex flex-col'>
 					<div className='flex cursor-pointer items-center gap-2.5 rounded-md py-2 transition-colors hover:bg-muted/50'>
@@ -1066,7 +1076,7 @@ function FeedbackDetailContent({
 						to='/@{$org}/$project/feedback'
 					>
 						<Plus className='size-3' />
-						Link related feedback
+						{m.feedback_link_related()}
 					</Link>
 				</div>
 			</SidebarSection>
@@ -1087,7 +1097,7 @@ function FeedbackDetailContent({
 					variant='outline'
 				>
 					<CircleSlash className='size-4' />
-					Close
+					{m.common_close()}
 				</Button>
 				{projectData.permissions.canManageContent ? (
 					<Button
@@ -1097,7 +1107,7 @@ function FeedbackDetailContent({
 						variant='outline'
 					>
 						<Trash2 className='size-4' />
-						Delete
+						{m.common_delete()}
 					</Button>
 				) : null}
 			</>
@@ -1178,7 +1188,7 @@ function FeedbackDetailContent({
 								</TooltipTrigger>
 								{/* Left-aligned, nudged a few px in from the title's left edge. */}
 								<TooltipContent align='start' alignOffset={12}>
-									Click to edit
+									{m.feedback_click_to_edit()}
 								</TooltipContent>
 							</Tooltip>
 						) : (
@@ -1186,9 +1196,9 @@ function FeedbackDetailContent({
 						)}
 						<div className='text-sm text-muted-foreground'>
 							<span suppressHydrationWarning>
-								{feedback.status === 'open' ? 'Opened' : 'Updated'}{' '}
-								{formatTimestamp(toTimestamp(feedback.createdAt))} · {feedback.upvotes} upvote
-								{feedback.upvotes !== 1 ? 's' : ''}
+								{feedback.status === 'open' ? m.feedback_opened() : m.feedback_updated()}{' '}
+								{formatTimestamp(toTimestamp(feedback.createdAt))} · {feedback.upvotes}{' '}
+								{m.feedback_upvote_count({ count: feedback.upvotes })}
 							</span>
 							{canEditStatus ? (
 								<span className='md:hidden'>
@@ -1198,7 +1208,7 @@ function FeedbackDetailContent({
 										onClick={() => setEditTitleOpen(true)}
 										type='button'
 									>
-										Edit title
+										{m.feedback_edit_title()}
 									</button>
 								</span>
 							) : null}
@@ -1258,10 +1268,10 @@ function FeedbackDetailContent({
 									render={<Button className='ml-auto' size='lg' variant='outline' />}
 								>
 									<Info className='size-4' />
-									Details
+									{m.feedback_details()}
 								</ResponsiveSideDrawerTrigger>
 								<ResponsiveSideDrawerContent>
-									<ResponsiveSideDrawerHeader icon={<Info />} title='Details' />
+									<ResponsiveSideDrawerHeader icon={<Info />} title={m.feedback_details()} />
 									<ResponsiveSideDrawerBody className='flex flex-col gap-6'>
 										{sidebarSections}
 									</ResponsiveSideDrawerBody>
@@ -1275,7 +1285,7 @@ function FeedbackDetailContent({
 							<div className='flex w-full items-center border-b pb-2'>
 								<h2 className='flex items-center gap-1.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase'>
 									<MessageSquare className='size-3.5' />
-									Discussion
+									{m.feedback_discussion()}
 								</h2>
 							</div>
 							<CommentEditorProvider>
@@ -1291,9 +1301,9 @@ function FeedbackDetailContent({
 											<CommentCard
 												badges={
 													<>
-														<CommentBadge kind='author' label='Author' />
+														<CommentBadge kind='author' label={m.feedback_author()} />
 														{firstComment.isTeamMember ? (
-															<CommentBadge kind='team' label='Team' />
+															<CommentBadge kind='team' label={m.feedback_team()} />
 														) : null}
 													</>
 												}
@@ -1319,7 +1329,7 @@ function FeedbackDetailContent({
 														content,
 													})
 												}
-												verb='opened this feedback'
+												verb={m.feedback_opened_this_feedback()}
 											/>
 										) : null}
 										{!middleButtonAnchorId ? middleCommentsButton : null}
@@ -1330,13 +1340,13 @@ function FeedbackDetailContent({
 														badges={
 															<>
 																{item.data.author?.id === feedback.authorProfileId ? (
-																	<CommentBadge kind='author' label='Author' />
+																	<CommentBadge kind='author' label={m.feedback_author()} />
 																) : null}
 																{item.data.isTeamMember ? (
-																	<CommentBadge kind='team' label='Team' />
+																	<CommentBadge kind='team' label={m.feedback_team()} />
 																) : null}
 																{feedback.answerCommentId === item.data.id ? (
-																	<CommentBadge kind='answer' label='Answer' />
+																	<CommentBadge kind='answer' label={m.feedback_answer()} />
 																) : null}
 															</>
 														}
@@ -1362,8 +1372,8 @@ function FeedbackDetailContent({
 																>
 																	<Check size={14} />
 																	{feedback.answerCommentId === item.data.id
-																		? 'Unmark as answer'
-																		: 'Mark as answer'}
+																		? m.feedback_unmark_answer()
+																		: m.feedback_mark_answer()}
 																</DropdownMenuItem>
 															) : null
 														}
@@ -1412,9 +1422,9 @@ function FeedbackDetailContent({
 										isAuthenticated
 										isSubmitting={commentCreateMutation.isPending}
 										onSubmit={handleCreateComment}
-										placeholder='Leave a comment...'
+										placeholder={m.feedback_leave_comment()}
 										redirectTo={`/@${params.org}/${params.project}/feedback/${params.slug}`}
-										submitLabel='Comment'
+										submitLabel={m.feedback_comment()}
 									/>
 								) : auth.isLoading ? (
 									<CommentAuthPending />
@@ -1423,10 +1433,10 @@ function FeedbackDetailContent({
 										isAuthenticated={false}
 										isSubmitting={commentCreateMutation.isPending}
 										onSubmit={handleCreateComment}
-										placeholder='Leave a comment...'
+										placeholder={m.feedback_leave_comment()}
 										redirectTo={`/@${params.org}/${params.project}/feedback/${params.slug}`}
 										signedOut='rich'
-										submitLabel='Comment'
+										submitLabel={m.feedback_comment()}
 									/>
 								)}
 							</CommentEditorProvider>
@@ -1524,6 +1534,8 @@ function FeedbackTargetDrawer({
 	const monthNum = Number(fields.month);
 	const yearOptions = useMemo(() => buildYearOptions(seedYear), [seedYear]);
 	const dayOptions = useMemo(() => buildDayOptions(yearNum, monthNum), [yearNum, monthNum]);
+	const monthOptions = MONTH_OPTIONS.map((option) => ({ ...option, label: option.label() }));
+	const quarterOptions = QUARTER_OPTIONS.map((option) => ({ ...option, label: option.label() }));
 	// The stored day can exceed the current month's length (e.g. picking day 31, then a
 	// shorter month); clamp for display but keep `fields.day` so it restores on a longer month.
 	const dayValue = pad2(Math.min(Math.max(Number(fields.day) || 1, 1), dayOptions.length));
@@ -1546,7 +1558,7 @@ function FeedbackTargetDrawer({
 		event.preventDefault();
 		const nextTarget = targetTokenFromFields(granularity, fields);
 		if (!isValidTarget(nextTarget, granularity)) {
-			setError('Enter a valid target for the selected type.');
+			setError(m.feedback_target_invalid());
 			return;
 		}
 
@@ -1555,7 +1567,7 @@ function FeedbackTargetDrawer({
 			await onSave({ target: nextTarget, targetGranularity: granularity });
 			onOpenChange(false);
 		} catch (saveError) {
-			setError(extractErrorMessage(saveError, 'Failed to save target'));
+			setError(localizeError(saveError, m.feedback_target_save_failed()));
 		}
 	}
 
@@ -1565,14 +1577,14 @@ function FeedbackTargetDrawer({
 			await onSave(null);
 			onOpenChange(false);
 		} catch (clearError) {
-			setError(extractErrorMessage(clearError, 'Failed to clear target'));
+			setError(localizeError(clearError, m.feedback_target_clear_failed()));
 		}
 	}
 
 	const yearField = (
 		<div className='flex min-w-0 flex-col gap-1.5'>
 			<label className='text-xs font-medium text-muted-foreground' htmlFor='target-year'>
-				Year
+				{m.feedback_target_year()}
 			</label>
 			<Select
 				items={yearOptions}
@@ -1600,7 +1612,7 @@ function FeedbackTargetDrawer({
 				dialogClassName='max-h-[85vh] sm:max-w-md'
 				showCloseButton={false}
 			>
-				<ResponsiveDialogHeader icon={<CalendarIcon />} title='Edit target timeframe' />
+				<ResponsiveDialogHeader icon={<CalendarIcon />} title={m.feedback_edit_target()} />
 
 				<form className='flex min-h-0 flex-1 flex-col' onSubmit={handleSave}>
 					{/* Granularity nav — the primary control, doubling as range navigation.
@@ -1621,7 +1633,7 @@ function FeedbackTargetDrawer({
 										key={option.value}
 										value={option.value}
 									>
-										{option.label}
+										{option.label()}
 									</TabsTrigger>
 								))}
 							</TabsList>
@@ -1644,7 +1656,7 @@ function FeedbackTargetDrawer({
 											className='text-xs font-medium text-muted-foreground'
 											htmlFor='target-day'
 										>
-											Day
+											{m.feedback_target_day()}
 										</label>
 										<Select
 											items={dayOptions}
@@ -1668,10 +1680,10 @@ function FeedbackTargetDrawer({
 											className='text-xs font-medium text-muted-foreground'
 											htmlFor='target-day-month'
 										>
-											Month
+											{m.feedback_target_month()}
 										</label>
 										<Select
-											items={MONTH_OPTIONS}
+											items={monthOptions}
 											onValueChange={(value) => updateFields({ month: String(value) })}
 											value={fields.month}
 										>
@@ -1679,7 +1691,7 @@ function FeedbackTargetDrawer({
 												<SelectValue />
 											</SelectTrigger>
 											<SelectContent>
-												{MONTH_OPTIONS.map((option) => (
+												{monthOptions.map((option) => (
 													<SelectItem key={option.value} value={option.value}>
 														{option.label}
 													</SelectItem>
@@ -1698,10 +1710,10 @@ function FeedbackTargetDrawer({
 											className='text-xs font-medium text-muted-foreground'
 											htmlFor='target-month'
 										>
-											Month
+											{m.feedback_target_month()}
 										</label>
 										<Select
-											items={MONTH_OPTIONS}
+											items={monthOptions}
 											onValueChange={(value) => updateFields({ month: String(value) })}
 											value={fields.month}
 										>
@@ -1709,7 +1721,7 @@ function FeedbackTargetDrawer({
 												<SelectValue />
 											</SelectTrigger>
 											<SelectContent>
-												{MONTH_OPTIONS.map((option) => (
+												{monthOptions.map((option) => (
 													<SelectItem key={option.value} value={option.value}>
 														{option.label}
 													</SelectItem>
@@ -1728,10 +1740,10 @@ function FeedbackTargetDrawer({
 											className='text-xs font-medium text-muted-foreground'
 											htmlFor='target-quarter'
 										>
-											Quarter
+											{m.feedback_target_quarter()}
 										</label>
 										<Select
-											items={QUARTER_OPTIONS}
+											items={quarterOptions}
 											onValueChange={(value) => updateFields({ quarter: String(value) })}
 											value={fields.quarter}
 										>
@@ -1739,7 +1751,7 @@ function FeedbackTargetDrawer({
 												<SelectValue />
 											</SelectTrigger>
 											<SelectContent>
-												{QUARTER_OPTIONS.map((option) => (
+												{quarterOptions.map((option) => (
 													<SelectItem key={option.value} value={option.value}>
 														{option.label}
 													</SelectItem>
@@ -1769,7 +1781,7 @@ function FeedbackTargetDrawer({
 							type='button'
 							variant='ghost'
 						>
-							Clear
+							{m.common_clear()}
 						</Button>
 						<div className='flex flex-row gap-2'>
 							<Button
@@ -1779,10 +1791,10 @@ function FeedbackTargetDrawer({
 								type='button'
 								variant='outline'
 							>
-								Cancel
+								{m.common_cancel()}
 							</Button>
 							<Button disabled={isSaving} size='sm' type='submit'>
-								{isSaving ? 'Saving...' : 'Save target'}
+								{isSaving ? m.common_saving() : m.feedback_save_target()}
 							</Button>
 						</div>
 					</ResponsiveDialogFooter>
@@ -1836,7 +1848,7 @@ function EditTitleDialog({
 			await onSave(trimmedTitle);
 			onOpenChange(false);
 		} catch (error) {
-			setTitleError(extractErrorMessage(error, 'Failed to save title'));
+			setTitleError(localizeError(error, m.feedback_title_save_failed()));
 		}
 	}
 
@@ -1847,10 +1859,10 @@ function EditTitleDialog({
 				dialogClassName='max-h-[85vh] sm:max-w-md'
 				showCloseButton={false}
 			>
-				<ResponsiveDialogHeader icon={<EditIcon />} title='Edit title' />
+				<ResponsiveDialogHeader icon={<EditIcon />} title={m.feedback_edit_title()} />
 				<form className='flex min-h-0 flex-1 flex-col' onSubmit={handleSaveTitle}>
 					<ResponsiveDialogBody className='flex flex-col gap-4'>
-						<Field error={titleError} label='Title'>
+						<Field error={titleError} label={m.feedback_title()}>
 							<Textarea
 								autoFocus
 								className='min-h-16 resize-none'
@@ -1872,10 +1884,10 @@ function EditTitleDialog({
 							type='button'
 							variant='outline'
 						>
-							Cancel
+							{m.common_cancel()}
 						</Button>
 						<Button disabled={!canSaveTitle} size='sm' type='submit'>
-							{isSaving ? 'Saving...' : 'Save'}
+							{isSaving ? m.common_saving() : m.common_save()}
 						</Button>
 					</ResponsiveDialogFooter>
 				</form>
@@ -1916,7 +1928,7 @@ function DeleteFeedbackDialog({
 			// Resolves into a navigation away from this page on success.
 			await onDelete();
 		} catch (error) {
-			setDeleteError(extractErrorMessage(error, 'Failed to delete feedback'));
+			setDeleteError(localizeError(error, m.feedback_delete_failed()));
 		}
 	}
 
@@ -1927,14 +1939,11 @@ function DeleteFeedbackDialog({
 				dialogClassName='max-h-[85vh] sm:max-w-md'
 				showCloseButton={false}
 			>
-				<ResponsiveDialogHeader icon={<Trash2 />} title='Delete feedback' />
+				<ResponsiveDialogHeader icon={<Trash2 />} title={m.feedback_delete_title()} />
 				<div className='flex min-h-0 flex-1 flex-col'>
 					<ResponsiveDialogBody className='flex flex-col gap-4'>
-						<p className='text-sm text-muted-foreground'>
-							This permanently deletes the feedback along with all of its comments, events, upvotes,
-							reactions, and GitHub connections. This action cannot be undone.
-						</p>
-						<Field error={deleteError} label='Type DELETE to confirm'>
+						<p className='text-sm text-muted-foreground'>{m.feedback_delete_description()}</p>
+						<Field error={deleteError} label={m.feedback_delete_confirm()}>
 							<Input
 								onChange={(event) => {
 									setDeleteConfirm(event.target.value);
@@ -1952,7 +1961,7 @@ function DeleteFeedbackDialog({
 							type='button'
 							variant='outline'
 						>
-							Cancel
+							{m.common_cancel()}
 						</Button>
 						<Button
 							disabled={!canConfirmDelete}
@@ -1962,7 +1971,7 @@ function DeleteFeedbackDialog({
 							variant='destructive'
 						>
 							<Trash2 className='size-4' />
-							{isDeleting ? 'Deleting...' : 'Delete permanently'}
+							{isDeleting ? m.common_deleting() : m.feedback_delete_permanently()}
 						</Button>
 					</ResponsiveDialogFooter>
 				</div>
@@ -1999,7 +2008,7 @@ function CloseFeedbackDialog({
 			await onClose();
 			onOpenChange(false);
 		} catch (error) {
-			setCloseError(extractErrorMessage(error, 'Failed to close feedback'));
+			setCloseError(localizeError(error, m.feedback_close_failed()));
 		}
 	}
 
@@ -2010,13 +2019,10 @@ function CloseFeedbackDialog({
 				dialogClassName='max-h-[85vh] sm:max-w-md'
 				showCloseButton={false}
 			>
-				<ResponsiveDialogHeader icon={<CircleSlash />} title='Close feedback' />
+				<ResponsiveDialogHeader icon={<CircleSlash />} title={m.feedback_close_title()} />
 				<div className='flex min-h-0 flex-1 flex-col'>
 					<ResponsiveDialogBody className='flex flex-col gap-4'>
-						<p className='text-sm text-muted-foreground'>
-							Closing this feedback marks it as resolved and is permanent — only an admin can
-							re-open it.
-						</p>
+						<p className='text-sm text-muted-foreground'>{m.feedback_close_description()}</p>
 						{closeError ? <p className='text-sm text-destructive'>{closeError}</p> : null}
 					</ResponsiveDialogBody>
 					<ResponsiveDialogFooter>
@@ -2027,11 +2033,11 @@ function CloseFeedbackDialog({
 							type='button'
 							variant='outline'
 						>
-							Cancel
+							{m.common_cancel()}
 						</Button>
 						<Button disabled={isClosing} onClick={handleClose} size='sm' type='button'>
 							<CircleSlash className='size-4' />
-							{isClosing ? 'Closing...' : 'Close feedback'}
+							{isClosing ? m.common_closing() : m.feedback_close_title()}
 						</Button>
 					</ResponsiveDialogFooter>
 				</div>

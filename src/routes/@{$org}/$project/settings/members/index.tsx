@@ -10,15 +10,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useCRPC } from '@/lib/convex/crpc';
 import { crpcServer } from '@/lib/convex/crpc-server';
-import { extractErrorMessage } from '@/lib/errors';
+import { localizeError } from '@/lib/errors';
 import { titleMeta } from '@/lib/seo';
 import { emailSchema, FORM_LIMITS } from '@/lib/validation';
+import * as m from '@/paraglide/messages.js';
 
 import { ArchivedSettingsNotice } from '../-components/archived-notice';
 
 export const Route = createFileRoute('/@{$org}/$project/settings/members/')({
 	head: () => ({
-		meta: [titleMeta(['Members'])],
+		meta: [titleMeta([m.meta_members()])],
 	}),
 	loader: async ({ context, params }) => {
 		const details = await context.queryClient.ensureQueryData(
@@ -44,7 +45,7 @@ export const Route = createFileRoute('/@{$org}/$project/settings/members/')({
 
 function mutationErrorMessage(error: unknown) {
 	if (!error) return null;
-	return extractErrorMessage(error);
+	return localizeError(error);
 }
 
 function ProjectMembersRoute() {
@@ -89,8 +90,8 @@ function ProjectMembersRoute() {
 	if (!project || !projectId) {
 		return (
 			<EmptyState
-				title='Project unavailable'
-				description='This project either does not exist or your session cannot view it.'
+				title={m.project_members_unavailable()}
+				description={m.project_members_unavailable_description()}
 			/>
 		);
 	}
@@ -98,8 +99,8 @@ function ProjectMembersRoute() {
 	if (!canManageAccess) {
 		return (
 			<EmptyState
-				title='Member management unavailable'
-				description='Only organization owners and admins can manage project access.'
+				title={m.project_member_management_unavailable()}
+				description={m.project_member_management_unavailable_description()}
 			/>
 		);
 	}
@@ -117,22 +118,15 @@ function ProjectMembersRoute() {
 		<section className='max-w-3xl'>
 			{isArchived ? <ArchivedSettingsNotice className='mb-6' /> : null}
 			<header className='border-b pb-4'>
-				<h2 className='text-xl font-semibold'>Project members</h2>
-				<p className='mt-1 text-sm text-muted-foreground'>
-					Give specific people access to this project when it is private. They get normal access —
-					view, comment, and submit feedback — just like any user on a public project. Moderator
-					access is managed separately below.
-				</p>
+				<h2 className='text-xl font-semibold'>{m.project_members_title()}</h2>
+				<p className='mt-1 text-sm text-muted-foreground'>{m.project_members_description()}</p>
 			</header>
 
 			<div className='mt-8'>
-				<h3 className='text-sm font-bold text-muted-foreground'>Moderators</h3>
-				<p className='mt-1 text-sm text-muted-foreground'>
-					Assigned moderators can manage content and ordinary project settings, but not members,
-					integrations, archiving, or deletion.
-				</p>
+				<h3 className='text-sm font-bold text-muted-foreground'>{m.org_members_moderators()}</h3>
+				<p className='mt-1 text-sm text-muted-foreground'>{m.project_moderators_description()}</p>
 				{moderators.length === 0 ? (
-					<p className='mt-3 text-sm text-muted-foreground'>This organization has no moderators.</p>
+					<p className='mt-3 text-sm text-muted-foreground'>{m.project_members_no_moderators()}</p>
 				) : (
 					<div className='mt-3 flex flex-col divide-y rounded-xl border bg-card'>
 						{moderators.map((moderator) => (
@@ -166,7 +160,9 @@ function ProjectMembersRoute() {
 										})
 									}
 								>
-									{moderator.assigned ? 'Remove access' : 'Grant access'}
+									{moderator.assigned
+										? m.project_members_remove_access()
+										: m.project_members_grant_access()}
 								</Button>
 							</div>
 						))}
@@ -176,10 +172,7 @@ function ProjectMembersRoute() {
 
 			{!isPrivate ? (
 				<div className='mt-4'>
-					<InlineAlert variant='info'>
-						This project is public, so anyone can already participate — members aren’t required.
-						People you add here are saved and take effect if you switch the project to private.
-					</InlineAlert>
+					<InlineAlert variant='info'>{m.project_members_public_notice()}</InlineAlert>
 				</div>
 			) : null}
 
@@ -191,7 +184,7 @@ function ProjectMembersRoute() {
 					setFormError(null);
 					const parsed = emailSchema.safeParse(email);
 					if (!parsed.success) {
-						setFormError(parsed.error.issues[0]?.message ?? 'Invalid email');
+						setFormError(m.project_members_invalid_email());
 						return;
 					}
 					invite.mutate({ email: parsed.data, projectId }, { onSuccess: () => setEmail('') });
@@ -199,7 +192,7 @@ function ProjectMembersRoute() {
 			>
 				<div className='flex flex-1 flex-col gap-2'>
 					<label className='text-sm font-medium' htmlFor='member-email'>
-						Add a member by email
+						{m.project_members_add_by_email()}
 					</label>
 					<Input
 						autoCapitalize='none'
@@ -215,12 +208,10 @@ function ProjectMembersRoute() {
 					/>
 				</div>
 				<Button type='submit' disabled={invite.isPending || !email.trim()}>
-					{invite.isPending ? 'Adding...' : 'Add member'}
+					{invite.isPending ? m.project_members_adding() : m.project_members_add()}
 				</Button>
 			</form>
-			<p className='mt-2 text-xs text-muted-foreground'>
-				The person must already have a Kino account.
-			</p>
+			<p className='mt-2 text-xs text-muted-foreground'>{m.project_members_account_required()}</p>
 
 			{(formError ?? actionError) ? (
 				<div className='mt-4'>
@@ -231,10 +222,10 @@ function ProjectMembersRoute() {
 			{/* Members */}
 			<div className='mt-8'>
 				<h3 className='text-sm font-bold text-muted-foreground'>
-					{members.length} member{members.length === 1 ? '' : 's'}
+					{m.project_members_count({ count: members.length })}
 				</h3>
 				{members.length === 0 ? (
-					<p className='mt-3 text-sm text-muted-foreground'>No project members yet.</p>
+					<p className='mt-3 text-sm text-muted-foreground'>{m.project_members_empty()}</p>
 				) : (
 					<div className='mt-3 flex flex-col divide-y rounded-xl border bg-card'>
 						{members.map((member) => (
@@ -262,7 +253,9 @@ function ProjectMembersRoute() {
 									onClick={() => {
 										if (
 											window.confirm(
-												`Remove ${member.profile.name ?? member.profile.username} from this project?`
+												m.project_members_remove_confirm({
+													name: member.profile.name ?? member.profile.username,
+												})
 											)
 										) {
 											removeMember.mutate({ projectMemberId: member.id });
@@ -270,7 +263,7 @@ function ProjectMembersRoute() {
 									}}
 								>
 									<Trash2 className='size-4' />
-									<span className='sr-only'>Remove member</span>
+									<span className='sr-only'>{m.project_members_remove()}</span>
 								</Button>
 							</div>
 						))}

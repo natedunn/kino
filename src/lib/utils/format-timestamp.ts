@@ -1,3 +1,19 @@
+import { getLocale } from '@/paraglide/runtime.js';
+
+const relativeFormatters = new Map<string, Intl.RelativeTimeFormat>();
+const dateFormatters = new Map<string, Intl.DateTimeFormat>();
+
+function getDateFormatter(options: Intl.DateTimeFormatOptions): Intl.DateTimeFormat {
+	const locale = getLocale();
+	const key = `${locale}:${JSON.stringify(options)}`;
+	let formatter = dateFormatters.get(key);
+	if (!formatter) {
+		formatter = new Intl.DateTimeFormat(locale, options);
+		dateFormatters.set(key, formatter);
+	}
+	return formatter;
+}
+
 /**
  * Coerce a Date, ISO string, or epoch-ms number to epoch milliseconds.
  * Use this to normalize the various timestamp shapes coming back from the
@@ -10,40 +26,7 @@ export function toTimestamp(value: number | string | Date): number {
 }
 
 export function formatFullDate(timestamp: number): string {
-	const date = new Date(timestamp);
-	const day = date.getDate();
-	const year = date.getFullYear();
-
-	const months = [
-		'January',
-		'February',
-		'March',
-		'April',
-		'May',
-		'June',
-		'July',
-		'August',
-		'September',
-		'October',
-		'November',
-		'December',
-	];
-
-	const getOrdinalSuffix = (n: number): string => {
-		if (n >= 11 && n <= 13) return 'th';
-		switch (n % 10) {
-			case 1:
-				return 'st';
-			case 2:
-				return 'nd';
-			case 3:
-				return 'rd';
-			default:
-				return 'th';
-		}
-	};
-
-	return `${months[date.getMonth()]} ${day}${getOrdinalSuffix(day)}, ${year}`;
+	return getDateFormatter({ dateStyle: 'long' }).format(new Date(timestamp));
 }
 
 export function formatRelativeDay(timestamp: number): string {
@@ -57,33 +40,31 @@ export function formatRelativeDay(timestamp: number): string {
 	const diffDays = Math.floor((today.getTime() - dateDay.getTime()) / (1000 * 60 * 60 * 24));
 
 	if (diffDays === 0) {
-		return 'today';
+		return formatRelative(0, 'day');
 	} else if (diffDays === 1) {
-		return 'yesterday';
+		return formatRelative(-1, 'day');
 	} else if (diffDays < 7) {
-		return `${diffDays} days ago`;
+		return formatRelative(-diffDays, 'day');
 	} else if (diffDays < 14) {
-		return '1 week ago';
+		return formatRelative(-1, 'week');
 	} else if (diffDays < 30) {
 		const weeks = Math.floor(diffDays / 7);
-		return `${weeks} weeks ago`;
+		return formatRelative(-weeks, 'week');
 	} else if (diffDays < 60) {
-		return '1 month ago';
+		return formatRelative(-1, 'month');
 	} else if (diffDays < 365) {
 		const months = Math.floor(diffDays / 30);
-		return `${months} months ago`;
+		return formatRelative(-months, 'month');
 	} else {
 		const years = Math.floor(diffDays / 365);
-		return years === 1 ? '1 year ago' : `${years} years ago`;
+		return formatRelative(-years, 'year');
 	}
 }
 
 export function formatTimestamp(
 	timestamp: number,
 	opts: {
-		ordinal?: boolean;
 		alwaysIncludeYear?: boolean;
-		yearComma?: boolean;
 		relative?: boolean;
 	} = {}
 ): string {
@@ -93,9 +74,7 @@ export function formatTimestamp(
 	const DAYS = 24 * HOURS;
 
 	opts = {
-		ordinal: false,
 		alwaysIncludeYear: false,
-		yearComma: true,
 		relative: true,
 		...opts,
 	};
@@ -106,64 +85,31 @@ export function formatTimestamp(
 
 	if (opts.relative && diff < DAYS) {
 		if (diff < MINUTES) {
-			return 'just now';
+			return formatRelative(0, 'second');
 		} else if (diff < HOURS) {
 			const minutes = Math.floor(diff / MINUTES);
-			return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+			return formatRelative(-minutes, 'minute');
 		} else {
 			const hours = Math.floor(diff / HOURS);
-			return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+			return formatRelative(-hours, 'hour');
 		}
 	}
-	opts = { ordinal: false, alwaysIncludeYear: false, yearComma: true, ...opts };
-
 	const currentYear = now.getFullYear();
 	const dateYear = date.getFullYear();
+	const includeYear = opts.alwaysIncludeYear || dateYear !== currentYear;
+	return getDateFormatter({
+		day: 'numeric',
+		month: 'short',
+		...(includeYear ? { year: 'numeric' } : {}),
+	}).format(date);
+}
 
-	const months = [
-		'Jan',
-		'Feb',
-		'Mar',
-		'Apr',
-		'May',
-		'Jun',
-		'Jul',
-		'Aug',
-		'Sep',
-		'Oct',
-		'Nov',
-		'Dec',
-	];
-
-	const day = date.getDate();
-	const month = months[date.getMonth()];
-
-	// Add ordinal suffix
-	const getOrdinalSuffix = (n: number): string => {
-		if (n >= 11 && n <= 13) return 'th';
-		switch (n % 10) {
-			case 1:
-				return 'st';
-			case 2:
-				return 'nd';
-			case 3:
-				return 'rd';
-			default:
-				return 'th';
-		}
-	};
-
-	const ordinalDay = `${day}${opts.ordinal ? getOrdinalSuffix(day) : ''}`;
-
-	const yearComma = opts.yearComma ? ',' : ' ';
-
-	// Include year if different from current year
-
-	if (opts.alwaysIncludeYear) {
-		return `${month} ${ordinalDay}${yearComma} ${dateYear}`;
-	} else {
-		return dateYear !== currentYear
-			? `${month} ${ordinalDay}${yearComma} ${dateYear}`
-			: `${month} ${ordinalDay}`;
+function formatRelative(value: number, unit: Intl.RelativeTimeFormatUnit): string {
+	const locale = getLocale();
+	let formatter = relativeFormatters.get(locale);
+	if (!formatter) {
+		formatter = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
+		relativeFormatters.set(locale, formatter);
 	}
+	return formatter.format(value, unit);
 }

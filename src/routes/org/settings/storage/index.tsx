@@ -4,11 +4,12 @@ import { createFileRoute } from '@tanstack/react-router';
 import { formatBytes, ProjectStorageTable } from '@/components/storage-usage';
 import { useCRPC } from '@/lib/convex/crpc';
 import { titleMeta } from '@/lib/seo';
+import * as m from '@/paraglide/messages.js';
 
 import { useSettingsOrgSlug } from '../-components/use-settings-org';
 
 export const Route = createFileRoute('/org/settings/storage/')({
-	head: () => ({ meta: [titleMeta(['Organization Storage'])] }),
+	head: () => ({ meta: [titleMeta([m.meta_organization_storage()])] }),
 	component: OrganizationStorageSettings,
 });
 
@@ -28,19 +29,16 @@ function OrganizationStorageSettings() {
 	return (
 		<div className='space-y-6'>
 			<header className='border-b pb-4'>
-				<h2 className='text-xl font-semibold'>Storage</h2>
-				<p className='mt-1 text-sm text-muted-foreground'>
-					Usage across every project in this organization. Each project currently has the 100 MiB
-					free-tier floor.
-				</p>
+				<h2 className='text-xl font-semibold'>{m.settings_storage()}</h2>
+				<p className='mt-1 text-sm text-muted-foreground'>{m.org_storage_description()}</p>
 			</header>
 			<div className='grid gap-4 sm:grid-cols-3'>
-				<Metric label='Hosted bytes' value={formatBytes(data.totalUsedBytes)} />
-				<Metric label='Uploading' value={formatBytes(data.totalReservedBytes)} />
-				<Metric label='Files' value={String(data.totalFiles)} />
+				<Metric label={m.storage_hosted_bytes()} value={formatBytes(data.totalUsedBytes)} />
+				<Metric label={m.storage_uploading()} value={formatBytes(data.totalReservedBytes)} />
+				<Metric label={m.project_nav_files()} value={String(data.totalFiles)} />
 			</div>
 			<div>
-				<h3 className='mb-3 font-semibold'>Projects</h3>
+				<h3 className='mb-3 font-semibold'>{m.nav_your_projects()}</h3>
 				<ProjectStorageTable projects={data.projects} />
 			</div>
 		</div>

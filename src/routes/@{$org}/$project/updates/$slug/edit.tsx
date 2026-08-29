@@ -23,10 +23,12 @@ import { Separator } from '@/components/ui/separator';
 import { authClient } from '@/lib/convex/auth-client';
 import { useCRPC } from '@/lib/convex/crpc';
 import { crpcServer } from '@/lib/convex/crpc-server';
+import { localizeError } from '@/lib/errors';
 import { useSidebarState } from '@/lib/hooks/use-sidebar-state';
 import { projectTitle, titleFromSlug, titleMeta } from '@/lib/seo';
 import { cn } from '@/lib/utils';
 import { updateFormSchema, validationMessage } from '@/lib/validation';
+import * as m from '@/paraglide/messages.js';
 
 import { CoverImageUpload } from '../-components/cover-image-upload';
 import {
@@ -136,7 +138,7 @@ function EditUpdateRoute() {
 
 	const saveMutation = useMutation(
 		crpc.update.update.mutationOptions({
-			onError: (error) => setFormError(error.message),
+			onError: (error) => setFormError(localizeError(error, m.common_try_again())),
 			onSuccess: () => {
 				navigate({
 					params,
@@ -147,7 +149,7 @@ function EditUpdateRoute() {
 	);
 	const publishMutation = useMutation(
 		crpc.update.publish.mutationOptions({
-			onError: (error) => setFormError(error.message),
+			onError: (error) => setFormError(localizeError(error, m.common_try_again())),
 			onSuccess: () => {
 				navigate({
 					params,
@@ -158,12 +160,12 @@ function EditUpdateRoute() {
 	);
 	const unpublishMutation = useMutation(
 		crpc.update.unpublish.mutationOptions({
-			onError: (error) => setFormError(error.message),
+			onError: (error) => setFormError(localizeError(error, m.common_try_again())),
 		})
 	);
 	const deleteMutation = useMutation(
 		crpc.update.remove.mutationOptions({
-			onError: (error) => setFormError(error.message),
+			onError: (error) => setFormError(localizeError(error, m.common_try_again())),
 			onSuccess: () => {
 				navigate({
 					params: { org: params.org, project: params.project },
@@ -233,7 +235,7 @@ function EditUpdateRoute() {
 	});
 
 	if (!session.data?.user) {
-		return <InlineAlert variant='warning'>Sign in to edit updates.</InlineAlert>;
+		return <InlineAlert variant='warning'>{m.updates_sign_in_edit()}</InlineAlert>;
 	}
 
 	if ((projectQuery.isLoading || updateQuery.isLoading) && !update) {
@@ -246,7 +248,7 @@ function EditUpdateRoute() {
 		!update ||
 		!updateData.canEdit
 	) {
-		return <InlineAlert variant='warning'>Update editing unavailable.</InlineAlert>;
+		return <InlineAlert variant='warning'>{m.updates_edit_unavailable()}</InlineAlert>;
 	}
 
 	const project = projectQuery.data.project;
@@ -267,33 +269,33 @@ function EditUpdateRoute() {
 				<div className='container flex items-center justify-between gap-4 py-3'>
 					<div className='flex items-center gap-3'>
 						<Link
-							aria-label='Back to Update'
+							aria-label={m.updates_back_single()}
 							className='inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground'
 							params={params}
 							to='/@{$org}/$project/updates/$slug'
 						>
 							<ArrowLeft className='size-3.5' />
 							<span aria-hidden='true' className='hidden sm:inline'>
-								Back
+								{m.updates_back_single()}
 							</span>
 						</Link>
 						<Separator className='hidden h-4 sm:block' orientation='vertical' />
 						<span className='hidden text-sm font-medium text-muted-foreground sm:inline'>
-							Edit Update
+							{m.updates_edit()}
 						</span>
 						{isPublished ? (
 							<Badge
 								className='bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
 								variant='outline'
 							>
-								Published
+								{m.updates_status_published()}
 							</Badge>
 						) : (
 							<Badge
 								className='bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
 								variant='outline'
 							>
-								Draft
+								{m.updates_status_draft()}
 							</Badge>
 						)}
 					</div>
@@ -307,7 +309,7 @@ function EditUpdateRoute() {
 								type='button'
 								variant='ghost'
 							>
-								{unpublishMutation.isPending ? 'Unpublishing...' : 'Unpublish'}
+								{unpublishMutation.isPending ? m.updates_unpublishing() : m.updates_unpublish()}
 							</Button>
 						) : (
 							<Button
@@ -317,7 +319,7 @@ function EditUpdateRoute() {
 								type='button'
 								variant='outline'
 							>
-								{publishMutation.isPending ? 'Publishing...' : 'Publish'}
+								{publishMutation.isPending ? m.updates_publishing() : m.updates_publish()}
 							</Button>
 						)}
 						<form.Subscribe
@@ -343,7 +345,7 @@ function EditUpdateRoute() {
 										size='sm'
 										type='submit'
 									>
-										{saveMutation.isPending ? 'Saving...' : 'Save Changes'}
+										{saveMutation.isPending ? m.updates_saving() : m.updates_save_changes()}
 									</Button>
 								);
 							}}
@@ -354,7 +356,9 @@ function EditUpdateRoute() {
 
 			{formError ? (
 				<div className='container pt-4'>
-					<InlineAlert variant='danger'>Unable to update: {formError}</InlineAlert>
+					<InlineAlert variant='danger'>
+						{m.updates_update_failed({ error: formError })}
+					</InlineAlert>
 				</div>
 			) : null}
 
@@ -367,7 +371,7 @@ function EditUpdateRoute() {
 							icon={<Settings2 className='size-3.5' />}
 							onOpenChange={(open) => setSidebarSection('settings', open)}
 							open={sidebarState.settings}
-							title='Settings'
+							title={m.updates_settings()}
 						>
 							<form.Field name='category'>
 								{(field) => (
@@ -383,7 +387,7 @@ function EditUpdateRoute() {
 							icon={<Image className='size-3.5' />}
 							onOpenChange={(open) => setSidebarSection('coverImage', open)}
 							open={sidebarState.coverImage}
-							title='Cover Image'
+							title={m.updates_cover_image()}
 						>
 							<form.Field name='coverImageId'>
 								{(field) => (
@@ -401,7 +405,7 @@ function EditUpdateRoute() {
 							icon={<Tag className='size-3.5' />}
 							onOpenChange={(open) => setSidebarSection('tags', open)}
 							open={sidebarState.tags}
-							title='Tags'
+							title={m.updates_tags()}
 						>
 							<form.Field name='tags'>
 								{(field) => (
@@ -417,7 +421,7 @@ function EditUpdateRoute() {
 							icon={<LinkIcon className='size-3.5' />}
 							onOpenChange={(open) => setSidebarSection('relatedFeedback', open)}
 							open={sidebarState.relatedFeedback}
-							title='Related Feedback'
+							title={m.updates_related_feedback()}
 						>
 							<form.Field name='relatedFeedbackIds'>
 								{(field) => (
@@ -435,11 +439,7 @@ function EditUpdateRoute() {
 							className='w-full gap-2 text-muted-foreground hover:text-destructive'
 							disabled={deleteMutation.isPending}
 							onClick={() => {
-								if (
-									window.confirm(
-										'Are you sure you want to delete this update? This cannot be undone.'
-									)
-								) {
+								if (window.confirm(m.updates_delete_confirm())) {
 									deleteMutation.mutate({ id: update.id });
 								}
 							}}
@@ -448,7 +448,7 @@ function EditUpdateRoute() {
 							variant='ghost'
 						>
 							<Trash2 className='size-3.5' />
-							{deleteMutation.isPending ? 'Deleting...' : 'Delete Update'}
+							{deleteMutation.isPending ? m.updates_deleting() : m.updates_delete()}
 						</Button>
 					</div>
 				</div>
@@ -460,10 +460,10 @@ function EditUpdateRoute() {
 							<form.Field name='content'>
 								{(field) => (
 									<LazyMarkdownEditor
-										ariaLabel='Update content'
+										ariaLabel={m.updates_content()}
 										minHeight='200px'
 										onChange={(html) => field.handleChange(html)}
-										placeholder='Write your update content...'
+										placeholder={m.updates_content_placeholder()}
 										value={field.state.value}
 										variant='borderless'
 									/>

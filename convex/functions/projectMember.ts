@@ -2,6 +2,7 @@ import { eq } from 'kitcn/orm';
 import { CRPCError } from 'kitcn/server';
 import { z } from 'zod';
 
+import { appError } from '../lib/app-error';
 import { authMutation, authQuery } from '../lib/crpc';
 import {
 	asId,
@@ -148,7 +149,8 @@ export const inviteProjectMember = authMutation
 			where: { email: input.email },
 		});
 		if (!user) {
-			throw new CRPCError({
+			throw appError({
+				appCode: 'ACCOUNT_NOT_FOUND_FOR_EMAIL',
 				code: 'BAD_REQUEST',
 				message: 'No Kino account exists with that email',
 			});
@@ -157,7 +159,8 @@ export const inviteProjectMember = authMutation
 			where: { userId: user.id },
 		});
 		if (!profile) {
-			throw new CRPCError({
+			throw appError({
+				appCode: 'ACCOUNT_NOT_READY',
 				code: 'BAD_REQUEST',
 				message: 'That account is not set up yet',
 			});
@@ -172,7 +175,8 @@ export const inviteProjectMember = authMutation
 			limit: 1,
 		});
 		if (existing.length > 0) {
-			throw new CRPCError({
+			throw appError({
+				appCode: 'PROJECT_MEMBER_ALREADY_HAS_ACCESS',
 				code: 'CONFLICT',
 				message: 'That person already has access to this project',
 			});
@@ -201,7 +205,8 @@ export const removeProjectMember = authMutation
 		// Only direct project members can be removed here. Organization roles and
 		// moderator assignments are managed through their dedicated APIs.
 		if (membership.role !== undefined && membership.role !== null && membership.role !== 'member') {
-			throw new CRPCError({
+			throw appError({
+				appCode: 'PROJECT_MEMBER_ORG_MANAGED',
 				code: 'BAD_REQUEST',
 				message: 'That access is managed at the organization level',
 			});

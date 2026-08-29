@@ -1,6 +1,7 @@
 import { Link } from '@tanstack/react-router';
 
 import { cn } from '@/lib/utils';
+import * as m from '@/paraglide/messages.js';
 
 type ProfileLinkProps = {
 	profile: {
@@ -61,7 +62,7 @@ type ProfileLinkOrUnknownProps = Omit<ProfileLinkProps, 'profile'> & {
  */
 export function ProfileLinkOrUnknown({ profile, ...props }: ProfileLinkOrUnknownProps) {
 	if (!profile) {
-		return <span className='text-sm text-muted-foreground'>Unknown</span>;
+		return <span className='text-sm text-muted-foreground'>{m.common_unknown()}</span>;
 	}
 	return <ProfileLink profile={profile} {...props} />;
 }

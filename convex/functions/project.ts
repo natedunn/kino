@@ -3,6 +3,7 @@ import { eq } from 'kitcn/orm';
 import { CRPCError } from 'kitcn/server';
 import { z } from 'zod';
 
+import { appError } from '../lib/app-error';
 import { authMutation, authQuery, optionalAuthQuery, privateQuery } from '../lib/crpc';
 import {
 	asId,
@@ -57,14 +58,16 @@ export const create = authMutation
 			userId: ctx.userId,
 		});
 		if (!access.organization) {
-			throw new CRPCError({
+			throw appError({
+				appCode: 'ORGANIZATION_NOT_FOUND',
 				code: 'NOT_FOUND',
 				message: 'Organization not found',
 			});
 		}
 
 		if (!access.permissions.canCreate) {
-			throw new CRPCError({
+			throw appError({
+				appCode: 'PERMISSION_DENIED',
 				code: 'FORBIDDEN',
 				message: 'User does not have permission to create a project',
 			});
@@ -77,7 +80,8 @@ export const create = authMutation
 		const maxProjects =
 			access.profile.role === 'system:admin' ? LIMITS.ADMIN.MAX_PROJECTS : LIMITS.FREE.MAX_PROJECTS;
 		if (projects.length >= maxProjects) {
-			throw new CRPCError({
+			throw appError({
+				appCode: 'PROJECT_LIMIT_REACHED',
 				code: 'FORBIDDEN',
 				message: 'Project limit reached',
 			});
@@ -90,9 +94,11 @@ export const create = authMutation
 			)
 			.unique();
 		if (existing) {
-			throw new CRPCError({
+			throw appError({
+				appCode: 'PROJECT_SLUG_TAKEN',
 				code: 'CONFLICT',
 				message: `A project with the slug '${input.slug}' already exists for this organization.`,
+				values: { slug: input.slug },
 			});
 		}
 
@@ -140,7 +146,11 @@ export const update = authMutation
 			userId: ctx.userId,
 		});
 		if (!access.project) {
-			throw new CRPCError({ code: 'NOT_FOUND', message: 'Project not found' });
+			throw appError({
+				appCode: 'PROJECT_NOT_FOUND',
+				code: 'NOT_FOUND',
+				message: 'Project not found',
+			});
 		}
 
 		// Archiving/un-archiving is an organization-admin or system-admin action.
@@ -156,7 +166,8 @@ export const update = authMutation
 			// values apply as part of that same save) before further edits.
 			const liftingArchive = input.visibility !== undefined && input.visibility !== 'archived';
 			if (!isAdmin || !liftingArchive) {
-				throw new CRPCError({
+				throw appError({
+					appCode: 'PROJECT_ARCHIVED',
 					code: 'FORBIDDEN',
 					message:
 						'This project is archived and read-only. An admin must un-archive it (change its visibility) to make changes.',
@@ -164,14 +175,16 @@ export const update = authMutation
 			}
 		} else {
 			if (!access.permissions.canEditSettings) {
-				throw new CRPCError({
+				throw appError({
+					appCode: 'PERMISSION_DENIED',
 					code: 'FORBIDDEN',
 					message: 'User does not have permission',
 				});
 			}
 			// Entering the archived (frozen) state is restricted to admins.
 			if (input.visibility === 'archived' && !isAdmin) {
-				throw new CRPCError({
+				throw appError({
+					appCode: 'PROJECT_ARCHIVE_ADMIN_ONLY',
 					code: 'FORBIDDEN',
 					message: 'Only an admin can archive a project.',
 				});
@@ -186,9 +199,11 @@ export const update = authMutation
 				)
 				.unique();
 			if (existing && existing._id !== access.project._id) {
-				throw new CRPCError({
+				throw appError({
+					appCode: 'PROJECT_SLUG_TAKEN',
 					code: 'CONFLICT',
 					message: `A project with the slug '${input.slug}' already exists for this organization.`,
+					values: { slug: input.slug },
 				});
 			}
 		}

@@ -9,6 +9,7 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import * as m from '@/paraglide/messages.js';
 
 import { EMOTE_EMOJI } from './types';
 
@@ -30,7 +31,7 @@ export function EmotePicker({ disabled, onSelect, onUnauthenticated }: EmotePick
 				variant='outline'
 			>
 				<SmilePlus size={16} />
-				<span className='sr-only'>Add reaction</span>
+				<span className='sr-only'>{m.reaction_add()}</span>
 			</Button>
 		);
 	}
@@ -40,7 +41,7 @@ export function EmotePicker({ disabled, onSelect, onUnauthenticated }: EmotePick
 			<DropdownMenuTrigger asChild>
 				<Button className='gap-2 rounded-full' disabled={disabled} size='sm' variant='outline'>
 					<SmilePlus size={16} />
-					<span className='sr-only'>Add reaction</span>
+					<span className='sr-only'>{m.reaction_add()}</span>
 				</Button>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align='start' className='grid grid-cols-5 gap-1 p-2'>

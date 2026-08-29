@@ -12,6 +12,7 @@ import Missing from '@/icons/missing';
 import { useCRPC } from '@/lib/convex/crpc';
 import { crpcServer } from '@/lib/convex/crpc-server';
 import { projectTitle, titleMeta } from '@/lib/seo';
+import * as m from '@/paraglide/messages.js';
 
 import { BoardsNav } from './-components/boards-nav';
 import { FeedbackCard } from './-components/feedback-card';
@@ -128,7 +129,7 @@ export const Route = createFileRoute('/@{$org}/$project/feedback/')({
 	pendingComponent: () => <RoutePending variant='sidebar' />,
 	validateSearch: validateFeedbackSearch,
 	head: ({ params }) => ({
-		meta: [titleMeta(['Feedback', projectTitle(params.org, params.project)])],
+		meta: [titleMeta([m.project_nav_feedback(), projectTitle(params.org, params.project)])],
 	}),
 });
 
@@ -287,9 +288,9 @@ function FeedbackListRoute() {
 				key: firstFeedbackPageKey,
 				pages: state.key === firstFeedbackPageKey ? [...state.pages, nextPage] : [nextPage],
 			}));
-		} catch (error) {
+		} catch {
 			setLoadMoreErrorState({
-				error: error instanceof Error ? error : new Error('Failed to load more feedback'),
+				error: new Error(m.feedback_index_load_more_failed()),
 				key: firstFeedbackPageKey,
 			});
 		} finally {
@@ -309,20 +310,24 @@ function FeedbackListRoute() {
 									to='/@{$org}/$project/feedback/new'
 								>
 									<CirclePlusOutline size='16px' />
-									Add feedback
+									{m.feedback_index_add_feedback()}
 								</Link>
 							</Button>
 						</div>
 						<div className='mt-4'>
 							<div className='border-b pb-6 md:pr-6'>
-								<h2 className='mx-2 text-sm font-bold text-muted-foreground'>Boards</h2>
+								<h2 className='mx-2 text-sm font-bold text-muted-foreground'>
+									{m.feedback_index_boards()}
+								</h2>
 								<div className='mt-2'>
 									<BoardsNav boards={boards} />
 								</div>
 							</div>
 							{projectData.permissions.canManageContent ? (
 								<div className='mt-6 pb-6 md:pr-6'>
-									<h2 className='mx-2 text-sm font-bold text-muted-foreground'>Options</h2>
+									<h2 className='mx-2 text-sm font-bold text-muted-foreground'>
+										{m.feedback_index_options()}
+									</h2>
 									<div className='mt-2'>
 										<FeedbackOptions />
 									</div>
@@ -339,12 +344,14 @@ function FeedbackListRoute() {
 					>
 						{isInitialFeedbackLoading ? (
 							<>
-								<span className='sr-only'>Loading feedback...</span>
+								<span className='sr-only'>{m.feedback_index_loading()}</span>
 								<FeedbackListSkeleton />
 							</>
 						) : null}
 						{!isInitialFeedbackLoading && feedback.length === 0 ? (
-							<Notice icon={<Missing aria-hidden='true' size='32px' />}>No feedback found.</Notice>
+							<Notice icon={<Missing aria-hidden='true' size='32px' />}>
+								{m.feedback_index_empty()}
+							</Notice>
 						) : null}
 						{feedback.length > 0 ? (
 							<ul className='flex flex-col gap-4'>
@@ -383,7 +390,7 @@ function FeedbackListRoute() {
 								onClick={() => void loadMoreFeedback()}
 								variant='outline'
 							>
-								{loadingMoreFeedback ? 'Loading feedback...' : 'Load more feedback'}
+								{loadingMoreFeedback ? m.feedback_index_loading() : m.feedback_index_load_more()}
 							</Button>
 						</div>
 					) : null}

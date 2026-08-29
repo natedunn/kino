@@ -2,7 +2,7 @@ import type { QueryClient } from '@tanstack/react-query';
 import type { ConvexQueryClient } from 'kitcn/react';
 import type { ReactNode } from 'react';
 
-import { lazy, Suspense, useRef } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import {
 	createRootRouteWithContext,
 	HeadContent,
@@ -20,6 +20,9 @@ import { getAppInstallMetadata, getFaviconHref, inferAppEnvironment } from '@/li
 import { isClientAuthed } from '@/lib/auth/auth-snapshot';
 import { getServerAuthToken } from '@/lib/convex/auth-start-token';
 import { crpcServer } from '@/lib/convex/crpc-server';
+import { LOCALE_COOKIE_NAME } from '@/lib/i18n/locale';
+import * as m from '@/paraglide/messages.js';
+import { getLocale } from '@/paraglide/runtime.js';
 
 import appCss from '../styles.css?url';
 
@@ -166,17 +169,22 @@ export const Route = createRootRouteWithContext<{
 	},
 	component: RootComponent,
 	errorComponent: DefaultCatchBoundary,
-	notFoundComponent: () => <div>Not found</div>,
+	notFoundComponent: () => <div>{m.common_not_found()}</div>,
 	shellComponent: RootDocument,
 });
 
 function RootDocument({ children }: { children: ReactNode }) {
+	const locale = getLocale();
+
 	return (
-		<html lang='en' suppressHydrationWarning>
+		<html lang={locale} suppressHydrationWarning>
 			<head>
 				<HeadContent />
 			</head>
 			<body>
+				<ScriptOnce>
+					{`document.cookie=${JSON.stringify(`${LOCALE_COOKIE_NAME}=${locale}; Path=/; Max-Age=34560000; SameSite=Lax`)}`}
+				</ScriptOnce>
 				<ScriptOnce>
 					{`document.documentElement.classList.toggle('dark', localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches))`}
 				</ScriptOnce>
@@ -185,14 +193,24 @@ function RootDocument({ children }: { children: ReactNode }) {
 				<Suspense fallback={null}>
 					<Toaster closeButton richColors />
 				</Suspense>
-				{Devtools ? (
-					<Suspense fallback={null}>
-						<Devtools />
-					</Suspense>
-				) : null}
+				<ClientDevtools />
 				<Scripts />
 			</body>
 		</html>
+	);
+}
+
+function ClientDevtools() {
+	const [mounted, setMounted] = useState(false);
+
+	useEffect(() => setMounted(true), []);
+
+	if (!mounted || !Devtools) return null;
+
+	return (
+		<Suspense fallback={null}>
+			<Devtools />
+		</Suspense>
 	);
 }
 

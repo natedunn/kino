@@ -2,6 +2,7 @@ import { useSuspenseQuery } from '@tanstack/react-query';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { Plus } from 'lucide-react';
 
+import { SiteFooter } from '@/components/site-footer';
 import { MainNav } from '@/components/site-nav/main-nav';
 import { Button } from '@/components/ui/button';
 import { requireAuth } from '@/lib/auth/require-auth';
@@ -99,14 +100,7 @@ function AuthenticatedDashboard() {
 				</div>
 			</main>
 
-			<footer className='mt-auto border-t border-border py-4 text-sm text-muted-foreground'>
-				<div className='container flex items-center justify-between gap-4'>
-					<p>&copy; {new Date().getFullYear()} Kino</p>
-					<Link to='/docs/notices' className='transition-colors hocus:text-foreground'>
-						Notices
-					</Link>
-				</div>
-			</footer>
+			<SiteFooter />
 		</div>
 	);
 }

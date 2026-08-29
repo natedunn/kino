@@ -20,6 +20,7 @@ import {
 	USERNAME_MIN_LENGTH,
 	validationMessage,
 } from '@/lib/validation';
+import * as m from '@/paraglide/messages.js';
 
 type ProfileSettingsFormValues = {
 	avatarFile: File | null;
@@ -29,7 +30,7 @@ type ProfileSettingsFormValues = {
 
 export const Route = createFileRoute('/account/profile/')({
 	head: () => ({
-		meta: [titleMeta(['Profile', 'Account'])],
+		meta: [titleMeta([m.account_profile(), m.account_title()])],
 	}),
 	loader: async ({ context }) => {
 		if (!context.loaderToken) {
@@ -119,7 +120,7 @@ function AuthenticatedProfileSettingsRoute() {
 					});
 
 					if (!response.ok) {
-						throw new Error('Avatar upload failed');
+						throw new Error(m.profile_avatar_upload_failed());
 					}
 
 					await syncMetadataMutation.mutateAsync({ key });
@@ -145,7 +146,7 @@ function AuthenticatedProfileSettingsRoute() {
 					username: updatedProfile.username ?? value.username,
 				});
 			} catch (error) {
-				setFormError(error instanceof Error ? error.message : 'Unable to update profile');
+				setFormError(error instanceof Error ? error.message : m.profile_update_failed());
 			}
 		},
 	});
@@ -160,10 +161,8 @@ function AuthenticatedProfileSettingsRoute() {
 	return (
 		<section className='max-w-3xl'>
 			<header className='border-b pb-4'>
-				<h2 className='text-xl font-semibold'>Profile</h2>
-				<p className='mt-1 text-sm text-muted-foreground'>
-					Manage how you appear across Kino and the URL for your public profile.
-				</p>
+				<h2 className='text-xl font-semibold'>{m.account_profile()}</h2>
+				<p className='mt-1 text-sm text-muted-foreground'>{m.profile_description()}</p>
 			</header>
 
 			<form
@@ -182,10 +181,8 @@ function AuthenticatedProfileSettingsRoute() {
 							{(field) => (
 								<div className='flex flex-col gap-2'>
 									<LabelWrapper>
-										<Label>Avatar</Label>
-										<LabelDescription>
-											Shown anywhere you appear in Kino. JPEG, PNG, or WebP, up to 5 MB.
-										</LabelDescription>
+										<Label>{m.profile_avatar()}</Label>
+										<LabelDescription>{m.profile_avatar_description()}</LabelDescription>
 									</LabelWrapper>
 									<div className='flex items-center gap-4'>
 										<AvatarPreview
@@ -226,13 +223,13 @@ function AuthenticatedProfileSettingsRoute() {
 							{(field) => (
 								<div className='flex flex-col gap-2'>
 									<LabelWrapper>
-										<Label>Username</Label>
+										<Label>{m.profile_username()}</Label>
 										<LabelDescription>
-											Changes your public profile URL at{' '}
+											{m.profile_username_description_prefix()}{' '}
 											<span className='font-medium text-foreground'>
 												/u/{field.state.value || 'username'}
 											</span>
-											. Your workspace URL stays separate.
+											. {m.profile_username_description_suffix()}
 										</LabelDescription>
 									</LabelWrapper>
 									<Input
@@ -251,7 +248,7 @@ function AuthenticatedProfileSettingsRoute() {
 									{field.state.value.length > 0 &&
 									field.state.value.length < USERNAME_MIN_LENGTH ? (
 										<p className='text-xs text-muted-foreground'>
-											Usernames must be at least {USERNAME_MIN_LENGTH} characters.
+											{m.profile_username_min({ count: USERNAME_MIN_LENGTH })}
 										</p>
 									) : null}
 								</div>
@@ -262,8 +259,8 @@ function AuthenticatedProfileSettingsRoute() {
 							{(field) => (
 								<div className='flex flex-col gap-2'>
 									<LabelWrapper>
-										<Label>Name</Label>
-										<LabelDescription>Your display name across Kino.</LabelDescription>
+										<Label>{m.auth_name()}</Label>
+										<LabelDescription>{m.profile_name_description()}</LabelDescription>
 									</LabelWrapper>
 									<Input
 										maxLength={FORM_LIMITS.orgName}
@@ -276,8 +273,8 @@ function AuthenticatedProfileSettingsRoute() {
 
 						<div className='flex flex-col gap-2'>
 							<LabelWrapper>
-								<Label>Email</Label>
-								<LabelDescription>Manage your email from the Security section.</LabelDescription>
+								<Label>{m.common_email()}</Label>
+								<LabelDescription>{m.profile_email_description()}</LabelDescription>
 							</LabelWrapper>
 							<Input disabled value={profile.email ?? ''} />
 						</div>
@@ -296,7 +293,7 @@ function AuthenticatedProfileSettingsRoute() {
 										disabled={disabled}
 										type='submit'
 									>
-										{disabled ? 'Saving...' : 'Save changes'}
+										{disabled ? m.common_saving() : m.profile_save_changes()}
 									</Button>
 								);
 							}}

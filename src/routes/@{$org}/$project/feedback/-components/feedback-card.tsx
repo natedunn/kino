@@ -1,6 +1,7 @@
 import { ClickableContainer } from '@/components/clickable-container';
 import { StatusIcon } from '@/icons';
 import { stripHtml, truncateToNearestSpace } from '@/lib/utils/truncate';
+import * as m from '@/paraglide/messages.js';
 
 import { UpvoteButton } from './upvote-button';
 
@@ -71,7 +72,7 @@ export function FeedbackCard({
 						</div>
 						{board ? (
 							<div className='mt-8 text-sm text-muted-foreground'>
-								Filed in <span className='underline'>{board.name}</span>
+								{m.feedback_index_filed_in()} <span className='underline'>{board.name}</span>
 							</div>
 						) : null}
 					</div>

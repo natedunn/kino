@@ -25,6 +25,7 @@ import {
 import { trackAuthError, trackAuthSuccess } from '@/lib/auth-analytics';
 import { useSignOutMutationOptions } from '@/lib/auth/auth-client';
 import { beginSignOut, endSignOut } from '@/lib/auth/sign-out-state';
+import { m } from '@/paraglide/messages.js';
 
 import { NavButton } from './nav-button';
 
@@ -63,13 +64,13 @@ export function UserDropdown({
 						});
 					}}
 				>
-					Your profile
+					{m.nav_your_profile()}
 				</UserDropdownItem>
 				<UserDropdownItem disabled icon={Building2}>
-					Your organizations
+					{m.nav_your_organizations()}
 				</UserDropdownItem>
 				<UserDropdownItem disabled icon={FolderKanban}>
-					Your projects
+					{m.nav_your_projects()}
 				</UserDropdownItem>
 				<DropdownMenuSeparator />
 				{!!orgSlug && (
@@ -82,7 +83,7 @@ export function UserDropdown({
 							});
 						}}
 					>
-						Org settings
+						{m.nav_org_settings()}
 					</UserDropdownItem>
 				)}
 				<UserDropdownItem
@@ -93,11 +94,11 @@ export function UserDropdown({
 						});
 					}}
 				>
-					Account
+					{m.account_title()}
 				</UserDropdownItem>
 				<DropdownMenuSeparator />
 				<UserDropdownItem icon={Keyboard} onClick={() => shortcuts.open()}>
-					Keyboard shortcuts
+					{m.nav_keyboard_shortcuts()}
 				</UserDropdownItem>
 				<DropdownMenuSeparator />
 				<UserDropdownItem
@@ -128,7 +129,7 @@ export function UserDropdown({
 						});
 					}}
 				>
-					{signOut.isPending ? 'Signing out...' : 'Sign out'}
+					{signOut.isPending ? m.nav_signing_out() : m.nav_sign_out()}
 				</UserDropdownItem>
 			</DropdownMenuContent>
 		</DropdownMenu>

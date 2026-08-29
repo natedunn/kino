@@ -31,6 +31,7 @@ import { projectTitle, titleFromSlug, titleMeta } from '@/lib/seo';
 import { cn } from '@/lib/utils';
 import { formatFullDate, formatRelativeDay } from '@/lib/utils/format-timestamp';
 import { getInitial } from '@/lib/utils/get-initial';
+import * as m from '@/paraglide/messages.js';
 
 import { CategoryBadge } from '../-components/category-badge';
 import { useEmoteToggle } from '../-components/use-emote-toggle';
@@ -326,7 +327,7 @@ function UpdateDetailRoute() {
 						<div className='flex items-center gap-2'>
 							{update.status === 'draft' ? (
 								<Badge className='text-yellow-600 dark:text-yellow-400' variant='outline'>
-									Draft
+									{m.updates_status_draft()}
 								</Badge>
 							) : null}
 							{update.category ? <CategoryBadge category={update.category} /> : null}
@@ -393,7 +394,9 @@ function UpdateDetailRoute() {
 								)}
 							/>
 							<span className='font-medium'>
-								{likeCount} {likeCount === 1 ? 'like' : 'likes'}
+								{likeCount === 1
+									? m.updates_like_count({ count: likeCount })
+									: m.updates_like_count_plural({ count: likeCount })}
 							</span>
 						</Button>
 						<Tooltip>
@@ -402,7 +405,7 @@ function UpdateDetailRoute() {
 									{copied ? <Check className='size-4' /> : <Link2 className='size-4' />}
 								</Button>
 							</TooltipTrigger>
-							<TooltipContent>{copied ? 'Copied!' : 'Copy link'}</TooltipContent>
+							<TooltipContent>{copied ? m.updates_copied() : m.updates_copy_link()}</TooltipContent>
 						</Tooltip>
 						<Tooltip>
 							<TooltipTrigger asChild>
@@ -412,7 +415,7 @@ function UpdateDetailRoute() {
 									</svg>
 								</Button>
 							</TooltipTrigger>
-							<TooltipContent>Share on X</TooltipContent>
+							<TooltipContent>{m.updates_share_x()}</TooltipContent>
 						</Tooltip>
 						<Tooltip>
 							<TooltipTrigger asChild>
@@ -422,7 +425,7 @@ function UpdateDetailRoute() {
 									</a>
 								</Button>
 							</TooltipTrigger>
-							<TooltipContent>RSS Feed</TooltipContent>
+							<TooltipContent>{m.updates_rss()}</TooltipContent>
 						</Tooltip>
 					</div>
 				</div>
@@ -435,14 +438,18 @@ function UpdateDetailRoute() {
 								icon={<Info className='size-3.5' />}
 								onOpenChange={(open) => setSidebarSection('details', open)}
 								open={sidebarState.details}
-								title='Details'
+								title={m.updates_details()}
 							>
 								<div className='flex flex-col'>
 									<div className='flex items-center justify-between py-1.5'>
-										<span className='text-sm text-muted-foreground'>Published</span>
+										<span className='text-sm text-muted-foreground'>
+											{m.updates_status_published()}
+										</span>
 										<span className='text-sm'>
 											{update.status === 'draft' ? (
-												<span className='text-yellow-600 dark:text-yellow-400'>Draft</span>
+												<span className='text-yellow-600 dark:text-yellow-400'>
+													{m.updates_status_draft()}
+												</span>
 											) : update.publishedAt ? (
 												<Tooltip>
 													<TooltipTrigger asChild>
@@ -457,16 +464,16 @@ function UpdateDetailRoute() {
 													</TooltipContent>
 												</Tooltip>
 											) : (
-												'Not published'
+												m.updates_status_not_published()
 											)}
 										</span>
 									</div>
 									<div className='flex items-center justify-between py-1.5'>
-										<span className='text-sm text-muted-foreground'>Author</span>
+										<span className='text-sm text-muted-foreground'>{m.updates_author()}</span>
 										<ProfileLinkOrUnknown profile={updateData.author} showAt />
 									</div>
 									<div className='flex items-center justify-between py-1.5'>
-										<span className='text-sm text-muted-foreground'>Category</span>
+										<span className='text-sm text-muted-foreground'>{m.updates_category()}</span>
 										<CategoryBadge category={update.category} />
 									</div>
 								</div>
@@ -477,7 +484,7 @@ function UpdateDetailRoute() {
 									icon={<LinkIcon className='size-3.5' />}
 									onOpenChange={(open) => setSidebarSection('related', open)}
 									open={sidebarState.related}
-									title='Related Feedback'
+									title={m.updates_related_feedback()}
 								>
 									<div className='flex flex-col'>
 										{relatedFeedback.map((item) => (
@@ -503,7 +510,7 @@ function UpdateDetailRoute() {
 								<Button asChild variant='outline'>
 									<Link params={params} to='/@{$org}/$project/updates/$slug/edit'>
 										<Edit className='h-4 w-4' />
-										Edit Update
+										{m.updates_edit()}
 									</Link>
 								</Button>
 							) : null}
@@ -568,7 +575,9 @@ function UpdateDetailRoute() {
 											type='button'
 											variant='outline'
 										>
-											{isLoadingMiddleComments ? 'Loading comments...' : 'Show more comments'}
+											{isLoadingMiddleComments
+												? m.updates_loading_comments()
+												: m.updates_show_more_comments()}
 										</Button>
 									</div>
 								) : null}

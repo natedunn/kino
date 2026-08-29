@@ -14,8 +14,15 @@ import {
 	CommandShortcut,
 } from '@/components/ui/command';
 import { useCRPC } from '@/lib/convex/crpc';
+import * as m from '@/paraglide/messages.js';
 
 const GROUP_ORDER: Array<CommandGroupName> = ['Files', 'Feedback', 'Global', 'Navigation'];
+const GROUP_LABELS: Record<CommandGroupName, () => string> = {
+	Feedback: m.shortcuts_group_feedback,
+	Files: m.shortcuts_group_files,
+	Global: m.shortcuts_group_global,
+	Navigation: m.shortcuts_group_navigation,
+};
 
 type RankedCommandGroup = {
 	commands: Array<AppCommand>;
@@ -161,8 +168,7 @@ export function CommandPalette({
 				}))
 				.sort((a, b) => {
 					const scoreDifference =
-						scoreCommand(b.commands[0], trimmedQuery) -
-						scoreCommand(a.commands[0], trimmedQuery);
+						scoreCommand(b.commands[0], trimmedQuery) - scoreCommand(a.commands[0], trimmedQuery);
 					if (scoreDifference !== 0) return scoreDifference;
 					return GROUP_ORDER.indexOf(a.group) - GROUP_ORDER.indexOf(b.group);
 				});
@@ -202,13 +208,13 @@ export function CommandPalette({
 	return (
 		<CommandDialog
 			commandValue={mode === 'commands' ? selectedCommandId : undefined}
-			description={mode === 'files' ? 'Search all files in this project' : undefined}
+			description={mode === 'files' ? m.command_search_project_files_description() : undefined}
 			initialFocus={inputRef}
 			onCommandValueChange={mode === 'commands' ? setSelectedCommandId : undefined}
 			onOpenChange={handleOpenChange}
 			open={open}
 			shouldFilter={false}
-			title={mode === 'files' ? 'Search files' : undefined}
+			title={mode === 'files' ? m.command_search_files() : undefined}
 		>
 			<CommandInput
 				ref={inputRef}
@@ -220,7 +226,7 @@ export function CommandPalette({
 				}}
 				onValueChange={setQuery}
 				placeholder={
-					mode === 'files' ? 'Search all files in this project...' : 'Type a command or search...'
+					mode === 'files' ? m.command_search_project_files() : m.command_search_placeholder()
 				}
 				value={query}
 			/>
@@ -234,10 +240,12 @@ export function CommandPalette({
 				/>
 			) : (
 				<CommandList className='px-1.5 sm:scroll-pb-12 sm:px-2 sm:pb-12'>
-					{rankedCommandGroups.length === 0 ? <CommandEmpty>No results found.</CommandEmpty> : null}
+					{rankedCommandGroups.length === 0 ? (
+						<CommandEmpty>{m.command_no_results()}</CommandEmpty>
+					) : null}
 					{rankedCommandGroups.map(({ commands: groupCommands, group }) => {
 						return (
-							<CommandGroup key={group} heading={group}>
+							<CommandGroup key={group} heading={GROUP_LABELS[group]()}>
 								{groupCommands.map((command) => {
 									const Icon = command.icon;
 
@@ -281,20 +289,22 @@ function FileSearchResults({
 	return (
 		<CommandList className='px-1.5 sm:scroll-pb-12 sm:px-2 sm:pb-12'>
 			<CommandGroup>
-				<CommandItem forceMount onSelect={onBack} value='Back to commands'>
+				<CommandItem forceMount onSelect={onBack} value={m.command_back()}>
 					<ArrowLeft />
-					<span>Back to commands</span>
+					<span>{m.command_back()}</span>
 					<CommandShortcut>Esc</CommandShortcut>
 				</CommandItem>
 			</CommandGroup>
 			{loading ? (
-				<p className='px-4 py-12 text-center text-base text-muted-foreground'>Searching files...</p>
+				<p className='px-4 py-12 text-center text-base text-muted-foreground'>
+					{m.command_searching_files()}
+				</p>
 			) : files.length === 0 ? (
 				<p className='px-4 py-12 text-center text-base text-muted-foreground'>
-					{query.trim() ? 'No matching files.' : 'No files in this project.'}
+					{query.trim() ? m.command_no_matching_files() : m.command_no_project_files()}
 				</p>
 			) : (
-				<CommandGroup heading={query.trim() ? 'Files' : 'Recently edited files'}>
+				<CommandGroup heading={query.trim() ? m.shortcuts_group_files() : m.command_recent_files()}>
 					{files.map((file) => {
 						const Icon = fileIcon(file.category);
 						return (
@@ -314,19 +324,19 @@ function CommandPaletteFooter({ mode }: { mode: CommandPaletteMode }) {
 	return (
 		<div className='absolute inset-x-0 bottom-0 z-10 hidden items-center gap-4 border-t border-white/10 bg-gradient-to-b from-background/65 to-background/90 px-4 py-2.5 text-xs text-muted-foreground shadow-[0_-10px_22px_-18px_rgba(0,0,0,0.2)] backdrop-blur-lg sm:flex dark:shadow-[0_-12px_28px_-18px_rgba(0,0,0,0.65)]'>
 			<span className='font-medium text-foreground/75'>
-				{mode === 'files' ? 'Project files' : 'Command palette'}
+				{mode === 'files' ? m.command_project_files() : m.command_palette()}
 			</span>
 			<span className='ml-auto flex items-center gap-1.5'>
 				<kbd className='rounded border bg-background/80 px-1.5 py-0.5 font-sans'>↑↓</kbd>
-				Navigate
+				{m.command_navigate()}
 			</span>
 			<span className='flex items-center gap-1.5'>
 				<kbd className='rounded border bg-background/80 px-1.5 py-0.5 font-sans'>↵</kbd>
-				Open
+				{m.command_open()}
 			</span>
 			<span className='flex items-center gap-1.5'>
 				<kbd className='rounded border bg-background/80 px-1.5 py-0.5 font-sans'>esc</kbd>
-				{mode === 'files' ? 'Commands' : 'Close'}
+				{mode === 'files' ? m.command_commands() : m.common_close()}
 			</span>
 		</div>
 	);

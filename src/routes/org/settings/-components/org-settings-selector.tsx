@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import { getInitial } from '@/lib/utils/get-initial';
+import * as m from '@/paraglide/messages.js';
 
 type SelectorOrg = {
 	logo?: string | null;
@@ -62,7 +63,7 @@ export function OrgSettingsSelector({
 								<span className='truncate'>{active.name}</span>
 							</>
 						) : (
-							<span className='truncate text-muted-foreground'>Select organization</span>
+							<span className='truncate text-muted-foreground'>{m.org_settings_select_org()}</span>
 						)}
 					</span>
 					<ChevronsUpDown className='size-4 shrink-0 text-muted-foreground' />

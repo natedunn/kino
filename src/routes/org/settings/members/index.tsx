@@ -24,6 +24,7 @@ import { titleMeta } from '@/lib/seo';
 import { cn } from '@/lib/utils';
 import { getInitial } from '@/lib/utils/get-initial';
 import { emailSchema, FORM_LIMITS } from '@/lib/validation';
+import * as m from '@/paraglide/messages.js';
 
 import { SettingsSkeleton } from '../-components/settings-skeleton';
 import { useDelayedFlag } from '../-components/use-delayed-flag';
@@ -31,7 +32,7 @@ import { useSettingsOrgSlug } from '../-components/use-settings-org';
 
 export const Route = createFileRoute('/org/settings/members/')({
 	head: () => ({
-		meta: [titleMeta(['Members'])],
+		meta: [titleMeta([m.meta_members()])],
 	}),
 	loader: ({ context, location }) => {
 		const orgSlug = (location.search as { org?: string }).org;
@@ -56,10 +57,10 @@ type AssignableRole = (typeof ASSIGNABLE_ROLES)[number];
 
 type MemberRole = AssignableRole | 'owner';
 
-const ROLE_LABELS: Record<MemberRole, string> = {
-	admin: 'Admin',
-	moderator: 'Moderator',
-	owner: 'Owner',
+const ROLE_LABELS: Record<MemberRole, () => string> = {
+	admin: m.role_admin,
+	moderator: m.role_moderator,
+	owner: m.role_owner,
 };
 
 type PickerProject = { id: string; name: string; visibility: string };
@@ -121,8 +122,8 @@ function MembersSettingsRoute() {
 	if (!data || !organizationId) {
 		return (
 			<EmptyState
-				title='Members unavailable'
-				description='This organization either does not exist or your session cannot view it.'
+				title={m.org_members_unavailable()}
+				description={m.org_members_unavailable_description()}
 			/>
 		);
 	}
@@ -130,8 +131,8 @@ function MembersSettingsRoute() {
 	if (!data.canManage) {
 		return (
 			<EmptyState
-				title='Member management unavailable'
-				description='Only organization admins and owners can manage members.'
+				title={m.org_member_management_unavailable()}
+				description={m.org_member_management_unavailable_description()}
 			/>
 		);
 	}
@@ -154,14 +155,12 @@ function MembersSettingsRoute() {
 	return (
 		<section className='max-w-3xl'>
 			<header className='border-b pb-4'>
-				<h2 className='text-xl font-semibold'>Members</h2>
-				<p className='mt-1 text-sm text-muted-foreground'>
-					Invite people to your organization and manage their roles.
-				</p>
+				<h2 className='text-xl font-semibold'>{m.settings_members()}</h2>
+				<p className='mt-1 text-sm text-muted-foreground'>{m.org_members_description()}</p>
 			</header>
 
 			{/* Invite */}
-			<h3 className='mt-8 text-base font-semibold'>Invite a new member</h3>
+			<h3 className='mt-8 text-base font-semibold'>{m.org_members_invite_title()}</h3>
 			<form
 				className='mt-3 overflow-hidden rounded-xl border bg-card'
 				onSubmit={(event) => {
@@ -170,7 +169,7 @@ function MembersSettingsRoute() {
 					const parsed = emailSchema.safeParse(email.trim());
 					if (!parsed.success) {
 						setEmailTouched(true);
-						setFormError(parsed.error.issues[0]?.message ?? 'Enter a valid email address');
+						setFormError(parsed.error.issues[0]?.message ?? m.org_members_invalid_email());
 						return;
 					}
 					invite.mutate(
@@ -196,7 +195,7 @@ function MembersSettingsRoute() {
 				<div className='flex flex-col gap-4 p-6 sm:flex-row'>
 					<div className='flex flex-1 flex-col gap-2'>
 						<LabelWrapper className='mb-0'>
-							<Label htmlFor='invite-email'>Email address</Label>
+							<Label htmlFor='invite-email'>{m.org_members_email()}</Label>
 						</LabelWrapper>
 						<Input
 							aria-invalid={showEmailInvalid || undefined}
@@ -213,12 +212,12 @@ function MembersSettingsRoute() {
 							value={email}
 						/>
 						{showEmailInvalid ? (
-							<p className='text-xs text-destructive'>Enter a valid email address.</p>
+							<p className='text-xs text-destructive'>{m.org_members_invalid_email()}</p>
 						) : null}
 					</div>
 					<div className='flex flex-col gap-2'>
 						<LabelWrapper className='mb-0'>
-							<Label htmlFor='invite-role'>Role</Label>
+							<Label htmlFor='invite-role'>{m.org_members_role()}</Label>
 						</LabelWrapper>
 						<RoleSelect
 							id='invite-role'
@@ -237,7 +236,7 @@ function MembersSettingsRoute() {
 				{inviteRole === 'moderator' ? (
 					<div className='border-t px-6 py-5'>
 						<ProjectPicker
-							description='Moderators can only manage the projects you assign here.'
+							description={m.org_members_moderator_description()}
 							projects={projects}
 							selectedIds={inviteProjectIds}
 							onSelectedIdsChange={setInviteProjectIds}
@@ -248,10 +247,10 @@ function MembersSettingsRoute() {
 				<div className='flex items-center justify-between gap-3 border-t bg-muted/30 px-6 py-4'>
 					<p className='text-xs text-muted-foreground'>
 						{inviteRole === 'admin'
-							? 'Admins can manage organization settings and every project.'
+							? m.org_members_admin_description()
 							: inviteProjectIds.length === 0
-								? 'Select at least one project for this moderator.'
-								: `This moderator will have access to ${inviteProjectIds.length} project${inviteProjectIds.length === 1 ? '' : 's'}.`}
+								? m.org_members_select_project()
+								: m.org_members_moderator_access_count({ count: inviteProjectIds.length })}
 					</p>
 					<Button
 						type='submit'
@@ -261,7 +260,7 @@ function MembersSettingsRoute() {
 							(inviteRole === 'moderator' && inviteProjectIds.length === 0)
 						}
 					>
-						{invite.isPending ? 'Inviting...' : 'Send invite'}
+						{invite.isPending ? m.org_members_inviting() : m.org_members_send_invite()}
 					</Button>
 				</div>
 			</form>
@@ -275,7 +274,7 @@ function MembersSettingsRoute() {
 			{/* Members */}
 			<div className='mt-10'>
 				<h3 className='text-base font-semibold'>
-					Existing members{' '}
+					{m.org_members_existing()}{' '}
 					<span className='text-sm font-normal text-muted-foreground'>({data.members.length})</span>
 				</h3>
 				<div className='mt-3 flex flex-col divide-y rounded-xl border bg-card'>
@@ -300,8 +299,8 @@ function MembersSettingsRoute() {
 											{isModerator
 												? ` · ${
 														member.assignedProjectCount === 0
-															? 'no project access'
-															: `${member.assignedProjectCount} project${member.assignedProjectCount === 1 ? '' : 's'}`
+															? m.org_members_no_project_access()
+															: m.org_members_project_count({ count: member.assignedProjectCount })
 													}`
 												: ''}
 										</p>
@@ -317,7 +316,9 @@ function MembersSettingsRoute() {
 												)
 											}
 										>
-											{editingModeratorId === member.id ? 'Close' : 'Manage access'}
+											{editingModeratorId === member.id
+												? m.common_close()
+												: m.org_members_manage_access()}
 										</Button>
 									) : null}
 									{/* The owner's controls render disabled: the role select and remove
@@ -336,9 +337,7 @@ function MembersSettingsRoute() {
 											if (
 												member.role === 'moderator' &&
 												value === 'admin' &&
-												!window.confirm(
-													'Promoting this moderator clears their explicit project assignments. Continue?'
-												)
+												!window.confirm(m.org_members_promote_confirm())
 											) {
 												return;
 											}
@@ -357,7 +356,9 @@ function MembersSettingsRoute() {
 										onClick={() => {
 											if (
 												window.confirm(
-													`Remove ${member.user.name || member.user.email} from this organization?`
+													m.org_members_remove_confirm({
+														name: member.user.name || member.user.email,
+													})
 												)
 											) {
 												removeMember.mutate({ memberId: member.id });
@@ -365,7 +366,7 @@ function MembersSettingsRoute() {
 										}}
 									>
 										<Trash2 />
-										Remove
+										{m.common_remove()}
 									</Button>
 								</div>
 								{isModerator && editingModeratorId === member.id ? (
@@ -377,7 +378,7 @@ function MembersSettingsRoute() {
 								{transitioningModeratorId === member.id ? (
 									<div className='mt-3 rounded-lg border bg-accent/30 p-4'>
 										<ProjectPicker
-											description='Pick which projects this moderator can manage.'
+											description={m.org_members_pick_projects()}
 											projects={projects}
 											selectedIds={transitionProjectIds}
 											onSelectedIdsChange={setTransitionProjectIds}
@@ -389,7 +390,7 @@ function MembersSettingsRoute() {
 												size='sm'
 												onClick={() => setTransitioningModeratorId(null)}
 											>
-												Cancel
+												{m.common_cancel()}
 											</Button>
 											<Button
 												type='button'
@@ -408,7 +409,9 @@ function MembersSettingsRoute() {
 													)
 												}
 											>
-												{updateRole.isPending ? 'Saving...' : 'Change to moderator'}
+												{updateRole.isPending
+													? m.common_saving()
+													: m.org_members_change_moderator()}
 											</Button>
 										</div>
 									</div>
@@ -422,7 +425,7 @@ function MembersSettingsRoute() {
 			{/* Pending invitations */}
 			{pendingQuery.data && pendingQuery.data.length > 0 ? (
 				<div className='mt-10'>
-					<h3 className='text-base font-semibold'>Pending invitations</h3>
+					<h3 className='text-base font-semibold'>{m.org_members_pending()}</h3>
 					<div className='mt-3 flex flex-col divide-y rounded-xl border bg-card'>
 						{pendingQuery.data.map((inv) => (
 							<div key={inv.id} className='flex items-center gap-3 px-4 py-3'>
@@ -431,7 +434,7 @@ function MembersSettingsRoute() {
 									<p className='text-xs text-muted-foreground capitalize'>
 										{inv.role}
 										{inv.role === 'moderator'
-											? ` · ${inv.assignedProjectCount} project${inv.assignedProjectCount === 1 ? '' : 's'}`
+											? ` · ${m.org_members_project_count({ count: inv.assignedProjectCount })}`
 											: ''}
 									</p>
 								</div>
@@ -443,14 +446,13 @@ function MembersSettingsRoute() {
 									disabled={cancelInvite.isPending}
 									onClick={() => cancelInvite.mutate({ invitationId: inv.id })}
 								>
-									Cancel invite
+									{m.org_members_cancel_invite()}
 								</Button>
 							</div>
 						))}
 					</div>
 					<p className='mt-2 text-xs text-muted-foreground'>
-						Invitations are created but email delivery isn’t configured yet — share the invite link
-						manually for now.
+						{m.org_members_invite_delivery_notice()}
 					</p>
 				</div>
 			) : null}
@@ -480,17 +482,17 @@ function RoleSelect({
 			onValueChange={(next) => onChange(next as AssignableRole)}
 		>
 			<SelectTrigger id={id} size={size} className={cn('shrink-0', triggerClassName)}>
-				<SelectValue placeholder='Role'>
-					{(current) => ROLE_LABELS[current as MemberRole]}
+				<SelectValue placeholder={m.org_members_role()}>
+					{(current) => ROLE_LABELS[current as MemberRole]()}
 				</SelectValue>
 			</SelectTrigger>
 			<SelectContent>
 				{/* Owner exists only so the (always-disabled) owner row can display its
 				    value — it is never offered as a choice for anyone else. */}
-				{value === 'owner' ? <SelectItem value='owner'>Owner</SelectItem> : null}
+				{value === 'owner' ? <SelectItem value='owner'>{m.role_owner()}</SelectItem> : null}
 				{ASSIGNABLE_ROLES.map((role) => (
 					<SelectItem key={role} value={role}>
-						{ROLE_LABELS[role]}
+						{ROLE_LABELS[role]()}
 					</SelectItem>
 				))}
 			</SelectContent>
@@ -512,13 +514,11 @@ function ProjectPicker({
 	return (
 		<div>
 			<LabelWrapper>
-				<Label>Project access</Label>
+				<Label>{m.org_members_project_access()}</Label>
 				<LabelDescription>{description}</LabelDescription>
 			</LabelWrapper>
 			{projects.length === 0 ? (
-				<p className='text-sm text-muted-foreground'>
-					This organization doesn’t have any projects yet.
-				</p>
+				<p className='text-sm text-muted-foreground'>{m.org_members_no_projects()}</p>
 			) : (
 				<div className='grid gap-2 sm:grid-cols-2'>
 					{projects.map((project) => {
@@ -576,7 +576,7 @@ function ModeratorAccessEditor({ memberId, onSaved }: { memberId: string; onSave
 	return (
 		<div className='mt-3 rounded-lg border bg-accent/30 p-4'>
 			<ProjectPicker
-				description='Pick which projects this moderator can manage.'
+				description={m.org_members_pick_projects()}
 				projects={accessQuery.data.projects}
 				selectedIds={selectedIds}
 				onSelectedIdsChange={setSelectedIds}
@@ -588,7 +588,7 @@ function ModeratorAccessEditor({ memberId, onSaved }: { memberId: string; onSave
 					disabled={save.isPending}
 					onClick={() => save.mutate({ memberId, projectIds: selectedIds }, { onSuccess: onSaved })}
 				>
-					{save.isPending ? 'Saving...' : 'Save project access'}
+					{save.isPending ? m.common_saving() : m.org_members_save_access()}
 				</Button>
 			</div>
 		</div>

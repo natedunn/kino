@@ -17,10 +17,12 @@ import { Separator } from '@/components/ui/separator';
 import { authClient } from '@/lib/convex/auth-client';
 import { useCRPC } from '@/lib/convex/crpc';
 import { crpcServer } from '@/lib/convex/crpc-server';
+import { localizeError } from '@/lib/errors';
 import { useSidebarState } from '@/lib/hooks/use-sidebar-state';
 import { projectTitle, titleMeta } from '@/lib/seo';
 import { cn } from '@/lib/utils';
 import { FORM_LIMITS, updateFormSchema, validationMessage } from '@/lib/validation';
+import * as m from '@/paraglide/messages.js';
 
 import {
 	CategoryField,
@@ -58,7 +60,7 @@ export const Route = createFileRoute('/@{$org}/$project/updates/new/')({
 		}
 	},
 	head: ({ params }) => ({
-		meta: [titleMeta(['New Update', projectTitle(params.org, params.project)])],
+		meta: [titleMeta([m.updates_new_meta(), projectTitle(params.org, params.project)])],
 	}),
 });
 
@@ -82,7 +84,7 @@ function NewUpdateRoute() {
 	);
 	const createMutation = useMutation(
 		crpc.update.create.mutationOptions({
-			onError: (error) => setFormError(error.message),
+			onError: (error) => setFormError(localizeError(error, m.common_try_again())),
 		})
 	);
 	const publishMutation = useMutation(
@@ -96,7 +98,7 @@ function NewUpdateRoute() {
 					to: '/@{$org}/$project/updates/$slug',
 				});
 			},
-			onError: (error) => setFormError(error.message),
+			onError: (error) => setFormError(localizeError(error, m.common_try_again())),
 		})
 	);
 
@@ -144,7 +146,7 @@ function NewUpdateRoute() {
 	});
 
 	if (!session.data?.user) {
-		return <InlineAlert variant='warning'>Sign in to write updates.</InlineAlert>;
+		return <InlineAlert variant='warning'>{m.updates_sign_in_write()}</InlineAlert>;
 	}
 
 	if (!projectQuery.data) {
@@ -204,23 +206,23 @@ function NewUpdateRoute() {
 					<div className='container flex items-center justify-between gap-4 py-3'>
 						<div className='flex items-center gap-3'>
 							<Link
-								aria-label='Back to Updates'
+								aria-label={m.updates_back()}
 								className='inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground'
 								params={{ org: params.org, project: params.project }}
 								to='/@{$org}/$project/updates'
 							>
 								<ArrowLeft className='size-3.5' />
 								<span aria-hidden='true' className='hidden sm:inline'>
-									Updates
+									{m.updates_meta()}
 								</span>
 							</Link>
 							<Separator className='h-4' orientation='vertical' />
-							<span className='text-sm font-medium text-muted-foreground'>New Update</span>
+							<span className='text-sm font-medium text-muted-foreground'>{m.updates_new()}</span>
 							<Badge
 								className='bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
 								variant='outline'
 							>
-								Draft
+								{m.updates_status_draft()}
 							</Badge>
 						</div>
 
@@ -253,7 +255,7 @@ function NewUpdateRoute() {
 												type='submit'
 												variant='outline'
 											>
-												{createMutation.isPending ? 'Saving...' : 'Save as Draft'}
+												{createMutation.isPending ? m.updates_saving() : m.updates_save_draft()}
 											</Button>
 											<Button
 												className={cn({
@@ -264,7 +266,7 @@ function NewUpdateRoute() {
 												size='sm'
 												type='button'
 											>
-												{publishMutation.isPending ? 'Publishing...' : 'Publish'}
+												{publishMutation.isPending ? m.updates_publishing() : m.updates_publish()}
 											</Button>
 										</>
 									);
@@ -276,7 +278,9 @@ function NewUpdateRoute() {
 
 				{formError ? (
 					<div className='container pt-4'>
-						<InlineAlert variant='danger'>Unable to create update: {formError}</InlineAlert>
+						<InlineAlert variant='danger'>
+							{m.updates_create_failed({ error: formError })}
+						</InlineAlert>
 					</div>
 				) : null}
 
@@ -289,7 +293,7 @@ function NewUpdateRoute() {
 								icon={<Settings2 className='size-3.5' />}
 								onOpenChange={(open) => setSidebarSection('settings', open)}
 								open={sidebarState.settings}
-								title='Settings'
+								title={m.updates_settings()}
 							>
 								<form.Field name='category'>
 									{(field) => (
@@ -305,7 +309,7 @@ function NewUpdateRoute() {
 								icon={<Tag className='size-3.5' />}
 								onOpenChange={(open) => setSidebarSection('tags', open)}
 								open={sidebarState.tags}
-								title='Tags'
+								title={m.updates_tags()}
 							>
 								<form.Field name='tags'>
 									{(field) => (
@@ -321,7 +325,7 @@ function NewUpdateRoute() {
 								icon={<LinkIcon className='size-3.5' />}
 								onOpenChange={(open) => setSidebarSection('relatedFeedback', open)}
 								open={sidebarState.relatedFeedback}
-								title='Related Feedback'
+								title={m.updates_related_feedback()}
 							>
 								<form.Field name='relatedFeedbackIds'>
 									{(field) => (
@@ -343,10 +347,10 @@ function NewUpdateRoute() {
 								<form.Field name='content'>
 									{(field) => (
 										<LazyMarkdownEditor
-											ariaLabel='Update content'
+											ariaLabel={m.updates_content()}
 											minHeight='200px'
 											onChange={(html) => field.handleChange(html)}
-											placeholder='Write your update content...'
+											placeholder={m.updates_content_placeholder()}
 											value={field.state.value}
 											variant='borderless'
 										/>

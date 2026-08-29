@@ -2,8 +2,10 @@ import type { NodeViewProps } from '@tiptap/react';
 
 import { NodeViewContent, NodeViewWrapper } from '@tiptap/react';
 
+import * as m from '@/paraglide/messages.js';
+
 const LANGUAGES = [
-	{ label: 'Plain Text', value: 'plaintext' },
+	{ label: m.editor_plain_text, value: 'plaintext' },
 	{ label: 'JavaScript', value: 'javascript' },
 	{ label: 'TypeScript', value: 'typescript' },
 	{ label: 'JSX', value: 'jsx' },
@@ -33,7 +35,7 @@ export function CodeBlockComponent({ node, updateAttributes }: NodeViewProps) {
 			>
 				{LANGUAGES.map((lang) => (
 					<option key={lang.value} className='bg-background text-foreground' value={lang.value}>
-						{lang.label}
+						{typeof lang.label === 'function' ? lang.label() : lang.label}
 					</option>
 				))}
 			</select>
