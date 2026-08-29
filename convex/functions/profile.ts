@@ -6,6 +6,7 @@ import { eq } from 'kitcn/orm';
 import { CRPCError } from 'kitcn/server';
 import { z } from 'zod';
 
+import { appError } from '../lib/app-error';
 import { authMutation, authQuery, optionalAuthQuery } from '../lib/crpc';
 import { getCurrentProfile, toPublicDoc } from '../lib/kino';
 import { userUploadsR2 } from '../lib/r2';
@@ -60,7 +61,11 @@ export const generateAvatarUploadUrl = authMutation
 	.mutation(async ({ ctx }) => {
 		const profile = await getCurrentProfile(ctx, ctx.userId);
 		if (!profile) {
-			throw new CRPCError({ code: 'NOT_FOUND', message: 'Profile not found' });
+			throw appError({
+				appCode: 'PROFILE_NOT_FOUND',
+				code: 'NOT_FOUND',
+				message: 'Profile not found',
+			});
 		}
 
 		return await userUploadsR2.generateUploadUrl(`PFP_${profile._id}`);

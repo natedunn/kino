@@ -30,11 +30,17 @@ export function LanguageSelector({ className }: { className?: string }) {
 		if (nextLocale === locale || isChanging) return;
 		setIsChanging(true);
 
-		if (profileQuery.data) {
-			await updateLocale.mutateAsync({ locale: nextLocale }).catch(() => undefined);
-		}
+		try {
+			if (profileQuery.data) {
+				await updateLocale.mutateAsync({ locale: nextLocale }).catch(() => undefined);
+			}
 
-		setLocale(nextLocale);
+			await setLocale(nextLocale);
+		} finally {
+			// Normally setLocale reloads the document. Re-enable the control if a
+			// custom strategy or failed navigation leaves this document mounted.
+			setIsChanging(false);
+		}
 	};
 
 	return (
