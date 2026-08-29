@@ -202,6 +202,7 @@ export const accountTable = convexTable(
 	},
 	(table) => [
 		index('accountId').on(table.accountId),
+		index('issuer_accountId').on(table.issuer, table.accountId),
 		index('accountId_issuer').on(table.accountId, table.issuer),
 		index('accountId_providerId').on(table.accountId, table.providerId),
 		index('providerId_userId').on(table.providerId, table.userId),
