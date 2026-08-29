@@ -1,6 +1,6 @@
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { Link as LinkIcon, MapPin, User2 } from 'lucide-react';
+import { Link as LinkIcon, MapPin } from 'lucide-react';
 
 import { NotFound } from '@/components/_not-found';
 import { MainNav } from '@/components/site-nav/main-nav';
@@ -42,7 +42,6 @@ function PublicProfileRoute() {
 	}
 
 	const displayName = profile.name?.trim() || profile.username;
-	const fallbackInitial = displayName.charAt(0).toUpperCase();
 	const visibleOrgCount = profile.ownedOrganizations.length + profile.memberOrganizations.length;
 
 	return (
@@ -58,11 +57,13 @@ function PublicProfileRoute() {
 					<div className='rounded-2xl border bg-card p-8 shadow-xs'>
 						<div className='flex flex-col gap-6 md:flex-row md:items-start md:justify-between'>
 							<div className='flex items-start gap-4'>
-								<Avatar className='size-20 border'>
+								<Avatar
+									className='size-20 border'
+									fallbackAnimate='always'
+									fallbackName={profile.username}
+								>
 									<AvatarImage alt={profile.username} src={profile.imageUrl ?? undefined} />
-									<AvatarFallback className='text-lg font-semibold'>
-										{fallbackInitial || <User2 className='size-5' />}
-									</AvatarFallback>
+									<AvatarFallback />
 								</Avatar>
 								<div className='min-w-0'>
 									<h1 className='truncate text-3xl font-bold tracking-tight'>{displayName}</h1>

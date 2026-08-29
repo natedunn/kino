@@ -75,15 +75,15 @@ export const MOCK_RECENT_UPDATES: Array<UpdatePreview> = [
 ];
 
 export const MOCK_MEMBERS: Array<Member> = [
-	{ id: 'm1', name: 'Nate Dunn', role: 'Owner' },
-	{ id: 'm2', name: 'Priya Shah', role: 'Admin' },
-	{ id: 'm3', name: 'Marcus Lee', role: 'Admin' },
-	{ id: 'm4', name: 'Jordan Kim', role: 'Moderator' },
-	{ id: 'm5', name: 'Sam Rivera', role: 'Moderator' },
-	{ id: 'm6', name: 'Alex Chen', role: 'Member' },
-	{ id: 'm7', name: 'Robin Patel', role: 'Member' },
-	{ id: 'm8', name: 'Dana Woods', role: 'Member' },
-	{ id: 'm9', name: 'Chris Vaughn', role: 'Member' },
+	{ id: 'm1', name: 'Nate Dunn', username: 'natedunn', role: 'Owner' },
+	{ id: 'm2', name: 'Priya Shah', username: 'priyashah', role: 'Admin' },
+	{ id: 'm3', name: 'Marcus Lee', username: 'marcuslee', role: 'Admin' },
+	{ id: 'm4', name: 'Jordan Kim', username: 'jordankim', role: 'Moderator' },
+	{ id: 'm5', name: 'Sam Rivera', username: 'samrivera', role: 'Moderator' },
+	{ id: 'm6', name: 'Alex Chen', username: 'alexchen', role: 'Member' },
+	{ id: 'm7', name: 'Robin Patel', username: 'robinpatel', role: 'Member' },
+	{ id: 'm8', name: 'Dana Woods', username: 'danawoods', role: 'Member' },
+	{ id: 'm9', name: 'Chris Vaughn', username: 'chrisvaughn', role: 'Member' },
 ];
 
 export const MOCK_ACTIVITY: Array<ActivityEvent> = [

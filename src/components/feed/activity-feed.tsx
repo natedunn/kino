@@ -1,6 +1,7 @@
 import type { Icon as IconType } from '@/icons/types';
 import type { ReactNode } from 'react';
 
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import ArchivePencil from '@/icons/archive-pencil';
 import CalendarDays from '@/icons/calendar-days';
 import CirclePlay from '@/icons/circle-play';
@@ -22,7 +23,7 @@ export interface ActivityFeedItem {
 	kind: ActivityKind;
 	/** Human time label, e.g. "2h ago". */
 	when: string;
-	/** Text used to derive the monogram initials in the avatar rail. */
+	/** Text used to derive the avatar fallback in the avatar rail. */
 	avatarLabel: string;
 	/** Bold primary line — the subject the row is about. */
 	primary: ReactNode;
@@ -67,15 +68,6 @@ const ACTIVITY_CONFIG: Record<ActivityKind, { label: string; Icon: IconType; col
 		},
 	};
 
-function initials(label: string) {
-	return label
-		.split(' ')
-		.map((part) => part.charAt(0))
-		.slice(0, 2)
-		.join('')
-		.toUpperCase();
-}
-
 // A vertical timeline of activity cards. Mirrors the comment thread: a connector
 // line (before:) runs through the avatars at left-[33px], with each event as its
 // own card. Used on the Project Overview page and the global dashboard.
@@ -95,9 +87,12 @@ export function ActivityFeed({ items }: { items: Array<ActivityFeedItem> }) {
 					<div className='flex w-full min-w-0'>
 						{/* Avatar rail — same as the comment card */}
 						<div className='flex shrink-0 flex-col items-center justify-start border-r bg-accent pt-3 pl-4'>
-							<div className='relative -mr-4 flex size-8 items-center justify-center overflow-hidden rounded-full border bg-primary text-xs font-bold text-primary-foreground shadow-xl shadow-black'>
-								{initials(event.avatarLabel)}
-							</div>
+							<Avatar
+								className='relative -mr-4 size-8 border shadow-xl shadow-black'
+								fallbackName={event.avatarLabel}
+							>
+								<AvatarFallback />
+							</Avatar>
 						</div>
 
 						{/* Body — the subject on top, then an optional detail line, then

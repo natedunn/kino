@@ -20,6 +20,7 @@ import {
 import { EditorContentDisplay } from '@/components/editor';
 import { ProfileLinkOrUnknown } from '@/components/profile-link';
 import { SidebarSection } from '@/components/sidebar-section';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -30,7 +31,6 @@ import { useSidebarState } from '@/lib/hooks/use-sidebar-state';
 import { projectTitle, titleFromSlug, titleMeta } from '@/lib/seo';
 import { cn } from '@/lib/utils';
 import { formatFullDate, formatRelativeDay } from '@/lib/utils/format-timestamp';
-import { getInitial } from '@/lib/utils/get-initial';
 import * as m from '@/paraglide/messages.js';
 
 import { CategoryBadge } from '../-components/category-badge';
@@ -340,17 +340,13 @@ function UpdateDetailRoute() {
 									params={{ username: updateData.author.username }}
 									to='/u/$username'
 								>
-									{updateData.author.imageUrl ? (
-										<img
+									<Avatar className='size-5' fallbackName={updateData.author.username}>
+										<AvatarImage
 											alt={updateData.author.username}
-											className='h-5 w-5 rounded-full'
-											src={updateData.author.imageUrl}
+											src={updateData.author.imageUrl ?? undefined}
 										/>
-									) : (
-										<div className='flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground'>
-											{getInitial(updateData.author.name)}
-										</div>
-									)}
+										<AvatarFallback />
+									</Avatar>
 									<span>@{updateData.author.username}</span>
 								</Link>
 							) : null}

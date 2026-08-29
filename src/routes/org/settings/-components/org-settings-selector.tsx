@@ -1,5 +1,6 @@
 import { Check, ChevronsUpDown } from 'lucide-react';
 
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
 	DropdownMenu,
@@ -10,7 +11,6 @@ import {
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
-import { getInitial } from '@/lib/utils/get-initial';
 import * as m from '@/paraglide/messages.js';
 
 type SelectorOrg = {
@@ -22,18 +22,10 @@ type SelectorOrg = {
 
 function OrgAvatar({ org, className }: { org: SelectorOrg; className?: string }) {
 	return (
-		<span
-			className={cn(
-				'flex size-6 shrink-0 items-center justify-center overflow-hidden rounded-full bg-foreground text-[11px] font-bold text-background',
-				className
-			)}
-		>
-			{org.logo ? (
-				<img alt='' className='h-full w-full object-cover' src={org.logo} />
-			) : (
-				getInitial(org.name)
-			)}
-		</span>
+		<Avatar className={cn('size-6 shrink-0', className)} fallbackName={org.slug}>
+			<AvatarImage alt={org.name} src={org.logo ?? undefined} />
+			<AvatarFallback />
+		</Avatar>
 	);
 }
 

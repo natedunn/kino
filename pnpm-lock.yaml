@@ -20,6 +20,9 @@ importers:
       '@bentonow/bento-node-sdk':
         specifier: ^2.0.0
         version: 2.0.0
+      '@blobatar/react':
+        specifier: ^2.6.0
+        version: 2.6.0(blobatar@2.6.0(react@19.2.6))(react@19.2.6)
       '@convex-dev/r2':
         specifier: ^0.10.2
         version: 0.10.2(@standard-schema/spec@1.1.0)(convex@1.44.0(react@19.2.6))(hono@4.12.9)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3)(zod@4.4.3)
@@ -113,6 +116,9 @@ importers:
       better-auth:
         specifier: 1.7.1
         version: 1.7.1(@opentelemetry/api@1.9.0)(@tanstack/react-start@1.168.49(crossws@0.4.5(srvx@0.11.22))(esbuild@0.28.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(rollup@4.60.4)(vite@7.3.3(@types/node@22.19.19)(jiti@2.7.0)(lightningcss@1.33.0)))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(solid-js@1.9.12)(vitest@3.2.4(@edge-runtime/vm@5.0.0)(@types/debug@4.1.13)(@types/node@22.19.19)(jiti@2.7.0)(jsdom@27.4.0(@noble/hashes@2.2.0))(lightningcss@1.33.0)(msw@2.14.6(@types/node@22.19.19)(typescript@5.9.3)))
+      blobatar:
+        specifier: ^2.6.0
+        version: 2.6.0(react@19.2.6)
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -698,6 +704,12 @@ packages:
 
   '@better-fetch/fetch@1.3.1':
     resolution: {integrity: sha512-ABkD1WhyfPZprKRQI3bhATjeiFuNWC9PXhfGWqL+sg/gKrM977oFrYkdb4msM3hgUGonr7KlOsOFT5TU2rht9g==}
+
+  '@blobatar/react@2.6.0':
+    resolution: {integrity: sha512-d3BX7KH7nh7N8wfCxP5LGwe+2o+OlcbIJsdDIBrcAME6GxmD63770BFCPiovnN+tWXCGA0yAAPTmznPUEOzPxA==}
+    peerDependencies:
+      blobatar: 2.x
+      react: '>=18'
 
   '@borewit/text-codec@0.2.2':
     resolution: {integrity: sha512-DDaRehssg1aNrH4+2hnj1B7vnUGEjU6OIlyRdkMd0aUdIUvKXrJfXsy8LVtXAy7DRvYVluWbMspsRhz2lcW0mQ==}
@@ -3791,6 +3803,17 @@ packages:
 
   blake3-wasm@2.1.5:
     resolution: {integrity: sha512-F1+K8EbfOZE49dtoPtmxUQrpXaBIl3ICvasLh+nJta0xkz+9kF/7uet9fLnwKqhDrmj6g+6K3Tw9yQPUg2ka5g==}
+
+  blobatar@2.6.0:
+    resolution: {integrity: sha512-rKwSmlhIIYCw9k9d5fwsZB/7EmuEE0h+4fGKVOks4PJml82w4CkoKxJLlcfU47Yft2vuPa3UEOZ8kMD0rk6Vtg==}
+    peerDependencies:
+      react: '>=18'
+      vue: '>=3'
+    peerDependenciesMeta:
+      react:
+        optional: true
+      vue:
+        optional: true
 
   body-parser@2.2.2:
     resolution: {integrity: sha512-oP5VkATKlNwcgvxi0vM0p/D3n2C3EReYVX+DNYs5TjZFn/oQt2j+4sVJtSMr18pdRr8wjTcBl6LoV+FUwzPmNA==}
@@ -7263,6 +7286,11 @@ snapshots:
 
   '@better-fetch/fetch@1.3.1': {}
 
+  '@blobatar/react@2.6.0(blobatar@2.6.0(react@19.2.6))(react@19.2.6)':
+    dependencies:
+      blobatar: 2.6.0(react@19.2.6)
+      react: 19.2.6
+
   '@borewit/text-codec@0.2.2': {}
 
   '@clack/core@0.5.0':
@@ -9845,6 +9873,10 @@ snapshots:
       require-from-string: 2.0.2
 
   blake3-wasm@2.1.5: {}
+
+  blobatar@2.6.0(react@19.2.6):
+    optionalDependencies:
+      react: 19.2.6
 
   body-parser@2.2.2:
     dependencies:

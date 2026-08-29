@@ -22,7 +22,6 @@ import { crpcServer } from '@/lib/convex/crpc-server';
 import { extractErrorMessage } from '@/lib/errors';
 import { titleMeta } from '@/lib/seo';
 import { cn } from '@/lib/utils';
-import { getInitial } from '@/lib/utils/get-initial';
 import { emailSchema, FORM_LIMITS } from '@/lib/validation';
 import * as m from '@/paraglide/messages.js';
 
@@ -284,11 +283,12 @@ function MembersSettingsRoute() {
 						return (
 							<div key={member.id} className='px-4 py-3'>
 								<div className='flex items-center gap-3'>
-									<Avatar className='size-8 shrink-0'>
+									<Avatar
+										className='size-8 shrink-0'
+										fallbackName={member.user.username ?? member.user.email}
+									>
 										{member.user.image ? <AvatarImage src={member.user.image} /> : null}
-										<AvatarFallback className='text-xs font-semibold'>
-											{getInitial(member.user.name, member.user.email)}
-										</AvatarFallback>
+										<AvatarFallback />
 									</Avatar>
 									<div className='min-w-0 flex-1'>
 										<p className='truncate text-sm font-medium'>

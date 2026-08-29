@@ -1,5 +1,6 @@
 import { Link } from '@tanstack/react-router';
 
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import * as m from '@/paraglide/messages.js';
 
@@ -28,7 +29,6 @@ export function ProfileLink({
 	className,
 }: ProfileLinkProps) {
 	const displayText = display === 'name' ? (profile.name ?? profile.username) : profile.username;
-	const fallbackInitial = profile.name?.charAt(0) ?? profile.username.charAt(0);
 
 	return (
 		<Link
@@ -36,15 +36,10 @@ export function ProfileLink({
 			params={{ username: profile.username }}
 			className={cn('flex items-center gap-2 text-sm hover:underline', className)}
 		>
-			<div className='size-5 overflow-hidden rounded-full'>
-				{profile.imageUrl ? (
-					<img src={profile.imageUrl} alt={profile.username} className='size-5' />
-				) : (
-					<div className='flex size-5 items-center justify-center bg-primary text-[10px] font-bold text-primary-foreground'>
-						{fallbackInitial}
-					</div>
-				)}
-			</div>
+			<Avatar className='size-5' fallbackName={profile.username}>
+				<AvatarImage src={profile.imageUrl ?? undefined} alt={profile.username} />
+				<AvatarFallback />
+			</Avatar>
 			<span>
 				{showAt && '@'}
 				{displayText}

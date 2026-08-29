@@ -20,7 +20,6 @@ import { Button } from '@/components/ui/button';
 import { useCRPC } from '@/lib/convex/crpc';
 import { crpcServer } from '@/lib/convex/crpc-server';
 import { titleFromSlug, titleMeta } from '@/lib/seo';
-import { getInitial } from '@/lib/utils/get-initial';
 
 import { NoPublicProjects } from './-components/no-public-projects';
 import { OrgProjects } from './-components/org-projects';
@@ -128,7 +127,6 @@ function OrganizationRoute() {
 		);
 	}
 
-	const orgInitial = orgData.org.name[0]?.toUpperCase() ?? '?';
 	const isPublic = orgData.org.visibility === 'public';
 
 	return (
@@ -155,11 +153,14 @@ function OrganizationRoute() {
 						<div className='flex items-center gap-5'>
 							{/* Org avatar */}
 							<div className='relative shrink-0'>
-								<div className='flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary/60 shadow-lg shadow-primary/20 md:h-20 md:w-20'>
-									<span className='text-2xl font-bold text-primary-foreground md:text-3xl'>
-										{orgInitial}
-									</span>
-								</div>
+								<Avatar
+									className='h-16 w-16 rounded-full shadow-lg shadow-primary/20 md:h-20 md:w-20'
+									fallbackAnimate='always'
+									fallbackName={orgData.org.slug}
+								>
+									<AvatarImage alt={orgData.org.name} src={orgData.org.logo ?? undefined} />
+									<AvatarFallback />
+								</Avatar>
 								{/* Online dot */}
 								<span className='absolute -right-1 -bottom-1 flex h-4 w-4 items-center justify-center rounded-full bg-background'>
 									<span className='h-2.5 w-2.5 rounded-full bg-green-500' />
@@ -289,11 +290,12 @@ function OrganizationRoute() {
 									<div className='flex flex-col gap-2'>
 										{members.slice(0, 5).map((m) => (
 											<div key={m.id} className='flex items-center gap-3 rounded-lg px-1 py-1'>
-												<Avatar className='size-8 shrink-0'>
+												<Avatar
+													className='size-8 shrink-0'
+													fallbackName={m.user.username ?? m.user.email}
+												>
 													{m.user.image ? <AvatarImage src={m.user.image} /> : null}
-													<AvatarFallback className='text-xs font-semibold'>
-														{getInitial(m.user.name, m.user.email)}
-													</AvatarFallback>
+													<AvatarFallback />
 												</Avatar>
 												<div className='flex min-w-0 flex-1 items-center justify-between gap-2'>
 													<span className='truncate text-sm font-medium'>{m.user.name}</span>
