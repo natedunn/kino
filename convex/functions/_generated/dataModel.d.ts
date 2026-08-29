@@ -67,6 +67,7 @@ export type DataModel = {
       accountId: ["accountId", "_creationTime"];
       accountId_issuer: ["accountId", "issuer", "_creationTime"];
       accountId_providerId: ["accountId", "providerId", "_creationTime"];
+      issuer_accountId: ["issuer", "accountId", "_creationTime"];
       providerId_userId: ["providerId", "userId", "_creationTime"];
       userId: ["userId", "_creationTime"];
     };
