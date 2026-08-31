@@ -737,6 +737,7 @@
 	"files_folder_missing": "Esta carpeta ya no existe.",
 	"files_folder_empty": "No hay nada en esta carpeta",
 	"files_folder_empty_help": "Usa Cmd+K para subir un archivo o crear una carpeta.",
+	"files_folder_empty_readonly_help": "No hay archivos ni carpetas en esta carpeta.",
 	"files_empty_help": "No se han agregado archivos ni carpetas.",
 	"files_root_empty": "No hay nada en la raíz",
 	"files_tree_empty": "El árbol está vacío",

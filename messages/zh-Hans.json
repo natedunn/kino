@@ -695,6 +695,7 @@
 	"files_folder_missing": "此文件夹已不存在。",
 	"files_folder_empty": "此文件夹中没有内容",
 	"files_folder_empty_help": "使用 Cmd+K 上传文件或创建文件夹。",
+	"files_folder_empty_readonly_help": "此文件夹中没有文件或文件夹。",
 	"files_empty_help": "还没有添加文件或文件夹。",
 	"files_root_empty": "根目录下没有内容",
 	"files_tree_empty": "文件树为空",

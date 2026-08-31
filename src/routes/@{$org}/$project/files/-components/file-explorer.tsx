@@ -198,7 +198,11 @@ export function FileExplorer({
 											{folderId ? m.files_folder_empty() : m.files_root_empty()}
 										</p>
 										<p className='mt-1 text-sm text-muted-foreground'>
-											{canManage ? m.files_folder_empty_help() : m.files_empty_help()}
+											{canManage
+												? m.files_folder_empty_help()
+												: folderId
+													? m.files_folder_empty_readonly_help()
+													: m.files_empty_help()}
 										</p>
 									</td>
 								</tr>
