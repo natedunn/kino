@@ -133,7 +133,10 @@ function ProjectMembersRoute() {
 							<div key={moderator.memberId} className='flex items-center gap-3 px-4 py-3'>
 								<Avatar className='size-8 shrink-0' fallbackName={moderator.profile.username}>
 									{moderator.profile.imageUrl ? (
-										<AvatarImage src={moderator.profile.imageUrl} />
+										<AvatarImage
+											alt={moderator.profile.name ?? moderator.profile.username}
+											src={moderator.profile.imageUrl}
+										/>
 									) : null}
 									<AvatarFallback />
 								</Avatar>
@@ -229,7 +232,12 @@ function ProjectMembersRoute() {
 						{members.map((member) => (
 							<div key={member.id} className='flex items-center gap-3 px-4 py-3'>
 								<Avatar className='size-8 shrink-0' fallbackName={member.profile.username}>
-									{member.profile.imageUrl ? <AvatarImage src={member.profile.imageUrl} /> : null}
+									{member.profile.imageUrl ? (
+										<AvatarImage
+											alt={member.profile.name ?? member.profile.username}
+											src={member.profile.imageUrl}
+										/>
+									) : null}
 									<AvatarFallback />
 								</Avatar>
 								<div className='min-w-0 flex-1'>

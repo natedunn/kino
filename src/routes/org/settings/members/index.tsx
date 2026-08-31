@@ -287,7 +287,12 @@ function MembersSettingsRoute() {
 										className='size-8 shrink-0'
 										fallbackName={member.user.username ?? member.user.email}
 									>
-										{member.user.image ? <AvatarImage src={member.user.image} /> : null}
+										{member.user.image ? (
+											<AvatarImage
+												alt={member.user.name || member.user.username || member.user.email}
+												src={member.user.image}
+											/>
+										) : null}
 										<AvatarFallback />
 									</Avatar>
 									<div className='min-w-0 flex-1'>

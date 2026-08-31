@@ -295,7 +295,12 @@ function OrganizationRoute() {
 													className='size-8 shrink-0'
 													fallbackName={m.user.username ?? m.user.email}
 												>
-													{m.user.image ? <AvatarImage src={m.user.image} /> : null}
+													{m.user.image ? (
+														<AvatarImage
+															alt={m.user.name || m.user.username || m.user.email}
+															src={m.user.image}
+														/>
+													) : null}
 													<AvatarFallback />
 												</Avatar>
 												<div className='flex min-w-0 flex-1 items-center justify-between gap-2'>
