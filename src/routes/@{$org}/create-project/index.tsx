@@ -20,7 +20,6 @@ import { useCRPC } from '@/lib/convex/crpc';
 import { crpcServer } from '@/lib/convex/crpc-server';
 import { titleFromSlug, titleMeta } from '@/lib/seo';
 import { cn } from '@/lib/utils';
-import { getInitial } from '@/lib/utils/get-initial';
 import {
 	filterSlugInput,
 	FORM_LIMITS,
@@ -144,10 +143,12 @@ function CreateProjectRoute() {
 									</div>
 									<div className='absolute inset-x-0 top-0 h-64 bg-linear-to-tr from-background to-foreground/10' />
 									<div className='z-10 flex w-full flex-col items-center justify-center pt-10'>
-										<Avatar className='size-24 border'>
-											<AvatarFallback className='rounded-lg text-xl font-bold'>
-												{getInitial(values.name)}
-											</AvatarFallback>
+										<Avatar
+											className='size-24 border'
+											fallbackAnimate='always'
+											fallbackName={values.name || values.slug || `${params.org}-project`}
+										>
+											<AvatarFallback />
 										</Avatar>
 										<div
 											className={cn('mt-3 w-full text-center text-2xl font-bold', {
@@ -182,8 +183,12 @@ function CreateProjectRoute() {
 						<h1 className='inline-flex flex-wrap items-center gap-y-1 text-2xl font-bold md:text-3xl'>
 							<span className='mr-2 inline-block'>{m.create_project_title_prefix()}</span>
 							<span className='inline-flex items-center gap-2 rounded-lg px-2 text-foreground'>
-								<Avatar className='size-6 rounded-full border border-primary'>
-									<AvatarFallback className='rounded-lg'>{getInitial(org.name)}</AvatarFallback>
+								<Avatar
+									className='size-6 border border-primary'
+									fallbackKind='org-initial'
+									fallbackName={org.slug}
+								>
+									<AvatarFallback />
 								</Avatar>
 								<span className='text-gradient-primary'>{org.name}</span>
 							</span>

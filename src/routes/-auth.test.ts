@@ -32,13 +32,13 @@ describe('getVerifyEmailCallbackUrl', () => {
 				'/@acme/kino/feedback/feedback-1?tab=activity#comment-2'
 			)
 		).toBe(
-			'https://app.usekino.com/auth/verify-email?verified=1&redirect=%2F%40acme%2Fkino%2Ffeedback%2Ffeedback-1%3Ftab%3Dactivity%23comment-2'
+			'https://app.usekino.com/auth?verified=1&redirect=%2F%40acme%2Fkino%2Ffeedback%2Ffeedback-1%3Ftab%3Dactivity%23comment-2'
 		);
 	});
 
 	it('omits redirect search when no return target was requested', () => {
 		expect(getVerifyEmailCallbackUrl('https://app.usekino.com', undefined)).toBe(
-			'https://app.usekino.com/auth/verify-email?verified=1'
+			'https://app.usekino.com/auth?verified=1'
 		);
 	});
 });

@@ -131,13 +131,14 @@ function ProjectMembersRoute() {
 					<div className='mt-3 flex flex-col divide-y rounded-xl border bg-card'>
 						{moderators.map((moderator) => (
 							<div key={moderator.memberId} className='flex items-center gap-3 px-4 py-3'>
-								<Avatar className='size-8 shrink-0'>
+								<Avatar className='size-8 shrink-0' fallbackName={moderator.profile.username}>
 									{moderator.profile.imageUrl ? (
-										<AvatarImage src={moderator.profile.imageUrl} />
+										<AvatarImage
+											alt={moderator.profile.name ?? moderator.profile.username}
+											src={moderator.profile.imageUrl}
+										/>
 									) : null}
-									<AvatarFallback className='text-xs font-semibold'>
-										{(moderator.profile.name ?? moderator.profile.username)[0]?.toUpperCase()}
-									</AvatarFallback>
+									<AvatarFallback />
 								</Avatar>
 								<div className='min-w-0 flex-1'>
 									<p className='truncate text-sm font-medium'>
@@ -230,11 +231,14 @@ function ProjectMembersRoute() {
 					<div className='mt-3 flex flex-col divide-y rounded-xl border bg-card'>
 						{members.map((member) => (
 							<div key={member.id} className='flex items-center gap-3 px-4 py-3'>
-								<Avatar className='size-8 shrink-0'>
-									{member.profile.imageUrl ? <AvatarImage src={member.profile.imageUrl} /> : null}
-									<AvatarFallback className='text-xs font-semibold'>
-										{(member.profile.name ?? member.profile.username)[0]?.toUpperCase()}
-									</AvatarFallback>
+								<Avatar className='size-8 shrink-0' fallbackName={member.profile.username}>
+									{member.profile.imageUrl ? (
+										<AvatarImage
+											alt={member.profile.name ?? member.profile.username}
+											src={member.profile.imageUrl}
+										/>
+									) : null}
+									<AvatarFallback />
 								</Avatar>
 								<div className='min-w-0 flex-1'>
 									<p className='truncate text-sm font-medium'>

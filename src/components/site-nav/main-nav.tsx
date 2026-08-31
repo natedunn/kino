@@ -6,6 +6,7 @@ import { Command, Ellipsis } from 'lucide-react';
 
 import { useCommandPalette } from '@/components/command';
 import { KinoMark } from '@/components/kino-mark';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -19,7 +20,6 @@ import Bell from '@/icons/bell';
 import SearchSparkle from '@/icons/search-sparkle';
 import { useProjectThemeStyle } from '@/lib/project-theme';
 import { cn } from '@/lib/utils';
-import { getInitial } from '@/lib/utils/get-initial';
 import { m } from '@/paraglide/messages.js';
 
 import { NavButton } from './nav-button';
@@ -81,7 +81,6 @@ export const MainNav = ({ context, isUserPending = false, subNav, user }: MainNa
 	const org = context.type === 'global' ? undefined : context.org;
 	const orgSlug = org?.slug;
 	const projectSlug = context.type === 'project' ? context.projectSlug : undefined;
-	const orgInitial = getInitial(org?.name, orgSlug);
 	const hasSubNav = !!subNav;
 
 	return (
@@ -105,20 +104,18 @@ export const MainNav = ({ context, isUserPending = false, subNav, user }: MainNa
 										/>
 									</Link>
 									{!!orgSlug && (
-										<div
+										<Avatar
 											className={cn(
-												'-ml-3 flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-foreground/15 ring-2 ring-muted select-none dark:border-foreground/25',
+												'-ml-3 h-8 w-8 border border-foreground/15 ring-2 ring-muted select-none dark:border-foreground/25',
 												!projectThemeStyle && 'dark:ring-black',
-												org.logo ? 'bg-background' : 'bg-foreground',
 												projectSlug && 'max-[459px]:hidden'
 											)}
+											fallbackKind='org-initial'
+											fallbackName={orgSlug}
 										>
-											{org.logo ? (
-												<img alt='' className='h-full w-full object-cover' src={org.logo} />
-											) : (
-												<span className='text-sm font-bold text-background'>{orgInitial}</span>
-											)}
-										</div>
+											<AvatarImage alt={org.name} src={org.logo ?? undefined} />
+											<AvatarFallback />
+										</Avatar>
 									)}
 								</div>
 								<div className='flex min-w-0 flex-1 items-center gap-1 overflow-hidden text-sm md:text-base'>

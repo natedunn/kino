@@ -4,7 +4,6 @@ import { ArrowRight } from 'lucide-react';
 import { SectionCard } from '@/components/section-card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Home from '@/icons/home';
-import { getInitial } from '@/lib/utils/get-initial';
 
 interface Team {
 	id: string;
@@ -45,11 +44,13 @@ export function YourTeams({ teams, underLimit }: { teams: Array<Team>; underLimi
 								params={{ org: team.slug }}
 								className='group flex items-center gap-2.5 px-4 py-2.5 transition-colors hover:bg-muted/40'
 							>
-								<Avatar className='size-7 border'>
+								<Avatar
+									className='size-7 border'
+									fallbackKind='org-initial'
+									fallbackName={team.slug}
+								>
 									{team.logo ? <AvatarImage src={team.logo} alt={team.name} /> : null}
-									<AvatarFallback className='text-xs font-semibold'>
-										{getInitial(team.name)}
-									</AvatarFallback>
+									<AvatarFallback />
 								</Avatar>
 								<span className='min-w-0 flex-1 truncate text-sm font-medium'>{team.name}</span>
 								<ArrowRight className='size-3.5 -translate-x-1 text-muted-foreground opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100' />

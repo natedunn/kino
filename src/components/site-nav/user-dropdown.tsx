@@ -44,11 +44,9 @@ export function UserDropdown({
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
 				<NavButton className='h-8 w-8 rounded-full px-0 min-[460px]:w-auto min-[460px]:min-w-28 min-[460px]:rounded-md min-[460px]:px-2.5'>
-					<Avatar className='size-6 border'>
-						<AvatarImage src={user.imageUrl} />
-						<AvatarFallback>
-							<User className='size-4' />
-						</AvatarFallback>
+					<Avatar className='size-6 border' fallbackName={user.username}>
+						<AvatarImage alt={user.username} src={user.imageUrl} />
+						<AvatarFallback />
 					</Avatar>
 					<span className='hidden text-sm font-medium sm:inline'>{user.username}</span>
 					<ChevronDown className='hidden h-3 w-3 min-[460px]:block' />

@@ -36,14 +36,14 @@ type GeneralSettingsFormValues = {
 // leaking a new URL on every render.
 function AvatarPreview({
 	alt,
-	fallback,
 	file,
 	fallbackSrc,
+	fallbackName,
 }: {
 	alt: string;
-	fallback: string;
 	file: File | null;
 	fallbackSrc?: string;
+	fallbackName: string;
 }) {
 	const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
@@ -58,9 +58,14 @@ function AvatarPreview({
 	}, [file]);
 
 	return (
-		<Avatar className='size-16 rounded-lg border'>
+		<Avatar
+			className='size-16 border'
+			fallbackAnimate='always'
+			fallbackKind='org-initial'
+			fallbackName={fallbackName}
+		>
 			<AvatarImage alt={alt} src={previewUrl ?? fallbackSrc} />
-			<AvatarFallback className='rounded-lg text-lg font-semibold'>{fallback}</AvatarFallback>
+			<AvatarFallback />
 		</Avatar>
 	);
 }
@@ -220,8 +225,8 @@ function GeneralSettingsRoute() {
 									<div className='flex items-center gap-4'>
 										<AvatarPreview
 											alt={org.name}
-											fallback={org.name[0]?.toUpperCase() ?? ''}
 											fallbackSrc={org.logo ?? undefined}
+											fallbackName={org.slug || org.name}
 											file={field.state.value}
 										/>
 										<Input

@@ -117,6 +117,30 @@ export function BaseUiLogo(props: IconProps) {
 	);
 }
 
+export function BlobatarLogo({ size = '1em', ...props }: IconProps) {
+	return (
+		<svg
+			fill='none'
+			height={size}
+			role='img'
+			stroke='currentColor'
+			strokeLinecap='round'
+			strokeLinejoin='round'
+			strokeWidth={2}
+			viewBox='0 0 24 24'
+			width={size}
+			xmlns='http://www.w3.org/2000/svg'
+			{...props}
+		>
+			<title>Blobatar</title>
+			<path d='M12 3c4.97 0 9 3.58 9 8s-4.03 10-9 10-9-5.58-9-10 4.03-8 9-8Z' />
+			<circle cx='9' cy='11' r='1' fill='currentColor' stroke='none' />
+			<circle cx='15' cy='11' r='1' fill='currentColor' stroke='none' />
+			<path d='M9 15c.9.9 2 1.35 3 1.35S14.1 15.9 15 15' />
+		</svg>
+	);
+}
+
 export function TailwindLogo(props: IconProps) {
 	return (
 		<BrandSvg

@@ -20,13 +20,18 @@ import { m } from '@/paraglide/messages.js';
 import { getSafeRedirectTarget, getVerifyEmailCallbackUrl } from './auth';
 
 export const Route = createFileRoute('/auth/')({
-	validateSearch: (search: Record<string, unknown>): { redirect?: string } =>
-		typeof search.redirect === 'string' ? { redirect: search.redirect } : {},
+	validateSearch: (
+		search: Record<string, unknown>
+	): { error?: string; redirect?: string; verified?: boolean } => ({
+		...(typeof search.error === 'string' ? { error: search.error } : {}),
+		...(typeof search.redirect === 'string' ? { redirect: search.redirect } : {}),
+		...(search.verified === '1' ? { verified: true } : {}),
+	}),
 	component: SignInPage,
 });
 
 function SignInPage() {
-	const { redirect } = Route.useSearch();
+	const { error: verificationError, redirect, verified } = Route.useSearch();
 	const session = authClient.useSession();
 	const router = useRouter();
 	const navigate = useNavigate();
@@ -242,6 +247,14 @@ function SignInPage() {
 					</AuthField>
 
 					{error ? <InlineAlert variant='danger'>{error}</InlineAlert> : null}
+
+					{verified && !verificationError ? (
+						<InlineAlert variant='success'>{m.auth_email_confirmed()}</InlineAlert>
+					) : null}
+
+					{verificationError ? (
+						<InlineAlert variant='danger'>{m.auth_verification_expired()}</InlineAlert>
+					) : null}
 
 					{needsVerification ? (
 						<InlineAlert variant='warning'>

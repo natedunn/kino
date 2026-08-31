@@ -9,15 +9,6 @@ import { cn } from '@/lib/utils';
 import { MOCK_MEMBERS } from '../-overview-mock-data';
 import { OverviewSection } from './overview-section';
 
-function initials(name: string) {
-	return name
-		.split(' ')
-		.map((part) => part.charAt(0))
-		.slice(0, 2)
-		.join('')
-		.toUpperCase();
-}
-
 const ROLE_CLASS: Record<Member['role'], string> = {
 	Owner: 'text-primary',
 	Admin: 'text-foreground',
@@ -51,11 +42,9 @@ export function OverviewTeam({
 			<ul className='flex flex-col gap-2.5'>
 				{MOCK_MEMBERS.slice(0, 6).map((member) => (
 					<li key={member.id} className='flex items-center gap-2.5'>
-						<Avatar className='size-7'>
+						<Avatar className='size-7' fallbackName={member.username}>
 							{member.imageUrl && <AvatarImage src={member.imageUrl} alt='' />}
-							<AvatarFallback className='text-[10px] text-background'>
-								{initials(member.name)}
-							</AvatarFallback>
+							<AvatarFallback />
 						</Avatar>
 						<span className='min-w-0 flex-1 truncate text-sm'>{member.name}</span>
 						<span className={cn('text-xs', ROLE_CLASS[member.role])}>{member.role}</span>

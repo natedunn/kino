@@ -22,15 +22,16 @@ export function NavUser({
 		name: string;
 		email: string;
 		avatar?: string;
+		username?: string | null;
 	};
 }) {
 	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
 				<Button size='lg' variant='outline' className='w-full !py-7'>
-					<Avatar className='h-8 w-8 rounded-lg'>
+					<Avatar className='h-8 w-8' fallbackName={user.username ?? user.email}>
 						<AvatarImage src={user.avatar} alt={user.name} />
-						<AvatarFallback className='rounded-lg'>CN</AvatarFallback>
+						<AvatarFallback />
 					</Avatar>
 					<div className='grid flex-1 text-left text-sm leading-tight'>
 						<span className='truncate font-medium'>{user.name}</span>
@@ -47,9 +48,9 @@ export function NavUser({
 			>
 				<DropdownMenuLabel className='p-0 font-normal'>
 					<div className='flex items-center gap-2 px-1 py-1.5 text-left text-sm'>
-						<Avatar className='h-8 w-8 rounded-lg'>
+						<Avatar className='h-8 w-8' fallbackName={user.username ?? user.email}>
 							<AvatarImage src={user.avatar} alt={user.name} />
-							<AvatarFallback className='rounded-lg'>CN</AvatarFallback>
+							<AvatarFallback />
 						</Avatar>
 						<div className='grid flex-1 text-left text-sm leading-tight'>
 							<span className='truncate font-medium'>{user.name}</span>

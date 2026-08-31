@@ -16,6 +16,7 @@ import {
 import { EditorContentDisplay, MarkdownEditor, sanitizeEditorContent } from '@/components/editor';
 import { EmoteButton, EmotePicker } from '@/components/emote';
 import { GradientIconBadge } from '@/components/gradient-icon-badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
 	DropdownMenu,
@@ -289,19 +290,18 @@ export function CommentCard({
 						railClassName
 					)}
 				>
-					<div className='relative -mr-4 size-8 overflow-hidden rounded-full border bg-linear-to-tr from-white/50 to-accent shadow-xl shadow-black'>
-						{comment.author?.imageUrl ? (
-							<img
-								alt={comment.author.username ?? ''}
-								className='size-8 object-cover'
-								src={comment.author.imageUrl}
-							/>
-						) : (
-							<div className='flex size-8 items-center justify-center bg-primary text-xs font-bold text-primary-foreground'>
-								{comment.author?.name?.charAt(0) ?? comment.author?.username?.charAt(0) ?? '?'}
-							</div>
-						)}
-					</div>
+					<Avatar
+						className='relative -mr-4 size-8 border shadow-xl shadow-black'
+						fallbackName={
+							comment.author?.username ?? comment.author?.name ?? m.feedback_unknown_user()
+						}
+					>
+						<AvatarImage
+							alt={comment.author?.username ?? comment.author?.name ?? m.feedback_unknown_user()}
+							src={comment.author?.imageUrl ?? undefined}
+						/>
+						<AvatarFallback />
+					</Avatar>
 				</div>
 				<div className='flex w-full min-w-0 flex-col bg-card'>
 					<div className='flex w-full justify-between gap-2 border-b px-6 py-4'>

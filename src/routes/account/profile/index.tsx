@@ -49,14 +49,14 @@ export const Route = createFileRoute('/account/profile/')({
 // leaking a new URL on every render.
 function AvatarPreview({
 	alt,
-	fallback,
 	file,
 	fallbackSrc,
+	fallbackName,
 }: {
 	alt: string;
-	fallback: string;
 	file: File | null;
 	fallbackSrc?: string;
+	fallbackName: string;
 }) {
 	const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
@@ -71,9 +71,9 @@ function AvatarPreview({
 	}, [file]);
 
 	return (
-		<Avatar className='size-16 rounded-lg border'>
+		<Avatar className='size-16 border' fallbackAnimate='always' fallbackName={fallbackName}>
 			<AvatarImage alt={alt} src={previewUrl ?? fallbackSrc} />
-			<AvatarFallback className='rounded-lg text-lg font-semibold'>{fallback}</AvatarFallback>
+			<AvatarFallback />
 		</Avatar>
 	);
 }
@@ -187,8 +187,8 @@ function AuthenticatedProfileSettingsRoute() {
 									<div className='flex items-center gap-4'>
 										<AvatarPreview
 											alt={profile.name ?? profile.username ?? ''}
-											fallback={(profile.name?.[0] ?? profile.username?.[0] ?? '').toUpperCase()}
 											fallbackSrc={profile.imageUrl ?? undefined}
+											fallbackName={profile.username ?? profile.name ?? 'profile'}
 											file={field.state.value}
 										/>
 										<Input

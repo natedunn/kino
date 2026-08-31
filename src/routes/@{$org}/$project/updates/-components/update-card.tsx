@@ -2,6 +2,7 @@ import { memo } from 'react';
 import { Link } from '@tanstack/react-router';
 import { Calendar, Heart, MessageSquare } from 'lucide-react';
 
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { formatFullDate } from '@/lib/utils/format-timestamp';
@@ -71,13 +72,10 @@ function UpdateCardImpl({
 					) : null}
 					{author ? (
 						<span className='flex items-center gap-1.5 text-sm text-muted-foreground'>
-							{author.imageUrl ? (
-								<img alt={author.username} className='size-5 rounded-full' src={author.imageUrl} />
-							) : (
-								<span className='flex size-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground'>
-									{author.name?.charAt(0) ?? '?'}
-								</span>
-							)}
+							<Avatar className='size-5' fallbackName={author.username ?? author.name ?? 'Unknown'}>
+								<AvatarImage alt={author.username} src={author.imageUrl ?? undefined} />
+								<AvatarFallback />
+							</Avatar>
 							<span>@{author.username}</span>
 						</span>
 					) : null}
