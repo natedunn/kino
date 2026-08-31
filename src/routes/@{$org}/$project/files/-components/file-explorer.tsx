@@ -194,9 +194,15 @@ export function FileExplorer({
 								<tr>
 									<td className='py-20 text-center' colSpan={6}>
 										<File className='mx-auto mb-3 size-8 text-muted-foreground/45' />
-										<p className='font-medium'>{m.files_folder_empty()}</p>
+										<p className='font-medium'>
+											{folderId ? m.files_folder_empty() : m.files_root_empty()}
+										</p>
 										<p className='mt-1 text-sm text-muted-foreground'>
-											{m.files_folder_empty_help()}
+											{canManage
+												? m.files_folder_empty_help()
+												: folderId
+													? m.files_folder_empty_readonly_help()
+													: m.files_empty_help()}
 										</p>
 									</td>
 								</tr>

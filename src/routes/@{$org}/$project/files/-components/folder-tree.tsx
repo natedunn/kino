@@ -173,6 +173,19 @@ export function FolderTree({
 		return <FolderTreeSkeleton className={className} />;
 	}
 
+	if (folders.length === 0 && files.length === 0) {
+		return (
+			<div
+				className={cn(
+					'rounded-md border bg-muted/30 px-3 py-2 text-xs text-muted-foreground uppercase',
+					className
+				)}
+			>
+				<p>{m.files_tree_empty()}</p>
+			</div>
+		);
+	}
+
 	return (
 		<Tree className={cn('gap-0.5 p-1', className)} indent={14} indentGuides tree={tree}>
 			{visibleItems.map((item) => {
