@@ -58,7 +58,12 @@ function AvatarPreview({
 	}, [file]);
 
 	return (
-		<Avatar className='size-16 border' fallbackAnimate='always' fallbackName={fallbackName}>
+		<Avatar
+			className='size-16 border'
+			fallbackAnimate='always'
+			fallbackKind='org-initial'
+			fallbackName={fallbackName}
+		>
 			<AvatarImage alt={alt} src={previewUrl ?? fallbackSrc} />
 			<AvatarFallback />
 		</Avatar>

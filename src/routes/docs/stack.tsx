@@ -10,6 +10,7 @@ import {
 	BaseUiLogo,
 	BentoLogo,
 	BetterAuthLogo,
+	BlobatarLogo,
 	CloudflareLogo,
 	ConvexLogo,
 	KitcnLogo,
@@ -20,10 +21,11 @@ import {
 	TanStackLogo,
 } from '@/components/stack/logos';
 import { titleMeta } from '@/lib/seo';
+import * as m from '@/paraglide/messages.js';
 
 export const Route = createFileRoute('/docs/stack')({
 	head: () => ({
-		meta: [titleMeta(['Tech Stack'])],
+		meta: [titleMeta([m.stack_meta()])],
 	}),
 	component: StackPage,
 });
@@ -43,85 +45,90 @@ type TechSection = {
 
 const SECTIONS: Array<TechSection> = [
 	{
-		title: 'Core',
-		description: 'The framework, data layer, and auth that make the app run.',
+		title: m.stack_section_core_title(),
+		description: m.stack_section_core_description(),
 		items: [
 			{
 				name: 'React',
-				blurb: 'You know it. You love it (maybe).',
+				blurb: m.stack_item_react_blurb(),
 				href: 'https://react.dev',
 				Logo: ReactLogo,
 			},
 			{
 				name: 'TanStack Start',
-				blurb: 'Our full-stack framework from the one and only.',
+				blurb: m.stack_item_tanstack_start_blurb(),
 				href: 'https://tanstack.com/start',
 				Logo: TanStackLogo,
 			},
 			{
 				name: 'Convex',
-				blurb: 'Reactive backend and database for our data and server functions.',
+				blurb: m.stack_item_convex_blurb(),
 				href: 'https://convex.dev',
 				Logo: ConvexLogo,
 			},
 			{
 				name: 'Better Auth',
-				blurb: 'Our auth solution, technically included with Kitcn.',
+				blurb: m.stack_item_better_auth_blurb(),
 				href: 'https://better-auth.com',
 				Logo: BetterAuthLogo,
 			},
 			{
 				name: 'kitcn',
-				blurb: 'Glue layer (cRPC + ORM + auth) wiring Convex to our app.',
+				blurb: m.stack_item_kitcn_blurb(),
 				href: 'https://kitcn.dev/',
 				Logo: KitcnLogo,
 			},
 		],
 	},
 	{
-		title: 'UI',
-		description: 'The components, primitives, and styling behind the interface.',
+		title: m.stack_section_ui_title(),
+		description: m.stack_section_ui_description(),
 		items: [
 			{
 				name: 'shadcn/ui',
-				blurb: 'Component patterns our UI primitives are built from.',
+				blurb: m.stack_item_shadcn_blurb(),
 				href: 'https://ui.shadcn.com',
 				Logo: ShadcnLogo,
 			},
 			{
 				name: 'Base UI',
-				blurb: 'Headless, accessible primitives backing our components.',
+				blurb: m.stack_item_base_ui_blurb(),
 				href: 'https://base-ui.com',
 				Logo: BaseUiLogo,
 			},
 			{
 				name: 'Tailwind CSS',
-				blurb: 'Utility-first styling system for the whole app.',
+				blurb: m.stack_item_tailwind_blurb(),
 				href: 'https://tailwindcss.com',
 				Logo: TailwindLogo,
+			},
+			{
+				name: 'Blobatar',
+				blurb: m.stack_item_blobatar_blurb(),
+				href: 'https://blobatar.dev',
+				Logo: BlobatarLogo,
 			},
 		],
 	},
 	{
-		title: 'Infrastructure & Analytics',
-		description: 'Where the app runs and how we understand usage.',
+		title: m.stack_section_infra_title(),
+		description: m.stack_section_infra_description(),
 		items: [
 			{
 				name: 'Cloudflare',
-				blurb: 'What don’t we use Cloudflare for?',
+				blurb: m.stack_item_cloudflare_blurb(),
 				href: 'https://cloudflare.com',
 				Logo: CloudflareLogo,
 			},
 			{
 				name: 'PostHog',
-				blurb: 'Product analytics for understanding how the app is used.',
+				blurb: m.stack_item_posthog_blurb(),
 				href: 'https://posthog.com',
 				Logo: PostHogLogo,
 			},
 			{
 				name: 'Bento',
-				blurb:
-					'Email platform for our transactional sends — verification, password resets, and invites.',
+				blurb: m.stack_item_bento_blurb(),
 				href: 'https://bentonow.com',
 				Logo: BentoLogo,
 			},
@@ -132,10 +139,7 @@ const SECTIONS: Array<TechSection> = [
 function StackPage() {
 	return (
 		<div>
-			<DocsPageHeader
-				description='The tools and technologies we use to build and run Kino — and what each one does in the project.'
-				title='Tech Stack'
-			/>
+			<DocsPageHeader description={m.stack_page_description()} title={m.stack_page_title()} />
 
 			<div className='mt-12 space-y-12'>
 				{SECTIONS.map((section) => (

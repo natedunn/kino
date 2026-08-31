@@ -110,6 +110,7 @@ export const MainNav = ({ context, isUserPending = false, subNav, user }: MainNa
 												!projectThemeStyle && 'dark:ring-black',
 												projectSlug && 'max-[459px]:hidden'
 											)}
+											fallbackKind='org-initial'
 											fallbackName={orgSlug}
 										>
 											<AvatarImage alt={org.name} src={org.logo ?? undefined} />

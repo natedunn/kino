@@ -183,7 +183,11 @@ function CreateProjectRoute() {
 						<h1 className='inline-flex flex-wrap items-center gap-y-1 text-2xl font-bold md:text-3xl'>
 							<span className='mr-2 inline-block'>{m.create_project_title_prefix()}</span>
 							<span className='inline-flex items-center gap-2 rounded-lg px-2 text-foreground'>
-								<Avatar className='size-6 border border-primary' fallbackName={org.slug}>
+								<Avatar
+									className='size-6 border border-primary'
+									fallbackKind='org-initial'
+									fallbackName={org.slug}
+								>
 									<AvatarFallback />
 								</Avatar>
 								<span className='text-gradient-primary'>{org.name}</span>

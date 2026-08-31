@@ -22,7 +22,11 @@ type SelectorOrg = {
 
 function OrgAvatar({ org, className }: { org: SelectorOrg; className?: string }) {
 	return (
-		<Avatar className={cn('size-6 shrink-0', className)} fallbackName={org.slug}>
+		<Avatar
+			className={cn('size-6 shrink-0', className)}
+			fallbackKind='org-initial'
+			fallbackName={org.slug}
+		>
 			<AvatarImage alt={org.name} src={org.logo ?? undefined} />
 			<AvatarFallback />
 		</Avatar>

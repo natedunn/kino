@@ -156,6 +156,7 @@ function OrganizationRoute() {
 								<Avatar
 									className='h-16 w-16 rounded-full shadow-lg shadow-primary/20 md:h-20 md:w-20'
 									fallbackAnimate='always'
+									fallbackKind='org-initial'
 									fallbackName={orgData.org.slug}
 								>
 									<AvatarImage alt={orgData.org.name} src={orgData.org.logo ?? undefined} />

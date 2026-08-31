@@ -44,7 +44,11 @@ export function YourTeams({ teams, underLimit }: { teams: Array<Team>; underLimi
 								params={{ org: team.slug }}
 								className='group flex items-center gap-2.5 px-4 py-2.5 transition-colors hover:bg-muted/40'
 							>
-								<Avatar className='size-7 border' fallbackName={team.slug}>
+								<Avatar
+									className='size-7 border'
+									fallbackKind='org-initial'
+									fallbackName={team.slug}
+								>
 									{team.logo ? <AvatarImage src={team.logo} alt={team.name} /> : null}
 									<AvatarFallback />
 								</Avatar>
