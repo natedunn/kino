@@ -29,6 +29,8 @@ type RankedCommandGroup = {
 	group: CommandGroupName;
 };
 
+type ProjectSearchContext = { orgSlug: string; projectSlug: string };
+
 function normalizeSearchText(value: string) {
 	return value
 		.normalize('NFKD')
@@ -83,28 +85,30 @@ function scoreCommand(command: AppCommand, rawQuery: string) {
 	return total + (command.contextual ? 0.01 : 0);
 }
 
-type CommandPaletteMode = 'commands' | 'files';
+type CommandPaletteMode = 'commands' | 'files' | 'updates';
 
 type CommandPaletteProps = {
 	commands: Array<AppCommand>;
-	fileSearchContext?: { orgSlug: string; projectSlug: string };
+	projectSearchContext?: ProjectSearchContext;
 	initialQuery: string;
 	mode: CommandPaletteMode;
 	onModeChange: (mode: CommandPaletteMode) => void;
 	onOpenChange: (open: boolean) => void;
 	onOpenFile: (fileId: string) => void;
+	onOpenUpdate: (slug: string) => void;
 	onRunCommand: (command: AppCommand) => void;
 	open: boolean;
 };
 
 export function CommandPalette({
 	commands,
-	fileSearchContext,
+	projectSearchContext,
 	initialQuery,
 	mode,
 	onModeChange,
 	onOpenChange,
 	onOpenFile,
+	onOpenUpdate,
 	onRunCommand,
 	open,
 }: CommandPaletteProps) {
@@ -115,10 +119,10 @@ export function CommandPalette({
 	const [selectedCommandId, setSelectedCommandId] = useState('');
 	const projectQuery = useQuery({
 		...crpc.project.getDetails.queryOptions({
-			orgSlug: fileSearchContext?.orgSlug ?? '',
-			slug: fileSearchContext?.projectSlug ?? '',
+			orgSlug: projectSearchContext?.orgSlug ?? '',
+			slug: projectSearchContext?.projectSlug ?? '',
 		}),
-		enabled: mode === 'files' && !!fileSearchContext,
+		enabled: mode !== 'commands' && !!projectSearchContext,
 	});
 	const projectId = projectQuery.data?.project?.id;
 	const filesQuery = useQuery({
@@ -130,6 +134,15 @@ export function CommandPalette({
 			sort: debouncedQuery.trim() ? undefined : 'edited_desc',
 		}),
 		enabled: mode === 'files' && !!projectId,
+	});
+	const updatesQuery = useQuery({
+		...crpc.update.searchProject.queryOptions({
+			category: undefined,
+			cursor: null,
+			projectId: projectId ?? '',
+			search: debouncedQuery.trim() || undefined,
+		}),
+		enabled: mode === 'updates' && !!projectId,
 	});
 
 	useEffect(() => {
@@ -208,25 +221,41 @@ export function CommandPalette({
 	return (
 		<CommandDialog
 			commandValue={mode === 'commands' ? selectedCommandId : undefined}
-			description={mode === 'files' ? m.command_search_project_files_description() : undefined}
+			description={
+				mode === 'files'
+					? m.command_search_project_files_description()
+					: mode === 'updates'
+						? m.command_search_project_updates_description()
+						: undefined
+			}
 			initialFocus={inputRef}
 			onCommandValueChange={mode === 'commands' ? setSelectedCommandId : undefined}
 			onOpenChange={handleOpenChange}
 			open={open}
 			shouldFilter={false}
-			title={mode === 'files' ? m.command_search_files() : undefined}
+			title={
+				mode === 'files'
+					? m.command_search_files()
+					: mode === 'updates'
+						? m.command_search_updates()
+						: undefined
+			}
 		>
 			<CommandInput
 				ref={inputRef}
 				onKeyDown={(event) => {
-					if (event.key !== 'Escape' || mode !== 'files') return;
+					if (event.key !== 'Escape' || mode === 'commands') return;
 					event.preventDefault();
 					event.stopPropagation();
 					returnToCommands();
 				}}
 				onValueChange={setQuery}
 				placeholder={
-					mode === 'files' ? m.command_search_project_files() : m.command_search_placeholder()
+					mode === 'files'
+						? m.command_search_project_files()
+						: mode === 'updates'
+							? m.command_search_project_updates()
+							: m.command_search_placeholder()
 				}
 				value={query}
 			/>
@@ -237,6 +266,14 @@ export function CommandPalette({
 					onBack={returnToCommands}
 					onOpenFile={onOpenFile}
 					query={debouncedQuery}
+				/>
+			) : mode === 'updates' ? (
+				<UpdateSearchResults
+					loading={projectQuery.isPending || updatesQuery.isPending || query !== debouncedQuery}
+					onBack={returnToCommands}
+					onOpenUpdate={onOpenUpdate}
+					query={debouncedQuery}
+					updates={updatesQuery.data?.page ?? []}
 				/>
 			) : (
 				<CommandList className='px-1.5 sm:scroll-pb-12 sm:px-2 sm:pb-12'>
@@ -320,11 +357,66 @@ function FileSearchResults({
 	);
 }
 
+function UpdateSearchResults({
+	loading,
+	onBack,
+	onOpenUpdate,
+	query,
+	updates,
+}: {
+	loading: boolean;
+	onBack: () => void;
+	onOpenUpdate: (slug: string) => void;
+	query: string;
+	updates: Array<any>;
+}) {
+	return (
+		<CommandList className='px-1.5 sm:scroll-pb-12 sm:px-2 sm:pb-12'>
+			<CommandGroup>
+				<CommandItem forceMount onSelect={onBack} value={m.command_back()}>
+					<ArrowLeft />
+					<span>{m.command_back()}</span>
+					<CommandShortcut>Esc</CommandShortcut>
+				</CommandItem>
+			</CommandGroup>
+			{loading ? (
+				<p className='px-4 py-12 text-center text-base text-muted-foreground'>
+					{m.command_searching_updates()}
+				</p>
+			) : updates.length === 0 ? (
+				<p className='px-4 py-12 text-center text-base text-muted-foreground'>
+					{query.trim() ? m.command_no_matching_updates() : m.command_no_project_updates()}
+				</p>
+			) : (
+				<CommandGroup heading={m.shortcuts_group_navigation()}>
+					{updates.map((update) => (
+						<CommandItem
+							key={update.id}
+							onSelect={() => onOpenUpdate(update.slug)}
+							value={update.id}
+						>
+							<FileText />
+							<div className='min-w-0 flex-1'>
+								<p className='truncate font-medium'>{update.title}</p>
+								<p className='truncate text-xs text-muted-foreground'>{update.contentPreview}</p>
+							</div>
+						</CommandItem>
+					))}
+				</CommandGroup>
+			)}
+		</CommandList>
+	);
+}
+
 function CommandPaletteFooter({ mode }: { mode: CommandPaletteMode }) {
 	return (
 		<div className='absolute inset-x-0 bottom-0 z-10 hidden items-center gap-4 border-t border-white/10 bg-gradient-to-b from-background/65 to-background/90 px-4 py-2.5 text-xs text-muted-foreground shadow-[0_-10px_22px_-18px_rgba(0,0,0,0.2)] backdrop-blur-lg sm:flex dark:shadow-[0_-12px_28px_-18px_rgba(0,0,0,0.65)]'>
 			<span className='font-medium text-foreground/75'>
-				{mode === 'files' ? m.command_project_files() : m.command_palette()}
+				{mode === 'files'
+					? m.command_project_files()
+					: mode === 'updates'
+						? m.command_project_updates()
+						: m.command_palette()}
 			</span>
 			<span className='ml-auto flex items-center gap-1.5'>
 				<kbd className='rounded border bg-background/80 px-1.5 py-0.5 font-sans'>↑↓</kbd>
@@ -336,7 +428,7 @@ function CommandPaletteFooter({ mode }: { mode: CommandPaletteMode }) {
 			</span>
 			<span className='flex items-center gap-1.5'>
 				<kbd className='rounded border bg-background/80 px-1.5 py-0.5 font-sans'>esc</kbd>
-				{mode === 'files' ? m.command_commands() : m.common_close()}
+				{mode === 'commands' ? m.common_close() : m.command_commands()}
 			</span>
 		</div>
 	);

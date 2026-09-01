@@ -80,6 +80,7 @@ import { Route as AtChar123orgChar125ProjectUpdatesSlugIndexRouteImport } from '
 import { Route as AtChar123orgChar125ProjectUpdatesSlugEditRouteImport } from './routes/@{$org}/$project/updates/$slug/edit'
 import { Route as AtChar123orgChar125ProjectUpdatesEditIndexRouteImport } from './routes/@{$org}/$project/updates/edit/index'
 import { Route as AtChar123orgChar125ProjectUpdatesNewIndexRouteImport } from './routes/@{$org}/$project/updates/new/index'
+import { Route as AtChar123orgChar125ProjectUpdatesSearchIndexRouteImport } from './routes/@{$org}/$project/updates/search/index'
 import { Route as AtChar123orgChar125ProjectFeedbackBoardsBoardIndexRouteImport } from './routes/@{$org}/$project/feedback/boards/$board/index'
 import { Route as AtChar123orgChar125ProjectFeedbackBoardsBoardEditRouteImport } from './routes/@{$org}/$project/feedback/boards/$board/edit'
 import { Route as AtChar123orgChar125ProjectFilesFileFileIdIndexRouteImport } from './routes/@{$org}/$project/files/file/$fileId/index'
@@ -476,6 +477,12 @@ const AtChar123orgChar125ProjectUpdatesNewIndexRoute =
     path: '/updates/new/',
     getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
   } as any)
+const AtChar123orgChar125ProjectUpdatesSearchIndexRoute =
+  AtChar123orgChar125ProjectUpdatesSearchIndexRouteImport.update({
+    id: '/updates/search/',
+    path: '/updates/search/',
+    getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
+  } as any)
 const AtChar123orgChar125ProjectFeedbackBoardsBoardIndexRoute =
   AtChar123orgChar125ProjectFeedbackBoardsBoardIndexRouteImport.update({
     id: '/boards/$board/',
@@ -573,6 +580,7 @@ export interface FileRoutesByFullPath {
   '/@{$org}/$project/updates/$slug/': typeof AtChar123orgChar125ProjectUpdatesSlugIndexRoute
   '/@{$org}/$project/updates/edit/': typeof AtChar123orgChar125ProjectUpdatesEditIndexRoute
   '/@{$org}/$project/updates/new/': typeof AtChar123orgChar125ProjectUpdatesNewIndexRoute
+  '/@{$org}/$project/updates/search/': typeof AtChar123orgChar125ProjectUpdatesSearchIndexRoute
   '/@{$org}/$project/feedback/boards/$board/edit': typeof AtChar123orgChar125ProjectFeedbackBoardsBoardEditRoute
   '/@{$org}/$project/feedback/boards/$board/': typeof AtChar123orgChar125ProjectFeedbackBoardsBoardIndexRoute
   '/@{$org}/$project/files/file/$fileId/': typeof AtChar123orgChar125ProjectFilesFileFileIdIndexRoute
@@ -642,6 +650,7 @@ export interface FileRoutesByTo {
   '/@{$org}/$project/updates/$slug': typeof AtChar123orgChar125ProjectUpdatesSlugIndexRoute
   '/@{$org}/$project/updates/edit': typeof AtChar123orgChar125ProjectUpdatesEditIndexRoute
   '/@{$org}/$project/updates/new': typeof AtChar123orgChar125ProjectUpdatesNewIndexRoute
+  '/@{$org}/$project/updates/search': typeof AtChar123orgChar125ProjectUpdatesSearchIndexRoute
   '/@{$org}/$project/feedback/boards/$board/edit': typeof AtChar123orgChar125ProjectFeedbackBoardsBoardEditRoute
   '/@{$org}/$project/feedback/boards/$board': typeof AtChar123orgChar125ProjectFeedbackBoardsBoardIndexRoute
   '/@{$org}/$project/files/file/$fileId': typeof AtChar123orgChar125ProjectFilesFileFileIdIndexRoute
@@ -720,6 +729,7 @@ export interface FileRoutesById {
   '/@{$org}/$project/updates/$slug/': typeof AtChar123orgChar125ProjectUpdatesSlugIndexRoute
   '/@{$org}/$project/updates/edit/': typeof AtChar123orgChar125ProjectUpdatesEditIndexRoute
   '/@{$org}/$project/updates/new/': typeof AtChar123orgChar125ProjectUpdatesNewIndexRoute
+  '/@{$org}/$project/updates/search/': typeof AtChar123orgChar125ProjectUpdatesSearchIndexRoute
   '/@{$org}/$project/feedback/boards/$board/edit': typeof AtChar123orgChar125ProjectFeedbackBoardsBoardEditRoute
   '/@{$org}/$project/feedback/boards/$board/': typeof AtChar123orgChar125ProjectFeedbackBoardsBoardIndexRoute
   '/@{$org}/$project/files/file/$fileId/': typeof AtChar123orgChar125ProjectFilesFileFileIdIndexRoute
@@ -799,6 +809,7 @@ export interface FileRouteTypes {
     | '/@{$org}/$project/updates/$slug/'
     | '/@{$org}/$project/updates/edit/'
     | '/@{$org}/$project/updates/new/'
+    | '/@{$org}/$project/updates/search/'
     | '/@{$org}/$project/feedback/boards/$board/edit'
     | '/@{$org}/$project/feedback/boards/$board/'
     | '/@{$org}/$project/files/file/$fileId/'
@@ -868,6 +879,7 @@ export interface FileRouteTypes {
     | '/@{$org}/$project/updates/$slug'
     | '/@{$org}/$project/updates/edit'
     | '/@{$org}/$project/updates/new'
+    | '/@{$org}/$project/updates/search'
     | '/@{$org}/$project/feedback/boards/$board/edit'
     | '/@{$org}/$project/feedback/boards/$board'
     | '/@{$org}/$project/files/file/$fileId'
@@ -945,6 +957,7 @@ export interface FileRouteTypes {
     | '/@{$org}/$project/updates/$slug/'
     | '/@{$org}/$project/updates/edit/'
     | '/@{$org}/$project/updates/new/'
+    | '/@{$org}/$project/updates/search/'
     | '/@{$org}/$project/feedback/boards/$board/edit'
     | '/@{$org}/$project/feedback/boards/$board/'
     | '/@{$org}/$project/files/file/$fileId/'
@@ -1467,6 +1480,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AtChar123orgChar125ProjectUpdatesNewIndexRouteImport
       parentRoute: typeof AtChar123orgChar125ProjectRouteRoute
     }
+    '/@{$org}/$project/updates/search/': {
+      id: '/@{$org}/$project/updates/search/'
+      path: '/updates/search'
+      fullPath: '/@{$org}/$project/updates/search/'
+      preLoaderRoute: typeof AtChar123orgChar125ProjectUpdatesSearchIndexRouteImport
+      parentRoute: typeof AtChar123orgChar125ProjectRouteRoute
+    }
     '/@{$org}/$project/feedback/boards/$board/': {
       id: '/@{$org}/$project/feedback/boards/$board/'
       path: '/boards/$board'
@@ -1606,6 +1626,7 @@ interface AtChar123orgChar125ProjectRouteRouteChildren {
   AtChar123orgChar125ProjectUpdatesSlugIndexRoute: typeof AtChar123orgChar125ProjectUpdatesSlugIndexRoute
   AtChar123orgChar125ProjectUpdatesEditIndexRoute: typeof AtChar123orgChar125ProjectUpdatesEditIndexRoute
   AtChar123orgChar125ProjectUpdatesNewIndexRoute: typeof AtChar123orgChar125ProjectUpdatesNewIndexRoute
+  AtChar123orgChar125ProjectUpdatesSearchIndexRoute: typeof AtChar123orgChar125ProjectUpdatesSearchIndexRoute
 }
 
 const AtChar123orgChar125ProjectRouteRouteChildren: AtChar123orgChar125ProjectRouteRouteChildren =
@@ -1637,6 +1658,8 @@ const AtChar123orgChar125ProjectRouteRouteChildren: AtChar123orgChar125ProjectRo
       AtChar123orgChar125ProjectUpdatesEditIndexRoute,
     AtChar123orgChar125ProjectUpdatesNewIndexRoute:
       AtChar123orgChar125ProjectUpdatesNewIndexRoute,
+    AtChar123orgChar125ProjectUpdatesSearchIndexRoute:
+      AtChar123orgChar125ProjectUpdatesSearchIndexRoute,
   }
 
 const AtChar123orgChar125ProjectRouteRouteWithChildren =

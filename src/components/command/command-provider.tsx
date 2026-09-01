@@ -43,7 +43,7 @@ export function CommandProvider({ children }: { children: ReactNode }) {
 	const [open, setOpen] = useState(false);
 	const [isPaletteMounted, setPaletteMounted] = useState(false);
 	const [CommandPalette, setCommandPalette] = useState<LoadedCommandPalette | null>(null);
-	const [mode, setMode] = useState<'commands' | 'files'>('commands');
+	const [mode, setMode] = useState<'commands' | 'files' | 'updates'>('commands');
 	const [initialQuery, setInitialQuery] = useState('');
 	const [registrations, setRegistrations] = useState<Array<CommandRegistration>>([]);
 	const navigate = useNavigate();
@@ -274,6 +274,12 @@ export function CommandProvider({ children }: { children: ReactNode }) {
 				setMode('files');
 				setOpen(true);
 			},
+			openUpdateSearch: (query = '') => {
+				preparePalette();
+				setInitialQuery(query);
+				setMode('updates');
+				setOpen(true);
+			},
 			preload: preloadPalette,
 			registerCommands,
 		}),
@@ -286,7 +292,7 @@ export function CommandProvider({ children }: { children: ReactNode }) {
 			{isPaletteMounted && CommandPalette ? (
 				<CommandPalette
 					commands={commands}
-					fileSearchContext={orgSlug && projectSlug ? { orgSlug, projectSlug } : undefined}
+					projectSearchContext={orgSlug && projectSlug ? { orgSlug, projectSlug } : undefined}
 					initialQuery={initialQuery}
 					mode={mode}
 					onModeChange={setMode}
@@ -305,6 +311,16 @@ export function CommandProvider({ children }: { children: ReactNode }) {
 						void navigate({
 							params: { fileId, org: orgSlug, project: projectSlug },
 							to: '/@{$org}/$project/files/file/$fileId',
+						});
+					}}
+					onOpenUpdate={(slug) => {
+						if (!orgSlug || !projectSlug) return;
+						setOpen(false);
+						setInitialQuery('');
+						setMode('commands');
+						void navigate({
+							params: { org: orgSlug, project: projectSlug, slug },
+							to: '/@{$org}/$project/updates/$slug',
 						});
 					}}
 					onRunCommand={runCommand}

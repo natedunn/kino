@@ -2,6 +2,8 @@ import { memo } from 'react';
 import { Link } from '@tanstack/react-router';
 import { Calendar, Heart, MessageSquare } from 'lucide-react';
 
+import { formatInlineCode } from '@/components/editor/format-inline-code';
+import { sanitizeEditorContent } from '@/components/editor/sanitize-content';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -10,6 +12,28 @@ import * as m from '@/paraglide/messages.js';
 
 import { CategoryBadge } from './category-badge';
 import { useEmoteToggle } from './use-emote-toggle';
+
+function UpdateCardContent({ content }: { content: string }) {
+	const isHTML = content.startsWith('<') && content.includes('</');
+
+	if (!isHTML) {
+		return (
+			<div className='text-base leading-8 whitespace-pre-wrap break-words text-muted-foreground'>
+				{content}
+			</div>
+		);
+	}
+
+	const sanitizedContent = sanitizeEditorContent(content);
+	const formattedContent = sanitizedContent.includes('<pre') ? sanitizedContent : formatInlineCode(sanitizedContent);
+
+	return (
+		<div
+			className='markdown-prose max-w-none break-words pb-1 text-muted-foreground [&_pre]:overflow-x-auto [&_pre]:rounded-xl [&_pre]:border [&_pre]:border-border/70 [&_pre]:bg-card/70'
+			dangerouslySetInnerHTML={{ __html: formattedContent }}
+		/>
+	);
+}
 
 // Memoized: the updates list re-renders on local state changes (e.g. "Load
 // more") while each row's props stay referentially stable, so memo skips
@@ -21,6 +45,7 @@ function UpdateCardImpl({
 	currentProfileId,
 	className,
 	isLast = false,
+	sidebarOpen = true,
 }: {
 	update: any;
 	orgSlug: string;
@@ -28,11 +53,13 @@ function UpdateCardImpl({
 	currentProfileId?: string;
 	className?: string;
 	isLast?: boolean;
+	sidebarOpen?: boolean;
 }) {
 	const {
 		id: updateId,
 		title,
-		contentPreview,
+		content,
+		contentPreviewIsTruncated,
 		slug,
 		author,
 		category,
@@ -57,12 +84,12 @@ function UpdateCardImpl({
 	});
 
 	return (
-		<li className={cn('relative flex', className)}>
+		<li className={cn('relative flex min-w-0', className)}>
 			{!isLast ? (
 				<div aria-hidden='true' className='absolute inset-x-0 bottom-0 border-b md:-mr-8.25' />
 			) : null}
-			<div className='w-full py-10'>
-				<div className='mb-4 flex flex-wrap items-center gap-3'>
+			<div className={cn('min-w-0 w-full py-10', sidebarOpen ? 'lg:pl-7' : 'lg:pl-0')}>
+				<div className='mb-4 flex min-w-0 flex-wrap items-center gap-3'>
 					<CategoryBadge category={category} />
 					{publishedAt ? (
 						<span className='flex items-center gap-1.5 text-sm text-muted-foreground'>
@@ -86,7 +113,7 @@ function UpdateCardImpl({
 					) : null}
 				</div>
 
-				<h3 className='mb-6 text-3xl font-semibold'>
+				<h3 className='mb-6 min-w-0 break-words text-3xl font-semibold'>
 					<Link
 						className='link-text'
 						params={{ org: orgSlug, project: projectSlug, slug }}
@@ -102,14 +129,24 @@ function UpdateCardImpl({
 					</div>
 				) : null}
 
-				{contentPreview ? (
-					<p className='mt-4 line-clamp-5 text-base leading-7 whitespace-pre-line text-muted-foreground'>
-						{contentPreview}
-					</p>
+				{content ? (
+					<div className='relative mt-4 min-w-0 overflow-hidden'>
+						<div
+							className={cn(
+								'min-w-0 overflow-hidden',
+								contentPreviewIsTruncated ? 'max-h-[72rem]' : ''
+							)}
+						>
+							<UpdateCardContent content={content} />
+						</div>
+						{contentPreviewIsTruncated ? (
+							<div className='pointer-events-none absolute inset-x-0 bottom-0 h-48 bg-linear-to-t from-background via-background/94 to-transparent' />
+						) : null}
+					</div>
 				) : null}
 
-				<div className='mt-6 flex items-center justify-between'>
-					<div className='flex items-center gap-6'>
+				<div className='mt-6 flex min-w-0 items-center justify-between gap-6'>
+					<div className='flex min-w-0 items-center gap-6'>
 						<button
 							className={cn(
 								'group flex cursor-pointer items-center gap-2 text-sm transition-colors duration-200',
@@ -147,13 +184,26 @@ function UpdateCardImpl({
 						</div>
 					</div>
 
-					<Link
-						className='link-text text-sm font-medium'
-						params={{ org: orgSlug, project: projectSlug, slug }}
-						to='/@{$org}/$project/updates/$slug'
-					>
-						{m.updates_view_more()}
-					</Link>
+					<div className='flex shrink-0 items-center gap-3'>
+						{contentPreviewIsTruncated ? (
+							<Link
+								className='inline-flex items-center rounded-full border border-border/70 bg-background/80 px-3.5 py-1.5 text-sm font-medium text-foreground shadow-xs transition-colors hover:bg-accent hover:text-accent-foreground'
+								params={{ org: orgSlug, project: projectSlug, slug }}
+								to='/@{$org}/$project/updates/$slug'
+							>
+								{m.updates_click_to_read_more()}
+							</Link>
+						) : null}
+						{!contentPreviewIsTruncated ? (
+							<Link
+								className='link-text text-sm font-medium'
+								params={{ org: orgSlug, project: projectSlug, slug }}
+								to='/@{$org}/$project/updates/$slug'
+							>
+								{m.updates_view_more()}
+							</Link>
+						) : null}
+					</div>
 				</div>
 			</div>
 		</li>

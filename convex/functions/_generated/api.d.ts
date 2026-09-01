@@ -922,6 +922,18 @@ export declare const api: {
     >;
     publish: FunctionReference<"mutation", "public", { id: string }, any>;
     remove: FunctionReference<"mutation", "public", { id: string }, any>;
+    searchProject: FunctionReference<
+      "query",
+      "public",
+      {
+        category?: "changelog" | "article" | "announcement";
+        cursor?: string | null;
+        limit?: number;
+        projectId: string;
+        search?: string;
+      },
+      { continueCursor: string | null; isDone: boolean; page: Array<any> }
+    >;
     syncMetadata: FunctionReference<"mutation", "public", { key: string }, any>;
     unpublish: FunctionReference<"mutation", "public", { id: string }, any>;
     update: FunctionReference<
