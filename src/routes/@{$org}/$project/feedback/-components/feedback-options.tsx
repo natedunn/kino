@@ -1,5 +1,5 @@
 import { Link, useParams } from '@tanstack/react-router';
-import { SquareArrowOutUpRight } from 'lucide-react';
+import { LayoutDashboard } from 'lucide-react';
 
 import { buttonVariants } from '@/components/ui/button';
 import * as m from '@/paraglide/messages.js';
@@ -11,25 +11,16 @@ export function FeedbackOptions() {
 		<div className='flex flex-col gap-2'>
 			<Link
 				className={buttonVariants({
-					variant: 'outline',
-					className: 'group inline-flex! w-full items-center justify-between! text-left',
+					variant: 'ghost',
+					className: 'group inline-flex! justify-start! gap-2 px-2 text-left',
 				})}
 				params={{ org, project }}
 				to='/@{$org}/$project/settings/boards'
 			>
-				<span>{m.feedback_index_all_boards()}</span>
-				<SquareArrowOutUpRight className='size-4 text-muted-foreground' />
-			</Link>
-			<Link
-				className={buttonVariants({
-					variant: 'outline',
-					className: 'group inline-flex! w-full items-center justify-between! text-left',
-				})}
-				params={{ org, project }}
-				to='/@{$org}/$project/settings/integrations'
-			>
-				<span>{m.feedback_index_integrations()}</span>
-				<SquareArrowOutUpRight className='size-4 text-muted-foreground' />
+				<span className='opacity-60 transition-opacity group-hover:opacity-100'>
+					<LayoutDashboard className='size-4 shrink-0' />
+				</span>
+				<span>{m.feedback_index_edit_boards()}</span>
 			</Link>
 		</div>
 	);

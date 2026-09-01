@@ -3,9 +3,16 @@ import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { useQuery, useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
 import { createFileRoute, Link, notFound, useRouter } from '@tanstack/react-router';
+import { PanelLeftOpen } from 'lucide-react';
 
 import { RoutePending } from '@/components/route-pending';
 import { Button } from '@/components/ui/button';
+import {
+	ResponsiveDialog,
+	ResponsiveDialogBody,
+	ResponsiveDialogContent,
+	ResponsiveDialogHeader,
+} from '@/components/ui/responsive-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import CirclePlusOutline from '@/icons/circle-plus-outline';
 import Missing from '@/icons/missing';
@@ -193,6 +200,7 @@ function FeedbackListRoute() {
 	const { search, status, board } = searchParams;
 	const { org: orgSlug, project: projectSlug } = Route.useParams();
 	const crpc = useCRPC();
+	const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
 	const { data: projectData } = useSuspenseQuery(
 		crpc.project.getDetails.queryOptions({
@@ -298,13 +306,155 @@ function FeedbackListRoute() {
 		}
 	}
 
+	const sidebarContent = (
+		<>
+			<div className='-mr-5 border-b pr-5 pb-6'>
+				<h2 className='mx-2 text-sm font-bold text-muted-foreground'>
+					{m.feedback_index_boards()}
+				</h2>
+				<div className='mt-2'>
+					<BoardsNav boards={boards} />
+				</div>
+			</div>
+			{projectData.permissions.canManageContent ? (
+				<div className='mt-6 pb-6'>
+					<h2 className='mx-2 text-sm font-bold text-muted-foreground'>
+						{m.feedback_index_actions()}
+					</h2>
+					<div className='mt-2'>
+						<FeedbackOptions />
+					</div>
+				</div>
+			) : null}
+		</>
+	);
+
 	return (
-		<div className='container flex flex-1 flex-col overflow-visible'>
-			<div className='flex flex-1 flex-col gap-8 md:grid md:grid-cols-12'>
-				<div className='order-last py-8 md:order-first md:col-span-3 md:border-r md:border-border/75'>
-					<div className='sticky top-6 flex flex-col overflow-hidden'>
-						<div className='border-b pb-6 md:pr-6'>
-							<Button asChild className='w-full'>
+		<>
+			<div className='relative flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-x-hidden lg:h-[calc(100dvh-9.75rem)] lg:flex-none'>
+				<div
+					aria-hidden='true'
+					className='pointer-events-none absolute inset-x-0 top-20 border-b'
+				/>
+				<div className='container flex min-h-0 w-full min-w-0 flex-1 flex-col'>
+					<div className='flex min-h-0 w-full max-w-full min-w-0 flex-1 flex-col lg:grid lg:grid-cols-[17rem_minmax(0,1fr)]'>
+						<aside
+							id='feedback-sidebar'
+							className='hidden h-full min-h-0 min-w-0 overflow-hidden border-r border-border/75 lg:block'
+						>
+							<div className='sticky top-0 flex h-full w-[17rem] max-w-none flex-col overflow-hidden'>
+								<div className='flex h-[81px] shrink-0 items-center pr-5'>
+									<Button asChild>
+										<Link
+											params={{ org: orgSlug, project: projectSlug }}
+											to='/@{$org}/$project/feedback/new'
+										>
+											<CirclePlusOutline size='16px' />
+											{m.feedback_index_add_feedback()}
+										</Link>
+									</Button>
+								</div>
+								<div className='mt-4 min-h-0 flex-1 overflow-y-auto pr-5 pb-6'>
+									{sidebarContent}
+								</div>
+							</div>
+						</aside>
+
+						<div className='flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden'>
+							<div className='flex h-[81px] min-w-0 shrink-0 items-center lg:pl-7'>
+								<FeedbackToolbar
+									leadingControl={
+										<Button
+											aria-label={m.feedback_index_browse_sidebar()}
+											className='lg:hidden'
+											onClick={() => setMobileSidebarOpen(true)}
+											size='icon'
+											variant='outline'
+										>
+											<PanelLeftOpen />
+										</Button>
+									}
+									topRowClassName='w-full'
+								/>
+							</div>
+
+							<div
+								aria-busy={isInitialFeedbackLoading || refreshingFeedback || loadingMoreFeedback}
+								aria-live='polite'
+								className='flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-y-auto py-6 lg:pl-7'
+							>
+								{isInitialFeedbackLoading ? (
+									<>
+										<span className='sr-only'>{m.feedback_index_loading()}</span>
+										<FeedbackListSkeleton />
+									</>
+								) : null}
+								{!isInitialFeedbackLoading && feedback.length === 0 ? (
+									<Notice icon={<Missing aria-hidden='true' size='32px' />}>
+										{m.feedback_index_empty()}
+									</Notice>
+								) : null}
+								{feedback.length > 0 ? (
+									<ul className='flex flex-col gap-4'>
+										{feedback.map((item) => {
+											const feedbackLinkOptions = {
+												params: {
+													org: orgSlug,
+													project: projectSlug,
+													slug: item.slug,
+												},
+												to: '/@{$org}/$project/feedback/$slug',
+											} as const;
+											const feedbackLocation = router.buildLocation(feedbackLinkOptions);
+
+											return (
+												<FeedbackCard
+													key={item.id}
+													feedback={item}
+													href={router.history.createHref(feedbackLocation.publicHref) || '/'}
+													isAuthenticated={!!profileQuery.data}
+													onNavigationClick={() => router.navigate(feedbackLinkOptions)}
+													onPreload={() => router.preloadRoute(feedbackLinkOptions)}
+												/>
+											);
+										})}
+									</ul>
+								) : null}
+								{loadMoreError ? (
+									<p className='mt-4 text-sm text-destructive'>{loadMoreError.message}</p>
+								) : null}
+								{canLoadMoreFeedback ? (
+									<div className='mt-4 flex items-center gap-3'>
+										<Button
+											disabled={loadingMoreFeedback}
+											onClick={() => void loadMoreFeedback()}
+											variant='outline'
+										>
+											{loadingMoreFeedback
+												? m.feedback_index_loading()
+												: m.feedback_index_load_more()}
+										</Button>
+									</div>
+								) : null}
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<ResponsiveDialog onOpenChange={setMobileSidebarOpen} open={mobileSidebarOpen}>
+				<ResponsiveDialogContent
+					className='flex flex-col gap-0 overflow-hidden p-0'
+					dialogClassName='sm:max-w-md'
+					showCloseButton={false}
+				>
+					<ResponsiveDialogHeader
+						icon={<PanelLeftOpen />}
+						title={m.feedback_index_browse_sidebar()}
+					/>
+					<ResponsiveDialogBody className='p-3'>
+						<div className='mb-3 border-b pb-3'>
+							<Button asChild>
 								<Link
 									params={{ org: orgSlug, project: projectSlug }}
 									to='/@{$org}/$project/feedback/new'
@@ -314,88 +464,10 @@ function FeedbackListRoute() {
 								</Link>
 							</Button>
 						</div>
-						<div className='mt-4'>
-							<div className='border-b pb-6 md:pr-6'>
-								<h2 className='mx-2 text-sm font-bold text-muted-foreground'>
-									{m.feedback_index_boards()}
-								</h2>
-								<div className='mt-2'>
-									<BoardsNav boards={boards} />
-								</div>
-							</div>
-							{projectData.permissions.canManageContent ? (
-								<div className='mt-6 pb-6 md:pr-6'>
-									<h2 className='mx-2 text-sm font-bold text-muted-foreground'>
-										{m.feedback_index_options()}
-									</h2>
-									<div className='mt-2'>
-										<FeedbackOptions />
-									</div>
-								</div>
-							) : null}
-						</div>
-					</div>
-				</div>
-				<div className='flex flex-col gap-4 py-8 md:col-span-9'>
-					<FeedbackToolbar />
-					<div
-						aria-busy={isInitialFeedbackLoading || refreshingFeedback || loadingMoreFeedback}
-						aria-live='polite'
-					>
-						{isInitialFeedbackLoading ? (
-							<>
-								<span className='sr-only'>{m.feedback_index_loading()}</span>
-								<FeedbackListSkeleton />
-							</>
-						) : null}
-						{!isInitialFeedbackLoading && feedback.length === 0 ? (
-							<Notice icon={<Missing aria-hidden='true' size='32px' />}>
-								{m.feedback_index_empty()}
-							</Notice>
-						) : null}
-						{feedback.length > 0 ? (
-							<ul className='flex flex-col gap-4'>
-								{feedback.map((item) => {
-									const feedbackLinkOptions = {
-										params: {
-											org: orgSlug,
-											project: projectSlug,
-											slug: item.slug,
-										},
-										to: '/@{$org}/$project/feedback/$slug',
-									} as const;
-									const feedbackLocation = router.buildLocation(feedbackLinkOptions);
-
-									return (
-										<FeedbackCard
-											key={item.id}
-											feedback={item}
-											href={router.history.createHref(feedbackLocation.publicHref) || '/'}
-											isAuthenticated={!!profileQuery.data}
-											onNavigationClick={() => router.navigate(feedbackLinkOptions)}
-											onPreload={() => router.preloadRoute(feedbackLinkOptions)}
-										/>
-									);
-								})}
-							</ul>
-						) : null}
-					</div>
-					{loadMoreError ? (
-						<p className='text-sm text-destructive'>{loadMoreError.message}</p>
-					) : null}
-					{canLoadMoreFeedback ? (
-						<div className='flex items-center gap-3'>
-							<Button
-								disabled={loadingMoreFeedback}
-								onClick={() => void loadMoreFeedback()}
-								variant='outline'
-							>
-								{loadingMoreFeedback ? m.feedback_index_loading() : m.feedback_index_load_more()}
-							</Button>
-						</div>
-					) : null}
-				</div>
-			</div>
-		</div>
+						{sidebarContent}
+					</ResponsiveDialogBody>
+				</ResponsiveDialogContent>
+			</ResponsiveDialog>
+		</>
 	);
 }

@@ -88,6 +88,9 @@ const config = defineConfig({
 			strategy: ['cookie', 'preferredLanguage', 'baseLocale'],
 		}),
 	],
+	resolve: {
+		dedupe: ['react', 'react-dom'],
+	},
 	server: {
 		...(process.env.KINO_SHARE === '1' ? { allowedHosts: ['.trycloudflare.com'] } : {}),
 		...(process.env.HOST ? { host: process.env.HOST } : {}),
