@@ -89,16 +89,20 @@ function AdvancedUpdatesSearch() {
 	}
 
 	const projectId = projectData.project.id;
+	const hasFilters = Boolean(search.category || search.q);
 	const currentProfileQuery = useQuery(
 		crpc.profile.findMyProfile.queryOptions({}, { skipUnauth: true, subscribe: false })
 	);
 	const firstPageQuery = useQuery(
-		crpc.update.searchProject.queryOptions({
-			category: search.category,
-			cursor: search.cursor ?? null,
-			projectId,
-			search: search.q,
-		})
+		{
+			...crpc.update.searchProject.queryOptions({
+				category: search.category,
+				cursor: search.cursor ?? null,
+				projectId,
+				search: search.q,
+			}),
+			enabled: hasFilters,
+		}
 	);
 	const [additionalPages, setAdditionalPages] = useState<
 		Array<NonNullable<typeof firstPageQuery.data>>
@@ -119,7 +123,6 @@ function AdvancedUpdatesSearch() {
 			(item, index, items) => items.findIndex((candidate) => candidate.id === item.id) === index
 		);
 	const canLoadMore = !!lastPage && !lastPage.isDone && !!lastPage.continueCursor;
-	const hasFilters = Boolean(search.category || search.q);
 
 	const submit = (event: FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
@@ -241,20 +244,22 @@ function AdvancedUpdatesSearch() {
 						{m.files_on_page({ count: updates.length })}
 					</p>
 				</div>
-				<div className='px-4 py-2 text-xs text-muted-foreground'>
-					{search.q ? m.updates_search_mode_relevance() : m.updates_search_mode_latest()}
-				</div>
 				<div className='divide-y'>
-					{firstPageQuery.isPending
+					{hasFilters && firstPageQuery.isPending
 						? Array.from({ length: 4 }).map((_, index) => (
 								<div className='p-4' key={index}>
 									<Skeleton className='h-24 w-full' />
 								</div>
 							))
 						: null}
-					{!firstPageQuery.isPending && updates.length === 0 ? (
+					{!hasFilters ? (
 						<div className='px-4 py-20 text-center text-muted-foreground'>
-							{hasFilters ? m.updates_no_matching_results() : m.updates_empty()}
+							{m.updates_search_empty_idle()}
+						</div>
+					) : null}
+					{hasFilters && !firstPageQuery.isPending && updates.length === 0 ? (
+						<div className='px-4 py-20 text-center text-muted-foreground'>
+							{m.updates_no_matching_results()}
 						</div>
 					) : null}
 					{updates.length > 0 ? (
@@ -267,6 +272,7 @@ function AdvancedUpdatesSearch() {
 									orgSlug={params.org}
 									projectSlug={params.project}
 									update={update}
+									variant='search'
 								/>
 							))}
 						</ul>

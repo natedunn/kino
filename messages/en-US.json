@@ -181,6 +181,7 @@
 	"updates_advanced_search": "Advanced search",
 	"updates_advanced_search_aria": "Advanced search",
 	"updates_search_description": "Search update titles, body content, and tags across this project.",
+	"updates_search_empty_idle": "Start with a search or choose a category to see matching updates.",
 	"updates_search_placeholder": "Search updates, titles, tags, or content…",
 	"updates_clear_query": "Clear query",
 	"updates_show_categories": "Show categories",

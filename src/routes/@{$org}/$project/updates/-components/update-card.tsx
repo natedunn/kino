@@ -13,6 +13,8 @@ import * as m from '@/paraglide/messages.js';
 import { CategoryBadge } from './category-badge';
 import { useEmoteToggle } from './use-emote-toggle';
 
+const SEARCH_PREVIEW_CHARS = 420;
+
 function UpdateCardContent({ content }: { content: string }) {
 	const isHTML = content.startsWith('<') && content.includes('</');
 
@@ -38,6 +40,8 @@ function UpdateCardContent({ content }: { content: string }) {
 // Memoized: the updates list re-renders on local state changes (e.g. "Load
 // more") while each row's props stay referentially stable, so memo skips
 // re-rendering unchanged rows.
+type UpdateCardVariant = 'index' | 'search';
+
 function UpdateCardImpl({
 	update,
 	orgSlug,
@@ -45,6 +49,7 @@ function UpdateCardImpl({
 	currentProfileId,
 	className,
 	isLast = false,
+	variant = 'index',
 }: {
 	update: any;
 	orgSlug: string;
@@ -52,11 +57,13 @@ function UpdateCardImpl({
 	currentProfileId?: string;
 	className?: string;
 	isLast?: boolean;
+	variant?: UpdateCardVariant;
 }) {
 	const {
 		id: updateId,
 		title,
 		content,
+		contentPreview,
 		contentPreviewIsTruncated,
 		slug,
 		author,
@@ -81,13 +88,29 @@ function UpdateCardImpl({
 		canInteract: Boolean(currentProfileId),
 	});
 
+	const isSearchVariant = variant === 'search';
+	const compactPreviewSource = (contentPreview ?? '').trim();
+	const compactPreview = compactPreviewSource.length > SEARCH_PREVIEW_CHARS
+		? `${compactPreviewSource.slice(0, SEARCH_PREVIEW_CHARS).trimEnd()}...`
+		: compactPreviewSource;
+	const isCompactPreviewTruncated =
+		contentPreviewIsTruncated || compactPreviewSource.length > SEARCH_PREVIEW_CHARS;
+
 	return (
 		<li className={cn('relative flex min-w-0', className)}>
-			<div className='relative min-w-0 w-full py-10 lg:pl-7'>
+			<div
+				className={cn(
+					'relative min-w-0 w-full',
+					isSearchVariant ? 'px-4 py-7 md:px-6' : 'py-10'
+				)}
+			>
 				{!isLast ? (
 					<div
 						aria-hidden='true'
-						className='absolute right-0 bottom-0 left-0 border-b lg:-left-7 md:-right-8.25'
+						className={cn(
+							'absolute right-0 bottom-0 left-0 border-b',
+							!isSearchVariant && 'lg:-left-7 md:-right-8.25'
+						)}
 					/>
 				) : null}
 				<div className='mb-4 flex min-w-0 flex-wrap items-center gap-3'>
@@ -114,7 +137,12 @@ function UpdateCardImpl({
 					) : null}
 				</div>
 
-				<h3 className='mb-6 min-w-0 break-words text-3xl font-semibold'>
+				<h3
+					className={cn(
+						'min-w-0 break-words font-semibold',
+						isSearchVariant ? 'mb-4 text-[1.9rem] leading-tight' : 'mb-6 text-3xl'
+					)}
+				>
 					<Link
 						className='link-text'
 						params={{ org: orgSlug, project: projectSlug, slug }}
@@ -130,7 +158,7 @@ function UpdateCardImpl({
 					</div>
 				) : null}
 
-				{content ? (
+				{content && !isSearchVariant ? (
 					<div className='relative mt-4 min-w-0 overflow-hidden'>
 						<div
 							className={cn(
@@ -145,8 +173,13 @@ function UpdateCardImpl({
 						) : null}
 					</div>
 				) : null}
+				{isSearchVariant && compactPreview ? (
+					<div className='mt-3 text-[0.95rem] leading-7 break-words text-muted-foreground'>
+						{compactPreview}
+					</div>
+				) : null}
 
-				<div className='mt-6 flex min-w-0 items-center justify-between gap-6'>
+				<div className={cn('flex min-w-0 items-center justify-between gap-6', isSearchVariant ? 'mt-5' : 'mt-6')}>
 					<div className='flex min-w-0 items-center gap-6'>
 						<button
 							className={cn(
@@ -186,7 +219,7 @@ function UpdateCardImpl({
 					</div>
 
 					<div className='flex shrink-0 items-center gap-3'>
-						{contentPreviewIsTruncated ? (
+						{(isSearchVariant ? isCompactPreviewTruncated : contentPreviewIsTruncated) ? (
 							<Link
 								className='inline-flex items-center rounded-full border border-border/70 bg-background/80 px-3.5 py-1.5 text-sm font-medium text-foreground shadow-xs transition-colors hover:bg-accent hover:text-accent-foreground'
 								params={{ org: orgSlug, project: projectSlug, slug }}
@@ -195,7 +228,7 @@ function UpdateCardImpl({
 								{m.updates_click_to_read_more()}
 							</Link>
 						) : null}
-						{!contentPreviewIsTruncated ? (
+						{!(isSearchVariant ? isCompactPreviewTruncated : contentPreviewIsTruncated) ? (
 							<Link
 								className='link-text text-sm font-medium'
 								params={{ org: orgSlug, project: projectSlug, slug }}

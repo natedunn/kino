@@ -181,6 +181,7 @@
 	"updates_advanced_search": "Búsqueda avanzada",
 	"updates_advanced_search_aria": "Búsqueda avanzada",
 	"updates_search_description": "Busca títulos, contenido y etiquetas de las novedades en este proyecto.",
+	"updates_search_empty_idle": "Empieza con una búsqueda o elige una categoría para ver las novedades que coincidan.",
 	"updates_search_placeholder": "Buscar novedades, títulos, etiquetas o contenido…",
 	"updates_clear_query": "Borrar búsqueda",
 	"updates_show_categories": "Mostrar categorías",
