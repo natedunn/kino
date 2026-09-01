@@ -85,10 +85,23 @@ function UpdateCardImpl({
 
 	return (
 		<li className={cn('relative flex min-w-0', className)}>
-			{!isLast ? (
-				<div aria-hidden='true' className='absolute inset-x-0 bottom-0 border-b md:-mr-8.25' />
-			) : null}
-			<div className={cn('min-w-0 w-full py-10', sidebarOpen ? 'lg:pl-7' : 'lg:pl-0')}>
+				<div
+					data-updates-sidebar-centered
+					className={cn(
+						'relative min-w-0 w-full py-10',
+						sidebarOpen ? 'lg:pl-7' : 'lg:mx-auto lg:max-w-[50rem] lg:pl-0'
+					)}
+				>
+				{!isLast ? (
+					<div
+						aria-hidden='true'
+						data-updates-sidebar-separator
+						className={cn(
+							'absolute right-0 bottom-0 left-0 border-b',
+							sidebarOpen && 'lg:-left-7 md:-right-8.25'
+						)}
+					/>
+				) : null}
 				<div className='mb-4 flex min-w-0 flex-wrap items-center gap-3'>
 					<CategoryBadge category={category} />
 					{publishedAt ? (

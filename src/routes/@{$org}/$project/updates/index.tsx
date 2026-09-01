@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
-import { createFileRoute, Link, notFound } from '@tanstack/react-router';
+import { createFileRoute, Link, notFound, ScriptOnce } from '@tanstack/react-router';
 import { PanelLeftClose, PanelLeftOpen, Search, Settings2, SlidersHorizontal } from 'lucide-react';
 
 import { useCommandPalette, useRegisterCommands } from '@/components/command';
@@ -32,6 +32,8 @@ import { UpdateCard } from './-components/update-card';
 
 const NUM_OF_ITEMS_PER_PAGE = 10;
 const UPDATES_SIDEBAR_STORAGE_KEY = 'kino:sidebar:updates';
+const UPDATES_SIDEBAR_ATTRIBUTE = 'data-updates-sidebar';
+const UPDATES_SIDEBAR_BOOTSTRAP = `try{document.documentElement.setAttribute('${UPDATES_SIDEBAR_ATTRIBUTE}',localStorage.getItem('${UPDATES_SIDEBAR_STORAGE_KEY}')==='closed'?'closed':'open')}catch{}`;
 
 type UpdateCategory = 'changelog' | 'article' | 'announcement';
 
@@ -171,26 +173,28 @@ function UpdatesSidebar({
 				</div>
 			</div>
 			{canEdit ? (
-				<div className='border-t pt-6 pr-5'>
-					<h2 className='mx-2 text-sm font-bold text-muted-foreground'>{m.updates_actions()}</h2>
-					<div className='mt-2 flex flex-col gap-3'>
-						<Button asChild className='w-full'>
-							<Link
-								params={{ org: orgSlug, project: projectSlug }}
-								to='/@{$org}/$project/updates/new'
-							>
-								<CirclePlusOutline size='16px' /> {m.updates_new()}
-							</Link>
-						</Button>
-						<Button asChild className='w-full' variant='outline'>
-							<Link
-								params={{ org: orgSlug, project: projectSlug }}
-								search={{ pageSize: 20 }}
-								to='/@{$org}/$project/updates/edit'
-							>
-								<Settings2 className='size-4' /> {m.updates_manage()}
-							</Link>
-						</Button>
+				<div className='-mr-5 border-t pt-6 pr-5'>
+					<div>
+						<h2 className='mx-2 text-sm font-bold text-muted-foreground'>{m.updates_actions()}</h2>
+						<div className='mt-2 flex flex-col gap-3'>
+							<Button asChild className='w-full'>
+								<Link
+									params={{ org: orgSlug, project: projectSlug }}
+									to='/@{$org}/$project/updates/new'
+								>
+									<CirclePlusOutline size='16px' /> {m.updates_new()}
+								</Link>
+							</Button>
+							<Button asChild className='w-full' variant='outline'>
+								<Link
+									params={{ org: orgSlug, project: projectSlug }}
+									search={{ pageSize: 20 }}
+									to='/@{$org}/$project/updates/edit'
+								>
+									<Settings2 className='size-4' /> {m.updates_manage()}
+								</Link>
+							</Button>
+						</div>
 					</div>
 				</div>
 			) : null}
@@ -207,10 +211,17 @@ function UpdatesListRoute() {
 	const isBelowLg = useIsBelow(1024);
 	const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 	const [sidebarOpen, setSidebarOpen] = useState(true);
+	const [sidebarPreferenceLoaded, setSidebarPreferenceLoaded] = useState(false);
 
 	useEffect(() => {
-		setSidebarOpen(readUpdatesSidebarPreference());
+		const storedOpen = readUpdatesSidebarPreference();
+		setSidebarOpen(storedOpen);
+		setSidebarPreferenceLoaded(true);
 	}, []);
+	useEffect(() => {
+		if (!sidebarPreferenceLoaded) return;
+		document.documentElement.removeAttribute(UPDATES_SIDEBAR_ATTRIBUTE);
+	}, [sidebarPreferenceLoaded]);
 
 	const toggleSidebar = useCallback(() => {
 		setSidebarOpen((open) => {
@@ -384,6 +395,7 @@ function UpdatesListRoute() {
 
 	return (
 		<>
+			<ScriptOnce>{UPDATES_SIDEBAR_BOOTSTRAP}</ScriptOnce>
 			<div className='relative flex w-full min-w-0 flex-1 flex-col overflow-x-hidden'>
 				<div
 					aria-hidden='true'
@@ -391,27 +403,30 @@ function UpdatesListRoute() {
 				/>
 				<div className='container flex w-full min-w-0 flex-1 flex-col'>
 					<div
+						data-updates-sidebar-grid
 						className={cn(
 							'flex w-full max-w-full min-w-0 flex-1 flex-col transition-[grid-template-columns] duration-200 ease-out motion-reduce:transition-none lg:grid',
 							sidebarOpen ? 'lg:grid-cols-[17rem_minmax(0,1fr)]' : 'lg:grid-cols-[0_minmax(0,1fr)]'
 						)}
 					>
-						<aside
-							aria-hidden={!sidebarOpen}
-							id='updates-sidebar'
-							className={cn(
-								'hidden h-full min-h-0 min-w-0 overflow-hidden transition-colors duration-200 lg:block',
-								sidebarOpen
-									? 'border-r border-border/75'
-									: 'pointer-events-none border-r border-transparent'
-							)}
-						>
-							<div
+							<aside
+								aria-hidden={!sidebarOpen}
+								data-updates-sidebar-aside
+								id='updates-sidebar'
 								className={cn(
-									'sticky top-0 flex h-full w-[17rem] max-w-none flex-col overflow-hidden transition-[transform,opacity] duration-200 ease-out motion-reduce:transition-none',
-									sidebarOpen ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0'
+									'hidden h-full min-h-0 min-w-0 overflow-hidden transition-colors duration-200 lg:block',
+									sidebarOpen
+										? 'border-r border-border/75'
+										: 'pointer-events-none border-r border-transparent'
 								)}
 							>
+								<div
+									data-updates-sidebar-panel
+									className={cn(
+										'sticky top-0 flex h-full w-[17rem] max-w-none flex-col overflow-hidden transition-[transform,opacity] duration-200 ease-out motion-reduce:transition-none',
+										sidebarOpen ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0'
+									)}
+								>
 								<div className='flex h-[81px] shrink-0 items-center pr-5'>{controls}</div>
 								<div className='mt-4 min-h-0 flex-1 overflow-visible pr-5 pb-6'>
 									<UpdatesSidebar canEdit={canEdit} orgSlug={orgSlug} projectSlug={projectSlug} />
@@ -421,69 +436,74 @@ function UpdatesListRoute() {
 
 						<div className='flex h-full min-h-0 w-full max-w-full min-w-0 flex-1 flex-col'>
 							<div
+								data-updates-sidebar-main
 								className={cn(
-									'flex h-[81px] min-w-0 shrink-0 items-center justify-between gap-3 transition-[padding] duration-200 ease-out motion-reduce:transition-none',
+									'flex h-[81px] min-w-0 shrink-0 items-center transition-[padding] duration-200 ease-out motion-reduce:transition-none',
 									sidebarOpen ? 'lg:pl-7' : 'lg:pl-0'
 								)}
 							>
-								<div className='flex min-w-0 items-center gap-3'>
-									<Tooltip
-										onOpenChange={(open, eventDetails) => {
-											if (open && eventDetails.reason === 'trigger-focus') {
-												eventDetails.cancel();
-											}
-										}}
-									>
-										<TooltipTrigger asChild delay={200}>
-											<Button
-												aria-controls='updates-sidebar'
-												aria-expanded={isBelowLg ? mobileSidebarOpen : sidebarOpen}
-												aria-keyshortcuts={isBelowLg ? undefined : '['}
-												aria-label={
-													sidebarOpen ? m.updates_hide_categories() : m.updates_show_categories()
+								<div
+									data-updates-sidebar-centered
+									className={cn(
+										'flex w-full min-w-0 items-center justify-between gap-3',
+										sidebarOpen ? 'max-w-none' : 'lg:mx-auto lg:max-w-[50rem]'
+									)}
+								>
+									<div className='flex min-w-0 items-center gap-3'>
+										<Tooltip
+											onOpenChange={(open, eventDetails) => {
+												if (open && eventDetails.reason === 'trigger-focus') {
+													eventDetails.cancel();
 												}
-												onClick={handleSidebarToggle}
-												size='icon'
-												variant='outline'
-											>
-												{isBelowLg ? (
-													<PanelLeftOpen />
-												) : sidebarOpen ? (
-													<PanelLeftClose />
-												) : (
-													<PanelLeftOpen />
-												)}
-											</Button>
-										</TooltipTrigger>
-										<TooltipContent className='flex items-center gap-2' side='bottom'>
-											<span>{m.updates_toggle_sidebar()}</span>
-											{!isBelowLg ? (
-												<kbd className='rounded border border-white/20 bg-black/45 px-1.5 py-0.5 font-sans text-[10px] text-white'>
-													[
-												</kbd>
-											) : null}
-										</TooltipContent>
-									</Tooltip>
+											}}
+										>
+											<TooltipTrigger asChild delay={200}>
+												<Button
+													aria-controls='updates-sidebar'
+													aria-expanded={isBelowLg ? mobileSidebarOpen : sidebarOpen}
+													aria-keyshortcuts={isBelowLg ? undefined : '['}
+													aria-label={
+														sidebarOpen ? m.updates_hide_categories() : m.updates_show_categories()
+													}
+													onClick={handleSidebarToggle}
+													size='icon'
+													variant='outline'
+												>
+													{isBelowLg ? (
+														<PanelLeftOpen />
+													) : sidebarOpen ? (
+														<PanelLeftClose />
+													) : (
+														<PanelLeftOpen />
+													)}
+												</Button>
+											</TooltipTrigger>
+											<TooltipContent className='flex items-center gap-2' side='bottom'>
+												<span>{m.updates_toggle_sidebar()}</span>
+												{!isBelowLg ? (
+													<kbd className='rounded border border-white/20 bg-black/45 px-1.5 py-0.5 font-sans text-[10px] text-white'>
+														[
+													</kbd>
+												) : null}
+											</TooltipContent>
+										</Tooltip>
+									</div>
+									<Button className='shrink-0' variant='outline'>
+										{m.feedback_follow()}
+									</Button>
 								</div>
-								<Button className='shrink-0' variant='outline'>
-									{m.feedback_follow()}
-								</Button>
 							</div>
 
 							<div
 								aria-busy={isInitialUpdatesLoading || refreshingUpdates || loadingMore}
 								aria-live='polite'
+								data-updates-sidebar-main
 								className={cn(
 									'flex w-full max-w-full min-w-0 flex-1 flex-col gap-4 overflow-visible pb-8',
 									sidebarOpen ? 'lg:pl-7' : 'lg:pl-0'
 								)}
 							>
-								<div
-									className={cn(
-										'w-full',
-										sidebarOpen ? 'max-w-none' : 'lg:mx-auto lg:max-w-[64rem]'
-									)}
-								>
+								<div className='w-full'>
 									{isInitialUpdatesLoading ? (
 										<>
 											<span className='sr-only'>{m.updates_loading()}</span>
@@ -491,9 +511,11 @@ function UpdatesListRoute() {
 										</>
 									) : null}
 									{!isInitialUpdatesLoading && updates.length === 0 ? (
-										<Notice icon={<Missing aria-hidden='true' size='32px' />}>
-											{m.updates_empty()}
-										</Notice>
+										<div className='pt-6'>
+											<Notice icon={<Missing aria-hidden='true' size='32px' />}>
+												{m.updates_empty()}
+											</Notice>
+										</div>
 									) : null}
 									{updates.length > 0 ? (
 										<>

@@ -23,6 +23,7 @@ export function CategoriesNav() {
 				const active = category.slug === (categoryParam ?? 'all');
 				return (
 					<Link
+						className='group block rounded-lg focus-visible:outline-none'
 						key={category.slug}
 						params={{ org, project }}
 						search={(prev) => ({

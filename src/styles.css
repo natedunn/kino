@@ -717,6 +717,34 @@
 	html[data-files-sidebar='closed'] [data-files-sidebar-main] {
 		padding-left: 0;
 	}
+
+	html[data-updates-sidebar='closed'] [data-updates-sidebar-grid] {
+		grid-template-columns: 0 minmax(0, 1fr);
+	}
+
+	html[data-updates-sidebar='closed'] [data-updates-sidebar-aside] {
+		pointer-events: none;
+		border-right-color: transparent;
+	}
+
+	html[data-updates-sidebar='closed'] [data-updates-sidebar-panel] {
+		transform: translateX(-100%);
+		opacity: 0;
+	}
+
+	html[data-updates-sidebar='closed'] [data-updates-sidebar-main] {
+		padding-left: 0;
+	}
+
+	html[data-updates-sidebar='closed'] [data-updates-sidebar-centered] {
+		max-width: 50rem;
+		margin-inline: auto;
+		padding-left: 0;
+	}
+
+	html[data-updates-sidebar='closed'] [data-updates-sidebar-separator] {
+		left: 0;
+	}
 }
 
 @keyframes heart-pop {
