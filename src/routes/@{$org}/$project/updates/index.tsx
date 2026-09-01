@@ -1,14 +1,13 @@
 import type { AppCommand } from '@/components/command';
 import type { ReactNode } from 'react';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery, useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
-import { createFileRoute, Link, notFound, ScriptOnce } from '@tanstack/react-router';
-import { PanelLeftClose, PanelLeftOpen, Search, Settings2, SlidersHorizontal } from 'lucide-react';
+import { createFileRoute, Link, notFound } from '@tanstack/react-router';
+import { PanelLeftOpen, Search, Settings2, SlidersHorizontal } from 'lucide-react';
 
 import { useCommandPalette, useRegisterCommands } from '@/components/command';
 import { RoutePending } from '@/components/route-pending';
-import { useRegisterShortcuts } from '@/components/shortcuts';
 import { Button } from '@/components/ui/button';
 import {
 	ResponsiveDialog,
@@ -22,18 +21,13 @@ import CirclePlusOutline from '@/icons/circle-plus-outline';
 import Missing from '@/icons/missing';
 import { useCRPC } from '@/lib/convex/crpc';
 import { crpcServer } from '@/lib/convex/crpc-server';
-import { useIsBelow } from '@/lib/hooks/use-mobile';
 import { projectTitle, titleMeta } from '@/lib/seo';
-import { cn } from '@/lib/utils';
 import * as m from '@/paraglide/messages.js';
 
 import { CategoriesNav } from './-components/categories-nav';
 import { UpdateCard } from './-components/update-card';
 
 const NUM_OF_ITEMS_PER_PAGE = 10;
-const UPDATES_SIDEBAR_STORAGE_KEY = 'kino:sidebar:updates';
-const UPDATES_SIDEBAR_ATTRIBUTE = 'data-updates-sidebar';
-const UPDATES_SIDEBAR_BOOTSTRAP = `try{document.documentElement.setAttribute('${UPDATES_SIDEBAR_ATTRIBUTE}',localStorage.getItem('${UPDATES_SIDEBAR_STORAGE_KEY}')==='closed'?'closed':'open')}catch{}`;
 
 type UpdateCategory = 'changelog' | 'article' | 'announcement';
 
@@ -58,24 +52,6 @@ function getUpdateListArgs({
 }
 
 const UPDATE_CATEGORIES = new Set<UpdateCategory>(['changelog', 'article', 'announcement']);
-
-function readUpdatesSidebarPreference() {
-	if (typeof window === 'undefined') return true;
-	try {
-		return window.localStorage.getItem(UPDATES_SIDEBAR_STORAGE_KEY) !== 'closed';
-	} catch {
-		return true;
-	}
-}
-
-function persistUpdatesSidebarPreference(open: boolean) {
-	if (typeof window === 'undefined') return;
-	try {
-		window.localStorage.setItem(UPDATES_SIDEBAR_STORAGE_KEY, open ? 'open' : 'closed');
-	} catch {
-		// Ignore storage failures and keep the in-memory state working.
-	}
-}
 
 function validateUpdatesSearch(search: Record<string, unknown>): {
 	category?: UpdateCategory;
@@ -208,39 +184,10 @@ function UpdatesListRoute() {
 	const crpc = useCRPC();
 	const queryClient = useQueryClient();
 	const { openUpdateSearch } = useCommandPalette();
-	const isBelowLg = useIsBelow(1024);
 	const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-	const [sidebarOpen, setSidebarOpen] = useState(true);
-	const [sidebarPreferenceLoaded, setSidebarPreferenceLoaded] = useState(false);
-
-	useEffect(() => {
-		const storedOpen = readUpdatesSidebarPreference();
-		setSidebarOpen(storedOpen);
-		setSidebarPreferenceLoaded(true);
-	}, []);
-	useEffect(() => {
-		if (!sidebarPreferenceLoaded) return;
-		document.documentElement.removeAttribute(UPDATES_SIDEBAR_ATTRIBUTE);
-	}, [sidebarPreferenceLoaded]);
-
-	const toggleSidebar = useCallback(() => {
-		setSidebarOpen((open) => {
-			const nextOpen = !open;
-			persistUpdatesSidebarPreference(nextOpen);
-			return nextOpen;
-		});
-	}, []);
-
-	const handleSidebarToggle = useCallback(() => {
-		if (isBelowLg) {
-			setMobileSidebarOpen(true);
-			return;
-		}
-		toggleSidebar();
-	}, [isBelowLg, toggleSidebar]);
 
 	const updateCommands = useMemo<Array<AppCommand>>(() => {
-		const commands: Array<AppCommand> = [
+		return [
 			{
 				closeOnRun: false,
 				group: 'Navigation',
@@ -251,36 +198,9 @@ function UpdatesListRoute() {
 				run: () => openUpdateSearch(),
 			},
 		];
-		if (!isBelowLg) {
-			commands.push({
-				group: 'Navigation',
-				icon: sidebarOpen ? PanelLeftClose : PanelLeftOpen,
-				id: 'updates.toggle-sidebar',
-				keywords: ['categories', 'navigation', 'collapse', 'expand'],
-				shortcut: '[',
-				title: m.updates_command_toggle_sidebar(),
-				run: toggleSidebar,
-			});
-		}
-		return commands;
-	}, [isBelowLg, openUpdateSearch, sidebarOpen, toggleSidebar]);
-
-	const updateShortcuts = useMemo(
-		() => [
-			{
-				description: m.updates_command_toggle_sidebar(),
-				enabled: () => !isBelowLg,
-				group: 'Navigation' as const,
-				id: 'updates.toggle-sidebar',
-				keys: ['['],
-				run: toggleSidebar,
-			},
-		],
-		[isBelowLg, toggleSidebar]
-	);
+	}, [openUpdateSearch]);
 
 	useRegisterCommands('updates', updateCommands);
-	useRegisterShortcuts('updates', updateShortcuts);
 
 	const { data: projectData } = useSuspenseQuery(
 		crpc.project.getDetails.queryOptions({
@@ -395,38 +315,15 @@ function UpdatesListRoute() {
 
 	return (
 		<>
-			<ScriptOnce>{UPDATES_SIDEBAR_BOOTSTRAP}</ScriptOnce>
 			<div className='relative flex w-full min-w-0 flex-1 flex-col overflow-x-hidden'>
 				<div
 					aria-hidden='true'
 					className='pointer-events-none absolute inset-x-0 top-20 border-b'
 				/>
 				<div className='container flex w-full min-w-0 flex-1 flex-col'>
-					<div
-						data-updates-sidebar-grid
-						className={cn(
-							'flex w-full max-w-full min-w-0 flex-1 flex-col transition-[grid-template-columns] duration-200 ease-out motion-reduce:transition-none lg:grid',
-							sidebarOpen ? 'lg:grid-cols-[17rem_minmax(0,1fr)]' : 'lg:grid-cols-[0_minmax(0,1fr)]'
-						)}
-					>
-							<aside
-								aria-hidden={!sidebarOpen}
-								data-updates-sidebar-aside
-								id='updates-sidebar'
-								className={cn(
-									'hidden h-full min-h-0 min-w-0 overflow-hidden transition-colors duration-200 lg:block',
-									sidebarOpen
-										? 'border-r border-border/75'
-										: 'pointer-events-none border-r border-transparent'
-								)}
-							>
-								<div
-									data-updates-sidebar-panel
-									className={cn(
-										'sticky top-0 flex h-full w-[17rem] max-w-none flex-col overflow-hidden transition-[transform,opacity] duration-200 ease-out motion-reduce:transition-none',
-										sidebarOpen ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0'
-									)}
-								>
+					<div className='flex w-full max-w-full min-w-0 flex-1 flex-col lg:grid lg:grid-cols-[17rem_minmax(0,1fr)]'>
+						<aside className='hidden h-full min-h-0 min-w-0 overflow-hidden border-r border-border/75 lg:block'>
+							<div className='sticky top-0 flex h-full w-[17rem] max-w-none flex-col overflow-hidden'>
 								<div className='flex h-[81px] shrink-0 items-center pr-5'>{controls}</div>
 								<div className='mt-4 min-h-0 flex-1 overflow-visible pr-5 pb-6'>
 									<UpdatesSidebar canEdit={canEdit} orgSlug={orgSlug} projectSlug={projectSlug} />
@@ -435,21 +332,9 @@ function UpdatesListRoute() {
 						</aside>
 
 						<div className='flex h-full min-h-0 w-full max-w-full min-w-0 flex-1 flex-col'>
-							<div
-								data-updates-sidebar-main
-								className={cn(
-									'flex h-[81px] min-w-0 shrink-0 items-center transition-[padding] duration-200 ease-out motion-reduce:transition-none',
-									sidebarOpen ? 'lg:pl-7' : 'lg:pl-0'
-								)}
-							>
-								<div
-									data-updates-sidebar-centered
-									className={cn(
-										'flex w-full min-w-0 items-center justify-between gap-3',
-										sidebarOpen ? 'max-w-none' : 'lg:mx-auto lg:max-w-[50rem]'
-									)}
-								>
-									<div className='flex min-w-0 items-center gap-3'>
+							<div className='flex h-[81px] min-w-0 shrink-0 items-center lg:pl-7'>
+								<div className='flex w-full min-w-0 items-center justify-between gap-3'>
+									<div className='flex min-w-0 items-center gap-3 lg:hidden'>
 										<Tooltip
 											onOpenChange={(open, eventDetails) => {
 												if (open && eventDetails.reason === 'trigger-focus') {
@@ -459,33 +344,17 @@ function UpdatesListRoute() {
 										>
 											<TooltipTrigger asChild delay={200}>
 												<Button
-													aria-controls='updates-sidebar'
-													aria-expanded={isBelowLg ? mobileSidebarOpen : sidebarOpen}
-													aria-keyshortcuts={isBelowLg ? undefined : '['}
-													aria-label={
-														sidebarOpen ? m.updates_hide_categories() : m.updates_show_categories()
-													}
-													onClick={handleSidebarToggle}
+													aria-controls='updates-sidebar-dialog'
+													aria-expanded={mobileSidebarOpen}
+													aria-label={m.updates_show_categories()}
+													onClick={() => setMobileSidebarOpen(true)}
 													size='icon'
 													variant='outline'
 												>
-													{isBelowLg ? (
-														<PanelLeftOpen />
-													) : sidebarOpen ? (
-														<PanelLeftClose />
-													) : (
-														<PanelLeftOpen />
-													)}
+													<PanelLeftOpen />
 												</Button>
 											</TooltipTrigger>
-											<TooltipContent className='flex items-center gap-2' side='bottom'>
-												<span>{m.updates_toggle_sidebar()}</span>
-												{!isBelowLg ? (
-													<kbd className='rounded border border-white/20 bg-black/45 px-1.5 py-0.5 font-sans text-[10px] text-white'>
-														[
-													</kbd>
-												) : null}
-											</TooltipContent>
+											<TooltipContent side='bottom'>{m.updates_categories()}</TooltipContent>
 										</Tooltip>
 									</div>
 									<Button className='shrink-0' variant='outline'>
@@ -497,11 +366,7 @@ function UpdatesListRoute() {
 							<div
 								aria-busy={isInitialUpdatesLoading || refreshingUpdates || loadingMore}
 								aria-live='polite'
-								data-updates-sidebar-main
-								className={cn(
-									'flex w-full max-w-full min-w-0 flex-1 flex-col gap-4 overflow-visible pb-8',
-									sidebarOpen ? 'lg:pl-7' : 'lg:pl-0'
-								)}
+								className='flex w-full max-w-full min-w-0 flex-1 flex-col gap-4 overflow-visible pb-8 lg:pl-7'
 							>
 								<div className='w-full'>
 									{isInitialUpdatesLoading ? (
@@ -527,7 +392,6 @@ function UpdatesListRoute() {
 														isLast={!canLoadMore && index === updates.length - 1}
 														orgSlug={orgSlug}
 														projectSlug={projectSlug}
-														sidebarOpen={sidebarOpen}
 														update={update}
 													/>
 												))}
@@ -559,6 +423,7 @@ function UpdatesListRoute() {
 
 			<ResponsiveDialog onOpenChange={setMobileSidebarOpen} open={mobileSidebarOpen}>
 				<ResponsiveDialogContent
+					id='updates-sidebar-dialog'
 					className='flex flex-col gap-0 overflow-hidden p-0'
 					dialogClassName='sm:max-w-md'
 					showCloseButton={false}

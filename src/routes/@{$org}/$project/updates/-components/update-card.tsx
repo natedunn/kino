@@ -45,7 +45,6 @@ function UpdateCardImpl({
 	currentProfileId,
 	className,
 	isLast = false,
-	sidebarOpen = true,
 }: {
 	update: any;
 	orgSlug: string;
@@ -53,7 +52,6 @@ function UpdateCardImpl({
 	currentProfileId?: string;
 	className?: string;
 	isLast?: boolean;
-	sidebarOpen?: boolean;
 }) {
 	const {
 		id: updateId,
@@ -85,21 +83,11 @@ function UpdateCardImpl({
 
 	return (
 		<li className={cn('relative flex min-w-0', className)}>
-				<div
-					data-updates-sidebar-centered
-					className={cn(
-						'relative min-w-0 w-full py-10',
-						sidebarOpen ? 'lg:pl-7' : 'lg:mx-auto lg:max-w-[50rem] lg:pl-0'
-					)}
-				>
+			<div className='relative min-w-0 w-full py-10 lg:pl-7'>
 				{!isLast ? (
 					<div
 						aria-hidden='true'
-						data-updates-sidebar-separator
-						className={cn(
-							'absolute right-0 bottom-0 left-0 border-b',
-							sidebarOpen && 'lg:-left-7 md:-right-8.25'
-						)}
+						className='absolute right-0 bottom-0 left-0 border-b lg:-left-7 md:-right-8.25'
 					/>
 				) : null}
 				<div className='mb-4 flex min-w-0 flex-wrap items-center gap-3'>
