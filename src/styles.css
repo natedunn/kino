@@ -717,6 +717,7 @@
 	html[data-files-sidebar='closed'] [data-files-sidebar-main] {
 		padding-left: 0;
 	}
+
 }
 
 @keyframes heart-pop {

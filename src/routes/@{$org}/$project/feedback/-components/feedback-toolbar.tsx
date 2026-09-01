@@ -10,6 +10,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
+	ResponsiveDialog,
+	ResponsiveDialogBody,
+	ResponsiveDialogContent,
+	ResponsiveDialogFooter,
+	ResponsiveDialogHeader,
+} from '@/components/ui/responsive-dialog';
+import {
 	Select,
 	SelectContent,
 	SelectItem,
@@ -44,12 +51,8 @@ export function FeedbackToolbar({
 	const searchParams = useSearch({ from: FROM_ROUTE });
 	const { search, status, board } = searchParams;
 	const { org, project } = useParams({ from: FROM_ROUTE });
-	// Visibility is driven solely by this state so the panel can always be
-	// toggled shut, even when a filter is active. It starts open if the user
-	// arrives with a filter already applied.
-	const [showFilters, setShowFilters] = useState(() => Boolean(status));
+	const [filtersOpen, setFiltersOpen] = useState(false);
 	const [searchTerm, setSearchTerm] = useState(!search ? '' : search);
-	const filtersPanelRef = useRef<HTMLDivElement>(null);
 	const searchTimeoutRef = useRef<number | null>(null);
 	const statusOptions = STATUS_OPTIONS.map((option) => ({ ...option, label: option.label() }));
 
@@ -93,7 +96,8 @@ export function FeedbackToolbar({
 		setSearchParams({ search: undefined, status: undefined });
 	};
 
-	const hasActiveFilters = status;
+	const activeFilterCount = [status].filter(Boolean).length;
+	const hasActiveFilters = activeFilterCount > 0;
 
 	const focusSearch = useCallback(() => {
 		const input = document.getElementById(SEARCH_INPUT_ID);
@@ -104,15 +108,7 @@ export function FeedbackToolbar({
 	}, []);
 
 	const toggleFilters = useCallback(() => {
-		setShowFilters((value) => {
-			const next = !value;
-			// When revealing the panel, move focus to the region so the next Tab
-			// lands on the first control inside it.
-			if (next) {
-				window.requestAnimationFrame(() => filtersPanelRef.current?.focus());
-			}
-			return next;
-		});
+		setFiltersOpen((value) => !value);
 	}, []);
 
 	const shortcuts = useMemo(
@@ -174,61 +170,54 @@ export function FeedbackToolbar({
 					topRowClassName
 				)}
 			>
+				<div className='flex min-w-0 items-center gap-2'>
+					<div className='relative min-w-0 flex-1'>
+						<Search className='pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground' />
+						<Input
+							autoCapitalize='none'
+							autoComplete='off'
+							autoCorrect='off'
+							className='min-w-0 pl-9'
+							id={SEARCH_INPUT_ID}
+							onChange={(event) => {
+								setSearchTerm(event.target.value);
+								scheduleSearch(event.target.value);
+							}}
+							placeholder={m.feedback_index_search_placeholder()}
+							spellCheck={false}
+							value={searchTerm}
+						/>
+					</div>
+				</div>
+
 				<div className='flex items-center gap-2'>
 					{leadingControl}
 					<Button
 						onClick={toggleFilters}
-						variant={showFilters || hasActiveFilters ? 'default' : 'outline'}
+						variant={filtersOpen || hasActiveFilters ? 'default' : 'outline'}
 					>
 						<Filter className='mr-2 h-4 w-4' />
-						{m.feedback_index_filters()}
+						<span>{m.feedback_index_filters()}</span>
 						{hasActiveFilters ? (
 							<Badge
-								className='ml-2 flex h-5 w-5 items-center justify-center rounded-full p-0 pr-px text-[10px]'
+								className='ml-2 flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px]'
 								variant='secondary'
 							>
-								{[status].filter(Boolean).length}
+								{activeFilterCount}
 							</Badge>
 						) : null}
 					</Button>
-
-					{hasActiveFilters ? (
-						<Button
-							onClick={() => {
-								setShowFilters(false);
-								clearFilters();
-							}}
-							variant='outline'
-						>
-							<X className='mr-2 h-4 w-4' />
-							{m.feedback_index_clear_all()}
-						</Button>
-					) : null}
-				</div>
-
-				<div className='flex min-w-0 items-center gap-2'>
-					<Input
-						className='min-w-0'
-						id={SEARCH_INPUT_ID}
-						onChange={(event) => {
-							setSearchTerm(event.target.value);
-							scheduleSearch(event.target.value);
-						}}
-						placeholder={m.feedback_index_search_placeholder()}
-						value={searchTerm}
-					/>
 				</div>
 			</div>
 
-			{showFilters ? (
-				<div
-					ref={filtersPanelRef}
-					aria-label={m.feedback_index_filters()}
-					className='rounded-lg border bg-muted/50 p-4 outline-none focus-visible:ring-2 focus-visible:ring-ring/50'
-					role='region'
-					tabIndex={-1}
+			<ResponsiveDialog onOpenChange={setFiltersOpen} open={filtersOpen}>
+				<ResponsiveDialogContent
+					className='flex flex-col gap-0 overflow-hidden p-0'
+					dialogClassName='sm:max-w-lg'
+					showCloseButton={false}
 				>
-					<div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4'>
+					<ResponsiveDialogHeader icon={<Filter className='size-4' />} title={m.feedback_index_filters()} />
+					<ResponsiveDialogBody className='space-y-4 p-4'>
 						<div className='space-y-2'>
 							<label className='text-muted-foreground' htmlFor={STATUS_FILTER_ID}>
 								{m.feedback_status()}
@@ -254,9 +243,21 @@ export function FeedbackToolbar({
 								</SelectContent>
 							</Select>
 						</div>
-					</div>
-				</div>
-			) : null}
+					</ResponsiveDialogBody>
+					<ResponsiveDialogFooter>
+						<Button
+							disabled={!hasActiveFilters}
+							onClick={() => {
+								clearFilters();
+							}}
+							variant='outline'
+						>
+							<X className='mr-2 h-4 w-4' />
+							{m.feedback_index_clear_all()}
+						</Button>
+					</ResponsiveDialogFooter>
+				</ResponsiveDialogContent>
+			</ResponsiveDialog>
 		</div>
 	);
 }
