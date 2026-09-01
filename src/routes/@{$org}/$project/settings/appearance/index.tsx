@@ -18,7 +18,6 @@ import {
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { Check } from 'lucide-react';
-import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,6 +33,7 @@ import { crpcServer } from '@/lib/convex/crpc-server';
 import { capturePostHogEvent } from '@/lib/posthog';
 import { useProjectThemePreview } from '@/lib/project-theme';
 import { titleMeta } from '@/lib/seo';
+import { toast } from '@/lib/toast';
 import { cn } from '@/lib/utils';
 import * as m from '@/paraglide/messages.js';
 
@@ -196,7 +196,7 @@ function ProjectAppearanceRoute() {
 				project_id: projectId,
 				published_revision: result.publishedRevision,
 			});
-			toast.success(m.project_appearance_published());
+			await toast.success(m.project_appearance_published());
 			await editor.refetch();
 		} catch {
 			// Global mutation error handling reports the detailed failure.

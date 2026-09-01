@@ -17,7 +17,7 @@ import {
 	Users,
 } from 'lucide-react';
 
-import { EditorContentDisplay } from '@/components/editor';
+import { EditorContentDisplay } from '@/components/editor/editor-content-display';
 import { ProfileLinkOrUnknown } from '@/components/profile-link';
 import { SidebarSection } from '@/components/sidebar-section';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';

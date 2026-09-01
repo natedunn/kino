@@ -5,7 +5,6 @@ import type { FolderPickerFolder } from '@/components/files/folder-picker-utils'
 import { useEffect, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { FolderInput } from 'lucide-react';
-import { toast } from 'sonner';
 
 import { FolderPicker } from '@/components/files/folder-picker';
 import { folderPickerPathLabel } from '@/components/files/folder-picker-utils';
@@ -19,6 +18,7 @@ import {
 } from '@/components/ui/responsive-dialog';
 import { useCRPC } from '@/lib/convex/crpc';
 import { localizeError } from '@/lib/errors';
+import { toast } from '@/lib/toast';
 import * as m from '@/paraglide/messages.js';
 
 type MoveFileDialogProps = {
@@ -47,13 +47,13 @@ export function MoveFileDialog({ file, folders, onOpenChange, open }: MoveFileDi
 		try {
 			await moveMutation.mutateAsync({ assetId: file.id, folderId: destinationFolderId });
 			onOpenChange(false);
-			toast.success(
+			await toast.success(
 				m.files_moved_to({
 					location: folderPickerPathLabel(folders, destinationFolderId, m.files_root()),
 				})
 			);
 		} catch (error) {
-			toast.error(localizeError(error, m.files_move_failed()));
+			await toast.error(localizeError(error, m.files_move_failed()));
 		}
 	};
 

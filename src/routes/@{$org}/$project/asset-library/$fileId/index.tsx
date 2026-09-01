@@ -36,7 +36,6 @@ import {
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { toast } from 'sonner';
 
 import { Field } from '@/components/field';
 import { MoveFileDialog } from '@/components/files/move-file-dialog';
@@ -60,6 +59,7 @@ import { extractErrorMessage } from '@/lib/errors';
 import { useSidebarState } from '@/lib/hooks/use-sidebar-state';
 import { capturePostHogEvent } from '@/lib/posthog';
 import { projectTitle, titleMeta } from '@/lib/seo';
+import { toast } from '@/lib/toast';
 import { cn } from '@/lib/utils';
 
 import css from 'highlight.js/lib/languages/css';
@@ -172,13 +172,13 @@ function FilePreviewPage() {
 			anchor.click();
 			URL.revokeObjectURL(objectUrl);
 		} catch (error) {
-			toast.error(extractErrorMessage(error, 'Unable to download file'));
+			await toast.error(extractErrorMessage(error, 'Unable to download file'));
 		}
 	};
 
 	const copyLink = async () => {
 		await navigator.clipboard.writeText(window.location.href);
-		toast.success('Preview link copied');
+		await toast.success('Preview link copied');
 	};
 
 	const openRename = () => {
@@ -194,7 +194,7 @@ function FilePreviewPage() {
 		try {
 			await renameMutation.mutateAsync({ assetId: file.id, name: trimmedDraftName });
 			setRenameOpen(false);
-			toast.success('File renamed');
+			await toast.success('File renamed');
 		} catch (error) {
 			setRenameError(extractErrorMessage(error, 'Unable to rename file'));
 		}
@@ -208,13 +208,13 @@ function FilePreviewPage() {
 				category: file.category,
 				origin_feature: file.sourceAndUsage?.originFeature ?? 'files',
 			});
-			toast.success('File deleted');
+			await toast.success('File deleted');
 			await router.navigate({
 				params: { org: params.org, project: params.project },
 				to: '/@{$org}/$project/asset-library',
 			});
 		} catch (error) {
-			toast.error(extractErrorMessage(error, 'Unable to delete file'));
+			await toast.error(extractErrorMessage(error, 'Unable to delete file'));
 		}
 	};
 

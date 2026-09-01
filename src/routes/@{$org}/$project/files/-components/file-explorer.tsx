@@ -17,7 +17,6 @@ import {
 	MoreHorizontal,
 	Trash2,
 } from 'lucide-react';
-import { toast } from 'sonner';
 
 import { MoveFileDialog } from '@/components/files/move-file-dialog';
 import { Badge } from '@/components/ui/badge';
@@ -32,6 +31,7 @@ import {
 import { useCRPC, useCRPCClient } from '@/lib/convex/crpc';
 import { localizeError } from '@/lib/errors';
 import { capturePostHogEvent } from '@/lib/posthog';
+import { toast } from '@/lib/toast';
 import * as m from '@/paraglide/messages.js';
 import { getLocale } from '@/paraglide/runtime.js';
 
@@ -121,7 +121,7 @@ export function FileExplorer({
 			if (!url) throw new Error(m.files_download_unavailable());
 			window.location.assign(url);
 		} catch (error) {
-			toast.error(localizeError(error, m.files_download_failed()));
+			await toast.error(localizeError(error, m.files_download_failed()));
 		}
 	};
 
@@ -286,9 +286,9 @@ function FileRow({
 				category: file.category,
 				origin_feature: file.originFeature,
 			});
-			toast.success(m.files_deleted());
+			await toast.success(m.files_deleted());
 		} catch (error) {
-			toast.error(localizeError(error, m.files_delete_failed()));
+			await toast.error(localizeError(error, m.files_delete_failed()));
 		}
 	};
 	return (

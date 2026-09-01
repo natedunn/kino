@@ -12,7 +12,6 @@ import {
 	Send,
 	Sparkles,
 } from 'lucide-react';
-import { toast } from 'sonner';
 
 import CheckboxButton from '@/components/checkbox-button';
 import { InlineAlert } from '@/components/inline-alert';
@@ -58,6 +57,7 @@ import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { GithubIcon } from '@/icons';
+import { toast } from '@/lib/toast';
 
 import { Preview } from './parts';
 
@@ -110,7 +110,7 @@ function SignInExample() {
 					</label>
 				</CardContent>
 				<CardFooter className='flex-col gap-2'>
-					<Button className='w-full' onClick={() => toast.success('Signed in')}>
+					<Button className='w-full' onClick={() => void toast.success('Signed in')}>
 						Sign in
 					</Button>
 					<p className='text-center text-xs text-muted-foreground'>
@@ -283,7 +283,7 @@ function SettingsPanelExample() {
 				</CardContent>
 				<CardFooter className='justify-end gap-2 border-t'>
 					<Button variant='ghost'>Cancel</Button>
-					<Button onClick={() => toast.success('Settings saved')}>Save changes</Button>
+					<Button onClick={() => void toast.success('Settings saved')}>Save changes</Button>
 				</CardFooter>
 			</Card>
 		</ExampleStage>
@@ -343,7 +343,7 @@ function CommentComposerExample() {
 							size='sm'
 							disabled={value.trim().length === 0}
 							onClick={() => {
-								toast.success('Comment posted');
+								void toast.success('Comment posted');
 								setValue('');
 							}}
 						>
@@ -464,7 +464,7 @@ function NotificationsExample() {
 					<Button variant='ghost' size='sm'>
 						Dismiss all
 					</Button>
-					<Button size='sm' onClick={() => toast('Marked all as read')}>
+					<Button size='sm' onClick={() => void toast.message('Marked all as read')}>
 						Mark read
 					</Button>
 				</div>

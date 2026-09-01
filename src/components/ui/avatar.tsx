@@ -1,10 +1,7 @@
 import type { Animate } from 'blobatar';
 
 import * as React from 'react';
-import { Blobatar } from '@blobatar/react';
-import { palette as blobatarPalette, traits as blobatarTraits } from 'blobatar';
-
-import 'blobatar/motion.css';
+import { ClientOnly } from '@tanstack/react-router';
 
 import {
 	getCurrentThemePreference,
@@ -38,40 +35,25 @@ type AvatarProps = React.ComponentProps<'span'> & {
 	fallbackName?: string;
 };
 
-function blobatarNumberSeed(name: string) {
+const BlobatarFallback = React.lazy(() =>
+	import('./avatar-blobatar').then((module) => ({
+		default: module.AvatarBlobatarFallback,
+	}))
+);
+
+function stringHue(name: string) {
 	let hash = 0;
 	for (let index = 0; index < name.length; index += 1) {
 		hash = (hash * 31 + name.charCodeAt(index)) >>> 0;
 	}
-	return hash / 0xffffffff;
-}
-
-function blobatarThemeOptions(name: string, isDark: boolean) {
-	if (!isDark) {
-		return {
-			palette: { bg: '#f4f5f7' },
-			tone: undefined,
-		};
-	}
-
-	const seed = blobatarNumberSeed(name);
-	return {
-		palette: { bg: '#242428' },
-		// Keep dark-mode faces out of the inkiest tail so they stay legible on
-		// the app's near-black surfaces while preserving deterministic variety.
-		tone: 0.08 + seed * 0.8,
-	};
+	return hash % 360;
 }
 
 function orgAvatarThemeOptions(name: string, isDark: boolean) {
-	const seedTraits = blobatarTraits(name, true);
-	// Keep org initials in a calmer mid-band while preserving deterministic hue.
-	const tone = 0.18 + seedTraits('tone') * 0.45;
-	const seededPalette = blobatarPalette(seedTraits.num('hue', 0, 360), true, tone);
-
+	const hue = stringHue(name);
 	return {
-		backgroundColor: seededPalette.head ?? '#6b7280',
-		color: seededPalette.eye ?? '#ffffff',
+		backgroundColor: isDark ? `oklch(0.56 0.09 ${hue})` : `oklch(0.72 0.11 ${hue})`,
+		color: isDark ? 'oklch(0.98 0.01 0)' : 'oklch(0.2 0.02 0)',
 		ringClassName: isDark ? 'ring-white/10' : 'ring-black/5',
 	};
 }
@@ -159,14 +141,11 @@ function AvatarFallback({
 		return null;
 	}
 
-	const blobatarOptions = fallbackName
-		? blobatarThemeOptions(fallbackName, theme === 'dark')
-		: null;
 	const orgFallbackStyles = fallbackName
 		? orgAvatarThemeOptions(fallbackName, theme === 'dark')
 		: null;
 	const style =
-		fallbackKind === 'org-initial' && orgFallbackStyles
+		fallbackName && orgFallbackStyles
 			? ({
 					backgroundColor: orgFallbackStyles.backgroundColor,
 					color: orgFallbackStyles.color,
@@ -193,14 +172,28 @@ function AvatarFallback({
 			{...props}
 		>
 			{fallbackName && fallbackKind === 'blobatar' ? (
-				<Blobatar
-					animate={fallbackAnimate}
-					background='circle'
-					className='size-full'
-					name={fallbackName}
-					palette={blobatarOptions?.palette}
-					tone={blobatarOptions?.tone}
-				/>
+				<ClientOnly
+					fallback={
+						<span className='text-[clamp(0.75rem,48cqh,1.75rem)] leading-none font-semibold'>
+							{getInitial(fallbackName)}
+						</span>
+					}
+				>
+					<React.Suspense
+						fallback={
+							<span className='text-[clamp(0.75rem,48cqh,1.75rem)] leading-none font-semibold'>
+								{getInitial(fallbackName)}
+							</span>
+						}
+					>
+						<BlobatarFallback
+							animate={fallbackAnimate}
+							className='size-full'
+							name={fallbackName}
+							theme={theme}
+						/>
+					</React.Suspense>
+				</ClientOnly>
 			) : fallbackName && fallbackKind === 'org-initial' ? (
 				<span className='text-[clamp(0.75rem,48cqh,1.75rem)] leading-none font-semibold'>
 					{getInitial(fallbackName)}

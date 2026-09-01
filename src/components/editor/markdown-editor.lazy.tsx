@@ -3,9 +3,9 @@ import type { ComponentProps } from 'react';
 // runtime dependency on markdown-editor.tsx. The dynamic import() below is the
 // only real reference, which is what lets the bundler split Tiptap + lowlight +
 // highlight.js grammars into a separate chunk.
-import type { MarkdownEditor } from './markdown-editor';
+import type { MarkdownEditor, MarkdownEditorRef } from './markdown-editor';
 
-import { lazy, Suspense } from 'react';
+import { forwardRef, lazy, Suspense } from 'react';
 
 const MarkdownEditorImpl = lazy(() =>
 	import('./markdown-editor').then((module) => ({
@@ -19,16 +19,20 @@ type LazyMarkdownEditorProps = Omit<ComponentProps<typeof MarkdownEditor>, 'ref'
  * Code-split MarkdownEditor. The heavy editor bundle only loads when an editor
  * actually mounts (an interaction-gated moment), instead of shipping in the
  * route's initial JS. A sized skeleton reserves the space so there's no layout
- * shift while the chunk loads. For consumers that need the imperative ref
- * (e.g. comment-thread), import MarkdownEditor directly instead.
+ * shift while the chunk loads. The wrapper forwards the imperative ref so
+ * interaction-gated consumers can still quote, submit, and clear content.
  */
-export function LazyMarkdownEditor(props: LazyMarkdownEditorProps) {
-	return (
-		<Suspense fallback={<EditorSkeleton minHeight={props.minHeight} />}>
-			<MarkdownEditorImpl {...props} />
-		</Suspense>
-	);
-}
+export const LazyMarkdownEditor = forwardRef<MarkdownEditorRef, LazyMarkdownEditorProps>(
+	(props, ref) => {
+		return (
+			<Suspense fallback={<EditorSkeleton minHeight={props.minHeight} />}>
+				<MarkdownEditorImpl {...props} ref={ref} />
+			</Suspense>
+		);
+	}
+);
+
+LazyMarkdownEditor.displayName = 'LazyMarkdownEditor';
 
 function EditorSkeleton({ minHeight = '100px' }: { minHeight?: string }) {
 	return (

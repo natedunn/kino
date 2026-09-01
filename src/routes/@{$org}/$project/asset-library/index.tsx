@@ -32,7 +32,6 @@ import {
 	Upload,
 	X,
 } from 'lucide-react';
-import { toast } from 'sonner';
 
 import { useCommandPalette } from '@/components/command';
 import { FolderPicker } from '@/components/files/folder-picker';
@@ -75,6 +74,7 @@ import { crpcServer } from '@/lib/convex/crpc-server';
 import { extractErrorMessage } from '@/lib/errors';
 import { capturePostHogEvent } from '@/lib/posthog';
 import { projectTitle, titleMeta } from '@/lib/seo';
+import { toast } from '@/lib/toast';
 import { cn } from '@/lib/utils';
 
 const FILE_SORTS = [
@@ -298,7 +298,7 @@ function FilesPage() {
 			anchor.click();
 			URL.revokeObjectURL(objectUrl);
 		} catch (error) {
-			toast.error(extractErrorMessage(error, 'Unable to download file'));
+			await toast.error(extractErrorMessage(error, 'Unable to download file'));
 		}
 	};
 
@@ -693,9 +693,9 @@ function FileRow({
 				category: file.category,
 				origin_feature: file.originFeature,
 			});
-			toast.success('File deleted');
+			await toast.success('File deleted');
 		} catch (error) {
-			toast.error(extractErrorMessage(error, 'Unable to delete file'));
+			await toast.error(extractErrorMessage(error, 'Unable to delete file'));
 		}
 	};
 	const save = async () => {
@@ -703,9 +703,9 @@ function FileRow({
 			if (name.trim() !== currentBaseName)
 				await renameMutation.mutateAsync({ assetId: file.id, name });
 			setEditOpen(false);
-			toast.success('File renamed');
+			await toast.success('File renamed');
 		} catch (error) {
-			toast.error(extractErrorMessage(error, 'Unable to update file'));
+			await toast.error(extractErrorMessage(error, 'Unable to update file'));
 		}
 	};
 	return (
@@ -900,7 +900,7 @@ function UploadDialog({
 					uploader_class: 'staff',
 				});
 			}
-			toast.success(
+			await toast.success(
 				`${selectedFiles.length} file${selectedFiles.length === 1 ? '' : 's'} uploaded`
 			);
 			setSelectedFiles([]);
@@ -1114,9 +1114,9 @@ function CreateFolderDialog({
 			await mutation.mutateAsync({ name, parentFolderId, projectId });
 			setName('');
 			onOpenChange(false);
-			toast.success('Folder created');
+			await toast.success('Folder created');
 		} catch (error) {
-			toast.error(extractErrorMessage(error, 'Unable to create folder'));
+			await toast.error(extractErrorMessage(error, 'Unable to create folder'));
 		}
 	};
 	return (
@@ -1178,9 +1178,9 @@ function ManageFolderDialog({
 					parentFolderId: parentFolderId === 'root' ? null : parentFolderId,
 				});
 			onOpenChange(false);
-			toast.success('Folder updated');
+			await toast.success('Folder updated');
 		} catch (error) {
-			toast.error(extractErrorMessage(error, 'Unable to rename folder'));
+			await toast.error(extractErrorMessage(error, 'Unable to rename folder'));
 		}
 	};
 	const destroy = async () => {
@@ -1189,9 +1189,9 @@ function ManageFolderDialog({
 			await remove.mutateAsync({ folderId: folder.id });
 			onOpenChange(false);
 			onDeleted();
-			toast.success('Folder deleted');
+			await toast.success('Folder deleted');
 		} catch (error) {
-			toast.error(extractErrorMessage(error, 'Unable to delete folder'));
+			await toast.error(extractErrorMessage(error, 'Unable to delete folder'));
 		}
 	};
 	return (
