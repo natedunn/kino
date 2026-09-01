@@ -1,17 +1,36 @@
+import type { AppCommand } from '@/components/command';
 import type { ReactNode } from 'react';
 
-import { useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
-import { createFileRoute, Link, notFound, useRouter } from '@tanstack/react-router';
+import {
+	createFileRoute,
+	Link,
+	notFound,
+	ScriptOnce,
+	useRouter,
+} from '@tanstack/react-router';
+import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 
+import { useRegisterCommands } from '@/components/command';
 import { RoutePending } from '@/components/route-pending';
+import { useRegisterShortcuts } from '@/components/shortcuts';
 import { Button } from '@/components/ui/button';
+import {
+	ResponsiveDialog,
+	ResponsiveDialogBody,
+	ResponsiveDialogContent,
+	ResponsiveDialogHeader,
+} from '@/components/ui/responsive-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import CirclePlusOutline from '@/icons/circle-plus-outline';
 import Missing from '@/icons/missing';
 import { useCRPC } from '@/lib/convex/crpc';
 import { crpcServer } from '@/lib/convex/crpc-server';
+import { useIsBelow } from '@/lib/hooks/use-mobile';
 import { projectTitle, titleMeta } from '@/lib/seo';
+import { cn } from '@/lib/utils';
 import * as m from '@/paraglide/messages.js';
 
 import { BoardsNav } from './-components/boards-nav';
@@ -20,6 +39,9 @@ import { FeedbackOptions } from './-components/feedback-options';
 import { FeedbackToolbar } from './-components/feedback-toolbar';
 
 const NUM_OF_ITEMS_PER_PAGE = 50;
+const FEEDBACK_SIDEBAR_STORAGE_KEY = 'kino:sidebar:feedback';
+const FEEDBACK_SIDEBAR_ATTRIBUTE = 'data-feedback-sidebar';
+const FEEDBACK_SIDEBAR_BOOTSTRAP = `try{document.documentElement.setAttribute('${FEEDBACK_SIDEBAR_ATTRIBUTE}',localStorage.getItem('${FEEDBACK_SIDEBAR_STORAGE_KEY}')==='closed'?'closed':'open')}catch{}`;
 
 type BoardSummary = {
 	id: string;
@@ -49,6 +71,24 @@ const FEEDBACK_STATUSES = new Set<FeedbackStatus>([
 	'completed',
 	'paused',
 ]);
+
+function readFeedbackSidebarPreference() {
+	if (typeof window === 'undefined') return true;
+	try {
+		return window.localStorage.getItem(FEEDBACK_SIDEBAR_STORAGE_KEY) !== 'closed';
+	} catch {
+		return true;
+	}
+}
+
+function persistFeedbackSidebarPreference(open: boolean) {
+	if (typeof window === 'undefined') return;
+	try {
+		window.localStorage.setItem(FEEDBACK_SIDEBAR_STORAGE_KEY, open ? 'open' : 'closed');
+	} catch {
+		// Keep the in-memory state working if storage is unavailable.
+	}
+}
 
 function parseOptionalString(value: unknown) {
 	if (typeof value !== 'string') return undefined;
@@ -193,6 +233,10 @@ function FeedbackListRoute() {
 	const { search, status, board } = searchParams;
 	const { org: orgSlug, project: projectSlug } = Route.useParams();
 	const crpc = useCRPC();
+	const isBelowLg = useIsBelow(1024);
+	const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+	const [sidebarOpen, setSidebarOpen] = useState(true);
+	const [sidebarPreferenceLoaded, setSidebarPreferenceLoaded] = useState(false);
 
 	const { data: projectData } = useSuspenseQuery(
 		crpc.project.getDetails.queryOptions({
@@ -234,6 +278,25 @@ function FeedbackListRoute() {
 		throw firstFeedbackPageQuery.error;
 	}
 
+	const toggleSidebar = useCallback(() => {
+		setSidebarOpen((open) => {
+			const nextOpen = !open;
+			persistFeedbackSidebarPreference(nextOpen);
+			return nextOpen;
+		});
+	}, []);
+
+	useEffect(() => {
+		const storedOpen = readFeedbackSidebarPreference();
+		setSidebarOpen(storedOpen);
+		setSidebarPreferenceLoaded(true);
+	}, []);
+
+	useEffect(() => {
+		if (!sidebarPreferenceLoaded) return;
+		document.documentElement.removeAttribute(FEEDBACK_SIDEBAR_ATTRIBUTE);
+	}, [sidebarPreferenceLoaded]);
+
 	const [additionalFeedbackState, setAdditionalFeedbackState] = useState<{
 		key: string;
 		pages: Array<NonNullable<typeof firstFeedbackPage>>;
@@ -265,6 +328,38 @@ function FeedbackListRoute() {
 		});
 	const canLoadMoreFeedback =
 		!!lastFeedbackPage && !lastFeedbackPage.isDone && !!lastFeedbackPage.continueCursor;
+
+	const commands = useMemo(() => {
+		if (isBelowLg) return [] satisfies Array<AppCommand>;
+		return [
+			{
+				group: 'Feedback' as const,
+				icon: sidebarOpen ? PanelLeftClose : PanelLeftOpen,
+				id: 'feedback.toggle-sidebar',
+				keywords: ['boards', 'navigation', 'sidebar', 'collapse', 'expand'],
+				shortcut: '[',
+				title: m.feedback_index_toggle_sidebar(),
+				run: toggleSidebar,
+			},
+		] satisfies Array<AppCommand>;
+	}, [isBelowLg, sidebarOpen, toggleSidebar]);
+
+	const shortcuts = useMemo(
+		() => [
+			{
+				description: m.feedback_index_toggle_sidebar(),
+				enabled: () => !isBelowLg,
+				group: 'Feedback' as const,
+				id: 'feedback.toggle-sidebar',
+				keys: ['['],
+				run: toggleSidebar,
+			},
+		],
+		[isBelowLg, toggleSidebar]
+	);
+
+	useRegisterCommands('feedback-sidebar', commands);
+	useRegisterShortcuts('feedback-sidebar', shortcuts);
 
 	async function loadMoreFeedback() {
 		if (!canLoadMoreFeedback || loadingMoreFeedback) return;
@@ -298,12 +393,215 @@ function FeedbackListRoute() {
 		}
 	}
 
+	const sidebarContent = (
+		<>
+			<div className='border-b pb-6'>
+				<h2 className='mx-2 text-sm font-bold text-muted-foreground'>
+					{m.feedback_index_boards()}
+				</h2>
+				<div className='mt-2'>
+					<BoardsNav boards={boards} />
+				</div>
+			</div>
+			{projectData.permissions.canManageContent ? (
+				<div className='mt-6 pb-6'>
+					<h2 className='mx-2 text-sm font-bold text-muted-foreground'>
+						{m.feedback_index_options()}
+					</h2>
+					<div className='mt-2'>
+						<FeedbackOptions />
+					</div>
+				</div>
+			) : null}
+		</>
+	);
+
 	return (
-		<div className='container flex flex-1 flex-col overflow-visible'>
-			<div className='flex flex-1 flex-col gap-8 md:grid md:grid-cols-12'>
-				<div className='order-last py-8 md:order-first md:col-span-3 md:border-r md:border-border/75'>
-					<div className='sticky top-6 flex flex-col overflow-hidden'>
-						<div className='border-b pb-6 md:pr-6'>
+		<>
+			<ScriptOnce>{FEEDBACK_SIDEBAR_BOOTSTRAP}</ScriptOnce>
+			<div className='relative flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-x-hidden lg:h-[calc(100dvh-9.75rem)] lg:flex-none'>
+				<div
+					aria-hidden='true'
+					className='pointer-events-none absolute inset-x-0 top-20 border-b'
+				/>
+				<div className='container flex min-h-0 w-full min-w-0 flex-1 flex-col'>
+					<div
+						className={cn(
+							'flex min-h-0 w-full max-w-full min-w-0 flex-1 flex-col transition-[grid-template-columns] duration-200 ease-out motion-reduce:transition-none lg:grid',
+							sidebarOpen
+								? 'lg:grid-cols-[17rem_minmax(0,1fr)]'
+								: 'lg:grid-cols-[0_minmax(0,1fr)]'
+						)}
+					>
+						<aside
+							aria-hidden={!sidebarOpen}
+							id='feedback-sidebar'
+							className={cn(
+								'hidden h-full min-h-0 min-w-0 overflow-hidden transition-colors duration-200 lg:block',
+								sidebarOpen
+									? 'border-r border-border/75'
+									: 'pointer-events-none border-r border-transparent'
+							)}
+						>
+							<div
+								className={cn(
+									'sticky top-0 flex h-full w-[17rem] max-w-none flex-col overflow-hidden transition-[transform,opacity] duration-200 ease-out motion-reduce:transition-none',
+									sidebarOpen ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0'
+								)}
+							>
+								<div className='flex h-[81px] shrink-0 items-center pr-5'>
+									<Button asChild className='w-full'>
+										<Link
+											params={{ org: orgSlug, project: projectSlug }}
+											to='/@{$org}/$project/feedback/new'
+										>
+											<CirclePlusOutline size='16px' />
+											{m.feedback_index_add_feedback()}
+										</Link>
+									</Button>
+								</div>
+								<div className='mt-4 min-h-0 flex-1 overflow-y-auto pr-5 pb-6'>
+									{sidebarContent}
+								</div>
+							</div>
+						</aside>
+
+						<div className='flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden'>
+							<div
+								className={cn(
+									'flex h-[81px] min-w-0 shrink-0 items-center transition-[padding] duration-200 ease-out motion-reduce:transition-none',
+									sidebarOpen ? 'lg:pl-7' : 'lg:pl-0'
+								)}
+							>
+								<FeedbackToolbar
+									leadingControl={
+										<>
+											<Tooltip
+												onOpenChange={(open, eventDetails) => {
+													if (open && eventDetails.reason === 'trigger-focus') {
+														eventDetails.cancel();
+													}
+												}}
+											>
+												<TooltipTrigger asChild delay={200}>
+													<Button
+														aria-controls='feedback-sidebar'
+														aria-expanded={sidebarOpen}
+														aria-keyshortcuts='['
+														aria-label={
+															sidebarOpen
+																? m.feedback_index_hide_sidebar()
+																: m.feedback_index_show_sidebar()
+														}
+														className='hidden lg:inline-flex'
+														onClick={toggleSidebar}
+														size='icon'
+														variant='outline'
+													>
+														{sidebarOpen ? <PanelLeftClose /> : <PanelLeftOpen />}
+													</Button>
+												</TooltipTrigger>
+												<TooltipContent className='flex items-center gap-2' side='bottom'>
+													<span>{m.feedback_index_toggle_sidebar()}</span>
+													<kbd className='rounded border border-white/20 bg-black/45 px-1.5 py-0.5 font-sans text-[10px] text-white'>
+														[
+													</kbd>
+												</TooltipContent>
+											</Tooltip>
+											<Button
+												aria-label={m.feedback_index_browse_sidebar()}
+												className='lg:hidden'
+												onClick={() => setMobileSidebarOpen(true)}
+												size='icon'
+												variant='outline'
+											>
+												<PanelLeftOpen />
+											</Button>
+										</>
+									}
+									topRowClassName='w-full'
+								/>
+							</div>
+
+							<div
+								aria-busy={isInitialFeedbackLoading || refreshingFeedback || loadingMoreFeedback}
+								aria-live='polite'
+								className={cn(
+									'flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-y-auto py-6 transition-[padding] duration-200 ease-out motion-reduce:transition-none',
+									sidebarOpen ? 'lg:pl-7' : 'lg:pl-0'
+								)}
+							>
+								{isInitialFeedbackLoading ? (
+									<>
+										<span className='sr-only'>{m.feedback_index_loading()}</span>
+										<FeedbackListSkeleton />
+									</>
+								) : null}
+								{!isInitialFeedbackLoading && feedback.length === 0 ? (
+									<Notice icon={<Missing aria-hidden='true' size='32px' />}>
+										{m.feedback_index_empty()}
+									</Notice>
+								) : null}
+								{feedback.length > 0 ? (
+									<ul className='flex flex-col gap-4'>
+										{feedback.map((item) => {
+											const feedbackLinkOptions = {
+												params: {
+													org: orgSlug,
+													project: projectSlug,
+													slug: item.slug,
+												},
+												to: '/@{$org}/$project/feedback/$slug',
+											} as const;
+											const feedbackLocation = router.buildLocation(feedbackLinkOptions);
+
+											return (
+												<FeedbackCard
+													key={item.id}
+													feedback={item}
+													href={router.history.createHref(feedbackLocation.publicHref) || '/'}
+													isAuthenticated={!!profileQuery.data}
+													onNavigationClick={() => router.navigate(feedbackLinkOptions)}
+													onPreload={() => router.preloadRoute(feedbackLinkOptions)}
+												/>
+											);
+										})}
+									</ul>
+								) : null}
+								{loadMoreError ? (
+									<p className='mt-4 text-sm text-destructive'>{loadMoreError.message}</p>
+								) : null}
+								{canLoadMoreFeedback ? (
+									<div className='mt-4 flex items-center gap-3'>
+										<Button
+											disabled={loadingMoreFeedback}
+											onClick={() => void loadMoreFeedback()}
+											variant='outline'
+										>
+											{loadingMoreFeedback
+												? m.feedback_index_loading()
+												: m.feedback_index_load_more()}
+										</Button>
+									</div>
+								) : null}
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<ResponsiveDialog onOpenChange={setMobileSidebarOpen} open={mobileSidebarOpen}>
+				<ResponsiveDialogContent
+					className='flex flex-col gap-0 overflow-hidden p-0'
+					dialogClassName='sm:max-w-md'
+					showCloseButton={false}
+				>
+					<ResponsiveDialogHeader
+						icon={<PanelLeftOpen />}
+						title={m.feedback_index_browse_sidebar()}
+					/>
+					<ResponsiveDialogBody className='p-3'>
+						<div className='mb-3 border-b pb-3'>
 							<Button asChild className='w-full'>
 								<Link
 									params={{ org: orgSlug, project: projectSlug }}
@@ -314,88 +612,10 @@ function FeedbackListRoute() {
 								</Link>
 							</Button>
 						</div>
-						<div className='mt-4'>
-							<div className='border-b pb-6 md:pr-6'>
-								<h2 className='mx-2 text-sm font-bold text-muted-foreground'>
-									{m.feedback_index_boards()}
-								</h2>
-								<div className='mt-2'>
-									<BoardsNav boards={boards} />
-								</div>
-							</div>
-							{projectData.permissions.canManageContent ? (
-								<div className='mt-6 pb-6 md:pr-6'>
-									<h2 className='mx-2 text-sm font-bold text-muted-foreground'>
-										{m.feedback_index_options()}
-									</h2>
-									<div className='mt-2'>
-										<FeedbackOptions />
-									</div>
-								</div>
-							) : null}
-						</div>
-					</div>
-				</div>
-				<div className='flex flex-col gap-4 py-8 md:col-span-9'>
-					<FeedbackToolbar />
-					<div
-						aria-busy={isInitialFeedbackLoading || refreshingFeedback || loadingMoreFeedback}
-						aria-live='polite'
-					>
-						{isInitialFeedbackLoading ? (
-							<>
-								<span className='sr-only'>{m.feedback_index_loading()}</span>
-								<FeedbackListSkeleton />
-							</>
-						) : null}
-						{!isInitialFeedbackLoading && feedback.length === 0 ? (
-							<Notice icon={<Missing aria-hidden='true' size='32px' />}>
-								{m.feedback_index_empty()}
-							</Notice>
-						) : null}
-						{feedback.length > 0 ? (
-							<ul className='flex flex-col gap-4'>
-								{feedback.map((item) => {
-									const feedbackLinkOptions = {
-										params: {
-											org: orgSlug,
-											project: projectSlug,
-											slug: item.slug,
-										},
-										to: '/@{$org}/$project/feedback/$slug',
-									} as const;
-									const feedbackLocation = router.buildLocation(feedbackLinkOptions);
-
-									return (
-										<FeedbackCard
-											key={item.id}
-											feedback={item}
-											href={router.history.createHref(feedbackLocation.publicHref) || '/'}
-											isAuthenticated={!!profileQuery.data}
-											onNavigationClick={() => router.navigate(feedbackLinkOptions)}
-											onPreload={() => router.preloadRoute(feedbackLinkOptions)}
-										/>
-									);
-								})}
-							</ul>
-						) : null}
-					</div>
-					{loadMoreError ? (
-						<p className='text-sm text-destructive'>{loadMoreError.message}</p>
-					) : null}
-					{canLoadMoreFeedback ? (
-						<div className='flex items-center gap-3'>
-							<Button
-								disabled={loadingMoreFeedback}
-								onClick={() => void loadMoreFeedback()}
-								variant='outline'
-							>
-								{loadingMoreFeedback ? m.feedback_index_loading() : m.feedback_index_load_more()}
-							</Button>
-						</div>
-					) : null}
-				</div>
-			</div>
-		</div>
+						{sidebarContent}
+					</ResponsiveDialogBody>
+				</ResponsiveDialogContent>
+			</ResponsiveDialog>
+		</>
 	);
 }

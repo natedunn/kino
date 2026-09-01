@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useRouter, useSearch } from '@tanstack/react-router';
 import { Search, X } from 'lucide-react';
@@ -16,6 +18,7 @@ import {
 } from '@/components/ui/select';
 import Filter from '@/icons/filter';
 import { Filter2Outline18 } from '@/icons/nucleo/Filter2Outline18';
+import { cn } from '@/lib/utils';
 import * as m from '@/paraglide/messages.js';
 
 const FROM_ROUTE = '/@{$org}/$project/feedback/';
@@ -30,7 +33,13 @@ const STATUS_OPTIONS = [
 	{ label: m.feedback_status_closed, value: 'closed' },
 ] as const;
 
-export function FeedbackToolbar() {
+export function FeedbackToolbar({
+	leadingControl,
+	topRowClassName,
+}: {
+	leadingControl?: ReactNode;
+	topRowClassName?: string;
+} = {}) {
 	const { navigate } = useRouter();
 	const searchParams = useSearch({ from: FROM_ROUTE });
 	const { search, status, board } = searchParams;
@@ -158,9 +167,15 @@ export function FeedbackToolbar() {
 	}, [clearSearchTimeout]);
 
 	return (
-		<div className='space-y-4'>
-			<div className='flex items-center justify-between gap-4'>
+		<div className='flex min-w-0 flex-col gap-4'>
+			<div
+				className={cn(
+					'flex min-w-0 items-center justify-between gap-4',
+					topRowClassName
+				)}
+			>
 				<div className='flex items-center gap-2'>
+					{leadingControl}
 					<Button
 						onClick={toggleFilters}
 						variant={showFilters || hasActiveFilters ? 'default' : 'outline'}
@@ -191,8 +206,9 @@ export function FeedbackToolbar() {
 					) : null}
 				</div>
 
-				<div className='flex items-center gap-2'>
+				<div className='flex min-w-0 items-center gap-2'>
 					<Input
+						className='min-w-0'
 						id={SEARCH_INPUT_ID}
 						onChange={(event) => {
 							setSearchTerm(event.target.value);
