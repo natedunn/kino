@@ -18,14 +18,13 @@ import * as m from '@/paraglide/messages.js';
 
 // A drawer that slides in from the right on ≥640px and up from the bottom on
 // phones (<640px). Styled like `ResponsiveDialog` (the glass ring + card). The
-// grab handle only shows on the bottom-sheet (phone) variant — the side variant
-// has none.
+// phone variant still supports swipe-to-dismiss, but no visible grab handle is
+// rendered.
 function ResponsiveSideDrawer({ children, ...props }: React.ComponentProps<typeof Drawer>) {
 	const isPhone = useIsBelow(640);
 
 	return (
 		<Drawer
-			showSwipeHandle={isPhone}
 			// Phone bottom-sheet gets snap stops: opens at 60%, drag up to full. The
 			// right-side (tablet) drawer is full-height already, so no snap points.
 			snapPoints={isPhone ? [0.6, 1] : undefined}
@@ -58,7 +57,7 @@ function ResponsiveSideDrawerContent({
 				// Float off the edges + round the leading edge to match the ring, for
 				// both the bottom (down) and side (right) variants. `--bleed:0px`
 				// stops the overscroll bleed from filling the inset gap.
-				'[--bleed:0px] [--drawer-inset:0.5rem] *:data-[slot=drawer-content]:overflow-visible *:data-[slot=drawer-swipe-handle]:items-center *:data-[slot=drawer-swipe-handle]:after:-translate-y-0.5 data-[swipe-direction=down]:rounded-t-[1.5rem] data-[swipe-direction=right]:rounded-l-[1.5rem] dark:from-white/[0.025]',
+				'[--bleed:0px] [--drawer-inset:0.5rem] *:data-[slot=drawer-content]:overflow-visible data-[swipe-direction=down]:rounded-t-[1.5rem] data-[swipe-direction=right]:rounded-l-[1.5rem] dark:from-white/[0.025]',
 				drawerClassName
 			)}
 			{...props}
@@ -85,7 +84,7 @@ function ResponsiveSideDrawerHeader({
 	return (
 		<DrawerHeader
 			className={cn(
-				'flex-row items-center justify-between gap-2 border-b bg-accent px-5 py-4',
+				'flex-row items-center justify-between gap-2 border-b bg-muted/40 px-5 py-3 md:py-3.5',
 				className
 			)}
 			{...props}
@@ -124,7 +123,9 @@ function ResponsiveSideDrawerHeader({
 // Scrollable content region between header and footer. The card is `p-0`, so the
 // body owns its own padding.
 function ResponsiveSideDrawerBody({ className, ...props }: React.ComponentProps<'div'>) {
-	return <div className={cn('min-h-0 flex-1 overflow-y-auto px-5 py-4', className)} {...props} />;
+	return (
+		<div className={cn('min-h-0 flex-1 overflow-y-auto px-5 py-3 md:py-4', className)} {...props} />
+	);
 }
 
 function ResponsiveSideDrawerFooter({ className, ...props }: React.ComponentProps<'div'>) {

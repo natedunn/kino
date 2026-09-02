@@ -48,7 +48,7 @@ function ResponsiveDialog({ children, ...props }: React.ComponentProps<typeof Di
 	return (
 		<ResponsiveDialogContext.Provider value={contextValue}>
 			{isMobile ? (
-				<Drawer showSwipeHandle swipeDirection='down' {...props}>
+				<Drawer swipeDirection='down' {...props}>
 					{children}
 				</Drawer>
 			) : (
@@ -105,9 +105,7 @@ function ResponsiveDialogContent({
 				// `--drawer-inset` is the margin; `--bleed:0px` stops the drawer's
 				// overscroll bleed from filling that inset gap. The base drawer only
 				// rounds its leading edge (rounded-t-xl for a bottom sheet), so round
-				// the top to match the ring now that it floats on all sides. The base
-				// grab handle pins to the content edge (items-end); center it in the
-				// ring's top gap instead so it isn't flush with the inner card.
+				// the top to match the ring now that it floats on all sides.
 				//
 				// `DrawerContent` wraps children in an inner element that clips with
 				// `rounded-[inherit] overflow-hidden`. With our padded ring + nested
@@ -116,10 +114,9 @@ function ResponsiveDialogContent({
 				// card's corners. Neutralize it so the inner card is the sole rounder.
 				className={cn(
 					RESPONSIVE_DIALOG_RING,
-					// Flatten the glass sheen on mobile: in dark mode the drawer's ring
-					// fill is a uniform 0.025 (matches the `to` stop) instead of the
-					// top-heavy gradient used on desktop.
-					'[--bleed:0px] [--drawer-inset:0.5rem] *:data-[slot=drawer-content]:overflow-visible *:data-[slot=drawer-swipe-handle]:items-center *:data-[slot=drawer-swipe-handle]:after:-translate-y-0.5 data-[swipe-direction=down]:rounded-t-[1.5rem] dark:from-white/[0.025]',
+					// Flatten the glass sheen on mobile while keeping the same ring
+					// thickness on all sides.
+					'[--bleed:0px] [--drawer-inset:0.5rem] *:data-[slot=drawer-content]:overflow-visible data-[swipe-direction=down]:rounded-t-[1.5rem] dark:from-white/[0.025]',
 					drawerClassName
 				)}
 			>
@@ -159,7 +156,7 @@ function ResponsiveDialogHeader({
 	return (
 		<Wrapper
 			className={cn(
-				'flex-row items-center justify-between gap-2 border-b bg-accent px-5 py-3 md:py-4',
+				'flex-row items-center justify-between gap-2 border-b bg-muted/40 px-5 py-3 md:py-3.5',
 				className
 			)}
 			{...props}
