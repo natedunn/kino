@@ -41,6 +41,15 @@ if [ "$branch" = "$production_branch" ]; then
   fi
 
   export CONVEX_DEPLOY_KEY="$CONVEX_PROD_DEPLOY_KEY"
+  # This Cloudflare "build" step intentionally deploys Convex as a prerequisite
+  # for the Worker deploy that runs later in `scripts/cloudflare-deploy.sh`.
+  # That means one Workers Builds job has two deploy phases:
+  # 1. here: Convex schema/functions/migrations via `kitcn deploy`
+  # 2. later: the Cloudflare Worker/assets via Wrangler
+  #
+  # We keep this ordering so a Convex failure aborts the Cloudflare release
+  # before Wrangler publishes the frontend. It is not a cross-service atomic
+  # transaction though: if Wrangler fails later, Convex may already be updated.
   # Use `kitcn deploy` (not `convex deploy`) so that, after pushing schema +
   # functions, kitcn runs pending migrations and the aggregateIndex/rankIndex
   # backfill against the just-deployed deployment. Plain `convex deploy` skips
@@ -56,6 +65,8 @@ else
   fi
 
   export CONVEX_DEPLOY_KEY="$CONVEX_PREVIEW_DEPLOY_KEY"
+  # Preview builds follow the same two-phase model as production: Convex first,
+  # then the Cloudflare Worker/assets deploy step later in the Workers pipeline.
   # `kitcn deploy` also runs migrations + aggregate backfill against the preview
   # deployment (targeted via --preview-name) after the convex push.
   npx kitcn deploy \
