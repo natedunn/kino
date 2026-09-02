@@ -12,7 +12,6 @@ import {
 } from '@convex/files';
 import { useMutation } from '@tanstack/react-query';
 import { ChevronRight, File, FolderInput, FolderPlus, Trash2, Upload } from 'lucide-react';
-import { toast } from 'sonner';
 
 import { FolderPicker } from '@/components/files/folder-picker';
 import { folderDescendantIds } from '@/components/files/folder-picker-utils';
@@ -28,6 +27,7 @@ import {
 import { useCRPC, useCRPCClient } from '@/lib/convex/crpc';
 import { localizeError } from '@/lib/errors';
 import { capturePostHogEvent } from '@/lib/posthog';
+import { toast } from '@/lib/toast';
 import { cn } from '@/lib/utils';
 import * as m from '@/paraglide/messages.js';
 
@@ -72,9 +72,9 @@ export function ManageFolderDialog({
 				await moveMutation.mutateAsync({ folderId: folder.id, parentFolderId });
 			}
 			onOpenChange(false);
-			toast.success(m.files_folder_updated());
+			await toast.success(m.files_folder_updated());
 		} catch (error) {
-			toast.error(localizeError(error, m.files_folder_update_failed()));
+			await toast.error(localizeError(error, m.files_folder_update_failed()));
 		}
 	};
 
@@ -84,9 +84,9 @@ export function ManageFolderDialog({
 			await removeMutation.mutateAsync({ folderId: folder.id });
 			onOpenChange(false);
 			onDeleted();
-			toast.success(m.files_folder_deleted());
+			await toast.success(m.files_folder_deleted());
 		} catch (error) {
-			toast.error(localizeError(error, m.files_folder_delete_failed()));
+			await toast.error(localizeError(error, m.files_folder_delete_failed()));
 		}
 	};
 
@@ -284,7 +284,7 @@ function UploadFilesDialog({
 					uploader_class: 'staff',
 				});
 			}
-			toast.success(m.files_uploaded({ count: selectedFiles.length }));
+			await toast.success(m.files_uploaded({ count: selectedFiles.length }));
 			onOpenChange(false);
 		} catch (uploadError) {
 			setError(localizeError(uploadError, m.files_upload_failed()));
@@ -434,9 +434,9 @@ function CreateFolderDialog({
 				projectId,
 			});
 			onOpenChange(false);
-			toast.success(m.files_folder_created());
+			await toast.success(m.files_folder_created());
 		} catch (error) {
-			toast.error(localizeError(error, m.files_folder_create_failed()));
+			await toast.error(localizeError(error, m.files_folder_create_failed()));
 		}
 	};
 

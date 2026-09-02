@@ -19,7 +19,6 @@ import {
 	Trash2,
 	User,
 } from 'lucide-react';
-import { toast } from 'sonner';
 
 import CheckboxButton from '@/components/checkbox-button';
 import { IconSelector } from '@/components/icon-selector';
@@ -107,6 +106,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { GithubIcon, iconRegistryOptions } from '@/icons';
+import { toast } from '@/lib/toast';
 
 import { Cell, CopySnippet, Demo } from './parts';
 
@@ -425,7 +425,7 @@ function InputGroupDemo() {
 				<InputGroup>
 					<InputGroupInput placeholder='https://kino.app/invite/x8f2' readOnly />
 					<InputGroupAddon align='inline-end'>
-						<InputGroupButton onClick={() => toast.success('Copied to clipboard')}>
+						<InputGroupButton onClick={() => void toast.success('Copied to clipboard')}>
 							<Copy />
 							Copy
 						</InputGroupButton>
@@ -965,21 +965,21 @@ function CommandDemo() {
 function ToastDemo() {
 	return (
 		<Demo title='Toasts'>
-			<Button variant='outline' onClick={() => toast('Event has been created')}>
+			<Button variant='outline' onClick={() => void toast.message('Event has been created')}>
 				Default
 			</Button>
-			<Button variant='outline' onClick={() => toast.success('Changes saved successfully')}>
+			<Button variant='outline' onClick={() => void toast.success('Changes saved successfully')}>
 				Success
 			</Button>
-			<Button variant='outline' onClick={() => toast.error('Something went wrong')}>
+			<Button variant='outline' onClick={() => void toast.error('Something went wrong')}>
 				Error
 			</Button>
 			<Button
 				variant='outline'
 				onClick={() =>
-					toast('Project archived', {
+					void toast.message('Project archived', {
 						description: 'You can restore it from settings.',
-						action: { label: 'Undo', onClick: () => toast('Restored') },
+						action: { label: 'Undo', onClick: () => void toast.message('Restored') },
 					})
 				}
 			>

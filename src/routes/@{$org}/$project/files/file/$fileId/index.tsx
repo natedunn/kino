@@ -8,7 +8,6 @@ import { getFileBaseName } from '@convex/files';
 import { useMutation, useSuspenseQuery } from '@tanstack/react-query';
 import { createFileRoute, Link, notFound, useNavigate } from '@tanstack/react-router';
 import { Copy, Download, ExternalLink, Folder, FolderInput, Pencil, Trash2 } from 'lucide-react';
-import { toast } from 'sonner';
 
 import { Field } from '@/components/field';
 import { MoveFileDialog } from '@/components/files/move-file-dialog';
@@ -26,6 +25,7 @@ import { useCRPC, useCRPCClient } from '@/lib/convex/crpc';
 import { crpcServer } from '@/lib/convex/crpc-server';
 import { localizeError } from '@/lib/errors';
 import { capturePostHogEvent } from '@/lib/posthog';
+import { toast } from '@/lib/toast';
 import { cn } from '@/lib/utils';
 import * as m from '@/paraglide/messages.js';
 import { getLocale } from '@/paraglide/runtime.js';
@@ -95,7 +95,7 @@ function FileWorkspacePreview() {
 			if (!url) throw new Error(m.files_download_unavailable());
 			window.location.assign(url);
 		} catch (error) {
-			toast.error(localizeError(error, m.files_download_failed()));
+			await toast.error(localizeError(error, m.files_download_failed()));
 		}
 	};
 
@@ -112,7 +112,7 @@ function FileWorkspacePreview() {
 		try {
 			await renameMutation.mutateAsync({ assetId: file.id, name: trimmedDraftName });
 			setRenameOpen(false);
-			toast.success(m.files_renamed());
+			await toast.success(m.files_renamed());
 		} catch (error) {
 			setRenameError(localizeError(error, m.files_rename_failed()));
 		}
@@ -126,7 +126,7 @@ function FileWorkspacePreview() {
 				category: file.category,
 				origin_feature: file.sourceAndUsage?.originFeature ?? 'files',
 			});
-			toast.success(m.files_deleted());
+			await toast.success(m.files_deleted());
 			if (file.folder?.id) {
 				await navigate({
 					params: { folderId: file.folder.id, org: params.org, project: params.project },
@@ -139,7 +139,7 @@ function FileWorkspacePreview() {
 				});
 			}
 		} catch (error) {
-			toast.error(localizeError(error, m.files_delete_failed()));
+			await toast.error(localizeError(error, m.files_delete_failed()));
 		}
 	};
 
@@ -210,7 +210,7 @@ function FileWorkspacePreview() {
 					<Button
 						onClick={() => {
 							void navigator.clipboard.writeText(window.location.href);
-							toast.success(m.files_link_copied());
+							void toast.success(m.files_link_copied());
 						}}
 						size='sm'
 						variant='outline'

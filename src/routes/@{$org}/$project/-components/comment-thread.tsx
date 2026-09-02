@@ -1,4 +1,4 @@
-import type { MarkdownEditorRef } from '@/components/editor';
+import type { MarkdownEditorRef } from '@/components/editor/markdown-editor';
 import type { EmoteContent } from '@/components/emote';
 import type { ReactNode, RefObject } from 'react';
 
@@ -13,7 +13,9 @@ import {
 	Trash2,
 } from 'lucide-react';
 
-import { EditorContentDisplay, MarkdownEditor, sanitizeEditorContent } from '@/components/editor';
+import { EditorContentDisplay } from '@/components/editor';
+import { LazyMarkdownEditor } from '@/components/editor/markdown-editor.lazy';
+import { sanitizeEditorContent } from '@/components/editor/sanitize-content';
 import { EmoteButton, EmotePicker } from '@/components/emote';
 import { GradientIconBadge } from '@/components/gradient-icon-badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -241,7 +243,7 @@ export function CommentCard({
 							{m.feedback_comment_editing()}
 						</div>
 					</div>
-					<MarkdownEditor
+					<LazyMarkdownEditor
 						ariaLabel={m.feedback_comment_edit()}
 						autoFocus
 						className='relative rounded-b-none'
@@ -543,7 +545,7 @@ export function CommentForm({
 
 	return (
 		<div className='mt-6'>
-			<MarkdownEditor
+			<LazyMarkdownEditor
 				ariaLabel={placeholder}
 				className='rounded-b-none'
 				disabled={isSubmitting}

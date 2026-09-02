@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { createServerFn } from '@tanstack/react-start';
 
+import { toast } from '@/lib/toast';
 import * as m from '@/paraglide/messages.js';
 
 // Runs in the currently deployed server bundle, so it always returns the live
@@ -56,8 +57,7 @@ export function StaleBundleWatcher() {
 			if (deployedBuildId === lastPromptedIdRef.current) return;
 
 			lastPromptedIdRef.current = deployedBuildId;
-			const { toast } = await import('sonner');
-			toast(m.update_available(), {
+			await toast.message(m.update_available(), {
 				description: m.update_available_description(),
 				duration: Number.POSITIVE_INFINITY,
 				action: {

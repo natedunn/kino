@@ -2,9 +2,9 @@ import type { ReactNode } from 'react';
 
 import { useState } from 'react';
 import { CheckIcon, CopyIcon } from 'lucide-react';
-import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
+import { toast } from '@/lib/toast';
 import { cn } from '@/lib/utils';
 
 /**
@@ -82,10 +82,10 @@ export function CopySnippet({ code, className }: { code: string; className?: str
 		try {
 			await navigator.clipboard.writeText(code);
 			setCopied(true);
-			toast.success('Copied to clipboard');
+			await toast.success('Copied to clipboard');
 			window.setTimeout(() => setCopied(false), 1500);
 		} catch {
-			toast.error("Couldn't copy to clipboard");
+			await toast.error("Couldn't copy to clipboard");
 		}
 	};
 
