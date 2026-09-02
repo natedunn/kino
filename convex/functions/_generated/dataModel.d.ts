@@ -1763,6 +1763,7 @@ export type DataModel = {
       projectId: Id<"project">;
       publishedAt?: null | number;
       relatedFeedbackIds?: null | Array<Id<"feedback">>;
+      searchContent?: null | string;
       slug: string;
       status: "draft" | "published";
       tags?: null | Array<string>;
@@ -1783,6 +1784,7 @@ export type DataModel = {
       | "projectId"
       | "publishedAt"
       | "relatedFeedbackIds"
+      | "searchContent"
       | "slug"
       | "status"
       | "tags"
@@ -1807,7 +1809,12 @@ export type DataModel = {
       ];
       by_projectId_updatedTime: ["projectId", "updatedTime", "_creationTime"];
     };
-    searchIndexes: {};
+    searchIndexes: {
+      by_projectId_status_category_searchContent: {
+        searchField: "searchContent";
+        filterFields: "category" | "projectId" | "status";
+      };
+    };
     vectorIndexes: {};
   };
   updateComment: {

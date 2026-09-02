@@ -6,7 +6,7 @@ import { asId, getDoc, isProjectTeamMember, toPublicDoc } from '../lib/kino';
 import { resolveProfileImageUrl } from '../lib/storage';
 
 export const updateCategorySchema = z.enum(['changelog', 'article', 'announcement']);
-export const UPDATE_LIST_PREVIEW_CHARS = 420;
+export const UPDATE_LIST_PREVIEW_CHARS = 5000;
 export const CRITICAL_COMMENT_HEAD_COUNT = 5;
 export const CRITICAL_COMMENT_TAIL_COUNT = 10;
 export const MIDDLE_COMMENT_PAGE_SIZE = 20;
@@ -176,7 +176,7 @@ export function decodeBasicHtmlEntities(value: string) {
 	});
 }
 
-export function getUpdateListPreview(content: string) {
+export function getUpdateListPreviewData(content: string) {
 	const plainText = decodeBasicHtmlEntities(
 		content
 			.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, ' ')
@@ -186,5 +186,22 @@ export function getUpdateListPreview(content: string) {
 			.trim()
 	);
 	const isTruncated = plainText.length > UPDATE_LIST_PREVIEW_CHARS;
-	return isTruncated ? `${plainText.slice(0, UPDATE_LIST_PREVIEW_CHARS).trimEnd()}...` : plainText;
+	return {
+		isTruncated,
+		preview: isTruncated
+			? `${plainText.slice(0, UPDATE_LIST_PREVIEW_CHARS).trimEnd()}...`
+			: plainText,
+	};
+}
+
+export function getUpdateListPreview(content: string) {
+	return getUpdateListPreviewData(content).preview;
+}
+
+export function buildUpdateSearchContent(args: {
+	content: string;
+	tags?: Array<string> | null;
+	title: string;
+}) {
+	return [args.title, ...(args.tags ?? []), getUpdateListPreview(args.content)].join('\n');
 }

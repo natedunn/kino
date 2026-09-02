@@ -51,16 +51,74 @@ import { internal } from './_generated/api';
 import { internalMutation } from './generated/server';
 import { UPDATE_CATEGORIES, updateTable } from './schema';
 import {
+	buildUpdateSearchContent,
 	createCommentEnrichCache,
 	dedupeComments,
 	dedupeDocsById,
+	getUpdateListPreviewData,
 	getUpdateCommentWindow,
-	getUpdateListPreview,
 	MIDDLE_COMMENT_PAGE_SIZE,
 	toProfileSummary,
 	toPublicUpdateComment,
 	updateCategorySchema,
 } from './update.lib';
+
+async function toPublicUpdateListItem(
+	ctx: any,
+	item: Doc<'update'>,
+	currentProfile: Doc<'profile'> | null
+) {
+	const author = await getDoc<'profile'>(ctx, item.authorProfileId);
+	const [heartCount, currentProfileHeart, commentCount] = await Promise.all([
+		ctx.orm.query.updateEmote.count({
+			where: { content: 'heart', updateId: item._id },
+		}),
+		currentProfile
+			? ctx.db
+					.query('updateEmote')
+					.withIndex('by_updateId_authorProfileId_content', (q: any) =>
+						q
+							.eq('updateId', item._id)
+							.eq('authorProfileId', currentProfile._id)
+							.eq('content', 'heart')
+					)
+					.first()
+			: null,
+		ctx.orm.query.updateComment.count({
+			where: { updateId: item._id },
+		}),
+	]);
+	const emoteCounts = {
+		heart: {
+			authorProfileIds: currentProfile && currentProfileHeart ? [currentProfile._id] : [],
+			count: heartCount,
+		},
+	};
+	const preview = getUpdateListPreviewData(item.content);
+
+	return {
+		author: author
+			? {
+					id: author._id,
+					imageUrl: await resolveProfileImageUrl(author),
+					name: author.name,
+					username: author.username,
+				}
+			: null,
+		category: item.category,
+		content: item.content,
+		commentCount,
+		contentPreview: preview.preview,
+		contentPreviewIsTruncated: preview.isTruncated,
+		coverImageUrl: await resolveCoverImageUrl(ctx, item.coverImageId ?? null),
+		emoteCounts,
+		id: item._id,
+		publishedAt: item.publishedAt,
+		slug: item.slug,
+		status: item.status,
+		title: item.title,
+	};
+}
 
 export const create = authMutation
 	.input(
@@ -99,6 +157,11 @@ export const create = authMutation
 				coverImageId: input.coverImageId ?? null,
 				projectId: project._id as any,
 				relatedFeedbackIds: input.relatedFeedbackIds?.map((id) => asId<'feedback'>(id)) ?? [],
+				searchContent: buildUpdateSearchContent({
+					content: input.content,
+					tags: input.tags ?? [],
+					title: input.title,
+				}),
 				slug: generateRandomSlug(),
 				status: 'draft',
 				tags: input.tags ?? [],
@@ -142,6 +205,14 @@ export const update = authMutation
 				category: input.category,
 				content: input.content,
 				relatedFeedbackIds: input.relatedFeedbackIds?.map((id) => asId<'feedback'>(id)),
+				searchContent:
+					input.title !== undefined || input.content !== undefined || input.tags !== undefined
+						? buildUpdateSearchContent({
+								content: input.content ?? existingUpdate.content,
+								tags: input.tags ?? existingUpdate.tags ?? [],
+								title: input.title ?? existingUpdate.title,
+							})
+						: undefined,
 				tags: input.tags,
 				title: input.title,
 				updatedTime: Date.now(),
@@ -1049,59 +1120,81 @@ export const listByProject = optionalAuthQuery
 			continueCursor: result.continueCursor,
 			isDone: result.isDone,
 			page: await Promise.all(
-				result.page.map(async (item) => {
-					const author = await getDoc<'profile'>(ctx, item.authorProfileId);
-					const [heartCount, currentProfileHeart, commentCount] = await Promise.all([
-						ctx.orm.query.updateEmote.count({
-							where: { content: 'heart', updateId: item._id },
-						}),
-						currentProfile
-							? ctx.db
-									.query('updateEmote')
-									.withIndex('by_updateId_authorProfileId_content', (q: any) =>
-										q
-											.eq('updateId', item._id)
-											.eq('authorProfileId', currentProfile._id)
-											.eq('content', 'heart')
-									)
-									.first()
-							: null,
-						ctx.orm.query.updateComment.count({
-							where: { updateId: item._id },
-						}),
-					]);
-					const emoteCounts = {
-						heart: {
-							authorProfileIds: currentProfile && currentProfileHeart ? [currentProfile._id] : [],
-							count: heartCount,
-						},
-					};
+				result.page.map((item) => toPublicUpdateListItem(ctx, item, currentProfile))
+			),
+		};
+	});
 
-					// Keep the list payload and client bundle light: detail pages render
-					// the rich HTML body, list pages only need bounded plain text.
-					const contentPreview = getUpdateListPreview(item.content);
+export const searchProject = optionalAuthQuery
+	.input(
+		z.object({
+			category: z.enum(UPDATE_CATEGORIES).optional(),
+			projectId: idSchema,
+			search: z.string().trim().max(100).optional(),
+		})
+	)
+	.paginated({ limit: 10, item: z.any() })
+	.query(async ({ ctx, input }) => {
+		const empty = { continueCursor: '', isDone: true, page: [] };
+		const project = await getDoc(ctx, asId<'project'>(input.projectId));
+		if (!project) {
+			return empty;
+		}
 
-					return {
-						author: author
-							? {
-									id: author._id,
-									imageUrl: await resolveProfileImageUrl(author),
-									name: author.name,
-									username: author.username,
-								}
-							: null,
-						category: item.category,
-						commentCount,
-						contentPreview,
-						coverImageUrl: await resolveCoverImageUrl(ctx, item.coverImageId ?? null),
-						emoteCounts,
-						id: item._id,
-						publishedAt: item.publishedAt,
-						slug: item.slug,
-						status: item.status,
-						title: item.title,
-					};
-				})
+		const access = await verifyProjectAccess(ctx, {
+			slug: project.slug,
+			userId: ctx.userId,
+		});
+		if (!access.permissions.canView) {
+			return empty;
+		}
+		const currentProfile = await getCurrentProfile(ctx, ctx.userId);
+		const trimmedSearch = input.search?.trim();
+
+		const query = trimmedSearch
+			? ctx.db
+					.query('update')
+					.withSearchIndex('by_projectId_status_category_searchContent', (builder: any) => {
+						let next = builder.search('searchContent', trimmedSearch).eq('projectId', project._id);
+						if (!access.permissions.canManageContent) {
+							next = next.eq('status', 'published');
+						}
+						if (input.category) {
+							next = next.eq('category', input.category);
+						}
+						return next;
+					})
+			: input.category
+				? ctx.db
+						.query('update')
+						.withIndex('by_projectId_category_status_publishedAt', (q: any) =>
+							access.permissions.canManageContent
+								? q.eq('projectId', project._id).eq('category', input.category)
+								: q
+										.eq('projectId', project._id)
+										.eq('category', input.category)
+										.eq('status', 'published')
+						)
+						.order('desc')
+				: ctx.db
+						.query('update')
+						.withIndex('by_projectId_status_publishedAt', (q: any) =>
+							access.permissions.canManageContent
+								? q.eq('projectId', project._id)
+								: q.eq('projectId', project._id).eq('status', 'published')
+						)
+						.order('desc');
+
+		const result = await query.paginate({
+			cursor: input.cursor,
+			numItems: input.limit,
+		});
+
+		return {
+			continueCursor: result.continueCursor,
+			isDone: result.isDone,
+			page: await Promise.all(
+				result.page.map((item) => toPublicUpdateListItem(ctx, item, currentProfile))
 			),
 		};
 	});

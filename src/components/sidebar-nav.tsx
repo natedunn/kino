@@ -54,6 +54,7 @@ export function SidebarNavItem({ active, icon, children, className }: SidebarNav
 			className={cn(
 				buttonVariants({ variant: 'ghost' }),
 				'group inline-flex! w-full items-center justify-start text-left',
+				'group-focus-visible:ring-2 group-focus-visible:ring-inset group-focus-visible:ring-ring/60',
 				// Active = a contrasty foreground-alpha gradient (deepens on light,
 				// lifts on dark), with a soft same-tone border that blends into the fill.
 				'data-[active]:pointer-events-none data-[active]:border-foreground/10 data-[active]:from-foreground/5 data-[active]:via-foreground/8 data-[active]:to-foreground/8 data-[active]:text-accent-foreground dark:data-[active]:from-foreground/8 dark:data-[active]:via-foreground/12 dark:data-[active]:to-foreground/12',

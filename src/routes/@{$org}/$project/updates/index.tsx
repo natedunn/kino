@@ -1,13 +1,22 @@
+import type { AppCommand } from '@/components/command';
 import type { ReactNode } from 'react';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery, useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
 import { createFileRoute, Link, notFound } from '@tanstack/react-router';
-import { Settings2 } from 'lucide-react';
+import { PanelLeftOpen, Search, Settings2, SlidersHorizontal } from 'lucide-react';
 
+import { useCommandPalette, useRegisterCommands } from '@/components/command';
 import { RoutePending } from '@/components/route-pending';
 import { Button } from '@/components/ui/button';
+import {
+	ResponsiveDialog,
+	ResponsiveDialogBody,
+	ResponsiveDialogContent,
+	ResponsiveDialogHeader,
+} from '@/components/ui/responsive-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import CirclePlusOutline from '@/icons/circle-plus-outline';
 import Missing from '@/icons/missing';
 import { useCRPC } from '@/lib/convex/crpc';
@@ -78,20 +87,10 @@ export const Route = createFileRoute('/@{$org}/$project/updates/')({
 		);
 
 		if (typeof window === 'undefined') {
-			// Hard refresh: pending Convex queries are not dehydrated (see
-			// `hydrationConfig`), so a fire-and-forget prefetch is discarded and the
-			// client refetches from scratch — a skeleton phase after first paint.
-			// Await so the first page ships inside the document and the list paints
-			// once, with data.
 			await context.queryClient.ensureQueryData(firstPageOptions).catch(() => undefined);
 			return;
 		}
 
-		// Non-blocking warm-up: `intent` preload runs this loader on hover/focus, so
-		// the first page (and current profile) is usually cached by the time the
-		// user clicks — the list paints without a skeleton. We intentionally do not
-		// await: a cold navigation still renders the shell immediately and falls
-		// back to the skeleton while these resolve.
 		void context.queryClient.prefetchQuery(firstPageOptions);
 		void context.queryClient.prefetchQuery(
 			crpcServer.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
@@ -132,11 +131,76 @@ function UpdatesListSkeleton() {
 	);
 }
 
+function UpdatesSidebar({
+	canEdit,
+	orgSlug,
+	projectSlug,
+}: {
+	canEdit: boolean;
+	orgSlug: string;
+	projectSlug: string;
+}) {
+	return (
+		<div className='flex flex-col'>
+			<div className='pb-6 pr-5'>
+				<h2 className='mx-2 text-sm font-bold text-muted-foreground'>{m.updates_categories()}</h2>
+				<div className='mt-2'>
+					<CategoriesNav />
+				</div>
+			</div>
+			{canEdit ? (
+				<div className='-mr-5 border-t pt-6 pr-5'>
+					<div>
+						<h2 className='mx-2 text-sm font-bold text-muted-foreground'>{m.updates_actions()}</h2>
+						<div className='mt-2 flex flex-col gap-3'>
+							<Button asChild className='w-full'>
+								<Link
+									params={{ org: orgSlug, project: projectSlug }}
+									to='/@{$org}/$project/updates/new'
+								>
+									<CirclePlusOutline size='16px' /> {m.updates_new()}
+								</Link>
+							</Button>
+							<Button asChild className='w-full' variant='outline'>
+								<Link
+									params={{ org: orgSlug, project: projectSlug }}
+									search={{ pageSize: 20 }}
+									to='/@{$org}/$project/updates/edit'
+								>
+									<Settings2 className='size-4' /> {m.updates_manage()}
+								</Link>
+							</Button>
+						</div>
+					</div>
+				</div>
+			) : null}
+		</div>
+	);
+}
+
 function UpdatesListRoute() {
 	const { org: orgSlug, project: projectSlug } = Route.useParams();
 	const { category: categoryParam } = Route.useSearch();
 	const crpc = useCRPC();
 	const queryClient = useQueryClient();
+	const { openUpdateSearch } = useCommandPalette();
+	const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+
+	const updateCommands = useMemo<Array<AppCommand>>(() => {
+		return [
+			{
+				closeOnRun: false,
+				group: 'Navigation',
+				icon: Search,
+				id: 'updates.search',
+				keywords: ['search', 'updates', 'changelog', 'announcement', 'article'],
+				title: m.updates_command_search(),
+				run: () => openUpdateSearch(),
+			},
+		];
+	}, [openUpdateSearch]);
+
+	useRegisterCommands('updates', updateCommands);
 
 	const { data: projectData } = useSuspenseQuery(
 		crpc.project.getDetails.queryOptions({
@@ -151,15 +215,10 @@ function UpdatesListRoute() {
 
 	const projectId = projectData.project.id;
 	const canEdit = projectData.permissions.canManageContent;
-
 	const currentProfileQuery = useQuery(
 		crpc.profile.findMyProfile.queryOptions({}, { skipUnauth: true, subscribe: false })
 	);
 
-	// Server-side cursor pagination. The first page loads after the route shell
-	// mounts; "Load more" appends subsequent pages. The category filter is
-	// applied server-side, so a fresh filter resets the accumulated pages via the
-	// args key.
 	const firstPageArgs = getUpdateListArgs({
 		projectId,
 		category: categoryParam,
@@ -228,94 +287,154 @@ function UpdatesListRoute() {
 		}
 	}
 
+	const controls = (
+		<div className='flex min-w-0 items-center gap-2'>
+			<Button className='min-w-0' onClick={() => openUpdateSearch()}>
+				<Search className='size-3.5' /> {m.updates_search()}
+			</Button>
+			<Tooltip>
+				<TooltipTrigger asChild delay={200}>
+					<Button
+						aria-label={m.updates_advanced_search_aria()}
+						asChild
+						size='icon'
+						variant='outline'
+					>
+						<Link
+							params={{ org: orgSlug, project: projectSlug }}
+							to='/@{$org}/$project/updates/search'
+						>
+							<SlidersHorizontal className='size-3.5' />
+						</Link>
+					</Button>
+				</TooltipTrigger>
+				<TooltipContent side='bottom'>{m.updates_advanced_search()}</TooltipContent>
+			</Tooltip>
+		</div>
+	);
+
 	return (
-		<div className='container flex flex-1 flex-col overflow-visible'>
-			<div className='flex flex-1 flex-col gap-8 md:grid md:grid-cols-12'>
-				<div className='order-last py-6 md:order-first md:col-span-3 md:border-r md:border-border/75'>
-					<div className='sticky top-6 flex flex-col overflow-hidden'>
-						<div className='pb-6 md:pr-6'>
-							<h2 className='mx-2 text-sm font-bold text-muted-foreground'>
-								{m.updates_categories()}
-							</h2>
-							<div className='mt-2'>
-								<CategoriesNav />
+		<>
+			<div className='relative flex w-full min-w-0 flex-1 flex-col overflow-x-hidden'>
+				<div
+					aria-hidden='true'
+					className='pointer-events-none absolute inset-x-0 top-20 border-b'
+				/>
+				<div className='container flex w-full min-w-0 flex-1 flex-col'>
+					<div className='flex w-full max-w-full min-w-0 flex-1 flex-col lg:grid lg:grid-cols-[17rem_minmax(0,1fr)]'>
+						<aside className='hidden h-full min-h-0 min-w-0 overflow-hidden border-r border-border/75 lg:block'>
+							<div className='sticky top-0 flex h-full w-[17rem] max-w-none flex-col overflow-hidden'>
+								<div className='flex h-[81px] shrink-0 items-center pr-5'>{controls}</div>
+								<div className='mt-4 min-h-0 flex-1 overflow-visible pr-5 pb-6'>
+									<UpdatesSidebar canEdit={canEdit} orgSlug={orgSlug} projectSlug={projectSlug} />
+								</div>
+							</div>
+						</aside>
+
+						<div className='flex h-full min-h-0 w-full max-w-full min-w-0 flex-1 flex-col'>
+							<div className='flex h-[81px] min-w-0 shrink-0 items-center lg:pl-7'>
+								<div className='flex w-full min-w-0 items-center justify-between gap-3'>
+									<div className='flex min-w-0 items-center gap-3 lg:hidden'>
+										<Tooltip
+											onOpenChange={(open, eventDetails) => {
+												if (open && eventDetails.reason === 'trigger-focus') {
+													eventDetails.cancel();
+												}
+											}}
+										>
+											<TooltipTrigger asChild delay={200}>
+												<Button
+													aria-controls='updates-sidebar-dialog'
+													aria-expanded={mobileSidebarOpen}
+													aria-label={m.updates_show_categories()}
+													onClick={() => setMobileSidebarOpen(true)}
+													size='icon'
+													variant='outline'
+												>
+													<PanelLeftOpen />
+												</Button>
+											</TooltipTrigger>
+											<TooltipContent side='bottom'>{m.updates_categories()}</TooltipContent>
+										</Tooltip>
+									</div>
+									<Button className='shrink-0' variant='outline'>
+										{m.feedback_follow()}
+									</Button>
+								</div>
+							</div>
+
+							<div
+								aria-busy={isInitialUpdatesLoading || refreshingUpdates || loadingMore}
+								aria-live='polite'
+								className='flex w-full max-w-full min-w-0 flex-1 flex-col gap-4 overflow-visible pb-8 lg:pl-7'
+							>
+								<div className='w-full'>
+									{isInitialUpdatesLoading ? (
+										<>
+											<span className='sr-only'>{m.updates_loading()}</span>
+											<UpdatesListSkeleton />
+										</>
+									) : null}
+									{!isInitialUpdatesLoading && updates.length === 0 ? (
+										<div className='pt-6'>
+											<Notice icon={<Missing aria-hidden='true' size='32px' />}>
+												{m.updates_empty()}
+											</Notice>
+										</div>
+									) : null}
+									{updates.length > 0 ? (
+										<>
+											<ul className='flex flex-col'>
+												{updates.map((update, index) => (
+													<UpdateCard
+														key={update.id}
+														currentProfileId={currentProfileQuery.data?.id}
+														isLast={!canLoadMore && index === updates.length - 1}
+														orgSlug={orgSlug}
+														projectSlug={projectSlug}
+														update={update}
+													/>
+												))}
+											</ul>
+											{canLoadMore ? (
+												<div className='flex justify-center pt-2'>
+													<Button
+														disabled={loadingMore}
+														onClick={() => void loadMoreUpdates()}
+														variant='outline'
+													>
+														{loadingMore ? m.updates_loading_more() : m.updates_load_more()}
+													</Button>
+												</div>
+											) : null}
+											{loadMoreError ? (
+												<p className='text-center text-sm text-destructive'>
+													{loadMoreError.message}
+												</p>
+											) : null}
+										</>
+									) : null}
+								</div>
 							</div>
 						</div>
-						{canEdit ? (
-							<div className='border-t pt-6 md:pr-6'>
-								<h2 className='mx-2 text-sm font-bold text-muted-foreground'>
-									{m.updates_actions()}
-								</h2>
-								<div className='mt-2 flex flex-col gap-3'>
-									<Button asChild className='w-full'>
-										<Link
-											params={{ org: orgSlug, project: projectSlug }}
-											to='/@{$org}/$project/updates/new'
-										>
-											<CirclePlusOutline size='16px' /> {m.updates_new()}
-										</Link>
-									</Button>
-									<Button asChild className='w-full' variant='outline'>
-										<Link
-											params={{ org: orgSlug, project: projectSlug }}
-											search={{ pageSize: 20 }}
-											to='/@{$org}/$project/updates/edit'
-										>
-											<Settings2 className='size-4' /> {m.updates_manage()}
-										</Link>
-									</Button>
-								</div>
-							</div>
-						) : null}
 					</div>
 				</div>
-
-				<div
-					className='flex flex-col gap-4 py-8 md:col-span-9'
-					aria-busy={isInitialUpdatesLoading || refreshingUpdates || loadingMore}
-					aria-live='polite'
-				>
-					{isInitialUpdatesLoading ? (
-						<>
-							<span className='sr-only'>{m.updates_loading()}</span>
-							<UpdatesListSkeleton />
-						</>
-					) : null}
-					{!isInitialUpdatesLoading && updates.length === 0 ? (
-						<Notice icon={<Missing aria-hidden='true' size='32px' />}>{m.updates_empty()}</Notice>
-					) : null}
-					{updates.length > 0 ? (
-						<>
-							<ul className='flex flex-col'>
-								{updates.map((update, index) => (
-									<UpdateCard
-										key={update.id}
-										currentProfileId={currentProfileQuery.data?.id}
-										isLast={!canLoadMore && index === updates.length - 1}
-										orgSlug={orgSlug}
-										projectSlug={projectSlug}
-										update={update}
-									/>
-								))}
-							</ul>
-							{canLoadMore ? (
-								<div className='flex justify-center pt-2'>
-									<Button
-										disabled={loadingMore}
-										onClick={() => void loadMoreUpdates()}
-										variant='outline'
-									>
-										{loadingMore ? m.updates_loading_more() : m.updates_load_more()}
-									</Button>
-								</div>
-							) : null}
-							{loadMoreError ? (
-								<p className='text-center text-sm text-destructive'>{loadMoreError.message}</p>
-							) : null}
-						</>
-					) : null}
-				</div>
 			</div>
-		</div>
+
+			<ResponsiveDialog onOpenChange={setMobileSidebarOpen} open={mobileSidebarOpen}>
+				<ResponsiveDialogContent
+					id='updates-sidebar-dialog'
+					className='flex flex-col gap-0 overflow-hidden p-0'
+					dialogClassName='sm:max-w-md'
+					showCloseButton={false}
+				>
+					<ResponsiveDialogHeader icon={<PanelLeftOpen />} title={m.updates_categories()} />
+					<ResponsiveDialogBody className='p-3'>
+						<div className='mb-3 border-b pb-3'>{controls}</div>
+						<UpdatesSidebar canEdit={canEdit} orgSlug={orgSlug} projectSlug={projectSlug} />
+					</ResponsiveDialogBody>
+				</ResponsiveDialogContent>
+			</ResponsiveDialog>
+		</>
 	);
 }

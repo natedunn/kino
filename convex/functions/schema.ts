@@ -906,6 +906,7 @@ export const updateTable = convexTable(
 		slug: text().notNull(),
 		title: text().notNull(),
 		content: text().notNull(),
+		searchContent: text(),
 		authorProfileId: id('profile')
 			.notNull()
 			.references(() => profileTable.id),
@@ -933,6 +934,9 @@ export const updateTable = convexTable(
 			table.status,
 			table.publishedAt
 		),
+		searchIndex('by_projectId_status_category_searchContent')
+			.on(table.searchContent)
+			.filter(table.projectId, table.status, table.category),
 	]
 );
 

@@ -4,7 +4,7 @@ import type { KeyboardEvent as ReactKeyboardEvent } from 'react';
  * Groups shown (in this order) inside the keyboard shortcuts modal. Add a new
  * group name here to surface a new page-specific section.
  */
-export type ShortcutGroupName = 'Global' | 'Feedback' | 'Files';
+export type ShortcutGroupName = 'Global' | 'Feedback' | 'Files' | 'Navigation';
 
 export type ShortcutRunContext = {
 	/** The normalized key that matched (lowercase for single letters). */

@@ -11,11 +11,12 @@ import {
 } from '@/components/ui/dialog';
 import * as m from '@/paraglide/messages.js';
 
-const GROUP_ORDER: Array<ShortcutGroupName> = ['Global', 'Feedback', 'Files'];
+const GROUP_ORDER: Array<ShortcutGroupName> = ['Global', 'Feedback', 'Files', 'Navigation'];
 const GROUP_LABELS: Record<ShortcutGroupName, () => string> = {
 	Feedback: m.shortcuts_group_feedback,
 	Files: m.shortcuts_group_files,
 	Global: m.shortcuts_group_global,
+	Navigation: m.shortcuts_group_navigation,
 };
 
 type ShortcutsDialogProps = {
