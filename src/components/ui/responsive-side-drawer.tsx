@@ -18,8 +18,8 @@ import * as m from '@/paraglide/messages.js';
 
 // A drawer that slides in from the right on ≥640px and up from the bottom on
 // phones (<640px). Styled like `ResponsiveDialog` (the glass ring + card). The
-// grab handle only shows on the bottom-sheet (phone) variant — the side variant
-// has none.
+// phone variant still supports swipe-to-dismiss, but no visible grab handle is
+// rendered.
 function ResponsiveSideDrawer({ children, ...props }: React.ComponentProps<typeof Drawer>) {
 	const isPhone = useIsBelow(640);
 

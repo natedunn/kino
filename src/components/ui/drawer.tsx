@@ -93,7 +93,7 @@ function DrawerSwipeHandle({ className, ...props }: React.ComponentProps<'div'>)
 	);
 }
 
-function DrawerContent({ className, children, ...props }: DrawerPrimitive.Popup.Props) {
+function DrawerContent({ className, children, style, ...props }: DrawerPrimitive.Popup.Props) {
 	const { hasSnapPoints, modal, showSwipeHandle, swipeDirection } = useDrawer();
 	const themeStyle = useProjectThemeStyle();
 	const swipeAxis = swipeDirection === 'down' || swipeDirection === 'up' ? 'y' : 'x';
@@ -140,7 +140,7 @@ function DrawerContent({ className, children, ...props }: DrawerPrimitive.Popup.
 						'data-[swipe-direction=right]:right-0 data-[swipe-direction=right]:origin-right data-[swipe-direction=right]:[--closed-transform:translate3d(calc(100%+var(--drawer-inset,0px)+2px),0,0)] data-[swipe-direction=right]:[--translate-x:calc(var(--drawer-swipe-movement-x)-var(--stack-peek-offset)-(var(--stack-shrink)*100%))]',
 						className
 					)}
-					style={themeStyle}
+					style={{ ...themeStyle, ...style }}
 					{...props}
 				>
 					{showSwipeHandle && <DrawerSwipeHandle />}
