@@ -120,6 +120,7 @@ function AvatarImage({ className, src, alt, ...props }: React.ComponentProps<'im
 function AvatarFallback({
 	className,
 	delayMs,
+	style: styleProp,
 	...props
 }: React.ComponentProps<'span'> & { delayMs?: number }) {
 	const { fallbackAnimate, fallbackKind, fallbackName, status } = useAvatarContext();
@@ -146,13 +147,13 @@ function AvatarFallback({
 		: null;
 	const style =
 		fallbackName && orgFallbackStyles
-			? ({
-					backgroundColor: orgFallbackStyles.backgroundColor,
-					color: orgFallbackStyles.color,
-					containerType: 'size',
-					...props.style,
-				} satisfies React.CSSProperties)
-			: props.style;
+				? ({
+						backgroundColor: orgFallbackStyles.backgroundColor,
+						color: orgFallbackStyles.color,
+						containerType: 'size',
+						...styleProp,
+					} satisfies React.CSSProperties)
+				: styleProp;
 
 	return (
 		<span
