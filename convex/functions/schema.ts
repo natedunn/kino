@@ -185,8 +185,9 @@ export const accountTable = convexTable(
 	'account',
 	{
 		accountId: text().notNull(),
-		// Better Auth 1.7 keys accounts by the stable compound identity.
-		issuer: text().notNull(),
+		// Better Auth 1.7 keys accounts by (issuer, accountId). Keep this
+		// optional until the prod backfill migration has run on every existing row.
+		issuer: text(),
 		providerId: text().notNull(),
 		userId: text()
 			.notNull()
