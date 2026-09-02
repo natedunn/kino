@@ -34,7 +34,7 @@ export type DataModel = {
       accountId: string;
       createdAt: number;
       idToken?: null | string;
-      issuer?: null | string;
+      issuer: string;
       password?: null | string;
       providerId: string;
       refreshToken?: null | string;
