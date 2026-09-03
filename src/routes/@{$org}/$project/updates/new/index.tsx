@@ -1,3 +1,4 @@
+import type { MarkdownEditorRef } from '@/components/editor/markdown-editor';
 import type { UpdateCategory } from '../-components/category-badge';
 
 import { useRef, useState } from 'react';
@@ -71,6 +72,7 @@ function NewUpdateRoute() {
 	const session = authClient.useSession();
 	const [formError, setFormError] = useState('');
 	const pendingPublishRef = useRef<null | { id: string; slug: string }>(null);
+	const contentEditorRef = useRef<MarkdownEditorRef>(null);
 	const { state: sidebarState, setSection: setSidebarSection } = useSidebarState(
 		SIDEBAR_STORAGE_KEY,
 		DEFAULT_SIDEBAR_STATE
@@ -92,6 +94,7 @@ function NewUpdateRoute() {
 			onSuccess: () => {
 				const created = pendingPublishRef.current;
 				pendingPublishRef.current = null;
+				contentEditorRef.current?.clearLocalDraft();
 				form.reset();
 				navigate({
 					params: { ...params, slug: created?.slug ?? '' },
@@ -133,6 +136,7 @@ function NewUpdateRoute() {
 				tags: parsed.data.tags,
 				title: parsed.data.title,
 			});
+			contentEditorRef.current?.clearLocalDraft();
 			form.reset();
 			navigate({
 				params: { ...params, slug: data.slug },
@@ -348,9 +352,11 @@ function NewUpdateRoute() {
 									{(field) => (
 										<LazyMarkdownEditor
 											ariaLabel={m.updates_content()}
+											localDraftKey='update-new-content'
 											minHeight='200px'
 											onChange={(html) => field.handleChange(html)}
 											placeholder={m.updates_content_placeholder()}
+											ref={contentEditorRef}
 											value={field.state.value}
 											variant='borderless'
 										/>

@@ -26,6 +26,7 @@ import {
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import * as m from '@/paraglide/messages.js';
 
@@ -291,23 +292,28 @@ export function EditorToolbar({ editor }: { editor: Editor | null }) {
 		if (item.id === 'heading') {
 			return (
 				<DropdownMenu key={item.id}>
-					<DropdownMenuTrigger asChild>
-						<Button
-							aria-label={`Text style: ${getCurrentBlockLabel()}`}
-							className={cn(
-								'h-8 min-w-14 gap-1.5 px-2',
-								isFlagActive('heading') && activeButtonClass
-							)}
-							size='sm'
-							type='button'
-							variant='ghost'
-						>
-							<Heading size={16} />
-							<span className='text-[11px] font-semibold tracking-wide'>
-								{getCurrentBlockLabel()}
-							</span>
-						</Button>
-					</DropdownMenuTrigger>
+					<Tooltip>
+						<TooltipTrigger asChild delay={100}>
+							<DropdownMenuTrigger asChild>
+								<Button
+									aria-label={`${m.editor_heading()}: ${getCurrentBlockLabel()}`}
+									className={cn(
+										'h-8 min-w-14 gap-1.5 px-2',
+										isFlagActive('heading') && activeButtonClass
+									)}
+									size='sm'
+									type='button'
+									variant='ghost'
+								>
+									<Heading size={16} />
+									<span className='text-[11px] font-semibold tracking-wide'>
+										{getCurrentBlockLabel()}
+									</span>
+								</Button>
+							</DropdownMenuTrigger>
+						</TooltipTrigger>
+						<TooltipContent side='bottom'>{item.label}</TooltipContent>
+					</Tooltip>
 					<DropdownMenuContent>
 						<DropdownMenuItem
 							className={cn(isBodyActive() && 'font-medium')}
@@ -360,18 +366,23 @@ export function EditorToolbar({ editor }: { editor: Editor | null }) {
 		if (item.id === 'link') {
 			return (
 				<Popover key={item.id} onOpenChange={setLinkPopoverOpen} open={linkPopoverOpen}>
-					<PopoverTrigger asChild>
-						<Button
-							aria-label={item.label}
-							className={cn('h-8 w-8 p-0', isFlagActive('link') && activeButtonClass)}
-							onClick={item.action}
-							size='sm'
-							type='button'
-							variant='ghost'
-						>
-							{item.icon}
-						</Button>
-					</PopoverTrigger>
+					<Tooltip>
+						<TooltipTrigger asChild delay={100}>
+							<PopoverTrigger asChild>
+								<Button
+									aria-label={item.label}
+									className={cn('h-8 w-8 p-0', isFlagActive('link') && activeButtonClass)}
+									onClick={item.action}
+									size='sm'
+									type='button'
+									variant='ghost'
+								>
+									{item.icon}
+								</Button>
+							</PopoverTrigger>
+						</TooltipTrigger>
+						<TooltipContent side='bottom'>{item.label}</TooltipContent>
+					</Tooltip>
 					<PopoverContent className='w-80'>
 						<div className='flex flex-col gap-2'>
 							<label className='text-sm font-medium'>{m.editor_link_url()}</label>
@@ -406,19 +417,22 @@ export function EditorToolbar({ editor }: { editor: Editor | null }) {
 
 		const active = isFlagActive(item.id as FlagKey);
 		return (
-			<Button
-				aria-label={item.label}
-				aria-pressed={toggleButtonIds.has(item.id) ? active : undefined}
-				key={item.id}
-				className={cn('h-8 w-8 p-0', active && activeButtonClass)}
-				onClick={item.action}
-				size='sm'
-				title={item.label}
-				type='button'
-				variant='ghost'
-			>
-				{item.icon}
-			</Button>
+			<Tooltip key={item.id}>
+				<TooltipTrigger asChild delay={100}>
+					<Button
+						aria-label={item.label}
+						aria-pressed={toggleButtonIds.has(item.id) ? active : undefined}
+						className={cn('h-8 w-8 p-0', active && activeButtonClass)}
+						onClick={item.action}
+						size='sm'
+						type='button'
+						variant='ghost'
+					>
+						{item.icon}
+					</Button>
+				</TooltipTrigger>
+				<TooltipContent side='bottom'>{item.label}</TooltipContent>
+			</Tooltip>
 		);
 	};
 
@@ -438,11 +452,22 @@ export function EditorToolbar({ editor }: { editor: Editor | null }) {
 				{groupedVisible}
 				{overflowItems.length > 0 ? (
 					<DropdownMenu>
-						<DropdownMenuTrigger asChild>
-							<Button className='ml-auto h-8 w-8 p-0' size='sm' type='button' variant='ghost'>
-								<MoreHorizontal size={16} />
-							</Button>
-						</DropdownMenuTrigger>
+						<Tooltip>
+							<TooltipTrigger asChild delay={100}>
+								<DropdownMenuTrigger asChild>
+									<Button
+										aria-label={m.common_more()}
+										className='ml-auto h-8 w-8 p-0'
+										size='sm'
+										type='button'
+										variant='ghost'
+									>
+										<MoreHorizontal size={16} />
+									</Button>
+								</DropdownMenuTrigger>
+							</TooltipTrigger>
+							<TooltipContent side='bottom'>{m.common_more()}</TooltipContent>
+						</Tooltip>
 						<DropdownMenuContent align='end'>
 							{overflowItems.map((item) => {
 								const active = isFlagActive(item.id as FlagKey);

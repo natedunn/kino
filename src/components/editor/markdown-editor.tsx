@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef } from 'react';
 import { Link } from '@tiptap/extension-link';
 import { Placeholder } from '@tiptap/extension-placeholder';
 import { Underline } from '@tiptap/extension-underline';
@@ -9,6 +9,12 @@ import { cn } from '@/lib/utils';
 
 import { EditorToolbar } from './editor-toolbar';
 import { createLowlightCodeBlock } from './extensions/lowlight-code-block';
+import {
+	getEditorDraftStorageKey,
+	readEditorDraft,
+	removeEditorDraft,
+	writeEditorDraft,
+} from './local-draft';
 
 function createExtensions(getPlaceholder: () => string) {
 	return [
@@ -35,6 +41,8 @@ function createExtensions(getPlaceholder: () => string) {
 
 export type MarkdownEditorRef = {
 	clear: () => void;
+	/** Removes the saved browser draft without changing the editor content. */
+	clearLocalDraft: () => void;
 	focus: () => void;
 	getHTML: () => string;
 	getText: () => string;
@@ -48,11 +56,15 @@ type MarkdownEditorProps = {
 	className?: string;
 	contentClassName?: string;
 	disabled?: boolean;
+	/** Stable identifier for this editor, scoped to the current pathname. */
+	localDraftKey?: string;
 	maxHeight?: string;
 	minHeight?: string;
 	onChange?: (html: string) => void;
 	onSubmitShortcut?: () => void;
 	placeholder?: string;
+	/** Store and restore this editor's draft in localStorage. Defaults to true. */
+	saveDraftLocally?: boolean;
 	value?: string;
 	variant?: 'borderless' | 'default';
 };
@@ -65,11 +77,13 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
 			className,
 			contentClassName,
 			disabled = false,
+			localDraftKey,
 			maxHeight,
 			minHeight = '100px',
 			onChange,
 			onSubmitShortcut,
 			placeholder = 'Write something...',
+			saveDraftLocally = true,
 			value = '',
 			variant = 'default',
 		},
@@ -84,6 +98,24 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
 		onSubmitShortcutRef.current = onSubmitShortcut;
 		const placeholderRef = useRef(placeholder);
 		placeholderRef.current = placeholder;
+		const ariaLabelRef = useRef(ariaLabel);
+		ariaLabelRef.current = ariaLabel;
+		const localDraftKeyRef = useRef(localDraftKey);
+		localDraftKeyRef.current = localDraftKey;
+		const saveDraftLocallyRef = useRef(saveDraftLocally);
+		saveDraftLocallyRef.current = saveDraftLocally;
+
+		const getCurrentDraftStorageKey = useCallback(
+			() =>
+				getEditorDraftStorageKey(
+					localDraftKeyRef.current ?? ariaLabelRef.current ?? placeholderRef.current
+				),
+			[]
+		);
+		const clearCurrentLocalDraft = useCallback(() => {
+			const key = getCurrentDraftStorageKey();
+			if (key) removeEditorDraft(key);
+		}, [getCurrentDraftStorageKey]);
 
 		// Tracks the last HTML we emitted via onChange. Lets the value-sync effect
 		// recognize its own echo and skip a second full getHTML() serialization on
@@ -119,6 +151,13 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
 			onUpdate: ({ editor: activeEditor }) => {
 				const html = activeEditor.getHTML();
 				lastHTMLRef.current = html;
+				if (saveDraftLocallyRef.current) {
+					const key = getCurrentDraftStorageKey();
+					if (key) {
+						if (activeEditor.isEmpty) removeEditorDraft(key);
+						else writeEditorDraft(key, html);
+					}
+				}
 				onChangeRef.current?.(html);
 			},
 		});
@@ -138,8 +177,26 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
 			if (value !== editor.getHTML()) {
 				editor.commands.setContent(value, { emitUpdate: false });
 			}
+			if (!value) clearCurrentLocalDraft();
 			lastHTMLRef.current = value;
-		}, [editor, value]);
+		}, [clearCurrentLocalDraft, editor, value]);
+
+		// Restore only after the initial controlled-value sync has run, then emit
+		// the draft through onChange so the parent adopts it on its next render.
+		useEffect(() => {
+			if (!editor) return;
+			const key = getEditorDraftStorageKey(localDraftKey ?? ariaLabel ?? placeholder);
+			if (!key) return;
+			if (!saveDraftLocally) {
+				removeEditorDraft(key);
+				return;
+			}
+
+			const draft = readEditorDraft(key);
+			if (draft && draft !== editor.getHTML()) {
+				editor.commands.setContent(draft);
+			}
+		}, [ariaLabel, editor, localDraftKey, placeholder, saveDraftLocally]);
 
 		// Refresh the placeholder decoration when the placeholder prop changes. The
 		// Placeholder extension reads the latest value through the ref getter; an
@@ -151,7 +208,11 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
 		}, [editor, placeholder]);
 
 		useImperativeHandle(ref, () => ({
-			clear: () => editor?.commands.clearContent(),
+			clear: () => {
+				clearCurrentLocalDraft();
+				editor?.commands.clearContent();
+			},
+			clearLocalDraft: clearCurrentLocalDraft,
 			focus: () => editor?.chain().focus().run(),
 			getHTML: () => editor?.getHTML() ?? '',
 			getText: () => editor?.getText() ?? '',
@@ -173,11 +234,7 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
 			<div
 				className={cn(
 					'overflow-hidden rounded-md',
-					variant === 'default' && [
-						'border bg-white dark:bg-background',
-						'focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50',
-						'relative z-10',
-					],
+					variant === 'default' && ['border bg-white dark:bg-background', 'relative z-10'],
 					disabled && 'cursor-not-allowed opacity-50',
 					className
 				)}
@@ -186,6 +243,7 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
 				<EditorContent
 					className={cn(
 						'[&_.ProseMirror]:min-h-[inherit]',
+						'[&_.ProseMirror:focus-visible]:ring-2 [&_.ProseMirror:focus-visible]:ring-ring [&_.ProseMirror:focus-visible]:ring-inset',
 						// Isolate the editable region's layout from the rest of the page so
 						// a growing document doesn't reflow ancestors (and vice-versa).
 						// `layout` only — not `paint` — so the focus ring is never clipped.
