@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import type { MarkdownEditorRef } from '@/components/editor/markdown-editor';
+
+import { useRef, useState } from 'react';
 import { useForm } from '@tanstack/react-form';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
@@ -43,6 +45,7 @@ function NewFeedbackRoute() {
 	const crpc = useCRPC();
 	const session = authClient.useSession();
 	const [formError, setFormError] = useState<string | null>(null);
+	const editorRef = useRef<MarkdownEditorRef>(null);
 
 	const projectQuery = useQuery(
 		crpc.project.getDetails.queryOptions({
@@ -61,6 +64,7 @@ function NewFeedbackRoute() {
 	const createMutation = useMutation(
 		crpc.feedback.create.mutationOptions({
 			onSuccess: (data) => {
+				editorRef.current?.clearLocalDraft();
 				navigate({
 					params: { ...params, slug: data.slug },
 					to: '/@{$org}/$project/feedback/$slug',
@@ -193,10 +197,12 @@ function NewFeedbackRoute() {
 								<LazyMarkdownEditor
 									ariaLabel='Feedback description'
 									disabled={createMutation.isPending}
+									localDraftKey='feedback-new-description'
 									minHeight='120px'
 									onChange={(html) => field.handleChange(html)}
 									onSubmitShortcut={() => form.handleSubmit()}
 									placeholder='Describe your feedback...'
+									ref={editorRef}
 									value={field.state.value}
 								/>
 							</div>

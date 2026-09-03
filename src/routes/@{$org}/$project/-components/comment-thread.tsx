@@ -216,6 +216,7 @@ export function CommentCard({
 
 		try {
 			await onUpdate(comment.id, sanitizedContent);
+			editEditorRef.current?.clearLocalDraft();
 			setIsEditing(false);
 		} catch (updateError) {
 			setEditError(localizeError(updateError, m.feedback_comment_save_failed()));
@@ -248,6 +249,7 @@ export function CommentCard({
 						autoFocus
 						className='relative rounded-b-none'
 						disabled={isUpdating}
+						localDraftKey={`comment-edit:${comment.id}`}
 						maxHeight='600px'
 						minHeight='80px'
 						onChange={setEditContent}
@@ -256,13 +258,14 @@ export function CommentCard({
 						ref={editEditorRef}
 						value={editContent}
 					/>
-					<div className='flex justify-end gap-2 rounded-b-md border-x border-b bg-background p-3'>
+					<div className='flex justify-end gap-2 rounded-b-md border-x border-b bg-muted/30 p-3'>
 						{editError ? (
 							<p className='mr-auto self-center text-sm text-destructive'>{editError}</p>
 						) : null}
 						<Button
 							disabled={isUpdating}
 							onClick={() => {
+								editEditorRef.current?.clearLocalDraft();
 								setIsEditing(false);
 								setEditContent(comment.content);
 								setEditError('');
@@ -549,6 +552,7 @@ export function CommentForm({
 				ariaLabel={placeholder}
 				className='rounded-b-none'
 				disabled={isSubmitting}
+				localDraftKey='comment-new'
 				maxHeight='400px'
 				minHeight='80px'
 				onChange={setContent}
@@ -557,11 +561,12 @@ export function CommentForm({
 				ref={editorRef}
 				value={content}
 			/>
-			<div className='flex justify-end gap-2 rounded-b-md border-x border-b bg-muted p-3'>
+			<div className='flex justify-end gap-2 rounded-b-md border-x border-b bg-muted/30 p-3'>
 				{error ? <p className='mr-auto self-center text-sm text-destructive'>{error}</p> : null}
 				<Button
 					disabled={isSubmitting || !hasEditorText(content)}
 					onClick={handleSubmit}
+					size='sm'
 					type='button'
 				>
 					{isSubmitting ? m.feedback_posting() : submitLabel}

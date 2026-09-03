@@ -1,6 +1,7 @@
+import type { MarkdownEditorRef } from '@/components/editor/markdown-editor';
 import type { UpdateCategory } from '../-components/category-badge';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { revalidateLogic, useForm } from '@tanstack/react-form';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import {
@@ -115,6 +116,7 @@ function EditUpdateRoute() {
 	const crpc = useCRPC();
 	const session = authClient.useSession();
 	const [formError, setFormError] = useState('');
+	const contentEditorRef = useRef<MarkdownEditorRef>(null);
 	const { state: sidebarState, setSection: setSidebarSection } = useSidebarState(
 		SIDEBAR_STORAGE_KEY,
 		DEFAULT_SIDEBAR_STATE
@@ -140,6 +142,7 @@ function EditUpdateRoute() {
 		crpc.update.update.mutationOptions({
 			onError: (error) => setFormError(localizeError(error, m.common_try_again())),
 			onSuccess: () => {
+				contentEditorRef.current?.clearLocalDraft();
 				navigate({
 					params,
 					to: '/@{$org}/$project/updates/$slug',
@@ -167,6 +170,7 @@ function EditUpdateRoute() {
 		crpc.update.remove.mutationOptions({
 			onError: (error) => setFormError(localizeError(error, m.common_try_again())),
 			onSuccess: () => {
+				contentEditorRef.current?.clearLocalDraft();
 				navigate({
 					params: { org: params.org, project: params.project },
 					to: '/@{$org}/$project/updates',
@@ -461,9 +465,11 @@ function EditUpdateRoute() {
 								{(field) => (
 									<LazyMarkdownEditor
 										ariaLabel={m.updates_content()}
+										localDraftKey='update-edit-content'
 										minHeight='200px'
 										onChange={(html) => field.handleChange(html)}
 										placeholder={m.updates_content_placeholder()}
+										ref={contentEditorRef}
 										value={field.state.value}
 										variant='borderless'
 									/>
