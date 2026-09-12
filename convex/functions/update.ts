@@ -1095,8 +1095,10 @@ export const listFeatured = optionalAuthQuery
 			return empty;
 		}
 
+		// Authorize against the exact document we fetched. Slugs are only unique
+		// per org, so a slug lookup could resolve a different project.
 		const access = await verifyProjectAccess(ctx, {
-			slug: project.slug,
+			id: project._id,
 			userId: ctx.userId,
 		});
 		if (!access.permissions.canView) {

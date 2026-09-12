@@ -239,6 +239,17 @@ function UpdatesListRoute() {
 		return clearSearchTimeout;
 	}, [clearSearchTimeout]);
 
+	// The URL is the source of truth. When navigation changes `q` out from under
+	// the input (back/forward, a tab link), drop any pending debounce so stale
+	// keystrokes can't overwrite it, and re-sync the field. Comparing on the
+	// trimmed value keeps the effect from eating a trailing space mid-typing
+	// when our own debounce lands.
+	useEffect(() => {
+		clearSearchTimeout();
+		const next = qParam ?? '';
+		setSearchTerm((current) => (current.trim() === next ? current : next));
+	}, [clearSearchTimeout, qParam]);
+
 	const focusSearch = useCallback(() => {
 		// The desktop and mobile inputs are separate elements; focus whichever is
 		// currently rendered visible.
