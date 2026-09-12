@@ -3,8 +3,8 @@ import { useForm } from '@tanstack/react-form';
 import { useMutation, useSuspenseQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 
+import { AppShell } from '@/components/app-shell';
 import { InlineAlert } from '@/components/inline-alert';
-import { MainNav } from '@/components/site-nav/main-nav';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -72,9 +72,8 @@ function AuthenticatedCreateTeamRoute() {
 	const navigate = useNavigate();
 	const crpc = useCRPC();
 	const [formError, setFormError] = useState<string>();
-	const { data: profile } = useSuspenseQuery(
-		crpc.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
-	);
+	// Warms the profile cache the shell header reads, so it never shows a skeleton.
+	useSuspenseQuery(crpc.profile.findMyProfile.queryOptions({}, { skipUnauth: true }));
 	const { data: orgsData } = useSuspenseQuery(
 		crpc.org.findMyOrgs.queryOptions({}, { skipUnauth: true })
 	);
@@ -118,8 +117,7 @@ function AuthenticatedCreateTeamRoute() {
 	}));
 
 	return (
-		<div className='flex min-h-svh flex-col'>
-			<MainNav context={{ type: 'global' }} isUserPending={false} user={profile} />
+		<AppShell>
 			<main className='relative w-full flex-1'>
 				<div className='absolute top-0 right-0 left-0 z-0 h-64 w-full bg-linear-to-t from-background to-muted' />
 				<div className='relative z-10 mx-auto max-w-2xl px-4 py-12 sm:px-6 md:px-10'>
@@ -230,6 +228,6 @@ function AuthenticatedCreateTeamRoute() {
 					</form>
 				</div>
 			</main>
-		</div>
+		</AppShell>
 	);
 }

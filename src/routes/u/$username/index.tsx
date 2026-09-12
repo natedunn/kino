@@ -1,9 +1,9 @@
-import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
+import { useSuspenseQuery } from '@tanstack/react-query';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { Link as LinkIcon, MapPin } from 'lucide-react';
 
 import { NotFound } from '@/components/_not-found';
-import { MainNav } from '@/components/site-nav/main-nav';
+import { AppShell } from '@/components/app-shell';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useCRPC } from '@/lib/convex/crpc';
 import { crpcServer } from '@/lib/convex/crpc-server';
@@ -32,9 +32,6 @@ function PublicProfileRoute() {
 	const { username } = Route.useParams();
 	const crpc = useCRPC();
 	const profileQuery = useSuspenseQuery(crpc.profile.getByUsername.queryOptions({ username }));
-	const currentViewerQuery = useQuery(
-		crpc.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
-	);
 	const profile = profileQuery.data;
 
 	if (!profile) {
@@ -45,13 +42,7 @@ function PublicProfileRoute() {
 	const visibleOrgCount = profile.ownedOrganizations.length + profile.memberOrganizations.length;
 
 	return (
-		<div className='min-h-svh bg-background'>
-			<MainNav
-				context={{ type: 'global' }}
-				isUserPending={currentViewerQuery.isLoading}
-				user={currentViewerQuery.data}
-			/>
-
+		<AppShell>
 			<main className='container py-12'>
 				<div className='mx-auto max-w-3xl'>
 					<div className='rounded-2xl border bg-card p-8 shadow-xs'>
@@ -137,7 +128,7 @@ function PublicProfileRoute() {
 					</div>
 				</div>
 			</main>
-		</div>
+		</AppShell>
 	);
 }
 

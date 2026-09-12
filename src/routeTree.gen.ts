@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AtChar123orgChar125RouteRouteImport } from './routes/@{$org}/route'
+import { Route as MarketingRouteRouteImport } from './routes/_marketing/route'
 import { Route as AccountRouteRouteImport } from './routes/account/route'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -19,6 +20,10 @@ import { Route as DocsRouteRouteImport } from './routes/docs/route'
 import { Route as UiRouteImport } from './routes/ui'
 import { Route as AtChar123orgChar125IndexRouteImport } from './routes/@{$org}/index'
 import { Route as AtChar123orgChar125ProjectRouteRouteImport } from './routes/@{$org}/$project/route'
+import { Route as MarketingAboutRouteImport } from './routes/_marketing/about'
+import { Route as MarketingBrandRouteImport } from './routes/_marketing/brand'
+import { Route as MarketingContactRouteImport } from './routes/_marketing/contact'
+import { Route as MarketingPricingRouteImport } from './routes/_marketing/pricing'
 import { Route as AccountIndexRouteImport } from './routes/account/index'
 import { Route as AuthIndexRouteImport } from './routes/auth.index'
 import { Route as AuthAcceptInvitationRouteImport } from './routes/auth.accept-invitation'
@@ -29,7 +34,6 @@ import { Route as AuthVerifyEmailRouteImport } from './routes/auth.verify-email'
 import { Route as DocsCommunityGuidelinesRouteImport } from './routes/docs/community-guidelines'
 import { Route as DocsCookiesRouteImport } from './routes/docs/cookies'
 import { Route as DocsDevelopmentRouteImport } from './routes/docs/development'
-import { Route as DocsNoticesRouteImport } from './routes/docs/notices'
 import { Route as DocsPrivacyRouteImport } from './routes/docs/privacy'
 import { Route as DocsStackRouteImport } from './routes/docs/stack'
 import { Route as OrgSettingsRouteRouteImport } from './routes/org/settings/route'
@@ -97,6 +101,10 @@ const AtChar123orgChar125RouteRoute =
     path: '/@{$org}',
     getParentRoute: () => rootRouteImport,
   } as any)
+const MarketingRouteRoute = MarketingRouteRouteImport.update({
+  id: '/_marketing',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AccountRouteRoute = AccountRouteRouteImport.update({
   id: '/account',
   path: '/account',
@@ -139,6 +147,26 @@ const AtChar123orgChar125ProjectRouteRoute =
     path: '/$project',
     getParentRoute: () => AtChar123orgChar125RouteRoute,
   } as any)
+const MarketingAboutRoute = MarketingAboutRouteImport.update({
+  id: '/about',
+  path: '/about',
+  getParentRoute: () => MarketingRouteRoute,
+} as any)
+const MarketingBrandRoute = MarketingBrandRouteImport.update({
+  id: '/brand',
+  path: '/brand',
+  getParentRoute: () => MarketingRouteRoute,
+} as any)
+const MarketingContactRoute = MarketingContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
+  getParentRoute: () => MarketingRouteRoute,
+} as any)
+const MarketingPricingRoute = MarketingPricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
+  getParentRoute: () => MarketingRouteRoute,
+} as any)
 const AccountIndexRoute = AccountIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -187,11 +215,6 @@ const DocsCookiesRoute = DocsCookiesRouteImport.update({
 const DocsDevelopmentRoute = DocsDevelopmentRouteImport.update({
   id: '/development',
   path: '/development',
-  getParentRoute: () => DocsRouteRoute,
-} as any)
-const DocsNoticesRoute = DocsNoticesRouteImport.update({
-  id: '/notices',
-  path: '/notices',
   getParentRoute: () => DocsRouteRoute,
 } as any)
 const DocsPrivacyRoute = DocsPrivacyRouteImport.update({
@@ -519,6 +542,10 @@ export interface FileRoutesByFullPath {
   '/ui': typeof UiRoute
   '/@{$org}/$project': typeof AtChar123orgChar125ProjectRouteRouteWithChildren
   '/org/settings': typeof OrgSettingsRouteRouteWithChildren
+  '/about': typeof MarketingAboutRoute
+  '/brand': typeof MarketingBrandRoute
+  '/contact': typeof MarketingContactRoute
+  '/pricing': typeof MarketingPricingRoute
   '/auth/accept-invitation': typeof AuthAcceptInvitationRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
@@ -527,7 +554,6 @@ export interface FileRoutesByFullPath {
   '/docs/community-guidelines': typeof DocsCommunityGuidelinesRoute
   '/docs/cookies': typeof DocsCookiesRoute
   '/docs/development': typeof DocsDevelopmentRoute
-  '/docs/notices': typeof DocsNoticesRoute
   '/docs/privacy': typeof DocsPrivacyRoute
   '/docs/stack': typeof DocsStackRoute
   '/@{$org}/': typeof AtChar123orgChar125IndexRoute
@@ -592,6 +618,10 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/dashboard': typeof DashboardRoute
   '/ui': typeof UiRoute
+  '/about': typeof MarketingAboutRoute
+  '/brand': typeof MarketingBrandRoute
+  '/contact': typeof MarketingContactRoute
+  '/pricing': typeof MarketingPricingRoute
   '/auth/accept-invitation': typeof AuthAcceptInvitationRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
@@ -600,7 +630,6 @@ export interface FileRoutesByTo {
   '/docs/community-guidelines': typeof DocsCommunityGuidelinesRoute
   '/docs/cookies': typeof DocsCookiesRoute
   '/docs/development': typeof DocsDevelopmentRoute
-  '/docs/notices': typeof DocsNoticesRoute
   '/docs/privacy': typeof DocsPrivacyRoute
   '/docs/stack': typeof DocsStackRoute
   '/@{$org}': typeof AtChar123orgChar125IndexRoute
@@ -660,6 +689,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/@{$org}': typeof AtChar123orgChar125RouteRouteWithChildren
+  '/_marketing': typeof MarketingRouteRouteWithChildren
   '/account': typeof AccountRouteRouteWithChildren
   '/docs': typeof DocsRouteRouteWithChildren
   '/admin': typeof AdminRoute
@@ -668,6 +698,10 @@ export interface FileRoutesById {
   '/ui': typeof UiRoute
   '/@{$org}/$project': typeof AtChar123orgChar125ProjectRouteRouteWithChildren
   '/org/settings': typeof OrgSettingsRouteRouteWithChildren
+  '/_marketing/about': typeof MarketingAboutRoute
+  '/_marketing/brand': typeof MarketingBrandRoute
+  '/_marketing/contact': typeof MarketingContactRoute
+  '/_marketing/pricing': typeof MarketingPricingRoute
   '/auth/accept-invitation': typeof AuthAcceptInvitationRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
@@ -676,7 +710,6 @@ export interface FileRoutesById {
   '/docs/community-guidelines': typeof DocsCommunityGuidelinesRoute
   '/docs/cookies': typeof DocsCookiesRoute
   '/docs/development': typeof DocsDevelopmentRoute
-  '/docs/notices': typeof DocsNoticesRoute
   '/docs/privacy': typeof DocsPrivacyRoute
   '/docs/stack': typeof DocsStackRoute
   '/@{$org}/': typeof AtChar123orgChar125IndexRoute
@@ -748,6 +781,10 @@ export interface FileRouteTypes {
     | '/ui'
     | '/@{$org}/$project'
     | '/org/settings'
+    | '/about'
+    | '/brand'
+    | '/contact'
+    | '/pricing'
     | '/auth/accept-invitation'
     | '/auth/forgot-password'
     | '/auth/reset-password'
@@ -756,7 +793,6 @@ export interface FileRouteTypes {
     | '/docs/community-guidelines'
     | '/docs/cookies'
     | '/docs/development'
-    | '/docs/notices'
     | '/docs/privacy'
     | '/docs/stack'
     | '/@{$org}/'
@@ -821,6 +857,10 @@ export interface FileRouteTypes {
     | '/admin'
     | '/dashboard'
     | '/ui'
+    | '/about'
+    | '/brand'
+    | '/contact'
+    | '/pricing'
     | '/auth/accept-invitation'
     | '/auth/forgot-password'
     | '/auth/reset-password'
@@ -829,7 +869,6 @@ export interface FileRouteTypes {
     | '/docs/community-guidelines'
     | '/docs/cookies'
     | '/docs/development'
-    | '/docs/notices'
     | '/docs/privacy'
     | '/docs/stack'
     | '/@{$org}'
@@ -888,6 +927,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/@{$org}'
+    | '/_marketing'
     | '/account'
     | '/docs'
     | '/admin'
@@ -896,6 +936,10 @@ export interface FileRouteTypes {
     | '/ui'
     | '/@{$org}/$project'
     | '/org/settings'
+    | '/_marketing/about'
+    | '/_marketing/brand'
+    | '/_marketing/contact'
+    | '/_marketing/pricing'
     | '/auth/accept-invitation'
     | '/auth/forgot-password'
     | '/auth/reset-password'
@@ -904,7 +948,6 @@ export interface FileRouteTypes {
     | '/docs/community-guidelines'
     | '/docs/cookies'
     | '/docs/development'
-    | '/docs/notices'
     | '/docs/privacy'
     | '/docs/stack'
     | '/@{$org}/'
@@ -967,6 +1010,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AtChar123orgChar125RouteRoute: typeof AtChar123orgChar125RouteRouteWithChildren
+  MarketingRouteRoute: typeof MarketingRouteRouteWithChildren
   AccountRouteRoute: typeof AccountRouteRouteWithChildren
   DocsRouteRoute: typeof DocsRouteRouteWithChildren
   AdminRoute: typeof AdminRoute
@@ -995,6 +1039,13 @@ declare module '@tanstack/react-router' {
       path: '/@{$org}'
       fullPath: '/@{$org}'
       preLoaderRoute: typeof AtChar123orgChar125RouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_marketing': {
+      id: '/_marketing'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof MarketingRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/account': {
@@ -1052,6 +1103,34 @@ declare module '@tanstack/react-router' {
       fullPath: '/@{$org}/$project'
       preLoaderRoute: typeof AtChar123orgChar125ProjectRouteRouteImport
       parentRoute: typeof AtChar123orgChar125RouteRoute
+    }
+    '/_marketing/about': {
+      id: '/_marketing/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof MarketingAboutRouteImport
+      parentRoute: typeof MarketingRouteRoute
+    }
+    '/_marketing/brand': {
+      id: '/_marketing/brand'
+      path: '/brand'
+      fullPath: '/brand'
+      preLoaderRoute: typeof MarketingBrandRouteImport
+      parentRoute: typeof MarketingRouteRoute
+    }
+    '/_marketing/contact': {
+      id: '/_marketing/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof MarketingContactRouteImport
+      parentRoute: typeof MarketingRouteRoute
+    }
+    '/_marketing/pricing': {
+      id: '/_marketing/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof MarketingPricingRouteImport
+      parentRoute: typeof MarketingRouteRoute
     }
     '/account/': {
       id: '/account/'
@@ -1121,13 +1200,6 @@ declare module '@tanstack/react-router' {
       path: '/development'
       fullPath: '/docs/development'
       preLoaderRoute: typeof DocsDevelopmentRouteImport
-      parentRoute: typeof DocsRouteRoute
-    }
-    '/docs/notices': {
-      id: '/docs/notices'
-      path: '/notices'
-      fullPath: '/docs/notices'
-      preLoaderRoute: typeof DocsNoticesRouteImport
       parentRoute: typeof DocsRouteRoute
     }
     '/docs/privacy': {
@@ -1690,6 +1762,24 @@ const AtChar123orgChar125RouteRouteWithChildren =
     AtChar123orgChar125RouteRouteChildren,
   )
 
+interface MarketingRouteRouteChildren {
+  MarketingAboutRoute: typeof MarketingAboutRoute
+  MarketingBrandRoute: typeof MarketingBrandRoute
+  MarketingContactRoute: typeof MarketingContactRoute
+  MarketingPricingRoute: typeof MarketingPricingRoute
+}
+
+const MarketingRouteRouteChildren: MarketingRouteRouteChildren = {
+  MarketingAboutRoute: MarketingAboutRoute,
+  MarketingBrandRoute: MarketingBrandRoute,
+  MarketingContactRoute: MarketingContactRoute,
+  MarketingPricingRoute: MarketingPricingRoute,
+}
+
+const MarketingRouteRouteWithChildren = MarketingRouteRoute._addFileChildren(
+  MarketingRouteRouteChildren,
+)
+
 interface AccountRouteRouteChildren {
   AccountIndexRoute: typeof AccountIndexRoute
   AccountAppearanceIndexRoute: typeof AccountAppearanceIndexRoute
@@ -1718,7 +1808,6 @@ interface DocsRouteRouteChildren {
   DocsCommunityGuidelinesRoute: typeof DocsCommunityGuidelinesRoute
   DocsCookiesRoute: typeof DocsCookiesRoute
   DocsDevelopmentRoute: typeof DocsDevelopmentRoute
-  DocsNoticesRoute: typeof DocsNoticesRoute
   DocsPrivacyRoute: typeof DocsPrivacyRoute
   DocsStackRoute: typeof DocsStackRoute
 }
@@ -1727,7 +1816,6 @@ const DocsRouteRouteChildren: DocsRouteRouteChildren = {
   DocsCommunityGuidelinesRoute: DocsCommunityGuidelinesRoute,
   DocsCookiesRoute: DocsCookiesRoute,
   DocsDevelopmentRoute: DocsDevelopmentRoute,
-  DocsNoticesRoute: DocsNoticesRoute,
   DocsPrivacyRoute: DocsPrivacyRoute,
   DocsStackRoute: DocsStackRoute,
 }
@@ -1778,6 +1866,7 @@ const OrgSettingsRouteRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AtChar123orgChar125RouteRoute: AtChar123orgChar125RouteRouteWithChildren,
+  MarketingRouteRoute: MarketingRouteRouteWithChildren,
   AccountRouteRoute: AccountRouteRouteWithChildren,
   DocsRouteRoute: DocsRouteRouteWithChildren,
   AdminRoute: AdminRoute,

@@ -2,8 +2,7 @@ import { useSuspenseQuery } from '@tanstack/react-query';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { Plus } from 'lucide-react';
 
-import { SiteFooter } from '@/components/site-footer';
-import { MainNav } from '@/components/site-nav/main-nav';
+import { AppShell } from '@/components/app-shell';
 import { Button } from '@/components/ui/button';
 import { requireAuth } from '@/lib/auth/require-auth';
 import { useAuthLostRedirect } from '@/lib/auth/use-auth-lost';
@@ -48,18 +47,15 @@ function DashboardPage() {
 
 function AuthenticatedDashboard() {
 	const crpc = useCRPC();
-	const { data: user } = useSuspenseQuery(
-		crpc.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
-	);
+	// Warms the profile cache the shell header reads, so it never shows a skeleton.
+	useSuspenseQuery(crpc.profile.findMyProfile.queryOptions({}, { skipUnauth: true }));
 	const { data: orgsData } = useSuspenseQuery(
 		crpc.org.findMyOrgs.queryOptions({}, { skipUnauth: true })
 	);
 	const teams = orgsData.teams;
 
 	return (
-		<div className='flex min-h-svh flex-col'>
-			<MainNav context={{ type: 'global' }} isUserPending={false} user={user} />
-
+		<AppShell>
 			<main className='flex flex-1 flex-col'>
 				{/* Header band — the divider below it runs the full page width. */}
 				<div className='border-b border-border'>
@@ -99,8 +95,6 @@ function AuthenticatedDashboard() {
 					</div>
 				</div>
 			</main>
-
-			<SiteFooter />
-		</div>
+		</AppShell>
 	);
 }

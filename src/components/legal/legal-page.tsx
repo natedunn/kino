@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 
 import { DocsPageHeader } from '@/components/docs/docs-page-header';
+import { KinoProjectLink } from '@/components/kino-project-link';
 
 export const LEGAL_LAST_UPDATED = 'August 19, 2026';
 
@@ -37,10 +38,10 @@ export function LegalContact() {
 				Kino and should provide a private way for Kino to respond.
 			</p>
 			<p>
-				Until that channel is available, non-sensitive inquiries can be submitted through the{' '}
-				<a href='https://github.com/natedunn/kino/issues'>Kino issue tracker</a>. Do not include
+				Until that channel is available, non-sensitive inquiries can be posted on the{' '}
+				<KinoProjectLink page='feedback'>Kino feedback board</KinoProjectLink>. Do not include
 				passwords, access tokens, private workspace content, identity documents, vulnerability
-				details, or other sensitive information in a public issue.
+				details, or other sensitive information in a public post.
 			</p>
 			<p>
 				<strong>Publication note:</strong> add the live private contact route and an appropriate

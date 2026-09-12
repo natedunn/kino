@@ -3,7 +3,7 @@ import { createFileRoute, notFound, Outlet, useParams } from '@tanstack/react-ro
 
 import { DefaultCatchBoundary } from '@/components/_default-catch-boundary';
 import { NotFound } from '@/components/_not-found';
-import { SiteFooter } from '@/components/site-footer';
+import { AppShell } from '@/components/app-shell';
 import { MainNav } from '@/components/site-nav/main-nav';
 import { useCRPC } from '@/lib/convex/crpc';
 import { crpcServer } from '@/lib/convex/crpc-server';
@@ -77,8 +77,8 @@ function OrganizationShell() {
 			} as const);
 
 	const shell = (
-		<div className='flex min-h-screen w-full flex-col'>
-			<div className='flex w-full flex-1 flex-col'>
+		<AppShell
+			nav={
 				<MainNav
 					context={navContext}
 					isUserPending={isUserPending}
@@ -89,12 +89,12 @@ function OrganizationShell() {
 					}
 					user={profileQuery.data}
 				/>
-				<div className='flex flex-1 flex-col'>
-					<Outlet />
-				</div>
+			}
+		>
+			<div className='flex flex-1 flex-col'>
+				<Outlet />
 			</div>
-			<SiteFooter />
-		</div>
+		</AppShell>
 	);
 	if (!projectSlug) return shell;
 	const publishedTheme = projectQuery.data?.publishedTheme

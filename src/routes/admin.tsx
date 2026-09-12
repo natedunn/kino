@@ -1,8 +1,8 @@
 import { Suspense } from 'react';
 import { useSuspenseQuery } from '@tanstack/react-query';
-import { createFileRoute, Link, Navigate, redirect } from '@tanstack/react-router';
+import { createFileRoute, Navigate, redirect } from '@tanstack/react-router';
 
-import { MainNav } from '@/components/site-nav/main-nav';
+import { AppShell } from '@/components/app-shell';
 import { Skeleton } from '@/components/ui/skeleton';
 import { requireAuth } from '@/lib/auth/require-auth';
 import { useAuthLostRedirect } from '@/lib/auth/use-auth-lost';
@@ -52,9 +52,7 @@ function AuthedAdmin() {
 	}
 
 	return (
-		<div className='flex min-h-svh flex-col'>
-			<MainNav context={{ type: 'global' }} isUserPending={false} user={profile} />
-
+		<AppShell>
 			<main className='flex-1'>
 				<div className='container py-10 md:py-14'>
 					<div>
@@ -69,16 +67,7 @@ function AuthedAdmin() {
 					</Suspense>
 				</div>
 			</main>
-
-			<footer className='mt-auto border-t border-border py-4 text-sm text-muted-foreground'>
-				<div className='container flex items-center justify-between gap-4'>
-					<p>&copy; {new Date().getFullYear()} Kino</p>
-					<Link to='/docs/notices' className='transition-colors hocus:text-foreground'>
-						Notices
-					</Link>
-				</div>
-			</footer>
-		</div>
+		</AppShell>
 	);
 }
 
