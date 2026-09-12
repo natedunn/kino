@@ -75,6 +75,7 @@ live.
 | Terms of service          | `FOOTER_GROUPS.legal`     | Not written. Add `src/routes/docs/terms.tsx` + docs-shell nav.                                                                             |
 | Private contact inbox     | `/contact`                | The in-product private channel promised by `LegalContact`.                                                                                 |
 | Security disclosure route | `/contact`                | Stand up a private security inbox.                                                                                                         |
+| Free project limit        | `convex/lib/kino.ts`      | `LIMITS.FREE` allows 1 org and 1 project; pricing copy promises 5 projects. Raise the limit before un-orphaning `/pricing`.                |
 | Pricing page              | `/pricing`                | Orphaned: reachable by URL, footer shows Soon. Paid prices and limits are placeholders; upcoming rows sit behind `SHOW_UPCOMING_FEATURES`. |
 | Brand asset downloads     | `/brand`                  | Export SVG/PNG mark + lockup, press kit; wire the button.                                                                                  |
 | Legal mailing address     | legal pages               | Required before publishing notices (see `LegalContact`).                                                                                   |

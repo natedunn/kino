@@ -1,7 +1,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { ArrowRight, Compass, Globe, Users } from 'lucide-react';
 
-import { KinoName } from '@/components/kino-brand';
 import {
 	Cell,
 	CellGrid,
@@ -29,9 +28,8 @@ function AboutPage() {
 				<div className='max-w-2xl space-y-4 text-muted-foreground'>
 					<p>
 						Feedback gets lost in inboxes. Roadmaps go stale in slide decks. Changelogs are written
-						once and never read. <KinoName className='text-foreground' /> puts all three in one
-						place, connected — so a request can become a roadmap item, ship, and be announced to the
-						people who asked for it.
+						once and never read. Kino puts all three in one place, connected — so a request can
+						become a roadmap item, ship, and be announced to the people who asked for it.
 					</p>
 					<p>
 						It is built for small product teams, indie developers, and maintainers who want a
