@@ -34,6 +34,7 @@ import * as m from '@/paraglide/messages.js';
 import { CoverImageUpload } from '../-components/cover-image-upload';
 import {
 	CategoryField,
+	FeaturedField,
 	RelatedFeedbackField,
 	TagsField,
 	UpdateEditorCard,
@@ -44,6 +45,7 @@ type UpdateFormValues = {
 	category: UpdateCategory;
 	content: string;
 	coverImageId: string | null;
+	featured: boolean;
 	relatedFeedbackIds: Array<string>;
 	tags: Array<string>;
 	title: string;
@@ -191,6 +193,7 @@ function EditUpdateRoute() {
 			category: (update?.category ?? 'changelog') as UpdateCategory,
 			content: update?.content ?? '',
 			coverImageId: update?.coverImageId ?? null,
+			featured: update?.featuredAt != null,
 			relatedFeedbackIds: (update?.relatedFeedbackIds ?? []).map(String),
 			tags: (update?.tags ?? []).map(String),
 			title: update?.title ?? '',
@@ -204,6 +207,7 @@ function EditUpdateRoute() {
 			update?.category,
 			update?.content,
 			update?.coverImageId,
+			update?.featuredAt,
 			update?.id,
 			update?.title,
 		]
@@ -226,6 +230,7 @@ function EditUpdateRoute() {
 			await saveMutation.mutateAsync({
 				category: value.category,
 				content: parsed.data.content,
+				featured: value.featured,
 				id: update.id,
 				relatedFeedbackIds: value.relatedFeedbackIds,
 				tags: parsed.data.tags,
@@ -385,6 +390,17 @@ function EditUpdateRoute() {
 									/>
 								)}
 							</form.Field>
+							<div className='mt-4'>
+								<form.Field name='featured'>
+									{(field) => (
+										<FeaturedField
+											checked={field.state.value}
+											mode={project.updatesFeaturedMode ?? 'latest'}
+											onChange={(checked) => field.handleChange(checked)}
+										/>
+									)}
+								</form.Field>
+							</div>
 						</SidebarSection>
 
 						<SidebarSection

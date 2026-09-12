@@ -6,7 +6,7 @@ import { X } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import {
 	Select,
@@ -35,13 +35,11 @@ const UPDATE_CATEGORY_ITEMS = UPDATE_CATEGORIES.map((category) => ({
  */
 export function UpdateEditorCard({ editor, title }: { editor: ReactNode; title: ReactNode }) {
 	return (
-		<Card className='gap-0 overflow-hidden py-0'>
-			<CardContent className='flex flex-col p-0'>
-				{title}
-				<Separator />
-				{editor}
-			</CardContent>
-		</Card>
+		<div className='flex flex-col overflow-hidden rounded-xl border bg-card text-card-foreground'>
+			{title}
+			<Separator />
+			{editor}
+		</div>
 	);
 }
 
@@ -103,6 +101,36 @@ export function CategoryField({
 					))}
 				</SelectContent>
 			</Select>
+		</div>
+	);
+}
+
+/**
+ * Featured toggle used in the sidebar of both editor pages. When the project's
+ * featured section is in automatic ("latest") mode the checkbox is replaced by
+ * an explanatory note — flagging individual updates has no effect there, and a
+ * control that silently does nothing would be worse than no control.
+ */
+export function FeaturedField({
+	checked,
+	mode,
+	onChange,
+}: {
+	checked: boolean;
+	mode: 'latest' | 'manual';
+	onChange: (checked: boolean) => void;
+}) {
+	if (mode === 'latest') {
+		return <p className='text-xs text-muted-foreground'>{m.updates_featured_auto_note()}</p>;
+	}
+
+	return (
+		<div className='flex flex-col gap-1.5'>
+			<label className='flex cursor-pointer items-center gap-2 text-sm'>
+				<Checkbox checked={checked} onCheckedChange={(next) => onChange(next === true)} />
+				{m.updates_featured_checkbox()}
+			</label>
+			<p className='text-xs text-muted-foreground'>{m.updates_featured_checkbox_description()}</p>
 		</div>
 	);
 }

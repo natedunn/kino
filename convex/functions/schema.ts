@@ -68,6 +68,10 @@ const FEEDBACK_EVENT_TYPES = [
 ] as const;
 const UPDATE_STATUSES = ['draft', 'published'] as const;
 export const UPDATE_CATEGORIES = ['changelog', 'article', 'announcement'] as const;
+// How the updates index picks its featured section. `latest` (and unset)
+// derives the section from the newest published updates; `manual` reads the
+// per-update `featuredAt` stamp curated by content managers.
+export const UPDATES_FEATURED_MODES = ['latest', 'manual'] as const;
 const GITHUB_SYNC_MODES = ['read', 'read_write'] as const;
 const GITHUB_CONNECTION_STATE_STATUSES = ['pending', 'consumed', 'expired'] as const;
 const GITHUB_INSTALLATION_STATUSES = ['active', 'suspended', 'stale', 'deleted'] as const;
@@ -332,6 +336,8 @@ export const projectTable = convexTable(
 		visibility: textEnum(PROJECT_VISIBILITIES).notNull(),
 		logoUrl: text(),
 		slug: text().notNull(),
+		// Unset behaves as 'latest'.
+		updatesFeaturedMode: textEnum(UPDATES_FEATURED_MODES),
 	},
 	(table) => [
 		index('by_orgSlug').on(table.orgSlug),
@@ -920,6 +926,9 @@ export const updateTable = convexTable(
 		relatedFeedbackIds: arrayOf(id('feedback').notNull()),
 		coverImageId: text(),
 		authorAsOrg: boolean(),
+		// Stamped when a content manager features the update; ordering doubles as
+		// featured history (newest = hero). Null = never featured / unfeatured.
+		featuredAt: integer(),
 	},
 	(table) => [
 		index('by_projectId_slug').on(table.projectId, table.slug),
@@ -934,6 +943,9 @@ export const updateTable = convexTable(
 			table.status,
 			table.publishedAt
 		),
+		// Supports the featured section in manual mode: range over non-null
+		// featuredAt descending, newest featured first.
+		index('by_projectId_featuredAt').on(table.projectId, table.featuredAt),
 		searchIndex('by_projectId_status_category_searchContent')
 			.on(table.searchContent)
 			.filter(table.projectId, table.status, table.category),

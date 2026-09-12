@@ -1501,6 +1501,7 @@ export type DataModel = {
       orgSlug: string;
       slug: string;
       updatedTime?: null | number;
+      updatesFeaturedMode?: null | "latest" | "manual";
       urls?: null | Array<null | any>;
       visibility: "public" | "private" | "archived";
       _id: Id<"project">;
@@ -1516,6 +1517,7 @@ export type DataModel = {
       | "orgSlug"
       | "slug"
       | "updatedTime"
+      | "updatesFeaturedMode"
       | "urls"
       | "visibility";
     indexes: {
@@ -1760,6 +1762,7 @@ export type DataModel = {
       content: string;
       coverImageId?: null | string;
       deletedTime?: null | number;
+      featuredAt?: null | number;
       projectId: Id<"project">;
       publishedAt?: null | number;
       relatedFeedbackIds?: null | Array<Id<"feedback">>;
@@ -1781,6 +1784,7 @@ export type DataModel = {
       | "content"
       | "coverImageId"
       | "deletedTime"
+      | "featuredAt"
       | "projectId"
       | "publishedAt"
       | "relatedFeedbackIds"
@@ -1800,6 +1804,7 @@ export type DataModel = {
         "publishedAt",
         "_creationTime",
       ];
+      by_projectId_featuredAt: ["projectId", "featuredAt", "_creationTime"];
       by_projectId_slug: ["projectId", "slug", "_creationTime"];
       by_projectId_status_publishedAt: [
         "projectId",

@@ -38,6 +38,7 @@ import {
 	feedbackTable,
 	projectMemberTable,
 	projectTable,
+	UPDATES_FEATURED_MODES,
 	updateTable,
 } from './schema';
 
@@ -136,6 +137,7 @@ export const update = authMutation
 			id: idSchema,
 			name: projectNameSchema.optional(),
 			slug: projectSlugWriteSchema.optional(),
+			updatesFeaturedMode: z.enum(UPDATES_FEATURED_MODES).optional(),
 			urls: urlListSchema.optional(),
 			visibility: visibilitySchema.optional(),
 		})
@@ -213,6 +215,7 @@ export const update = authMutation
 				description: input.description,
 				name: input.name,
 				slug: input.slug,
+				updatesFeaturedMode: input.updatesFeaturedMode,
 				visibility: input.visibility,
 			}).filter(([, value]) => value !== undefined)
 		);
