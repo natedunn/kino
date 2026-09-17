@@ -718,6 +718,7 @@ export declare const api: {
         id: string;
         name?: string;
         slug?: string;
+        updatesFeaturedMode?: "latest" | "manual";
         urls?: Array<{
           source?: "manual" | "github";
           text: string;
@@ -852,6 +853,7 @@ export declare const api: {
         category?: "changelog" | "article" | "announcement";
         content: string;
         coverImageId?: string;
+        featured?: boolean;
         projectId: string;
         relatedFeedbackIds?: Array<string>;
         tags?: Array<string>;
@@ -914,6 +916,12 @@ export declare const api: {
       },
       { continueCursor: string | null; isDone: boolean; page: Array<any> }
     >;
+    listFeatured: FunctionReference<
+      "query",
+      "public",
+      { projectId: string },
+      any
+    >;
     listProjectDashboard: FunctionReference<
       "query",
       "public",
@@ -942,6 +950,7 @@ export declare const api: {
       {
         category?: "changelog" | "article" | "announcement";
         content?: string;
+        featured?: boolean;
         id: string;
         relatedFeedbackIds?: Array<string>;
         tags?: Array<string>;

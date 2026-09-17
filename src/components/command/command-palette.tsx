@@ -16,12 +16,19 @@ import {
 import { useCRPC } from '@/lib/convex/crpc';
 import * as m from '@/paraglide/messages.js';
 
-const GROUP_ORDER: Array<CommandGroupName> = ['Files', 'Feedback', 'Global', 'Navigation'];
+const GROUP_ORDER: Array<CommandGroupName> = [
+	'Files',
+	'Feedback',
+	'Updates',
+	'Global',
+	'Navigation',
+];
 const GROUP_LABELS: Record<CommandGroupName, () => string> = {
 	Feedback: m.shortcuts_group_feedback,
 	Files: m.shortcuts_group_files,
 	Global: m.shortcuts_group_global,
 	Navigation: m.shortcuts_group_navigation,
+	Updates: m.shortcuts_group_updates,
 };
 
 type RankedCommandGroup = {
