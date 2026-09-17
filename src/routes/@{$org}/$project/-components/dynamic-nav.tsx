@@ -8,6 +8,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 
+import { NavTab, navTabLinkClassName } from '@/components/nav-tab';
 import { Button } from '@/components/ui/button';
 import {
 	DropdownMenu,
@@ -24,7 +25,6 @@ import Interview from '@/icons/interview';
 import Roadmap from '@/icons/roadmap';
 import SettingsSliders from '@/icons/settings-sliders';
 import { useCRPC } from '@/lib/convex/crpc';
-import { cn } from '@/lib/utils';
 import * as m from '@/paraglide/messages.js';
 
 const useIsomorphicLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect;
@@ -211,34 +211,9 @@ export function DynamicNavigation({ orgSlug, projectSlug }: DynamicNavigationPro
 								}}
 								to={item.to}
 								params={item.params}
-								className='group flex shrink-0 items-center gap-2 rounded-t-md outline-none focus-visible:bg-primary/20 focus-visible:ring-1 focus-visible:ring-primary/80 focus-visible:ring-inset'
+								className={navTabLinkClassName}
 							>
-								{({ isActive }) => (
-									<span
-										className={cn(
-											'inline-flex items-center gap-2 border-b-2 px-3 pt-2 pb-2 text-xs text-muted-foreground transition-colors md:text-sm',
-											isActive
-												? 'border-primary text-foreground'
-												: 'border-transparent hocus:border-foreground/35 hocus:text-foreground'
-										)}
-									>
-										{typeof Icon === 'string' ? (
-											<>{Icon}</>
-										) : (
-											Icon && (
-												<Icon
-													className={cn(
-														'size-4',
-														isActive
-															? 'text-primary'
-															: 'text-muted-foreground group-hocus:text-foreground'
-													)}
-												/>
-											)
-										)}
-										<span>{item.children}</span>
-									</span>
-								)}
+								{({ isActive }) => <NavTab icon={Icon} isActive={isActive} label={item.children} />}
 							</Link>
 						);
 					})}

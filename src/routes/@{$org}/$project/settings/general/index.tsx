@@ -60,10 +60,18 @@ type ProjectUrl = {
 
 type ProjectUrlValue = { source?: string; text: string; url: string };
 
+type UpdatesFeaturedMode = 'latest' | 'manual';
+
+const FEATURED_MODE_LABELS: Record<UpdatesFeaturedMode, () => string> = {
+	latest: m.updates_featured_mode_latest,
+	manual: m.updates_featured_mode_manual,
+};
+
 type GeneralSettingsFormValues = {
 	description: string;
 	name: string;
 	slug: string;
+	updatesFeaturedMode: UpdatesFeaturedMode;
 	urls: Array<ProjectUrlValue>;
 	visibility: ProjectVisibility;
 };
@@ -148,6 +156,7 @@ function ProjectGeneralSettingsRoute() {
 			description: project?.description ?? '',
 			name: project?.name ?? '',
 			slug: project?.slug ?? '',
+			updatesFeaturedMode: (project?.updatesFeaturedMode ?? 'latest') as UpdatesFeaturedMode,
 			urls: initialUrls.map((entry) => ({
 				source: entry.source ?? undefined,
 				text: entry.text,
@@ -181,6 +190,7 @@ function ProjectGeneralSettingsRoute() {
 					id: project.id,
 					name: parsed.data.name,
 					slug: parsed.data.slug,
+					updatesFeaturedMode: value.updatesFeaturedMode,
 					urls: parsed.data.urls ?? [],
 					visibility: parsed.data.visibility,
 				});
@@ -189,6 +199,8 @@ function ProjectGeneralSettingsRoute() {
 					description: updated.description ?? '',
 					name: updated.name ?? value.name,
 					slug: updated.slug ?? value.slug,
+					updatesFeaturedMode: (updated.updatesFeaturedMode ??
+						value.updatesFeaturedMode) as UpdatesFeaturedMode,
 					// Reset from the server's re-verified result so link provenance
 					// (which stayed "github" vs got downgraded) matches what persisted.
 					urls: ((updated.urls ?? []) as Array<ProjectUrl>).map((entry) => ({
@@ -484,6 +496,30 @@ function ProjectGeneralSettingsRoute() {
 									</div>
 								);
 							}}
+						</form.Field>
+					</SectionCard>
+
+					<SectionCard
+						description={m.updates_featured_mode_description()}
+						label={m.updates_featured_mode_label()}
+					>
+						<form.Field name='updatesFeaturedMode'>
+							{(field) => (
+								<Select
+									onValueChange={(value) => field.handleChange(value as UpdatesFeaturedMode)}
+									value={field.state.value}
+								>
+									<SelectTrigger className='w-full sm:w-72'>
+										<SelectValue>
+											{(value) => FEATURED_MODE_LABELS[value as UpdatesFeaturedMode]()}
+										</SelectValue>
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value='latest'>{m.updates_featured_mode_latest()}</SelectItem>
+										<SelectItem value='manual'>{m.updates_featured_mode_manual()}</SelectItem>
+									</SelectContent>
+								</Select>
+							)}
 						</form.Field>
 					</SectionCard>
 

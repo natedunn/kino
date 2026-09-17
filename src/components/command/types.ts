@@ -1,6 +1,6 @@
 import type { ComponentType } from 'react';
 
-export type CommandGroupName = 'Global' | 'Navigation' | 'Feedback' | 'Files';
+export type CommandGroupName = 'Global' | 'Navigation' | 'Feedback' | 'Files' | 'Updates';
 
 export type AppCommand = {
 	id: string;

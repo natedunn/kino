@@ -55,8 +55,8 @@ import {
 	createCommentEnrichCache,
 	dedupeComments,
 	dedupeDocsById,
-	getUpdateListPreviewData,
 	getUpdateCommentWindow,
+	getUpdateListPreviewData,
 	MIDDLE_COMMENT_PAGE_SIZE,
 	toProfileSummary,
 	toPublicUpdateComment,
@@ -112,6 +112,7 @@ async function toPublicUpdateListItem(
 		contentPreviewIsTruncated: preview.isTruncated,
 		coverImageUrl: await resolveCoverImageUrl(ctx, item.coverImageId ?? null),
 		emoteCounts,
+		featuredAt: item.featuredAt ?? null,
 		id: item._id,
 		publishedAt: item.publishedAt,
 		slug: item.slug,
@@ -126,6 +127,7 @@ export const create = authMutation
 			category: updateCategorySchema.optional(),
 			content: updateContentSchema,
 			coverImageId: storageKeySchema.optional(),
+			featured: z.boolean().optional(),
 			projectId: idSchema,
 			relatedFeedbackIds: idArraySchema.optional(),
 			tags: tagListSchema.optional(),
@@ -155,6 +157,7 @@ export const create = authMutation
 				category: input.category ?? 'changelog',
 				content: input.content,
 				coverImageId: input.coverImageId ?? null,
+				featuredAt: input.featured ? Date.now() : null,
 				projectId: project._id as any,
 				relatedFeedbackIds: input.relatedFeedbackIds?.map((id) => asId<'feedback'>(id)) ?? [],
 				searchContent: buildUpdateSearchContent({
@@ -179,6 +182,7 @@ export const update = authMutation
 			id: idSchema,
 			category: updateCategorySchema.optional(),
 			content: updateContentSchema.optional(),
+			featured: z.boolean().optional(),
 			relatedFeedbackIds: idArraySchema.optional(),
 			tags: tagListSchema.optional(),
 			title: updateTitleSchema.optional(),
@@ -204,6 +208,14 @@ export const update = authMutation
 			Object.entries({
 				category: input.category,
 				content: input.content,
+				// Only stamp on the off→on transition so re-saving an already
+				// featured update doesn't bump it back to the hero slot.
+				featuredAt:
+					input.featured === undefined
+						? undefined
+						: input.featured
+							? (existingUpdate.featuredAt ?? Date.now())
+							: null,
 				relatedFeedbackIds: input.relatedFeedbackIds?.map((id) => asId<'feedback'>(id)),
 				searchContent:
 					input.title !== undefined || input.content !== undefined || input.tags !== undefined
@@ -1059,6 +1071,84 @@ export const getMiddleComments = optionalAuthQuery
 		return {
 			comments: dedupeComments(comments),
 			nextCursor: hitTail || page.isDone ? null : page.continueCursor,
+		};
+	});
+
+// Hero slot + two secondary slots on the updates index.
+const FEATURED_SECTION_SIZE = 3;
+// Manual mode reads the curated set, then re-sorts it by publish date, so the
+// candidate scan has to be wider than the number of slots we fill. Curated sets
+// are small; this cap just keeps the read bounded if one grows.
+const FEATURED_CANDIDATE_LIMIT = 50;
+
+export const listFeatured = optionalAuthQuery
+	.input(
+		z.object({
+			projectId: idSchema,
+		})
+	)
+	.query(async ({ ctx, input }) => {
+		const empty = { isFallback: false, items: [], mode: 'latest' as const };
+
+		const project = await getDoc(ctx, asId<'project'>(input.projectId));
+		if (!project) {
+			return empty;
+		}
+
+		// Authorize against the exact document we fetched. Slugs are only unique
+		// per org, so a slug lookup could resolve a different project.
+		const access = await verifyProjectAccess(ctx, {
+			id: project._id,
+			userId: ctx.userId,
+		});
+		if (!access.permissions.canView) {
+			return empty;
+		}
+		const currentProfile = await getCurrentProfile(ctx, ctx.userId);
+		const mode = project.updatesFeaturedMode ?? 'latest';
+
+		// The featured section is always published-only, even for content
+		// managers — drafts never belong in the hero.
+		let featured: Array<Doc<'update'>> = [];
+		if (mode === 'manual') {
+			const curated = await ctx.db
+				.query('update')
+				.withIndex('by_projectId_featuredAt', (q: any) =>
+					q.eq('projectId', project._id).gt('featuredAt', 0)
+				)
+				.order('desc')
+				// The index range is already narrowed to the (small) set of featured
+				// updates; this only drops unpublished stragglers from that range.
+				// eslint-disable-next-line @convex-dev/no-filter-in-query
+				.filter((q: any) => q.eq(q.field('status'), 'published'))
+				.take(FEATURED_CANDIDATE_LIMIT);
+			// `featuredAt` decides *whether* an update is featured; publish date
+			// decides the order it appears in, so the hero is always the newest
+			// featured post rather than whichever was checked most recently.
+			featured = curated
+				.sort((a, b) => (b.publishedAt ?? 0) - (a.publishedAt ?? 0))
+				.slice(0, FEATURED_SECTION_SIZE);
+		}
+
+		// `latest` mode and the manual-mode empty state both fall back to the
+		// newest published updates so the section never renders broken.
+		const usedFallback = featured.length === 0;
+		if (usedFallback) {
+			featured = await ctx.db
+				.query('update')
+				.withIndex('by_projectId_status_publishedAt', (q: any) =>
+					q.eq('projectId', project._id).eq('status', 'published')
+				)
+				.order('desc')
+				.take(FEATURED_SECTION_SIZE);
+		}
+
+		return {
+			isFallback: mode === 'manual' && usedFallback,
+			items: await Promise.all(
+				featured.map((item) => toPublicUpdateListItem(ctx, item, currentProfile))
+			),
+			mode,
 		};
 	});
 

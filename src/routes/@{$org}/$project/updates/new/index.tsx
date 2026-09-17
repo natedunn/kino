@@ -27,6 +27,7 @@ import * as m from '@/paraglide/messages.js';
 
 import {
 	CategoryField,
+	FeaturedField,
 	RelatedFeedbackField,
 	TagsField,
 	UpdateEditorCard,
@@ -109,6 +110,7 @@ function NewUpdateRoute() {
 		defaultValues: {
 			category: 'changelog' as UpdateCategory,
 			content: '',
+			featured: false,
 			relatedFeedbackIds: [] as Array<string>,
 			tags: [] as Array<string>,
 			title: '',
@@ -130,6 +132,7 @@ function NewUpdateRoute() {
 			const data = await createMutation.mutateAsync({
 				category: value.category,
 				content: parsed.data.content,
+				featured: value.featured,
 				projectId: project.id,
 				relatedFeedbackIds:
 					value.relatedFeedbackIds.length > 0 ? value.relatedFeedbackIds : undefined,
@@ -164,6 +167,7 @@ function NewUpdateRoute() {
 		const value = {
 			category: form.getFieldValue('category'),
 			content: form.getFieldValue('content'),
+			featured: form.getFieldValue('featured'),
 			relatedFeedbackIds: form.getFieldValue('relatedFeedbackIds'),
 			tags: form.getFieldValue('tags'),
 			title: form.getFieldValue('title'),
@@ -183,6 +187,7 @@ function NewUpdateRoute() {
 			const created = await createMutation.mutateAsync({
 				category: value.category,
 				content: parsed.data.content,
+				featured: value.featured,
 				projectId: project.id,
 				relatedFeedbackIds:
 					value.relatedFeedbackIds.length > 0 ? value.relatedFeedbackIds : undefined,
@@ -307,6 +312,17 @@ function NewUpdateRoute() {
 										/>
 									)}
 								</form.Field>
+								<div className='mt-4'>
+									<form.Field name='featured'>
+										{(field) => (
+											<FeaturedField
+												checked={field.state.value}
+												mode={project?.updatesFeaturedMode ?? 'latest'}
+												onChange={(checked) => field.handleChange(checked)}
+											/>
+										)}
+									</form.Field>
+								</div>
 							</SidebarSection>
 
 							<SidebarSection
