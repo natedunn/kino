@@ -2,9 +2,8 @@ import { useSuspenseQuery } from '@tanstack/react-query';
 import { createFileRoute, Link, Outlet, useRouterState } from '@tanstack/react-router';
 import { Bell, Database, Languages, Palette, ShieldCheck, User } from 'lucide-react';
 
+import { AppShell } from '@/components/app-shell';
 import { SidebarNavGroup, SidebarNavItem, SidebarNavSelect } from '@/components/sidebar-nav';
-import { SiteFooter } from '@/components/site-footer';
-import { MainNav } from '@/components/site-nav/main-nav';
 import { requireAuth } from '@/lib/auth/require-auth';
 import { useAuthLostRedirect } from '@/lib/auth/use-auth-lost';
 import { useCRPC } from '@/lib/convex/crpc';
@@ -78,9 +77,8 @@ function AuthenticatedAccountShell() {
 	});
 	// Suspense guarantees the profile is resolved by the time we render, so the
 	// nav never needs a pending state here.
-	const profileQuery = useSuspenseQuery(
-		crpc.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
-	);
+	// Warms the profile cache the shell header reads, so it never shows a skeleton.
+	useSuspenseQuery(crpc.profile.findMyProfile.queryOptions({}, { skipUnauth: true }));
 	const selectItems = navItems.map((item) => {
 		const Icon = item.icon;
 		const active = pathname === item.to || pathname.startsWith(`${item.to}/`);
@@ -95,9 +93,8 @@ function AuthenticatedAccountShell() {
 	});
 
 	return (
-		<div className='flex min-h-dvh w-full flex-col'>
+		<AppShell>
 			<div className='flex w-full flex-1 flex-col'>
-				<MainNav context={{ type: 'global' }} isUserPending={false} user={profileQuery.data} />
 				<div className='container flex flex-1 flex-col overflow-visible'>
 					{/* Mobile: section navigation collapses into a dropdown. */}
 					<div className='py-4 md:hidden'>
@@ -131,7 +128,6 @@ function AuthenticatedAccountShell() {
 					</div>
 				</div>
 			</div>
-			<SiteFooter />
-		</div>
+		</AppShell>
 	);
 }

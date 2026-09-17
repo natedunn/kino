@@ -2,11 +2,10 @@ import { useSuspenseQuery } from '@tanstack/react-query';
 import { createFileRoute, Link, Outlet, redirect, useRouterState } from '@tanstack/react-router';
 import { GitBranch, HardDrive, Settings, Users } from 'lucide-react';
 
+import { AppShell } from '@/components/app-shell';
 import { EmptyState } from '@/components/kino/common';
 import { SidebarNavGroup, SidebarNavItem, SidebarNavSelect } from '@/components/sidebar-nav';
-import { SiteFooter } from '@/components/site-footer';
 import { EditingBar } from '@/components/site-nav/editing-bar';
-import { MainNav } from '@/components/site-nav/main-nav';
 import { requireAuth } from '@/lib/auth/require-auth';
 import { useAuthLostRedirect } from '@/lib/auth/use-auth-lost';
 import { useCRPC } from '@/lib/convex/crpc';
@@ -95,9 +94,8 @@ function AuthenticatedOrgSettingsShell() {
 	const pathname = useRouterState({
 		select: (state) => state.location.pathname,
 	});
-	const profileQuery = useSuspenseQuery(
-		crpc.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
-	);
+	// Warms the profile cache the shell header reads, so it never shows a skeleton.
+	useSuspenseQuery(crpc.profile.findMyProfile.queryOptions({}, { skipUnauth: true }));
 	const { activeOrg, activeSlug, isEmpty, orgs, setOrg } = useSettingsOrgController();
 	// Whole settings area is an organization-management surface.
 	// `findMyEditableOrgs` returns owner/admin memberships only.
@@ -120,9 +118,8 @@ function AuthenticatedOrgSettingsShell() {
 	});
 
 	return (
-		<div className='flex min-h-dvh w-full flex-col'>
+		<AppShell>
 			<div className='flex w-full flex-1 flex-col'>
-				<MainNav context={{ type: 'global' }} isUserPending={false} user={profileQuery.data} />
 				{activeOrg ? <EditingBar /> : null}
 				<div className='container flex flex-1 flex-col overflow-visible'>
 					{isEmpty ? (
@@ -170,7 +167,6 @@ function AuthenticatedOrgSettingsShell() {
 					)}
 				</div>
 			</div>
-			<SiteFooter />
-		</div>
+		</AppShell>
 	);
 }

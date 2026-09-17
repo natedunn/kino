@@ -2,8 +2,17 @@ import type { AppLocale } from '@convex/i18n';
 
 import { useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
+import { Languages } from 'lucide-react';
 
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@/components/ui/select';
 import { useCRPC } from '@/lib/convex/crpc';
+import { cn } from '@/lib/utils';
 import { m } from '@/paraglide/messages.js';
 import { getLocale, setLocale } from '@/paraglide/runtime.js';
 
@@ -16,6 +25,10 @@ export const LANGUAGE_OPTIONS: ReadonlyArray<{
 	{ value: 'es-419', label: 'Español (Latinoamérica)', description: 'Spanish (Latin America)' },
 	{ value: 'zh-Hans', label: '简体中文', description: 'Chinese (Simplified)' },
 ];
+
+const LABEL_BY_VALUE = Object.fromEntries(
+	LANGUAGE_OPTIONS.map((option) => [option.value, option.label])
+) as Record<AppLocale, string>;
 
 export function LanguageSelector({ className }: { className?: string }) {
 	const crpc = useCRPC();
@@ -44,21 +57,22 @@ export function LanguageSelector({ className }: { className?: string }) {
 	};
 
 	return (
-		<label className={className}>
-			<span className='sr-only'>{m.account_language()}</span>
-			<select
-				aria-label={m.account_language()}
-				className='h-8 max-w-56 rounded-lg border border-input bg-background px-2 text-sm text-foreground disabled:opacity-50'
-				disabled={isChanging}
-				onChange={(event) => void changeLocale(event.target.value as AppLocale)}
-				value={locale}
-			>
+		<Select
+			value={locale}
+			disabled={isChanging}
+			onValueChange={(next) => void changeLocale(next as AppLocale)}
+		>
+			<SelectTrigger aria-label={m.account_language()} className={cn('max-w-56', className)}>
+				<Languages className='text-muted-foreground' aria-hidden='true' />
+				<SelectValue>{(current) => LABEL_BY_VALUE[current as AppLocale]}</SelectValue>
+			</SelectTrigger>
+			<SelectContent align='end'>
 				{LANGUAGE_OPTIONS.map((option) => (
-					<option key={option.value} value={option.value}>
+					<SelectItem key={option.value} value={option.value}>
 						{option.label}
-					</option>
+					</SelectItem>
 				))}
-			</select>
-		</label>
+			</SelectContent>
+		</Select>
 	);
 }

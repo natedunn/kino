@@ -4,9 +4,8 @@ import type { ReactNode } from 'react';
 import { Link, useRouterState } from '@tanstack/react-router';
 import { Blocks, Cookie, FileWarning, ShieldCheck, Users } from 'lucide-react';
 
+import { AppShell } from '@/components/app-shell';
 import { SidebarNavGroup, SidebarNavItem, SidebarNavSelect } from '@/components/sidebar-nav';
-import { SiteFooter } from '@/components/site-footer';
-import { PublicMainNav } from '@/components/site-nav/public-main-nav';
 
 type DocsRoute =
 	| '/docs/community-guidelines'
@@ -61,9 +60,8 @@ export function DocsShell({ children }: { children: ReactNode }) {
 	});
 
 	return (
-		<div className='flex min-h-dvh w-full flex-col'>
+		<AppShell>
 			<div className='flex w-full flex-1 flex-col'>
-				<PublicMainNav />
 				<div className='container flex flex-1 flex-col overflow-visible'>
 					<div className='py-4 md:hidden'>
 						<SidebarNavSelect items={selectItems} />
@@ -103,8 +101,6 @@ export function DocsShell({ children }: { children: ReactNode }) {
 					</div>
 				</div>
 			</div>
-
-			<SiteFooter />
-		</div>
+		</AppShell>
 	);
 }
