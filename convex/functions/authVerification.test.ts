@@ -10,12 +10,29 @@ import { expect, test } from 'vitest';
 const secret = 'test-only-oauth-proxy-secret-at-least-32-characters';
 const baseURL = 'https://auth.example.test';
 
-async function fixture(expiresAt: number) {
+async function fixture(expiresAt: number, includeIssuer = true) {
 	const db: Record<string, any[]> = { user: [], session: [], account: [], verification: [] };
 	const auth = betterAuth({
 		baseURL,
 		secret,
-		database: memoryAdapter(db),
+		database: (options) => {
+			const adapter = memoryAdapter(db)(options);
+			// Convex rejects undefined query operands. The memory adapter alone
+			// tolerates them, masking a stale gateway's missing account issuer.
+			return new Proxy(adapter, {
+				get(target, property, receiver) {
+					if (property === 'findOne') {
+						return (args: Parameters<typeof adapter.findOne>[0]) => {
+							if (args.where?.some((clause) => clause.value === undefined)) {
+								throw new Error('Query filter value is required');
+							}
+							return target.findOne(args);
+						};
+					}
+					return Reflect.get(target, property, receiver);
+				},
+			});
+		},
 		verification: { disableCleanup: true },
 		logger: { disabled: true },
 		plugins: [oAuthProxy({ productionURL: 'https://gateway.example.test', secret })],
@@ -48,7 +65,11 @@ async function fixture(expiresAt: number) {
 				email: 'test@example.test',
 				emailVerified: true,
 			},
-			account: { providerId: 'github', accountId: 'github-user' },
+			account: {
+				providerId: 'github',
+				accountId: 'github-user',
+				...(includeIssuer ? { issuer: 'local:oauth:github' } : {}),
+			},
 		}),
 	});
 	const callback = () =>
@@ -78,5 +99,12 @@ test('expired OAuth state fails even before scheduled cleanup runs', async () =>
 	expect(db.verification.some((row) => row.identifier === 'test-state')).toBe(true);
 	const response = await callback();
 	expect(response.headers.get('location')).toContain('error=state_mismatch');
+	expect(db.session).toHaveLength(0);
+});
+
+test('a stale gateway payload without issuer cannot pass the callback fixture', async () => {
+	const { db, callback } = await fixture(Date.now() + 600000, false);
+	const response = await callback();
+	expect(response.headers.get('location')).toContain('error=internal_server_error');
 	expect(db.session).toHaveLength(0);
 });

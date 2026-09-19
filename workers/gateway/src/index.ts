@@ -1,5 +1,7 @@
 import type { GatewayEnv } from './env';
 
+import { oAuthProxy } from 'better-auth/plugins';
+
 import { createGatewayAuth } from './auth';
 import { handleGitHubRelayOAuthCallback } from './github-relay';
 import { handleGitHubWebhook, handleTargetsApi } from './hooks';
@@ -36,10 +38,17 @@ export default {
 		}
 
 		if (url.pathname === '/' || url.pathname === '/health') {
-			return new Response(JSON.stringify({ ok: true, service: 'kino-gateway' }), {
-				headers: { 'content-type': 'application/json' },
-				status: 200,
-			});
+			return new Response(
+				JSON.stringify({
+					ok: true,
+					service: 'kino-gateway',
+					betterAuthVersion: oAuthProxy().version,
+				}),
+				{
+					headers: { 'content-type': 'application/json', 'cache-control': 'no-store' },
+					status: 200,
+				}
+			);
 		}
 
 		return new Response('Not found', { status: 404 });
