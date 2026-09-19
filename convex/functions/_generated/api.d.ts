@@ -1044,6 +1044,12 @@ export declare const api: {
  */
 export declare const internal: {
   crons: {
+    cleanupExpiredVerifications: FunctionReference<
+      "mutation",
+      "internal",
+      {},
+      any
+    >;
     cleanupWebhookDeliveries: FunctionReference<
       "mutation",
       "internal",

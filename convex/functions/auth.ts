@@ -178,6 +178,9 @@ export default defineAuth(() => {
 			updateAge: 60 * 60 * 24 * 15,
 		},
 		telemetry: { enabled: false },
+		// crons.cleanupExpiredVerifications handles physical deletion off the
+		// login path. Better Auth still validates expiry and consumes OAuth state.
+		verification: { disableCleanup: true },
 		trustedOrigins,
 		user: {
 			additionalFields: {

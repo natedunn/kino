@@ -33,7 +33,33 @@ export const cleanupWebhookDeliveries = internalMutation({
 	},
 });
 
+// Replaces Better Auth's inline verification sweep (verification.disableCleanup).
+// Expiry validation and consumption remain Better Auth's responsibility.
+export const cleanupExpiredVerifications = internalMutation({
+	args: {},
+	handler: async (ctx) => {
+		const expired = await ctx.db
+			.query('verification')
+			.withIndex('expiresAt', (q) => q.lt('expiresAt', Date.now()))
+			.take(CLEANUP_BATCH_SIZE);
+		for (const row of expired) {
+			await ctx.db.delete('verification', row._id);
+		}
+		if (expired.length === CLEANUP_BATCH_SIZE) {
+			await ctx.scheduler.runAfter(0, internal.crons.cleanupExpiredVerifications, {});
+		}
+		return null;
+	},
+});
+
 const crons = cronJobs();
+
+crons.interval(
+	'cleanup expired auth verifications',
+	{ hours: 1 },
+	internal.crons.cleanupExpiredVerifications,
+	{}
+);
 
 crons.interval(
 	'cleanup old github webhook deliveries',

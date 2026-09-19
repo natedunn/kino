@@ -1,0 +1,4 @@
+# Only Vite's content-hashed build assets belong under /assets/.
+# HTML, auth responses, manifests, and unversioned public files keep their policies.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
