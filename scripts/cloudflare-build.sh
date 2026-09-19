@@ -34,6 +34,13 @@ else
   export POSTHOG_CLI_HOST=""
 fi
 
+# Check the independently deployed gateway BEFORE kitcn can push Convex code.
+if [ "$branch" = "$production_branch" ]; then
+  node scripts/check-gateway-auth-version.mjs https://gateway.usekino.com
+else
+  node scripts/check-gateway-auth-version.mjs https://gateway-dev.usekino.com
+fi
+
 if [ "$branch" = "$production_branch" ]; then
   if [ -z "${CONVEX_PROD_DEPLOY_KEY:-}" ]; then
     echo "Missing CONVEX_PROD_DEPLOY_KEY for production branch '$branch'." >&2

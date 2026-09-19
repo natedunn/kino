@@ -55,3 +55,9 @@ validation, or errors, **read `docs/internationalization.md` first**. New featur
 must ship with complete `en-US`, `es-419`, and `zh-Hans` messages in the same PR.
 Do not translate user-generated content, internal developer errors, admin/UI-lab
 copy, or a deliberately deferred placeholder surface.
+
+When changing Better Auth/kitcn versions or gateway auth, matching package files
+is not deployment verification. The app release does not deploy the standalone
+OAuth gateways. Follow the rollout order in `docs/github-environments.md`, check
+the deployed gateway's `/health` auth version, and verify a complete OAuth return
+callback and authenticated page before reporting login as validated.

@@ -267,3 +267,55 @@ webhook URLs on **both** apps — a stale webhook URL fails with GitHub's
 Update it in lockstep: GitHub (if it's the webhook secret) → gateway secret →
 all tier Convex deployments (+ preview defaults). In-flight OAuth states
 signed with the old secret fail until users restart sign-in; that's expected.
+
+## Auth release gate and September 2026 incident
+
+**Merging the app PR does not deploy either gateway.** Cloudflare's `kino`
+Workers Build deploys Convex and the app Worker. `kino-gateway` and
+`kino-gateway-dev` are standalone packages with separate deployments. The
+repository version-lock test compares package files only; it cannot establish
+which library version is running on Cloudflare.
+
+On September 19, 2026, production sign-in initiation succeeded but the return
+callback failed in `generated/auth:findOne`: the `issuer` filter had no `value`.
+The app expected Better Auth 1.7.1's account issuer, while the production gateway
+still ran a June 12 deployment predating the package upgrade. Removing expired
+verification cleanup from sign-in did not repair that deployment mismatch.
+
+The gateway now reports `betterAuthVersion` from the bundled OAuth proxy plugin
+in its uncached `/health` response. `scripts/cloudflare-build.sh` checks the
+appropriate tier with `scripts/check-gateway-auth-version.mjs` **before invoking
+kitcn deploy**, so mismatch, missing version, or unreachable health stops the
+release before it changes Convex. This check does not deploy the gateway.
+
+### Rollout order (including first installation of this gate)
+
+1. Update the app and gateway package pins and lockfiles together. Install the
+   gateway's standalone dependencies with `pnpm --dir workers/gateway install
+   --frozen-lockfile`; run its typecheck and tests.
+2. Deploy the gateway from the reviewed commit to the dev tier first, then check
+   it from the repository root:
+   `node scripts/check-gateway-auth-version.mjs https://gateway-dev.usekino.com`.
+   For the first rollout, old gateways lack the version field and intentionally
+   fail the check until this gateway code is deployed. Deploying the dev gateway
+   from the PR branch lets the preview build pass before merge.
+3. Exercise GitHub login on a matching app preview through the gateway return
+   callback, session creation, and a protected page. A successful
+   `/sign-in/social` response proves initiation only. The app's synthetic callback
+   tests cover expiry/replay and missing-issuer rejection, not a real GitHub
+   exchange or the deployed Convex adapter.
+4. With production deployment authorization, deploy the same gateway commit using
+   `pnpm --dir workers/gateway run deploy:production`, then run
+   `node scripts/check-gateway-auth-version.mjs https://gateway.usekino.com`.
+   Confirm the active version with `wrangler deployments list --env production`
+   from `workers/gateway`. Preserve existing secrets and the redirect rewrite.
+5. Release the app/Convex changes and complete a real production GitHub login.
+   Inspect Convex callback logs and verify the signed-in protected page. Record
+   the gateway deployment ID, app commit, and auth versions in the release notes.
+
+For upgrades that change payload formats, use a coordinated release window:
+exact version matching is required, and updating one side first does not promise
+uninterrupted OAuth compatibility. Roll back both sides to a tested matching
+pair if necessary; do not loosen Convex validators to accept missing identity
+fields. This PR alone cannot repair the live gateway until its separate rollout
+is performed.
