@@ -2,9 +2,20 @@
 import { afterEach, expect, test, vi } from 'vitest';
 
 import { internal } from './_generated/api';
+import crons from './crons';
 import { convexTest } from './setup.testing';
 
 afterEach(() => vi.useRealTimers());
+
+test('expired verification cleanup is registered to run every hour', () => {
+	// Test the exported deployment configuration, not just the callable handler:
+	// removing this registration would leave expired records accumulating.
+	expect(JSON.parse(crons.export())['cleanup expired auth verifications']).toEqual({
+		name: 'crons:cleanupExpiredVerifications',
+		args: [{}],
+		schedule: { type: 'interval', hours: 1 },
+	});
+});
 
 test('verification sweep preserves unexpired rows and drains bounded batches', async () => {
 	vi.useFakeTimers();

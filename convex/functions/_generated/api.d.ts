@@ -1048,7 +1048,7 @@ export declare const internal: {
       "mutation",
       "internal",
       {},
-      any
+      null
     >;
     cleanupWebhookDeliveries: FunctionReference<
       "mutation",

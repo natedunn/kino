@@ -1,4 +1,5 @@
 import { cronJobs } from 'convex/server';
+import { v } from 'convex/values';
 
 import { internal } from './_generated/api';
 import { internalMutation } from './generated/server';
@@ -37,6 +38,7 @@ export const cleanupWebhookDeliveries = internalMutation({
 // Expiry validation and consumption remain Better Auth's responsibility.
 export const cleanupExpiredVerifications = internalMutation({
 	args: {},
+	returns: v.null(),
 	handler: async (ctx) => {
 		const expired = await ctx.db
 			.query('verification')

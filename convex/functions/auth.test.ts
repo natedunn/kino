@@ -7,6 +7,13 @@ import { fileURLToPath } from 'node:url';
 
 import { describe, expect, test } from 'vitest';
 
+test('app auth delegates verification cleanup to the scheduled sweep', () => {
+	// The callback tests use their own Better Auth fixture. Guard the app's
+	// configuration too, so removing the optimization cannot silently pass CI.
+	const authSource = readFileSync(fileURLToPath(new URL('./auth.ts', import.meta.url)), 'utf8');
+	expect(authSource).toMatch(/verification:\s*\{\s*disableCleanup:\s*true\s*,?\s*\}/);
+});
+
 /**
  * Security regression guard for privilege escalation via better-auth
  * `additionalFields`.
