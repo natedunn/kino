@@ -49,17 +49,14 @@ function resolveBuildId(): string {
 
 const config = defineConfig({
 	build: {
-		// The app shell is code-split below 500 kB, but React 19 + ReactDOM's
-		// production client runtime lands in a stable vendor chunk above Vite's
-		// default 500 kB warning threshold. Keep the warning meaningful for chunks
-		// that grow beyond the intentional framework/runtime ceiling.
-		chunkSizeWarningLimit: 900,
 		rollupOptions: {
 			output: {
 				manualChunks(id) {
 					if (!id.includes('/node_modules/')) return;
 
-					if (id.includes('/react/') || id.includes('/react-dom/') || id.includes('/scheduler/')) {
+					// Match package roots: /react/ also matches @tiptap/react and
+					// @base-ui/react, pulling feature code into every page's runtime.
+					if (/\/node_modules\/(?:react|react-dom|scheduler)\//.test(id)) {
 						return 'vendor-react';
 					}
 				},
