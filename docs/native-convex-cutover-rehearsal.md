@@ -1,7 +1,8 @@
 # Native Convex cutover and recovery runbook
 
-Status: **release-candidate preview validated; production cutover not yet
-authorized**. Updated September 23, 2026 (America/Mexico City).
+Status: **release-candidate preview validated; production data reset complete;
+runtime deployment not yet authorized**. Updated September 23, 2026
+(America/Mexico City).
 
 This runbook covers one coordinated release unit: the native Convex deployment,
 Kino Start Worker, Kino Files Worker, production OAuth gateway, GitHub OAuth app,
@@ -88,6 +89,17 @@ Before merging, while the legacy Kitcn deployment is still selected:
 4. Clear disposable legacy `_storage` objects and production upload objects, or
    record them for the post-acceptance cleanup. They cannot become native file
    records without rows in the new native tables.
+
+These steps were completed on September 23 against `brainy-boar-871`. The
+checked-in 716-byte snapshot (SHA-256
+`0dcb6f40c1a171106ea0274a1fc58656f89319af6eee36255da5492c57b63977`)
+was imported with `--replace-all --yes`. Convex reported zero documents added
+and deleted every legacy application/component row. A read-only follow-up
+inspected all 68 remaining application, component, and system tables, including
+`_storage`: 68 were empty, none were nonempty, and none failed inspection.
+Stale undeclared legacy tables were absent afterward. Do not repeat this reset
+unless a later release rehearsal writes disposable production data and a fresh
+production action is explicitly authorized.
 
 The native schema intentionally differs from the Kitcn storage model: most
 singular tables become plural native tables, relationships use native document

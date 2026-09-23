@@ -38,8 +38,10 @@ production. The build provisions their exact auth origins, validates non-placeho
 GitHub credentials, registers a branch-specific expiring route with the shared dev
 gateway, and publishes the route signing key as a Worker Preview secret. Real
 GitHub sign-in returned to `/dashboard`, and a reload remained authenticated.
-The final Cloudflare preview build and `pnpm run verify:pr` pass. Production has
-not been changed.
+The final Cloudflare preview build and `pnpm run verify:pr` pass. Production
+runtime code has not been changed. Production preparation has begun: the native
+environment is configured and the disposable legacy database was cleared and
+verified empty on September 23.
 
 The native implementation now covers auth, SSR and live TanStack Query data,
 organizations and permissions, projects and boards, Feedback, Updates, Files,
@@ -100,12 +102,14 @@ upstream check, and upgrade procedure live in
 
 ### Production preparation
 
-- [ ] Confirm `CONVEX_PROD_DEPLOY_KEY` selects the existing Kino production
+- [x] Confirm `CONVEX_PROD_DEPLOY_KEY` selects the existing Kino production
       deployment `brainy-boar-871` and record its cloud/site URLs. Before
       merging, use a validated empty snapshot with Convex `--replace-all`, then
       verify every current and stale legacy application table is empty. Existing
       prelaunch data is intentionally disposable; do not attempt an
-      application-data migration.
+      application-data migration. Completed September 23 with the checked-in
+      716-byte snapshot; all 68 application/component/system tables, including
+      `_storage`, were empty on the read-only follow-up inspection.
 - [x] Set and verify the native production environment: the six required auth
       values; Bento sender credentials; operations alert recipient; Relay
       credentials/callback; R2 credentials; Files origin; and cache-purge zone/token.
