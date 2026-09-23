@@ -247,20 +247,20 @@ env vars — note these apply **at deployment creation**, not retroactively.
 
 ### Scripts / CI
 
-| Var                                                         | Where                 | Meaning                                                                 |
-| ----------------------------------------------------------- | --------------------- | ----------------------------------------------------------------------- |
-| `GATEWAY_URL` + `GATEWAY_ADMIN_TOKEN`                       | `.env.local`          | local target registration on `pnpm dev`                                 |
-| `GATEWAY_URL_PREVIEW` + `GATEWAY_ADMIN_TOKEN_PREVIEW`       | Workers Builds env    | preview-branch builds (mapped by `scripts/cloudflare-build.sh`)         |
-| `GATEWAY_URL_PRODUCTION` + `GATEWAY_ADMIN_TOKEN_PRODUCTION` | Workers Builds env    | main-branch builds                                                      |
-| `NATIVE_APP_ORIGIN_PRODUCTION`                              | Workers Builds env    | exact production Start Worker origin                                    |
-| `NATIVE_APP_PREVIEW_HOST_SUFFIX`                            | Workers Builds env    | preview host suffix after `<alias>-`, e.g. `kino.hello-fc8.workers.dev` |
-| `NATIVE_GITHUB_GATEWAY_URL_PREVIEW` / `_PRODUCTION`         | Workers Builds env    | exact native `/oauth/github/callback` URL                               |
-| `NATIVE_GITHUB_ROUTE_ID_PRODUCTION`                         | Workers Builds env    | fixed production opaque-state route ID                                  |
-| `NATIVE_GITHUB_ROUTE_SECRET_PREVIEW` / `_PRODUCTION`        | Workers Builds secret | opaque-state route signing secret for the tier                          |
-| `CONVEX_PROD_DEPLOY_KEY`                                    | Workers Builds secret | distinct native production deployment key                               |
-| `CONVEX_MANAGEMENT_TOKEN`                                   | Workers Builds secret | management token used to create/reuse and provision branch previews     |
-| `CONVEX_PREVIEW_DEPLOY_KEY`                                 | Workers Builds secret | project preview key used by `convex deploy --preview-name`              |
-| `CONVEX_TEAM_SLUG` / `CONVEX_PROJECT_SLUG`                  | Workers Builds env    | exact project selector used by preview provisioning                     |
+| Var                                                         | Where                 | Meaning                                                                   |
+| ----------------------------------------------------------- | --------------------- | ------------------------------------------------------------------------- |
+| `GATEWAY_URL` + `GATEWAY_ADMIN_TOKEN`                       | `.env.local`          | local target registration on `pnpm dev`                                   |
+| `GATEWAY_URL_PREVIEW` + `GATEWAY_ADMIN_TOKEN_PREVIEW`       | Workers Builds env    | preview-branch builds (mapped by `scripts/cloudflare-build.sh`)           |
+| `GATEWAY_URL_PRODUCTION` + `GATEWAY_ADMIN_TOKEN_PRODUCTION` | Workers Builds env    | main-branch builds                                                        |
+| `NATIVE_APP_ORIGIN_PRODUCTION`                              | Workers Builds env    | exact production Start Worker origin                                      |
+| `NATIVE_APP_PREVIEW_HOST_SUFFIX`                            | Workers Builds env    | preview host suffix after `<alias>-`, e.g. `kino.hello-fc8.workers.dev`   |
+| `NATIVE_GITHUB_GATEWAY_URL_PREVIEW` / `_PRODUCTION`         | Workers Builds env    | exact native `/oauth/github/callback` URL                                 |
+| `NATIVE_GITHUB_ROUTE_ID_PRODUCTION`                         | Workers Builds env    | fixed production opaque-state route ID                                    |
+| `NATIVE_GITHUB_ROUTE_SECRET_PREVIEW` / `_PRODUCTION`        | Workers Builds secret | opaque-state route signing secret for the tier                            |
+| `CONVEX_PROD_DEPLOY_KEY`                                    | Workers Builds secret | existing Kino production deployment key, reused after the prelaunch reset |
+| `CONVEX_MANAGEMENT_TOKEN`                                   | Workers Builds secret | management token used to create/reuse and provision branch previews       |
+| `CONVEX_PREVIEW_DEPLOY_KEY`                                 | Workers Builds secret | project preview key used by `convex deploy --preview-name`                |
+| `CONVEX_TEAM_SLUG` / `CONVEX_PROJECT_SLUG`                  | Workers Builds env    | exact project selector used by preview provisioning                       |
 
 The branch-suffixed split exists because Workers Builds env vars apply to all
 branches; the mapping in `cloudflare-build.sh` makes cross-tier registration

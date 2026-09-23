@@ -11,19 +11,19 @@ the authoritative sections.
 
 ## Cutover decision
 
-Kino is prelaunch and has no production user/data migration requirement. This
-work will ship as one native-only PR and one coordinated release rather than a
-long-lived dual-runtime rollout. Legacy Better Auth session continuity,
-cross-database identity migration, and password/GitHub account linking are not
-release blockers unless they are needed to develop or verify this PR. The native
-GitHub Relay, Files Worker, preview workflow, and production release pipeline do
-remain in scope because the shipped application depends on them.
+Kino is prelaunch and has no production user/data migration requirement. The
+existing production Convex deployment will be reused after its disposable Kitcn
+application data is cleared while the legacy reset function is still deployed.
+This work will ship as one native-only PR and one coordinated release rather
+than a long-lived dual-runtime rollout. Legacy Better Auth session continuity,
+data migration, and password/GitHub account linking are not release blockers.
+The native GitHub Relay, Files Worker, preview workflow, and production release
+pipeline remain in scope because the shipped application depends on them.
 
-After public launch, rollback to the legacy database is not a safe recovery
-strategy: native accounts and writes would not exist there. Operational recovery
-should use a forward fix on the native backend. The prelaunch rehearsal still
-proves Worker and gateway version recovery, but it does not establish a data
-bridge between the separate databases.
+After the destructive reset and native deployment, the old Kitcn data model is
+not a rollback target. Operational recovery should use a forward fix on the
+native backend once native writes begin. Before that point, the application and
+OAuth callback can still be restored while the database remains empty.
 
 ## Authoritative current status
 
@@ -100,10 +100,12 @@ upstream check, and upgrade procedure live in
 
 ### Production preparation
 
-- [ ] Select a distinct native production Convex deployment and record its exact
-      cloud/site URLs. Point `CONVEX_PROD_DEPLOY_KEY` at it. Do not replace the
-      legacy deployment in place unless its documents have first been inspected
-      and proven compatible with the native schema.
+- [ ] Confirm `CONVEX_PROD_DEPLOY_KEY` selects the existing Kino production
+      deployment `brainy-boar-871` and record its cloud/site URLs. Before
+      merging, use a validated empty snapshot with Convex `--replace-all`, then
+      verify every current and stale legacy application table is empty. Existing
+      prelaunch data is intentionally disposable; do not attempt an
+      application-data migration.
 - [ ] Set and verify the native production environment: the six required auth
       values; Bento sender credentials; operations alert recipient; Relay
       credentials/callback; R2 credentials; Files origin; and cache-purge zone/token.
@@ -142,6 +144,11 @@ upstream check, and upgrade procedure live in
 - [ ] Rotate the root worktree's previously exposed `CONVEX_MANAGEMENT_TOKEN`.
 - [ ] Delete the temporary **Kino Convex v2 Proof** OAuth app and disposable proof
       Workers/Convex deployments; remove ignored proof credentials and state.
+      The currently inventoried proof Workers are
+      `kino-native-files-proof-c318c09d`, `kino-native-auth-proof-c318c09d`,
+      `kino-auth-v2-proof-beta-c318c09d`, `kino-auth-v2-proof-c318c09d`, and
+      `kino-v2-gateway-proof-c318c09d`. Keep the shared dev/preview Workers and
+      shared preview R2 bucket.
 - [ ] Retry `node scripts/native-settings-live-proof.mjs cleanup-visual` until the
       retained proof folder is removed.
 - [ ] Delete preview OAuth route records when convenient or allow their 14-day TTL
@@ -149,6 +156,10 @@ upstream check, and upgrade procedure live in
       but does not currently delete the route record directly.
 - [ ] After an agreed native stability window, remove the gateway's legacy Better
       Auth proxy, its rollback secrets/tests, and obsolete legacy documentation.
+- [ ] Add a dedicated, manually dispatched infrastructure release workflow for
+      `workers/gateway` and `workers/files`, with production environment approval
+      and path-scoped validation. Keep their independent lockfiles and do not
+      couple them to every `kino` application deployment.
 
 ### Deferred scale follow-ups
 

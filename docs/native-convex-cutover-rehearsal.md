@@ -11,9 +11,10 @@ flag. Better Auth remains only in the standalone gateway as a temporary legacy
 proxy during the acceptance window.
 
 Kino is prelaunch and has no legacy-user or product-data migration requirement.
-Use a distinct native production Convex deployment. Once native writes are
-accepted, the separate legacy database is not a rollback target; recovery is a
-forward fix on the native stack.
+Reuse the existing Kino production Convex deployment after destructively
+clearing its disposable Kitcn application data. Once the native schema is
+deployed and native writes are accepted, the old Kitcn model is not a rollback
+target; recovery is a forward fix on the native stack.
 
 ## Current release-candidate evidence
 
@@ -61,10 +62,31 @@ anonymous loopback backend and is not hosted OAuth evidence.
 
 ### Native Convex
 
-Create or select a distinct native production deployment and point
-`CONVEX_PROD_DEPLOY_KEY` at it. Do not aim that key at the legacy database unless
-existing documents have been inspected and proven compatible with the native
-schema.
+Keep `CONVEX_PROD_DEPLOY_KEY` pointed at the existing Kino production deployment:
+
+- deployment: `brainy-boar-871`
+- cloud URL: `https://brainy-boar-871.convex.cloud`
+- site URL: `https://brainy-boar-871.convex.site`
+
+Before merging, while the legacy Kitcn deployment is still selected:
+
+1. Confirm the deployment name and cloud/site URLs from both the key and the
+   Convex dashboard.
+2. Use Convex's snapshot import with `--replace-all` and a previously validated
+   empty snapshot. This clears current and stale application tables atomically;
+   the generated Kitcn reset is insufficient because it only knows the current
+   ORM schema and production still contains older undeclared tables.
+3. Verify every legacy application table is empty, especially the reused
+   `feedback` table name.
+4. Clear disposable legacy `_storage` objects and production upload objects, or
+   record them for the post-acceptance cleanup. They cannot become native file
+   records without rows in the new native tables.
+
+The native schema intentionally differs from the Kitcn storage model: most
+singular tables become plural native tables, relationships use native document
+IDs, and explicit cleanup/job tables are added. Emptying the legacy tables makes
+this a schema replacement rather than a data migration. Do not start the first
+native deploy while any legacy application document remains.
 
 Configure and verify:
 
@@ -80,6 +102,15 @@ Configure and verify:
   `NATIVE_R2_ACCESS_KEY_ID`, `NATIVE_R2_SECRET_ACCESS_KEY`,
   `NATIVE_FILES_ORIGIN`, `NATIVE_FILES_PURGE_ZONE_ID`, and
   `NATIVE_FILES_PURGE_TOKEN`.
+
+The production deployment already has Bento and Relay variables under their
+native names. Reuse the existing GitHub login and organization-upload values by
+copying `GITHUB_AUTH_CLIENT_ID`/`GITHUB_AUTH_CLIENT_SECRET` to the native
+`AUTH_GITHUB_*` names and the `R2_ORG_UPLOADS_*` values to `NATIVE_R2_*`.
+Generate fresh `AUTH_PRIVATE_KEY`/`AUTH_JWKS`. Set the exact native callback and
+origins below. The genuinely new production values are
+`NATIVE_OPERATIONS_ALERT_EMAIL`, `NATIVE_FILES_PURGE_ZONE_ID`, and
+`NATIVE_FILES_PURGE_TOKEN`.
 
 Use exact production values:
 
@@ -139,7 +170,8 @@ stage and verify those runtime bindings before releasing.
 Production actions require explicit authorization.
 
 1. Freeze the release and complete all checks and PR-preview acceptance.
-2. Prepare the distinct native production Convex deployment and environment.
+2. Reset the existing production Convex data, verify the legacy tables are
+   empty, and configure its native environment.
 3. Deploy and verify the production Files Worker.
 4. Deploy and verify the migration-bearing gateway stage, then the reviewed
    dual-protocol gateway. Keep the legacy proxy and Relay paths working.
@@ -180,8 +212,8 @@ not selected by the legacy app.
 
 ### After native writes are accepted
 
-Do not point users back at the legacy database. Pause writes or place the app in
-maintenance if necessary, then forward-fix the native app/backend. A gateway
+Do not attempt to restore the erased Kitcn data model. Pause writes or place the
+app in maintenance if necessary, then forward-fix the native app/backend. A gateway
 recovery must deploy a version that retains the Durable Object class/binding and
 native protocol; the legacy-only migration stage is no longer sufficient while
 native OAuth is live. Roll Convex code back only when its current schema and data
