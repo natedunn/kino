@@ -136,7 +136,12 @@ export function getAppConvexQueryClient(queryClient: QueryClient) {
 	const existing = convexClients.get(queryClient);
 	if (existing) return existing;
 
-	const convexQueryClient = new ConvexQueryClient(import.meta.env.VITE_CONVEX_URL);
+	const convexQueryClient = new ConvexQueryClient(import.meta.env.VITE_CONVEX_URL, {
+		// Start already supplied a server-validated access token during SSR. Convex
+		// otherwise rotates the refresh cookie immediately after confirming that
+		// cached token on every document navigation, increasing refresh races.
+		initialAuthTokenReuse: true,
+	});
 
 	const options = queryClient.getDefaultOptions();
 	queryClient.setDefaultOptions({

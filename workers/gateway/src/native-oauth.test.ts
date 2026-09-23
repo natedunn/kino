@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import worker from './index';
 import { handleNativeOAuth } from './native-oauth';
-import { parseNativeRoutes, signRoute } from './native-routing';
+import { parseNativeRoutes, resolveRoute, signRoute } from './native-routing';
 import stage from './stage';
 
 const routes: Routes = {
@@ -247,6 +247,19 @@ describe('native OAuth gateway', () => {
 		expect(parseNativeRoutes(JSON.stringify(routes))).toEqual(routes);
 	});
 
+	it('rejects an expired signed routing envelope', async () => {
+		const issuedAt = 1_000;
+		const envelope = await signRoute(
+			'alpha',
+			'original-provider-state-value-123',
+			routes.alpha.secret,
+			issuedAt
+		);
+		await expect(
+			resolveRoute(envelope, routes, new Date((issuedAt + 601) * 1_000))
+		).rejects.toThrow();
+	});
+
 	it('forwards one opaque callback to its exact backend and refuses replay', async () => {
 		const env = fixtureEnv();
 		const reference = await register(env);
@@ -267,6 +280,30 @@ describe('native OAuth gateway', () => {
 			routes.alpha.backendCallback + '?code=provider-code&state=original-provider-state-value-123'
 		);
 		expect(new Headers(send.mock.calls[0][1]?.headers).has('cookie')).toBe(false);
+		expect((await handleNativeOAuth(request, env, routes, send)).status).toBe(400);
+		expect(send).toHaveBeenCalledTimes(1);
+	});
+
+	it('forwards provider cancellation and consumes its opaque state once', async () => {
+		const env = fixtureEnv();
+		const reference = await register(env);
+		const send = vi.fn<typeof fetch>().mockResolvedValue(
+			new Response(null, {
+				status: 302,
+				headers: {
+					Location: routes.alpha.appCallback + '?convexAuthError=access_denied',
+				},
+			})
+		);
+		const request = new Request(
+			`${base}?state=${reference}&error=access_denied&error_description=cancelled`
+		);
+		const response = await handleNativeOAuth(request, env, routes, send);
+		expect(response.status).toBe(302);
+		expect(String(send.mock.calls[0][0])).toBe(
+			routes.alpha.backendCallback +
+				'?error=access_denied&error_description=cancelled&state=original-provider-state-value-123'
+		);
 		expect((await handleNativeOAuth(request, env, routes, send)).status).toBe(400);
 		expect(send).toHaveBeenCalledTimes(1);
 	});

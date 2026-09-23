@@ -1,6 +1,9 @@
+import type { Id } from '../../../../convex/native/_generated/dataModel';
+import type { ProjectOverviewData } from './-overview-types';
+
 import { convexQuery } from '@convex-dev/react-query';
 import { useSuspenseQuery } from '@tanstack/react-query';
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, notFound } from '@tanstack/react-router';
 
 import { projectTitle, titleMeta } from '@/lib/seo';
 
@@ -12,6 +15,18 @@ import { OverviewStats } from './-components/overview-stats';
 import { OverviewTeam } from './-components/overview-team';
 
 export const Route = createFileRoute('/@{$org}/$project/')({
+	loader: async ({ context, params }) => {
+		const data = await context.queryClient.ensureQueryData(
+			convexQuery(nativeApi.projects.getBySlugs, {
+				organizationSlug: params.org,
+				projectSlug: params.project,
+			})
+		);
+		if (!data?.project) throw notFound();
+		await context.queryClient.ensureQueryData(
+			convexQuery(nativeApi.projectOverview.get, { projectId: data.project.id })
+		);
+	},
 	head: ({ params }) => ({
 		meta: [titleMeta([projectTitle(params.org, params.project)])],
 	}),
@@ -30,18 +45,48 @@ function NativeProjectIndexRoute() {
 			projectSlug: params.project,
 		})
 	);
+	if (!data?.project) throw notFound();
+	return (
+		<NativeProjectOverview project={data.project} permissions={data.permissions} params={params} />
+	);
+}
+
+function NativeProjectOverview({
+	project,
+	permissions,
+	params,
+}: {
+	project: {
+		id: Id<'projects'>;
+		name: string;
+		description?: string | null;
+		visibility: 'public' | 'private' | 'archived';
+		logoUrl?: string | null;
+		urls?: Array<{ url: string; text: string }> | null;
+		updatedTime?: number | null;
+		createdAt?: number;
+	};
+	permissions: { canEditSettings: boolean; canManageAccess: boolean };
+	params: { org: string; project: string };
+}) {
+	const { data: overview } = useSuspenseQuery(
+		convexQuery(nativeApi.projectOverview.get, { projectId: project.id })
+	);
+	if (!overview) throw notFound();
 	return (
 		<ProjectOverview
-			project={data?.project}
+			project={project}
+			overview={overview}
 			params={params}
-			canEditSettings={data?.permissions.canEditSettings ?? false}
-			canManageAccess={data?.permissions.canManageAccess ?? false}
+			canEditSettings={permissions.canEditSettings}
+			canManageAccess={permissions.canManageAccess}
 		/>
 	);
 }
 
 function ProjectOverview({
 	project,
+	overview,
 	params,
 	canEditSettings,
 	canManageAccess,
@@ -55,6 +100,7 @@ function ProjectOverview({
 		updatedTime?: number | null;
 		createdAt?: number;
 	} | null;
+	overview: ProjectOverviewData;
 	params: { org: string; project: string };
 	canEditSettings: boolean;
 	canManageAccess: boolean;
@@ -64,7 +110,7 @@ function ProjectOverview({
 			{/* Header + KPIs span the full width above the feed. */}
 			<div className='flex flex-col gap-6 py-8'>
 				{project && <OverviewHeader project={project} params={params} canEdit={canEditSettings} />}
-				<OverviewStats />
+				<OverviewStats stats={overview.stats} />
 			</div>
 
 			{/* Mirrors the Feedback detail layout: the primary feed sits on the left
@@ -73,13 +119,18 @@ function ProjectOverview({
 			<div className='flex flex-1 flex-col gap-8 border-t md:grid md:grid-cols-12'>
 				{/* Secondary context — right sidebar */}
 				<aside className='order-last flex flex-col gap-6 py-8 md:col-span-4 md:border-l md:border-border/75 md:pl-8'>
-					<OverviewTeam params={params} canEdit={canManageAccess} />
-					<OverviewRecentUpdates params={params} />
+					<OverviewTeam
+						params={params}
+						canEdit={canManageAccess}
+						members={overview.members}
+						memberCount={overview.stats.members}
+					/>
+					<OverviewRecentUpdates params={params} updates={overview.recentUpdates} />
 				</aside>
 
 				{/* Primary feed — activity */}
 				<div className='flex flex-col gap-4 py-8 md:col-span-8'>
-					<OverviewActivity />
+					<OverviewActivity activity={overview.activity} />
 				</div>
 			</div>
 		</div>

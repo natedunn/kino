@@ -62,7 +62,7 @@ but the PR preview is the release candidate.
       boards, Feedback, Updates, Files, settings, Relay, and the important mobile
       layouts. Include populated data, file preview/upload/delete, and the
       non-manager organization summary.
-- [ ] Confirm cancellation, expired, tampered, and replayed OAuth state fail safely
+- [x] Confirm cancellation, expired, tampered, and replayed OAuth state fail safely
       against the release-candidate preview. The protocol already has automated
       and earlier hosted evidence; this check verifies the final deployed pair.
 - [ ] Repeat a deployment-transition navigation/reload check so a stale route asset
@@ -1209,6 +1209,35 @@ rather than reasons to delay those application ports.
       PR preview before release.
 - [x] Keep direct-provider success distinct from gateway/SSR success in the
       recorded evidence.
+
+On September 23, the final PR preview passed the compact negative-flow check
+against `gateway-dev.usekino.com`. Cancellation returned through the app's
+`oauthError=access_denied` path; replay and a modified opaque reference returned
+HTTP 400. Modifying one reference did not consume its legitimate flow. A fresh
+reference held for 615 seconds returned HTTP 400 `Invalid routing state`, and
+the original cookie jar still redirected `/dashboard` to `/auth`. A newly
+registered flow then completed the cancellation path normally. No provider
+codes, state values, cookies, or secrets were recorded.
+
+The PR preview initially rejected verification email because its `BENTO_FROM`
+was `noreply@mail.usekino.com`, which Bento did not authorize for the configured
+site. The preview's credentials matched the working proof deployment, whose
+sender is `mail@usekino.com`. After correcting only preview deployment
+`animated-vole-389`, Bento accepted the resend to a tagged address at
+`natedunn.net`; Nate confirmed inbox delivery. Verification, password sign-in,
+and a dashboard reload passed in isolated Chrome. Nate also confirmed delivery
+of the reset email. Reset, old-session rejection, old-password rejection,
+new-password sign-in, and used-link rejection passed. A later browser session
+intermittently signed out during token refresh; the PR now opts into Convex's
+supported `initialAuthTokenReuse` behavior to avoid an unnecessary refresh on
+each hydration. The updated preview still needs a timed browser recheck. The
+initial email failure was sender authorization, not Gmail plus-address routing.
+
+The same acceptance run found that a new private project's overview still
+showed sample counts, people, updates, and activity. The PR now reads those
+from a bounded, access-scoped native overview query with honest empty states.
+The corrected overview has local type, translation, and private-access test
+coverage; it also needs confirmation on the updated preview.
 
 The basic real GitHub sign-in question is answered. Remaining checks improve
 coverage; they are not evidence that the initial sign-in was unconfirmed.

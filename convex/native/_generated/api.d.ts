@@ -1922,6 +1922,45 @@ export declare const api: {
       { success: boolean }
     >;
   };
+  projectOverview: {
+    get: FunctionReference<
+      "query",
+      "public",
+      { projectId: Id<"projects"> },
+      null | {
+        activity: Array<{
+          actor: string | null;
+          at: number;
+          id: Id<"feedback"> | Id<"updates">;
+          kind: "update_published" | "feedback_created";
+          title: string;
+        }>;
+        members: Array<{
+          id: Id<"users">;
+          imageUrl: string | null;
+          name: string;
+          role: "owner" | "admin" | "moderator" | "member";
+          username: string;
+        }>;
+        recentUpdates: Array<{
+          author: string | null;
+          category: "changelog" | "article" | "announcement";
+          commentCount: number;
+          id: Id<"updates">;
+          publishedAt: number;
+          slug: string;
+          title: string;
+        }>;
+        stats: {
+          inProgress: number | null;
+          members: number | null;
+          openFeedback: number | null;
+          publishedUpdates: number | null;
+          upvotes: number | null;
+        };
+      }
+    >;
+  };
   projects: {
     getBySlugs: FunctionReference<
       "query",

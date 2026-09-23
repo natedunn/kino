@@ -1,13 +1,46 @@
+import type { ProjectOverviewData } from '../-overview-types';
+
 import { Card } from '@/components/ui/card';
+import ArchivePencil from '@/icons/archive-pencil';
+import CalendarDays from '@/icons/calendar-days';
+import ChartUp from '@/icons/chart-up';
+import Interview from '@/icons/interview';
+import Roadmap from '@/icons/roadmap';
+import * as m from '@/paraglide/messages.js';
+import { getLocale } from '@/paraglide/runtime.js';
 
-import { MOCK_STATS } from '../-overview-mock-data';
-
-const numberFormatter = new Intl.NumberFormat('en-US');
-
-export function OverviewStats() {
+export function OverviewStats({ stats }: { stats: ProjectOverviewData['stats'] }) {
+	const cards = [
+		{
+			key: 'open-feedback',
+			label: m.project_overview_open_feedback(),
+			value: stats.openFeedback,
+			Icon: ArchivePencil,
+		},
+		{
+			key: 'upvotes',
+			label: m.project_overview_total_upvotes(),
+			value: stats.upvotes,
+			Icon: ChartUp,
+		},
+		{
+			key: 'in-progress',
+			label: m.project_overview_in_progress(),
+			value: stats.inProgress,
+			Icon: Roadmap,
+		},
+		{
+			key: 'updates',
+			label: m.project_overview_published_updates(),
+			value: stats.publishedUpdates,
+			Icon: CalendarDays,
+		},
+		{ key: 'members', label: m.project_overview_members(), value: stats.members, Icon: Interview },
+	];
+	const numberFormatter = new Intl.NumberFormat(getLocale());
 	return (
 		<div className='flex flex-wrap gap-3'>
-			{MOCK_STATS.map((stat) => {
+			{cards.map((stat) => {
 				const { Icon } = stat;
 				return (
 					<Card
@@ -19,10 +52,12 @@ export function OverviewStats() {
 								<Icon className='size-3.5' />
 								<span className='truncate text-xs'>{stat.label}</span>
 							</div>
-							<span className='text-2xl font-semibold tabular-nums'>
-								{numberFormatter.format(stat.value)}
+							<span
+								className='text-2xl font-semibold tabular-nums'
+								title={stat.value === null ? m.project_overview_count_unavailable() : undefined}
+							>
+								{stat.value === null ? '—' : numberFormatter.format(stat.value)}
 							</span>
-							{stat.hint && <span className='text-[11px] text-muted-foreground'>{stat.hint}</span>}
 						</div>
 					</Card>
 				);

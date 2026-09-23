@@ -488,9 +488,6 @@ function MembersSettingsRoute() {
 							</div>
 						))}
 					</div>
-					<p className='mt-2 text-xs text-muted-foreground'>
-						{m.org_members_invite_delivery_notice()}
-					</p>
 				</div>
 			) : null}
 		</section>
