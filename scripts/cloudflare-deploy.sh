@@ -4,6 +4,20 @@ set -eu
 # Cloudflare Workers Builds invokes this command for the Git-connected `kino`
 # Worker. That build credential is intentionally scoped to `kino`; standalone
 # infrastructure Workers under workers/ are deployed from their own packages.
+branch="${WORKERS_CI_BRANCH:-${CF_BRANCH:-${CF_PAGES_BRANCH:-${CLOUDFLARE_BRANCH:-${GITHUB_HEAD_REF:-${GITHUB_REF_NAME:-${BRANCH:-}}}}}}}"
+if [ -z "$branch" ] && command -v git >/dev/null 2>&1; then
+  branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || true)"
+fi
+branch="${branch:-local}"
+production_branch="${PRODUCTION_BRANCH:-main}"
+
+# Preview builds already bake their branch-specific gateway route into the
+# generated Wrangler config. Production uses fixed build variables and must
+# copy them into the app Worker's runtime bindings explicitly.
+if [ "$branch" != "$production_branch" ]; then
+  exec pnpm exec wrangler deploy --config dist/server/wrangler.json --keep-vars
+fi
+
 if [ -z "${NATIVE_GITHUB_GATEWAY_URL_PRODUCTION:-}" ] || \
   [ -z "${NATIVE_GITHUB_ROUTE_ID_PRODUCTION:-}" ] || \
   [ -z "${NATIVE_GITHUB_ROUTE_SECRET_PRODUCTION:-}" ]; then
