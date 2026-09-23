@@ -1,106 +1,17 @@
---- a/src/components/core/schema.ts
-+++ b/src/components/core/schema.ts
-@@ -2,6 +2,11 @@
- import { v } from "convex/values";
- 
- export default defineSchema({
-+  // Keep this record after revocation: deleting it could revive generation-zero sessions.
-+  sessionGenerations: defineTable({
-+    userId: v.string(),
-+    generation: v.number(),
-+  }).index("by_user", ["userId"]),
-   // Maps a provider-scoped identity to an opaque app user id. The app owns the
-   // actual users table; we only store the id string it gives us back.
-   accounts: defineTable({
-@@ -15,6 +20,8 @@
-   // One row per active session, holding only the *current* refresh token's
-   // SHA-256 hash. The raw refresh token is never stored.
-   sessions: defineTable({
-+    // Absent on existing sessions; interpreted as generation zero.
-+    generation: v.optional(v.number()),
-     userId: v.string(),
-     accountId: v.id("accounts"),
-     refreshTokenHash: v.string(),
---- a/src/components/core/public.ts
-+++ b/src/components/core/public.ts
-@@ -218,6 +218,30 @@
-   });
- }
- 
-+/** Component API: the host must authorize the operation (e.g. consume a reset proof).
-+ * Not re-exported as a public application mutation accepting arbitrary user IDs.
-+ * Revocation is O(1); expired-generation records are retained for separate cleanup.
-+ */
-+export const revokeUserSessions = mutation({
-+  args: { userId: v.string() },
-+  returns: v.null(),
-+  handler: async (ctx, { userId }) => {
-+    const state = await ctx.db.query("sessionGenerations")
-+      .withIndex("by_user", q => q.eq("userId", userId)).unique();
-+    if (state === null) {
-+      await ctx.db.insert("sessionGenerations", { userId, generation: 1 });
-+    } else {
-+      await ctx.db.patch("sessionGenerations", state._id, { generation: state.generation + 1 });
-+    }
-+    return null;
-+  },
-+});
-+
-+async function currentGeneration(ctx: QueryCtx, userId: string): Promise<number> {
-+  return (await ctx.db.query("sessionGenerations")
-+    .withIndex("by_user", q => q.eq("userId", userId)).unique())?.generation ?? 0;
-+}
-+
- async function issueSession(
-   ctx: MutationCtx,
-   accountId: Id<"accounts">,
-@@ -229,6 +253,7 @@
-   const refreshTokenHash = await sha256Hex(refreshToken);
-   const refreshTokenExpiresAt = Date.now() + ttl.refreshTokenTtlSeconds * 1000;
-   await ctx.db.insert("sessions", {
-+    generation: await currentGeneration(ctx, userId),
-     userId,
-     accountId,
-     refreshTokenHash,
-@@ -655,6 +680,12 @@
-       ({ session, isValid } = await sessionBySpentHash(ctx, hash));
-     }
-     if (session === null) return { kind: "noSession" };
-+    // Check both current-token and grace-window/spent-token paths before minting.
-+    // The shared generation read makes issuance/refresh conflict with revocation
-+    // under Convex's serializable transactions. Rotation never upgrades generation.
-+    if ((session.generation ?? 0) !== await currentGeneration(ctx, session.userId)) {
-+      return { kind: "noSession" };
-+    }
-     if (!isValid) {
-       // Past its refresh-token lifetime or a spent token past the grace
-       // window: delete the session and grant no more tokens.
---- a/src/oauth/component/convex.config.ts
-+++ b/src/oauth/component/convex.config.ts
-@@ -29,6 +29,7 @@
-   env: {
-     CLIENT_ID: v.string(),
-     CLIENT_SECRET: v.string(),
-+    CALLBACK_URL: v.optional(v.string()),
-   },
- });
- 
---- a/src/oauth/shared/dbHelpers.ts
-+++ b/src/oauth/shared/dbHelpers.ts
-@@ -72,7 +72,12 @@
-         "functions (get-convex/convex-backend@64c163a, July 2026).",
-     );
-   }
--  const callbackUrl = `${siteUrl}${CALLBACK_PATH}`;
-+  const callbackUrl = process.env.CALLBACK_URL ?? `${siteUrl}${CALLBACK_PATH}`;
-+  const parsed = new URL(callbackUrl);
-+  const loopback = parsed.hostname === "127.0.0.1" || parsed.hostname === "localhost";
-+  if ((parsed.protocol !== "https:" && !(parsed.protocol === "http:" && loopback)) || parsed.username || parsed.password || parsed.search || parsed.hash) {
-+    throw new Error("CALLBACK_URL must be HTTPS (or HTTP loopback), without credentials, query, or fragment");
-+  }
-   await ctx.db.insert("authorizationRequests", {
-     ...fields,
-     callbackUrl,
+diff --git a/dist/components/core/_generated/component.d.ts b/dist/components/core/_generated/component.d.ts
+index ba2b194..d5d8202 100644
+--- a/dist/components/core/_generated/component.d.ts
++++ b/dist/components/core/_generated/component.d.ts
+@@ -20,6 +20,9 @@ import type { FunctionReference } from "convex/server";
+  */
+ export type ComponentApi<Name extends string | undefined = string | undefined> = {
+     public: {
++      revokeUserSessions: FunctionReference<
++        "mutation", "internal", { userId: string }, null, Name
++      >;
+         getUserIdByAccount: FunctionReference<"query", "internal", {
+             provider: string;
+             providerAccountId: string;
 diff --git a/dist/components/core/public.d.ts b/dist/components/core/public.d.ts
 index 5a4fb3c..ec9a1fb 100644
 --- a/dist/components/core/public.d.ts
@@ -217,13 +128,36 @@ index 5a4fb3c..ec9a1fb 100644
  } | {
      kind: "noSession";
 diff --git a/dist/components/core/public.js b/dist/components/core/public.js
-index e444cef..fd0d16d 100644
+index e444cef..91a9968 100644
 --- a/dist/components/core/public.js
 +++ b/dist/components/core/public.js
-@@ -138,11 +138,35 @@ async function mintAccessToken(userId, issuer, ttlSeconds) {
+@@ -20,6 +20,10 @@ export const REFRESH_GRACE_MS = 30 * 1000; // 30 seconds
+ // reuse-detection horizon: past it the row is gone and a replayed token reads
+ // as unknown, which revokes nothing but also grants nothing.
+ export const SPENT_TOKEN_HORIZON_MS = 60 * 60 * 1000; // 1 hour
++// Kino compatibility patch: make one refresh rotation idempotently recoverable
++// without storing the raw successor token. Domain separation prevents this HMAC
++// use from colliding with any other use of the auth signing-key material.
++const REFRESH_RECOVERY_DOMAIN = "kino-convex-auth-refresh-recovery-v1";
+ // The issuer (CONVEX_SITE_URL) is passed in by the app rather than read here:
+ // inside a component the system var arrives prefixed with the mount's
+ // httpPrefix, so this mount would see `<site-url>/auth`, not the bare site URL
+@@ -138,11 +142,47 @@ async function mintAccessToken(userId, issuer, ttlSeconds) {
          expiresInSeconds: ttlSeconds,
      });
  }
++async function deriveRotatedRefreshToken(sessionId, previousRefreshTokenHash) {
++    const encoder = new TextEncoder();
++    const key = await crypto.subtle.importKey("raw", encoder.encode(atob(env.AUTH_PRIVATE_KEY)), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
++    const bytes = new Uint8Array(await crypto.subtle.sign("HMAC", key, encoder.encode(`${REFRESH_RECOVERY_DOMAIN}\0${sessionId}\0${previousRefreshTokenHash}`)));
++    let binary = "";
++    for (const byte of bytes)
++        binary += String.fromCharCode(byte);
++    return btoa(binary)
++        .replace(/\+/g, "-")
++        .replace(/\//g, "_")
++        .replace(/=+$/, "");
++}
 +/** Component API: the host must authorize the operation (e.g. consume a reset proof).
 + * Not re-exported as a public application mutation accepting arbitrary user IDs.
 + * Revocation is O(1); expired-generation records are retained for separate cleanup.
@@ -256,7 +190,41 @@ index e444cef..fd0d16d 100644
          userId,
          accountId,
          refreshTokenHash,
-@@ -481,6 +505,12 @@ export const refresh = mutation({
+@@ -373,7 +413,7 @@ export const getUserIdByAccount = query({
+  * session.
+  */
+ async function rotateSession(ctx, session, now, issuer, ttl) {
+-    const newRefreshToken = generateRefreshToken();
++    const newRefreshToken = await deriveRotatedRefreshToken(session._id, session.refreshTokenHash);
+     const newRefreshTokenHash = await sha256Hex(newRefreshToken);
+     const refreshTokenExpiresAt = now + ttl.refreshTokenTtlSeconds * 1000;
+     await ctx.db.insert("spentRefreshTokens", {
+@@ -432,8 +472,8 @@ async function sessionBySpentHash(ctx, hash) {
+  *
+  * The outcomes are the arms of {@link vRefreshResult}:
+  *
+- *  * `rotated`: the token was current. It is spent, a replacement is minted,
+- *    and the caller persists both tokens.
++ *  * `rotated`: the token was current, or it was the immediately previous token
++ *    retried inside the grace window. The caller persists both tokens.
+  *  * `reused`: a concurrent caller had already rotated this token, and it is
+  *    still inside `REFRESH_GRACE_MS`. A fresh access token is minted
+  *    *but not a new refresh token* (more on this below).
+@@ -452,9 +492,10 @@ async function sessionBySpentHash(ctx, hash) {
+  * any different than a client presenting a stolen/leaked refresh token, and
+  * the session would be ended as a safety measure.
+  *
+- * Since we don't rotate, the loser of the refresh race above won't get a new
+- * refresh token but will be told to reuse whatever token already exists (the
+- * one issued to the winner).
++ * Kino's compatibility patch derives a rotation deterministically. A retry of
++ * the immediately previous token can therefore recover the exact successor the
++ * winner received, avoiding both a last-writer race and a lost-response logout.
++ * Older spent tokens retain the upstream access-only `reused` behavior.
+  */
+ export const refresh = mutation({
+     args: {
+@@ -481,6 +522,12 @@ export const refresh = mutation({
          }
          if (session === null)
              return { kind: "noSession" };
@@ -269,6 +237,34 @@ index e444cef..fd0d16d 100644
          if (!isValid) {
              // Past its refresh-token lifetime or a spent token past the grace
              // window: delete the session and grant no more tokens.
+@@ -490,6 +537,20 @@ export const refresh = mutation({
+             return { kind: "noSession" };
+         }
+         if (isSpent) {
++            const recoveredRefreshToken = await deriveRotatedRefreshToken(session._id, hash);
++            if ((await sha256Hex(recoveredRefreshToken)) === session.refreshTokenHash) {
++                const access = await mintAccessToken(session.userId, args.issuer, ttl.accessTokenTtlSeconds);
++                return {
++                    kind: "rotated",
++                    tokens: {
++                        accessToken: access.token,
++                        accessTokenExpiresAt: access.expiresAt,
++                        refreshToken: recoveredRefreshToken,
++                        refreshTokenExpiresAt: session.refreshTokenExpiresAt,
++                        userId: session.userId,
++                    },
++                };
++            }
+             // Deliberately no writes: no spent-token insert, no session patch, not
+             // even `lastRefreshedAt`. See the note above.
+             const access = await mintAccessToken(session.userId, args.issuer, ttl.accessTokenTtlSeconds);
+@@ -531,4 +592,4 @@ export const signOut = mutation({
+         return null;
+     },
+ });
+-//# sourceMappingURL=public.js.map
+\ No newline at end of file
++//# sourceMappingURL=public.js.map
 diff --git a/dist/components/core/schema.d.ts b/dist/components/core/schema.d.ts
 index 94263cd..172cb5a 100644
 --- a/dist/components/core/schema.d.ts
@@ -386,9 +382,11 @@ index 83fef57..3a3b50a 100644
      await ctx.db.insert("authorizationRequests", {
          ...fields,
          callbackUrl,
+diff --git a/src/components/core/_generated/component.ts b/src/components/core/_generated/component.ts
+index 43fc324..c130707 100644
 --- a/src/components/core/_generated/component.ts
 +++ b/src/components/core/_generated/component.ts
-@@ -24,6 +24,9 @@
+@@ -24,6 +24,9 @@ import type { FunctionReference } from "convex/server";
  export type ComponentApi<Name extends string | undefined = string | undefined> =
    {
      public: {
@@ -398,15 +396,222 @@ index 83fef57..3a3b50a 100644
        getUserIdByAccount: FunctionReference<
          "query",
          "internal",
---- a/dist/components/core/_generated/component.d.ts
-+++ b/dist/components/core/_generated/component.d.ts
-@@ -20,6 +20,9 @@
+diff --git a/src/components/core/public.ts b/src/components/core/public.ts
+index 504fa82..d39052a 100644
+--- a/src/components/core/public.ts
++++ b/src/components/core/public.ts
+@@ -45,6 +45,11 @@ export const REFRESH_GRACE_MS = 30 * 1000; // 30 seconds
+ // as unknown, which revokes nothing but also grants nothing.
+ export const SPENT_TOKEN_HORIZON_MS = 60 * 60 * 1000; // 1 hour
+
++// Kino compatibility patch: make one refresh rotation idempotently recoverable
++// without storing the raw successor token. Domain separation prevents this HMAC
++// use from colliding with any other use of the auth signing-key material.
++const REFRESH_RECOVERY_DOMAIN = "kino-convex-auth-refresh-recovery-v1";
++
+ // The issuer (CONVEX_SITE_URL) is passed in by the app rather than read here:
+ // inside a component the system var arrives prefixed with the mount's
+ // httpPrefix, so this mount would see `<site-url>/auth`, not the bare site URL
+@@ -218,6 +223,59 @@ async function mintAccessToken(
+   });
+ }
+
++async function deriveRotatedRefreshToken(
++  sessionId: Id<"sessions">,
++  previousRefreshTokenHash: string,
++): Promise<string> {
++  const encoder = new TextEncoder();
++  const key = await crypto.subtle.importKey(
++    "raw",
++    encoder.encode(atob(env.AUTH_PRIVATE_KEY)),
++    { name: "HMAC", hash: "SHA-256" },
++    false,
++    ["sign"],
++  );
++  const bytes = new Uint8Array(
++    await crypto.subtle.sign(
++      "HMAC",
++      key,
++      encoder.encode(
++        `${REFRESH_RECOVERY_DOMAIN}\0${sessionId}\0${previousRefreshTokenHash}`,
++      ),
++    ),
++  );
++  let binary = "";
++  for (const byte of bytes) binary += String.fromCharCode(byte);
++  return btoa(binary)
++    .replace(/\+/g, "-")
++    .replace(/\//g, "_")
++    .replace(/=+$/, "");
++}
++
++/** Component API: the host must authorize the operation (e.g. consume a reset proof).
++ * Not re-exported as a public application mutation accepting arbitrary user IDs.
++ * Revocation is O(1); expired-generation records are retained for separate cleanup.
++ */
++export const revokeUserSessions = mutation({
++  args: { userId: v.string() },
++  returns: v.null(),
++  handler: async (ctx, { userId }) => {
++    const state = await ctx.db.query("sessionGenerations")
++      .withIndex("by_user", q => q.eq("userId", userId)).unique();
++    if (state === null) {
++      await ctx.db.insert("sessionGenerations", { userId, generation: 1 });
++    } else {
++      await ctx.db.patch("sessionGenerations", state._id, { generation: state.generation + 1 });
++    }
++    return null;
++  },
++});
++
++async function currentGeneration(ctx: QueryCtx, userId: string): Promise<number> {
++  return (await ctx.db.query("sessionGenerations")
++    .withIndex("by_user", q => q.eq("userId", userId)).unique())?.generation ?? 0;
++}
++
+ async function issueSession(
+   ctx: MutationCtx,
+   accountId: Id<"accounts">,
+@@ -229,6 +287,7 @@ async function issueSession(
+   const refreshTokenHash = await sha256Hex(refreshToken);
+   const refreshTokenExpiresAt = Date.now() + ttl.refreshTokenTtlSeconds * 1000;
+   await ctx.db.insert("sessions", {
++    generation: await currentGeneration(ctx, userId),
+     userId,
+     accountId,
+     refreshTokenHash,
+@@ -536,7 +595,10 @@ async function rotateSession(
+   issuer: string,
+   ttl: TtlConfig,
+ ): Promise<TokenBundle> {
+-  const newRefreshToken = generateRefreshToken();
++  const newRefreshToken = await deriveRotatedRefreshToken(
++    session._id,
++    session.refreshTokenHash,
++  );
+   const newRefreshTokenHash = await sha256Hex(newRefreshToken);
+   const refreshTokenExpiresAt = now + ttl.refreshTokenTtlSeconds * 1000;
+   await ctx.db.insert("spentRefreshTokens", {
+@@ -606,8 +668,8 @@ async function sessionBySpentHash(
+  *
+  * The outcomes are the arms of {@link vRefreshResult}:
+  *
+- *  * `rotated`: the token was current. It is spent, a replacement is minted,
+- *    and the caller persists both tokens.
++ *  * `rotated`: the token was current, or it was the immediately previous token
++ *    retried inside the grace window. The caller persists both tokens.
+  *  * `reused`: a concurrent caller had already rotated this token, and it is
+  *    still inside `REFRESH_GRACE_MS`. A fresh access token is minted
+  *    *but not a new refresh token* (more on this below).
+@@ -626,9 +688,10 @@ async function sessionBySpentHash(
+  * any different than a client presenting a stolen/leaked refresh token, and
+  * the session would be ended as a safety measure.
+  *
+- * Since we don't rotate, the loser of the refresh race above won't get a new
+- * refresh token but will be told to reuse whatever token already exists (the
+- * one issued to the winner).
++ * Kino's compatibility patch derives a rotation deterministically. A retry of
++ * the immediately previous token can therefore recover the exact successor the
++ * winner received, avoiding both a last-writer race and a lost-response logout.
++ * Older spent tokens retain the upstream access-only `reused` behavior.
   */
- export type ComponentApi<Name extends string | undefined = string | undefined> = {
-     public: {
-+      revokeUserSessions: FunctionReference<
-+        "mutation", "internal", { userId: string }, null, Name
-+      >;
-         getUserIdByAccount: FunctionReference<"query", "internal", {
-             provider: string;
-             providerAccountId: string;
+ export const refresh = mutation({
+   args: {
+@@ -655,6 +718,12 @@ export const refresh = mutation({
+       ({ session, isValid } = await sessionBySpentHash(ctx, hash));
+     }
+     if (session === null) return { kind: "noSession" };
++    // Check both current-token and grace-window/spent-token paths before minting.
++    // The shared generation read makes issuance/refresh conflict with revocation
++    // under Convex's serializable transactions. Rotation never upgrades generation.
++    if ((session.generation ?? 0) !== await currentGeneration(ctx, session.userId)) {
++      return { kind: "noSession" };
++    }
+     if (!isValid) {
+       // Past its refresh-token lifetime or a spent token past the grace
+       // window: delete the session and grant no more tokens.
+@@ -667,6 +736,29 @@ export const refresh = mutation({
+     }
+
+     if (isSpent) {
++      const recoveredRefreshToken = await deriveRotatedRefreshToken(
++        session._id,
++        hash,
++      );
++      if (
++        (await sha256Hex(recoveredRefreshToken)) === session.refreshTokenHash
++      ) {
++        const access = await mintAccessToken(
++          session.userId,
++          args.issuer,
++          ttl.accessTokenTtlSeconds,
++        );
++        return {
++          kind: "rotated",
++          tokens: {
++            accessToken: access.token,
++            accessTokenExpiresAt: access.expiresAt,
++            refreshToken: recoveredRefreshToken,
++            refreshTokenExpiresAt: session.refreshTokenExpiresAt,
++            userId: session.userId,
++          },
++        };
++      }
+       // Deliberately no writes: no spent-token insert, no session patch, not
+       // even `lastRefreshedAt`. See the note above.
+       const access = await mintAccessToken(
+diff --git a/src/components/core/schema.ts b/src/components/core/schema.ts
+index 83fc923..c67f55c 100644
+--- a/src/components/core/schema.ts
++++ b/src/components/core/schema.ts
+@@ -2,6 +2,11 @@ import { defineSchema, defineTable } from "convex/server";
+ import { v } from "convex/values";
+
+ export default defineSchema({
++  // Keep this record after revocation: deleting it could revive generation-zero sessions.
++  sessionGenerations: defineTable({
++    userId: v.string(),
++    generation: v.number(),
++  }).index("by_user", ["userId"]),
+   // Maps a provider-scoped identity to an opaque app user id. The app owns the
+   // actual users table; we only store the id string it gives us back.
+   accounts: defineTable({
+@@ -15,6 +20,8 @@ export default defineSchema({
+   // One row per active session, holding only the *current* refresh token's
+   // SHA-256 hash. The raw refresh token is never stored.
+   sessions: defineTable({
++    // Absent on existing sessions; interpreted as generation zero.
++    generation: v.optional(v.number()),
+     userId: v.string(),
+     accountId: v.id("accounts"),
+     refreshTokenHash: v.string(),
+diff --git a/src/oauth/component/convex.config.ts b/src/oauth/component/convex.config.ts
+index 90e6aae..676adfb 100644
+--- a/src/oauth/component/convex.config.ts
++++ b/src/oauth/component/convex.config.ts
+@@ -29,6 +29,7 @@ const component = defineComponent("oauth", {
+   env: {
+     CLIENT_ID: v.string(),
+     CLIENT_SECRET: v.string(),
++    CALLBACK_URL: v.optional(v.string()),
+   },
+ });
+
+diff --git a/src/oauth/shared/dbHelpers.ts b/src/oauth/shared/dbHelpers.ts
+index 6f7dabb..181fe01 100644
+--- a/src/oauth/shared/dbHelpers.ts
++++ b/src/oauth/shared/dbHelpers.ts
+@@ -72,7 +72,12 @@ export async function insertAuthorizationRequest<
+         "functions (get-convex/convex-backend@64c163a, July 2026).",
+     );
+   }
+-  const callbackUrl = `${siteUrl}${CALLBACK_PATH}`;
++  const callbackUrl = process.env.CALLBACK_URL ?? `${siteUrl}${CALLBACK_PATH}`;
++  const parsed = new URL(callbackUrl);
++  const loopback = parsed.hostname === "127.0.0.1" || parsed.hostname === "localhost";
++  if ((parsed.protocol !== "https:" && !(parsed.protocol === "http:" && loopback)) || parsed.username || parsed.password || parsed.search || parsed.hash) {
++    throw new Error("CALLBACK_URL must be HTTPS (or HTTP loopback), without credentials, query, or fragment");
++  }
+   await ctx.db.insert("authorizationRequests", {
+     ...fields,
+     callbackUrl,

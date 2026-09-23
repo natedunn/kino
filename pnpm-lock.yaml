@@ -6,7 +6,7 @@ settings:
 
 patchedDependencies:
   '@convex-dev/auth@2.0.0-alpha.2':
-    hash: b3513251470cbd11ad16a1cca25277bf977a94ff8773ddaadedade2c96de1794
+    hash: 269ba5c544fe9399bfdf9cc8bcdc52f229e69fc2b80351ab646ea9ca0ea1bc55
     path: patches/convex-auth-v2-reboot.patch
 
 importers:
@@ -30,7 +30,7 @@ importers:
         version: 2.6.0(blobatar@2.6.0(react@19.2.6))(react@19.2.6)
       '@convex-dev/auth':
         specifier: github:get-convex/convex-auth#1d105a04d124785441ce655cef33b54103c7bc2e&path:packages/core
-        version: https://codeload.github.com/get-convex/convex-auth/tar.gz/1d105a04d124785441ce655cef33b54103c7bc2e#path:packages/core(patch_hash=b3513251470cbd11ad16a1cca25277bf977a94ff8773ddaadedade2c96de1794)(@standard-schema/spec@1.1.0)(convex@1.46.0(react@19.2.6))(hono@4.12.9)(react@19.2.6)(typescript@5.9.3)(zod@4.4.3)
+        version: https://codeload.github.com/get-convex/convex-auth/tar.gz/1d105a04d124785441ce655cef33b54103c7bc2e#path:packages/core(patch_hash=269ba5c544fe9399bfdf9cc8bcdc52f229e69fc2b80351ab646ea9ca0ea1bc55)(@standard-schema/spec@1.1.0)(convex@1.46.0(react@19.2.6))(hono@4.12.9)(react@19.2.6)(typescript@5.9.3)(zod@4.4.3)
       '@convex-dev/r2':
         specifier: ^0.10.2
         version: 0.10.2(@standard-schema/spec@1.1.0)(convex@1.46.0(react@19.2.6))(hono@4.12.9)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3)(zod@4.4.3)
@@ -7191,7 +7191,7 @@ snapshots:
     dependencies:
       convex: 1.46.0(react@19.2.6)
 
-  '@convex-dev/auth@https://codeload.github.com/get-convex/convex-auth/tar.gz/1d105a04d124785441ce655cef33b54103c7bc2e#path:packages/core(patch_hash=b3513251470cbd11ad16a1cca25277bf977a94ff8773ddaadedade2c96de1794)(@standard-schema/spec@1.1.0)(convex@1.46.0(react@19.2.6))(hono@4.12.9)(react@19.2.6)(typescript@5.9.3)(zod@4.4.3)':
+  '@convex-dev/auth@https://codeload.github.com/get-convex/convex-auth/tar.gz/1d105a04d124785441ce655cef33b54103c7bc2e#path:packages/core(patch_hash=269ba5c544fe9399bfdf9cc8bcdc52f229e69fc2b80351ab646ea9ca0ea1bc55)(@standard-schema/spec@1.1.0)(convex@1.46.0(react@19.2.6))(hono@4.12.9)(react@19.2.6)(typescript@5.9.3)(zod@4.4.3)':
     dependencies:
       '@babel/code-frame': 7.29.7
       '@convex-dev/batch-worker': 0.3.4(@standard-schema/spec@1.1.0)(convex@1.46.0(react@19.2.6))(hono@4.12.9)(react@19.2.6)(typescript@5.9.3)(zod@4.4.3)

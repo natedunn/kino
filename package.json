@@ -37,6 +37,7 @@
 		"format": "prettier --write \"**/*.{ts,tsx,js,jsx}\"",
 		"auth:env:audit": "node scripts/auth-env-audit.mjs",
 		"auth:native:verify-package": "node scripts/check-native-auth-package.mjs",
+		"auth:native:check-upstream": "node scripts/check-convex-auth-upstream.mjs",
 		"auth:native:smoke": "node scripts/native-auth-smoke.mjs",
 		"auth:native:prepare-local": "node scripts/prepare-native-auth-local.mjs",
 		"gateway:webhook:register": "node scripts/gateway-webhook-target.mjs register",

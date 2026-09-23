@@ -6,6 +6,10 @@ separate dependency install here. Root `convex.json` now selects
 `convex/native/`; this directory remains for isolated proof configuration and
 historical evidence.
 
+The package pin, three compatibility patches, removal conditions, and weekly
+upstream-review procedure are maintained in
+[Convex Auth v2 patch maintenance](../../docs/convex-auth-v2-maintenance.md).
+
 ## Deployment boundary
 
 For the September 22 storage and original Files UI checkpoint, see

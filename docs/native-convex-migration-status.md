@@ -55,21 +55,19 @@ transport, routes, presentation, and application authorization. Reliability
 changes such as browser Fetch `keepalive` belong in that adapter; they should
 use the package's exported browser/server primitives and remain removable when
 the alpha provides its own binding. An app-layer wrapper cannot recover a new
-refresh token whose response was lost: the package deliberately does not return
-the successor on a grace-window reuse. Do not claim that retries or a second
-Kino session table solve that protocol property.
+refresh token whose response was lost, so Kino carries a narrow core
+compatibility patch for exact successor recovery rather than introducing a
+second session authority.
 
-This PR has two explicit exceptions to that boundary in
+This PR has three explicit exceptions to that boundary in
 `patches/convex-auth-v2-reboot.patch`: a core session-generation/revocation
 operation used by password reset, and an OAuth callback-URL override required
-by Kino's stable GitHub gateway. They are temporary compatibility patches, not
-Kino's desired permanent auth API. The reset proof requires old sessions to
-stop refreshing, and the pinned alpha exposes no equivalent revocation seam;
-removing the patch now would remove that guarantee. An upstream replacement or
-a separately reviewed change in product requirements is needed before either
-patch can be dropped. Future alpha upgrades should compare these two patches
-against newly supported APIs, remove them when equivalent primitives exist,
-and rerun password-reset, GitHub callback, SSR, and session-edge proofs.
+by Kino's stable GitHub gateway, plus deterministic recovery of the immediately
+previous refresh token's exact successor during the upstream 30-second grace
+window. They are temporary compatibility patches, not Kino's desired permanent
+auth API. The complete inventory, security tradeoff, removal conditions, weekly
+upstream check, and upgrade procedure live in
+[Convex Auth v2 patch maintenance](convex-auth-v2-maintenance.md).
 
 ## Remaining release checklist
 
@@ -91,11 +89,10 @@ and rerun password-reset, GitHub callback, SSR, and session-edge proofs.
       and earlier hosted evidence; this check verifies the final deployed pair.
 - [x] Repeat a deployment-transition navigation/reload check so a stale route asset
       either refreshes cleanly or shows the existing new-version prompt.
-- [x] Review and accept the remaining lost-refresh-response risk for this
-      prelaunch release. Keep the navigation mitigation and re-sign-in recovery;
-      hold rollout if final smoke testing finds another unexplained sign-out.
-      The protocol limit and replacement criteria are recorded below.
-- [x] Review the two existing Convex Auth v2 compatibility patches against the
+- [x] Patch and test exact successor recovery for a lost refresh response while
+      retaining upstream replay revocation outside the grace window. Keep the
+      browser navigation mitigation as an additional defense.
+- [x] Review the three Convex Auth v2 compatibility patches against the
       chosen upstream revision and record their replacement/removal path. Keep
       Kino-specific transport and authorization outside the auth component.
 - [x] Run the final root, native Convex, gateway, and Files Worker checks plus
@@ -1346,24 +1343,19 @@ refresh, kept both cookies and had no 401 or private-page failure. This
 mitigates navigation loss; it does not make token rotation recoverable when a
 server-rendered response or network response is discarded.
 
-**September 23 release decision:** accept this as an availability risk in the
-prelaunch Auth v2 alpha integration. Both the pinned package and the current
-`reboot` head store only the successor refresh token's hash. A retry of the old
-cookie within 30 seconds returns an access token but cannot restore the
-successor; a later retry revokes the session. The browser then follows the
-existing sign-in recovery path, preserving its protected return URL. This
-does not grant unauthorized access or lose product data, but it can interrupt
-work by requiring another sign-in. Browser `keepalive` addresses the observed
-navigation path; the remaining network/SSR loss cannot be eliminated with the
-exported v2 API. We will not add a second Kino session authority or a third
-core patch solely to hide it. Raising the default 60-second access-token TTL
-would reduce refresh frequency but extend the validity of already-issued JWTs
-after reset or sign-out, so this release keeps the current revocation window.
-During final production smoke testing, any unexplained sign-out stops rollout
-for investigation; after release, repeated spent-token warnings or user reports
-require a forward fix or rollback decision. Revisit this decision when upstream
-offers an idempotent or acknowledged refresh protocol, and rerun the deliberate
-lost-response proof before replacing the workaround.
+**September 23 release decision:** patch the prelaunch Auth v2 alpha integration
+to make the immediately previous refresh rotation idempotently recoverable. Both
+the pinned package and the reviewed `reboot` head otherwise store only the
+successor token's hash, so the exported API cannot repair a discarded response.
+Kino now derives that successor deterministically and returns the exact same
+token when the old cookie is retried inside the existing 30-second grace window.
+It stores no raw token and does not create a second session authority. Older
+spent tokens retain upstream's access-only behavior, and use outside the grace
+window still revokes the session. The browser `keepalive` mitigation remains.
+The regression test simulates a discarded first response, proves the successor
+is identical and usable, and proves an older generation cannot recover the
+current credential. The permanent patch inventory and scheduled upstream-review
+procedure are in [Convex Auth v2 patch maintenance](convex-auth-v2-maintenance.md).
 
 The basic real GitHub sign-in question is answered. Remaining checks improve
 coverage; they are not evidence that the initial sign-in was unconfirmed.

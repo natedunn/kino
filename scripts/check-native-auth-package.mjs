@@ -30,6 +30,8 @@ const requiredMarkers = [
 	['dist/components/core/public.js', 'revokeUserSessions'],
 	['dist/components/core/_generated/component.d.ts', 'revokeUserSessions'],
 	['dist/components/core/public.js', 'currentGeneration'],
+	['dist/components/core/public.js', 'kino-convex-auth-refresh-recovery-v1'],
+	['dist/components/core/public.js', 'deriveRotatedRefreshToken'],
 	['dist/oauth/component/convex.config.js', 'CALLBACK_URL'],
 	['dist/oauth/shared/dbHelpers.js', 'process.env.CALLBACK_URL'],
 ];

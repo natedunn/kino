@@ -160,6 +160,49 @@ describe('native verified password lifecycle', () => {
 			status: 'complete',
 		});
 	});
+	test('a lost refresh response can recover the exact successor once', async () => {
+		const t = setup();
+		const initial = await verified(t);
+		const first = await t.mutation(api.auth.refreshSession, {
+			refreshToken: initial.tokens.refreshToken,
+		});
+		if (first.kind !== 'rotated') throw new Error('Expected initial rotation');
+
+		// Simulate the first response being lost: the browser retries the token it
+		// still has and must receive the exact same successor, not a second rotation.
+		const recovered = await t.mutation(api.auth.refreshSession, {
+			refreshToken: initial.tokens.refreshToken,
+		});
+		expect(recovered).toMatchObject({ kind: 'rotated' });
+		if (recovered.kind !== 'rotated') throw new Error('Expected recovered rotation');
+		expect(recovered.tokens.refreshToken).toBe(first.tokens.refreshToken);
+
+		const second = await t.mutation(api.auth.refreshSession, {
+			refreshToken: recovered.tokens.refreshToken,
+		});
+		expect(second).toMatchObject({ kind: 'rotated' });
+
+		// Once the session has advanced again, the older token cannot reconstruct
+		// the current credential and retains upstream's access-only grace behavior.
+		expect(
+			await t.mutation(api.auth.refreshSession, {
+				refreshToken: initial.tokens.refreshToken,
+			})
+		).toMatchObject({ kind: 'reused' });
+
+		vi.advanceTimersByTime(31_000);
+		expect(
+			await t.mutation(api.auth.refreshSession, {
+				refreshToken: recovered.tokens.refreshToken,
+			})
+		).toEqual({ kind: 'noSession' });
+		if (second.kind !== 'rotated') throw new Error('Expected second rotation');
+		expect(
+			await t.mutation(api.auth.refreshSession, {
+				refreshToken: second.tokens.refreshToken,
+			})
+		).toEqual({ kind: 'noSession' });
+	});
 	test('expired, wrong-purpose and disabled-account links cannot grant a session', async () => {
 		const t = setup();
 		const proof = await signUp(t);
