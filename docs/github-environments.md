@@ -284,12 +284,14 @@ shared preview secret is uploaded as a Worker Preview secret. Production keeps
 its explicit route ID and static gateway route.
 
 The `kino` Worker uses Cloudflare Worker Previews (`wrangler preview`, Wrangler
-4.135 or newer) rather than aliased production versions. Enable Worker Previews
-in the Worker's Settings > Builds once, with preview command
-`pnpm run deploy:preview`; that script invokes `npx wrangler preview` using the
-generated server bundle. The preview's gateway URL is declared in
-`wrangler.jsonc` under `previews.vars`, and the build supplies its signing key
-through `--secrets-file`. Preview settings do not inherit production settings.
+4.135 or newer) rather than aliased production versions. Workers Builds runs
+`pnpm run deploy:preview`, which invokes `npx wrangler preview` using the
+generated server bundle. This CLI path published the branch preview without
+switching the Worker's dashboard preview model; the dashboard's separate
+one-time switch is not required for this rollout. The preview's gateway URL is
+declared in `wrangler.jsonc` under `previews.vars`, and the build supplies its
+signing key through `--secrets-file`. Preview settings do not inherit production
+settings.
 
 Set the preview defaults for `AUTH_PRIVATE_KEY`, `AUTH_JWKS`,
 `AUTH_GITHUB_CLIENT_ID`, and `AUTH_GITHUB_CLIENT_SECRET` before enabling the
