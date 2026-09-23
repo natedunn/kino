@@ -1,11 +1,14 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useState } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
 
 import { AuthFooter, AuthHeader } from '@/components/auth/auth-card';
 import { InlineAlert } from '@/components/inline-alert';
+import { Button } from '@/components/ui/button';
 import { trackAuthError, trackAuthSuccess } from '@/lib/auth-analytics';
+import { verifyEmail } from '@/lib/auth/auth-client';
+import { useAuthLinkCode } from '@/lib/auth/use-auth-link-code';
 import { titleMeta } from '@/lib/seo';
 import * as m from '@/paraglide/messages.js';
 
@@ -22,40 +25,63 @@ export const Route = createFileRoute('/auth/verify-email')({
 });
 
 function VerifyEmailPage() {
-	// Better Auth verifies the token on the API side and redirects here with the
-	// outcome. We only render the result.
-	const { error, redirect, verified } = Route.useSearch();
-	const ok = verified && !error;
-	const invalid = !verified && !error;
+	return <NativeVerifyEmailPage />;
+}
 
-	useEffect(() => {
-		if (ok) trackAuthSuccess('email_verification');
-		else if (error) trackAuthError('email_verification', error);
-	}, [ok, error]);
+function NativeVerifyEmailPage() {
+	const code = useAuthLinkCode(true);
+	const [state, setState] = useState<'idle' | 'pending' | 'complete' | 'error'>('idle');
+
+	async function completeVerification() {
+		if (!code) return;
+		setState('pending');
+		const result = await verifyEmail(code);
+		if (result.error) {
+			trackAuthError('email_verification', result.error);
+			setState('error');
+		} else {
+			trackAuthSuccess('email_verification');
+			setState('complete');
+		}
+	}
+
+	if (code === undefined) return null;
+	if (!code || state === 'error') {
+		return (
+			<>
+				<AuthHeader title={m.auth_invalid_verification_link()} />
+				<InlineAlert variant='danger'>{m.auth_verification_invalid()}</InlineAlert>
+				<AuthFooter>
+					<Link className='link-text font-medium text-foreground' to='/auth'>
+						{m.auth_continue_sign_in()}
+					</Link>
+				</AuthFooter>
+			</>
+		);
+	}
+	if (state === 'complete') {
+		return (
+			<>
+				<AuthHeader title={m.auth_email_verified()} />
+				<InlineAlert variant='success'>{m.auth_email_confirmed()}</InlineAlert>
+				<AuthFooter>
+					<Link className='link-text font-medium text-foreground' to='/dashboard'>
+						{m.auth_go_dashboard()}
+					</Link>
+				</AuthFooter>
+			</>
+		);
+	}
 
 	return (
 		<>
 			<AuthHeader
-				title={
-					ok
-						? m.auth_email_verified()
-						: invalid
-							? m.auth_invalid_verification_link()
-							: m.auth_verification_failed()
-				}
+				title={m.auth_verify_email_title()}
+				description={m.auth_verify_email_description()}
 			/>
-			{ok ? (
-				<InlineAlert variant='success'>{m.auth_email_confirmed()}</InlineAlert>
-			) : invalid ? (
-				<InlineAlert variant='danger'>{m.auth_verification_invalid()}</InlineAlert>
-			) : (
-				<InlineAlert variant='danger'>{m.auth_verification_expired()}</InlineAlert>
-			)}
-			<AuthFooter>
-				<Link className='link-text font-medium text-foreground' search={{ redirect }} to='/auth'>
-					{m.auth_continue_sign_in()}
-				</Link>
-			</AuthFooter>
+			<Button disabled={state === 'pending'} onClick={completeVerification} size='lg'>
+				{state === 'pending' ? m.auth_verifying_email() : m.auth_verify_email_action()}
+			</Button>
 		</>
 	);
 }

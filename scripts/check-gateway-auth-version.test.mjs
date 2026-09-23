@@ -25,10 +25,10 @@ for (const data of [
 	{ ...health, ok: false },
 	{ ...health, service: 'other' },
 ]) {
-	test(`rejects incompatible health: ${JSON.stringify(data)}`, async () => {
+		test(`rejects incompatible health: ${JSON.stringify(data)}`, async () => {
 		await assert.rejects(
 			checkGatewayAuthVersion(origin, '1.7.1', respond(data)),
-			/Deploy and verify the matching gateway first/
+			/Deploy and verify the gateway package from this checkout first/
 		);
 	});
 }

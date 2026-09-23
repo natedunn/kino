@@ -50,6 +50,8 @@ function translateAppError(code: unknown, values: unknown): string | undefined {
 			return m.server_error_project_not_found();
 		case 'PROJECT_ARCHIVED':
 			return m.server_error_project_archived();
+		case 'PROJECT_PUBLIC_REQUIRES_PUBLIC_ORGANIZATION':
+			return m.project_public_private_organization();
 		case 'PERMISSION_DENIED':
 			return m.server_error_permission_denied();
 		case 'PROJECT_ARCHIVE_ADMIN_ONLY':
@@ -59,7 +61,9 @@ function translateAppError(code: unknown, values: unknown): string | undefined {
 		case 'PROJECT_LIMIT_REACHED':
 			return m.server_error_project_limit_reached();
 		case 'PROJECT_SLUG_TAKEN':
-			return m.server_error_project_slug_taken({ slug: String(parsed.slug ?? '') });
+			return m.server_error_project_slug_taken({
+				slug: Object.hasOwn(parsed, 'slug') ? String(parsed.slug) : '',
+			});
 		case 'USERNAME_TAKEN':
 			return m.server_error_username_taken();
 		case 'ACCOUNT_NOT_FOUND_FOR_EMAIL':
@@ -75,7 +79,9 @@ function translateAppError(code: unknown, values: unknown): string | undefined {
 		case 'FOLDER_LIMIT_REACHED':
 			return m.server_error_folder_limit_reached();
 		case 'FOLDER_DEPTH_EXCEEDED':
-			return m.server_error_folder_depth_exceeded({ count: String(parsed.count ?? '') });
+			return m.server_error_folder_depth_exceeded({
+				count: Object.hasOwn(parsed, 'count') ? String(parsed.count) : '',
+			});
 		case 'FOLDER_NAME_TAKEN':
 			return m.server_error_folder_name_taken();
 		case 'FOLDER_NOT_EMPTY':
@@ -109,17 +115,36 @@ function translateCategory(code: unknown): string | undefined {
 	}
 }
 
+function translateNativeErrorCode(code: string): string | undefined {
+	if (code === 'FILE_STORAGE_LIMIT') return m.files_storage_limit_exceeded();
+	const domainMessage = translateAppError(code, undefined);
+	if (domainMessage) return domainMessage;
+	if (code === 'UNAUTHORIZED') return translateCategory('UNAUTHORIZED');
+	if (code === 'FORBIDDEN') return translateCategory('FORBIDDEN');
+	if (code === 'RATE_LIMITED') return translateCategory('TOO_MANY_REQUESTS');
+	if (code.endsWith('_NOT_FOUND')) return translateCategory('NOT_FOUND');
+	if (code.startsWith('INVALID_') || code.endsWith('_REQUIRED') || code === 'CASCADE_TOO_LARGE')
+		return translateCategory('BAD_REQUEST');
+	return undefined;
+}
+
 /** Converts structured server failures into locale-aware, user-safe copy. */
 export function localizeError(
 	error: unknown,
 	fallback: string = m.common_something_went_wrong()
 ): string {
 	if (!error) return fallback;
-	const anyError = error as { data?: StructuredErrorData; message?: string };
+	const anyError = error as { data?: StructuredErrorData | string | null; message?: string };
 	const data = anyError.data;
-	const domainMessage = translateAppError(data?.appErrorCode, data?.appErrorValues);
+	const nativeMessage = typeof data === 'string' ? translateNativeErrorCode(data) : undefined;
+	if (nativeMessage) return nativeMessage;
+	const domainMessage =
+		data !== null && typeof data === 'object'
+			? translateAppError(data.appErrorCode, data.appErrorValues)
+			: undefined;
 	if (domainMessage) return domainMessage;
-	const categoryMessage = translateCategory(data?.code);
+	const categoryMessage =
+		data !== null && typeof data === 'object' ? translateCategory(data.code) : undefined;
 	if (categoryMessage) return categoryMessage;
 
 	// Preserve explicit client-side errors (for example, a localized upload error),

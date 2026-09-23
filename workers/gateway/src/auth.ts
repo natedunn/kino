@@ -21,8 +21,9 @@ import { oAuthProxy } from 'better-auth/plugins';
  * import `memoryAdapter` from "better-auth/adapters/memory" statically — its
  * module is lazily initialized in the Workers bundle and the import resolves
  * to undefined at call time: "memoryAdapter is not a function".) Keep the
- * better-auth version pinned to the app's version: the state/profile payloads
- * are symmetric-encrypted and the formats must match across both sides.
+ * Better Auth is an exact dependency of this standalone package. Keep it pinned
+ * while this legacy route remains deployed so its encrypted payload format does
+ * not change as a side effect of an unrelated gateway install.
  */
 export function createGatewayAuth(env: GatewayEnv) {
 	return betterAuth({

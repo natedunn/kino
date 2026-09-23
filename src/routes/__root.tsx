@@ -1,8 +1,9 @@
+import type { ConvexQueryClient } from '@convex-dev/react-query';
 import type { QueryClient } from '@tanstack/react-query';
-import type { ConvexQueryClient } from 'kitcn/react';
 import type { ReactNode } from 'react';
 
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { convexQuery } from '@convex-dev/react-query';
 import {
 	createRootRouteWithContext,
 	HeadContent,
@@ -17,13 +18,13 @@ import { DefaultCatchBoundary } from '@/components/_default-catch-boundary';
 import { Providers } from '@/components/providers';
 import { StaleBundleWatcher } from '@/components/stale-bundle-watcher';
 import { getAppInstallMetadata, getFaviconHref, inferAppEnvironment } from '@/lib/app-env';
+import { getServerAuthToken } from '@/lib/auth/auth-server';
 import { isClientAuthed } from '@/lib/auth/auth-snapshot';
-import { getServerAuthToken } from '@/lib/convex/auth-start-token';
-import { crpcServer } from '@/lib/convex/crpc-server';
 import { LOCALE_COOKIE_NAME } from '@/lib/i18n/locale';
 import * as m from '@/paraglide/messages.js';
 import { getLocale } from '@/paraglide/runtime.js';
 
+import { api as nativeApi } from '../../convex/native/_generated/api';
 import appCss from '../styles.css?url';
 
 const Devtools = import.meta.env.DEV
@@ -38,7 +39,9 @@ const Devtools = import.meta.env.DEV
 		})
 	: null;
 
-const Toaster = lazy(() => import('@/components/ui/sonner').then((m) => ({ default: m.Toaster })));
+const Toaster = lazy(() =>
+	import('@/components/ui/sonner').then((module) => ({ default: module.Toaster }))
+);
 
 const getLoaderToken = createServerFn({ method: 'GET' }).handler(async () => {
 	return await getServerAuthToken();
@@ -83,7 +86,7 @@ export const Route = createRootRouteWithContext<{
 		if (loaderToken) {
 			context.convexQueryClient.serverHttpClient?.setAuth(loaderToken);
 			await context.queryClient
-				.ensureQueryData(crpcServer.profile.findMyProfile.queryOptions({}, { skipUnauth: true }))
+				.ensureQueryData(convexQuery(nativeApi.profiles.me, {}))
 				.catch(() => undefined);
 		}
 

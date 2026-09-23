@@ -1,17 +1,22 @@
 'use client';
 
+import type { Id } from '../../convex/native/_generated/dataModel';
+
 import { useState } from 'react';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { convexQuery } from '@convex-dev/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
+import { useMutation as useConvexMutation } from 'convex/react';
 
 import { AuthFooter, AuthHeader } from '@/components/auth/auth-card';
 import { InlineAlert } from '@/components/inline-alert';
 import { Button } from '@/components/ui/button';
 import { trackAuthError, trackAuthSuccess } from '@/lib/auth-analytics';
-import { authClient } from '@/lib/convex/auth-client';
-import { useCRPC } from '@/lib/convex/crpc';
+import { useAuthSession } from '@/lib/auth/auth-client';
 import { titleMeta } from '@/lib/seo';
 import * as m from '@/paraglide/messages.js';
+
+import { api as nativeApi } from '../../convex/native/_generated/api';
 
 export const Route = createFileRoute('/auth/accept-invitation')({
 	head: () => ({ meta: [titleMeta([m.auth_accept_invitation_meta()])] }),
@@ -21,23 +26,26 @@ export const Route = createFileRoute('/auth/accept-invitation')({
 });
 
 function AcceptInvitationPage() {
+	return <NativeAcceptInvitationPage />;
+}
+
+function NativeAcceptInvitationPage() {
 	const { invitationId } = Route.useSearch();
-	const session = authClient.useSession();
-	const crpc = useCRPC();
-	const invitationState = useQuery(
-		crpc.orgMember.getInvitationState.queryOptions(
-			{ invitationId: invitationId ?? '' },
-			{
-				enabled: !!invitationId && !!session.data?.user,
-				subscribe: false,
-			}
-		)
-	);
-	const acceptInvitation = useMutation(crpc.orgMember.acceptInvitation.mutationOptions());
-	const rejectInvitation = useMutation(crpc.orgMember.rejectInvitation.mutationOptions());
+	const [inspectionTime] = useState(() => Date.now());
+	const session = useAuthSession();
 	const navigate = useNavigate();
+	const acceptInvitation = useConvexMutation(nativeApi.invitations.accept);
+	const rejectInvitation = useConvexMutation(nativeApi.invitations.reject);
+	const invitationState = useQuery({
+		...convexQuery(nativeApi.invitations.inspect, {
+			invitationId: invitationId as Id<'invitations'>,
+			now: inspectionTime,
+		}),
+		enabled: !!invitationId && !!session.user,
+		retry: false,
+	});
 	const [pending, setPending] = useState(false);
-	const [error, setError] = useState<string | null>(null);
+	const [error, setError] = useState(false);
 	const [accepted, setAccepted] = useState(false);
 
 	if (!invitationId) {
@@ -48,7 +56,6 @@ function AcceptInvitationPage() {
 			</>
 		);
 	}
-
 	if (session.isPending) {
 		return (
 			<>
@@ -60,10 +67,7 @@ function AcceptInvitationPage() {
 			</>
 		);
 	}
-
-	// Accepting requires an authenticated account. Send the user to sign in and
-	// back here.
-	if (!session.data?.user) {
+	if (!session.user) {
 		const back = `/auth/accept-invitation?invitationId=${encodeURIComponent(invitationId)}`;
 		return (
 			<>
@@ -84,7 +88,6 @@ function AcceptInvitationPage() {
 			</>
 		);
 	}
-
 	if (invitationState.isPending) {
 		return (
 			<>
@@ -96,7 +99,6 @@ function AcceptInvitationPage() {
 			</>
 		);
 	}
-
 	const state = invitationState.data?.state;
 	if (invitationState.isError || !state || state === 'unavailable' || state === 'wrong_account') {
 		return (
@@ -111,57 +113,22 @@ function AcceptInvitationPage() {
 			</>
 		);
 	}
-
 	if (state === 'already_accepted') {
 		return (
 			<>
 				<AuthHeader title={m.auth_invitation_accepted_title()} />
 				<InlineAlert variant='success'>{m.auth_invitation_already_joined()}</InlineAlert>
 				<AuthFooter>
-					<Link className='link-text font-medium text-foreground' to='/dashboard'>
+					<Link
+						className='link-text font-medium text-foreground'
+						params={{ org: invitationState.data.organizationSlug }}
+						to='/@{$org}'
+					>
 						{m.auth_go_dashboard()}
 					</Link>
 				</AuthFooter>
 			</>
 		);
-	}
-
-	async function onAccept() {
-		setError(null);
-		setPending(true);
-		try {
-			const result = await acceptInvitation.mutateAsync({ invitationId: invitationId! });
-			trackAuthSuccess('invitation_accept');
-			setAccepted(true);
-			setTimeout(() => {
-				if (result.organizationSlug) {
-					void navigate({
-						params: { org: result.organizationSlug },
-						to: '/@{$org}',
-					});
-					return;
-				}
-				void navigate({ to: '/dashboard' });
-			}, 1200);
-		} catch (err) {
-			trackAuthError('invitation_accept', err);
-			setError(err instanceof Error ? err.message : m.auth_something_wrong());
-		} finally {
-			setPending(false);
-		}
-	}
-
-	async function onReject() {
-		setError(null);
-		setPending(true);
-		try {
-			await rejectInvitation.mutateAsync({ invitationId: invitationId! });
-			await navigate({ to: '/dashboard' });
-		} catch (err) {
-			setError(err instanceof Error ? err.message : m.auth_something_wrong());
-		} finally {
-			setPending(false);
-		}
 	}
 
 	return (
@@ -174,20 +141,49 @@ function AcceptInvitationPage() {
 				<InlineAlert variant='success'>{m.auth_invitation_joined()}</InlineAlert>
 			) : (
 				<div className='flex flex-col gap-4'>
-					{error ? <InlineAlert variant='danger'>{error}</InlineAlert> : null}
-					<Button disabled={pending} onClick={onAccept} size='lg' type='button'>
+					{error ? <InlineAlert variant='danger'>{m.auth_something_wrong()}</InlineAlert> : null}
+					<Button
+						disabled={pending}
+						onClick={() => {
+							setPending(true);
+							setError(false);
+							void acceptInvitation({ invitationId: invitationId as Id<'invitations'> })
+								.then((result) => {
+									trackAuthSuccess('invitation_accept');
+									setAccepted(true);
+									setTimeout(() => {
+										void navigate({ params: { org: result.organizationSlug }, to: '/@{$org}' });
+									}, 1200);
+								})
+								.catch((cause) => {
+									trackAuthError('invitation_accept', cause);
+									setError(true);
+								})
+								.finally(() => setPending(false));
+						}}
+						size='lg'
+						type='button'
+					>
 						{pending ? m.auth_joining() : m.auth_accept_invitation_action()}
 					</Button>
-					<Button disabled={pending} onClick={onReject} size='lg' type='button' variant='outline'>
+					<Button
+						disabled={pending}
+						onClick={() => {
+							setPending(true);
+							setError(false);
+							void rejectInvitation({ invitationId: invitationId as Id<'invitations'> })
+								.then(() => navigate({ to: '/dashboard' }))
+								.catch(() => setError(true))
+								.finally(() => setPending(false));
+						}}
+						size='lg'
+						type='button'
+						variant='outline'
+					>
 						{m.auth_decline()}
 					</Button>
 				</div>
 			)}
-			<AuthFooter>
-				<Link className='link-text font-medium text-foreground' to='/dashboard'>
-					{m.auth_go_dashboard()}
-				</Link>
-			</AuthFooter>
 		</>
 	);
 }

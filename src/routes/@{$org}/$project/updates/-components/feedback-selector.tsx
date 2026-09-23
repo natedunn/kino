@@ -14,7 +14,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { StatusIcon } from '@/icons';
 import LoaderQuarter from '@/icons/loader-quarter';
-import { useCRPC } from '@/lib/convex/crpc';
+import { useUpdatesAPI as useCRPC } from '@/lib/convex/updates-api';
 import { cn } from '@/lib/utils';
 import * as m from '@/paraglide/messages.js';
 

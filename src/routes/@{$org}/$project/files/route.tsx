@@ -1,5 +1,3 @@
-'use client';
-
 import type { AppCommand } from '@/components/command';
 import type { FileWorkspaceAction } from '@/components/files/file-workspace-actions';
 
@@ -43,8 +41,8 @@ import {
 	ResponsiveDialogHeader,
 } from '@/components/ui/responsive-dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { useCRPC } from '@/lib/convex/crpc';
-import { crpcServer } from '@/lib/convex/crpc-server';
+import { useFilesAPI } from '@/lib/convex/files-api';
+import { preloadNativeFiles } from '@/lib/convex/native-files';
 import { useIsBelow } from '@/lib/hooks/use-mobile';
 import { projectTitle, titleMeta } from '@/lib/seo';
 import { cn } from '@/lib/utils';
@@ -52,6 +50,8 @@ import * as m from '@/paraglide/messages.js';
 
 import { buildFolderPath, FilesWorkspaceProvider } from './-components/files-workspace-context';
 import { FolderTree } from './-components/folder-tree';
+
+('use client');
 
 type FilesWorkspaceSearch = {
 	action?: FileWorkspaceAction;
@@ -88,45 +88,7 @@ function validateFilesWorkspaceSearch(search: Record<string, unknown>): FilesWor
 
 export const Route = createFileRoute('/@{$org}/$project/files')({
 	component: FilesWorkspaceRoute,
-	loader: async ({ context, location, params }) => {
-		const projectData = await context.queryClient.ensureQueryData(
-			crpcServer.project.getDetails.queryOptions({ orgSlug: params.org, slug: params.project })
-		);
-		if (!projectData?.project) throw notFound();
-
-		const foldersOptions = crpcServer.file.listFolders.queryOptions({
-			projectId: projectData.project.id,
-		});
-		const treeOptions = crpcServer.file.listFileTreeItems.queryOptions({
-			projectId: projectData.project.id,
-		});
-		const usageOptions = crpcServer.file.getProjectUsage.queryOptions({
-			projectId: projectData.project.id,
-		});
-		const isAdvancedSearch = location.pathname.endsWith('/files/search');
-		const canViewUsage = projectData.permissions.canManageContent;
-
-		if (typeof window === 'undefined') {
-			// Ship the bounded tree snapshot with the document so a hard refresh does
-			// not paint a client-only sidebar skeleton. Convex subscriptions take over
-			// after hydration and keep this data current.
-			await Promise.all([
-				context.queryClient.ensureQueryData(foldersOptions).catch(() => undefined),
-				isAdvancedSearch
-					? Promise.resolve()
-					: context.queryClient.ensureQueryData(treeOptions).catch(() => undefined),
-				!isAdvancedSearch && canViewUsage
-					? context.queryClient.ensureQueryData(usageOptions).catch(() => undefined)
-					: Promise.resolve(),
-			]);
-			return;
-		}
-
-		// Intent preloads warm the same cache before client-side navigation.
-		void context.queryClient.prefetchQuery(foldersOptions);
-		if (!isAdvancedSearch) void context.queryClient.prefetchQuery(treeOptions);
-		if (!isAdvancedSearch && canViewUsage) void context.queryClient.prefetchQuery(usageOptions);
-	},
+	loader: ({ context, params }) => preloadNativeFiles(context.queryClient, params),
 	pendingComponent: () => <RoutePending variant='page' />,
 	validateSearch: validateFilesWorkspaceSearch,
 	head: ({ params }) => ({
@@ -139,7 +101,7 @@ function FilesWorkspaceRoute() {
 	const search = Route.useSearch();
 	const navigate = useNavigate({ from: Route.fullPath });
 	const looseParams = useParams({ strict: false });
-	const crpc = useCRPC();
+	const crpc = useFilesAPI();
 	const { openFileSearch } = useCommandPalette();
 	const isBelowLg = useIsBelow(1024);
 	const isAdvancedSearch = useRouterState({
@@ -320,7 +282,7 @@ function FilesWorkspaceRoute() {
 	const fileTreeActions = canManage ? (
 		<div className='mb-4 flex w-full items-center gap-2'>
 			<Button
-				aria-label={m.files_new_folder_button()}
+				aria-label={m.files_upload_button()}
 				className='min-w-0 flex-1 px-2'
 				onClick={() => {
 					setMobileTreeOpen(false);
@@ -570,6 +532,16 @@ function FilesWorkspaceRoute() {
 											<FolderTreeIcon />
 										</Button>
 										<div className='min-w-0 flex-1'>{location}</div>
+										{canManage ? (
+											<Button
+												className='shrink-0 lg:hidden'
+												onClick={() => openFileAction('upload')}
+												size='sm'
+											>
+												<Upload className='size-3.5' />
+												{m.files_upload_button()}
+											</Button>
+										) : null}
 									</div>
 									<div
 										data-files-sidebar-main

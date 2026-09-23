@@ -6,7 +6,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { Check } from 'lucide-react';
 
 import { LANGUAGE_OPTIONS } from '@/components/language-selector';
-import { useCRPC } from '@/lib/convex/crpc';
+import { useProfileAPI } from '@/lib/convex/profile-api';
 import { titleMeta } from '@/lib/seo';
 import { cn } from '@/lib/utils';
 import { m } from '@/paraglide/messages.js';
@@ -18,7 +18,7 @@ export const Route = createFileRoute('/account/language/')({
 });
 
 function LanguageSettingsRoute() {
-	const crpc = useCRPC();
+	const crpc = useProfileAPI();
 	const updateLocale = useMutation(crpc.profile.updateLocale.mutationOptions());
 	const [error, setError] = useState<string | null>(null);
 	const locale = getLocale();

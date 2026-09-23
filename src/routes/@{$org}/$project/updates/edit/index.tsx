@@ -1,5 +1,5 @@
 import type { ColumnVisibilityState, RowSelectionState } from '@tanstack/react-table';
-import type { DeleteDialogState, StatusFilter } from './-types';
+import type { DashboardUpdate, DeleteDialogState, StatusFilter } from './-types';
 
 import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useSuspenseQuery } from '@tanstack/react-query';
@@ -44,8 +44,7 @@ import {
 	SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { useCRPC } from '@/lib/convex/crpc';
-import { crpcServer } from '@/lib/convex/crpc-server';
+import { updatesServer as crpcServer, useUpdatesAPI as useCRPC } from '@/lib/convex/updates-api';
 import { localizeError } from '@/lib/errors';
 import { projectTitle, titleMeta } from '@/lib/seo';
 import { cn } from '@/lib/utils';
@@ -155,10 +154,11 @@ function UpdatesDashboard({ canDelete, pageSize }: { canDelete: boolean; pageSiz
 		})
 	);
 
-	const projectId = projectData?.project?.id;
-	if (!projectId) {
+	const project = projectData?.project;
+	if (!project) {
 		throw notFound();
 	}
+	const projectId = project.id;
 
 	const [pagination, setPagination] = useState({
 		pageIndex: 0,
@@ -240,7 +240,7 @@ function UpdatesDashboard({ canDelete, pageSize }: { canDelete: boolean; pageSiz
 		[allRows, sheetUpdateId]
 	);
 
-	const rows = useMemo(
+	const rows = useMemo<Array<DashboardUpdate>>(
 		() => (statusFilter === 'all' ? allRows : allRows.filter((row) => row.status === statusFilter)),
 		[allRows, statusFilter]
 	);
@@ -248,7 +248,7 @@ function UpdatesDashboard({ canDelete, pageSize }: { canDelete: boolean; pageSiz
 	const selectedIds = useMemo(
 		() =>
 			Object.entries(rowSelection)
-				.filter(([, selected]) => selected)
+				.filter(([, selected]) => Boolean(selected))
 				.map(([id]) => id),
 		[rowSelection]
 	);
@@ -626,7 +626,9 @@ function UpdatesDashboard({ canDelete, pageSize }: { canDelete: boolean; pageSiz
 													checked={column.getIsVisible()}
 													onCheckedChange={(checked) => column.toggleVisibility(checked === true)}
 												/>
-												{COLUMN_LABELS[column.id]?.() ?? column.id}
+												{Object.hasOwn(COLUMN_LABELS, column.id)
+													? COLUMN_LABELS[column.id]()
+													: column.id}
 											</label>
 										))}
 									</div>
@@ -727,6 +729,7 @@ function UpdatesDashboard({ canDelete, pageSize }: { canDelete: boolean; pageSiz
 									{table.getHeaderGroups().map((headerGroup) => (
 										<tr key={headerGroup.id}>
 											{headerGroup.headers.map((header) => {
+												// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
 												const meta = header.column.columnDef.meta as
 													| { headerClassName?: string }
 													| undefined;
@@ -760,6 +763,7 @@ function UpdatesDashboard({ canDelete, pageSize }: { canDelete: boolean; pageSiz
 											data-state={row.getIsSelected() ? 'selected' : undefined}
 										>
 											{row.getVisibleCells().map((cell) => {
+												// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
 												const meta = cell.column.columnDef.meta as
 													| { cellClassName?: string }
 													| undefined;

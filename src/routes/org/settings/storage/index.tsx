@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 
 import { formatBytes, ProjectStorageTable } from '@/components/storage-usage';
-import { useCRPC } from '@/lib/convex/crpc';
+import { useFilesAPI } from '@/lib/convex/files-api';
 import { titleMeta } from '@/lib/seo';
 import * as m from '@/paraglide/messages.js';
 
@@ -15,7 +15,7 @@ export const Route = createFileRoute('/org/settings/storage/')({
 
 function OrganizationStorageSettings() {
 	const orgSlug = useSettingsOrgSlug();
-	const crpc = useCRPC();
+	const crpc = useFilesAPI();
 	const usage = useQuery(
 		crpc.file.getOrgUsage.queryOptions(
 			{ orgSlug: orgSlug ?? '' },

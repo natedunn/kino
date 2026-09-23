@@ -11,7 +11,7 @@ import { Folder5OpenOutline18 } from '@/icons/nucleo/Folder5OpenOutline18';
 import { House4Outline18 } from '@/icons/nucleo/House4Outline18';
 import { InterviewOutline18 } from '@/icons/nucleo/InterviewOutline18';
 import { Roadmap2Outline18 } from '@/icons/nucleo/Roadmap2Outline18';
-import { authClient } from '@/lib/auth/auth-client';
+import { useAuthSession } from '@/lib/auth/auth-client';
 import { toggleThemePreference } from '@/lib/theme';
 import * as m from '@/paraglide/messages.js';
 
@@ -50,7 +50,7 @@ export function CommandProvider({ children }: { children: ReactNode }) {
 	const pathname = useRouterState({ select: (s) => s.location.pathname });
 	// The command palette (and its ⌘K shortcut) is disabled on the auth pages.
 	const isAuthRoute = pathname === '/auth' || pathname.startsWith('/auth/');
-	const session = authClient.useSession();
+	const session = useAuthSession();
 	const orgParams = useParams({
 		from: '/@{$org}',
 		shouldThrow: false,
@@ -62,7 +62,7 @@ export function CommandProvider({ children }: { children: ReactNode }) {
 
 	const orgSlug = orgParams?.org;
 	const projectSlug = projectParams?.project;
-	const isAuthenticated = !!session.data?.user;
+	const isAuthenticated = !!session.user;
 	const preloadPalette = useCallback(() => {
 		void loadCommandPaletteModule().then((module) => {
 			setCommandPalette((current: LoadedCommandPalette | null) => current ?? module.CommandPalette);

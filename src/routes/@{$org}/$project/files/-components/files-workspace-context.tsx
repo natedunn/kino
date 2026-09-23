@@ -1,9 +1,9 @@
-import type { ApiOutputs } from '@convex/api';
+import type { FileFolder } from '@/lib/convex/files-api';
 import type { ReactNode } from 'react';
 
 import { createContext, useContext } from 'react';
 
-export type FileFolder = ApiOutputs['file']['listFolders'][number];
+export type { FileFolder };
 
 export type FilesWorkspaceContextValue = {
 	canManage: boolean;

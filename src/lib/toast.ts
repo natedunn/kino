@@ -1,11 +1,7 @@
 import type { ReactNode } from 'react';
+import type { ExternalToast, toast as SonnerToast } from 'sonner';
 
-type SonnerModule = typeof import('sonner');
-type ExternalToast = SonnerModule['toast'] extends {
-	success(message: ReactNode, data?: infer T): unknown;
-}
-	? T
-	: never;
+type SonnerModule = { toast: typeof SonnerToast };
 
 let sonnerModulePromise: Promise<SonnerModule> | null = null;
 

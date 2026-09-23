@@ -1,3 +1,4 @@
+import { convexQuery } from '@convex-dev/react-query';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { CheckCircle2, GitBranch, RefreshCw } from 'lucide-react';
@@ -5,8 +6,7 @@ import { CheckCircle2, GitBranch, RefreshCw } from 'lucide-react';
 import { InlineAlert } from '@/components/inline-alert';
 import { EmptyState } from '@/components/kino/common';
 import { Button } from '@/components/ui/button';
-import { useCRPC } from '@/lib/convex/crpc';
-import { crpcServer } from '@/lib/convex/crpc-server';
+import { relayServer as crpcServer, useRelayAPI as useCRPC } from '@/lib/convex/relay-api';
 import { localizeGitHubError } from '@/lib/i18n/github-errors';
 import { titleMeta } from '@/lib/seo';
 import * as m from '@/paraglide/messages.js';
@@ -14,6 +14,7 @@ import * as m from '@/paraglide/messages.js';
 import { SettingsSkeleton } from '../-components/settings-skeleton';
 import { useDelayedFlag } from '../-components/use-delayed-flag';
 import { useSettingsOrgSlug } from '../-components/use-settings-org';
+import { api as nativeApi } from '../../../../../convex/native/_generated/api';
 
 type IntegrationsSearch = { github?: string };
 
@@ -36,17 +37,23 @@ export const Route = createFileRoute('/org/settings/integrations/')({
 	component: IntegrationsSettingsRoute,
 });
 
+function useNativeIntegrationOrg(slug: string | undefined) {
+	const q = useQuery({
+		...convexQuery(nativeApi.organizations.getBySlug, { slug: slug ?? '' }),
+		enabled: !!slug,
+	});
+	return {
+		isLoading: q.isLoading,
+		data: q.data ? { org: q.data, permissions: q.data.permissions } : null,
+	};
+}
 function IntegrationsSettingsRoute() {
 	const orgSlug = useSettingsOrgSlug();
 	const search = Route.useSearch();
 	const crpc = useCRPC();
 
-	const orgQuery = useQuery(
-		crpc.org.getDetails.queryOptions(
-			{ slug: orgSlug ?? '' },
-			{ enabled: !!orgSlug, skipUnauth: true }
-		)
-	);
+	const orgQuery = useNativeIntegrationOrg(orgSlug);
+
 	// Only needs the slug (the loader warms this same query), so run it in
 	// parallel with the org details query instead of waterfalling behind it.
 	const integrationQuery = useQuery(
@@ -160,22 +167,22 @@ function IntegrationsSettingsRoute() {
 								<GitBranch className='size-4' />
 								{hasKnownInstallations ? m.org_github_manage() : m.org_github_install()}
 							</Button>
-							{hasKnownInstallations ? (
-								<Button
-									disabled={refreshInstallations.isPending}
-									onClick={() =>
-										refreshInstallations.mutate({
-											callbackTargetUrl: `${window.location.origin}/api/github/callback`,
-											orgSlug,
-										})
-									}
-									type='button'
-									variant='outline'
-								>
-									<RefreshCw className='size-4' />
-									{m.github_refresh_accounts()}
-								</Button>
-							) : null}
+							<Button
+								disabled={refreshInstallations.isPending}
+								onClick={() =>
+									refreshInstallations.mutate({
+										callbackTargetUrl: `${window.location.origin}/api/github/callback`,
+										orgSlug,
+									})
+								}
+								type='button'
+								variant='outline'
+							>
+								<RefreshCw className='size-4' />
+								{hasKnownInstallations
+									? m.github_refresh_accounts()
+									: m.org_github_connect_existing()}
+							</Button>
 						</div>
 					</section>
 
@@ -217,7 +224,7 @@ function IntegrationsSettingsRoute() {
 										>
 											<div className='flex items-center gap-3'>
 												<div className='flex size-9 items-center justify-center rounded-lg border bg-background text-sm font-bold'>
-													{installation.accountLogin[0]?.toUpperCase()}
+													{installation.accountLogin.at(0)?.toUpperCase()}
 												</div>
 												<div className='min-w-0 flex-1'>
 													<div className='truncate text-sm font-medium'>

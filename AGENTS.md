@@ -3,7 +3,7 @@
 This project uses [Convex](https://convex.dev) as its backend.
 
 When working on Convex code, **always read
-`convex/functions/_generated/ai/guidelines.md` first** for important guidelines on
+`convex/native/_generated/ai/guidelines.md` first** for important guidelines on
 how to correctly use Convex APIs and patterns. The file contains rules that
 override what you may have learned about Convex from training data.
 
@@ -15,7 +15,7 @@ Convex agent skills for common tasks can be installed by running
 ## Pull request verification
 
 Before opening or updating a pull request, run `pnpm run verify:pr`. This
-regenerates the kitcn and Convex application files, fails if the committed
+regenerates the Convex application files, fails if the committed
 generated output is stale, and then runs the TypeScript checks. If generation
 changes files, review and commit those files before rerunning the command.
 
@@ -34,7 +34,7 @@ When working on anything involving GitHub auth (login), the Kino Relay GitHub
 App (org/repo sync), webhooks, or `workers/gateway/`, **read
 `docs/github-environments.md` first**. It documents the Auth/Relay/Gateway
 naming scheme, the per-tier architecture, and a set of invariants (better-auth
-version locking, the load-bearing redirect rewrite, bundler traps, Convex
+gateway pinning, the load-bearing redirect rewrite, bundler traps, Convex
 schema-vs-prod-data validation) where violations pass local tests but break
 deployed OAuth flows.
 
@@ -56,7 +56,7 @@ must ship with complete `en-US`, `es-419`, and `zh-Hans` messages in the same PR
 Do not translate user-generated content, internal developer errors, admin/UI-lab
 copy, or a deliberately deferred placeholder surface.
 
-When changing Better Auth/kitcn versions or gateway auth, matching package files
+When changing gateway auth, matching package files
 is not deployment verification. The app release does not deploy the standalone
 OAuth gateways. Follow the rollout order in `docs/github-environments.md`, check
 the deployed gateway's `/health` auth version, and verify a complete OAuth return

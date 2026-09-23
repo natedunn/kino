@@ -4,6 +4,7 @@ import { Calendar, Heart, MessageSquare } from 'lucide-react';
 
 import { formatInlineCode } from '@/components/editor/format-inline-code';
 import { sanitizeEditorContent } from '@/components/editor/sanitize-content';
+import { NativeFileImage } from '@/components/files/native-files';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -20,18 +21,20 @@ function UpdateCardContent({ content }: { content: string }) {
 
 	if (!isHTML) {
 		return (
-			<div className='text-base leading-8 whitespace-pre-wrap break-words text-muted-foreground'>
+			<div className='text-base leading-8 break-words whitespace-pre-wrap text-muted-foreground'>
 				{content}
 			</div>
 		);
 	}
 
 	const sanitizedContent = sanitizeEditorContent(content);
-	const formattedContent = sanitizedContent.includes('<pre') ? sanitizedContent : formatInlineCode(sanitizedContent);
+	const formattedContent = sanitizedContent.includes('<pre')
+		? sanitizedContent
+		: formatInlineCode(sanitizedContent);
 
 	return (
 		<div
-			className='markdown-prose max-w-none break-words pb-1 text-muted-foreground [&_pre]:overflow-x-auto [&_pre]:rounded-xl [&_pre]:border [&_pre]:border-border/70 [&_pre]:bg-card/70'
+			className='markdown-prose max-w-none pb-1 break-words text-muted-foreground [&_pre]:overflow-x-auto [&_pre]:rounded-xl [&_pre]:border [&_pre]:border-border/70 [&_pre]:bg-card/70'
 			dangerouslySetInnerHTML={{ __html: formattedContent }}
 		/>
 	);
@@ -90,26 +93,24 @@ function UpdateCardImpl({
 
 	const isSearchVariant = variant === 'search';
 	const compactPreviewSource = (contentPreview ?? '').trim();
-	const compactPreview = compactPreviewSource.length > SEARCH_PREVIEW_CHARS
-		? `${compactPreviewSource.slice(0, SEARCH_PREVIEW_CHARS).trimEnd()}...`
-		: compactPreviewSource;
+	const compactPreview =
+		compactPreviewSource.length > SEARCH_PREVIEW_CHARS
+			? `${compactPreviewSource.slice(0, SEARCH_PREVIEW_CHARS).trimEnd()}...`
+			: compactPreviewSource;
 	const isCompactPreviewTruncated =
 		contentPreviewIsTruncated || compactPreviewSource.length > SEARCH_PREVIEW_CHARS;
 
 	return (
 		<li className={cn('relative flex min-w-0', className)}>
 			<div
-				className={cn(
-					'relative min-w-0 w-full',
-					isSearchVariant ? 'px-4 py-7 md:px-6' : 'py-10'
-				)}
+				className={cn('relative w-full min-w-0', isSearchVariant ? 'px-4 py-7 md:px-6' : 'py-10')}
 			>
 				{!isLast ? (
 					<div
 						aria-hidden='true'
 						className={cn(
 							'absolute right-0 bottom-0 left-0 border-b',
-							!isSearchVariant && 'lg:-left-7 md:-right-8.25'
+							!isSearchVariant && 'md:-right-8.25 lg:-left-7'
 						)}
 					/>
 				) : null}
@@ -139,7 +140,7 @@ function UpdateCardImpl({
 
 				<h3
 					className={cn(
-						'min-w-0 break-words font-semibold',
+						'min-w-0 font-semibold break-words',
 						isSearchVariant ? 'mb-4 text-[1.9rem] leading-tight' : 'mb-6 text-3xl'
 					)}
 				>
@@ -152,9 +153,17 @@ function UpdateCardImpl({
 					</Link>
 				</h3>
 
-				{coverImageUrl ? (
+				{update.coverAssetId || coverImageUrl ? (
 					<div className='mb-6 w-full overflow-hidden rounded-lg bg-muted'>
-						<img alt={title} className='h-full w-full object-cover' src={coverImageUrl} />
+						{update.coverAssetId ? (
+							<NativeFileImage
+								assetId={update.coverAssetId}
+								alt={title}
+								className='h-full w-full object-cover'
+							/>
+						) : (
+							<img alt={title} className='h-full w-full object-cover' src={coverImageUrl} />
+						)}
 					</div>
 				) : null}
 
@@ -179,7 +188,12 @@ function UpdateCardImpl({
 					</div>
 				) : null}
 
-				<div className={cn('flex min-w-0 items-center justify-between gap-6', isSearchVariant ? 'mt-5' : 'mt-6')}>
+				<div
+					className={cn(
+						'flex min-w-0 items-center justify-between gap-6',
+						isSearchVariant ? 'mt-5' : 'mt-6'
+					)}
+				>
 					<div className='flex min-w-0 items-center gap-6'>
 						<button
 							className={cn(

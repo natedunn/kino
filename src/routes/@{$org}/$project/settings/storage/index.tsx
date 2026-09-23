@@ -2,8 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, notFound } from '@tanstack/react-router';
 
 import { StorageBreakdown, StorageSummary } from '@/components/storage-usage';
-import { useCRPC } from '@/lib/convex/crpc';
-import { crpcServer } from '@/lib/convex/crpc-server';
+import { nativeFilesReads, useFilesAPI } from '@/lib/convex/files-api';
 import { titleMeta } from '@/lib/seo';
 import * as m from '@/paraglide/messages.js';
 
@@ -11,7 +10,10 @@ export const Route = createFileRoute('/@{$org}/$project/settings/storage/')({
 	head: () => ({ meta: [titleMeta([m.meta_storage_settings()])] }),
 	loader: async ({ context, params }) => {
 		const data = await context.queryClient.ensureQueryData(
-			crpcServer.project.getDetails.queryOptions({ orgSlug: params.org, slug: params.project })
+			nativeFilesReads.project.getDetails.queryOptions({
+				orgSlug: params.org,
+				slug: params.project,
+			})
 		);
 		if (!data?.project) throw notFound();
 	},
@@ -20,11 +22,11 @@ export const Route = createFileRoute('/@{$org}/$project/settings/storage/')({
 
 function ProjectStorageSettings() {
 	const params = Route.useParams();
-	const crpc = useCRPC();
+	const crpc = useFilesAPI();
 	const details = useQuery(
 		crpc.project.getDetails.queryOptions({ orgSlug: params.org, slug: params.project })
 	);
-	const projectId = details.data?.project?.id ?? '';
+	const projectId = details.data?.project.id ?? '';
 	const usage = useQuery(
 		crpc.file.getProjectUsage.queryOptions(
 			{ projectId },

@@ -1,8 +1,8 @@
 'use client';
 
-import type { ApiOutputs } from '@convex/api';
+import type { FileDetail } from '@/lib/convex/files-api';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { getFileFormatPolicy } from '@convex/files';
 import hljs from 'highlight.js/lib/core';
 import bash from 'highlight.js/lib/languages/bash';
@@ -27,8 +27,6 @@ import * as m from '@/paraglide/messages.js';
 
 import css from 'highlight.js/lib/languages/css';
 
-type FileDetail = NonNullable<ApiOutputs['file']['getFileDetail']>;
-
 hljs.registerLanguage('bash', bash);
 hljs.registerLanguage('css', css);
 hljs.registerLanguage('go', go);
@@ -46,6 +44,7 @@ hljs.registerLanguage('yaml', yaml);
 
 export function FilePreviewBody({ file }: { file: FileDetail }) {
 	const [imageFailed, setImageFailed] = useState(false);
+	useEffect(() => setImageFailed(false), [file.deliveryUrl]);
 	const preview = getFileFormatPolicy(file.extension)?.preview ?? 'download';
 	return (
 		<div
@@ -61,7 +60,7 @@ export function FilePreviewBody({ file }: { file: FileDetail }) {
 					alt={file.name}
 					className='max-h-[75vh] max-w-full object-contain'
 					onError={() => setImageFailed(true)}
-					src={file.deliveryUrl}
+					src={file.deliveryUrl || undefined}
 				/>
 			) : preview === 'video' ? (
 				<video className='max-h-[75vh] w-full bg-black' controls preload='metadata'>

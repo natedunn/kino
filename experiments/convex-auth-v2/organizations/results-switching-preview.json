@@ -1,0 +1,16 @@
+{
+  "checkedAt": "2026-09-21T19:46:52.533Z",
+  "origin": "https://kino-auth-v2-proof-c318c09d.hello-fc8.workers.dev",
+  "checks": [
+    "real preview session for synthetic fixture user",
+    "organization-specific query keys",
+    "hover subscription reused on switch",
+    "tabs select organizations independently",
+    "live role demotion in one organization leaves the other unchanged",
+    "revocation removes data and navigation in both tabs",
+    "back navigation has no observed stale-data flash",
+    "revoked SSR and reload contain no beta data",
+    "revoked writes denied while other organization writes succeed",
+    "no browser exceptions"
+  ]
+}

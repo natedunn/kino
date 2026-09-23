@@ -1,0 +1,25 @@
+{
+	"$schema": "../node_modules/wrangler/config-schema.json",
+	"name": "kino-v2-gateway-proof-c318c09d",
+	"account_id": "fc87b44f5832b25053fec2efb19fc208",
+	"main": "cloud-entry.ts",
+	"compatibility_date": "2026-05-22",
+	"workers_dev": true,
+	"observability": {
+		"enabled": false,
+	},
+	"durable_objects": {
+		"bindings": [
+			{
+				"name": "OAUTH_STATES",
+				"class_name": "OAuthState",
+			},
+		],
+	},
+	"migrations": [
+		{
+			"tag": "opaque-state-v1",
+			"new_sqlite_classes": ["OAuthState"],
+		},
+	],
+}

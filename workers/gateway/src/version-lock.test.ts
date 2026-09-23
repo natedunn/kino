@@ -2,23 +2,25 @@ import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { oAuthProxy } from 'better-auth/plugins';
 import { describe, expect, it } from 'vitest';
 
 const testDir = dirname(fileURLToPath(import.meta.url));
 
 /**
- * The gateway's better-auth must exactly match the app's better-auth (which is
- * itself pinned by kitcn's exact peer dependency). The oAuthProxy state and
- * profile payloads are symmetric-encrypted; both sides must agree on formats.
+ * The gateway keeps Better Auth as a standalone, exact dependency while the
+ * legacy oAuthProxy route remains available during the native-auth rollout.
+ * This test deliberately has no dependency on the root app package.
  *
- * If this fails after a kitcn upgrade: bump `better-auth` here to the version
- * kitcn now pins, reinstall, and redeploy the gateway before (or with) the app.
+ * If this fails after a gateway dependency update, regenerate the gateway's
+ * standalone lockfile and deploy the gateway before relying on its legacy route.
  */
 describe('better-auth version lock', () => {
-	it("matches the app's better-auth version", () => {
+	it('uses the exact version declared by the standalone gateway package', () => {
 		const gatewayPkg = JSON.parse(readFileSync(resolve(testDir, '../package.json'), 'utf8'));
-		const appPkg = JSON.parse(readFileSync(resolve(testDir, '../../../package.json'), 'utf8'));
+		const declaredVersion = gatewayPkg.dependencies['better-auth'];
 
-		expect(gatewayPkg.dependencies['better-auth']).toBe(appPkg.dependencies['better-auth']);
+		expect(declaredVersion).toMatch(/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/);
+		expect(oAuthProxy().version).toBe(declaredVersion);
 	});
 });

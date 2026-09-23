@@ -1,133 +1,161 @@
+import type { FunctionReturnType } from 'convex/server';
+
+import { convexQuery } from '@convex-dev/react-query';
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import {
 	Activity,
 	ArrowRight,
-	CheckCircle2,
 	Clock,
 	FolderOpen,
 	Globe,
 	Lock,
 	Settings,
 	Users,
-	Zap,
 } from 'lucide-react';
 
 import { EmptyState } from '@/components/kino/common';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useCRPC } from '@/lib/convex/crpc';
-import { crpcServer } from '@/lib/convex/crpc-server';
 import { titleFromSlug, titleMeta } from '@/lib/seo';
+import * as m from '@/paraglide/messages.js';
+import { getLocale } from '@/paraglide/runtime.js';
 
+import { api as nativeApi } from '../../../convex/native/_generated/api';
 import { NoPublicProjects } from './-components/no-public-projects';
 import { OrgProjects } from './-components/org-projects';
+
+type OverviewOrganization = NonNullable<
+	FunctionReturnType<typeof nativeApi.organizations.getBySlug>
+>;
+type OverviewProject = FunctionReturnType<typeof nativeApi.projects.listByOrganization>[number];
+type OverviewMember = FunctionReturnType<
+	typeof nativeApi.organizations.listMembers
+>['members'][number];
+type OverviewSummary = NonNullable<FunctionReturnType<typeof nativeApi.organizationOverview.get>>;
 
 export const Route = createFileRoute('/@{$org}/')({
 	head: ({ params }) => ({
 		meta: [titleMeta([titleFromSlug(params.org)])],
 	}),
 	loader: async ({ context, params }) => {
-		const orgData = await context.queryClient.ensureQueryData(
-			crpcServer.org.getDetails.queryOptions({
-				slug: params.org,
-			})
+		const organization = await context.queryClient.ensureQueryData(
+			convexQuery(nativeApi.organizations.getBySlug, { slug: params.org })
 		);
-
-		await context.queryClient.ensureQueryData(
-			crpcServer.project.getManyByOrg.queryOptions({
-				limit: 24,
-				orgSlug: params.org,
-			})
-		);
-
-		if (orgData?.permissions.canCreate) {
-			await context.queryClient.ensureQueryData(
-				crpcServer.org.getMyPermission.queryOptions({ slug: params.org }, { skipUnauth: true })
-			);
+		await Promise.all([
+			context.queryClient.ensureQueryData(convexQuery(nativeApi.organizations.listMine, {})),
+			organization
+				? context.queryClient.ensureQueryData(
+						convexQuery(nativeApi.projects.listByOrganization, {
+							organizationId: organization.id,
+						})
+					)
+				: Promise.resolve(),
+			organization
+				? context.queryClient.ensureQueryData(
+						convexQuery(nativeApi.organizationOverview.get, { organizationId: organization.id })
+					)
+				: Promise.resolve(),
+		]);
+		if (organization?.permissions.canManageMembers) {
+			await Promise.all([
+				context.queryClient.ensureQueryData(
+					convexQuery(nativeApi.organizations.listMembers, {
+						organizationId: organization.id,
+					})
+				),
+				context.queryClient.ensureQueryData(
+					convexQuery(nativeApi.invitations.listPending, {
+						organizationId: organization.id,
+					})
+				),
+			]);
 		}
 	},
 	component: OrganizationRoute,
 });
 
-const PLACEHOLDER_ACTIVITY = [
-	{
-		id: 1,
-		label: 'Issue #42 closed',
-		sub: 'Bug: login redirect loop',
-		time: '2h ago',
-		color: 'bg-green-500',
-	},
-	{
-		id: 2,
-		label: 'New project created',
-		sub: 'mobile-app',
-		time: 'Yesterday',
-		color: 'bg-primary',
-	},
-	{
-		id: 3,
-		label: 'Member joined',
-		sub: '@alex joined the org',
-		time: '3 days ago',
-		color: 'bg-violet-500',
-	},
-	{
-		id: 4,
-		label: 'Issue #38 closed',
-		sub: 'Feat: dark mode toggle',
-		time: '4 days ago',
-		color: 'bg-green-500',
-	},
-	{
-		id: 5,
-		label: 'Issue #31 opened',
-		sub: 'Feat: API rate limiting',
-		time: '1 week ago',
-		color: 'bg-amber-500',
-	},
-];
-
 function OrganizationRoute() {
-	const params = Route.useParams();
-	const crpc = useCRPC();
-	const { data: orgData } = useSuspenseQuery(
-		crpc.org.getDetails.queryOptions({
-			slug: params.org,
-		})
-	);
-	const { data: projectsData } = useSuspenseQuery(
-		crpc.project.getManyByOrg.queryOptions({
-			limit: 24,
-			orgSlug: params.org,
-		})
-	);
-	const limitsQuery = useQuery(
-		crpc.org.getMyPermission.queryOptions(
-			{ slug: params.org },
-			{ enabled: !!orgData?.permissions.canCreate, skipUnauth: true }
-		)
-	);
-	const membersQuery = useQuery(
-		crpc.orgMember.listMembers.queryOptions({ slug: params.org }, { skipUnauth: true })
-	);
-	const members = membersQuery.data?.members ?? [];
-	const canManageMembers = membersQuery.data?.canManage ?? false;
-	const projects = projectsData ?? [];
+	return <NativeOrganizationRoute />;
+}
 
-	if (!orgData?.org) {
+function NativeOrganizationRoute() {
+	const params = Route.useParams();
+	const { data: organization } = useSuspenseQuery(
+		convexQuery(nativeApi.organizations.getBySlug, { slug: params.org })
+	);
+	if (!organization) {
 		return (
 			<div className='container py-10'>
 				<EmptyState
-					title='Organization not available'
-					description='This organization either does not exist or your session cannot view it.'
+					title={m.org_members_unavailable()}
+					description={m.org_members_unavailable_description()}
 				/>
 			</div>
 		);
 	}
+	return <NativeOrganizationContent organization={organization} />;
+}
 
-	const isPublic = orgData.org.visibility === 'public';
+function NativeOrganizationContent({
+	organization,
+}: {
+	organization: NonNullable<FunctionReturnType<typeof nativeApi.organizations.getBySlug>>;
+}) {
+	const { data: projects } = useSuspenseQuery(
+		convexQuery(nativeApi.projects.listByOrganization, { organizationId: organization.id })
+	);
+	const { data: summary } = useSuspenseQuery(
+		convexQuery(nativeApi.organizationOverview.get, { organizationId: organization.id })
+	);
+	const { data: creationPermission } = useQuery(
+		convexQuery(nativeApi.policy.getMyProjectCreationPermission, { orgSlug: organization.slug })
+	);
+	const { data: memberData } = useQuery({
+		...convexQuery(nativeApi.organizations.listMembers, { organizationId: organization.id }),
+		enabled: organization.permissions.canManageMembers,
+	});
+	return (
+		<OrganizationOverview
+			organization={organization}
+			projects={projects}
+			summary={summary}
+			members={organization.permissions.canManageMembers ? (memberData?.members ?? []) : []}
+			orgSlug={organization.slug}
+			canCreate={organization.permissions.canCreateProjects}
+			canEdit={organization.permissions.canEdit}
+			canManageMembers={organization.permissions.canManageMembers}
+			canAddProjects={creationPermission?.canAddProjects ?? false}
+		/>
+	);
+}
+
+function OrganizationOverview({
+	organization,
+	projects,
+	summary,
+	members,
+	orgSlug,
+	canCreate,
+	canEdit,
+	canManageMembers,
+	canAddProjects,
+}: {
+	organization: OverviewOrganization;
+	projects: Array<OverviewProject>;
+	summary: OverviewSummary | null;
+	members: Array<OverviewMember>;
+	orgSlug: string;
+	canCreate: boolean;
+	canEdit: boolean;
+	canManageMembers: boolean;
+	canAddProjects: boolean;
+}) {
+	const isPublic = organization.visibility === 'public';
+	const numberFormatter = new Intl.NumberFormat(getLocale());
+	const memberCount = summary?.memberCount;
+	const projectHistory = [...projects].sort((a, b) => b.createdAt - a.createdAt).slice(0, 5);
 
 	return (
 		<div>
@@ -157,9 +185,9 @@ function OrganizationRoute() {
 									className='h-16 w-16 rounded-full shadow-lg shadow-primary/20 md:h-20 md:w-20'
 									fallbackAnimate='always'
 									fallbackKind='org-initial'
-									fallbackName={orgData.org.slug}
+									fallbackName={organization.slug}
 								>
-									<AvatarImage alt={orgData.org.name} src={orgData.org.logo ?? undefined} />
+									<AvatarImage alt={organization.name} src={organization.logo ?? undefined} />
 									<AvatarFallback />
 								</Avatar>
 								{/* Online dot */}
@@ -171,35 +199,36 @@ function OrganizationRoute() {
 							<div className='flex flex-col gap-1.5'>
 								<div className='flex flex-wrap items-center gap-2.5'>
 									<h1 className='text-2xl font-bold tracking-tight md:text-3xl'>
-										{orgData.org.name}
+										{organization.name}
 									</h1>
 									<Badge variant='outline' className='gap-1 text-xs'>
 										{isPublic ? <Globe className='size-3' /> : <Lock className='size-3' />}
-										{isPublic ? 'Public' : 'Private'}
+										{isPublic ? m.project_overview_public() : m.project_overview_private()}
 									</Badge>
 								</div>
-								<p className='text-sm text-muted-foreground'>
-									{/* Placeholder description — swap for real org.description when available */}
-									Building the future, one project at a time.
-								</p>
+								<p className='text-sm text-muted-foreground'>{m.org_overview_description()}</p>
 								<div className='mt-1 flex flex-wrap items-center gap-4 text-sm text-muted-foreground'>
 									<span className='flex items-center gap-1.5'>
 										<Users className='size-3.5' />
-										{members.length} member{members.length === 1 ? '' : 's'}
+										{memberCount === undefined
+											? m.org_overview_count_unavailable()
+											: m.org_overview_member_count({ count: numberFormatter.format(memberCount) })}
 									</span>
 									<span className='flex items-center gap-1.5'>
 										<FolderOpen className='size-3.5' />
-										{projects.length} project{projects.length !== 1 ? 's' : ''}
+										{m.org_overview_project_count({
+											count: numberFormatter.format(projects.length),
+										})}
 									</span>
 								</div>
 							</div>
 						</div>
 
-						{orgData.permissions.canEdit ? (
+						{canEdit ? (
 							<Button asChild variant='outline' className='shrink-0 self-start'>
-								<Link search={{ org: params.org }} to='/org/settings'>
+								<Link search={{ org: orgSlug }} to='/org/settings'>
 									<Settings className='size-4' />
-									Settings
+									{m.project_overview_settings()}
 								</Link>
 							</Button>
 						) : null}
@@ -214,25 +243,13 @@ function OrganizationRoute() {
 						<div className='flex divide-x divide-border overflow-x-auto'>
 							<StatCell
 								icon={<FolderOpen className='size-4 text-primary' />}
-								value={projects.length}
-								label='Active projects'
-								real
+								value={numberFormatter.format(projects.length)}
+								label={m.org_overview_visible_projects()}
 							/>
 							<StatCell
 								icon={<Users className='size-4 text-violet-500' />}
-								value={members.length}
-								label='Team members'
-								real
-							/>
-							<StatCell
-								icon={<CheckCircle2 className='size-4 text-green-500' />}
-								value={126}
-								label='Closed this month'
-							/>
-							<StatCell
-								icon={<Zap className='size-4 text-amber-500' />}
-								value={14}
-								label='Open issues'
+								value={memberCount === undefined ? '—' : numberFormatter.format(memberCount)}
+								label={m.org_overview_team_members()}
 							/>
 						</div>
 					</div>
@@ -242,29 +259,25 @@ function OrganizationRoute() {
 			{/* ── Body ──────────────────────────────────────────── */}
 			<div className='container py-10'>
 				{projects.length === 0 ? (
-					<NoPublicProjects
-						canCreate={orgData.permissions.canCreate}
-						orgName={orgData.org.name}
-						orgSlug={params.org}
-					/>
+					<NoPublicProjects canCreate={canCreate} orgName={organization.name} orgSlug={orgSlug} />
 				) : (
 					<div className='grid grid-cols-1 gap-10 md:grid-cols-12'>
 						{/* ── Projects ───────────────────────────────── */}
 						<section className='col-span-1 md:col-span-8'>
 							<div className='mb-5 flex items-center justify-between'>
-								<h2 className='text-lg font-semibold'>Projects</h2>
-								{orgData.permissions.canCreate && limitsQuery.data?.canAddProjects ? (
+								<h2 className='text-lg font-semibold'>{m.org_overview_projects()}</h2>
+								{canCreate && canAddProjects ? (
 									<Link
 										className='inline-flex items-center gap-1 text-sm text-primary underline decoration-primary/40 decoration-2 underline-offset-2 hover:decoration-primary/70'
-										params={{ org: params.org }}
+										params={{ org: orgSlug }}
 										to='/@{$org}/create-project'
 									>
-										New project
+										{m.org_overview_new_project()}
 										<ArrowRight className='size-3.5' />
 									</Link>
 								) : null}
 							</div>
-							<OrgProjects orgSlug={params.org} projects={projects} />
+							<OrgProjects orgSlug={orgSlug} projects={projects} />
 						</section>
 
 						{/* ── Sidebar ────────────────────────────────── */}
@@ -272,44 +285,51 @@ function OrganizationRoute() {
 							{/* Members */}
 							<div>
 								<div className='mb-4 flex items-center justify-between'>
-									<h2 className='text-lg font-semibold'>Members</h2>
+									<h2 className='text-lg font-semibold'>{m.project_overview_members()}</h2>
 									{canManageMembers ? (
 										<Link
 											className='text-sm text-primary underline decoration-primary/40 decoration-2 underline-offset-2 hover:decoration-primary/70'
-											search={{ org: params.org }}
+											search={{ org: orgSlug }}
 											to='/org/settings/members'
 										>
-											Manage
+											{m.project_overview_manage()}
 										</Link>
 									) : (
-										<span className='text-sm text-muted-foreground'>{members.length} total</span>
+										<span className='text-sm text-muted-foreground'>
+											{memberCount === undefined
+												? m.org_overview_count_unavailable()
+												: m.org_overview_total_count({
+														count: numberFormatter.format(memberCount),
+													})}
+										</span>
 									)}
 								</div>
 								{members.length === 0 ? (
-									<p className='text-sm text-muted-foreground'>No members to show.</p>
+									<p className='text-sm text-muted-foreground'>
+										{memberCount === 0
+											? m.project_overview_no_members()
+											: m.org_overview_roster_restricted()}
+									</p>
 								) : (
 									<div className='flex flex-col gap-2'>
-										{members.slice(0, 5).map((m) => (
-											<div key={m.id} className='flex items-center gap-3 rounded-lg px-1 py-1'>
-												<Avatar
-													className='size-8 shrink-0'
-													fallbackName={m.user.username ?? m.user.email}
-												>
-													{m.user.image ? (
+										{members.slice(0, 5).map((member) => (
+											<div key={member.id} className='flex items-center gap-3 rounded-lg px-1 py-1'>
+												<Avatar className='size-8 shrink-0' fallbackName={member.user.username}>
+													{member.user.image ? (
 														<AvatarImage
-															alt={m.user.name || m.user.username || m.user.email}
-															src={m.user.image}
+															alt={member.user.name || member.user.username || member.user.email}
+															src={member.user.image}
 														/>
 													) : null}
 													<AvatarFallback />
 												</Avatar>
 												<div className='flex min-w-0 flex-1 items-center justify-between gap-2'>
-													<span className='truncate text-sm font-medium'>{m.user.name}</span>
+													<span className='truncate text-sm font-medium'>{member.user.name}</span>
 													<Badge
 														variant='outline'
 														className='shrink-0 text-[10px] text-muted-foreground capitalize'
 													>
-														{m.role}
+														{m[`project_overview_${member.role}`]()}
 													</Badge>
 												</div>
 											</div>
@@ -317,45 +337,63 @@ function OrganizationRoute() {
 										{members.length > 5 && canManageMembers ? (
 											<Link
 												className='mt-1 text-left text-sm text-muted-foreground transition-colors hover:text-foreground'
-												search={{ org: params.org }}
+												search={{ org: orgSlug }}
 												to='/org/settings/members'
 											>
-												+{members.length - 5} more members
+												{m.project_overview_more_members({
+													count: numberFormatter.format(members.length - 5),
+												})}
 											</Link>
 										) : members.length > 5 ? (
 											<span className='mt-1 text-sm text-muted-foreground'>
-												+{members.length - 5} more members
+												{m.project_overview_more_members({
+													count: numberFormatter.format(members.length - 5),
+												})}
 											</span>
 										) : null}
 									</div>
 								)}
 							</div>
 
-							{/* Recent Activity */}
+							{/* History of projects shown on this page */}
 							<div>
 								<div className='mb-4 flex items-center gap-2'>
-									<h2 className='text-lg font-semibold'>Activity</h2>
+									<h2 className='text-lg font-semibold'>{m.org_overview_project_history()}</h2>
 									<Activity className='size-4 text-muted-foreground' />
 								</div>
-								<div className='relative flex flex-col gap-0'>
-									{/* Vertical line */}
-									<div className='absolute top-0 bottom-0 left-[7px] w-px bg-border' />
-									{PLACEHOLDER_ACTIVITY.map((item) => (
-										<div key={item.id} className='relative flex gap-4 pb-5 last:pb-0'>
-											<div
-												className={`relative z-10 mt-1 h-3.5 w-3.5 shrink-0 rounded-full ring-2 ring-background ${item.color}`}
-											/>
-											<div className='flex min-w-0 flex-col gap-0.5'>
-												<span className='text-sm leading-snug font-medium'>{item.label}</span>
-												<span className='truncate text-xs text-muted-foreground'>{item.sub}</span>
-												<span className='flex items-center gap-1 text-[11px] text-muted-foreground/60'>
-													<Clock className='size-2.5' />
-													{item.time}
-												</span>
+								{projectHistory.length > 0 && (
+									<div className='relative flex flex-col gap-0'>
+										<div className='absolute top-0 bottom-0 left-[7px] w-px bg-border' />
+										{projectHistory.map((project) => (
+											<div key={project.id} className='relative flex gap-4 pb-5 last:pb-0'>
+												<div className='relative z-10 mt-1 h-3.5 w-3.5 shrink-0 rounded-full bg-primary ring-2 ring-background' />
+												<div className='flex min-w-0 flex-col gap-0.5'>
+													<span className='text-sm leading-snug font-medium'>
+														{m.org_overview_project_created()}
+													</span>
+													<Link
+														className='truncate text-xs text-primary hover:underline'
+														params={{ org: orgSlug, project: project.slug }}
+														to='/@{$org}/$project'
+													>
+														{project.name}
+													</Link>
+													<span className='flex items-center gap-1 text-[11px] text-muted-foreground/60'>
+														<Clock className='size-2.5' />
+														{new Intl.DateTimeFormat(getLocale(), { dateStyle: 'medium' }).format(
+															project.createdAt
+														)}
+													</span>
+												</div>
 											</div>
-										</div>
-									))}
-								</div>
+										))}
+									</div>
+								)}
+								{projectHistory.length === 0 && (
+									<p className='text-sm text-muted-foreground'>
+										{m.org_overview_no_project_history()}
+									</p>
+								)}
 							</div>
 						</aside>
 					</div>
@@ -369,22 +407,16 @@ function OrganizationRoute() {
 
 type StatCellProps = {
 	icon: React.ReactNode;
-	value: number;
+	value: string;
 	label: string;
-	real?: boolean;
 };
 
-function StatCell({ icon, value, label, real }: StatCellProps) {
+function StatCell({ icon, value, label }: StatCellProps) {
 	return (
 		<div className='flex min-w-[120px] flex-1 flex-col gap-1 px-6 py-4'>
 			<div className='flex items-center gap-2'>
 				{icon}
 				<span className='text-gradient-primary text-2xl font-bold'>{value}</span>
-				{!real && (
-					<span title='Placeholder number' className='text-[10px] text-muted-foreground/40'>
-						·
-					</span>
-				)}
 			</div>
 			<span className='text-xs text-muted-foreground'>{label}</span>
 		</div>

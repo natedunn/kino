@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { useNavigate, useRouterState, useSearch } from '@tanstack/react-router';
 
-import { useCRPC } from '@/lib/convex/crpc';
+import { useFilesAPI } from '@/lib/convex/files-api';
 
 const STORAGE_KEY = 'kino:settings-org';
 
@@ -33,7 +33,7 @@ export function persistSettingsOrg(slug: string) {
 
 /** Loads the organizations the signed-in user can manage (owner/admin). */
 export function useEditableOrgs() {
-	const crpc = useCRPC();
+	const crpc = useFilesAPI();
 	return useSuspenseQuery(crpc.org.findMyEditableOrgs.queryOptions({}, { skipUnauth: true }));
 }
 
@@ -59,7 +59,7 @@ export function useSettingsOrgController() {
 	// the server and the first client paint agree. `localStorage` is a client-only
 	// concern, applied after mount via navigation below — never during render.
 	const urlSlug = has(searchOrg) ? searchOrg! : null;
-	const activeSlug = urlSlug ?? orgs[0]?.slug ?? null;
+	const activeSlug = urlSlug ?? (orgs.length ? orgs[0].slug : null);
 
 	useEffect(() => {
 		if (urlSlug) {

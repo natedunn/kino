@@ -1,0 +1,38 @@
+{
+  "recordedAt": "2026-09-21T06:12:33.630Z",
+  "environment": "local HTTPS workerd, real local Convex, admin-minted fixture sessions; no OAuth/email flow",
+  "results": [
+    {
+      "name": "simultaneous refresh requests preserve a usable cookie session",
+      "passed": true
+    },
+    {
+      "name": "logout in one tab removes private content in the other tab",
+      "passed": true
+    },
+    {
+      "name": "account switch clears old user and prefetched data in another tab",
+      "passed": true
+    },
+    {
+      "name": "missed account-change notification is recovered on focus",
+      "passed": true
+    },
+    {
+      "name": "refresh racing signout leaves the session unable to refresh",
+      "passed": true
+    },
+    {
+      "name": "expired refresh session clears cookies and denies private SSR",
+      "passed": true
+    },
+    {
+      "name": "frozen tab resumes after token expiry and clears a missed logout",
+      "passed": true
+    },
+    {
+      "name": "offline tab resumes after actual current access-token expiry",
+      "passed": true
+    }
+  ]
+}

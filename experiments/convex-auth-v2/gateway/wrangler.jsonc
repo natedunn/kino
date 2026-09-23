@@ -1,0 +1,1 @@
+{"$schema":"../node_modules/wrangler/config-schema.json","name":"kino-v2-gateway-proof-local","main":"worker.ts","compatibility_date":"2026-05-22","workers_dev":false,"observability":{"enabled":true,"traces":{"enabled":true}},"dev":{"ip":"127.0.0.1","port":4411}}

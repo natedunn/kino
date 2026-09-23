@@ -9,5 +9,10 @@
     { "pattern": "www.usekino.com", "custom_domain": true },
   ],
   "preview_urls": true,
+  "previews": {
+    "vars": {
+      "NATIVE_GITHUB_GATEWAY_URL": "https://gateway-dev.usekino.com/oauth/github/callback"
+    }
+  },
   "observability": { "enabled": true },
 }

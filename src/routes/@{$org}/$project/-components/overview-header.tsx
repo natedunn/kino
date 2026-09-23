@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { formatRelativeDay } from '@/lib/utils/format-timestamp';
+import * as m from '@/paraglide/messages.js';
 
 type Visibility = 'public' | 'private' | 'archived';
 
@@ -20,22 +21,22 @@ interface ProjectHeaderData {
 
 const VISIBILITY_CONFIG: Record<
 	Visibility,
-	{ label: string; Icon: typeof Globe; className: string }
+	{ label: () => string; Icon: typeof Globe; className: string }
 > = {
 	public: {
-		label: 'Public',
+		label: m.project_overview_public,
 		Icon: Globe,
 		className:
 			'border-emerald-200 bg-emerald-50 text-emerald-600 dark:border-emerald-900 dark:bg-emerald-500/10 dark:text-emerald-400',
 	},
 	private: {
-		label: 'Private',
+		label: m.project_overview_private,
 		Icon: Lock,
 		className:
 			'border-amber-200 bg-amber-50 text-amber-600 dark:border-amber-900 dark:bg-amber-500/10 dark:text-amber-400',
 	},
 	archived: {
-		label: 'Archived',
+		label: m.project_overview_archived,
 		Icon: Archive,
 		className: 'border-border bg-muted text-muted-foreground',
 	},
@@ -72,7 +73,7 @@ export function OverviewHeader({
 						<h1 className='text-2xl font-bold md:text-3xl'>{project.name}</h1>
 						<Badge variant='outline' className={cn('gap-1 font-normal', visibility.className)}>
 							<VisibilityIcon className='size-3' />
-							{visibility.label}
+							{visibility.label()}
 						</Badge>
 					</div>
 
@@ -81,7 +82,11 @@ export function OverviewHeader({
 					)}
 
 					<div className='mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground'>
-						{updatedAt ? <span>Updated {formatRelativeDay(updatedAt)}</span> : null}
+						{updatedAt ? (
+							<span suppressHydrationWarning>
+								{m.project_overview_updated({ date: formatRelativeDay(updatedAt) })}
+							</span>
+						) : null}
 						{primaryUrl && (
 							<a
 								href={primaryUrl.url}
@@ -103,7 +108,7 @@ export function OverviewHeader({
 					<Button asChild variant='outline' size='sm'>
 						<Link to='/@{$org}/$project/settings' params={(prev) => ({ ...prev, ...params })}>
 							<Settings className='size-4' />
-							Settings
+							{m.project_overview_settings()}
 						</Link>
 					</Button>
 				</div>

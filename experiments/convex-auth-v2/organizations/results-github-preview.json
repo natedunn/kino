@@ -1,0 +1,19 @@
+{
+  "checkedAt": "2026-09-21T19:31:07.628Z",
+  "origin": "https://kino-auth-v2-proof-c318c09d.hello-fc8.workers.dev",
+  "backend": "https://graceful-elephant-103.convex.cloud",
+  "checks": [
+    "Bento accepted preview invitation",
+    "anonymous invitation routes to GitHub",
+    "real GitHub callback refreshes verified email",
+    "invitation destination survives OAuth and temporary storage clears",
+    "Secure HttpOnly session cookies",
+    "GitHub user accepts invitation",
+    "six concurrent accepted retries share one membership",
+    "reload preserves acceptance",
+    "live organization membership and private SSR",
+    "membership removal immediately updates live list",
+    "removed membership cannot be recreated by old invitation",
+    "no browser exceptions"
+  ]
+}

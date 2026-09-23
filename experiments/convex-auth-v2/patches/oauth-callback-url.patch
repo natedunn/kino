@@ -1,0 +1,26 @@
+--- a/packages/core/src/oauth/component/convex.config.ts
++++ b/packages/core/src/oauth/component/convex.config.ts
+@@ -29,6 +29,7 @@
+   env: {
+     CLIENT_ID: v.string(),
+     CLIENT_SECRET: v.string(),
++    CALLBACK_URL: v.optional(v.string()),
+   },
+ });
+ 
+--- a/packages/core/src/oauth/shared/dbHelpers.ts
++++ b/packages/core/src/oauth/shared/dbHelpers.ts
+@@ -72,7 +72,12 @@
+         "functions (get-convex/convex-backend@64c163a, July 2026).",
+     );
+   }
+-  const callbackUrl = `${siteUrl}${CALLBACK_PATH}`;
++  const callbackUrl = process.env.CALLBACK_URL ?? `${siteUrl}${CALLBACK_PATH}`;
++  const parsed = new URL(callbackUrl);
++  const loopback = parsed.hostname === "127.0.0.1" || parsed.hostname === "localhost";
++  if ((parsed.protocol !== "https:" && !(parsed.protocol === "http:" && loopback)) || parsed.username || parsed.password || parsed.search || parsed.hash) {
++    throw new Error("CALLBACK_URL must be HTTPS (or HTTP loopback), without credentials, query, or fragment");
++  }
+   await ctx.db.insert("authorizationRequests", {
+     ...fields,
+     callbackUrl,

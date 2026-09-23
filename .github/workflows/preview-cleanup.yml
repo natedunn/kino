@@ -27,6 +27,12 @@ jobs:
         with:
           node-version: 22
 
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.28.2
+
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+
       - name: Resolve preview names
         id: preview
         shell: bash
@@ -44,7 +50,7 @@ jobs:
           echo "convex_preview=$convex_preview" >> "$GITHUB_OUTPUT"
           echo "cloudflare_alias=$cloudflare_alias" >> "$GITHUB_OUTPUT"
 
-      - name: Delete Cloudflare preview Worker versions
+      - name: Delete Cloudflare Worker Preview
         run: node scripts/cleanup-cloudflare-preview.mjs "${{ steps.preview.outputs.cloudflare_alias }}"
 
       - name: Delete Convex preview deployment

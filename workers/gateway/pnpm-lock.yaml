@@ -11,6 +11,9 @@ importers:
       better-auth:
         specifier: 1.7.1
         version: 1.7.1(@cloudflare/workers-types@4.20260611.1)(vitest@3.2.6)
+      jose:
+        specifier: 6.2.3
+        version: 6.2.3
     devDependencies:
       typescript:
         specifier: ^5.8.0

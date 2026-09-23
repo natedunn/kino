@@ -1,0 +1,77 @@
+--- a/packages/core/src/components/core/schema.ts
++++ b/packages/core/src/components/core/schema.ts
+@@ -2,6 +2,11 @@
+ import { v } from "convex/values";
+ 
+ export default defineSchema({
++  // Keep this record after revocation: deleting it could revive generation-zero sessions.
++  sessionGenerations: defineTable({
++    userId: v.string(),
++    generation: v.number(),
++  }).index("by_user", ["userId"]),
+   // Maps a provider-scoped identity to an opaque app user id. The app owns the
+   // actual users table; we only store the id string it gives us back.
+   accounts: defineTable({
+@@ -15,6 +20,8 @@
+   // One row per active session, holding only the *current* refresh token's
+   // SHA-256 hash. The raw refresh token is never stored.
+   sessions: defineTable({
++    // Absent on existing sessions; interpreted as generation zero.
++    generation: v.optional(v.number()),
+     userId: v.string(),
+     accountId: v.id("accounts"),
+     refreshTokenHash: v.string(),
+--- a/packages/core/src/components/core/public.ts
++++ b/packages/core/src/components/core/public.ts
+@@ -218,6 +218,30 @@
+   });
+ }
+ 
++/** Component API: the host must authorize the operation (e.g. consume a reset proof).
++ * Not re-exported as a public application mutation accepting arbitrary user IDs.
++ * Revocation is O(1); expired-generation records are retained for separate cleanup.
++ */
++export const revokeUserSessions = mutation({
++  args: { userId: v.string() },
++  returns: v.null(),
++  handler: async (ctx, { userId }) => {
++    const state = await ctx.db.query("sessionGenerations")
++      .withIndex("by_user", q => q.eq("userId", userId)).unique();
++    if (state === null) {
++      await ctx.db.insert("sessionGenerations", { userId, generation: 1 });
++    } else {
++      await ctx.db.patch("sessionGenerations", state._id, { generation: state.generation + 1 });
++    }
++    return null;
++  },
++});
++
++async function currentGeneration(ctx: QueryCtx, userId: string): Promise<number> {
++  return (await ctx.db.query("sessionGenerations")
++    .withIndex("by_user", q => q.eq("userId", userId)).unique())?.generation ?? 0;
++}
++
+ async function issueSession(
+   ctx: MutationCtx,
+   accountId: Id<"accounts">,
+@@ -229,6 +253,7 @@
+   const refreshTokenHash = await sha256Hex(refreshToken);
+   const refreshTokenExpiresAt = Date.now() + ttl.refreshTokenTtlSeconds * 1000;
+   await ctx.db.insert("sessions", {
++    generation: await currentGeneration(ctx, userId),
+     userId,
+     accountId,
+     refreshTokenHash,
+@@ -655,6 +680,12 @@
+       ({ session, isValid } = await sessionBySpentHash(ctx, hash));
+     }
+     if (session === null) return { kind: "noSession" };
++    // Check both current-token and grace-window/spent-token paths before minting.
++    // The shared generation read makes issuance/refresh conflict with revocation
++    // under Convex's serializable transactions. Rotation never upgrades generation.
++    if ((session.generation ?? 0) !== await currentGeneration(ctx, session.userId)) {
++      return { kind: "noSession" };
++    }
+     if (!isValid) {
+       // Past its refresh-token lifetime or a spent token past the grace
+       // window: delete the session and grant no more tokens.

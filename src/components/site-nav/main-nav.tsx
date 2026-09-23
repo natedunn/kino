@@ -1,5 +1,3 @@
-import type { API } from '@/lib/api';
-
 import React from 'react';
 import { Link, useRouterState } from '@tanstack/react-router';
 import { Command, Ellipsis } from 'lucide-react';
@@ -50,7 +48,7 @@ type MainNavProps = {
 	context: MainNavContext;
 	isUserPending?: boolean;
 	subNav?: React.ReactNode;
-	user: API['profile']['findMyProfile'] | null | undefined;
+	user: { username: string; imageUrl?: string | null } | null | undefined;
 };
 
 type MainNavOrg = {

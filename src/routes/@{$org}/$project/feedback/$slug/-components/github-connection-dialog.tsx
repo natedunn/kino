@@ -17,7 +17,7 @@ import {
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { GithubIcon } from '@/icons';
-import { useCRPC } from '@/lib/convex/crpc';
+import { useRelayAPI as useCRPC } from '@/lib/convex/relay-api';
 import { localizeGitHubError } from '@/lib/i18n/github-errors';
 import { cn } from '@/lib/utils';
 import { FORM_LIMITS } from '@/lib/validation';

@@ -1,17 +1,26 @@
+import type { ProjectOverviewData } from '../-overview-types';
+
 import { Link } from '@tanstack/react-router';
 import { MessageSquare } from 'lucide-react';
 
 import CalendarDays from '@/icons/calendar-days';
 import { cn } from '@/lib/utils';
+import { formatTimestamp } from '@/lib/utils/format-timestamp';
+import * as m from '@/paraglide/messages.js';
 
 import { UPDATE_CATEGORY_CONFIG } from '../-overview-config';
-import { MOCK_RECENT_UPDATES } from '../-overview-mock-data';
 import { OverviewSection } from './overview-section';
 
-export function OverviewRecentUpdates({ params }: { params: { org: string; project: string } }) {
+export function OverviewRecentUpdates({
+	params,
+	updates,
+}: {
+	params: { org: string; project: string };
+	updates: ProjectOverviewData['recentUpdates'];
+}) {
 	return (
 		<OverviewSection
-			title='Latest updates'
+			title={m.project_overview_latest_updates()}
 			Icon={CalendarDays}
 			bodyClassName='p-0'
 			action={
@@ -20,12 +29,15 @@ export function OverviewRecentUpdates({ params }: { params: { org: string; proje
 					params={(prev) => ({ ...prev, ...params })}
 					className='link-text text-xs'
 				>
-					View all
+					{m.project_overview_view_all()}
 				</Link>
 			}
 		>
+			{updates.length === 0 && (
+				<p className='px-4 py-3 text-sm text-muted-foreground'>{m.project_overview_no_updates()}</p>
+			)}
 			<ul className='divide-y'>
-				{MOCK_RECENT_UPDATES.map((item) => {
+				{updates.map((item) => {
 					const category = UPDATE_CATEGORY_CONFIG[item.category];
 					return (
 						<li
@@ -35,11 +47,11 @@ export function OverviewRecentUpdates({ params }: { params: { org: string; proje
 							<div className='min-w-0 flex-1'>
 								<p className='truncate text-sm font-medium'>{item.title}</p>
 								<div className='mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground'>
-									<span className={cn('font-medium', category.colorClass)}>{category.label}</span>
+									<span className={cn('font-medium', category.colorClass)}>{category.label()}</span>
 									<span aria-hidden>·</span>
-									<span>{item.author}</span>
+									<span>{item.author ?? m.project_overview_unknown_actor()}</span>
 									<span aria-hidden>·</span>
-									<span>{item.date}</span>
+									<span suppressHydrationWarning>{formatTimestamp(item.publishedAt)}</span>
 								</div>
 							</div>
 							<span className='flex shrink-0 items-center gap-1 text-xs text-muted-foreground'>

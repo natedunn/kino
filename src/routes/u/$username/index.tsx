@@ -5,8 +5,7 @@ import { Link as LinkIcon, MapPin } from 'lucide-react';
 import { NotFound } from '@/components/_not-found';
 import { AppShell } from '@/components/app-shell';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useCRPC } from '@/lib/convex/crpc';
-import { crpcServer } from '@/lib/convex/crpc-server';
+import { profileServer, useProfileAPI } from '@/lib/convex/profile-api';
 import { titleFromSlug, titleMeta } from '@/lib/seo';
 
 export const Route = createFileRoute('/u/$username/')({
@@ -16,12 +15,12 @@ export const Route = createFileRoute('/u/$username/')({
 	loader: async ({ context, params }) => {
 		await Promise.all([
 			context.queryClient.ensureQueryData(
-				crpcServer.profile.getByUsername.queryOptions({
+				profileServer.profile.getByUsername.queryOptions({
 					username: params.username,
 				})
 			),
 			context.queryClient.ensureQueryData(
-				crpcServer.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
+				profileServer.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
 			),
 		]);
 	},
@@ -30,7 +29,7 @@ export const Route = createFileRoute('/u/$username/')({
 
 function PublicProfileRoute() {
 	const { username } = Route.useParams();
-	const crpc = useCRPC();
+	const crpc = useProfileAPI();
 	const profileQuery = useSuspenseQuery(crpc.profile.getByUsername.queryOptions({ username }));
 	const profile = profileQuery.data;
 
@@ -38,7 +37,7 @@ function PublicProfileRoute() {
 		return <NotFound isContainer className='py-12' message='This user profile is not available.' />;
 	}
 
-	const displayName = profile.name?.trim() || profile.username;
+	const displayName = profile.name.trim() || profile.username;
 	const visibleOrgCount = profile.ownedOrganizations.length + profile.memberOrganizations.length;
 
 	return (

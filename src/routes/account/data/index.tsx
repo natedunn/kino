@@ -1,4 +1,4 @@
-import type { ApiOutputs } from '@convex/api';
+import type { ExportDocument, ExportSectionId } from '@/lib/convex/user-data-export-api';
 
 import { useMemo, useState } from 'react';
 import { useSuspenseQuery } from '@tanstack/react-query';
@@ -8,17 +8,13 @@ import { Check, Database, Download } from 'lucide-react';
 import { InlineAlert } from '@/components/inline-alert';
 import { Label, LabelDescription, LabelWrapper } from '@/components/label';
 import { Button } from '@/components/ui/button';
-import { useCRPC, useCRPCClient } from '@/lib/convex/crpc';
-import { crpcServer } from '@/lib/convex/crpc-server';
+import { profileServer } from '@/lib/convex/profile-api';
+import { userDataExportServer, useUserDataExportAPI } from '@/lib/convex/user-data-export-api';
 import { localizeError } from '@/lib/errors';
 import { capturePostHogEvent } from '@/lib/posthog';
 import { titleMeta } from '@/lib/seo';
 import { cn } from '@/lib/utils';
 import * as m from '@/paraglide/messages.js';
-
-type ExportSection = ApiOutputs['userDataExport']['getAvailableSections'][number];
-type ExportSectionId = ExportSection['id'];
-type ExportDocument = ApiOutputs['userDataExport']['exportData'];
 
 export const Route = createFileRoute('/account/data/')({
 	head: () => ({
@@ -31,10 +27,13 @@ export const Route = createFileRoute('/account/data/')({
 
 		await Promise.all([
 			context.queryClient.ensureQueryData(
-				crpcServer.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
+				profileServer.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
 			),
 			context.queryClient.ensureQueryData(
-				crpcServer.userDataExport.getAvailableSections.queryOptions({}, { skipUnauth: true })
+				userDataExportServer.userDataExport.getAvailableSections.queryOptions(
+					{},
+					{ skipUnauth: true }
+				)
 			),
 		]);
 	},
@@ -74,16 +73,7 @@ function getExportAnalyticsProperties(
 	sectionIds: Array<ExportSectionId>
 ) {
 	const comments = exportDocument.sections.comments;
-	const totalComments =
-		typeof comments === 'object' &&
-		comments &&
-		'counts' in comments &&
-		typeof comments.counts === 'object' &&
-		comments.counts &&
-		'total' in comments.counts &&
-		typeof comments.counts.total === 'number'
-			? comments.counts.total
-			: 0;
+	const totalComments = comments?.counts.total ?? 0;
 
 	return {
 		comment_count_bucket: getCountBucket(totalComments),
@@ -113,10 +103,9 @@ function downloadJson(filename: string, data: unknown) {
 }
 
 function AuthenticatedDataRoute() {
-	const crpc = useCRPC();
-	const crpcClient = useCRPCClient();
+	const api = useUserDataExportAPI();
 	const sectionsQuery = useSuspenseQuery(
-		crpc.userDataExport.getAvailableSections.queryOptions({}, { skipUnauth: true })
+		api.userDataExport.getAvailableSections.queryOptions({}, { skipUnauth: true })
 	);
 	const defaultSectionIds = useMemo(
 		() =>
@@ -149,7 +138,8 @@ function AuthenticatedDataRoute() {
 		setExportError(null);
 		setIsExporting(true);
 		try {
-			const exportDocument = await crpcClient.userDataExport.exportData.query({
+			const exportDocument = await api.userDataExport.exportData.query({
+				generatedAt: Date.now(),
 				sections: activeSectionIds,
 			});
 			capturePostHogEvent(

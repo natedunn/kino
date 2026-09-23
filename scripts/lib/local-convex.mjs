@@ -96,7 +96,7 @@ export function ensureAnonymousEnvFile(workspaceRoot) {
   fs.writeFileSync(
     envPath,
     [
-      "# Used by kitcn/Convex CLI to avoid reusing .env.local's shared dev deployment.",
+      "# Used by the Convex CLI to avoid reusing .env.local's shared dev deployment.",
       "CONVEX_DEPLOYMENT=anonymous-agent",
       "",
     ].join("\n")
@@ -404,7 +404,7 @@ export function stopLocalBackendForWorkspace(
 
   if (!stopped && failOnStubborn) {
     console.error(
-      `${logPrefix} port ${port} is still occupied by this worktree. Stop pnpm dev/kitcn dev and rerun.`
+      `${logPrefix} port ${port} is still occupied by this worktree. Stop pnpm dev and rerun.`
     )
   }
 

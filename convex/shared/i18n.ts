@@ -23,9 +23,9 @@ export function resolveRequestLocale(request?: Request): AppLocale {
 	const preferences = request.headers.get('accept-language')?.split(',') ?? [];
 	for (const preference of preferences) {
 		const language = preference.split(';')[0]?.trim().toLowerCase();
-		if (language === 'es' || language?.startsWith('es-')) return 'es-419';
-		if (language === 'zh' || language?.startsWith('zh-')) return 'zh-Hans';
-		if (language === 'en' || language?.startsWith('en-')) return 'en-US';
+		if (language === 'es' || language.startsWith('es-')) return 'es-419';
+		if (language === 'zh' || language.startsWith('zh-')) return 'zh-Hans';
+		if (language === 'en' || language.startsWith('en-')) return 'en-US';
 	}
 	return DEFAULT_LOCALE;
 }

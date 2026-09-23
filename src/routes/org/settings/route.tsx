@@ -6,10 +6,10 @@ import { AppShell } from '@/components/app-shell';
 import { EmptyState } from '@/components/kino/common';
 import { SidebarNavGroup, SidebarNavItem, SidebarNavSelect } from '@/components/sidebar-nav';
 import { EditingBar } from '@/components/site-nav/editing-bar';
+import { MainNav } from '@/components/site-nav/main-nav';
 import { requireAuth } from '@/lib/auth/require-auth';
 import { useAuthLostRedirect } from '@/lib/auth/use-auth-lost';
-import { useCRPC } from '@/lib/convex/crpc';
-import { crpcServer } from '@/lib/convex/crpc-server';
+import { nativeFilesReads, useFilesAPI } from '@/lib/convex/files-api';
 import { titleMeta } from '@/lib/seo';
 import * as m from '@/paraglide/messages.js';
 
@@ -56,7 +56,7 @@ export const Route = createFileRoute('/org/settings')({
 		}
 
 		const editableOrgs = await context.queryClient.ensureQueryData(
-			crpcServer.org.findMyEditableOrgs.queryOptions({}, { skipUnauth: true })
+			nativeFilesReads.org.findMyEditableOrgs.queryOptions({}, { skipUnauth: true })
 		);
 		if (editableOrgs.length === 0) {
 			throw redirect({ to: '/dashboard' });
@@ -69,7 +69,7 @@ export const Route = createFileRoute('/org/settings')({
 		// search param; the default-org pick happens client-side in the shell.
 		if (deps.org) {
 			const orgData = await context.queryClient.ensureQueryData(
-				crpcServer.org.getDetails.queryOptions({ slug: deps.org }, { skipUnauth: true })
+				nativeFilesReads.org.getDetails.queryOptions({ slug: deps.org })
 			);
 			if (!orgData?.permissions.canEdit) {
 				throw redirect({ to: '/dashboard' });
@@ -90,12 +90,14 @@ function OrgSettingsRoute() {
 
 function AuthenticatedOrgSettingsShell() {
 	const navItems = getNavItems();
-	const crpc = useCRPC();
+	const crpc = useFilesAPI();
 	const pathname = useRouterState({
 		select: (state) => state.location.pathname,
 	});
 	// Warms the profile cache the shell header reads, so it never shows a skeleton.
-	useSuspenseQuery(crpc.profile.findMyProfile.queryOptions({}, { skipUnauth: true }));
+	const profile = useSuspenseQuery(
+		crpc.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
+	);
 	const { activeOrg, activeSlug, isEmpty, orgs, setOrg } = useSettingsOrgController();
 	// Whole settings area is an organization-management surface.
 	// `findMyEditableOrgs` returns owner/admin memberships only.
@@ -118,7 +120,7 @@ function AuthenticatedOrgSettingsShell() {
 	});
 
 	return (
-		<AppShell>
+		<AppShell nav={<MainNav context={{ type: 'global' }} user={profile.data} />}>
 			<div className='flex w-full flex-1 flex-col'>
 				{activeOrg ? <EditingBar /> : null}
 				<div className='container flex flex-1 flex-col overflow-visible'>

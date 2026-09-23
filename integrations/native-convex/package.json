@@ -1,0 +1,9 @@
+{
+	"name": "kino-native-convex-integration",
+	"private": true,
+	"type": "module",
+	"dependencies": {
+		"convex": "1.46.0",
+		"sharp": "0.34.5"
+	}
+}

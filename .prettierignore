@@ -6,7 +6,7 @@ yarn.lock
 .tanstack/
 dist/
 **/build
-convex/functions/_generated/
-convex/functions/generated/
-convex/shared/api.ts
+convex/native/_generated/
 src/routeTree.gen.ts
+experiments/**/.upstream/
+experiments/**/.revocation/

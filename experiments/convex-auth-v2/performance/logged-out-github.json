@@ -1,0 +1,12 @@
+{
+  "startedAt": "2026-09-21T17:15:21.569Z",
+  "githubInitiallyLoggedOut": true,
+  "responses": [
+    {
+      "path": "/session",
+      "status": 302,
+      "requestId": "5AE2:D750D:3AE1EE:4C8B0B:6AB1662B"
+    }
+  ],
+  "nativeLoggedOutFlowPassed": true
+}

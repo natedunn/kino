@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from '@tanstack/react-form';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router';
@@ -16,8 +16,12 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
-import { useCRPC } from '@/lib/convex/crpc';
-import { crpcServer } from '@/lib/convex/crpc-server';
+import {
+	canCreateProjectInOrganization,
+	creationServer,
+	useCreationAPI,
+} from '@/lib/convex/creation-api';
+import { localizeError } from '@/lib/errors';
 import { titleFromSlug, titleMeta } from '@/lib/seo';
 import { cn } from '@/lib/utils';
 import {
@@ -42,9 +46,9 @@ export const Route = createFileRoute('/@{$org}/create-project/')({
 	}),
 	loader: async ({ context, params }) => {
 		const orgData = await context.queryClient.ensureQueryData(
-			crpcServer.org.getDetails.queryOptions({ slug: params.org }, { skipUnauth: true })
+			creationServer.org.getDetails.queryOptions({ slug: params.org }, { skipUnauth: true })
 		);
-		if (!orgData?.permissions.canCreate) {
+		if (!canCreateProjectInOrganization(orgData)) {
 			throw redirect({ to: '/@{$org}', params: { org: params.org } });
 		}
 	},
@@ -54,23 +58,23 @@ export const Route = createFileRoute('/@{$org}/create-project/')({
 function CreateProjectRoute() {
 	const params = Route.useParams();
 	const navigate = useNavigate();
-	const crpc = useCRPC();
+	const creation = useCreationAPI();
 	const [formError, setFormError] = useState<string | null>(null);
 
 	const orgQuery = useQuery(
-		crpc.org.getDetails.queryOptions({
+		creation.org.getDetails.queryOptions({
 			slug: params.org,
 		})
 	);
 	const limitsQuery = useQuery(
-		crpc.org.getMyPermission.queryOptions(
+		creation.org.getMyPermission.queryOptions(
 			{ slug: params.org },
-			{ enabled: !!orgQuery.data?.permissions.canCreate, skipUnauth: true }
+			{ enabled: canCreateProjectInOrganization(orgQuery.data), skipUnauth: true }
 		)
 	);
 
 	const createMutation = useMutation(
-		crpc.project.create.mutationOptions({
+		creation.project.create.mutationOptions({
 			onSuccess: (project) => {
 				form.reset();
 				navigate({
@@ -99,10 +103,14 @@ function CreateProjectRoute() {
 				name: parsed.data.name,
 				orgSlug: value.orgSlug,
 				slug: parsed.data.slug,
-				visibility: parsed.data.visibility,
+				visibility: value.visibility,
 			});
 		},
 	});
+	const privateOrganization = orgQuery.data?.org.visibility === 'private';
+	useEffect(() => {
+		if (privateOrganization) form.setFieldValue('visibility', 'private');
+	}, [privateOrganization, form]);
 
 	if (orgQuery.isLoading || limitsQuery.isLoading) {
 		return (
@@ -112,7 +120,7 @@ function CreateProjectRoute() {
 		);
 	}
 
-	if (!orgQuery.data?.org || !orgQuery.data.permissions.canCreate) {
+	if (!orgQuery.data?.org || !canCreateProjectInOrganization(orgQuery.data)) {
 		return (
 			<div className='container py-10'>
 				<EmptyState
@@ -294,12 +302,21 @@ function CreateProjectRoute() {
 													</SelectTrigger>
 													<SelectContent>
 														{visibilityItems.map((item) => (
-															<SelectItem key={item.value} value={item.value}>
+															<SelectItem
+																key={item.value}
+																value={item.value}
+																disabled={privateOrganization && item.value === 'public'}
+															>
 																{item.label}
 															</SelectItem>
 														))}
 													</SelectContent>
 												</Select>
+												{privateOrganization ? (
+													<p className='text-sm text-muted-foreground'>
+														{m.project_public_private_organization()}
+													</p>
+												) : null}
 											</div>
 										</div>
 									)}
@@ -307,7 +324,8 @@ function CreateProjectRoute() {
 
 								{(formError ?? createMutation.error) ? (
 									<InlineAlert variant='danger'>
-										{m.create_project_failed()}: {formError ?? createMutation.error?.message}
+										{m.create_project_failed()}:{' '}
+										{formError ?? localizeError(createMutation.error, m.common_try_again())}
 									</InlineAlert>
 								) : null}
 

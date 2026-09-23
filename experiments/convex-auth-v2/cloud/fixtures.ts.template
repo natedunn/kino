@@ -1,0 +1,26 @@
+// Admin-only synthetic identities for the disposable cloud session proof.
+import { createFunctionHandle, makeFunctionReference } from 'convex/server';
+import { v } from 'convex/values';
+import { components } from './_generated/api';
+import { internalMutation } from './_generated/server';
+export const createUser = internalMutation({
+ args: { provider: v.object({name:v.literal('proofFixture'),accountId:v.string(),profile:v.any()}) },
+ returns:v.id('users'),
+ handler: async ctx => ctx.db.insert('users',{verified:true,verificationGeneration:0,resetGeneration:0}),
+});
+export const seed = internalMutation({
+ args:{},
+ returns:v.array(v.object({provider:v.string(),providerAccountId:v.string(),userId:v.string()})),
+ handler:async ctx=>{
+  const rows=[];
+  for(const accountId of ['session-alpha','session-beta']){
+   let userId=await ctx.runQuery(components.auth.public.getUserIdByAccount,{provider:'proofFixture',providerAccountId:accountId});
+   if(!userId) userId=(await ctx.runMutation(components.auth.public.signUpWithoutSession,{
+    claims:{providerName:'proofFixture',providerAccountId:accountId,profile:{}},
+    createUserHandle:await createFunctionHandle(makeFunctionReference<'mutation'>('fixtures:createUser')),
+   })).userId;
+   rows.push({provider:'proofFixture',providerAccountId:accountId,userId});
+  }
+  return rows;
+ }
+});

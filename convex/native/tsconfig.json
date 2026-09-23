@@ -1,0 +1,32 @@
+{
+	"$schema": "https://json.schemastore.org/tsconfig",
+	"compilerOptions": {
+		"allowImportingTsExtensions": true,
+		"allowJs": true,
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
+		"isolatedModules": true,
+		"jsx": "react-jsx",
+		"lib": ["esnext", "dom"],
+		"module": "esnext",
+		"moduleDetection": "force",
+		"moduleResolution": "bundler",
+		"noEmit": true,
+		"noUnusedLocals": false,
+		"noUnusedParameters": false,
+		"resolveJsonModule": true,
+		"skipLibCheck": true,
+		"strict": true,
+		"strictFunctionTypes": false,
+		"target": "esnext",
+		"types": ["bun", "node"]
+	},
+	"include": ["./**/*", "../emails/**/*", "../shared/**/*"],
+	"exclude": [
+		"node_modules",
+		"./_generated",
+		"**/*.spec.ts",
+		"**/*.test.ts",
+		"**/setup.testing.ts"
+	]
+}

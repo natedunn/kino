@@ -1,0 +1,8 @@
+{
+	"functions": "../../convex/native",
+	"node": { "externalPackages": ["sharp"] },
+	"codegen": {
+		"staticApi": true,
+		"staticDataModel": true
+	}
+}

@@ -1,0 +1,12 @@
+{
+  "recordedAt": "2026-09-21T05:53:16.320Z",
+  "environment": "deployed Cloudflare + signed gateway routing + Convex preview + actual GitHub OAuth",
+  "checks": [
+    "Secure HttpOnly cookies",
+    "no browser token storage",
+    "private SSR",
+    "reload retains identity",
+    "logout clears cookies",
+    "repeat login preserves user ID"
+  ]
+}

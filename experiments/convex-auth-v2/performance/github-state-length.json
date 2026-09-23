@@ -1,0 +1,99 @@
+{
+  "startedAt": "2026-09-21T18:32:27.675Z",
+  "method": "Five adaptive intermediate-length tests, then repeat both bracket endpoints with new random states. Prior same-day anchors: 48 passed, 1906 failed. Same client, redirect URI, scopes and PKCE. Fresh signed-out contexts. No app callback executed.",
+  "cases": [
+    {
+      "phase": "intermediate",
+      "stateLength": 1024,
+      "stateBytes": 1024,
+      "authorizationUrlLength": 1318,
+      "authorizationUrlBytes": 1318,
+      "responses": [
+        {
+          "method": "GET",
+          "path": "/login/oauth/authorize",
+          "status": 302,
+          "requestId": "5B86:87DBA:1B020D:23475E:6AB17840",
+          "redirectLength": 1420
+        },
+        {
+          "method": "GET",
+          "path": "/login",
+          "status": 200,
+          "requestId": "5B86:87DBA:1B026C:2347D0:6AB17841"
+        },
+        {
+          "method": "POST",
+          "path": "/session",
+          "status": 302,
+          "requestId": "5B86:87DBA:1B34C2:238971:6AB17841",
+          "redirectLength": 45
+        },
+        {
+          "method": "GET",
+          "path": "/sessions/two-factor/mobile",
+          "status": 200,
+          "requestId": "5B86:87DBA:1B3674:238BAC:6AB1784E"
+        },
+        {
+          "method": "GET",
+          "path": "/sessions/two-factor/mobile",
+          "status": 302,
+          "requestId": "5B86:87DBA:1B7720:23E04F:6AB1785E",
+          "redirectLength": 1318
+        },
+        {
+          "method": "GET",
+          "path": "/login/oauth/authorize",
+          "status": 200,
+          "requestId": "5B86:87DBA:1B77A5:23E102:6AB1785F"
+        }
+      ],
+      "outcome": "oauth-return-success",
+      "githubLoginUrlLength": 1420
+    },
+    {
+      "phase": "intermediate",
+      "stateLength": 1465,
+      "stateBytes": 1465,
+      "authorizationUrlLength": 1759,
+      "authorizationUrlBytes": 1759,
+      "responses": [
+        {
+          "method": "GET",
+          "path": "/login/oauth/authorize",
+          "status": 302,
+          "requestId": "5C52:766D5:1D400C:2649EC:6AB17861",
+          "redirectLength": 1861
+        },
+        {
+          "method": "GET",
+          "path": "/login",
+          "status": 200,
+          "requestId": "5C52:766D5:1D406D:264A54:6AB17861"
+        },
+        {
+          "method": "POST",
+          "path": "/session",
+          "status": 302,
+          "requestId": "5C52:766D5:1D61BD:267541:6AB17862",
+          "redirectLength": 45
+        },
+        {
+          "method": "GET",
+          "path": "/sessions/two-factor/mobile",
+          "status": 404,
+          "requestId": "5C52:766D5:1D62DE:2676E0:6AB1786A"
+        }
+      ],
+      "outcome": "unexpected-http-error",
+      "githubLoginUrlLength": 1861
+    }
+  ],
+  "complete": false,
+  "bracket": {
+    "largestPassingState": 1024,
+    "smallestFailingState": 1906
+  },
+  "error": "AssertionError"
+}

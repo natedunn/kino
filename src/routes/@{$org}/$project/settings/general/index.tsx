@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 
 import { useRef, useState } from 'react';
 import { useForm, useStore } from '@tanstack/react-form';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { createFileRoute, useBlocker, useNavigate } from '@tanstack/react-router';
 import { Plus, ShieldCheck, Trash2 } from 'lucide-react';
 
@@ -28,8 +28,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { GithubIcon } from '@/icons';
-import { useCRPC } from '@/lib/convex/crpc';
-import { crpcServer } from '@/lib/convex/crpc-server';
+import { settingsServer, useSettingsAPI } from '@/lib/convex/settings-api';
 import { localizeError } from '@/lib/errors';
 import { titleMeta } from '@/lib/seo';
 import { cn } from '@/lib/utils';
@@ -106,7 +105,7 @@ export const Route = createFileRoute('/@{$org}/$project/settings/general/')({
 	}),
 	loader: async ({ context, params }) => {
 		await context.queryClient.ensureQueryData(
-			crpcServer.project.getDetails.queryOptions({
+			settingsServer.project.getDetails.queryOptions({
 				orgSlug: params.org,
 				slug: params.project,
 			})
@@ -118,8 +117,7 @@ export const Route = createFileRoute('/@{$org}/$project/settings/general/')({
 function ProjectGeneralSettingsRoute() {
 	const params = Route.useParams();
 	const navigate = useNavigate();
-	const crpc = useCRPC();
-	const queryClient = useQueryClient();
+	const crpc = useSettingsAPI();
 	const [formError, setFormError] = useState<string | null>(null);
 
 	const detailsQuery = useQuery(
@@ -133,6 +131,7 @@ function ProjectGeneralSettingsRoute() {
 	const importMutation = useMutation(crpc.projectExternal.importGithubUrls.mutationOptions());
 
 	const project = detailsQuery.data?.project;
+	const privateOrganization = detailsQuery.data?.organization.visibility === 'private';
 	const canEdit = detailsQuery.data?.permissions.canEditSettings ?? false;
 	const initialUrls = (project?.urls ?? []) as Array<ProjectUrl>;
 
@@ -143,26 +142,18 @@ function ProjectGeneralSettingsRoute() {
 		)
 	);
 
-	const invalidateDetails = () =>
-		queryClient.invalidateQueries({
-			queryKey: crpc.project.getDetails.queryKey({
-				orgSlug: params.org,
-				slug: params.project,
-			}),
-		});
-
 	const form = useForm({
 		defaultValues: {
 			description: project?.description ?? '',
 			name: project?.name ?? '',
 			slug: project?.slug ?? '',
-			updatesFeaturedMode: (project?.updatesFeaturedMode ?? 'latest') as UpdatesFeaturedMode,
+			updatesFeaturedMode: project?.updatesFeaturedMode ?? 'latest',
 			urls: initialUrls.map((entry) => ({
 				source: entry.source ?? undefined,
 				text: entry.text,
 				url: entry.url,
 			})),
-			visibility: (project?.visibility ?? 'public') as ProjectVisibility,
+			visibility: project?.visibility ?? 'public',
 		} satisfies GeneralSettingsFormValues,
 		onSubmit: async ({ value, formApi }) => {
 			if (!project) return;
@@ -196,21 +187,21 @@ function ProjectGeneralSettingsRoute() {
 				});
 
 				formApi.reset({
-					description: updated.description ?? '',
-					name: updated.name ?? value.name,
-					slug: updated.slug ?? value.slug,
-					updatesFeaturedMode: (updated.updatesFeaturedMode ??
-						value.updatesFeaturedMode) as UpdatesFeaturedMode,
+					description: updated.description,
+					name: updated.name,
+					slug: updated.slug,
+					updatesFeaturedMode: updated.updatesFeaturedMode,
 					// Reset from the server's re-verified result so link provenance
 					// (which stayed "github" vs got downgraded) matches what persisted.
-					urls: ((updated.urls ?? []) as Array<ProjectUrl>).map((entry) => ({
+					urls: (updated.urls as Array<ProjectUrl>).map((entry) => ({
 						source: entry.source ?? undefined,
 						text: entry.text,
 						url: entry.url,
 					})),
-					visibility: (updated.visibility ?? value.visibility) as ProjectVisibility,
+					visibility: updated.visibility,
 				});
-				await invalidateDetails();
+				// Renames invalidate the old live lookup. Move first so an old-slug
+				// refetch cannot strand the form on its not-found boundary.
 
 				if (updated.slug && updated.slug !== params.project) {
 					bypassBlockerRef.current = true;
@@ -533,24 +524,33 @@ function ProjectGeneralSettingsRoute() {
 					>
 						<form.Field name='visibility'>
 							{(field) => (
-								<Select
-									onValueChange={(value) => field.handleChange(value as ProjectVisibility)}
-									value={field.state.value}
-								>
-									<SelectTrigger className='w-full sm:w-56'>
-										<SelectValue placeholder={m.project_general_select_visibility()}>
-											{(value) => VISIBILITY_LABELS[value as ProjectVisibility]()}
-										</SelectValue>
-									</SelectTrigger>
-									<SelectContent>
-										<SelectItem value='public'>{m.project_visibility_public()}</SelectItem>
-										<SelectItem value='private'>{m.project_visibility_private()}</SelectItem>
-										{/* Archiving/un-archiving is admin-only (enforced server-side too). */}
-										{isAdmin ? (
-											<SelectItem value='archived'>{m.project_visibility_archived()}</SelectItem>
-										) : null}
-									</SelectContent>
-								</Select>
+								<>
+									<Select
+										onValueChange={(value) => field.handleChange(value as ProjectVisibility)}
+										value={field.state.value}
+									>
+										<SelectTrigger className='w-full sm:w-56'>
+											<SelectValue placeholder={m.project_general_select_visibility()}>
+												{(value) => VISIBILITY_LABELS[value as ProjectVisibility]()}
+											</SelectValue>
+										</SelectTrigger>
+										<SelectContent>
+											<SelectItem disabled={privateOrganization} value='public'>
+												{m.project_visibility_public()}
+											</SelectItem>
+											<SelectItem value='private'>{m.project_visibility_private()}</SelectItem>
+											{/* Archiving/un-archiving is admin-only (enforced server-side too). */}
+											{isAdmin ? (
+												<SelectItem value='archived'>{m.project_visibility_archived()}</SelectItem>
+											) : null}
+										</SelectContent>
+									</Select>
+									{privateOrganization ? (
+										<p className='mt-2 text-sm text-muted-foreground'>
+											{m.project_public_private_organization()}
+										</p>
+									) : null}
+								</>
 							)}
 						</form.Field>
 					</SectionCard>

@@ -9,8 +9,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ALLOWED_AVATAR_TYPES, validateAvatarFile } from '@/lib/avatar';
-import { useCRPC } from '@/lib/convex/crpc';
-import { crpcServer } from '@/lib/convex/crpc-server';
+import { profileServer, useProfileAPI } from '@/lib/convex/profile-api';
+import { localizeError } from '@/lib/errors';
 import { titleMeta } from '@/lib/seo';
 import { cn } from '@/lib/utils';
 import {
@@ -38,7 +38,7 @@ export const Route = createFileRoute('/account/profile/')({
 		}
 
 		await context.queryClient.ensureQueryData(
-			crpcServer.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
+			profileServer.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
 		);
 	},
 	// Auth is gated by the parent `/account` route (beforeLoad + AccountRoute).
@@ -79,7 +79,7 @@ function AvatarPreview({
 }
 
 function AuthenticatedProfileSettingsRoute() {
-	const crpc = useCRPC();
+	const crpc = useProfileAPI();
 	const uploadUrlMutation = useMutation(crpc.profile.generateAvatarUploadUrl.mutationOptions());
 	const syncMetadataMutation = useMutation(crpc.profile.syncMetadata.mutationOptions());
 	const updateMutation = useMutation(crpc.profile.update.mutationOptions());
@@ -112,18 +112,27 @@ function AuthenticatedProfileSettingsRoute() {
 
 				let imageKey: string | undefined;
 				if (value.avatarFile) {
-					const { key, url } = await uploadUrlMutation.mutateAsync({});
+					const { key, method, url } = await uploadUrlMutation.mutateAsync({});
 					const response = await fetch(url, {
 						body: value.avatarFile,
 						headers: { 'Content-Type': value.avatarFile.type },
-						method: 'PUT',
+						method: method ?? 'PUT',
 					});
 
 					if (!response.ok) {
 						throw new Error(m.profile_avatar_upload_failed());
 					}
 
-					await syncMetadataMutation.mutateAsync({ key });
+					const uploadResult = (await response
+						.clone()
+						.json()
+						.catch(() => null)) as { storageId?: unknown } | null;
+					await syncMetadataMutation.mutateAsync({
+						key,
+						...(typeof uploadResult?.storageId === 'string'
+							? { storageId: uploadResult.storageId }
+							: {}),
+					});
 					imageKey = key;
 				}
 
@@ -142,11 +151,11 @@ function AuthenticatedProfileSettingsRoute() {
 				// result instead of forcing an extra non-reactive refetch.
 				formApi.reset({
 					avatarFile: null,
-					name: updatedProfile.name ?? value.name,
-					username: updatedProfile.username ?? value.username,
+					name: updatedProfile.name,
+					username: updatedProfile.username,
 				});
 			} catch (error) {
-				setFormError(error instanceof Error ? error.message : m.profile_update_failed());
+				setFormError(localizeError(error, m.profile_update_failed()));
 			}
 		},
 	});
@@ -186,9 +195,9 @@ function AuthenticatedProfileSettingsRoute() {
 									</LabelWrapper>
 									<div className='flex items-center gap-4'>
 										<AvatarPreview
-											alt={profile.name ?? profile.username ?? ''}
+											alt={profile.name || profile.username}
 											fallbackSrc={profile.imageUrl ?? undefined}
-											fallbackName={profile.username ?? profile.name ?? 'profile'}
+											fallbackName={profile.username || profile.name}
 											file={field.state.value}
 										/>
 										<Input
@@ -276,7 +285,7 @@ function AuthenticatedProfileSettingsRoute() {
 								<Label>{m.common_email()}</Label>
 								<LabelDescription>{m.profile_email_description()}</LabelDescription>
 							</LabelWrapper>
-							<Input disabled value={profile.email ?? ''} />
+							<Input disabled value={profile.email} />
 						</div>
 					</div>
 

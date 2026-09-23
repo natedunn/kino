@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 
 const expectedVersion = JSON.parse(
-	readFileSync(new URL('../package.json', import.meta.url), 'utf8')
+	readFileSync(new URL('../workers/gateway/package.json', import.meta.url), 'utf8')
 ).dependencies['better-auth'];
 
 export async function checkGatewayAuthVersion(origin, expected = expectedVersion, fetcher = fetch) {
@@ -20,8 +20,8 @@ export async function checkGatewayAuthVersion(origin, expected = expectedVersion
 		health.betterAuthVersion !== expected
 	) {
 		throw new Error(
-			`Gateway ${origin} reports Better Auth ${health?.betterAuthVersion ?? 'unknown'}; app requires ${expected}. ` +
-				'Deploy and verify the matching gateway first. See docs/github-environments.md.'
+			`Gateway ${origin} reports Better Auth ${health?.betterAuthVersion ?? 'unknown'}; this checkout pins ${expected}. ` +
+				'Deploy and verify the gateway package from this checkout first. See docs/github-environments.md.'
 		);
 	}
 	return health.betterAuthVersion;

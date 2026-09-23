@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { convexQuery } from '@convex-dev/react-query';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { Trash2 } from 'lucide-react';
@@ -17,9 +18,8 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
-import { useCRPC } from '@/lib/convex/crpc';
-import { crpcServer } from '@/lib/convex/crpc-server';
-import { extractErrorMessage } from '@/lib/errors';
+import { useOrganizationMembersAPI } from '@/lib/convex/organization-members-api';
+import { localizeError } from '@/lib/errors';
 import { titleMeta } from '@/lib/seo';
 import { cn } from '@/lib/utils';
 import { emailSchema, FORM_LIMITS } from '@/lib/validation';
@@ -28,25 +28,33 @@ import * as m from '@/paraglide/messages.js';
 import { SettingsSkeleton } from '../-components/settings-skeleton';
 import { useDelayedFlag } from '../-components/use-delayed-flag';
 import { useSettingsOrgSlug } from '../-components/use-settings-org';
+import { api as nativeApi } from '../../../../../convex/native/_generated/api';
 
 export const Route = createFileRoute('/org/settings/members/')({
 	head: () => ({
 		meta: [titleMeta([m.meta_members()])],
 	}),
-	loader: ({ context, location }) => {
+	loader: async ({ context, location }) => {
 		const orgSlug = (location.search as { org?: string }).org;
 		if (!context.loaderToken || !orgSlug) return;
-		// Access (canEdit) is gated once on the `/org/settings` layout loader; the
-		// component still enforces the finer `canManage` distinction. Here we only
-		// warm the page-specific caches.
-		void context.queryClient.ensureQueryData(
-			crpcServer.orgMember.listMembers.queryOptions({ slug: orgSlug })
+		const organization = await context.queryClient.ensureQueryData(
+			convexQuery(nativeApi.organizations.getBySlug, { slug: orgSlug })
 		);
-		void context.queryClient.ensureQueryData(
-			crpcServer.orgMember.listPendingInvitations.queryOptions({
-				slug: orgSlug,
-			})
-		);
+		if (!organization?.permissions.canManageMembers) return;
+		await Promise.all([
+			context.queryClient.ensureQueryData(
+				convexQuery(nativeApi.organizations.listMembers, { organizationId: organization.id })
+			),
+			context.queryClient.ensureQueryData(
+				convexQuery(nativeApi.invitations.listPending, { organizationId: organization.id })
+			),
+			context.queryClient.ensureQueryData(
+				convexQuery(nativeApi.projects.listByOrganization, {
+					organizationId: organization.id,
+					limit: 100,
+				})
+			),
+		]);
 	},
 	component: MembersSettingsRoute,
 });
@@ -66,12 +74,12 @@ type PickerProject = { id: string; name: string; visibility: string };
 
 function mutationErrorMessage(error: unknown) {
 	if (!error) return null;
-	return extractErrorMessage(error);
+	return localizeError(error);
 }
 
 function MembersSettingsRoute() {
 	const orgSlug = useSettingsOrgSlug();
-	const crpc = useCRPC();
+	const crpc = useOrganizationMembersAPI();
 
 	const orgQuery = useQuery(
 		crpc.org.getDetails.queryOptions(
@@ -80,17 +88,36 @@ function MembersSettingsRoute() {
 		)
 	);
 	const membersQuery = useQuery(
-		crpc.orgMember.listMembers.queryOptions({ slug: orgSlug ?? '' }, { enabled: !!orgSlug })
+		crpc.orgMember.listMembers.queryOptions(
+			{
+				slug: orgSlug ?? '',
+				organizationId: orgQuery.data?.permissions.canManageMembers
+					? orgQuery.data.org.id
+					: undefined,
+			},
+			{ enabled: !!orgSlug }
+		)
 	);
 	const pendingQuery = useQuery(
 		crpc.orgMember.listPendingInvitations.queryOptions(
-			{ slug: orgSlug ?? '' },
+			{
+				slug: orgSlug ?? '',
+				organizationId: orgQuery.data?.permissions.canManageMembers
+					? orgQuery.data.org.id
+					: undefined,
+			},
 			{ enabled: !!orgSlug }
 		)
 	);
 	const projectsQuery = useQuery(
 		crpc.project.getManyByOrg.queryOptions(
-			{ limit: 100, orgSlug: orgSlug ?? '' },
+			{
+				limit: 100,
+				orgSlug: orgSlug ?? '',
+				organizationId: orgQuery.data?.permissions.canManageMembers
+					? orgQuery.data.org.id
+					: undefined,
+			},
 			{ enabled: !!orgSlug }
 		)
 	);
@@ -109,8 +136,11 @@ function MembersSettingsRoute() {
 	const [transitionProjectIds, setTransitionProjectIds] = useState<Array<string>>([]);
 	const [formError, setFormError] = useState<string | null>(null);
 
-	const data = membersQuery.data;
-	const organizationId = orgQuery.data?.org?.id;
+	const data =
+		orgQuery.data && !orgQuery.data.permissions.canManageMembers
+			? { canManage: false, members: [] }
+			: membersQuery.data;
+	const organizationId = orgQuery.data?.org.id;
 
 	const isLoading = !orgSlug || membersQuery.isLoading || orgQuery.isLoading;
 	const showSkeleton = useDelayedFlag(isLoading);
@@ -136,11 +166,13 @@ function MembersSettingsRoute() {
 		);
 	}
 
-	const projects: Array<PickerProject> = (projectsQuery.data ?? []).map((project) => ({
-		id: project.id,
-		name: project.name,
-		visibility: project.visibility,
-	}));
+	const projects: Array<PickerProject> = (projectsQuery.data ?? []).map(
+		(project: PickerProject) => ({
+			id: project.id,
+			name: project.name,
+			visibility: project.visibility,
+		})
+	);
 
 	const isEmailValid = emailSchema.safeParse(email.trim()).success;
 	const showEmailInvalid = emailTouched && email.trim().length > 0 && !isEmailValid;
@@ -285,7 +317,7 @@ function MembersSettingsRoute() {
 								<div className='flex items-center gap-3'>
 									<Avatar
 										className='size-8 shrink-0'
-										fallbackName={member.user.username ?? member.user.email}
+										fallbackName={member.user.username || member.user.email}
 									>
 										{member.user.image ? (
 											<AvatarImage
@@ -331,7 +363,7 @@ function MembersSettingsRoute() {
 										    changes/removal regardless of what the client sends. */}
 									<RoleSelect
 										size='sm'
-										value={member.role as MemberRole}
+										value={member.role}
 										disabled={isOwner || updateRole.isPending}
 										onChange={(value) => {
 											if (value === 'moderator' && member.role !== 'moderator') {
@@ -437,7 +469,7 @@ function MembersSettingsRoute() {
 								<div className='min-w-0 flex-1'>
 									<p className='truncate text-sm font-medium'>{inv.email}</p>
 									<p className='text-xs text-muted-foreground capitalize'>
-										{inv.role}
+										{ROLE_LABELS[inv.role]()}
 										{inv.role === 'moderator'
 											? ` · ${m.org_members_project_count({ count: inv.assignedProjectCount })}`
 											: ''}
@@ -456,9 +488,6 @@ function MembersSettingsRoute() {
 							</div>
 						))}
 					</div>
-					<p className='mt-2 text-xs text-muted-foreground'>
-						{m.org_members_invite_delivery_notice()}
-					</p>
 				</div>
 			) : null}
 		</section>
@@ -560,7 +589,7 @@ function ProjectPicker({
 }
 
 function ModeratorAccessEditor({ memberId, onSaved }: { memberId: string; onSaved: () => void }) {
-	const crpc = useCRPC();
+	const crpc = useOrganizationMembersAPI();
 	const accessQuery = useQuery(crpc.orgMember.getModeratorProjectAccess.queryOptions({ memberId }));
 	const save = useMutation(crpc.orgMember.setModeratorProjectAccess.mutationOptions());
 	const [selectedIds, setSelectedIds] = useState<Array<string>>([]);
@@ -580,6 +609,7 @@ function ModeratorAccessEditor({ memberId, onSaved }: { memberId: string; onSave
 
 	return (
 		<div className='mt-3 rounded-lg border bg-accent/30 p-4'>
+			{save.error ? <InlineAlert variant='danger'>{localizeError(save.error)}</InlineAlert> : null}
 			<ProjectPicker
 				description={m.org_members_pick_projects()}
 				projects={accessQuery.data.projects}

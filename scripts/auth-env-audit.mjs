@@ -161,7 +161,7 @@ function collectFindings(envs) {
       !sameValue(envs, key, ["convex.env", "convex-dev"])
     ) {
       warnings.push(
-        `convex/.env ${key} differs from Convex dev. kitcn dev watches convex/.env and can push this value.`
+        `convex/.env ${key} differs from Convex dev. Treat this legacy auth value as rollback-only during the native cutover.`
       )
     }
 

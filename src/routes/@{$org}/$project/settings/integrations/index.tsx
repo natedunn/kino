@@ -15,8 +15,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
-import { useCRPC } from '@/lib/convex/crpc';
-import { crpcServer } from '@/lib/convex/crpc-server';
+import { relayServer as crpcServer, useRelayAPI as useCRPC } from '@/lib/convex/relay-api';
 import { localizeGitHubError } from '@/lib/i18n/github-errors';
 import { titleMeta } from '@/lib/seo';
 import * as m from '@/paraglide/messages.js';
@@ -76,7 +75,7 @@ function GitHubIntegrationRoute() {
 	const detailsQuery = useQuery(
 		crpc.project.getDetails.queryOptions({ orgSlug: params.org, slug: params.project })
 	);
-	const isArchived = detailsQuery.data?.project?.visibility === 'archived';
+	const isArchived = detailsQuery.data?.project.visibility === 'archived';
 	const repositoriesQuery = useMutation(
 		crpc.githubExternal.listInstallationRepositoriesForProject.mutationOptions()
 	);
@@ -99,24 +98,24 @@ function GitHubIntegrationRoute() {
 	const installations = integrationQuery.data?.installations ?? [];
 	const staleInstallations = integrationQuery.data?.staleInstallations ?? [];
 	const connections = integrationQuery.data?.connections ?? [];
-	const activeConnection = connections[0] ?? null;
+	const activeConnection = connections.at(0) ?? null;
 	const connectedInstallation = activeConnection
 		? installations.find((item) => item.id === activeConnection.githubInstallationId)
 		: null;
 	const selectedInstallation =
 		installations.find((installation) => installation.installationId === selectedInstallationId) ??
 		connectedInstallation ??
-		installations[0];
+		installations.at(0);
 	const activeInstallationId = selectedInstallation?.installationId ?? null;
 	const connectionRepoId =
 		activeConnection && connectedInstallation?.installationId === activeInstallationId
 			? activeConnection.repoId
 			: null;
-	const mode = modeOverride ?? (activeConnection?.mode as ConnectionMode | undefined) ?? 'read';
+	const mode = modeOverride ?? activeConnection?.mode ?? 'read';
 	const sources =
 		sourcesOverride ??
 		(activeConnection && activeConnection.enabledSources.length > 0
-			? (activeConnection.enabledSources as Array<Source>)
+			? activeConnection.enabledSources
 			: ['issues']);
 	const repositories =
 		repositoriesInstallationId === activeInstallationId ? (repositoriesQuery.data ?? []) : [];

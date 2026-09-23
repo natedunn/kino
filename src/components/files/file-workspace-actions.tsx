@@ -24,7 +24,7 @@ import {
 	ResponsiveDialogFooter,
 	ResponsiveDialogHeader,
 } from '@/components/ui/responsive-dialog';
-import { useCRPC, useCRPCClient } from '@/lib/convex/crpc';
+import { useFilesAPI, useFilesClient } from '@/lib/convex/files-api';
 import { localizeError } from '@/lib/errors';
 import { capturePostHogEvent } from '@/lib/posthog';
 import { toast } from '@/lib/toast';
@@ -46,7 +46,7 @@ export function ManageFolderDialog({
 	onOpenChange: (open: boolean) => void;
 	open: boolean;
 }) {
-	const crpc = useCRPC();
+	const crpc = useFilesAPI();
 	const renameMutation = useMutation(crpc.file.renameFolder.mutationOptions());
 	const moveMutation = useMutation(crpc.file.moveFolder.mutationOptions());
 	const removeMutation = useMutation(crpc.file.removeFolder.mutationOptions());
@@ -210,8 +210,8 @@ function UploadFilesDialog({
 	open: boolean;
 	projectId: string;
 }) {
-	const crpc = useCRPC();
-	const crpcClient = useCRPCClient();
+	const crpc = useFilesAPI();
+	const crpcClient = useFilesClient();
 	const createMutation = useMutation(crpc.file.createDirectUploadBatch.mutationOptions());
 	const completeMutation = useMutation(crpc.file.completeUpload.mutationOptions());
 	const [selectedFiles, setSelectedFiles] = useState<Array<globalThis.File>>([]);
@@ -413,7 +413,7 @@ function CreateFolderDialog({
 	parentFolderId: string | null;
 	projectId: string;
 }) {
-	const crpc = useCRPC();
+	const crpc = useFilesAPI();
 	const mutation = useMutation(crpc.file.createFolder.mutationOptions());
 	const [name, setName] = useState('');
 	const [destinationFolderId, setDestinationFolderId] = useState<string | null>(parentFolderId);
@@ -550,14 +550,14 @@ async function uploadFileToSignedUrl(url: string, file: globalThis.File) {
 }
 
 async function waitForUploadReady(
-	crpcClient: ReturnType<typeof useCRPCClient>,
+	crpcClient: ReturnType<typeof useFilesClient>,
 	assetId: string,
 	fileName: string
 ) {
 	for (let attempt = 0; attempt < 60; attempt += 1) {
 		const status = await crpcClient.file.getUploadStatus.query({ assetId });
 		if (status === 'ready') return;
-		if (status === 'rejected' || status === 'deleted' || status === null) {
+		if (status === 'rejected' || status === 'deleted') {
 			throw new Error(m.files_verification_failed({ name: fileName }));
 		}
 		await new Promise((resolve) => window.setTimeout(resolve, 250));

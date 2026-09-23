@@ -1,15 +1,16 @@
-import { useQuery } from '@tanstack/react-query';
+import { convexQuery } from '@convex-dev/react-query';
+import { useSuspenseQuery } from '@tanstack/react-query';
 import { createFileRoute, notFound, Outlet, useParams } from '@tanstack/react-router';
 
 import { DefaultCatchBoundary } from '@/components/_default-catch-boundary';
 import { NotFound } from '@/components/_not-found';
 import { AppShell } from '@/components/app-shell';
 import { MainNav } from '@/components/site-nav/main-nav';
-import { useCRPC } from '@/lib/convex/crpc';
-import { crpcServer } from '@/lib/convex/crpc-server';
+import { getOrganizationForRoute } from '@/lib/convex/route-visibility-query';
 import { ProjectThemeBoundary, resolveProjectTheme } from '@/lib/project-theme';
 import { titleFromSlug, titleMeta } from '@/lib/seo';
 
+import { api as nativeApi } from '../../../convex/native/_generated/api';
 import { DynamicNavigation } from './$project/-components/dynamic-nav';
 
 export const Route = createFileRoute('/@{$org}')({
@@ -17,13 +18,11 @@ export const Route = createFileRoute('/@{$org}')({
 		meta: [titleMeta([titleFromSlug(params.org)])],
 	}),
 	loader: async ({ context, params }) => {
-		const orgDetails = await context.queryClient.ensureQueryData(
-			crpcServer.org.getDetails.queryOptions({ slug: params.org })
-		);
-
-		if (!orgDetails?.org) {
-			throw notFound();
-		}
+		const [organization] = await Promise.all([
+			getOrganizationForRoute(context.queryClient, params.org),
+			context.queryClient.ensureQueryData(convexQuery(nativeApi.profiles.me, {})),
+		]);
+		if (!organization) throw notFound();
 	},
 	component: OrganizationShell,
 	notFoundComponent: () => <NotFound isContainer />,
@@ -31,63 +30,38 @@ export const Route = createFileRoute('/@{$org}')({
 });
 
 function OrganizationShell() {
-	const crpc = useCRPC();
+	return <NativeOrganizationShell />;
+}
+
+function NativeOrganizationShell() {
 	const params = Route.useParams();
-	const { loaderToken } = Route.useRouteContext();
 	const projectParams = useParams({
 		from: '/@{$org}/$project',
 		shouldThrow: false,
 	});
-	const profileQuery = useQuery(
-		crpc.profile.findMyProfile.queryOptions({}, { skipUnauth: true, subscribe: false })
+	const { data: organization } = useSuspenseQuery(
+		convexQuery(nativeApi.organizations.getBySlug, { slug: params.org })
 	);
-	const orgQuery = useQuery(
-		crpc.org.getDetails.queryOptions({ slug: params.org }, { subscribe: false })
-	);
-	const projectSlug = projectParams?.project;
-	const projectQuery = useQuery(
-		crpc.project.getDetails.queryOptions(
-			{ orgSlug: params.org, slug: projectSlug ?? '' },
-			{ enabled: !!projectSlug }
-		)
-	);
-
-	if (orgQuery.isSuccess && !orgQuery.data?.org) {
-		throw notFound();
+	const { data: profile } = useSuspenseQuery(convexQuery(nativeApi.profiles.me, {}));
+	if (!organization) throw notFound();
+	if (projectParams?.project) {
+		return (
+			<NativeProjectShell
+				organization={organization}
+				profile={profile}
+				projectSlug={projectParams.project}
+			/>
+		);
 	}
-
-	const isUserPending =
-		!!loaderToken && (profileQuery.isPending || profileQuery.data === undefined);
-	const org =
-		orgQuery.data?.org ??
-		({
-			logo: null,
-			name: params.org,
-			slug: params.org,
-		} as const);
-	const navContext = projectSlug
-		? ({
-				org,
-				projectSlug,
-				type: 'project',
-			} as const)
-		: ({
-				org,
-				type: 'org',
-			} as const);
-
-	const shell = (
+	return (
 		<AppShell
 			nav={
 				<MainNav
-					context={navContext}
-					isUserPending={isUserPending}
-					subNav={
-						projectSlug ? (
-							<DynamicNavigation orgSlug={params.org} projectSlug={projectSlug} />
-						) : undefined
-					}
-					user={profileQuery.data}
+					context={{
+						org: { name: organization.name, slug: organization.slug, logo: organization.logo },
+						type: 'org',
+					}}
+					user={profile}
 				/>
 			}
 		>
@@ -96,13 +70,52 @@ function OrganizationShell() {
 			</div>
 		</AppShell>
 	);
-	if (!projectSlug) return shell;
-	const publishedTheme = projectQuery.data?.publishedTheme
-		? resolveProjectTheme(projectQuery.data.publishedTheme)
+}
+
+function NativeProjectShell({
+	organization,
+	profile,
+	projectSlug,
+}: {
+	organization: { logo?: string | null; name: string; slug: string };
+	profile: { username: string; imageUrl?: string | null } | null;
+	projectSlug: string;
+}) {
+	const { data: projectDetails } = useSuspenseQuery(
+		convexQuery(nativeApi.projects.getBySlugs, {
+			organizationSlug: organization.slug,
+			projectSlug,
+		})
+	);
+	if (!projectDetails?.project) throw notFound();
+	const publishedTheme = projectDetails.publishedTheme
+		? resolveProjectTheme(projectDetails.publishedTheme)
 		: null;
 	return (
 		<ProjectThemeBoundary key={projectSlug} theme={publishedTheme}>
-			{shell}
+			<AppShell
+				nav={
+					<MainNav
+						context={{
+							org: organization,
+							projectSlug,
+							type: 'project',
+						}}
+						subNav={
+							<DynamicNavigation
+								orgSlug={organization.slug}
+								projectSlug={projectSlug}
+								canManageSettings={projectDetails.permissions.canEditSettings}
+							/>
+						}
+						user={profile}
+					/>
+				}
+			>
+				<div className='flex flex-1 flex-col'>
+					<Outlet />
+				</div>
+			</AppShell>
 		</ProjectThemeBoundary>
 	);
 }

@@ -1,0 +1,47 @@
+{
+  "startedAt": "2026-09-21T18:34:20.998Z",
+  "method": "Adaptive intermediate-length tests, then repeat both bracket endpoints with new random states. Same client, redirect URI, scopes and PKCE. Fresh signed-out contexts. No app callback executed.",
+  "priorPassingState": 1024,
+  "priorFailingState": 1906,
+  "cases": [
+    {
+      "phase": "intermediate",
+      "stateLength": 1465,
+      "stateBytes": 1465,
+      "authorizationUrlLength": 1759,
+      "authorizationUrlBytes": 1759,
+      "responses": [
+        {
+          "method": "GET",
+          "path": "/login/oauth/authorize",
+          "status": 302,
+          "requestId": "5D9B:19E022:2FE8:3CD3:6AB178B1",
+          "redirectLength": 1861
+        },
+        {
+          "method": "GET",
+          "path": "/login",
+          "status": 200,
+          "requestId": "5D9B:19E022:3019:3D11:6AB178B1"
+        },
+        {
+          "method": "POST",
+          "path": "/session",
+          "status": 302,
+          "requestId": "5D9B:19E022:5037:663D:6AB178B1",
+          "redirectLength": 45
+        },
+        {
+          "method": "GET",
+          "path": "/sessions/two-factor/mobile",
+          "status": 404,
+          "requestId": "5D9B:19E022:5103:678A:6AB178BC"
+        }
+      ],
+      "outcome": "unexpected-http-error",
+      "githubLoginUrlLength": 1861
+    }
+  ],
+  "complete": false,
+  "error": "AssertionError"
+}

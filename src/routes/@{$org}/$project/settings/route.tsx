@@ -19,8 +19,7 @@ import {
 
 import { SidebarNavGroup, SidebarNavItem, SidebarNavSelect } from '@/components/sidebar-nav';
 import { EditingBar } from '@/components/site-nav/editing-bar';
-import { useCRPC } from '@/lib/convex/crpc';
-import { crpcServer } from '@/lib/convex/crpc-server';
+import { nativeFilesReads, useFilesAPI } from '@/lib/convex/files-api';
 import { titleMeta } from '@/lib/seo';
 import * as m from '@/paraglide/messages.js';
 
@@ -33,7 +32,7 @@ export const Route = createFileRoute('/@{$org}/$project/settings')({
 	// capabilities. Archived projects remain read-only server-side.
 	loader: async ({ context, params }) => {
 		const projectData = await context.queryClient.ensureQueryData(
-			crpcServer.project.getDetails.queryOptions({
+			nativeFilesReads.project.getDetails.queryOptions({
 				orgSlug: params.org,
 				slug: params.project,
 			})
@@ -55,14 +54,14 @@ export const Route = createFileRoute('/@{$org}/$project/settings')({
 
 function ProjectSettingsRoute() {
 	const params = Route.useParams();
-	const crpc = useCRPC();
+	const crpc = useFilesAPI();
 	const projectQuery = useQuery(
 		crpc.project.getDetails.queryOptions(
 			{
 				orgSlug: params.org,
 				slug: params.project,
 			},
-			{ subscribe: false }
+			{}
 		)
 	);
 	const permissions = projectQuery.data?.permissions;

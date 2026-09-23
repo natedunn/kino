@@ -1,0 +1,58 @@
+{
+  "recordedAt": "2026-09-21T17:03:33.906Z",
+  "initiation": {
+    "kino-preview-sept17": {
+      "n": 20,
+      "p50Ms": 2433.8,
+      "p95Ms": 2990.7
+    },
+    "native-proof": {
+      "n": 20,
+      "p50Ms": 208.2,
+      "p95Ms": 474.3
+    }
+  },
+  "public": {
+    "kino-preview-sept17": {
+      "ttfb": {
+        "n": 10,
+        "p50Ms": 850.5,
+        "p95Ms": 1456.2
+      },
+      "fcp": {
+        "n": 10,
+        "p50Ms": 1058,
+        "p95Ms": 1764
+      }
+    },
+    "native-proof": {
+      "ttfb": {
+        "n": 10,
+        "p50Ms": 157.3,
+        "p95Ms": 214.3
+      },
+      "fcp": {
+        "n": 10,
+        "p50Ms": 176,
+        "p95Ms": 236
+      }
+    }
+  },
+  "protected": {
+    "ttfbMs": {
+      "n": 10,
+      "p50Ms": 287.3,
+      "p95Ms": 462.4
+    },
+    "usefulMs": {
+      "n": 10,
+      "p50Ms": 445.1,
+      "p95Ms": 628.8
+    },
+    "hoverClickMs": {
+      "n": 10,
+      "p50Ms": 22.3,
+      "p95Ms": 26.7
+    }
+  }
+}

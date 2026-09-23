@@ -16,8 +16,7 @@ import {
 	SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useCRPC } from '@/lib/convex/crpc';
-import { crpcServer } from '@/lib/convex/crpc-server';
+import { updatesServer as crpcServer, useUpdatesAPI as useCRPC } from '@/lib/convex/updates-api';
 import { projectTitle, titleMeta } from '@/lib/seo';
 import * as m from '@/paraglide/messages.js';
 
@@ -93,17 +92,15 @@ function AdvancedUpdatesSearch() {
 	const currentProfileQuery = useQuery(
 		crpc.profile.findMyProfile.queryOptions({}, { skipUnauth: true, subscribe: false })
 	);
-	const firstPageQuery = useQuery(
-		{
-			...crpc.update.searchProject.queryOptions({
-				category: search.category,
-				cursor: search.cursor ?? null,
-				projectId,
-				search: search.q,
-			}),
-			enabled: hasFilters,
-		}
-	);
+	const firstPageQuery = useQuery({
+		...crpc.update.searchProject.queryOptions({
+			category: search.category,
+			cursor: search.cursor ?? null,
+			projectId,
+			search: search.q,
+		}),
+		enabled: hasFilters,
+	});
 	const [additionalPages, setAdditionalPages] = useState<
 		Array<NonNullable<typeof firstPageQuery.data>>
 	>([]);
@@ -142,7 +139,7 @@ function AdvancedUpdatesSearch() {
 	};
 
 	async function loadMoreUpdates() {
-		if (!canLoadMore || loadingMore || !lastPage?.continueCursor) return;
+		if (!canLoadMore || loadingMore || !lastPage.continueCursor) return;
 
 		setLoadingMore(true);
 		setLoadMoreError(null);

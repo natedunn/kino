@@ -1,0 +1,61 @@
+import type { GatewayEnv } from './env';
+
+import { oAuthProxy } from 'better-auth/plugins';
+
+import { createGatewayAuth } from './auth';
+import { handleGitHubRelayOAuthCallback } from './github-relay';
+import { handleGitHubWebhook, handleTargetsApi } from './hooks';
+import { rewriteProxyCallbackRedirect } from './redirect-rewrite';
+import { handleShareOriginsApi } from './share-origins';
+
+export default {
+	async fetch(request: Request, env: GatewayEnv, ctx: ExecutionContext) {
+		const url = new URL(request.url);
+
+		// Better Auth oAuthProxy production leg (GitHub OAuth login callback).
+		if (url.pathname.startsWith('/api/auth')) {
+			const response = await createGatewayAuth(env).handler(request);
+			return await rewriteProxyCallbackRedirect(env, response);
+		}
+
+		// GitHub App (sync) install/authorize trampoline.
+		if (url.pathname === '/github-relay/oauth-callback') {
+			return handleGitHubRelayOAuthCallback(env, request);
+		}
+
+		// GitHub App webhook intake + fan-out.
+		if (url.pathname === '/hooks/github' && request.method === 'POST') {
+			return handleGitHubWebhook(env, request, ctx);
+		}
+
+		// Webhook target registry (deploy/cleanup scripts).
+		if (url.pathname === '/hooks/targets') {
+			return handleTargetsApi(env, request);
+		}
+
+		if (url.pathname === '/dev/share-origins') {
+			return handleShareOriginsApi(env, request);
+		}
+
+		if (url.pathname === '/' || url.pathname === '/health') {
+			return new Response(
+				JSON.stringify({
+					ok: true,
+						service: 'kino-gateway',
+						betterAuthVersion: oAuthProxy().version,
+						nativeGithub: {
+							protocol: 'opaque-state-v1',
+							storage: !!env.OAUTH_STATES,
+							enabled: false,
+						},
+				}),
+				{
+					headers: { 'content-type': 'application/json', 'cache-control': 'no-store' },
+					status: 200,
+				}
+			);
+		}
+
+		return new Response('Not found', { status: 404 });
+	},
+} satisfies ExportedHandler<GatewayEnv>;

@@ -1,46 +1,4 @@
-import type { ActivityKind } from '@/components/feed/activity-feed';
-import type { Icon as IconType } from '@/icons/types';
+import type { FunctionReturnType } from 'convex/server';
+import type { api } from '../../../../convex/native/_generated/api';
 
-// Types for the static Project Overview draft. These describe the *mock* shapes
-// rendered on the overview dashboard. The project header binds to real data
-// (see index.tsx); everything below is placeholder until wired to the backend.
-
-export type { ActivityKind };
-
-export type UpdateCategory = 'changelog' | 'article' | 'announcement';
-
-export interface StatCard {
-	key: string;
-	label: string;
-	value: number;
-	/** Small delta hint, e.g. "+12 this week". Optional. */
-	hint?: string;
-	Icon: IconType;
-}
-
-export interface UpdatePreview {
-	id: string;
-	title: string;
-	category: UpdateCategory;
-	author: string;
-	/** Human date label, e.g. "Jun 24". */
-	date: string;
-	commentCount: number;
-}
-
-export interface Member {
-	id: string;
-	name: string;
-	username: string;
-	role: 'Owner' | 'Admin' | 'Moderator' | 'Member';
-	imageUrl?: string;
-}
-
-export interface ActivityEvent {
-	id: string;
-	kind: ActivityKind;
-	actor: string;
-	/** Pre-composed summary text for the feed row. */
-	summary: string;
-	when: string;
-}
+export type ProjectOverviewData = NonNullable<FunctionReturnType<typeof api.projectOverview.get>>;

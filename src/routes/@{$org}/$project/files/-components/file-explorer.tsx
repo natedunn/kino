@@ -1,6 +1,6 @@
 'use client';
 
-import type { ApiOutputs } from '@convex/api';
+import type { ProjectFile } from '@/lib/convex/files-api';
 
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 
 import { MoveFileDialog } from '@/components/files/move-file-dialog';
+import { NativeFileThumbnail } from '@/components/files/native-file-thumbnail';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -28,7 +29,7 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useCRPC, useCRPCClient } from '@/lib/convex/crpc';
+import { useFilesAPI, useFilesClient } from '@/lib/convex/files-api';
 import { localizeError } from '@/lib/errors';
 import { capturePostHogEvent } from '@/lib/posthog';
 import { toast } from '@/lib/toast';
@@ -36,8 +37,6 @@ import * as m from '@/paraglide/messages.js';
 import { getLocale } from '@/paraglide/runtime.js';
 
 import { useFilesWorkspace } from './files-workspace-context';
-
-type ProjectFile = ApiOutputs['file']['listProjectFiles']['page'][number];
 
 export type FileExplorerSearch = {
 	cursor?: string;
@@ -61,8 +60,8 @@ export function FileExplorer({
 	search: FileExplorerSearch;
 }) {
 	const { canManage, folders, manageFolder, projectId } = useFilesWorkspace();
-	const crpc = useCRPC();
-	const crpcClient = useCRPCClient();
+	const crpc = useFilesAPI();
+	const crpcClient = useFilesClient();
 	const navigate = useNavigate();
 	const currentFolder = folderId ? folders.find((folder) => folder.id === folderId) : null;
 	const childFolders = folders.filter(
@@ -129,15 +128,15 @@ export function FileExplorer({
 		<div className='flex min-h-0 w-full max-w-full min-w-0 flex-1 flex-col overflow-x-hidden py-6'>
 			<div className='w-full max-w-full min-w-0 overflow-hidden rounded-xl border bg-card shadow-xs'>
 				<div className='w-full max-w-full overflow-x-auto overscroll-x-contain contain-paint'>
-					<table className='w-full min-w-[660px] border-collapse text-sm'>
+					<table className='w-full table-fixed border-collapse text-sm sm:min-w-[660px] sm:table-auto'>
 						<thead>
 							<tr className='border-b bg-muted/35 text-left text-xs tracking-wider text-muted-foreground uppercase'>
 								<th className='px-4 py-3'>{m.files_name()}</th>
-								<th className='px-4 py-3'>{m.files_category()}</th>
-								<th className='px-4 py-3'>{m.files_size()}</th>
-								<th className='px-4 py-3'>{m.files_created()}</th>
-								<th className='px-4 py-3'>{m.files_edited()}</th>
-								<th className='px-4 py-3'>
+								<th className='hidden px-4 py-3 sm:table-cell'>{m.files_category()}</th>
+								<th className='hidden px-4 py-3 sm:table-cell'>{m.files_size()}</th>
+								<th className='hidden px-4 py-3 sm:table-cell'>{m.files_created()}</th>
+								<th className='hidden px-4 py-3 sm:table-cell'>{m.files_edited()}</th>
+								<th className='w-14 px-2 py-3 sm:w-auto sm:px-4'>
 									<span className='sr-only'>{m.files_actions()}</span>
 								</th>
 							</tr>
@@ -155,27 +154,27 @@ export function FileExplorer({
 								>
 									<td className='px-4 py-3'>
 										<button
-											className='flex cursor-pointer items-center gap-3 font-medium'
+											className='flex max-w-full min-w-0 cursor-pointer items-center gap-3 font-medium'
 											onClick={() => openFolder(folder.id)}
 											type='button'
 										>
-											<span className='flex size-9 items-center justify-center rounded-lg border bg-muted/45 text-muted-foreground'>
+											<span className='flex size-9 shrink-0 items-center justify-center rounded-lg border bg-muted/45 text-muted-foreground'>
 												<Folder className='size-4' />
 											</span>
-											{folder.name}
+											<span className='truncate'>{folder.name}</span>
 										</button>
 									</td>
-									<td className='px-4 py-3'>
+									<td className='hidden px-4 py-3 sm:table-cell'>
 										<Badge variant='outline'>{m.files_folder()}</Badge>
 									</td>
-									<td className='px-4 py-3 text-muted-foreground'>—</td>
-									<td className='px-4 py-3 text-muted-foreground'>
+									<td className='hidden px-4 py-3 text-muted-foreground sm:table-cell'>—</td>
+									<td className='hidden px-4 py-3 text-muted-foreground sm:table-cell'>
 										{formatDate(folder.createdTime)}
 									</td>
-									<td className='px-4 py-3 text-muted-foreground'>
+									<td className='hidden px-4 py-3 text-muted-foreground sm:table-cell'>
 										{formatDate(folder.updatedTime)}
 									</td>
-									<td className='px-4 py-3 text-right'>
+									<td className='px-2 py-3 text-right sm:px-4'>
 										{canManage && !folder.systemKey ? (
 											<Button
 												aria-label={m.files_manage_folder({ name: folder.name })}
@@ -198,11 +197,16 @@ export function FileExplorer({
 											{folderId ? m.files_folder_empty() : m.files_root_empty()}
 										</p>
 										<p className='mt-1 text-sm text-muted-foreground'>
-											{canManage
-												? m.files_folder_empty_help()
-												: folderId
-													? m.files_folder_empty_readonly_help()
-													: m.files_empty_help()}
+											{canManage ? (
+												<>
+													<span className='sm:hidden'>{m.files_folder_empty_help_mobile()}</span>
+													<span className='hidden sm:inline'>{m.files_folder_empty_help()}</span>
+												</>
+											) : folderId ? (
+												m.files_folder_empty_readonly_help()
+											) : (
+												m.files_empty_help()
+											)}
 										</p>
 									</td>
 								</tr>
@@ -272,7 +276,7 @@ function FileRow({
 	onDownload: () => void;
 	params: { org: string; project: string };
 }) {
-	const crpc = useCRPC();
+	const crpc = useFilesAPI();
 	const removeMutation = useMutation(crpc.file.removeAsset.mutationOptions());
 	const [moveOpen, setMoveOpen] = useState(false);
 	const [thumbnailFailed, setThumbnailFailed] = useState(false);
@@ -302,7 +306,9 @@ function FileRow({
 						to='/@{$org}/$project/files/file/$fileId'
 					>
 						<span className='flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-lg border bg-muted/45'>
-							{file.thumbnailUrl && !thumbnailFailed ? (
+							{file.hasThumbnail ? (
+								<NativeFileThumbnail assetId={file.id} publicUrl={file.thumbnailUrl} />
+							) : file.thumbnailUrl && !thumbnailFailed ? (
 								<img
 									alt=''
 									className='size-full object-cover'
@@ -315,20 +321,24 @@ function FileRow({
 								<Icon className='size-4 text-muted-foreground' />
 							)}
 						</span>
-						<span className='max-w-80 truncate'>{file.name}</span>
+						<span className='max-w-80 min-w-0 truncate'>{file.name}</span>
 					</Link>
 				</td>
-				<td className='px-4 py-3'>
+				<td className='hidden px-4 py-3 sm:table-cell'>
 					<Badge className='capitalize' variant='outline'>
 						{categoryLabel(file.category)}
 					</Badge>
 				</td>
-				<td className='px-4 py-3 font-mono text-xs text-muted-foreground'>
+				<td className='hidden px-4 py-3 font-mono text-xs text-muted-foreground sm:table-cell'>
 					{formatBytes(file.sizeBytes ?? 0)}
 				</td>
-				<td className='px-4 py-3 text-muted-foreground'>{formatDate(file.createdTime)}</td>
-				<td className='px-4 py-3 text-muted-foreground'>{formatDate(file.updatedTime)}</td>
-				<td className='px-4 py-3 text-right'>
+				<td className='hidden px-4 py-3 text-muted-foreground sm:table-cell'>
+					{formatDate(file.createdTime)}
+				</td>
+				<td className='hidden px-4 py-3 text-muted-foreground sm:table-cell'>
+					{formatDate(file.updatedTime)}
+				</td>
+				<td className='px-2 py-3 text-right sm:px-4'>
 					<DropdownMenu>
 						<DropdownMenuTrigger
 							render={
@@ -398,7 +408,7 @@ function categoryLabel(value: string) {
 		text: m.storage_label_text,
 		video: m.storage_label_video,
 	};
-	return labels[value]?.() ?? value;
+	return Object.hasOwn(labels, value) ? labels[value]() : value;
 }
 
 export function formatBytes(bytes: number) {

@@ -1,0 +1,15 @@
+{
+	"$schema": "../../node_modules/wrangler/config-schema.json",
+	"name": "kino-native-auth-proof-c318c09d",
+	"main": "../../dist/server/index.js",
+	"assets": {
+		"directory": "../../dist/client"
+	},
+	"compatibility_date": "2026-05-22",
+	"compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+	"rules": [{ "type": "ESModule", "globs": ["**/*.js", "**/*.mjs"] }],
+	"no_bundle": true,
+	"preview_urls": true,
+	"workers_dev": true,
+	"observability": { "enabled": true }
+}

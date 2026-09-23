@@ -1,0 +1,156 @@
+{
+  "recordedAt": "2026-09-22T23:41:31.666Z",
+  "conditions": "Anonymous feedback-list route in fresh en-US Chrome contexts, no throttling. Production has one feedback item; native fixture is empty, so these are contextual public-SSR timings, not equal data workloads.",
+  "targets": {
+    "production": {
+      "url": "https://usekino.com/@natedunn/kino/feedback",
+      "samples": [
+        {
+          "iteration": 0,
+          "ttfbMs": 1750.9,
+          "documentMs": 1751.9,
+          "fcpMs": 2512,
+          "lcpMs": 2512
+        },
+        {
+          "iteration": 1,
+          "ttfbMs": 989.7,
+          "documentMs": 993.2,
+          "fcpMs": 1176,
+          "lcpMs": 1176
+        },
+        {
+          "iteration": 2,
+          "ttfbMs": 1404.7,
+          "documentMs": 1418.9,
+          "fcpMs": 1584,
+          "lcpMs": 1584
+        },
+        {
+          "iteration": 3,
+          "ttfbMs": 1592.5,
+          "documentMs": 1594.4,
+          "fcpMs": 1776,
+          "lcpMs": 1776
+        },
+        {
+          "iteration": 4,
+          "ttfbMs": 1210,
+          "documentMs": 1211.5,
+          "fcpMs": 1424,
+          "lcpMs": 1424
+        },
+        {
+          "iteration": 5,
+          "ttfbMs": 1255.6,
+          "documentMs": 1256.5,
+          "fcpMs": 1556,
+          "lcpMs": 1556
+        },
+        {
+          "iteration": 6,
+          "ttfbMs": 1649.5,
+          "documentMs": 1650.7,
+          "fcpMs": 1812,
+          "lcpMs": 1812
+        },
+        {
+          "iteration": 7,
+          "ttfbMs": 979.6,
+          "documentMs": 981.1,
+          "fcpMs": 1136,
+          "lcpMs": 1136
+        },
+        {
+          "iteration": 8,
+          "ttfbMs": 990.3,
+          "documentMs": 991.6,
+          "fcpMs": 1136,
+          "lcpMs": 1136
+        },
+        {
+          "iteration": 9,
+          "ttfbMs": 934,
+          "documentMs": 935.5,
+          "fcpMs": 1096,
+          "lcpMs": 1096
+        }
+      ]
+    },
+    "native": {
+      "url": "https://kino-native-auth-proof-c318c09d.hello-fc8.workers.dev/@storage-proof-0d90676a/native-storage-transport-proof/feedback",
+      "samples": [
+        {
+          "iteration": 0,
+          "ttfbMs": 463.5,
+          "documentMs": 463.8,
+          "fcpMs": 580,
+          "lcpMs": 580
+        },
+        {
+          "iteration": 1,
+          "ttfbMs": 563.6,
+          "documentMs": 564.2,
+          "fcpMs": 692,
+          "lcpMs": 692
+        },
+        {
+          "iteration": 2,
+          "ttfbMs": 483.3,
+          "documentMs": 486.1,
+          "fcpMs": 648,
+          "lcpMs": 648
+        },
+        {
+          "iteration": 3,
+          "ttfbMs": 348.2,
+          "documentMs": 349.5,
+          "fcpMs": 540,
+          "lcpMs": 540
+        },
+        {
+          "iteration": 4,
+          "ttfbMs": 492.3,
+          "documentMs": 495.7,
+          "fcpMs": 656,
+          "lcpMs": 656
+        },
+        {
+          "iteration": 5,
+          "ttfbMs": 517.3,
+          "documentMs": 517.8,
+          "fcpMs": 648,
+          "lcpMs": 648
+        },
+        {
+          "iteration": 6,
+          "ttfbMs": 501.2,
+          "documentMs": 502,
+          "fcpMs": 640,
+          "lcpMs": 640
+        },
+        {
+          "iteration": 7,
+          "ttfbMs": 439,
+          "documentMs": 441.7,
+          "fcpMs": 568,
+          "lcpMs": 568
+        },
+        {
+          "iteration": 8,
+          "ttfbMs": 311.2,
+          "documentMs": 313,
+          "fcpMs": 456,
+          "lcpMs": 456
+        },
+        {
+          "iteration": 9,
+          "ttfbMs": 442.5,
+          "documentMs": 445,
+          "fcpMs": 576,
+          "lcpMs": 576
+        }
+      ]
+    }
+  }
+}

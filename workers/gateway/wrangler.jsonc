@@ -7,6 +7,12 @@
   "observability": { "enabled": true },
   "workers_dev": false,
 
+  // Deploy src/stage.ts first and record that version before activating native
+  // routes. Cloudflare cannot roll back across a Durable Object class migration.
+  "migrations": [
+    { "tag": "native-oauth-state-v1", "new_sqlite_classes": ["OAuthState"] },
+  ],
+
   // Secrets (set per env with `wrangler secret put <NAME> --env <env>`):
   //   OAUTH_PROXY_SECRET        shared with every app deployment in this tier
   //   BETTER_AUTH_SECRET        gateway-local better-auth secret (any random value)
@@ -30,6 +36,9 @@
         // Create with: wrangler kv namespace create TARGETS --env dev
         { "binding": "TARGETS", "id": "c0daa6e26ec349399a1aaf6426f4e619" },
       ],
+      "durable_objects": {
+        "bindings": [{ "name": "OAUTH_STATES", "class_name": "OAuthState" }],
+      },
     },
     "production": {
       "name": "kino-gateway",
@@ -42,6 +51,9 @@
         // Create with: wrangler kv namespace create TARGETS --env production
         { "binding": "TARGETS", "id": "5f28cf640ea44c5f94bf053e21b5db94" },
       ],
+      "durable_objects": {
+        "bindings": [{ "name": "OAUTH_STATES", "class_name": "OAuthState" }],
+      },
     },
   },
 }

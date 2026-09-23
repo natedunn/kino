@@ -16,14 +16,14 @@ import { ArrowLeft, Image, LinkIcon, Settings2, Tag, Trash2 } from 'lucide-react
 
 import { LazyMarkdownEditor } from '@/components/editor/markdown-editor.lazy';
 import { sanitizeEditorContent } from '@/components/editor/sanitize-content';
+import { NativeCoverImageUpload } from '@/components/files/native-files';
 import { InlineAlert } from '@/components/inline-alert';
 import { SidebarSection } from '@/components/sidebar-section';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { authClient } from '@/lib/convex/auth-client';
-import { useCRPC } from '@/lib/convex/crpc';
-import { crpcServer } from '@/lib/convex/crpc-server';
+import { useAuthSession } from '@/lib/auth/auth-client';
+import { updatesServer as crpcServer, useUpdatesAPI as useCRPC } from '@/lib/convex/updates-api';
 import { localizeError } from '@/lib/errors';
 import { useSidebarState } from '@/lib/hooks/use-sidebar-state';
 import { projectTitle, titleFromSlug, titleMeta } from '@/lib/seo';
@@ -31,7 +31,6 @@ import { cn } from '@/lib/utils';
 import { updateFormSchema, validationMessage } from '@/lib/validation';
 import * as m from '@/paraglide/messages.js';
 
-import { CoverImageUpload } from '../-components/cover-image-upload';
 import {
 	CategoryField,
 	FeaturedField,
@@ -72,7 +71,7 @@ export const Route = createFileRoute('/@{$org}/$project/updates/$slug/edit')({
 			})
 		);
 
-		if (!projectData?.project?.id) {
+		if (!projectData?.project.id) {
 			throw notFound();
 		}
 
@@ -116,7 +115,7 @@ function EditUpdateRoute() {
 	const params = routeApi.useParams();
 	const navigate = useNavigate();
 	const crpc = useCRPC();
-	const session = authClient.useSession();
+	const session = useAuthSession();
 	const [formError, setFormError] = useState('');
 	const contentEditorRef = useRef<MarkdownEditorRef>(null);
 	const { state: sidebarState, setSection: setSidebarSection } = useSidebarState(
@@ -133,7 +132,7 @@ function EditUpdateRoute() {
 	const updateQuery = useQuery(
 		crpc.update.getBySlug.queryOptions(
 			{
-				projectId: projectQuery.data?.project?.id ?? '',
+				projectId: projectQuery.data?.project.id ?? '',
 				slug: params.slug,
 			},
 			{ enabled: !!projectQuery.data?.project }
@@ -190,7 +189,7 @@ function EditUpdateRoute() {
 	const tagsKey = useMemo(() => JSON.stringify((update?.tags ?? []).map(String)), [update?.tags]);
 	const formDefaultValues = useMemo<UpdateFormValues>(
 		() => ({
-			category: (update?.category ?? 'changelog') as UpdateCategory,
+			category: update?.category ?? 'changelog',
 			content: update?.content ?? '',
 			coverImageId: update?.coverImageId ?? null,
 			featured: update?.featuredAt != null,
@@ -243,7 +242,7 @@ function EditUpdateRoute() {
 		}),
 	});
 
-	if (!session.data?.user) {
+	if (!session.user) {
 		return <InlineAlert variant='warning'>{m.updates_sign_in_edit()}</InlineAlert>;
 	}
 
@@ -395,7 +394,7 @@ function EditUpdateRoute() {
 									{(field) => (
 										<FeaturedField
 											checked={field.state.value}
-											mode={project.updatesFeaturedMode ?? 'latest'}
+											mode={project.updatesFeaturedMode}
 											onChange={(checked) => field.handleChange(checked)}
 										/>
 									)}
@@ -410,12 +409,11 @@ function EditUpdateRoute() {
 							title={m.updates_cover_image()}
 						>
 							<form.Field name='coverImageId'>
-								{(field) => (
-									<CoverImageUpload
-										currentCoverImageUrl={updateData.coverImageUrl}
-										onChange={(value) => field.handleChange(value)}
-										onError={(message) => setFormError(message)}
+								{() => (
+									<NativeCoverImageUpload
+										projectId={update.projectId}
 										updateId={update.id}
+										assetId={update.coverAssetId}
 									/>
 								)}
 							</form.Field>

@@ -1,9 +1,7 @@
 import { useRef, useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
 import { ImagePlus, Loader2, Trash2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { useCRPC } from '@/lib/convex/crpc';
 import { localizeError } from '@/lib/errors';
 import { cn } from '@/lib/utils';
 import * as m from '@/paraglide/messages.js';
@@ -12,20 +10,18 @@ export function CoverImageUpload({
 	currentCoverImageUrl,
 	onChange,
 	onError,
-	updateId,
+	uploadFile,
+	clearCover,
 }: {
 	currentCoverImageUrl?: string | null;
 	onChange: (value: string | null) => void;
 	onError?: (message: string) => void;
-	updateId: string;
+	uploadFile: (file: File) => Promise<string>;
+	clearCover: () => Promise<unknown>;
 }) {
-	const crpc = useCRPC();
 	const fileInputRef = useRef<HTMLInputElement>(null);
 	const [isUploading, setIsUploading] = useState(false);
 	const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-	const uploadUrlMutation = useMutation(crpc.update.generateCoverImageUploadUrl.mutationOptions());
-	const syncMetadataMutation = useMutation(crpc.update.syncMetadata.mutationOptions());
-	const clearCoverImageMutation = useMutation(crpc.update.clearCoverImage.mutationOptions());
 
 	const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
 		const file = event.target.files?.[0];
@@ -46,22 +42,7 @@ export function CoverImageUpload({
 		onError?.('');
 
 		try {
-			const { key, url } = await uploadUrlMutation.mutateAsync({
-				file: { mimeType: file.type, name: file.name, sizeBytes: file.size },
-				updateId,
-			});
-			const response = await fetch(url, {
-				body: file,
-				headers: { 'Content-Type': file.type },
-				method: 'PUT',
-			});
-
-			if (!response.ok) {
-				throw new Error(m.updates_cover_upload_failed());
-			}
-
-			await syncMetadataMutation.mutateAsync({ key });
-			onChange(key);
+			onChange(await uploadFile(file));
 		} catch (error) {
 			onError?.(localizeError(error, m.updates_cover_failed()));
 			setPreviewUrl(null);
@@ -74,14 +55,14 @@ export function CoverImageUpload({
 	};
 
 	const displayUrl = previewUrl ?? currentCoverImageUrl;
-	const isBusy = isUploading || clearCoverImageMutation.isPending;
+	const isBusy = isUploading;
 
 	const handleClear = async () => {
 		setIsUploading(true);
 		onError?.('');
 
 		try {
-			await clearCoverImageMutation.mutateAsync({ updateId });
+			await clearCover();
 			setPreviewUrl(null);
 			onChange(null);
 		} catch (error) {

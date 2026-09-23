@@ -1,3 +1,4 @@
+import { convexQuery } from '@convex-dev/react-query';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { Plus } from 'lucide-react';
@@ -6,10 +7,9 @@ import { AppShell } from '@/components/app-shell';
 import { Button } from '@/components/ui/button';
 import { requireAuth } from '@/lib/auth/require-auth';
 import { useAuthLostRedirect } from '@/lib/auth/use-auth-lost';
-import { useCRPC } from '@/lib/convex/crpc';
-import { crpcServer } from '@/lib/convex/crpc-server';
 import { titleMeta } from '@/lib/seo';
 
+import { api as nativeApi } from '../../convex/native/_generated/api';
 import { DashboardFeed } from './-dashboard/dashboard-feed';
 import { KinoNews } from './-dashboard/kino-news';
 import { YourTeams } from './-dashboard/your-teams';
@@ -25,11 +25,9 @@ export const Route = createFileRoute('/dashboard')({
 		}
 
 		await Promise.all([
+			context.queryClient.ensureQueryData(convexQuery(nativeApi.profiles.me, {})),
 			context.queryClient.ensureQueryData(
-				crpcServer.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
-			),
-			context.queryClient.ensureQueryData(
-				crpcServer.org.findMyOrgs.queryOptions({}, { skipUnauth: true })
+				convexQuery(nativeApi.organizations.listMineForRoute, {})
 			),
 		]);
 	},
@@ -41,19 +39,25 @@ function DashboardPage() {
 	// in place (sign-out), which `beforeLoad` can't see.
 	const lost = useAuthLostRedirect();
 	if (lost) return lost;
-
-	return <AuthenticatedDashboard />;
+	return <NativeDashboard />;
 }
 
-function AuthenticatedDashboard() {
-	const crpc = useCRPC();
-	// Warms the profile cache the shell header reads, so it never shows a skeleton.
-	useSuspenseQuery(crpc.profile.findMyProfile.queryOptions({}, { skipUnauth: true }));
-	const { data: orgsData } = useSuspenseQuery(
-		crpc.org.findMyOrgs.queryOptions({}, { skipUnauth: true })
+function NativeDashboard() {
+	// Warm the profile used by the shared navigation before it renders.
+	useSuspenseQuery(convexQuery(nativeApi.profiles.me, {}));
+	const { data: organizations } = useSuspenseQuery(
+		convexQuery(nativeApi.organizations.listMineForRoute, {})
 	);
-	const teams = orgsData.teams;
+	return <DashboardLayout teams={organizations.teams} underLimit={organizations.underLimit} />;
+}
 
+function DashboardLayout({
+	teams,
+	underLimit,
+}: {
+	teams: Parameters<typeof YourTeams>[0]['teams'];
+	underLimit: boolean;
+}) {
 	return (
 		<AppShell>
 			<main className='flex flex-1 flex-col'>
@@ -66,7 +70,7 @@ function AuthenticatedDashboard() {
 								Updates from across all your projects.
 							</p>
 						</div>
-						{orgsData.underLimit ? (
+						{underLimit ? (
 							<Button asChild size='sm'>
 								<Link to='/create/team'>
 									<Plus className='size-3.5' />
@@ -84,7 +88,7 @@ function AuthenticatedDashboard() {
 					<div className='flex flex-1 flex-col gap-8 md:grid md:grid-cols-12'>
 						{/* Secondary context — right sidebar */}
 						<aside className='order-last flex flex-col gap-6 py-8 md:col-span-4 md:border-l md:border-border/75 md:pl-8'>
-							<YourTeams teams={teams} underLimit={orgsData.underLimit} />
+							<YourTeams teams={teams} underLimit={underLimit} />
 							<KinoNews />
 						</aside>
 

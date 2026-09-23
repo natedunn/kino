@@ -1,0 +1,23 @@
+// Read-only check of deployed key encoding and the public JWKS, without logging keys.
+import { readFileSync } from 'node:fs';
+import { parseEnv } from 'node:util';
+import { ConvexHttpClient } from 'convex/browser';
+import { makeFunctionReference } from 'convex/server';
+import { importPKCS8, SignJWT, createLocalJWKSet, jwtVerify } from 'jose';
+const read = (path) => readFileSync(new URL(path, import.meta.url), 'utf8');
+const deployment = JSON.parse(read('deployment.json'));
+if (deployment.type !== 'preview' || deployment.name !== 'graceful-elephant-103') throw new Error('Wrong target');
+const key = parseEnv(read('.env.deploy.local')).CONVEX_DEPLOY_KEY;
+if (key.split('|')[0].split(':').at(-1) !== deployment.name) throw new Error('Wrong key target');
+const client = new ConvexHttpClient(deployment.url);
+client.setAdminAuth(key);
+const vars = await client.query(makeFunctionReference('_system/cli/queryEnvironmentVariables'), {});
+const encoded = vars.find((item) => item.name === 'AUTH_PRIVATE_KEY')?.value;
+if (!encoded || encoded.startsWith('-----')) throw new Error('AUTH_PRIVATE_KEY must contain base64-encoded PEM');
+const privateKey = await importPKCS8(atob(encoded), 'RS256');
+const jwksResponse = await fetch(deployment.url.replace('.convex.cloud', '.convex.site') + '/auth/.well-known/jwks.json');
+if (!jwksResponse.ok) throw new Error('Public JWKS unavailable');
+const jwks = await jwksResponse.json();
+const token = await new SignJWT({}).setProtectedHeader({alg:'RS256',kid:jwks.keys[0].kid}).setExpirationTime('10s').sign(privateKey);
+await jwtVerify(token, createLocalJWKSet(jwks));
+console.log('PASS: deployed preview private-key encoding and public JWKS agree.');

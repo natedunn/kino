@@ -1,99 +1,70 @@
-import type { RoadmapItem, ViewMode } from './-types';
-
-import { useMemo, useState } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import { LayoutGrid, List, Milestone, Search } from 'lucide-react';
 
 import { projectTitle, titleMeta } from '@/lib/seo';
-import { cn } from '@/lib/utils';
-
-import { BoardView } from './-components/board-view';
-import { ListView } from './-components/list-view';
-import { TimelineView } from './-components/timeline-view';
-import { MOCK_ITEMS } from './-mock-data';
+import * as m from '@/paraglide/messages.js';
 
 export const Route = createFileRoute('/@{$org}/$project/roadmap/')({
 	head: ({ params }) => ({
-		meta: [titleMeta(['Roadmap', projectTitle(params.org, params.project)])],
+		meta: [titleMeta([m.project_nav_roadmap(), projectTitle(params.org, params.project)])],
 	}),
 	component: RoadmapPage,
 });
 
-const VIEW_OPTIONS: Array<{
-	mode: ViewMode;
-	label: string;
-	Icon: typeof LayoutGrid;
-}> = [
-	{ mode: 'board', label: 'Board', Icon: LayoutGrid },
-	{ mode: 'list', label: 'List', Icon: List },
-	{ mode: 'timeline', label: 'Timeline', Icon: Milestone },
-];
+const VIEW_OPTIONS = [
+	{ label: m.roadmap_view_board, Icon: LayoutGrid },
+	{ label: m.roadmap_view_list, Icon: List },
+	{ label: m.roadmap_view_timeline, Icon: Milestone },
+] as const;
 
 function RoadmapPage() {
-	const [view, setView] = useState<ViewMode>('board');
-	const [search, setSearch] = useState('');
-	const [items, setItems] = useState<Array<RoadmapItem>>(MOCK_ITEMS);
-
-	const filteredItems = useMemo(() => {
-		const q = search.trim().toLowerCase();
-		if (!q) return items;
-		return items.filter(
-			(item) =>
-				item.title.toLowerCase().includes(q) ||
-				item.tags.some((tag) => tag.toLowerCase().includes(q))
-		);
-	}, [items, search]);
-
 	return (
 		<div className='flex flex-1 flex-col'>
-			{/* Toolbar */}
 			<div className='border-b'>
 				<div className='container flex items-center justify-between gap-4 py-3'>
-					{/* View toggle — left */}
 					<div
-						role='tablist'
-						aria-label='Roadmap view'
+						aria-label={m.roadmap_view_label()}
 						className='flex items-center gap-0.5 rounded-lg border bg-muted/70 p-1'
 					>
-						{VIEW_OPTIONS.map(({ mode, label, Icon: ViewIcon }) => (
+						{VIEW_OPTIONS.map(({ label, Icon: ViewIcon }, index) => (
 							<button
-								key={mode}
-								role='tab'
+								key={index}
 								type='button'
-								aria-selected={view === mode}
-								onClick={() => setView(mode)}
-								className={cn(
-									'flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors',
-									view === mode
+								disabled
+								className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium ${
+									index === 0
 										? 'border border-border/60 bg-background text-foreground shadow-xs'
-										: 'text-muted-foreground hover:text-foreground'
-								)}
+										: 'text-muted-foreground'
+								}`}
 							>
 								<ViewIcon className='size-3' />
-								{label}
+								{label()}
 							</button>
 						))}
 					</div>
 
-					{/* Search — right */}
 					<div className='relative w-52'>
 						<Search className='pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground' />
 						<input
 							type='search'
-							aria-label='Search roadmap'
-							placeholder='Search roadmap…'
-							value={search}
-							onChange={(e) => setSearch(e.target.value)}
-							className='w-full rounded-md border bg-muted/50 py-1.5 pr-3 pl-8 text-xs transition-colors placeholder:text-muted-foreground/50 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none'
+							aria-label={m.roadmap_search_label()}
+							placeholder={m.roadmap_search_placeholder()}
+							disabled
+							className='w-full rounded-md border bg-muted/50 py-1.5 pr-3 pl-8 text-xs placeholder:text-muted-foreground/50'
 						/>
 					</div>
 				</div>
 			</div>
 
-			{/* View content */}
-			{view === 'board' && <BoardView items={filteredItems} onStatusChange={setItems} />}
-			{view === 'list' && <ListView items={filteredItems} />}
-			{view === 'timeline' && <TimelineView items={filteredItems} />}
+			<div className='container py-6'>
+				<div className='rounded-xl border border-dashed bg-muted/20 px-6 py-16 text-center'>
+					<Milestone aria-hidden='true' className='mx-auto size-8 text-muted-foreground' />
+					<h1 className='mt-4 text-base font-semibold'>{m.roadmap_unavailable_title()}</h1>
+					<p className='mt-1 text-sm text-muted-foreground'>
+						{m.roadmap_unavailable_description()}
+					</p>
+				</div>
+			</div>
 		</div>
 	);
 }

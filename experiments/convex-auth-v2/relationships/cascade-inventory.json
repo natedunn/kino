@@ -1,0 +1,681 @@
+{
+	"source": "convex/functions/schema.ts",
+	"kitcnVersion": "0.31.1",
+	"defaultEvidence": "node_modules/kitcn/dist/schema-DbPcDW-N.js:882-894",
+	"rows": [
+		{
+			"table": "session",
+			"field": "userId",
+			"target": "user",
+			"action": "no action (restrict)",
+			"declaration": "explicit reference",
+			"indexes": ["userId"],
+			"line": 175
+		},
+		{
+			"table": "account",
+			"field": "userId",
+			"target": "user",
+			"action": "no action (restrict)",
+			"declaration": "explicit reference",
+			"indexes": ["userId"],
+			"line": 195
+		},
+		{
+			"table": "member",
+			"field": "organizationId",
+			"target": "organization",
+			"action": "no action (restrict)",
+			"declaration": "explicit reference",
+			"indexes": ["organizationId", "organizationId_userId", "organizationId_role"],
+			"line": 246
+		},
+		{
+			"table": "member",
+			"field": "userId",
+			"target": "user",
+			"action": "no action (restrict)",
+			"declaration": "explicit reference",
+			"indexes": ["userId", "userId_organizationId"],
+			"line": 249
+		},
+		{
+			"table": "invitation",
+			"field": "organizationId",
+			"target": "organization",
+			"action": "no action (restrict)",
+			"declaration": "explicit reference",
+			"indexes": ["organizationId", "organizationId_status"],
+			"line": 269
+		},
+		{
+			"table": "invitation",
+			"field": "inviterId",
+			"target": "user",
+			"action": "no action (restrict)",
+			"declaration": "explicit reference",
+			"indexes": ["inviterId"],
+			"line": 277
+		},
+		{
+			"table": "profile",
+			"field": "personalOrganizationId",
+			"target": "organization",
+			"action": "no action (restrict)",
+			"declaration": "explicit reference",
+			"indexes": [],
+			"line": 314
+		},
+		{
+			"table": "profile",
+			"field": "userId",
+			"target": "user",
+			"action": "no action (restrict)",
+			"declaration": "explicit reference",
+			"indexes": ["by_userId"],
+			"line": 316
+		},
+		{
+			"table": "projectMember",
+			"field": "profileId",
+			"target": "profile",
+			"action": "cascade",
+			"declaration": "explicit reference",
+			"indexes": [
+				"by_profileId_projectId",
+				"by_profileId_projectSlug",
+				"by_profileId_projectId_role",
+				"by_profileId_projectSlug_role"
+			],
+			"line": 356
+		},
+		{
+			"table": "projectMember",
+			"field": "projectId",
+			"target": "project",
+			"action": "cascade",
+			"declaration": "explicit reference",
+			"indexes": ["by_projectId"],
+			"line": 359
+		},
+		{
+			"table": "projectTheme",
+			"field": "projectId",
+			"target": "project",
+			"action": "cascade",
+			"declaration": "explicit reference",
+			"indexes": ["by_projectId"],
+			"line": 380
+		},
+		{
+			"table": "projectTheme",
+			"field": "publishedByProfileId",
+			"target": "profile",
+			"action": "set null",
+			"declaration": "explicit reference",
+			"indexes": [],
+			"line": 395
+		},
+		{
+			"table": "projectModeratorAccess",
+			"field": "organizationId",
+			"target": "organization",
+			"action": "cascade",
+			"declaration": "explicit reference",
+			"indexes": ["by_organizationId_and_memberId", "by_organizationId_and_projectId"],
+			"line": 405
+		},
+		{
+			"table": "projectModeratorAccess",
+			"field": "memberId",
+			"target": "member",
+			"action": "cascade",
+			"declaration": "explicit reference",
+			"indexes": ["by_memberId_and_projectId"],
+			"line": 408
+		},
+		{
+			"table": "projectModeratorAccess",
+			"field": "projectId",
+			"target": "project",
+			"action": "cascade",
+			"declaration": "explicit reference",
+			"indexes": ["by_projectId_and_memberId"],
+			"line": 411
+		},
+		{
+			"table": "pendingModeratorProjectAccess",
+			"field": "invitationId",
+			"target": "invitation",
+			"action": "cascade",
+			"declaration": "explicit reference",
+			"indexes": ["by_invitationId_and_projectId"],
+			"line": 427
+		},
+		{
+			"table": "pendingModeratorProjectAccess",
+			"field": "organizationId",
+			"target": "organization",
+			"action": "cascade",
+			"declaration": "explicit reference",
+			"indexes": ["by_organizationId_and_projectId"],
+			"line": 430
+		},
+		{
+			"table": "pendingModeratorProjectAccess",
+			"field": "projectId",
+			"target": "project",
+			"action": "cascade",
+			"declaration": "explicit reference",
+			"indexes": ["by_projectId_and_invitationId"],
+			"line": 433
+		},
+		{
+			"table": "fileFolder",
+			"field": "projectId",
+			"target": "project",
+			"action": "cascade",
+			"declaration": "explicit reference",
+			"indexes": [
+				"by_projectId",
+				"by_projectId_parentFolderId_normalizedName",
+				"by_projectId_systemKey"
+			],
+			"line": 450
+		},
+		{
+			"table": "fileFolder",
+			"field": "parentFolderId",
+			"target": "fileFolder",
+			"action": "restrict",
+			"declaration": "explicit reference",
+			"indexes": ["by_parentFolderId"],
+			"line": 453
+		},
+		{
+			"table": "fileFolder",
+			"field": "createdByProfileId",
+			"target": "profile",
+			"action": "set null",
+			"declaration": "explicit reference",
+			"indexes": [],
+			"line": 459
+		},
+		{
+			"table": "fileAsset",
+			"field": "projectId",
+			"target": "project",
+			"action": "cascade",
+			"declaration": "explicit reference",
+			"indexes": [
+				"by_projectId",
+				"by_projectId_status_createdTime",
+				"by_projectId_status_updatedTime",
+				"by_projectId_status_normalizedName",
+				"by_projectId_listing_status_createdTime",
+				"by_projectId_listing_status_updatedTime",
+				"by_projectId_listing_status_normalizedName",
+				"by_projectId_listing_status_sizeBytes",
+				"by_projectId_listing_folderId_status_createdTime",
+				"by_projectId_listing_folderId_status_updatedTime",
+				"by_projectId_listing_folderId_status_normalizedName",
+				"by_projectId_listing_folderId_status_sizeBytes",
+				"by_projectId_listing_folderId_category_status_createdTime",
+				"by_projectId_listing_folderId_extension_status_createdTime",
+				"by_projectId_listing_category_status_createdTime",
+				"by_projectId_listing_extension_status_createdTime",
+				"by_projectId_listing_sourceProvider_status_createdTime",
+				"by_projectId_listing_category_sourceProvider_status_createdTime",
+				"by_projectId_listing_extension_sourceProvider_status_createdTime"
+			],
+			"line": 480
+		},
+		{
+			"table": "fileAsset",
+			"field": "folderId",
+			"target": "fileFolder",
+			"action": "set null",
+			"declaration": "explicit reference",
+			"indexes": ["by_folderId"],
+			"line": 486
+		},
+		{
+			"table": "fileAsset",
+			"field": "uploadedByProfileId",
+			"target": "profile",
+			"action": "set null",
+			"declaration": "explicit reference",
+			"indexes": ["by_uploadedByProfileId"],
+			"line": 499
+		},
+		{
+			"table": "fileObject",
+			"field": "assetId",
+			"target": "fileAsset",
+			"action": "cascade",
+			"declaration": "explicit reference",
+			"indexes": ["by_assetId"],
+			"line": 648
+		},
+		{
+			"table": "fileObject",
+			"field": "projectId",
+			"target": "project",
+			"action": "cascade",
+			"declaration": "explicit reference",
+			"indexes": ["by_projectId", "by_projectId_status_createdTime"],
+			"line": 651
+		},
+		{
+			"table": "fileReference",
+			"field": "assetId",
+			"target": "fileAsset",
+			"action": "cascade",
+			"declaration": "explicit reference",
+			"indexes": ["by_assetId"],
+			"line": 683
+		},
+		{
+			"table": "fileReference",
+			"field": "projectId",
+			"target": "project",
+			"action": "cascade",
+			"declaration": "explicit reference",
+			"indexes": ["by_projectId", "by_projectId_feature"],
+			"line": 686
+		},
+		{
+			"table": "projectStorageUsage",
+			"field": "projectId",
+			"target": "project",
+			"action": "cascade",
+			"declaration": "explicit reference",
+			"indexes": ["by_projectId"],
+			"line": 711
+		},
+		{
+			"table": "feedbackBoard",
+			"field": "projectId",
+			"target": "project",
+			"action": "cascade",
+			"declaration": "explicit reference",
+			"indexes": ["by_projectId"],
+			"line": 744
+		},
+		{
+			"table": "feedbackComment",
+			"field": "feedbackId",
+			"target": "feedback",
+			"action": "cascade",
+			"declaration": "explicit reference",
+			"indexes": ["by_feedbackId"],
+			"line": 762
+		},
+		{
+			"table": "feedbackComment",
+			"field": "authorProfileId",
+			"target": "profile",
+			"action": "no action (restrict)",
+			"declaration": "explicit reference",
+			"indexes": ["by_authorProfileId"],
+			"line": 765
+		},
+		{
+			"table": "feedbackComment",
+			"field": "replyFeedbackCommentId",
+			"target": "feedbackComment",
+			"action": "set null",
+			"declaration": "explicit reference",
+			"indexes": ["by_replyFeedbackCommentId"],
+			"line": 771
+		},
+		{
+			"table": "feedback",
+			"field": "authorProfileId",
+			"target": "profile",
+			"action": "no action (restrict)",
+			"declaration": "explicit reference",
+			"indexes": [],
+			"line": 791
+		},
+		{
+			"table": "feedback",
+			"field": "projectId",
+			"target": "project",
+			"action": "no action (restrict)",
+			"declaration": "explicit reference",
+			"indexes": [
+				"by_projectId",
+				"by_projectId_slug",
+				"by_projectId_boardId",
+				"by_projectId_status",
+				"by_projectId_boardId_status"
+			],
+			"line": 794
+		},
+		{
+			"table": "feedback",
+			"field": "boardId",
+			"target": "feedbackBoard",
+			"action": "cascade",
+			"declaration": "explicit reference",
+			"indexes": ["by_boardId"],
+			"line": 798
+		},
+		{
+			"table": "feedback",
+			"field": "firstCommentId",
+			"target": "feedbackComment",
+			"action": "set null",
+			"declaration": "explicit reference",
+			"indexes": ["by_firstCommentId"],
+			"line": 804
+		},
+		{
+			"table": "feedback",
+			"field": "answerCommentId",
+			"target": "feedbackComment",
+			"action": "set null",
+			"declaration": "explicit reference",
+			"indexes": ["by_answerCommentId"],
+			"line": 807
+		},
+		{
+			"table": "feedback",
+			"field": "assignedProfileId",
+			"target": "profile",
+			"action": "set null",
+			"declaration": "explicit reference",
+			"indexes": ["by_assignedProfileId"],
+			"line": 810
+		},
+		{
+			"table": "feedbackCommentEmote",
+			"field": "authorProfileId",
+			"target": "profile",
+			"action": "no action (restrict)",
+			"declaration": "explicit reference",
+			"indexes": ["by_authorProfileId"],
+			"line": 849
+		},
+		{
+			"table": "feedbackCommentEmote",
+			"field": "feedbackId",
+			"target": "feedback",
+			"action": "cascade",
+			"declaration": "explicit reference",
+			"indexes": ["by_feedbackId"],
+			"line": 852
+		},
+		{
+			"table": "feedbackCommentEmote",
+			"field": "feedbackCommentId",
+			"target": "feedbackComment",
+			"action": "cascade",
+			"declaration": "explicit reference",
+			"indexes": ["by_feedbackCommentId", "by_feedbackCommentId_authorProfileId_content"],
+			"line": 855
+		},
+		{
+			"table": "feedbackEvent",
+			"field": "feedbackId",
+			"target": "feedback",
+			"action": "cascade",
+			"declaration": "explicit reference",
+			"indexes": ["by_feedbackId"],
+			"line": 877
+		},
+		{
+			"table": "feedbackEvent",
+			"field": "actorProfileId",
+			"target": "profile",
+			"action": "no action (restrict)",
+			"declaration": "explicit reference",
+			"indexes": [],
+			"line": 880
+		},
+		{
+			"table": "feedbackUpvote",
+			"field": "feedbackId",
+			"target": "feedback",
+			"action": "cascade",
+			"declaration": "explicit reference",
+			"indexes": ["by_feedbackId", "by_feedbackId_authorProfileId"],
+			"line": 894
+		},
+		{
+			"table": "feedbackUpvote",
+			"field": "authorProfileId",
+			"target": "profile",
+			"action": "no action (restrict)",
+			"declaration": "explicit reference",
+			"indexes": [],
+			"line": 897
+		},
+		{
+			"table": "update",
+			"field": "authorProfileId",
+			"target": "profile",
+			"action": "no action (restrict)",
+			"declaration": "explicit reference",
+			"indexes": [],
+			"line": 916
+		},
+		{
+			"table": "update",
+			"field": "projectId",
+			"target": "project",
+			"action": "cascade",
+			"declaration": "explicit reference",
+			"indexes": [
+				"by_projectId_slug",
+				"by_projectId_updatedTime",
+				"by_projectId_status_publishedAt",
+				"by_projectId_category_status_publishedAt",
+				"by_projectId_featuredAt"
+			],
+			"line": 919
+		},
+		{
+			"table": "update",
+			"field": "relatedFeedbackIds",
+			"target": "feedback",
+			"action": "no action (restrict)",
+			"declaration": "implicit id reference",
+			"indexes": [],
+			"line": 926
+		},
+		{
+			"table": "updateComment",
+			"field": "updateId",
+			"target": "update",
+			"action": "cascade",
+			"declaration": "explicit reference",
+			"indexes": ["by_updateId"],
+			"line": 960
+		},
+		{
+			"table": "updateComment",
+			"field": "authorProfileId",
+			"target": "profile",
+			"action": "no action (restrict)",
+			"declaration": "explicit reference",
+			"indexes": ["by_authorProfileId"],
+			"line": 963
+		},
+		{
+			"table": "updateEmote",
+			"field": "updateId",
+			"target": "update",
+			"action": "cascade",
+			"declaration": "explicit reference",
+			"indexes": ["by_updateId", "by_updateId_authorProfileId_content"],
+			"line": 984
+		},
+		{
+			"table": "updateEmote",
+			"field": "authorProfileId",
+			"target": "profile",
+			"action": "no action (restrict)",
+			"declaration": "explicit reference",
+			"indexes": [],
+			"line": 987
+		},
+		{
+			"table": "updateCommentEmote",
+			"field": "updateId",
+			"target": "update",
+			"action": "cascade",
+			"declaration": "explicit reference",
+			"indexes": ["by_updateId"],
+			"line": 1014
+		},
+		{
+			"table": "updateCommentEmote",
+			"field": "updateCommentId",
+			"target": "updateComment",
+			"action": "cascade",
+			"declaration": "explicit reference",
+			"indexes": ["by_updateCommentId", "by_updateCommentId_authorProfileId_content"],
+			"line": 1017
+		},
+		{
+			"table": "updateCommentEmote",
+			"field": "authorProfileId",
+			"target": "profile",
+			"action": "no action (restrict)",
+			"declaration": "explicit reference",
+			"indexes": [],
+			"line": 1020
+		},
+		{
+			"table": "githubConnectionState",
+			"field": "createdByProfileId",
+			"target": "profile",
+			"action": "no action (restrict)",
+			"declaration": "explicit reference",
+			"indexes": [],
+			"line": 1041
+		},
+		{
+			"table": "githubConnectionState",
+			"field": "createdByUserId",
+			"target": "user",
+			"action": "no action (restrict)",
+			"declaration": "explicit reference",
+			"indexes": [],
+			"line": 1044
+		},
+		{
+			"table": "githubConnectionState",
+			"field": "orgId",
+			"target": "organization",
+			"action": "no action (restrict)",
+			"declaration": "explicit reference",
+			"indexes": ["by_orgId"],
+			"line": 1049
+		},
+		{
+			"table": "githubConnectionState",
+			"field": "projectId",
+			"target": "project",
+			"action": "cascade",
+			"declaration": "explicit reference",
+			"indexes": ["by_projectId"],
+			"line": 1053
+		},
+		{
+			"table": "githubInstallation",
+			"field": "connectedByProfileId",
+			"target": "profile",
+			"action": "no action (restrict)",
+			"declaration": "explicit reference",
+			"indexes": [],
+			"line": 1077
+		},
+		{
+			"table": "githubInstallation",
+			"field": "orgId",
+			"target": "organization",
+			"action": "cascade",
+			"declaration": "explicit reference",
+			"indexes": ["by_orgId", "by_orgId_installationId"],
+			"line": 1082
+		},
+		{
+			"table": "githubRepositoryConnection",
+			"field": "connectedByProfileId",
+			"target": "profile",
+			"action": "no action (restrict)",
+			"declaration": "explicit reference",
+			"indexes": [],
+			"line": 1102
+		},
+		{
+			"table": "githubRepositoryConnection",
+			"field": "githubInstallationId",
+			"target": "githubInstallation",
+			"action": "cascade",
+			"declaration": "explicit reference",
+			"indexes": ["by_githubInstallationId"],
+			"line": 1106
+		},
+		{
+			"table": "githubRepositoryConnection",
+			"field": "orgId",
+			"target": "organization",
+			"action": "no action (restrict)",
+			"declaration": "explicit reference",
+			"indexes": ["by_orgId_repoId"],
+			"line": 1112
+		},
+		{
+			"table": "githubRepositoryConnection",
+			"field": "projectId",
+			"target": "project",
+			"action": "cascade",
+			"declaration": "explicit reference",
+			"indexes": ["by_projectId"],
+			"line": 1116
+		},
+		{
+			"table": "feedbackGithubConnection",
+			"field": "connectedByProfileId",
+			"target": "profile",
+			"action": "no action (restrict)",
+			"declaration": "explicit reference",
+			"indexes": [],
+			"line": 1142
+		},
+		{
+			"table": "feedbackGithubConnection",
+			"field": "feedbackId",
+			"target": "feedback",
+			"action": "cascade",
+			"declaration": "explicit reference",
+			"indexes": ["by_feedbackId", "by_feedbackId_kind_githubNodeId"],
+			"line": 1145
+		},
+		{
+			"table": "feedbackGithubConnection",
+			"field": "githubRepositoryConnectionId",
+			"target": "githubRepositoryConnection",
+			"action": "cascade",
+			"declaration": "explicit reference",
+			"indexes": [
+				"by_githubRepositoryConnectionId",
+				"by_githubRepositoryConnectionId_githubNodeId"
+			],
+			"line": 1148
+		},
+		{
+			"table": "feedbackGithubConnection",
+			"field": "projectId",
+			"target": "project",
+			"action": "no action (restrict)",
+			"declaration": "explicit reference",
+			"indexes": ["by_projectId"],
+			"line": 1153
+		}
+	]
+}

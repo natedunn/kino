@@ -1,0 +1,244 @@
+{
+  "recordedAt": "2026-09-22T05:44:15.392Z",
+  "target": "https://kino-native-auth-proof-c318c09d.hello-fc8.workers.dev",
+  "conditions": "Integrated native feedback slice; same machine/network; fresh browser context per sample; authenticated with copied HttpOnly proof cookies; no CPU/network throttling.",
+  "reloads": [
+    {
+      "iteration": 0,
+      "cache": "fresh browser context",
+      "browserHttpQueries": 0,
+      "ttfbMs": 1036.6,
+      "documentMs": 1038.5,
+      "domContentLoadedMs": 1217.9,
+      "loadMs": 1413.1,
+      "fcpMs": 1276
+    },
+    {
+      "iteration": 1,
+      "cache": "fresh browser context",
+      "browserHttpQueries": 0,
+      "ttfbMs": 480.9,
+      "documentMs": 485.2,
+      "domContentLoadedMs": 585.9,
+      "loadMs": 731.7,
+      "fcpMs": 620
+    },
+    {
+      "iteration": 2,
+      "cache": "fresh browser context",
+      "browserHttpQueries": 0,
+      "ttfbMs": 502.2,
+      "documentMs": 508.2,
+      "domContentLoadedMs": 603.1,
+      "loadMs": 761.7,
+      "fcpMs": 640
+    },
+    {
+      "iteration": 3,
+      "cache": "fresh browser context",
+      "browserHttpQueries": 0,
+      "ttfbMs": 707.8,
+      "documentMs": 709.1,
+      "domContentLoadedMs": 844.4,
+      "loadMs": 981.1,
+      "fcpMs": 856
+    },
+    {
+      "iteration": 4,
+      "cache": "fresh browser context",
+      "browserHttpQueries": 0,
+      "ttfbMs": 1399.2,
+      "documentMs": 1400.2,
+      "domContentLoadedMs": 1565.1,
+      "loadMs": 1734.3,
+      "fcpMs": 1600
+    },
+    {
+      "iteration": 5,
+      "cache": "fresh browser context",
+      "browserHttpQueries": 0,
+      "ttfbMs": 525.7,
+      "documentMs": 527.2,
+      "domContentLoadedMs": 640.1,
+      "loadMs": 785.9,
+      "fcpMs": 680
+    },
+    {
+      "iteration": 6,
+      "cache": "fresh browser context",
+      "browserHttpQueries": 0,
+      "ttfbMs": 459.6,
+      "documentMs": 461.7,
+      "domContentLoadedMs": 533.3,
+      "loadMs": 669.3,
+      "fcpMs": 572
+    },
+    {
+      "iteration": 7,
+      "cache": "fresh browser context",
+      "browserHttpQueries": 0,
+      "ttfbMs": 768.6,
+      "documentMs": 772.2,
+      "domContentLoadedMs": 857.5,
+      "loadMs": 1008.9,
+      "fcpMs": 888
+    },
+    {
+      "iteration": 8,
+      "cache": "fresh browser context",
+      "browserHttpQueries": 0,
+      "ttfbMs": 435.4,
+      "documentMs": 437.6,
+      "domContentLoadedMs": 585.4,
+      "loadMs": 722.9,
+      "fcpMs": 660
+    },
+    {
+      "iteration": 9,
+      "cache": "fresh browser context",
+      "browserHttpQueries": 0,
+      "ttfbMs": 391.7,
+      "documentMs": 396.2,
+      "domContentLoadedMs": 490.3,
+      "loadMs": 633,
+      "fcpMs": 520
+    }
+  ],
+  "hover": [
+    {
+      "dwellMs": 0,
+      "iteration": 0,
+      "clickToDetailMs": 268.1,
+      "browserHttpQueries": 0,
+      "subscriptionAddsBeforeHover": 0,
+      "subscriptionAddsDuringHover": 0,
+      "subscriptionAddsThroughNavigation": 11
+    },
+    {
+      "dwellMs": 0,
+      "iteration": 1,
+      "clickToDetailMs": 275.5,
+      "browserHttpQueries": 0,
+      "subscriptionAddsBeforeHover": 0,
+      "subscriptionAddsDuringHover": 0,
+      "subscriptionAddsThroughNavigation": 11
+    },
+    {
+      "dwellMs": 0,
+      "iteration": 2,
+      "clickToDetailMs": 422.5,
+      "browserHttpQueries": 0,
+      "subscriptionAddsBeforeHover": 0,
+      "subscriptionAddsDuringHover": 0,
+      "subscriptionAddsThroughNavigation": 11
+    },
+    {
+      "dwellMs": 0,
+      "iteration": 3,
+      "clickToDetailMs": 364.1,
+      "browserHttpQueries": 0,
+      "subscriptionAddsBeforeHover": 0,
+      "subscriptionAddsDuringHover": 0,
+      "subscriptionAddsThroughNavigation": 11
+    },
+    {
+      "dwellMs": 0,
+      "iteration": 4,
+      "clickToDetailMs": 347.6,
+      "browserHttpQueries": 0,
+      "subscriptionAddsBeforeHover": 0,
+      "subscriptionAddsDuringHover": 0,
+      "subscriptionAddsThroughNavigation": 11
+    },
+    {
+      "dwellMs": 100,
+      "iteration": 0,
+      "clickToDetailMs": 255.2,
+      "browserHttpQueries": 0,
+      "subscriptionAddsBeforeHover": 0,
+      "subscriptionAddsDuringHover": 0,
+      "subscriptionAddsThroughNavigation": 11
+    },
+    {
+      "dwellMs": 100,
+      "iteration": 1,
+      "clickToDetailMs": 229.9,
+      "browserHttpQueries": 0,
+      "subscriptionAddsBeforeHover": 0,
+      "subscriptionAddsDuringHover": 0,
+      "subscriptionAddsThroughNavigation": 11
+    },
+    {
+      "dwellMs": 100,
+      "iteration": 2,
+      "clickToDetailMs": 263.2,
+      "browserHttpQueries": 0,
+      "subscriptionAddsBeforeHover": 0,
+      "subscriptionAddsDuringHover": 0,
+      "subscriptionAddsThroughNavigation": 11
+    },
+    {
+      "dwellMs": 100,
+      "iteration": 3,
+      "clickToDetailMs": 240.4,
+      "browserHttpQueries": 0,
+      "subscriptionAddsBeforeHover": 0,
+      "subscriptionAddsDuringHover": 0,
+      "subscriptionAddsThroughNavigation": 11
+    },
+    {
+      "dwellMs": 100,
+      "iteration": 4,
+      "clickToDetailMs": 244.2,
+      "browserHttpQueries": 0,
+      "subscriptionAddsBeforeHover": 0,
+      "subscriptionAddsDuringHover": 0,
+      "subscriptionAddsThroughNavigation": 11
+    },
+    {
+      "dwellMs": 700,
+      "iteration": 0,
+      "clickToDetailMs": 64.9,
+      "browserHttpQueries": 0,
+      "subscriptionAddsBeforeHover": 0,
+      "subscriptionAddsDuringHover": 8,
+      "subscriptionAddsThroughNavigation": 11
+    },
+    {
+      "dwellMs": 700,
+      "iteration": 1,
+      "clickToDetailMs": 93,
+      "browserHttpQueries": 0,
+      "subscriptionAddsBeforeHover": 0,
+      "subscriptionAddsDuringHover": 8,
+      "subscriptionAddsThroughNavigation": 11
+    },
+    {
+      "dwellMs": 700,
+      "iteration": 2,
+      "clickToDetailMs": 76.4,
+      "browserHttpQueries": 0,
+      "subscriptionAddsBeforeHover": 0,
+      "subscriptionAddsDuringHover": 8,
+      "subscriptionAddsThroughNavigation": 11
+    },
+    {
+      "dwellMs": 700,
+      "iteration": 3,
+      "clickToDetailMs": 73,
+      "browserHttpQueries": 0,
+      "subscriptionAddsBeforeHover": 0,
+      "subscriptionAddsDuringHover": 8,
+      "subscriptionAddsThroughNavigation": 11
+    },
+    {
+      "dwellMs": 700,
+      "iteration": 4,
+      "clickToDetailMs": 81.8,
+      "browserHttpQueries": 0,
+      "subscriptionAddsBeforeHover": 0,
+      "subscriptionAddsDuringHover": 8,
+      "subscriptionAddsThroughNavigation": 11
+    }
+  ]
+}
