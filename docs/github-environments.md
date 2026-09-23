@@ -295,12 +295,11 @@ signing key through `--secrets-file`. Preview settings do not inherit production
 settings.
 
 Production uses `wrangler deploy --keep-vars`. The suffixed Workers Builds
-values are build inputs and validation; they do not create runtime bindings on
-the deployed `kino` Worker. Before release, separately set and verify runtime
-`NATIVE_GITHUB_GATEWAY_URL`, `NATIVE_GITHUB_ROUTE_ID`, and secret
-`NATIVE_GITHUB_ROUTE_SECRET` on that Worker. The production gateway's static
-`NATIVE_GITHUB_ROUTES` entry must use the same route ID/key and exact native
-Convex/app callbacks.
+values are build inputs; `scripts/cloudflare-deploy.sh` passes the native
+gateway URL and route ID as runtime variables and the route key through
+`--secrets-file` when it publishes the Worker. Verify those bindings after
+release. The production gateway's static `NATIVE_GITHUB_ROUTES` entry must use
+the same route ID/key and exact native Convex/app callbacks.
 
 Set the preview defaults for `AUTH_PRIVATE_KEY`, `AUTH_JWKS`,
 `AUTH_GITHUB_CLIENT_ID`, and `AUTH_GITHUB_CLIENT_SECRET` before enabling the

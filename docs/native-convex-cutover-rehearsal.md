@@ -1,7 +1,7 @@
 # Native Convex cutover and recovery runbook
 
 Status: **release-candidate preview validated; production cutover not yet
-authorized**. Updated September 22, 2026 (America/Mexico City).
+authorized**. Updated September 23, 2026 (America/Mexico City).
 
 This runbook covers one coordinated release unit: the native Convex deployment,
 Kino Start Worker, Kino Files Worker, production OAuth gateway, GitHub OAuth app,
@@ -73,7 +73,14 @@ Before merging, while the legacy Kitcn deployment is still selected:
 1. Confirm the deployment name and cloud/site URLs from both the key and the
    Convex dashboard.
 2. Use Convex's snapshot import with `--replace-all` and a previously validated
-   empty snapshot. This clears current and stale application tables atomically;
+   empty snapshot. A disposable local deployment proved this with a real Convex
+   export containing only `README.md` and an empty `_tables/documents.jsonl`:
+   after importing one `disposableResetProbe` document, `convex import
+   --replace-all --yes empty-snapshot.zip` deleted that document and its table;
+   a subsequent export had an empty table registry. The exact tested 716-byte
+   ZIP is checked in at `integrations/native-convex/empty-snapshot.zip` so the
+   production command can name a reviewable artifact. This clears current and
+   stale application tables atomically;
    the generated Kitcn reset is insufficient because it only knows the current
    ORM schema and production still contains older undeclared tables.
 3. Verify every legacy application table is empty, especially the reused
@@ -150,20 +157,30 @@ The native callbacks are:
 
 ### App Worker and Workers Builds
 
-Configure Workers Builds with `CONVEX_PROD_DEPLOY_KEY`,
+The existing `kino` production Workers Build already has
+`CONVEX_PROD_DEPLOY_KEY`, production gateway URL/admin token, and PostHog values.
+On September 23, the following native inputs were added to its `main` trigger
+and verified after a dashboard reload: `NATIVE_APP_ORIGIN_PRODUCTION`,
+`NATIVE_GITHUB_GATEWAY_URL_PRODUCTION`, `NATIVE_GITHUB_ROUTE_ID_PRODUCTION`, and
+the encrypted `NATIVE_GITHUB_ROUTE_SECRET_PRODUCTION`.
+
+Keep Workers Builds configured with `CONVEX_PROD_DEPLOY_KEY`,
 `NATIVE_APP_ORIGIN_PRODUCTION`, `NATIVE_GITHUB_GATEWAY_URL_PRODUCTION`,
 `NATIVE_GITHUB_ROUTE_ID_PRODUCTION`, `NATIVE_GITHUB_ROUTE_SECRET_PRODUCTION`,
 the production gateway URL/admin token, and the existing PostHog values.
 
-Separately configure the deployed `kino` Worker's runtime values:
+The production `scripts/cloudflare-deploy.sh` command supplies the deployed
+`kino` Worker's runtime values from those build inputs:
 
 - `NATIVE_GITHUB_GATEWAY_URL=https://gateway.usekino.com/oauth/github/callback`
 - `NATIVE_GITHUB_ROUTE_ID=<the fixed production route ID>`
 - secret `NATIVE_GITHUB_ROUTE_SECRET=<the matching route key>`
 
-The suffixed Workers Builds values are build inputs. They do not by themselves
-create the Worker's runtime bindings. Production deploy uses `--keep-vars`, so
-stage and verify those runtime bindings before releasing.
+The suffixed Workers Builds values are build inputs. The deploy script passes
+the URL and route ID with `--var` and the route key with `--secrets-file` while
+retaining existing bindings with `--keep-vars`. Verify these bindings on the
+published Worker after the release; a separate pre-release runtime edit is not
+required.
 
 ## Coordinated release order
 
@@ -175,8 +192,9 @@ Production actions require explicit authorization.
 3. Deploy and verify the production Files Worker.
 4. Deploy and verify the migration-bearing gateway stage, then the reviewed
    dual-protocol gateway. Keep the legacy proxy and Relay paths working.
-5. Stage the production app Worker's native GitHub runtime bindings and verify
-   the static route mapping agrees with them.
+5. Verify the production build's native GitHub route ID/key agree with the
+   gateway's static route mapping. The app deployment supplies the runtime
+   bindings when it publishes.
 6. Change the existing Kino Auth OAuth app's callback to
    `https://gateway.usekino.com/oauth/github/callback`. Do not change the Kino
    Relay GitHub App registration.
