@@ -19,12 +19,12 @@ export function Providers({
 	initialToken?: string | null;
 }) {
 	return (
-		<PostHogProvider appEnvironment={appEnvironment}>
-			<AppConvexProvider convexQueryClient={convexQueryClient} initialToken={initialToken}>
+		<AppConvexProvider convexQueryClient={convexQueryClient} initialToken={initialToken}>
+			<PostHogProvider appEnvironment={appEnvironment}>
 				<CommandProvider>
 					<ShortcutsProvider>{children}</ShortcutsProvider>
 				</CommandProvider>
-			</AppConvexProvider>
-		</PostHogProvider>
+			</PostHogProvider>
+		</AppConvexProvider>
 	);
 }
