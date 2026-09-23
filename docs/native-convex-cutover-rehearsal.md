@@ -167,6 +167,13 @@ roll back across the Durable Object class migration:
    reports the expected Better Auth version and native protocol/storage readiness,
    and recheck legacy login plus Relay before changing GitHub's OAuth callback.
 
+Step 1 completed September 23. Production stage version
+`5cfc66f9-ff5c-4eda-a861-a29424f626b3` is the migration-compatible rollback
+target. Its live health reported Better Auth `1.7.1`, native protocol
+`opaque-state-v1`, storage enabled, and routing disabled. Legacy `/api/auth/ok`
+returned 200 and the Relay registry retained the exact
+`brainy-boar-871.convex.site` webhook target.
+
 The native callbacks are:
 
 - backend: `https://<native-production>.convex.site/oauth/github/callback`

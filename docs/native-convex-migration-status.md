@@ -123,11 +123,17 @@ upstream check, and upgrade procedure live in
       record that compatible rollback version. Then configure its fixed native
       `NATIVE_GITHUB_ROUTES` entry, deploy the reviewed dual-protocol version, and
       verify health, the retained legacy proxy, Relay, and native state storage.
-- [x] Configure Workers Builds with the production Convex key, exact app origin,
+      The stage is complete as version
+      `5cfc66f9-ff5c-4eda-a861-a29424f626b3`; its live storage/disabled-native,
+      Better Auth, legacy route, and Relay checks passed. Static-route secret
+      activation and the dual-protocol deployment remain.
+- [ ] Finalize Workers Builds with the production Convex key, exact app origin,
       gateway URL/admin token, fixed native route ID/secret, and existing PostHog
       values. The production deploy script supplies the `kino` Worker's runtime
       `NATIVE_GITHUB_GATEWAY_URL`, `NATIVE_GITHUB_ROUTE_ID`, and secret
-      `NATIVE_GITHUB_ROUTE_SECRET`; verify them after the Worker publishes.
+      `NATIVE_GITHUB_ROUTE_SECRET`; verify them after the Worker publishes. All
+      values were configured and read back, but the route secret must be rotated
+      before activation because it was exposed during a local validation command.
 - [ ] Freeze the app commit, native Convex deployment, Files Worker version,
       gateway stage/active versions, auth package revision, callback URLs, and a
       non-secret fingerprint of the native route mapping.
