@@ -119,21 +119,22 @@ upstream check, and upgrade procedure live in
       Version `8d2e539c-f6a5-492b-8558-230582879d1f` passed the live health and
       missing-file/native-lookup checks; rollback version is
       `9d47763d-45ba-4e03-903e-b66cf0af753a`.
-- [ ] Deploy the production gateway's migration-bearing legacy stage first and
+- [x] Deploy the production gateway's migration-bearing legacy stage first and
       record that compatible rollback version. Then configure its fixed native
       `NATIVE_GITHUB_ROUTES` entry, deploy the reviewed dual-protocol version, and
       verify health, the retained legacy proxy, Relay, and native state storage.
-      The stage is complete as version
-      `5cfc66f9-ff5c-4eda-a861-a29424f626b3`; its live storage/disabled-native,
-      Better Auth, legacy route, and Relay checks passed. Static-route secret
-      activation and the dual-protocol deployment remain.
-- [ ] Finalize Workers Builds with the production Convex key, exact app origin,
+      Final rollback version is `f35ebc5d-a5bb-4730-b7f5-b1595a832778`; active
+      version is `b667c0c3-3e20-444e-8da1-8ab8ee784aee`. Native readiness and
+      malformed-input rejection, Better Auth `1.7.1`, the legacy route, and Relay
+      all passed live checks.
+- [x] Finalize Workers Builds with the production Convex key, exact app origin,
       gateway URL/admin token, fixed native route ID/secret, and existing PostHog
       values. The production deploy script supplies the `kino` Worker's runtime
       `NATIVE_GITHUB_GATEWAY_URL`, `NATIVE_GITHUB_ROUTE_ID`, and secret
-      `NATIVE_GITHUB_ROUTE_SECRET`; verify them after the Worker publishes. All
-      values were configured and read back, but the route secret must be rotated
-      before activation because it was exposed during a local validation command.
+      `NATIVE_GITHUB_ROUTE_SECRET`; verify them after the Worker publishes. The
+      replacement route secret was saved after the original value was exposed
+      during local validation; its non-secret fingerprint is `23d1f8f03f37` and
+      matches the gateway route bundle.
 - [ ] Freeze the app commit, native Convex deployment, Files Worker version,
       gateway stage/active versions, auth package revision, callback URLs, and a
       non-secret fingerprint of the native route mapping.

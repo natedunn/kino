@@ -174,6 +174,17 @@ target. Its live health reported Better Auth `1.7.1`, native protocol
 returned 200 and the Relay registry retained the exact
 `brainy-boar-871.convex.site` webhook target.
 
+Steps 2–3 also completed September 23. The final static route uses ID
+`kino-production`, exact backend callback
+`https://brainy-boar-871.convex.site/oauth/github/callback`, exact app callback
+`https://usekino.com/api/auth/github/callback`, and replacement secret
+fingerprint `23d1f8f03f37`. Secret-change stage version
+`f35ebc5d-a5bb-4730-b7f5-b1595a832778` is the final rollback target. Active
+dual-protocol version `b667c0c3-3e20-444e-8da1-8ab8ee784aee` reported storage
+and routing enabled with Better Auth `1.7.1`; malformed state registration and
+callback probes returned 400, legacy `/api/auth/ok` returned 200, and the Relay
+target remained unchanged.
+
 The native callbacks are:
 
 - backend: `https://<native-production>.convex.site/oauth/github/callback`
