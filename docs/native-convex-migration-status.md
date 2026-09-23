@@ -106,7 +106,7 @@ upstream check, and upgrade procedure live in
       verify every current and stale legacy application table is empty. Existing
       prelaunch data is intentionally disposable; do not attempt an
       application-data migration.
-- [ ] Set and verify the native production environment: the six required auth
+- [x] Set and verify the native production environment: the six required auth
       values; Bento sender credentials; operations alert recipient; Relay
       credentials/callback; R2 credentials; Files origin; and cache-purge zone/token.
 - [ ] Configure and deploy the production Files Worker with the native production
@@ -116,12 +116,11 @@ upstream check, and upgrade procedure live in
       record that compatible rollback version. Then configure its fixed native
       `NATIVE_GITHUB_ROUTES` entry, deploy the reviewed dual-protocol version, and
       verify health, the retained legacy proxy, Relay, and native state storage.
-- [ ] Configure Workers Builds with the production Convex key, exact app origin,
+- [x] Configure Workers Builds with the production Convex key, exact app origin,
       gateway URL/admin token, fixed native route ID/secret, and existing PostHog
-      values. Separately configure the `kino` Worker's runtime bindings
+      values. The production deploy script supplies the `kino` Worker's runtime
       `NATIVE_GITHUB_GATEWAY_URL`, `NATIVE_GITHUB_ROUTE_ID`, and secret
-      `NATIVE_GITHUB_ROUTE_SECRET`; suffixed build variables do not create those
-      runtime bindings, and the production deploy intentionally uses `--keep-vars`.
+      `NATIVE_GITHUB_ROUTE_SECRET`; verify them after the Worker publishes.
 - [ ] Freeze the app commit, native Convex deployment, Files Worker version,
       gateway stage/active versions, auth package revision, callback URLs, and a
       non-secret fingerprint of the native route mapping.

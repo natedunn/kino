@@ -110,14 +110,11 @@ Configure and verify:
   `NATIVE_FILES_ORIGIN`, `NATIVE_FILES_PURGE_ZONE_ID`, and
   `NATIVE_FILES_PURGE_TOKEN`.
 
-The production deployment already has Bento and Relay variables under their
-native names. Reuse the existing GitHub login and organization-upload values by
-copying `GITHUB_AUTH_CLIENT_ID`/`GITHUB_AUTH_CLIENT_SECRET` to the native
-`AUTH_GITHUB_*` names and the `R2_ORG_UPLOADS_*` values to `NATIVE_R2_*`.
-Generate fresh `AUTH_PRIVATE_KEY`/`AUTH_JWKS`. Set the exact native callback and
-origins below. The genuinely new production values are
-`NATIVE_OPERATIONS_ALERT_EMAIL`, `NATIVE_FILES_PURGE_ZONE_ID`, and
-`NATIVE_FILES_PURGE_TOKEN`.
+On September 23, all of these values were configured on `brainy-boar-871` and
+read back for an exact comparison with the ignored production bundle. The 14
+new names matched, including fresh `AUTH_PRIVATE_KEY`/`AUTH_JWKS`, copied GitHub
+login and R2 credentials, exact native origins, operations email, and purge
+credentials. Existing Bento and Relay values remained in place.
 
 Use exact production values:
 
