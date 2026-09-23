@@ -47,6 +47,30 @@ settings, admin operations, email, GitHub Relay, storage accounting and cleanup,
 and the current product UI. Dated proof deployments below remain useful evidence,
 but the PR preview is the release candidate.
 
+### Convex Auth v2 integration boundary
+
+Convex Auth v2 remains the authority for identities, sessions, refresh-token
+rotation and replay detection. Kino owns the TanStack Start adapter, cookie
+transport, routes, presentation, and application authorization. Reliability
+changes such as browser Fetch `keepalive` belong in that adapter; they should
+use the package's exported browser/server primitives and remain removable when
+the alpha provides its own binding. An app-layer wrapper cannot recover a new
+refresh token whose response was lost: the package deliberately does not return
+the successor on a grace-window reuse. Do not claim that retries or a second
+Kino session table solve that protocol property.
+
+This PR has two explicit exceptions to that boundary in
+`patches/convex-auth-v2-reboot.patch`: a core session-generation/revocation
+operation used by password reset, and an OAuth callback-URL override required
+by Kino's stable GitHub gateway. They are temporary compatibility patches, not
+Kino's desired permanent auth API. The reset proof requires old sessions to
+stop refreshing, and the pinned alpha exposes no equivalent revocation seam;
+removing the patch now would remove that guarantee. An upstream replacement or
+a separately reviewed change in product requirements is needed before either
+patch can be dropped. Future alpha upgrades should compare these two patches
+against newly supported APIs, remove them when equivalent primitives exist,
+and rerun password-reset, GitHub callback, SSR, and session-edge proofs.
+
 ## Remaining release checklist
 
 ### Before marking the PR ready
@@ -71,6 +95,9 @@ but the PR preview is the release candidate.
       The observed sign-out coincided with a spent refresh-token rejection after
       its grace window; browser navigation is now mitigated, but an interrupted
       SSR response or network loss can still discard a newly rotated cookie.
+- [ ] Review the two existing Convex Auth v2 compatibility patches against the
+      chosen upstream revision and record their replacement/removal path. Keep
+      Kino-specific transport and authorization outside the auth component.
 - [x] Run the final root, native Convex, gateway, and Files Worker checks plus
       `pnpm run verify:pr`, lint, and the production build from the frozen commit.
 
