@@ -68,7 +68,7 @@ but the PR preview is the release candidate.
 - [x] Repeat a deployment-transition navigation/reload check so a stale route asset
       either refreshes cleanly or shows the existing new-version prompt.
 - [ ] Resolve or explicitly accept the remaining lost-refresh-response risk.
-      The observed sign-out was caused by reuse of a spent refresh token after
+      The observed sign-out coincided with a spent refresh-token rejection after
       its grace window; browser navigation is now mitigated, but an interrupted
       SSR response or network loss can still discard a newly rotated cookie.
 - [x] Run the final root, native Convex, gateway, and Files Worker checks plus
@@ -1297,7 +1297,9 @@ During this pass both auth cookies disappeared once without an intentional
 sign-out; subsequent private document requests correctly returned 404 and the
 dashboard redirected to sign-in. Preview Convex logs at 10:18 a.m. local time
 show the auth component rejected a spent refresh token after its 30-second
-grace window and revoked that session. A controlled test reproduced the same
+grace window and revoked a session. The log has no browser/request correlation,
+so attribution to the observed sign-out is strong but not conclusive. A
+controlled test reproduced the same
 failure: rotating a preview session while deliberately discarding the response
 left Chrome with the old cookie, and a request 32 seconds later returned 401
 with both cookie deletions. The original lost response was not captured, so
