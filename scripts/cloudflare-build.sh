@@ -118,6 +118,10 @@ else
     echo "Native preview deploy requires CONVEX_TEAM_SLUG and CONVEX_PROJECT_SLUG." >&2
     exit 1
   fi
+  if [ -z "${CONVEX_PREVIEW_DEPLOY_KEY:-}" ]; then
+    echo "Native preview deploy requires CONVEX_PREVIEW_DEPLOY_KEY." >&2
+    exit 1
+  fi
 
   # A management token is required here because the branch-specific app origin
   # cannot be a shared Convex preview default. Preview and project deploy keys
@@ -133,10 +137,14 @@ else
   fi
   npx convex env set --deployment "$preview_selector" AUTH_APP_ORIGIN "$VITE_SITE_URL"
   npx convex env set --deployment "$preview_selector" AUTH_GITHUB_CALLBACK_URL "$NATIVE_GITHUB_GATEWAY_URL"
+  # This pinned Convex CLI accepts --deployment for env commands, but deploy
+  # selects previews through a preview deploy key plus --preview-name.
+  unset CONVEX_OVERRIDE_ACCESS_TOKEN
+  export CONVEX_DEPLOY_KEY="$CONVEX_PREVIEW_DEPLOY_KEY"
   # Preview builds follow the same two-phase model as production: Convex first,
   # then the Cloudflare Worker/assets deploy step later in the Workers pipeline.
   npx convex deploy \
-    --deployment "$preview_selector" \
+    --preview-name "$convex_preview_name" \
     --cmd "$build_cmd" \
     --cmd-url-env-var-name VITE_CONVEX_URL
 fi

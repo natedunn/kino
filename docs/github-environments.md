@@ -258,6 +258,7 @@ env vars — note these apply **at deployment creation**, not retroactively.
 | `NATIVE_GITHUB_ROUTE_ID_PRODUCTION`                         | Workers Builds env    | fixed production opaque-state route ID                                  |
 | `NATIVE_GITHUB_ROUTE_SECRET_PREVIEW` / `_PRODUCTION`        | Workers Builds secret | opaque-state route signing secret for the tier                          |
 | `CONVEX_MANAGEMENT_TOKEN`                                   | Workers Builds secret | management token used to create/reuse and provision branch previews     |
+| `CONVEX_PREVIEW_DEPLOY_KEY`                                 | Workers Builds secret | project preview key used by `convex deploy --preview-name`              |
 | `CONVEX_TEAM_SLUG` / `CONVEX_PROJECT_SLUG`                  | Workers Builds env    | exact project selector used by preview provisioning                     |
 
 The branch-suffixed split exists because Workers Builds env vars apply to all
@@ -269,7 +270,8 @@ Cloudflare's stable preview URL is derived as
 Convex keeps its independently normalized 48-character preview reference. The
 build uses the management token because the current Convex CLI cannot authorize
 a specific preview for environment updates with either a preview deploy key or
-a project deploy key. Shared secrets stay in Convex preview defaults and are
+a project deploy key. It then deploys using the project preview key. Shared
+secrets stay in Convex preview defaults and are
 never copied through shell arguments. Convex validates all six required
 deployment variables during its push.
 
