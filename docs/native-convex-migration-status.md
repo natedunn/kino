@@ -91,10 +91,10 @@ and rerun password-reset, GitHub callback, SSR, and session-edge proofs.
       and earlier hosted evidence; this check verifies the final deployed pair.
 - [x] Repeat a deployment-transition navigation/reload check so a stale route asset
       either refreshes cleanly or shows the existing new-version prompt.
-- [ ] Resolve or explicitly accept the remaining lost-refresh-response risk.
-      The observed sign-out coincided with a spent refresh-token rejection after
-      its grace window; browser navigation is now mitigated, but an interrupted
-      SSR response or network loss can still discard a newly rotated cookie.
+- [x] Review and accept the remaining lost-refresh-response risk for this
+      prelaunch release. Keep the navigation mitigation and re-sign-in recovery;
+      hold rollout if final smoke testing finds another unexplained sign-out.
+      The protocol limit and replacement criteria are recorded below.
 - [x] Review the two existing Convex Auth v2 compatibility patches against the
       chosen upstream revision and record their replacement/removal path. Keep
       Kino-specific transport and authorization outside the auth component.
@@ -1344,8 +1344,26 @@ still rotated the cookie, and the dashboard stayed signed in. Twenty further
 full navigations across dashboard and a private project, including one browser
 refresh, kept both cookies and had no 401 or private-page failure. This
 mitigates navigation loss; it does not make token rotation recoverable when a
-server-rendered response or network response is discarded. The release check
-above remains open for that protocol-level decision.
+server-rendered response or network response is discarded.
+
+**September 23 release decision:** accept this as an availability risk in the
+prelaunch Auth v2 alpha integration. Both the pinned package and the current
+`reboot` head store only the successor refresh token's hash. A retry of the old
+cookie within 30 seconds returns an access token but cannot restore the
+successor; a later retry revokes the session. The browser then follows the
+existing sign-in recovery path, preserving its protected return URL. This
+does not grant unauthorized access or lose product data, but it can interrupt
+work by requiring another sign-in. Browser `keepalive` addresses the observed
+navigation path; the remaining network/SSR loss cannot be eliminated with the
+exported v2 API. We will not add a second Kino session authority or a third
+core patch solely to hide it. Raising the default 60-second access-token TTL
+would reduce refresh frequency but extend the validity of already-issued JWTs
+after reset or sign-out, so this release keeps the current revocation window.
+During final production smoke testing, any unexplained sign-out stops rollout
+for investigation; after release, repeated spent-token warnings or user reports
+require a forward fix or rollback decision. Revisit this decision when upstream
+offers an idempotent or acknowledged refresh protocol, and rerun the deliberate
+lost-response proof before replacing the workaround.
 
 The basic real GitHub sign-in question is answered. Remaining checks improve
 coverage; they are not evidence that the initial sign-in was unconfirmed.
