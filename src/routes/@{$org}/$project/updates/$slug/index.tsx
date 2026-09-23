@@ -3,7 +3,6 @@ import type { ThreadComment } from '../../-components/comment-thread';
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
 import { createFileRoute, getRouteApi, Link, notFound } from '@tanstack/react-router';
-import { useAuth } from 'kitcn/react';
 import {
 	Calendar,
 	Check,
@@ -18,6 +17,7 @@ import {
 } from 'lucide-react';
 
 import { EditorContentDisplay } from '@/components/editor/editor-content-display';
+import { NativeFileImage } from '@/components/files/native-files';
 import { ProfileLinkOrUnknown } from '@/components/profile-link';
 import { SidebarSection } from '@/components/sidebar-section';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -25,8 +25,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { StatusIcon } from '@/icons';
-import { useCRPC } from '@/lib/convex/crpc';
-import { crpcServer } from '@/lib/convex/crpc-server';
+import { useAuthState } from '@/lib/auth/auth-client';
+import { updatesServer as crpcServer, useUpdatesAPI as useCRPC } from '@/lib/convex/updates-api';
 import { useSidebarState } from '@/lib/hooks/use-sidebar-state';
 import { projectTitle, titleFromSlug, titleMeta } from '@/lib/seo';
 import { cn } from '@/lib/utils';
@@ -120,7 +120,7 @@ function createMiddleCommentState<TComment>(
 function UpdateDetailRoute() {
 	const params = routeApi.useParams();
 	const crpc = useCRPC();
-	const auth = useAuth();
+	const auth = useAuthState();
 	const queryClient = useQueryClient();
 	const [isLoadingMiddleComments, setIsLoadingMiddleComments] = useState(false);
 	const { state: sidebarState, setSection: setSidebarSection } = useSidebarState(
@@ -330,7 +330,7 @@ function UpdateDetailRoute() {
 									{m.updates_status_draft()}
 								</Badge>
 							) : null}
-							{update.category ? <CategoryBadge category={update.category} /> : null}
+							<CategoryBadge category={update.category} />
 						</div>
 						<h1 className='text-3xl font-bold'>{update.title}</h1>
 						<div className='flex items-center gap-3 text-sm text-muted-foreground'>
@@ -502,7 +502,7 @@ function UpdateDetailRoute() {
 								</SidebarSection>
 							) : null}
 
-							{interactiveData?.canEdit ? (
+							{(interactiveData?.canEdit ?? updateData.canEdit) ? (
 								<Button asChild variant='outline'>
 									<Link params={params} to='/@{$org}/$project/updates/$slug/edit'>
 										<Edit className='h-4 w-4' />
@@ -514,7 +514,13 @@ function UpdateDetailRoute() {
 					</div>
 
 					<div className='flex flex-col gap-4 py-8 md:col-span-8'>
-						{updateData.coverImageUrl ? (
+						{update.coverAssetId ? (
+							<NativeFileImage
+								assetId={update.coverAssetId}
+								alt={update.title}
+								className='w-full rounded-lg bg-muted object-cover'
+							/>
+						) : updateData.coverImageUrl ? (
 							<img
 								alt={update.title}
 								className='w-full rounded-lg bg-muted object-cover'

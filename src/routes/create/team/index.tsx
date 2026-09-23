@@ -16,8 +16,8 @@ import {
 } from '@/components/ui/select';
 import { requireAuth } from '@/lib/auth/require-auth';
 import { useAuthLostRedirect } from '@/lib/auth/use-auth-lost';
-import { useCRPC } from '@/lib/convex/crpc';
-import { crpcServer } from '@/lib/convex/crpc-server';
+import { creationServer, useCreationAPI } from '@/lib/convex/creation-api';
+import { profileServer, useProfileAPI } from '@/lib/convex/profile-api';
 import { localizeError } from '@/lib/errors';
 import { titleMeta } from '@/lib/seo';
 import { cn } from '@/lib/utils';
@@ -49,10 +49,10 @@ export const Route = createFileRoute('/create/team/')({
 
 		await Promise.all([
 			context.queryClient.ensureQueryData(
-				crpcServer.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
+				profileServer.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
 			),
 			context.queryClient.ensureQueryData(
-				crpcServer.org.findMyOrgs.queryOptions({}, { skipUnauth: true })
+				creationServer.org.findMyOrgs.queryOptions({}, { skipUnauth: true })
 			),
 		]);
 	},
@@ -70,15 +70,16 @@ function CreateTeamRoute() {
 
 function AuthenticatedCreateTeamRoute() {
 	const navigate = useNavigate();
-	const crpc = useCRPC();
+	const creation = useCreationAPI();
+	const profile = useProfileAPI();
 	const [formError, setFormError] = useState<string>();
 	// Warms the profile cache the shell header reads, so it never shows a skeleton.
-	useSuspenseQuery(crpc.profile.findMyProfile.queryOptions({}, { skipUnauth: true }));
+	useSuspenseQuery(profile.profile.findMyProfile.queryOptions({}, { skipUnauth: true }));
 	const { data: orgsData } = useSuspenseQuery(
-		crpc.org.findMyOrgs.queryOptions({}, { skipUnauth: true })
+		creation.org.findMyOrgs.queryOptions({}, { skipUnauth: true })
 	);
 	const createMutation = useMutation(
-		crpc.org.create.mutationOptions({
+		creation.org.create.mutationOptions({
 			onError: (error) => setFormError(localizeError(error, m.common_try_again())),
 			onSuccess: (org) => {
 				form.reset();

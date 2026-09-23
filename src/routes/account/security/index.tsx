@@ -4,8 +4,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { Label, LabelDescription, LabelWrapper } from '@/components/label';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useCRPC } from '@/lib/convex/crpc';
-import { crpcServer } from '@/lib/convex/crpc-server';
+import { profileServer, useProfileAPI } from '@/lib/convex/profile-api';
 import { titleMeta } from '@/lib/seo';
 import { m } from '@/paraglide/messages.js';
 
@@ -19,7 +18,7 @@ export const Route = createFileRoute('/account/security/')({
 		}
 
 		await context.queryClient.ensureQueryData(
-			crpcServer.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
+			profileServer.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
 		);
 	},
 	// Auth entry is gated by the parent `/account` route's `beforeLoad`, and
@@ -28,7 +27,7 @@ export const Route = createFileRoute('/account/security/')({
 });
 
 function AuthenticatedSecurityRoute() {
-	const crpc = useCRPC();
+	const crpc = useProfileAPI();
 	const profileQuery = useSuspenseQuery(
 		crpc.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
 	);
@@ -52,7 +51,7 @@ function AuthenticatedSecurityRoute() {
 							<Label>{m.common_email()}</Label>
 							<LabelDescription>{m.security_email_description()}</LabelDescription>
 						</LabelWrapper>
-						<Input disabled value={profile.email ?? ''} />
+						<Input disabled value={profile.email} />
 					</div>
 				</div>
 			</div>

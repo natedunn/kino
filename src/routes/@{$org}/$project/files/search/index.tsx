@@ -1,6 +1,4 @@
-'use client';
-
-import type { ApiOutputs } from '@convex/api';
+import type { ProjectFile } from '@/lib/convex/files-api';
 import type { FormEvent } from 'react';
 
 import { useEffect, useState } from 'react';
@@ -19,6 +17,7 @@ import {
 	X,
 } from 'lucide-react';
 
+import { NativeFileThumbnail } from '@/components/files/native-file-thumbnail';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,15 +28,18 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
-import { useCRPC } from '@/lib/convex/crpc';
+import { useFilesAPI } from '@/lib/convex/files-api';
+import { preloadNativeFiles } from '@/lib/convex/native-files';
 import * as m from '@/paraglide/messages.js';
 
 import { formatBytes, formatDate } from '../-components/file-explorer';
 import { useFilesWorkspace } from '../-components/files-workspace-context';
 
+('use client');
+
 type FileCategory = (typeof FILE_CATEGORIES)[number];
 type FileSourceProvider = (typeof FILE_SOURCE_PROVIDERS)[number];
-type SearchResult = ApiOutputs['file']['listProjectFiles']['page'][number];
+type SearchResult = ProjectFile;
 
 type AdvancedFileSearch = {
 	category?: FileCategory;
@@ -68,6 +70,9 @@ function validateAdvancedFileSearch(search: Record<string, unknown>): AdvancedFi
 
 export const Route = createFileRoute('/@{$org}/$project/files/search/')({
 	component: AdvancedFilesSearch,
+	loaderDeps: ({ search }) => search,
+	loader: ({ context, params, deps }) =>
+		preloadNativeFiles(context.queryClient, params, deps, true),
 	validateSearch: validateAdvancedFileSearch,
 });
 
@@ -76,7 +81,7 @@ function AdvancedFilesSearch() {
 	const search = Route.useSearch();
 	const navigate = useNavigate({ from: Route.fullPath });
 	const { folders, projectId } = useFilesWorkspace();
-	const crpc = useCRPC();
+	const crpc = useFilesAPI();
 	const [query, setQuery] = useState(search.q ?? '');
 	useEffect(() => setQuery(search.q ?? ''), [search.q]);
 	const filesQuery = useQuery(
@@ -312,7 +317,9 @@ function SearchResultRow({
 			to='/@{$org}/$project/files/file/$fileId'
 		>
 			<span className='flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border bg-muted/45'>
-				{file.thumbnailUrl && !thumbnailFailed ? (
+				{file.hasThumbnail ? (
+					<NativeFileThumbnail assetId={file.id} publicUrl={file.thumbnailUrl} />
+				) : file.thumbnailUrl && !thumbnailFailed ? (
 					<img
 						alt=''
 						className='size-full object-cover'
@@ -357,7 +364,7 @@ function categoryLabel(value: string) {
 		text: m.storage_label_text,
 		video: m.storage_label_video,
 	};
-	return labels[value]?.() ?? value;
+	return Object.hasOwn(labels, value) ? labels[value]() : value;
 }
 function sourceLabel(value: string) {
 	return value

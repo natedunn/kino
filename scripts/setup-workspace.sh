@@ -11,9 +11,10 @@ set -euo pipefail
 # seed), which tripped the worktree-creation timeouts in tools like T3 Code /
 # Conductor. Worktree creation is now instant; setup is a deliberate manual step.
 #
-# Steps: sync env files from the main worktree, install deps, seed a
-# worktree-local anonymous Convex backend from shared dev, and verify generated
-# application files against that local backend.
+# Steps: sync env files from the main worktree, install deps, initialize a fresh
+# worktree-local native Convex backend, and verify generated application files
+# against that local backend. Prelaunch workspaces intentionally do not import
+# the incompatible legacy Kitcn snapshot.
 
 readonly TOTAL_STEPS=5
 
@@ -114,30 +115,12 @@ step 2 "Install dependencies"
 detail "Running pnpm install (timeout 180s)"
 run_with_timeout 180 pnpm install
 
-step 3 "Resolve seed options"
-seed_args=(--reset-local-state)
-detail "Resetting this worktree's anonymous local Convex backend before seeding"
+step 3 "Select native local initialization"
+detail "Legacy Kitcn snapshot import is disabled for the native schema"
 
-# Accept the neutral KINO_* name; fall back to the legacy HELMOR_* name so older
-# bootstraps keep working.
-INCLUDE_FILE_STORAGE="${KINO_CONVEX_SEED_INCLUDE_FILE_STORAGE:-${HELMOR_CONVEX_SEED_INCLUDE_FILE_STORAGE:-}}"
-if [[ "$INCLUDE_FILE_STORAGE" == "1" ]]; then
-  detail "Including Convex file storage in the seed snapshot"
-  seed_args+=(--include-file-storage)
-else
-  detail "Skipping Convex file storage"
-fi
-
-if [[ -n "${KINO_CONVEX_SEED_SOURCE:-}" ]]; then
-  detail "Using seed source: $KINO_CONVEX_SEED_SOURCE"
-  seed_args+=(--source "$KINO_CONVEX_SEED_SOURCE")
-else
-  detail "Using the saved/shared dev seed source"
-fi
-
-step 4 "Seed anonymous Convex workspace from shared dev"
-detail "This creates/resets the worktree-local anonymous Convex database"
-pnpm convex:seed:from-dev "${seed_args[@]}"
+step 4 "Initialize a fresh native Convex workspace"
+detail "This resets only this worktree's anonymous local Convex database"
+pnpm convex:local:init --reset-local-state
 
 step 5 "Verify generated application files"
 detail "Running pnpm run verify:generated (timeout 120s)"

@@ -1,0 +1,108 @@
+{
+  "recordedAt": "2026-09-22T23:52:34.379Z",
+  "target": "production",
+  "origin": "https://usekino.com",
+  "conditions": "Same deployed /dashboard component; 10 fresh browser contexts with copied authenticated cookies; en-US Chrome, no throttling; backend and account data differ.",
+  "samples": [
+    {
+      "iteration": 0,
+      "visibleMs": 1416.1,
+      "browserHttpQueries": 0,
+      "subscriptionAdds": 4,
+      "ttfbMs": 1096.7,
+      "documentMs": 1097.7,
+      "fcpMs": 1256,
+      "lcpMs": 1880
+    },
+    {
+      "iteration": 1,
+      "visibleMs": 1276.6,
+      "browserHttpQueries": 0,
+      "subscriptionAdds": 4,
+      "ttfbMs": 1001.7,
+      "documentMs": 1002,
+      "fcpMs": 1116,
+      "lcpMs": 1696
+    },
+    {
+      "iteration": 2,
+      "visibleMs": 1082.2,
+      "browserHttpQueries": 0,
+      "subscriptionAdds": 4,
+      "ttfbMs": 818.9,
+      "documentMs": 823.2,
+      "fcpMs": 984,
+      "lcpMs": 1536
+    },
+    {
+      "iteration": 3,
+      "visibleMs": 1649.5,
+      "browserHttpQueries": 0,
+      "subscriptionAdds": 4,
+      "ttfbMs": 1336.6,
+      "documentMs": 1338,
+      "fcpMs": 1564,
+      "lcpMs": 2080
+    },
+    {
+      "iteration": 4,
+      "visibleMs": 1150.6,
+      "browserHttpQueries": 0,
+      "subscriptionAdds": 4,
+      "ttfbMs": 938,
+      "documentMs": 939.2,
+      "fcpMs": 1076,
+      "lcpMs": 1620
+    },
+    {
+      "iteration": 5,
+      "visibleMs": 1246.4,
+      "browserHttpQueries": 0,
+      "subscriptionAdds": 4,
+      "ttfbMs": 966.1,
+      "documentMs": 968.2,
+      "fcpMs": 1108,
+      "lcpMs": 1704
+    },
+    {
+      "iteration": 6,
+      "visibleMs": 1247,
+      "browserHttpQueries": 0,
+      "subscriptionAdds": 4,
+      "ttfbMs": 948.3,
+      "documentMs": 948.7,
+      "fcpMs": 1120,
+      "lcpMs": 1120
+    },
+    {
+      "iteration": 7,
+      "visibleMs": 2271,
+      "browserHttpQueries": 0,
+      "subscriptionAdds": 4,
+      "ttfbMs": 1947.6,
+      "documentMs": 1948.7,
+      "fcpMs": 2108,
+      "lcpMs": 2728
+    },
+    {
+      "iteration": 8,
+      "visibleMs": 1284.7,
+      "browserHttpQueries": 0,
+      "subscriptionAdds": 4,
+      "ttfbMs": 981.9,
+      "documentMs": 982.9,
+      "fcpMs": 1128,
+      "lcpMs": 1760
+    },
+    {
+      "iteration": 9,
+      "visibleMs": 1333.8,
+      "browserHttpQueries": 0,
+      "subscriptionAdds": 4,
+      "ttfbMs": 1090.6,
+      "documentMs": 1092.6,
+      "fcpMs": 1244,
+      "lcpMs": 1776
+    }
+  ]
+}

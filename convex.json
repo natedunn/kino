@@ -1,5 +1,5 @@
 {
-  "functions": "convex/functions",
+  "functions": "convex/native",
   "codegen": {
     "staticApi": true,
     "staticDataModel": true

@@ -1,0 +1,14 @@
+{
+	"checkedAt": "2026-09-21T20:03:32.687Z",
+	"target": "isolated local backend 4430",
+	"concurrentWrites": 30,
+	"committed": 28,
+	"rejected": 2,
+	"postFenceWriteRejected": true,
+	"deletingBoardHidden": true,
+	"siblingPreserved": true,
+	"boardExists": false,
+	"done": true,
+	"processed": 90,
+	"remaining": []
+}

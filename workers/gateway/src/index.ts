@@ -1,56 +1,34 @@
 import type { GatewayEnv } from './env';
 
-import { oAuthProxy } from 'better-auth/plugins';
+import legacy from './legacy';
+import { handleNativeOAuth } from './native-oauth';
+import { parseNativeRoutes } from './native-routing';
 
-import { createGatewayAuth } from './auth';
-import { handleGitHubRelayOAuthCallback } from './github-relay';
-import { handleGitHubWebhook, handleTargetsApi } from './hooks';
-import { rewriteProxyCallbackRedirect } from './redirect-rewrite';
-import { handleShareOriginsApi } from './share-origins';
+export { OAuthState } from './native-state-object';
 
 export default {
 	async fetch(request: Request, env: GatewayEnv, ctx: ExecutionContext) {
 		const url = new URL(request.url);
-
-		// Better Auth oAuthProxy production leg (GitHub OAuth login callback).
-		if (url.pathname.startsWith('/api/auth')) {
-			const response = await createGatewayAuth(env).handler(request);
-			return await rewriteProxyCallbackRedirect(env, response);
-		}
-
-		// GitHub App (sync) install/authorize trampoline.
-		if (url.pathname === '/github-relay/oauth-callback') {
-			return handleGitHubRelayOAuthCallback(env, request);
-		}
-
-		// GitHub App webhook intake + fan-out.
-		if (url.pathname === '/hooks/github' && request.method === 'POST') {
-			return handleGitHubWebhook(env, request, ctx);
-		}
-
-		// Webhook target registry (deploy/cleanup scripts).
-		if (url.pathname === '/hooks/targets') {
-			return handleTargetsApi(env, request);
-		}
-
-		if (url.pathname === '/dev/share-origins') {
-			return handleShareOriginsApi(env, request);
-		}
-
+		const routes = parseNativeRoutes(env.NATIVE_GITHUB_ROUTES);
 		if (url.pathname === '/' || url.pathname === '/health') {
-			return new Response(
-				JSON.stringify({
-					ok: true,
-					service: 'kino-gateway',
-					betterAuthVersion: oAuthProxy().version,
-				}),
-				{
-					headers: { 'content-type': 'application/json', 'cache-control': 'no-store' },
-					status: 200,
-				}
-			);
+			const response = await legacy.fetch(request, env, ctx);
+			const health: {
+				nativeGithub: { enabled: boolean };
+			} = await response.json();
+			health.nativeGithub.enabled = !!routes && !!env.OAUTH_STATES;
+			return Response.json(health, {
+				status: 200,
+				headers: { 'Cache-Control': 'no-store', 'Content-Type': 'application/json' },
+			});
 		}
-
-		return new Response('Not found', { status: 404 });
+		if (url.pathname === '/oauth/state' || url.pathname === '/oauth/github/callback') {
+			if (!routes || !env.OAUTH_STATES)
+				return new Response('Native GitHub is not configured', {
+					status: 503,
+					headers: { 'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer' },
+				});
+			return handleNativeOAuth(request, env, routes);
+		}
+		return legacy.fetch(request, env, ctx);
 	},
 } satisfies ExportedHandler<GatewayEnv>;

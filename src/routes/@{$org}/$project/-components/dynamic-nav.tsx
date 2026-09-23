@@ -5,7 +5,6 @@ import type { ClassValue } from '@/lib/utils';
 import type { LinkProps } from '@tanstack/react-router';
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 
 import { NavTab, navTabLinkClassName } from '@/components/nav-tab';
@@ -24,7 +23,6 @@ import Home from '@/icons/home';
 import Interview from '@/icons/interview';
 import Roadmap from '@/icons/roadmap';
 import SettingsSliders from '@/icons/settings-sliders';
-import { useCRPC } from '@/lib/convex/crpc';
 import * as m from '@/paraglide/messages.js';
 
 const useIsomorphicLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect;
@@ -38,26 +36,19 @@ export interface NavigationItem extends Omit<LinkProps, 'children'> {
 interface DynamicNavigationProps {
 	orgSlug: string;
 	projectSlug: string;
+	canManageSettings: boolean;
 	className?: string;
 }
 
-export function DynamicNavigation({ orgSlug, projectSlug }: DynamicNavigationProps) {
-	const crpc = useCRPC();
+export function DynamicNavigation({
+	orgSlug,
+	projectSlug,
+	canManageSettings,
+}: DynamicNavigationProps) {
 	const params = {
 		org: orgSlug,
 		project: projectSlug,
 	};
-	const projectQuery = useQuery(
-		crpc.project.getDetails.queryOptions(
-			{
-				orgSlug,
-				slug: projectSlug,
-			},
-			{ subscribe: false }
-		)
-	);
-	const canManageSettings = projectQuery.data?.permissions.canEditSettings ?? false;
-
 	const items: Array<NavigationItem> = [
 		{
 			children: m.project_nav_overview(),

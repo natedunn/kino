@@ -37,9 +37,11 @@ export function getRouter() {
 	});
 
 	setupRouterSsrQueryIntegration({
-		dehydrateOptions: hydrationConfig.dehydrate as never,
+		dehydrateOptions: hydrationConfig.dehydrate,
+		// The integration currently exposes the core hydrate shape through a
+		// narrower adapter type; both packages consume the same runtime fields.
 		hydrateOptions: hydrationConfig.hydrate as never,
-		queryClient: queryClient as never,
+		queryClient,
 		router,
 	});
 

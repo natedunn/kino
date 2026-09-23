@@ -15,9 +15,8 @@ import { EditingBar } from '@/components/site-nav/editing-bar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { authClient } from '@/lib/convex/auth-client';
-import { useCRPC } from '@/lib/convex/crpc';
-import { crpcServer } from '@/lib/convex/crpc-server';
+import { useAuthSession } from '@/lib/auth/auth-client';
+import { updatesServer as crpcServer, useUpdatesAPI as useCRPC } from '@/lib/convex/updates-api';
 import { localizeError } from '@/lib/errors';
 import { useSidebarState } from '@/lib/hooks/use-sidebar-state';
 import { projectTitle, titleMeta } from '@/lib/seo';
@@ -70,7 +69,7 @@ function NewUpdateRoute() {
 	const params = routeApi.useParams();
 	const navigate = useNavigate();
 	const crpc = useCRPC();
-	const session = authClient.useSession();
+	const session = useAuthSession();
 	const [formError, setFormError] = useState('');
 	const pendingPublishRef = useRef<null | { id: string; slug: string }>(null);
 	const contentEditorRef = useRef<MarkdownEditorRef>(null);
@@ -152,7 +151,7 @@ function NewUpdateRoute() {
 		}),
 	});
 
-	if (!session.data?.user) {
+	if (!session.user) {
 		return <InlineAlert variant='warning'>{m.updates_sign_in_write()}</InlineAlert>;
 	}
 

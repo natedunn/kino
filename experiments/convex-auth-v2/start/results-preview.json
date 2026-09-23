@@ -1,0 +1,36 @@
+{
+  "recordedAt": "2026-09-21T04:44:26.280Z",
+  "environment": "local production build preview; not deployed latency",
+  "results": [
+    {
+      "name": "HttpOnly cookie sign-in; no refresh token in JSON or browser storage",
+      "signInToHydratedMs": 154
+    },
+    {
+      "name": "Authenticated SSR contains private data; hydration makes no browser HTTP query"
+    },
+    {
+      "name": "External mutation updates hydrated subscription",
+      "mutationToVisibleMs": 23
+    },
+    {
+      "name": "Hover starts beta subscription before navigation; click reuses it",
+      "hoveredNavigationMs": 29
+    },
+    {
+      "name": "Independent anonymous request receives no private data; cross-origin refresh refused"
+    },
+    {
+      "name": "SSR refresh restores access cookie once for parallel token consumers"
+    },
+    {
+      "name": "Open page renews token through cookie endpoint and remains live past original JWT expiry"
+    },
+    {
+      "name": "Sign-out clears cookies and private SSR access"
+    },
+    {
+      "name": "No browser or hydration errors"
+    }
+  ]
+}

@@ -1,6 +1,7 @@
 'use client';
 
-import type { ApiOutputs } from '@convex/api';
+import type { FunctionReturnType } from 'convex/server';
+import type { api } from '../../../../../../convex/native/_generated/api';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { hotkeysCoreFeature, selectionFeature, syncDataLoaderFeature } from '@headless-tree/core';
@@ -33,7 +34,7 @@ type FolderTreeItem = {
 	system: boolean;
 };
 
-export type FileTreeFile = ApiOutputs['file']['listFileTreeItems']['files'][number];
+export type FileTreeFile = FunctionReturnType<typeof api.filesWorkspace.tree>['files'][number];
 
 const ROOT_ID = 'files-root';
 const EXPANDED_FOLDERS_STORAGE_PREFIX = 'kino:files:expanded-folders:';

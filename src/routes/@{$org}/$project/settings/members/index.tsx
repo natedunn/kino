@@ -8,8 +8,7 @@ import { EmptyState } from '@/components/kino/common';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useCRPC } from '@/lib/convex/crpc';
-import { crpcServer } from '@/lib/convex/crpc-server';
+import { projectMembersServer, useProjectMembersAPI } from '@/lib/convex/project-members-api';
 import { localizeError } from '@/lib/errors';
 import { titleMeta } from '@/lib/seo';
 import { emailSchema, FORM_LIMITS } from '@/lib/validation';
@@ -23,19 +22,19 @@ export const Route = createFileRoute('/@{$org}/$project/settings/members/')({
 	}),
 	loader: async ({ context, params }) => {
 		const details = await context.queryClient.ensureQueryData(
-			crpcServer.project.getDetails.queryOptions({
+			projectMembersServer.project.getDetails.queryOptions({
 				orgSlug: params.org,
 				slug: params.project,
 			})
 		);
 		const projectId = (details as { project?: { id?: string } } | null)?.project?.id;
-		if (projectId && context.loaderToken) {
+		if (projectId && context.loaderToken && details?.permissions.canManageAccess) {
 			await Promise.all([
 				context.queryClient.ensureQueryData(
-					crpcServer.projectMember.listProjectMembers.queryOptions({ projectId })
+					projectMembersServer.projectMember.listProjectMembers.queryOptions({ projectId })
 				),
 				context.queryClient.ensureQueryData(
-					crpcServer.projectAccess.getManagementState.queryOptions({ projectId })
+					projectMembersServer.projectAccess.getManagementState.queryOptions({ projectId })
 				),
 			]);
 		}
@@ -50,7 +49,7 @@ function mutationErrorMessage(error: unknown) {
 
 function ProjectMembersRoute() {
 	const params = Route.useParams();
-	const crpc = useCRPC();
+	const crpc = useProjectMembersAPI();
 
 	const detailsQuery = useQuery(
 		crpc.project.getDetails.queryOptions({
@@ -152,7 +151,7 @@ function ProjectMembersRoute() {
 									type='button'
 									variant={moderator.assigned ? 'outline' : 'default'}
 									size='sm'
-									disabled={setModeratorAccess.isPending}
+									disabled={isArchived || setModeratorAccess.isPending}
 									onClick={() =>
 										setModeratorAccess.mutate({
 											enabled: !moderator.assigned,
@@ -196,6 +195,7 @@ function ProjectMembersRoute() {
 						{m.project_members_add_by_email()}
 					</label>
 					<Input
+						disabled={isArchived}
 						autoCapitalize='none'
 						autoComplete='email'
 						id='member-email'
@@ -208,7 +208,7 @@ function ProjectMembersRoute() {
 						value={email}
 					/>
 				</div>
-				<Button type='submit' disabled={invite.isPending || !email.trim()}>
+				<Button type='submit' disabled={isArchived || invite.isPending || !email.trim()}>
 					{invite.isPending ? m.project_members_adding() : m.project_members_add()}
 				</Button>
 			</form>
@@ -253,7 +253,7 @@ function ProjectMembersRoute() {
 									variant='ghost'
 									size='sm'
 									className='shrink-0 text-muted-foreground hover:text-destructive'
-									disabled={removeMember.isPending}
+									disabled={isArchived || removeMember.isPending}
 									onClick={() => {
 										if (
 											window.confirm(

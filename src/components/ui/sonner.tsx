@@ -1,9 +1,7 @@
 import * as React from 'react';
+import type { ToasterProps } from 'sonner';
 
 import { getCurrentThemePreference } from '@/lib/theme';
-
-type SonnerModule = typeof import('sonner');
-type ToasterProps = SonnerModule['Toaster'] extends React.ComponentType<infer P> ? P : never;
 
 const Sonner = React.lazy(async () => {
 	const module = await import('sonner');

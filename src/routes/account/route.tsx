@@ -6,8 +6,7 @@ import { AppShell } from '@/components/app-shell';
 import { SidebarNavGroup, SidebarNavItem, SidebarNavSelect } from '@/components/sidebar-nav';
 import { requireAuth } from '@/lib/auth/require-auth';
 import { useAuthLostRedirect } from '@/lib/auth/use-auth-lost';
-import { useCRPC } from '@/lib/convex/crpc';
-import { crpcServer } from '@/lib/convex/crpc-server';
+import { profileServer, useProfileAPI } from '@/lib/convex/profile-api';
 import { titleMeta } from '@/lib/seo';
 import { m } from '@/paraglide/messages.js';
 
@@ -22,7 +21,7 @@ export const Route = createFileRoute('/account')({
 		}
 
 		await context.queryClient.ensureQueryData(
-			crpcServer.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
+			profileServer.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
 		);
 	},
 	component: AccountRoute,
@@ -71,7 +70,7 @@ function AccountRoute() {
 }
 
 function AuthenticatedAccountShell() {
-	const crpc = useCRPC();
+	const crpc = useProfileAPI();
 	const pathname = useRouterState({
 		select: (state) => state.location.pathname,
 	});

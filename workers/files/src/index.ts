@@ -3,6 +3,7 @@ const ORIGINAL_KEY_PREFIX = 'PUBLIC_FILE.';
 const THUMBNAIL_KEY_PREFIX = 'PUBLIC_FILE_THUMBNAIL.';
 const THUMBNAIL_NAME = 'thumb-128.webp';
 const CACHE_CONTROL = 'public, max-age=300, s-maxage=3600';
+const CACHE_TAG_PREFIX = 'kino-file-';
 
 const INLINE_MIME_TYPES = new Set([
 	'application/pdf',
@@ -102,8 +103,13 @@ function applyObjectHeaders(
 	return headers;
 }
 
-function rangeHeaders(headers: Headers, object: R2ObjectBody) {
-	if (!object.range || !('offset' in object.range) || object.range.offset === undefined) {
+function rangeHeaders(headers: Headers, object: R2ObjectBody, requestedRange: boolean) {
+	if (
+		!requestedRange ||
+		!object.range ||
+		!('offset' in object.range) ||
+		object.range.offset === undefined
+	) {
 		headers.set('Content-Length', String(object.size));
 		return 200;
 	}
@@ -136,7 +142,11 @@ async function serveGet(
 	const cache = caches.default;
 	const cacheRequest = new Request(request.url, { headers: request.headers, method: 'GET' });
 	const cached = await cache.match(cacheRequest);
-	if (cached) return cached;
+	if (cached) {
+		const response = new Response(cached.body, cached);
+		response.headers.delete('Cache-Tag');
+		return response;
+	}
 
 	let object: R2ObjectBody | R2Object | null;
 	try {
@@ -162,10 +172,12 @@ async function serveGet(
 		return new Response(null, { headers, status: notModified ? 304 : 412 });
 	}
 
-	const status = rangeHeaders(headers, object);
+	const status = rangeHeaders(headers, object, request.headers.has('range'));
 	const response = new Response(object.body, { headers, status });
 	if (status === 200 && !request.headers.has('range')) {
-		ctx.waitUntil(cache.put(new Request(request.url), response.clone()));
+		const cacheResponse = response.clone();
+		cacheResponse.headers.set('Cache-Tag', `${CACHE_TAG_PREFIX}${asset.publicId}`);
+		ctx.waitUntil(cache.put(new Request(request.url), cacheResponse));
 	}
 	return response;
 }
@@ -197,6 +209,53 @@ async function handleRequest(request: Request, env: Env, ctx: ExecutionContext) 
 
 	const asset = parseAssetRequest(url);
 	if (!asset) return jsonResponse({ error: 'not_found' }, 404, { 'cache-control': 'no-store' });
+	if (env.NATIVE_CONVEX_URL) {
+		// Authorize before even consulting the edge cache. A visibility change or
+		// deletion must revoke a formerly public URL on the next request.
+		try {
+			const response = await fetch(`${env.NATIVE_CONVEX_URL}/api/query`, {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({
+					path: 'files:publicMetadata',
+					args: { publicId: asset.publicId },
+					format: 'json',
+				}),
+				signal: AbortSignal.timeout(10_000),
+			});
+			const data: unknown = await response.json();
+			if (
+				!response.ok ||
+				!data ||
+				typeof data !== 'object' ||
+				!('status' in data) ||
+				data.status !== 'success' ||
+				!('value' in data) ||
+				!data.value ||
+				typeof data.value !== 'object' ||
+				!('name' in data.value) ||
+				typeof data.value.name !== 'string' ||
+				(asset.variant === 'thumbnail' && (!('thumbnail' in data.value) || !data.value.thumbnail))
+			) {
+				return jsonResponse({ error: 'not_found' }, 404, { 'cache-control': 'no-store' });
+			}
+			asset.filename = data.value.name;
+			asset.key =
+				asset.variant === 'thumbnail'
+					? `NATIVE_THUMB.${asset.publicId}.webp`
+					: `NATIVE_FILE.${asset.publicId}`;
+		} catch {
+			return jsonResponse({ error: 'unavailable' }, 503, { 'cache-control': 'no-store' });
+		}
+		const response =
+			request.method === 'HEAD'
+				? await serveHead(request, env, asset)
+				: await serveGet(request, env, ctx, asset);
+		// Browsers must return here to recheck authorization; only our gated edge
+		// cache can reuse bytes without another R2 read.
+		response.headers.set('Cache-Control', 'no-store');
+		return response;
+	}
 	return request.method === 'HEAD'
 		? serveHead(request, env, asset)
 		: serveGet(request, env, ctx, asset);

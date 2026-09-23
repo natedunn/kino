@@ -1,4 +1,5 @@
 import { execSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 
 import { cloudflare } from '@cloudflare/vite-plugin';
 import { paraglideVitePlugin } from '@inlang/paraglide-js';
@@ -8,6 +9,7 @@ import { tanstackStart } from '@tanstack/react-start/plugin/vite';
 import viteReact from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import viteTsConfigPaths from 'vite-tsconfig-paths';
+import { configDefaults } from 'vitest/config';
 
 const port = process.env.PORT ? Number(process.env.PORT) : undefined;
 const isVitest = process.env.VITEST === 'true';
@@ -68,6 +70,19 @@ const config = defineConfig({
 		__KINO_BUILD_ID__: JSON.stringify(resolveBuildId()),
 	},
 	plugins: [
+		...(isVitest
+			? [
+					{
+						name: 'native-auth-test-wasm',
+						enforce: 'pre' as const,
+						load(id: string) {
+							if (!id.endsWith('.wasm')) return null;
+							const base64 = readFileSync(id).toString('base64');
+							return `export default new WebAssembly.Module(Uint8Array.from(atob(${JSON.stringify(base64)}), c => c.charCodeAt(0)));`;
+						},
+					},
+				]
+			: []),
 		// Vitest needs neither the devtools event server nor a Cloudflare runtime.
 		...(isVitest ? [] : [devtools(), cloudflare({ viteEnvironment: { name: 'ssr' } })]),
 		// this is the plugin that enables path aliases
@@ -98,12 +113,19 @@ const config = defineConfig({
 		...(Number.isFinite(port) ? { port, strictPort: true } : {}),
 	},
 	test: {
+		// Experiments pin their own dependencies and run with their own config.
+		exclude: [
+			...configDefaults.exclude,
+			'experiments/**',
+			'scripts/**/*.test.mjs',
+			'workers/gateway/**',
+		],
 		// convex-test must be inlined so its module graph runs in the test runtime.
 		// Per-file environment is set via a `// @vitest-environment edge-runtime`
 		// docblock on the convex-test suites (others stay on the default env).
-		server: { deps: { inline: ['convex-test'] } },
-		// convex-test mutation invocations pay a one-time cold-start (better-auth
-		// init + module loading) that can exceed the default 5s on first run.
+		server: { deps: { inline: ['convex-test', 'argon2id-wasm'] } },
+		// convex-test mutation invocations pay a one-time native auth/component
+		// cold-start that can exceed the default 5s on first run.
 		testTimeout: 30_000,
 	},
 });

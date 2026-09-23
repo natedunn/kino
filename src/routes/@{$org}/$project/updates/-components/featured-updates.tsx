@@ -1,7 +1,9 @@
+import type { Id } from '../../../../../../convex/native/_generated/dataModel';
 import type { UpdateCategory } from './category-badge';
 
 import { Link } from '@tanstack/react-router';
 
+import { NativeFileImage } from '@/components/files/native-files';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { formatFullDate } from '@/lib/utils/format-timestamp';
@@ -16,6 +18,7 @@ export type FeaturedUpdateItem = {
 	category: UpdateCategory;
 	contentPreview?: string;
 	coverImageUrl?: string | null;
+	coverAssetId?: Id<'fileAssets'>;
 	id: string;
 	publishedAt?: number | null;
 	slug: string;
@@ -25,6 +28,13 @@ export type FeaturedUpdateItem = {
 // Placeholder cover for featured updates without an uploaded image. Kept
 // intentionally simple for now — richer randomized artwork can replace this.
 function CoverImage({ className, update }: { className?: string; update: FeaturedUpdateItem }) {
+	if (update.coverAssetId)
+		return (
+			<NativeFileImage
+				assetId={update.coverAssetId}
+				className={cn('h-full w-full object-cover', className)}
+			/>
+		);
 	if (update.coverImageUrl) {
 		return (
 			<img

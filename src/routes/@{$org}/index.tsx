@@ -1,3 +1,6 @@
+import type { FunctionReturnType } from 'convex/server';
+
+import { convexQuery } from '@convex-dev/react-query';
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import {
@@ -17,35 +20,52 @@ import { EmptyState } from '@/components/kino/common';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useCRPC } from '@/lib/convex/crpc';
-import { crpcServer } from '@/lib/convex/crpc-server';
 import { titleFromSlug, titleMeta } from '@/lib/seo';
+import * as m from '@/paraglide/messages.js';
 
+import { api as nativeApi } from '../../../convex/native/_generated/api';
 import { NoPublicProjects } from './-components/no-public-projects';
 import { OrgProjects } from './-components/org-projects';
+
+type OverviewOrganization = NonNullable<
+	FunctionReturnType<typeof nativeApi.organizations.getBySlug>
+>;
+type OverviewProject = FunctionReturnType<typeof nativeApi.projects.listByOrganization>[number];
+type OverviewMember = FunctionReturnType<
+	typeof nativeApi.organizations.listMembers
+>['members'][number];
 
 export const Route = createFileRoute('/@{$org}/')({
 	head: ({ params }) => ({
 		meta: [titleMeta([titleFromSlug(params.org)])],
 	}),
 	loader: async ({ context, params }) => {
-		const orgData = await context.queryClient.ensureQueryData(
-			crpcServer.org.getDetails.queryOptions({
-				slug: params.org,
-			})
+		const organization = await context.queryClient.ensureQueryData(
+			convexQuery(nativeApi.organizations.getBySlug, { slug: params.org })
 		);
-
-		await context.queryClient.ensureQueryData(
-			crpcServer.project.getManyByOrg.queryOptions({
-				limit: 24,
-				orgSlug: params.org,
-			})
-		);
-
-		if (orgData?.permissions.canCreate) {
-			await context.queryClient.ensureQueryData(
-				crpcServer.org.getMyPermission.queryOptions({ slug: params.org }, { skipUnauth: true })
-			);
+		await Promise.all([
+			context.queryClient.ensureQueryData(convexQuery(nativeApi.organizations.listMine, {})),
+			organization
+				? context.queryClient.ensureQueryData(
+						convexQuery(nativeApi.projects.listByOrganization, {
+							organizationId: organization.id,
+						})
+					)
+				: Promise.resolve(),
+		]);
+		if (organization?.permissions.canManageMembers) {
+			await Promise.all([
+				context.queryClient.ensureQueryData(
+					convexQuery(nativeApi.organizations.listMembers, {
+						organizationId: organization.id,
+					})
+				),
+				context.queryClient.ensureQueryData(
+					convexQuery(nativeApi.invitations.listPending, {
+						organizationId: organization.id,
+					})
+				),
+			]);
 		}
 	},
 	component: OrganizationRoute,
@@ -90,44 +110,76 @@ const PLACEHOLDER_ACTIVITY = [
 ];
 
 function OrganizationRoute() {
-	const params = Route.useParams();
-	const crpc = useCRPC();
-	const { data: orgData } = useSuspenseQuery(
-		crpc.org.getDetails.queryOptions({
-			slug: params.org,
-		})
-	);
-	const { data: projectsData } = useSuspenseQuery(
-		crpc.project.getManyByOrg.queryOptions({
-			limit: 24,
-			orgSlug: params.org,
-		})
-	);
-	const limitsQuery = useQuery(
-		crpc.org.getMyPermission.queryOptions(
-			{ slug: params.org },
-			{ enabled: !!orgData?.permissions.canCreate, skipUnauth: true }
-		)
-	);
-	const membersQuery = useQuery(
-		crpc.orgMember.listMembers.queryOptions({ slug: params.org }, { skipUnauth: true })
-	);
-	const members = membersQuery.data?.members ?? [];
-	const canManageMembers = membersQuery.data?.canManage ?? false;
-	const projects = projectsData ?? [];
+	return <NativeOrganizationRoute />;
+}
 
-	if (!orgData?.org) {
+function NativeOrganizationRoute() {
+	const params = Route.useParams();
+	const { data: organization } = useSuspenseQuery(
+		convexQuery(nativeApi.organizations.getBySlug, { slug: params.org })
+	);
+	if (!organization) {
 		return (
 			<div className='container py-10'>
 				<EmptyState
-					title='Organization not available'
-					description='This organization either does not exist or your session cannot view it.'
+					title={m.org_members_unavailable()}
+					description={m.org_members_unavailable_description()}
 				/>
 			</div>
 		);
 	}
+	return <NativeOrganizationContent organization={organization} />;
+}
 
-	const isPublic = orgData.org.visibility === 'public';
+function NativeOrganizationContent({
+	organization,
+}: {
+	organization: NonNullable<FunctionReturnType<typeof nativeApi.organizations.getBySlug>>;
+}) {
+	const { data: projects } = useSuspenseQuery(
+		convexQuery(nativeApi.projects.listByOrganization, { organizationId: organization.id })
+	);
+	const { data: creationPermission } = useQuery(
+		convexQuery(nativeApi.policy.getMyProjectCreationPermission, { orgSlug: organization.slug })
+	);
+	const { data: memberData } = useQuery({
+		...convexQuery(nativeApi.organizations.listMembers, { organizationId: organization.id }),
+		enabled: organization.permissions.canManageMembers,
+	});
+	return (
+		<OrganizationOverview
+			organization={organization}
+			projects={projects}
+			members={organization.permissions.canManageMembers ? (memberData?.members ?? []) : []}
+			orgSlug={organization.slug}
+			canCreate={organization.permissions.canCreateProjects}
+			canEdit={organization.permissions.canEdit}
+			canManageMembers={organization.permissions.canManageMembers}
+			canAddProjects={creationPermission?.canAddProjects ?? false}
+		/>
+	);
+}
+
+function OrganizationOverview({
+	organization,
+	projects,
+	members,
+	orgSlug,
+	canCreate,
+	canEdit,
+	canManageMembers,
+	canAddProjects,
+}: {
+	organization: OverviewOrganization;
+	projects: Array<OverviewProject>;
+	members: Array<OverviewMember>;
+	orgSlug: string;
+	canCreate: boolean;
+	canEdit: boolean;
+	canManageMembers: boolean;
+	canAddProjects: boolean;
+}) {
+	const isPublic = organization.visibility === 'public';
 
 	return (
 		<div>
@@ -157,9 +209,9 @@ function OrganizationRoute() {
 									className='h-16 w-16 rounded-full shadow-lg shadow-primary/20 md:h-20 md:w-20'
 									fallbackAnimate='always'
 									fallbackKind='org-initial'
-									fallbackName={orgData.org.slug}
+									fallbackName={organization.slug}
 								>
-									<AvatarImage alt={orgData.org.name} src={orgData.org.logo ?? undefined} />
+									<AvatarImage alt={organization.name} src={organization.logo ?? undefined} />
 									<AvatarFallback />
 								</Avatar>
 								{/* Online dot */}
@@ -171,7 +223,7 @@ function OrganizationRoute() {
 							<div className='flex flex-col gap-1.5'>
 								<div className='flex flex-wrap items-center gap-2.5'>
 									<h1 className='text-2xl font-bold tracking-tight md:text-3xl'>
-										{orgData.org.name}
+										{organization.name}
 									</h1>
 									<Badge variant='outline' className='gap-1 text-xs'>
 										{isPublic ? <Globe className='size-3' /> : <Lock className='size-3' />}
@@ -195,9 +247,9 @@ function OrganizationRoute() {
 							</div>
 						</div>
 
-						{orgData.permissions.canEdit ? (
+						{canEdit ? (
 							<Button asChild variant='outline' className='shrink-0 self-start'>
-								<Link search={{ org: params.org }} to='/org/settings'>
+								<Link search={{ org: orgSlug }} to='/org/settings'>
 									<Settings className='size-4' />
 									Settings
 								</Link>
@@ -242,21 +294,17 @@ function OrganizationRoute() {
 			{/* ── Body ──────────────────────────────────────────── */}
 			<div className='container py-10'>
 				{projects.length === 0 ? (
-					<NoPublicProjects
-						canCreate={orgData.permissions.canCreate}
-						orgName={orgData.org.name}
-						orgSlug={params.org}
-					/>
+					<NoPublicProjects canCreate={canCreate} orgName={organization.name} orgSlug={orgSlug} />
 				) : (
 					<div className='grid grid-cols-1 gap-10 md:grid-cols-12'>
 						{/* ── Projects ───────────────────────────────── */}
 						<section className='col-span-1 md:col-span-8'>
 							<div className='mb-5 flex items-center justify-between'>
 								<h2 className='text-lg font-semibold'>Projects</h2>
-								{orgData.permissions.canCreate && limitsQuery.data?.canAddProjects ? (
+								{canCreate && canAddProjects ? (
 									<Link
 										className='inline-flex items-center gap-1 text-sm text-primary underline decoration-primary/40 decoration-2 underline-offset-2 hover:decoration-primary/70'
-										params={{ org: params.org }}
+										params={{ org: orgSlug }}
 										to='/@{$org}/create-project'
 									>
 										New project
@@ -264,7 +312,7 @@ function OrganizationRoute() {
 									</Link>
 								) : null}
 							</div>
-							<OrgProjects orgSlug={params.org} projects={projects} />
+							<OrgProjects orgSlug={orgSlug} projects={projects} />
 						</section>
 
 						{/* ── Sidebar ────────────────────────────────── */}
@@ -276,7 +324,7 @@ function OrganizationRoute() {
 									{canManageMembers ? (
 										<Link
 											className='text-sm text-primary underline decoration-primary/40 decoration-2 underline-offset-2 hover:decoration-primary/70'
-											search={{ org: params.org }}
+											search={{ org: orgSlug }}
 											to='/org/settings/members'
 										>
 											Manage
@@ -289,27 +337,27 @@ function OrganizationRoute() {
 									<p className='text-sm text-muted-foreground'>No members to show.</p>
 								) : (
 									<div className='flex flex-col gap-2'>
-										{members.slice(0, 5).map((m) => (
-											<div key={m.id} className='flex items-center gap-3 rounded-lg px-1 py-1'>
+										{members.slice(0, 5).map((member) => (
+											<div key={member.id} className='flex items-center gap-3 rounded-lg px-1 py-1'>
 												<Avatar
 													className='size-8 shrink-0'
-													fallbackName={m.user.username ?? m.user.email}
+												fallbackName={member.user.username}
 												>
-													{m.user.image ? (
+													{member.user.image ? (
 														<AvatarImage
-															alt={m.user.name || m.user.username || m.user.email}
-															src={m.user.image}
+															alt={member.user.name || member.user.username || member.user.email}
+															src={member.user.image}
 														/>
 													) : null}
 													<AvatarFallback />
 												</Avatar>
 												<div className='flex min-w-0 flex-1 items-center justify-between gap-2'>
-													<span className='truncate text-sm font-medium'>{m.user.name}</span>
+													<span className='truncate text-sm font-medium'>{member.user.name}</span>
 													<Badge
 														variant='outline'
 														className='shrink-0 text-[10px] text-muted-foreground capitalize'
 													>
-														{m.role}
+														{member.role}
 													</Badge>
 												</div>
 											</div>
@@ -317,7 +365,7 @@ function OrganizationRoute() {
 										{members.length > 5 && canManageMembers ? (
 											<Link
 												className='mt-1 text-left text-sm text-muted-foreground transition-colors hover:text-foreground'
-												search={{ org: params.org }}
+												search={{ org: orgSlug }}
 												to='/org/settings/members'
 											>
 												+{members.length - 5} more members

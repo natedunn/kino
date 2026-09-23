@@ -4,18 +4,14 @@ set -euo pipefail
 WORKTREE_ROOT=$(git rev-parse --show-toplevel)
 cd "$WORKTREE_ROOT"
 
-echo "Regenerating kitcn and Convex source files..."
-# `kitcn codegen` generates the kitcn runtime and then runs Convex codegen for
-# the standard `_generated` bindings.
+echo "Regenerating native Convex source files..."
 pnpm run codegen
 
 # Convex AI guidance is updated separately with `npx convex ai-files update`.
 # It is intentionally excluded here because it is tooling documentation, not
 # application runtime code.
 generated_status=$(git status --short --untracked-files=all -- \
-  convex/functions/generated \
-  convex/functions/_generated \
-  ':(exclude)convex/functions/_generated/ai/**')
+  convex/native/_generated)
 
 if [[ -n "$generated_status" ]]; then
   echo >&2

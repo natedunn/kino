@@ -1,0 +1,10 @@
+{
+  "recordedAt": "2026-09-21T18:55:31.331Z",
+  "checks": [
+    "both previews advertise one gateway, S256, and 43-character opaque state",
+    "unknown opaque reference refused",
+    "valid beta signature cannot claim alpha state",
+    "concurrent cancellations return to correct apps",
+    "both callback replays refused"
+  ]
+}

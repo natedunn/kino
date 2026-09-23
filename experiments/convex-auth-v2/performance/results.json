@@ -1,0 +1,696 @@
+{
+  "recordedAt": "2026-09-21T17:03:33.906Z",
+  "conditions": "Same machine/network, sequential alternating targets; no CPU/network throttling. First observation is NOT a server cold start. Public pages differ in complexity. Synthetic proof sessions bypass OAuth.",
+  "targets": [
+    {
+      "name": "kino-preview-sept17",
+      "origin": "https://t3code-build-footer-marketing-pages-kino.hello-fc8.workers.dev",
+      "path": "/auth",
+      "start": "/api/auth/sign-in/social"
+    },
+    {
+      "name": "native-proof",
+      "origin": "https://kino-auth-v2-proof-c318c09d.hello-fc8.workers.dev",
+      "path": "/",
+      "start": "/api/auth/github/start"
+    }
+  ],
+  "initiation": [
+    {
+      "target": "kino-preview-sept17",
+      "iteration": 0,
+      "phase": "warmup",
+      "headersMs": 3538.9,
+      "totalMs": 3540.8
+    },
+    {
+      "target": "native-proof",
+      "iteration": 0,
+      "phase": "warmup",
+      "headersMs": 610.5,
+      "totalMs": 611.4
+    },
+    {
+      "target": "native-proof",
+      "iteration": 1,
+      "phase": "warmup",
+      "headersMs": 307.1,
+      "totalMs": 307.9
+    },
+    {
+      "target": "kino-preview-sept17",
+      "iteration": 1,
+      "phase": "warmup",
+      "headersMs": 2481,
+      "totalMs": 2483
+    },
+    {
+      "target": "kino-preview-sept17",
+      "iteration": 2,
+      "phase": "warmup",
+      "headersMs": 2509.8,
+      "totalMs": 2511.2
+    },
+    {
+      "target": "native-proof",
+      "iteration": 2,
+      "phase": "warmup",
+      "headersMs": 369.6,
+      "totalMs": 370
+    },
+    {
+      "target": "native-proof",
+      "iteration": 3,
+      "phase": "measured",
+      "headersMs": 177.9,
+      "totalMs": 178.7
+    },
+    {
+      "target": "kino-preview-sept17",
+      "iteration": 3,
+      "phase": "measured",
+      "headersMs": 2583.8,
+      "totalMs": 2584.2
+    },
+    {
+      "target": "kino-preview-sept17",
+      "iteration": 4,
+      "phase": "measured",
+      "headersMs": 3173.8,
+      "totalMs": 3174.9
+    },
+    {
+      "target": "native-proof",
+      "iteration": 4,
+      "phase": "measured",
+      "headersMs": 517.5,
+      "totalMs": 519.2
+    },
+    {
+      "target": "native-proof",
+      "iteration": 5,
+      "phase": "measured",
+      "headersMs": 142.7,
+      "totalMs": 143.6
+    },
+    {
+      "target": "kino-preview-sept17",
+      "iteration": 5,
+      "phase": "measured",
+      "headersMs": 2437.3,
+      "totalMs": 2438.1
+    },
+    {
+      "target": "kino-preview-sept17",
+      "iteration": 6,
+      "phase": "measured",
+      "headersMs": 2989.4,
+      "totalMs": 2990.7
+    },
+    {
+      "target": "native-proof",
+      "iteration": 6,
+      "phase": "measured",
+      "headersMs": 270.1,
+      "totalMs": 270.7
+    },
+    {
+      "target": "native-proof",
+      "iteration": 7,
+      "phase": "measured",
+      "headersMs": 148.5,
+      "totalMs": 150.5
+    },
+    {
+      "target": "kino-preview-sept17",
+      "iteration": 7,
+      "phase": "measured",
+      "headersMs": 2173.3,
+      "totalMs": 2174.2
+    },
+    {
+      "target": "kino-preview-sept17",
+      "iteration": 8,
+      "phase": "measured",
+      "headersMs": 2575.3,
+      "totalMs": 2576.8
+    },
+    {
+      "target": "native-proof",
+      "iteration": 8,
+      "phase": "measured",
+      "headersMs": 326.1,
+      "totalMs": 326.7
+    },
+    {
+      "target": "native-proof",
+      "iteration": 9,
+      "phase": "measured",
+      "headersMs": 129.4,
+      "totalMs": 133.2
+    },
+    {
+      "target": "kino-preview-sept17",
+      "iteration": 9,
+      "phase": "measured",
+      "headersMs": 2398.3,
+      "totalMs": 2399.3
+    },
+    {
+      "target": "kino-preview-sept17",
+      "iteration": 10,
+      "phase": "measured",
+      "headersMs": 2428.3,
+      "totalMs": 2429.4
+    },
+    {
+      "target": "native-proof",
+      "iteration": 10,
+      "phase": "measured",
+      "headersMs": 195.5,
+      "totalMs": 196.1
+    },
+    {
+      "target": "native-proof",
+      "iteration": 11,
+      "phase": "measured",
+      "headersMs": 106,
+      "totalMs": 106.7
+    },
+    {
+      "target": "kino-preview-sept17",
+      "iteration": 11,
+      "phase": "measured",
+      "headersMs": 2391.9,
+      "totalMs": 2392.7
+    },
+    {
+      "target": "kino-preview-sept17",
+      "iteration": 12,
+      "phase": "measured",
+      "headersMs": 2594.7,
+      "totalMs": 2597.3
+    },
+    {
+      "target": "native-proof",
+      "iteration": 12,
+      "phase": "measured",
+      "headersMs": 473.6,
+      "totalMs": 474.3
+    },
+    {
+      "target": "native-proof",
+      "iteration": 13,
+      "phase": "measured",
+      "headersMs": 234.4,
+      "totalMs": 235.8
+    },
+    {
+      "target": "kino-preview-sept17",
+      "iteration": 13,
+      "phase": "measured",
+      "headersMs": 2384.4,
+      "totalMs": 2385.4
+    },
+    {
+      "target": "kino-preview-sept17",
+      "iteration": 14,
+      "phase": "measured",
+      "headersMs": 2253.1,
+      "totalMs": 2254.1
+    },
+    {
+      "target": "native-proof",
+      "iteration": 14,
+      "phase": "measured",
+      "headersMs": 242.9,
+      "totalMs": 244.1
+    },
+    {
+      "target": "native-proof",
+      "iteration": 15,
+      "phase": "measured",
+      "headersMs": 143.1,
+      "totalMs": 144.1
+    },
+    {
+      "target": "kino-preview-sept17",
+      "iteration": 15,
+      "phase": "measured",
+      "headersMs": 2412.3,
+      "totalMs": 2413.7
+    },
+    {
+      "target": "kino-preview-sept17",
+      "iteration": 16,
+      "phase": "measured",
+      "headersMs": 2460.4,
+      "totalMs": 2461.1
+    },
+    {
+      "target": "native-proof",
+      "iteration": 16,
+      "phase": "measured",
+      "headersMs": 310.8,
+      "totalMs": 311.3
+    },
+    {
+      "target": "native-proof",
+      "iteration": 17,
+      "phase": "measured",
+      "headersMs": 187.2,
+      "totalMs": 188.1
+    },
+    {
+      "target": "kino-preview-sept17",
+      "iteration": 17,
+      "phase": "measured",
+      "headersMs": 2547.7,
+      "totalMs": 2548.9
+    },
+    {
+      "target": "kino-preview-sept17",
+      "iteration": 18,
+      "phase": "measured",
+      "headersMs": 2242.4,
+      "totalMs": 2243.7
+    },
+    {
+      "target": "native-proof",
+      "iteration": 18,
+      "phase": "measured",
+      "headersMs": 426.8,
+      "totalMs": 428.1
+    },
+    {
+      "target": "native-proof",
+      "iteration": 19,
+      "phase": "measured",
+      "headersMs": 211.6,
+      "totalMs": 212.2
+    },
+    {
+      "target": "kino-preview-sept17",
+      "iteration": 19,
+      "phase": "measured",
+      "headersMs": 2613.5,
+      "totalMs": 2614.5
+    },
+    {
+      "target": "kino-preview-sept17",
+      "iteration": 20,
+      "phase": "measured",
+      "headersMs": 2460.7,
+      "totalMs": 2461
+    },
+    {
+      "target": "native-proof",
+      "iteration": 20,
+      "phase": "measured",
+      "headersMs": 203.3,
+      "totalMs": 204.2
+    },
+    {
+      "target": "native-proof",
+      "iteration": 21,
+      "phase": "measured",
+      "headersMs": 194.2,
+      "totalMs": 194.7
+    },
+    {
+      "target": "kino-preview-sept17",
+      "iteration": 21,
+      "phase": "measured",
+      "headersMs": 2428.7,
+      "totalMs": 2429.4
+    },
+    {
+      "target": "kino-preview-sept17",
+      "iteration": 22,
+      "phase": "measured",
+      "headersMs": 2307.2,
+      "totalMs": 2307.8
+    },
+    {
+      "target": "native-proof",
+      "iteration": 22,
+      "phase": "measured",
+      "headersMs": 280.2,
+      "totalMs": 280.8
+    }
+  ],
+  "public": [
+    {
+      "target": "kino-preview-sept17",
+      "iteration": 0,
+      "cache": "fresh browser context",
+      "ttfbMs": 1456.2000000476837,
+      "documentMs": 1460,
+      "domContentLoadedMs": 1742.5,
+      "loadMs": 2005.5,
+      "fcpMs": 1764,
+      "scriptCount": 2,
+      "resourceTransferBytes": 584668
+    },
+    {
+      "target": "native-proof",
+      "iteration": 0,
+      "cache": "fresh browser context",
+      "ttfbMs": 198.60000002384186,
+      "documentMs": 199.39999997615814,
+      "domContentLoadedMs": 209.70000004768372,
+      "loadMs": 330.60000002384186,
+      "fcpMs": 228,
+      "scriptCount": 0,
+      "resourceTransferBytes": 143583
+    },
+    {
+      "target": "native-proof",
+      "iteration": 1,
+      "cache": "fresh browser context",
+      "ttfbMs": 141,
+      "documentMs": 141.29999995231628,
+      "domContentLoadedMs": 148.19999992847443,
+      "loadMs": 277.39999997615814,
+      "fcpMs": 164,
+      "scriptCount": 0,
+      "resourceTransferBytes": 143583
+    },
+    {
+      "target": "kino-preview-sept17",
+      "iteration": 1,
+      "cache": "fresh browser context",
+      "ttfbMs": 1005.5,
+      "documentMs": 1006.6999999284744,
+      "domContentLoadedMs": 1342.5,
+      "loadMs": 1475.1000000238419,
+      "fcpMs": 1392,
+      "scriptCount": 2,
+      "resourceTransferBytes": 584524
+    },
+    {
+      "target": "kino-preview-sept17",
+      "iteration": 2,
+      "cache": "fresh browser context",
+      "ttfbMs": 846,
+      "documentMs": 850.5,
+      "domContentLoadedMs": 982.2999999523163,
+      "loadMs": 1113.6999999284744,
+      "fcpMs": 1004,
+      "scriptCount": 2,
+      "resourceTransferBytes": 584812
+    },
+    {
+      "target": "native-proof",
+      "iteration": 2,
+      "cache": "fresh browser context",
+      "ttfbMs": 214.30000007152557,
+      "documentMs": 214.89999997615814,
+      "domContentLoadedMs": 226.20000004768372,
+      "loadMs": 363.2000000476837,
+      "fcpMs": 236,
+      "scriptCount": 0,
+      "resourceTransferBytes": 143618
+    },
+    {
+      "target": "native-proof",
+      "iteration": 3,
+      "cache": "fresh browser context",
+      "ttfbMs": 198.80000007152557,
+      "documentMs": 200.30000007152557,
+      "domContentLoadedMs": 207,
+      "loadMs": 389.8000000715256,
+      "fcpMs": 216,
+      "scriptCount": 0,
+      "resourceTransferBytes": 143527
+    },
+    {
+      "target": "kino-preview-sept17",
+      "iteration": 3,
+      "cache": "fresh browser context",
+      "ttfbMs": 1157.2000000476837,
+      "documentMs": 1158.8000000715256,
+      "domContentLoadedMs": 1450.3000000715256,
+      "loadMs": 1618.7000000476837,
+      "fcpMs": 1492,
+      "scriptCount": 2,
+      "resourceTransferBytes": 584704
+    },
+    {
+      "target": "kino-preview-sept17",
+      "iteration": 4,
+      "cache": "fresh browser context",
+      "ttfbMs": 758.6999999284744,
+      "documentMs": 759.5,
+      "domContentLoadedMs": 928.3999999761581,
+      "loadMs": 1030.8999999761581,
+      "fcpMs": 968,
+      "scriptCount": 2,
+      "resourceTransferBytes": 584686
+    },
+    {
+      "target": "native-proof",
+      "iteration": 4,
+      "cache": "fresh browser context",
+      "ttfbMs": 165.5,
+      "documentMs": 166.10000002384186,
+      "domContentLoadedMs": 173.29999995231628,
+      "loadMs": 306.10000002384186,
+      "fcpMs": 184,
+      "scriptCount": 0,
+      "resourceTransferBytes": 143583
+    },
+    {
+      "target": "native-proof",
+      "iteration": 5,
+      "cache": "fresh browser context",
+      "ttfbMs": 133.80000007152557,
+      "documentMs": 134,
+      "domContentLoadedMs": 139.40000009536743,
+      "loadMs": 256.8000000715256,
+      "fcpMs": 152,
+      "scriptCount": 0,
+      "resourceTransferBytes": 143528
+    },
+    {
+      "target": "kino-preview-sept17",
+      "iteration": 5,
+      "cache": "fresh browser context",
+      "ttfbMs": 750.2000000476837,
+      "documentMs": 750.5,
+      "domContentLoadedMs": 920.2000000476837,
+      "loadMs": 1224.7999999523163,
+      "fcpMs": 952,
+      "scriptCount": 2,
+      "resourceTransferBytes": 584686
+    },
+    {
+      "target": "kino-preview-sept17",
+      "iteration": 6,
+      "cache": "fresh browser context",
+      "ttfbMs": 855,
+      "documentMs": 858,
+      "domContentLoadedMs": 1048.1000000238419,
+      "loadMs": 1186.7999999523163,
+      "fcpMs": 1068,
+      "scriptCount": 2,
+      "resourceTransferBytes": 584469
+    },
+    {
+      "target": "native-proof",
+      "iteration": 6,
+      "cache": "fresh browser context",
+      "ttfbMs": 143.39999997615814,
+      "documentMs": 143.89999997615814,
+      "domContentLoadedMs": 150.70000004768372,
+      "loadMs": 276.60000002384186,
+      "fcpMs": 164,
+      "scriptCount": 0,
+      "resourceTransferBytes": 143583
+    },
+    {
+      "target": "native-proof",
+      "iteration": 7,
+      "cache": "fresh browser context",
+      "ttfbMs": 151,
+      "documentMs": 151.39999997615814,
+      "domContentLoadedMs": 158,
+      "loadMs": 290.7999999523163,
+      "fcpMs": 172,
+      "scriptCount": 0,
+      "resourceTransferBytes": 143583
+    },
+    {
+      "target": "kino-preview-sept17",
+      "iteration": 7,
+      "cache": "fresh browser context",
+      "ttfbMs": 862.6000000238419,
+      "documentMs": 863.2999999523163,
+      "domContentLoadedMs": 1218,
+      "loadMs": 1342.3999999761581,
+      "fcpMs": 1260,
+      "scriptCount": 2,
+      "resourceTransferBytes": 584854
+    },
+    {
+      "target": "kino-preview-sept17",
+      "iteration": 8,
+      "cache": "fresh browser context",
+      "ttfbMs": 823.3000000715256,
+      "documentMs": 824.5,
+      "domContentLoadedMs": 1017.1000000238419,
+      "loadMs": 1141.8000000715256,
+      "fcpMs": 1048,
+      "scriptCount": 2,
+      "resourceTransferBytes": 584554
+    },
+    {
+      "target": "native-proof",
+      "iteration": 8,
+      "cache": "fresh browser context",
+      "ttfbMs": 149.80000007152557,
+      "documentMs": 150.10000002384186,
+      "domContentLoadedMs": 155.70000004768372,
+      "loadMs": 286.8000000715256,
+      "fcpMs": 168,
+      "scriptCount": 0,
+      "resourceTransferBytes": 143618
+    },
+    {
+      "target": "native-proof",
+      "iteration": 9,
+      "cache": "fresh browser context",
+      "ttfbMs": 163.5,
+      "documentMs": 163.89999997615814,
+      "domContentLoadedMs": 169.29999995231628,
+      "loadMs": 301.39999997615814,
+      "fcpMs": 180,
+      "scriptCount": 0,
+      "resourceTransferBytes": 143618
+    },
+    {
+      "target": "kino-preview-sept17",
+      "iteration": 9,
+      "cache": "fresh browser context",
+      "ttfbMs": 627.6999999284744,
+      "documentMs": 628.5,
+      "domContentLoadedMs": 773.2999999523163,
+      "loadMs": 1103.2999999523163,
+      "fcpMs": 816,
+      "scriptCount": 2,
+      "resourceTransferBytes": 583989
+    }
+  ],
+  "protected": [
+    {
+      "iteration": 0,
+      "cache": "fresh browser context",
+      "ttfbMs": 322.2999999523163,
+      "documentMs": 322.89999997615814,
+      "usefulMs": 516.9,
+      "hoverDwellMs": 700,
+      "hoverClickMs": 22.5,
+      "betaSubscriptionAdds": 1,
+      "browserHttpQueries": 0
+    },
+    {
+      "iteration": 1,
+      "cache": "fresh browser context",
+      "ttfbMs": 462.39999997615814,
+      "documentMs": 463.1999999284744,
+      "usefulMs": 628.8,
+      "hoverDwellMs": 700,
+      "hoverClickMs": 21.3,
+      "betaSubscriptionAdds": 1,
+      "browserHttpQueries": 0
+    },
+    {
+      "iteration": 2,
+      "cache": "fresh browser context",
+      "ttfbMs": 297.2999999523163,
+      "documentMs": 297.89999997615814,
+      "usefulMs": 466.9,
+      "hoverDwellMs": 700,
+      "hoverClickMs": 22.1,
+      "betaSubscriptionAdds": 1,
+      "browserHttpQueries": 0
+    },
+    {
+      "iteration": 3,
+      "cache": "fresh browser context",
+      "ttfbMs": 266.2000000476837,
+      "documentMs": 266.89999997615814,
+      "usefulMs": 423.3,
+      "hoverDwellMs": 700,
+      "hoverClickMs": 26.2,
+      "betaSubscriptionAdds": 1,
+      "browserHttpQueries": 0
+    },
+    {
+      "iteration": 4,
+      "cache": "fresh browser context",
+      "ttfbMs": 270.59999990463257,
+      "documentMs": 271.59999990463257,
+      "usefulMs": 422.5,
+      "hoverDwellMs": 700,
+      "hoverClickMs": 23.7,
+      "betaSubscriptionAdds": 1,
+      "browserHttpQueries": 0
+    },
+    {
+      "iteration": 5,
+      "cache": "fresh browser context",
+      "ttfbMs": 256.1999999284744,
+      "documentMs": 257.10000002384186,
+      "usefulMs": 415.1,
+      "hoverDwellMs": 700,
+      "hoverClickMs": 22.9,
+      "betaSubscriptionAdds": 1,
+      "browserHttpQueries": 0
+    },
+    {
+      "iteration": 6,
+      "cache": "fresh browser context",
+      "ttfbMs": 232.89999997615814,
+      "documentMs": 233.89999997615814,
+      "usefulMs": 402.2,
+      "hoverDwellMs": 700,
+      "hoverClickMs": 21.5,
+      "betaSubscriptionAdds": 1,
+      "browserHttpQueries": 0
+    },
+    {
+      "iteration": 7,
+      "cache": "fresh browser context",
+      "ttfbMs": 361.7000000476837,
+      "documentMs": 362.10000002384186,
+      "usefulMs": 523.8,
+      "hoverDwellMs": 700,
+      "hoverClickMs": 21.5,
+      "betaSubscriptionAdds": 1,
+      "browserHttpQueries": 0
+    },
+    {
+      "iteration": 8,
+      "cache": "fresh browser context",
+      "ttfbMs": 277.2000000476837,
+      "documentMs": 277.8000000715256,
+      "usefulMs": 420.7,
+      "hoverDwellMs": 700,
+      "hoverClickMs": 26.7,
+      "betaSubscriptionAdds": 1,
+      "browserHttpQueries": 0
+    },
+    {
+      "iteration": 9,
+      "cache": "fresh browser context",
+      "ttfbMs": 356.40000009536743,
+      "documentMs": 357.2000000476837,
+      "usefulMs": 527.8,
+      "hoverDwellMs": 700,
+      "hoverClickMs": 18.1,
+      "betaSubscriptionAdds": 1,
+      "browserHttpQueries": 0
+    }
+  ]
+}

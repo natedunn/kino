@@ -1,7 +1,11 @@
+import type { Id } from '../../../../../convex/native/_generated/dataModel';
+
 import { useEffect, useMemo, useState } from 'react';
+import { convexQuery } from '@convex-dev/react-query';
 import { useForm } from '@tanstack/react-form';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { useConvex } from 'convex/react';
 
 import { InlineAlert } from '@/components/inline-alert';
 import { EmptyState } from '@/components/kino/common';
@@ -10,7 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ALLOWED_AVATAR_TYPES, validateAvatarFile } from '@/lib/avatar';
-import { useCRPC } from '@/lib/convex/crpc';
+import { localizeError } from '@/lib/errors';
 import { titleMeta } from '@/lib/seo';
 import { cn } from '@/lib/utils';
 import {
@@ -25,6 +29,7 @@ import * as m from '@/paraglide/messages.js';
 import { SettingsSkeleton } from '../-components/settings-skeleton';
 import { useDelayedFlag } from '../-components/use-delayed-flag';
 import { persistSettingsOrg, useSettingsOrgSlug } from '../-components/use-settings-org';
+import { api as nativeApi } from '../../../../../convex/native/_generated/api';
 
 type GeneralSettingsFormValues = {
 	avatarFile: File | null;
@@ -81,7 +86,7 @@ export const Route = createFileRoute('/org/settings/general/')({
 function GeneralSettingsRoute() {
 	const orgSlug = useSettingsOrgSlug();
 	const navigate = useNavigate();
-	const crpc = useCRPC();
+	const native = useConvex();
 	// Start from the SSR-safe value so the first client render matches the server,
 	// then swap to the live origin after mount to avoid a hydration mismatch.
 	const [originHost, setOriginHost] = useState<string>(
@@ -94,18 +99,22 @@ function GeneralSettingsRoute() {
 		() => `${originHost.replace(/^https?:\/\//, '').replace(/\/$/, '')}/@`,
 		[originHost]
 	);
-	const orgQuery = useQuery(
-		crpc.org.getDetails.queryOptions(
-			{
-				slug: orgSlug ?? '',
-			},
-			{ enabled: !!orgSlug, skipUnauth: true }
-		)
-	);
-	const updateMutation = useMutation(crpc.org.update.mutationOptions());
-	const uploadUrlMutation = useMutation(crpc.org.generateAvatarUploadUrl.mutationOptions());
-	const syncMetadataMutation = useMutation(crpc.org.syncAvatarMetadata.mutationOptions());
+	const nativeOrgQuery = useQuery({
+		...convexQuery(nativeApi.organizations.getBySlug, orgSlug ? { slug: orgSlug } : 'skip'),
+		enabled: !!orgSlug,
+	});
+	const orgQuery = {
+		...nativeOrgQuery,
+		data: nativeOrgQuery.data
+			? { org: nativeOrgQuery.data, permissions: nativeOrgQuery.data.permissions }
+			: null,
+	};
+	const nativeUpdateMutation = useMutation({
+		mutationFn: (args: { currentSlug: string; name: string; updatedSlug?: string }) =>
+			native.mutation(nativeApi.settings.updateOrganization, args),
+	});
 	const [formError, setFormError] = useState<string | null>(null);
+	const [isSavingForm, setIsSaving] = useState(false);
 
 	const org = orgQuery.data?.org;
 	const formDefaultValues = useMemo<GeneralSettingsFormValues>(
@@ -123,6 +132,7 @@ function GeneralSettingsRoute() {
 			const currentOrg = orgQuery.data?.org;
 			if (!currentOrg) return;
 			setFormError(null);
+			setIsSaving(true);
 
 			try {
 				const parsed = orgFormSchema.safeParse({
@@ -136,23 +146,41 @@ function GeneralSettingsRoute() {
 				}
 
 				if (value.avatarFile) {
-					const { key, url } = await uploadUrlMutation.mutateAsync({
-						organizationId: currentOrg.id,
-					});
-					const response = await fetch(url, {
+					const organizationId = currentOrg.id;
+					const { uploadUrl, uploadToken } = await native.mutation(
+						nativeApi.organizationAppearance.generateLogoUploadUrl,
+						{ organizationId }
+					);
+					const response = await fetch(uploadUrl, {
+						method: 'POST',
 						body: value.avatarFile,
 						headers: { 'Content-Type': value.avatarFile.type },
-						method: 'PUT',
 					});
-
-					if (!response.ok) {
-						throw new Error('Organization avatar upload failed');
+					if (!response.ok) throw new Error(m.common_something_went_wrong());
+					const { storageId } = (await response.json()) as { storageId: Id<'_storage'> };
+					try {
+						await native.mutation(nativeApi.organizationAppearance.registerLogoUpload, {
+							organizationId,
+							storageId,
+							uploadToken,
+						});
+						await native.mutation(nativeApi.organizationAppearance.commitLogo, {
+							organizationId,
+							storageId,
+							uploadToken,
+						});
+					} catch (error) {
+						await native
+							.mutation(nativeApi.organizationAppearance.discardLogoUpload, {
+								organizationId,
+								uploadToken,
+							})
+							.catch(() => undefined);
+						throw error;
 					}
-
-					await syncMetadataMutation.mutateAsync({ key });
 				}
 
-				const updatedOrg = await updateMutation.mutateAsync({
+				const updatedOrg = await nativeUpdateMutation.mutateAsync({
 					currentSlug: currentOrg.slug,
 					name: parsed.data.name,
 					updatedSlug: parsed.data.slug || undefined,
@@ -160,8 +188,8 @@ function GeneralSettingsRoute() {
 
 				formApi.reset({
 					avatarFile: null,
-					name: updatedOrg.name ?? value.name,
-					slug: updatedOrg.slug ?? value.slug,
+					name: updatedOrg.name,
+					slug: updatedOrg.slug,
 				});
 
 				if (updatedOrg.slug && updatedOrg.slug !== orgSlug) {
@@ -173,7 +201,9 @@ function GeneralSettingsRoute() {
 					});
 				}
 			} catch (error) {
-				setFormError(error instanceof Error ? error.message : 'Unable to update organization');
+				setFormError(localizeError(error, m.common_something_went_wrong()));
+			} finally {
+				setIsSaving(false);
 			}
 		},
 	});
@@ -184,7 +214,7 @@ function GeneralSettingsRoute() {
 		return showSkeleton ? <SettingsSkeleton /> : null;
 	}
 
-	if (!orgQuery.data?.org || !orgQuery.data.permissions.canEdit) {
+	if (!org || !orgQuery.data?.permissions.canEdit) {
 		return (
 			<EmptyState
 				title={m.org_edit_unavailable()}
@@ -202,10 +232,7 @@ function GeneralSettingsRoute() {
 
 			<form
 				className={cn('mt-6 flex flex-col gap-6', {
-					'pointer-events-none opacity-50':
-						updateMutation.isPending ||
-						uploadUrlMutation.isPending ||
-						syncMetadataMutation.isPending,
+					'pointer-events-none opacity-50': isSavingForm || nativeUpdateMutation.isPending,
 				})}
 				onSubmit={(event) => {
 					event.preventDefault();
@@ -311,11 +338,7 @@ function GeneralSettingsRoute() {
 							})}
 						>
 							{({ isSubmitting, name }) => {
-								const isSaving =
-									isSubmitting ||
-									updateMutation.isPending ||
-									uploadUrlMutation.isPending ||
-									syncMetadataMutation.isPending;
+								const isSaving = isSubmitting || nativeUpdateMutation.isPending;
 								const disabled = !name.trim() || isSaving;
 
 								return (
@@ -334,9 +357,9 @@ function GeneralSettingsRoute() {
 					</div>
 				</div>
 
-				{(formError ?? updateMutation.error) ? (
+				{(formError ?? nativeUpdateMutation.error) ? (
 					<InlineAlert variant='danger'>
-						{m.org_update_failed()}: {formError ?? updateMutation.error?.message}
+						{m.org_update_failed()}: {formError ?? nativeUpdateMutation.error?.message}
 					</InlineAlert>
 				) : null}
 			</form>

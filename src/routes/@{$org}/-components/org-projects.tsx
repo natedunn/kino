@@ -1,19 +1,23 @@
-import type { ApiOutputs } from '@convex/api';
-
 import { Link } from '@tanstack/react-router';
 import { ArrowRight, Globe, Lock } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 
 type OrgProjectsProps = {
-	projects: ApiOutputs['project']['getManyByOrg'];
+	projects: Array<{
+		id: string;
+		name: string;
+		slug: string;
+		visibility: 'public' | 'private' | 'archived';
+		description?: string | null;
+	}>;
 	orgSlug: string;
 };
 
 export const OrgProjects = ({ projects, orgSlug }: OrgProjectsProps) => {
 	return (
 		<div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-			{projects?.map((project) => {
+			{projects.map((project) => {
 				return (
 					<Link
 						key={project.id}

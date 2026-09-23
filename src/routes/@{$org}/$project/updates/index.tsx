@@ -16,8 +16,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import CirclePlusOutline from '@/icons/circle-plus-outline';
 import Missing from '@/icons/missing';
-import { useCRPC } from '@/lib/convex/crpc';
-import { crpcServer } from '@/lib/convex/crpc-server';
+import { updatesServer as crpcServer, useUpdatesAPI as useCRPC } from '@/lib/convex/updates-api';
 import { projectTitle, titleMeta } from '@/lib/seo';
 import * as m from '@/paraglide/messages.js';
 

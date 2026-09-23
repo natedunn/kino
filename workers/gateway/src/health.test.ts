@@ -18,6 +18,7 @@ describe('gateway release identification', () => {
 			ok: true,
 			service: 'kino-gateway',
 			betterAuthVersion: pkg.dependencies['better-auth'],
+			nativeGithub: { protocol: 'opaque-state-v1', storage: false, enabled: false },
 		});
 	});
 });

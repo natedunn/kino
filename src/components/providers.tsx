@@ -1,5 +1,5 @@
 import type { AppEnvironment } from '@/lib/app-env';
-import type { ConvexQueryClient } from 'kitcn/react';
+import type { ConvexQueryClient } from '@convex-dev/react-query';
 import type { ReactNode } from 'react';
 
 import { CommandProvider } from '@/components/command';

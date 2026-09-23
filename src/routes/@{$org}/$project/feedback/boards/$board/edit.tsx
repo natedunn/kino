@@ -12,8 +12,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { iconRegistryOptions } from '@/icons';
 import ChevronLeft from '@/icons/chevron-left';
-import { useCRPC } from '@/lib/convex/crpc';
-import { crpcServer } from '@/lib/convex/crpc-server';
+import { boardsServer as crpcServer, useBoardsAPI as useCRPC } from '@/lib/convex/boards-api';
+import { localizeError } from '@/lib/errors';
 import { projectTitle, titleMeta } from '@/lib/seo';
 import {
 	boardFormSchema,
@@ -22,6 +22,7 @@ import {
 	SLUG_INPUT_PATTERN,
 	validationMessage,
 } from '@/lib/validation';
+import * as m from '@/paraglide/messages.js';
 
 export const Route = createFileRoute('/@{$org}/$project/feedback/boards/$board/edit')({
 	loader: async ({ context, params }) => {
@@ -50,7 +51,12 @@ export const Route = createFileRoute('/@{$org}/$project/feedback/boards/$board/e
 		};
 	},
 	head: ({ loaderData, params }) => ({
-		meta: [titleMeta([loaderData?.title ?? 'Board', projectTitle(params.org, params.project)])],
+		meta: [
+			titleMeta([
+				loaderData?.title ?? m.feedback_board(),
+				projectTitle(params.org, params.project),
+			]),
+		],
 	}),
 	component: EditBoardRoute,
 });
@@ -139,16 +145,14 @@ function EditBoardRoute() {
 	if (!projectQuery.data?.permissions.canManageContent) {
 		return (
 			<EmptyState
-				title='Board editing unavailable'
-				description='Only project admins and assigned moderators can edit feedback boards.'
+				title={m.project_boards_unavailable()}
+				description={m.project_boards_unavailable_description()}
 			/>
 		);
 	}
 
 	if (!boardQuery.data) {
-		return (
-			<EmptyState title='Board not found' description='The selected board could not be loaded.' />
-		);
+		return <EmptyState title={m.board_missing()} description={m.board_missing_help()} />;
 	}
 	return (
 		<div className='container'>
@@ -159,9 +163,9 @@ function EditBoardRoute() {
 					to='/@{$org}/$project/settings/boards'
 				>
 					<ChevronLeft className='size-3' />
-					Back to all boards
+					{m.board_back()}
 				</Link>
-				<h1 className='text-3xl font-bold'>Edit Board</h1>
+				<h1 className='text-3xl font-bold'>{m.board_edit_heading()}</h1>
 				<div>
 					<form
 						className='space-y-5'
@@ -174,10 +178,8 @@ function EditBoardRoute() {
 						<form.Field name='name'>
 							{(field) => (
 								<div className='grid gap-2'>
-									<label className='text-sm font-medium'>Name</label>
-									<p className='text-sm text-muted-foreground'>
-										Name of your public board. Must be unique to your project.
-									</p>
+									<label className='text-sm font-medium'>{m.board_name()}</label>
+									<p className='text-sm text-muted-foreground'>{m.board_name_help()}</p>
 									<Input
 										maxLength={FORM_LIMITS.boardName}
 										onChange={(event) => field.handleChange(event.target.value)}
@@ -189,10 +191,8 @@ function EditBoardRoute() {
 						<form.Field name='icon'>
 							{(field) => (
 								<div className='grid gap-2'>
-									<label className='text-sm font-medium'>Icon</label>
-									<p className='text-sm text-muted-foreground'>
-										Pick the visual marker used anywhere this board appears.
-									</p>
+									<label className='text-sm font-medium'>{m.board_icon()}</label>
+									<p className='text-sm text-muted-foreground'>{m.board_icon_help()}</p>
 									<IconSelector
 										contentClassName='w-96'
 										onValueChange={(value) => field.handleChange(value)}
@@ -205,10 +205,8 @@ function EditBoardRoute() {
 						<form.Field name='slug'>
 							{(field) => (
 								<div className='grid gap-2'>
-									<label className='text-sm font-medium'>Slug</label>
-									<p className='text-sm text-muted-foreground'>
-										Must be unique to your project. Changing this may break old permalinks.
-									</p>
+									<label className='text-sm font-medium'>{m.board_slug()}</label>
+									<p className='text-sm text-muted-foreground'>{m.board_slug_help()}</p>
 									<Input
 										autoCapitalize='none'
 										maxLength={FORM_LIMITS.projectSlug}
@@ -227,11 +225,8 @@ function EditBoardRoute() {
 						<form.Field name='description'>
 							{(field) => (
 								<div className='grid gap-2'>
-									<label className='text-sm font-medium'>Description</label>
-									<p className='text-sm text-muted-foreground'>
-										Describe the purpose for the board so that your users know where to add their
-										feedback.
-									</p>
+									<label className='text-sm font-medium'>{m.board_description()}</label>
+									<p className='text-sm text-muted-foreground'>{m.board_edit_description_help()}</p>
 									<Textarea
 										maxLength={FORM_LIMITS.boardDescription}
 										onChange={(event) => field.handleChange(event.target.value)}
@@ -240,9 +235,9 @@ function EditBoardRoute() {
 								</div>
 							)}
 						</form.Field>
-						{(formError ?? updateMutation.error) ? (
+						{(formError ?? updateMutation.error ?? deleteMutation.error) ? (
 							<InlineAlert variant='danger'>
-								Unable to update board: {formError ?? updateMutation.error?.message}
+								{formError ?? localizeError(updateMutation.error ?? deleteMutation.error)}
 							</InlineAlert>
 						) : null}
 						<div className='flex items-center justify-between gap-4'>
@@ -259,7 +254,9 @@ function EditBoardRoute() {
 
 									return (
 										<Button disabled={disabled} type='submit'>
-											{isSubmitting || updateMutation.isPending ? 'Updating...' : 'Update board'}
+											{isSubmitting || updateMutation.isPending
+												? m.board_updating()
+												: m.board_update()}
 										</Button>
 									);
 								}}
@@ -268,14 +265,11 @@ function EditBoardRoute() {
 								disabled={deleteMutation.isPending}
 								onClick={() => {
 									const project = projectQuery.data?.project;
-									if (!project) return;
-									if (
-										window.confirm(
-											'Delete this board? Feedback items in this board will be removed too.'
-										)
-									) {
+									const board = boardQuery.data;
+									if (!project || !board) return;
+									if (window.confirm(m.board_delete_confirm())) {
 										deleteMutation.mutate({
-											boardId: boardQuery.data.id,
+											boardId: board.id,
 											projectId: project.id,
 										});
 									}
@@ -283,7 +277,7 @@ function EditBoardRoute() {
 								type='button'
 								variant='destructive'
 							>
-								{deleteMutation.isPending ? 'Deleting...' : 'Delete Board'}
+								{deleteMutation.isPending ? m.board_deleting() : m.board_delete()}
 							</Button>
 						</div>
 					</form>

@@ -1,0 +1,16 @@
+{
+	"compilerOptions": {
+		"allowJs": true,
+		"allowImportingTsExtensions": true,
+		"strict": true,
+		"moduleResolution": "Bundler",
+		"skipLibCheck": true,
+		"target": "ESNext",
+		"lib": ["ES2023", "dom"],
+		"module": "ESNext",
+		"noEmit": true,
+		"types": ["node"]
+	},
+	"include": ["./**/*"],
+	"exclude": ["./_generated"]
+}

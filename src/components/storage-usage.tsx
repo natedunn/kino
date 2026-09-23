@@ -4,7 +4,7 @@ import * as m from '@/paraglide/messages.js';
 
 type Breakdown = Record<string, { bytes: number; files: number }>;
 
-const STORAGE_LABELS: Record<string, () => string> = {
+const STORAGE_LABELS: Partial<Record<string, () => string>> = {
 	data: m.storage_label_data,
 	design: m.storage_label_design,
 	document: m.storage_label_document,

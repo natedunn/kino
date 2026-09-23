@@ -1,0 +1,12 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "kino-native-files-proof-c318c09d",
+	"main": "src/index.ts",
+	"compatibility_date": "2026-09-22",
+	"compatibility_flags": ["nodejs_compat"],
+	"workers_dev": true,
+	"routes": [{ "pattern": "native-files-proof.usekino.com", "custom_domain": true }],
+	"observability": { "enabled": true },
+	"vars": { "NATIVE_CONVEX_URL": "https://giant-jaguar-319.convex.cloud" },
+	"r2_buckets": [{ "binding": "ORG_UPLOADS", "bucket_name": "kino-dev-org-uploads" }],
+}

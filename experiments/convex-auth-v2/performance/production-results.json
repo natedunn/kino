@@ -1,0 +1,233 @@
+{
+  "recordedAt": "2026-09-21T17:10:32.696Z",
+  "conditions": "Dedicated Chromium context; actual GitHub OAuth; human/provider time reported separately. Different page workloads. Reloads use warm browser cache, not controlled server cold starts.",
+  "targets": [
+    {
+      "name": "kino-production",
+      "origin": "https://usekino.com",
+      "initiationMs": 1620.1,
+      "callbackToVisibleContentMs": 8679.8,
+      "startToVisibleIncludingHumanMs": 10645.3,
+      "readyCriterion": "Dashboard heading and Your teams visible; does not imply all feed items loaded",
+      "navigationLegs": [
+        {
+          "origin": "https://usekino.com",
+          "path": "/auth",
+          "status": null,
+          "durationMs": 1755.7,
+          "ttfbMs": 1752.9
+        },
+        {
+          "origin": "https://usekino.com",
+          "path": "/auth",
+          "status": null,
+          "durationMs": 1377.5,
+          "ttfbMs": 1376.5
+        },
+        {
+          "origin": "https://gateway.usekino.com",
+          "path": "/api/auth/callback/github",
+          "status": null,
+          "durationMs": 2699,
+          "ttfbMs": 2697
+        },
+        {
+          "origin": "https://usekino.com",
+          "path": "/api/auth/oauth-proxy-callback",
+          "status": null,
+          "durationMs": 3185.1,
+          "ttfbMs": 3183.8
+        },
+        {
+          "origin": "https://usekino.com",
+          "path": "/dashboard",
+          "status": null,
+          "durationMs": 2588.9,
+          "ttfbMs": 2581.6
+        },
+        {
+          "origin": "https://usekino.com",
+          "path": "/dashboard",
+          "status": null,
+          "durationMs": 744.6,
+          "ttfbMs": 744
+        },
+        {
+          "origin": "https://usekino.com",
+          "path": "/dashboard",
+          "status": null,
+          "durationMs": 1505.3,
+          "ttfbMs": 1496.8
+        },
+        {
+          "origin": "https://usekino.com",
+          "path": "/dashboard",
+          "status": null,
+          "durationMs": 946.3,
+          "ttfbMs": 942
+        },
+        {
+          "origin": "https://usekino.com",
+          "path": "/dashboard",
+          "status": null,
+          "durationMs": 878.6,
+          "ttfbMs": 876.6
+        },
+        {
+          "origin": "https://usekino.com",
+          "path": "/dashboard",
+          "status": null,
+          "durationMs": 653.3,
+          "ttfbMs": 652.2
+        }
+      ],
+      "reloads": [
+        {
+          "iteration": 0,
+          "visibleMs": 1013.1,
+          "ssrContainsContent": true,
+          "ttfbMs": 751.3999999761581,
+          "documentMs": 751.8000000715256
+        },
+        {
+          "iteration": 1,
+          "visibleMs": 1619.9,
+          "ssrContainsContent": true,
+          "ttfbMs": 1503.6000000238419,
+          "documentMs": 1510.3999999761581
+        },
+        {
+          "iteration": 2,
+          "visibleMs": 1045,
+          "ssrContainsContent": true,
+          "ttfbMs": 945.2000000476837,
+          "documentMs": 947.5
+        },
+        {
+          "iteration": 3,
+          "visibleMs": 973.6,
+          "ssrContainsContent": true,
+          "ttfbMs": 878,
+          "documentMs": 879.7000000476837
+        },
+        {
+          "iteration": 4,
+          "visibleMs": 742.1,
+          "ssrContainsContent": true,
+          "ttfbMs": 655.5,
+          "documentMs": 656.3000000715256
+        }
+      ]
+    },
+    {
+      "name": "native-proof",
+      "origin": "https://kino-auth-v2-proof-c318c09d.hello-fc8.workers.dev",
+      "initiationMs": 131.2,
+      "callbackToVisibleContentMs": 1024.6,
+      "startToVisibleIncludingHumanMs": 1485.5,
+      "readyCriterion": "Hydrated private counter visible",
+      "navigationLegs": [
+        {
+          "origin": "https://kino-auth-v2-proof-c318c09d.hello-fc8.workers.dev",
+          "path": "/",
+          "status": null,
+          "durationMs": 69.7,
+          "ttfbMs": 68.8
+        },
+        {
+          "origin": "https://kino-v2-gateway-proof-c318c09d.hello-fc8.workers.dev",
+          "path": "/oauth/github/callback",
+          "status": null,
+          "durationMs": 576.5,
+          "ttfbMs": 575.3
+        },
+        {
+          "origin": "https://kino-auth-v2-proof-c318c09d.hello-fc8.workers.dev",
+          "path": "/api/auth/github/callback",
+          "status": null,
+          "durationMs": 160.2,
+          "ttfbMs": 158.2
+        },
+        {
+          "origin": "https://kino-auth-v2-proof-c318c09d.hello-fc8.workers.dev",
+          "path": "/private/alpha",
+          "status": null,
+          "durationMs": 158.2,
+          "ttfbMs": 156
+        },
+        {
+          "origin": "https://kino-auth-v2-proof-c318c09d.hello-fc8.workers.dev",
+          "path": "/private/alpha",
+          "status": null,
+          "durationMs": 406.8,
+          "ttfbMs": 405.8
+        },
+        {
+          "origin": "https://kino-auth-v2-proof-c318c09d.hello-fc8.workers.dev",
+          "path": "/private/alpha",
+          "status": null,
+          "durationMs": 154.9,
+          "ttfbMs": 153.7
+        },
+        {
+          "origin": "https://kino-auth-v2-proof-c318c09d.hello-fc8.workers.dev",
+          "path": "/private/alpha",
+          "status": null,
+          "durationMs": 156.7,
+          "ttfbMs": 155.7
+        },
+        {
+          "origin": "https://kino-auth-v2-proof-c318c09d.hello-fc8.workers.dev",
+          "path": "/private/alpha",
+          "status": null,
+          "durationMs": 191.1,
+          "ttfbMs": 190.1
+        },
+        {
+          "origin": "https://kino-auth-v2-proof-c318c09d.hello-fc8.workers.dev",
+          "path": "/private/alpha",
+          "status": null,
+          "durationMs": 190.5,
+          "ttfbMs": 188.6
+        }
+      ],
+      "reloads": [
+        {
+          "iteration": 0,
+          "visibleMs": 519.1,
+          "ssrContainsContent": true,
+          "ttfbMs": 406.89999997615814,
+          "documentMs": 407.59999990463257
+        },
+        {
+          "iteration": 1,
+          "visibleMs": 277.3,
+          "ssrContainsContent": true,
+          "ttfbMs": 164.89999997615814,
+          "documentMs": 165.69999992847443
+        },
+        {
+          "iteration": 2,
+          "visibleMs": 278.6,
+          "ssrContainsContent": true,
+          "ttfbMs": 164.10000002384186,
+          "documentMs": 164.80000007152557
+        },
+        {
+          "iteration": 3,
+          "visibleMs": 313,
+          "ssrContainsContent": true,
+          "ttfbMs": 201.39999997615814,
+          "documentMs": 202.10000002384186
+        },
+        {
+          "iteration": 4,
+          "visibleMs": 307.1,
+          "ssrContainsContent": true,
+          "ttfbMs": 197,
+          "documentMs": 198.70000004768372
+        }
+      ]
+    }
+  ]
+}

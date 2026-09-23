@@ -7,7 +7,7 @@ import type { ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { useRouterState } from '@tanstack/react-router';
 
-import { authClient } from '@/lib/convex/auth-client';
+import { useAuthSession } from '@/lib/auth/auth-client';
 
 // NOTE: `phc_...` is PostHog's *public* project API key — it's a client-side,
 // write-only token designed to be shipped in the browser bundle (like a GA
@@ -191,13 +191,13 @@ export function captureAppError(error: unknown, properties?: Record<string, unkn
 }
 
 function PostHogIdentitySync({ client }: { client: PostHogClient }) {
-	const session = authClient.useSession();
+	const session = useAuthSession();
 	const identifiedUserId = useRef<string | null>(null);
 
 	useEffect(() => {
 		if (session.isPending) return;
 
-		const user = session.data?.user;
+		const user = session.user;
 
 		if (!user) {
 			if (identifiedUserId.current) {
@@ -214,7 +214,7 @@ function PostHogIdentitySync({ client }: { client: PostHogClient }) {
 			name: user.name,
 		});
 		identifiedUserId.current = user.id;
-	}, [client, session.data?.user, session.isPending]);
+	}, [client, session.isPending, session.user]);
 
 	return null;
 }

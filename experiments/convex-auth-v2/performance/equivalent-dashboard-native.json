@@ -1,0 +1,108 @@
+{
+  "recordedAt": "2026-09-22T23:35:52.720Z",
+  "target": "native",
+  "origin": "https://kino-native-auth-proof-c318c09d.hello-fc8.workers.dev",
+  "conditions": "Same deployed /dashboard component; 10 fresh browser contexts with copied authenticated cookies; en-US Chrome, no throttling; backend and account data differ.",
+  "samples": [
+    {
+      "iteration": 0,
+      "visibleMs": 906.3,
+      "browserHttpQueries": 0,
+      "subscriptionAdds": 2,
+      "ttfbMs": 619.3,
+      "documentMs": 619.7,
+      "fcpMs": 812,
+      "lcpMs": 812
+    },
+    {
+      "iteration": 1,
+      "visibleMs": 671.3,
+      "browserHttpQueries": 0,
+      "subscriptionAdds": 2,
+      "ttfbMs": 397.7,
+      "documentMs": 398.1,
+      "fcpMs": 600,
+      "lcpMs": 600
+    },
+    {
+      "iteration": 2,
+      "visibleMs": 735.4,
+      "browserHttpQueries": 0,
+      "subscriptionAdds": 2,
+      "ttfbMs": 311.2,
+      "documentMs": 311.5,
+      "fcpMs": 480,
+      "lcpMs": 480
+    },
+    {
+      "iteration": 3,
+      "visibleMs": 751.8,
+      "browserHttpQueries": 0,
+      "subscriptionAdds": 2,
+      "ttfbMs": 379.1,
+      "documentMs": 379.6,
+      "fcpMs": 628,
+      "lcpMs": 628
+    },
+    {
+      "iteration": 4,
+      "visibleMs": 667.7,
+      "browserHttpQueries": 0,
+      "subscriptionAdds": 2,
+      "ttfbMs": 388.5,
+      "documentMs": 395.5,
+      "fcpMs": 540,
+      "lcpMs": 540
+    },
+    {
+      "iteration": 5,
+      "visibleMs": 566.2,
+      "browserHttpQueries": 0,
+      "subscriptionAdds": 2,
+      "ttfbMs": 311.5,
+      "documentMs": 314.8,
+      "fcpMs": 424,
+      "lcpMs": 424
+    },
+    {
+      "iteration": 6,
+      "visibleMs": 756.6,
+      "browserHttpQueries": 0,
+      "subscriptionAdds": 2,
+      "ttfbMs": 279.4,
+      "documentMs": 281.4,
+      "fcpMs": 520,
+      "lcpMs": 520
+    },
+    {
+      "iteration": 7,
+      "visibleMs": 587.7,
+      "browserHttpQueries": 0,
+      "subscriptionAdds": 2,
+      "ttfbMs": 274.1,
+      "documentMs": 274.4,
+      "fcpMs": 396,
+      "lcpMs": 396
+    },
+    {
+      "iteration": 8,
+      "visibleMs": 585.3,
+      "browserHttpQueries": 0,
+      "subscriptionAdds": 2,
+      "ttfbMs": 284.7,
+      "documentMs": 285.1,
+      "fcpMs": 404,
+      "lcpMs": 404
+    },
+    {
+      "iteration": 9,
+      "visibleMs": 557.1,
+      "browserHttpQueries": 0,
+      "subscriptionAdds": 2,
+      "ttfbMs": 307.5,
+      "documentMs": 307.9,
+      "fcpMs": 432,
+      "lcpMs": 432
+    }
+  ]
+}

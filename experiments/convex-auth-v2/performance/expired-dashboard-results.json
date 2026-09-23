@@ -1,0 +1,14 @@
+{
+  "recordedAt": "2026-09-22T23:58:12.293Z",
+  "target": "https://kino-native-auth-proof-c318c09d.hello-fc8.workers.dev",
+  "conditions": "Native proof dashboard in a fresh en-US Chrome context with untouched login cookies, first used after waiting beyond the 60-second access-token lifetime. No throttling.",
+  "samples": [
+    {
+      "label": "expired_access",
+      "browserRefreshRequests": 0,
+      "responseSetCookies": 2,
+      "ttfbMs": 650.6,
+      "fcpMs": 840
+    }
+  ]
+}

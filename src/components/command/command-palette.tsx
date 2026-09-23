@@ -13,7 +13,8 @@ import {
 	CommandList,
 	CommandShortcut,
 } from '@/components/ui/command';
-import { useCRPC } from '@/lib/convex/crpc';
+import { useFilesAPI } from '@/lib/convex/files-api';
+import { useUpdatesAPI } from '@/lib/convex/updates-api';
 import * as m from '@/paraglide/messages.js';
 
 const GROUP_ORDER: Array<CommandGroupName> = [
@@ -119,13 +120,14 @@ export function CommandPalette({
 	onRunCommand,
 	open,
 }: CommandPaletteProps) {
-	const crpc = useCRPC();
+	const filesAPI = useFilesAPI();
+	const updatesAPI = useUpdatesAPI();
 	const inputRef = useRef<HTMLInputElement>(null);
 	const [query, setQuery] = useState(initialQuery);
 	const [debouncedQuery, setDebouncedQuery] = useState(initialQuery);
 	const [selectedCommandId, setSelectedCommandId] = useState('');
 	const projectQuery = useQuery({
-		...crpc.project.getDetails.queryOptions({
+		...filesAPI.project.getDetails.queryOptions({
 			orgSlug: projectSearchContext?.orgSlug ?? '',
 			slug: projectSearchContext?.projectSlug ?? '',
 		}),
@@ -133,7 +135,7 @@ export function CommandPalette({
 	});
 	const projectId = projectQuery.data?.project?.id;
 	const filesQuery = useQuery({
-		...crpc.file.listProjectFiles.queryOptions({
+		...filesAPI.file.listProjectFiles.queryOptions({
 			cursor: null,
 			limit: 10,
 			projectId: projectId ?? '',
@@ -143,7 +145,7 @@ export function CommandPalette({
 		enabled: mode === 'files' && !!projectId,
 	});
 	const updatesQuery = useQuery({
-		...crpc.update.searchProject.queryOptions({
+		...updatesAPI.update.searchProject.queryOptions({
 			category: undefined,
 			cursor: null,
 			projectId: projectId ?? '',

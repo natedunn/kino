@@ -1,5 +1,9 @@
+import type { OAuthState } from './native-state-object';
+
 export type GatewayEnv = {
 	TARGETS: KVNamespace;
+	OAUTH_STATES?: DurableObjectNamespace<OAuthState>;
+	NATIVE_GITHUB_ROUTES?: string;
 
 	GATEWAY_ORIGIN: string;
 	TRUSTED_TARGET_PATTERNS: string;

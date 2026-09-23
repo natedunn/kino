@@ -6,13 +6,16 @@
     "dev": "wrangler dev --config wrangler.jsonc --env dev",
     "deploy:preview": "wrangler deploy --config wrangler.jsonc --env dev",
     "deploy:dev": "pnpm run deploy:preview",
+    "deploy:stage:dev": "wrangler deploy src/stage.ts --config wrangler.jsonc --env dev",
+    "deploy:stage:production": "wrangler deploy src/stage.ts --config wrangler.jsonc --env production",
     "deploy:production": "wrangler deploy --config wrangler.jsonc --env production",
     "types": "wrangler types --config wrangler.jsonc --env dev",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
   "dependencies": {
-    "better-auth": "1.7.1"
+    "better-auth": "1.7.1",
+    "jose": "6.2.3"
   },
   "devDependencies": {
     "typescript": "^5.8.0",

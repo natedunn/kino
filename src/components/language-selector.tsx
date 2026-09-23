@@ -11,7 +11,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
-import { useCRPC } from '@/lib/convex/crpc';
+import { useProfileAPI } from '@/lib/convex/profile-api';
 import { cn } from '@/lib/utils';
 import { m } from '@/paraglide/messages.js';
 import { getLocale, setLocale } from '@/paraglide/runtime.js';
@@ -31,7 +31,7 @@ const LABEL_BY_VALUE = Object.fromEntries(
 ) as Record<AppLocale, string>;
 
 export function LanguageSelector({ className }: { className?: string }) {
-	const crpc = useCRPC();
+	const crpc = useProfileAPI();
 	const profileQuery = useQuery(
 		crpc.profile.findMyProfile.queryOptions({}, { skipUnauth: true, subscribe: false })
 	);

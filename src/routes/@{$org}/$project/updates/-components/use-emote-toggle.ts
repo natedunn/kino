@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 
-import { useCRPC } from '@/lib/convex/crpc';
+import { useUpdatesAPI as useCRPC } from '@/lib/convex/updates-api';
 
 type UseEmoteToggleOptions = {
 	updateId: string;
@@ -28,7 +28,9 @@ export function useEmoteToggle({
 	canInteract,
 }: UseEmoteToggleOptions) {
 	const crpc = useCRPC();
-	const toggleEmote = useMutation(crpc.updateEmote.toggle.mutationOptions());
+	const toggleEmote = useMutation(
+		crpc.updateEmote.toggle.mutationOptions({ onError: () => setOptimistic(null) })
+	);
 	const latestServerIsLikedRef = useRef(serverIsLiked);
 	latestServerIsLikedRef.current = serverIsLiked;
 	const latestCanInteractRef = useRef(canInteract);

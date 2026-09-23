@@ -1,0 +1,9 @@
+{
+	"checkedAt": "2026-09-21T22:27:47.507Z",
+	"target": "isolated local backend 4430 + local R2",
+	"deletedAssets": 4,
+	"deletedObjects": 12,
+	"purgedTags": 4,
+	"projectRemoved": true,
+	"otherTenantPreserved": true
+}

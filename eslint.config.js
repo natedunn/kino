@@ -8,13 +8,14 @@ import tseslint from 'typescript-eslint';
 export default [
 	{
 		ignores: [
-			'convex/functions/_generated/**/*.{ts,tsx,js}',
-			'convex/functions/generated/**/*.{ts,tsx,js}',
-			'convex/shared/api.ts',
+			'experiments/**',
+			'integrations/**',
+			'src/paraglide/**',
+			'convex/native/_generated/**/*.{ts,tsx,js}',
 			'**/routeTree.gen.ts',
 		],
 	},
-	// Kitcn / TanStack baseline (kept intact).
+	// TanStack baseline.
 	...tanstackConfig,
 	// Convex-specific lint rules.
 	...convexPlugin.configs.recommended,
@@ -41,14 +42,18 @@ export default [
 	{
 		...tseslint.configs.disableTypeChecked,
 		files: [
-			'**/*.test.ts',
-			'**/*.spec.ts',
+			'**/*.test.{ts,tsx}',
+			'**/*.spec.{ts,tsx}',
 			'**/setup.testing.ts',
 			'**/*.config.{ts,mts,cts,js}',
 			'eslint.config.js',
 		],
 	},
-	// Restored opinionated rules from the pre-Kitcn config.
+	{
+		files: ['convex/{emails,native,shared}/**/*.{ts,tsx}'],
+		ignores: ['**/*.test.{ts,tsx}'],
+		languageOptions: { parserOptions: { project: './convex/native/tsconfig.json' } },
+	},
 	{
 		files: ['**/*.{ts,tsx}'],
 		rules: {

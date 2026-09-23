@@ -147,13 +147,13 @@ function AvatarFallback({
 		: null;
 	const style =
 		fallbackName && orgFallbackStyles
-				? ({
-						backgroundColor: orgFallbackStyles.backgroundColor,
-						color: orgFallbackStyles.color,
-						containerType: 'size',
-						...styleProp,
-					} satisfies React.CSSProperties)
-				: styleProp;
+			? ({
+					backgroundColor: orgFallbackStyles.backgroundColor,
+					color: orgFallbackStyles.color,
+					containerType: 'size',
+					...styleProp,
+				} satisfies React.CSSProperties)
+			: styleProp;
 
 	return (
 		<span

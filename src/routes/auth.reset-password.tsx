@@ -8,7 +8,8 @@ import { InlineAlert } from '@/components/inline-alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { trackAuthError, trackAuthSuccess } from '@/lib/auth-analytics';
-import { authClient } from '@/lib/convex/auth-client';
+import { resetPassword } from '@/lib/auth/auth-client';
+import { useAuthLinkCode } from '@/lib/auth/use-auth-link-code';
 import { titleMeta } from '@/lib/seo';
 import { m } from '@/paraglide/messages.js';
 
@@ -22,7 +23,9 @@ export const Route = createFileRoute('/auth/reset-password')({
 });
 
 function ResetPasswordPage() {
-	const { token, error: tokenError } = Route.useSearch();
+	const { error: tokenError } = Route.useSearch();
+	const nativeCode = useAuthLinkCode(true);
+	const resetToken = nativeCode;
 	const navigate = useNavigate();
 	const [password, setPassword] = useState('');
 	const [confirmPassword, setConfirmPassword] = useState('');
@@ -35,7 +38,7 @@ function ResetPasswordPage() {
 
 	async function onSubmit(e: React.FormEvent) {
 		e.preventDefault();
-		if (!token) return;
+		if (!resetToken) return;
 		if (!passwordsMatch) {
 			setError(m.auth_password_mismatch());
 			return;
@@ -43,9 +46,9 @@ function ResetPasswordPage() {
 		setError(null);
 		setPending(true);
 		try {
-			const res = await authClient.resetPassword({
+			const res = await resetPassword({
 				newPassword: password,
-				token,
+				token: resetToken,
 			});
 			if (res.error) {
 				trackAuthError('password_reset', res.error);
@@ -63,7 +66,9 @@ function ResetPasswordPage() {
 		}
 	}
 
-	if (!token || tokenError) {
+	if (nativeCode === undefined) return null;
+
+	if (!resetToken || tokenError) {
 		return (
 			<>
 				<AuthHeader
@@ -95,7 +100,7 @@ function ResetPasswordPage() {
 							size='lg'
 							autoComplete='new-password'
 							id='password'
-							minLength={8}
+							minLength={10}
 							onChange={(e) => setPassword(e.target.value)}
 							required
 							type='password'
@@ -108,7 +113,7 @@ function ResetPasswordPage() {
 							aria-invalid={showPasswordMismatch}
 							autoComplete='new-password'
 							id='confirm-password'
-							minLength={8}
+							minLength={10}
 							onChange={(e) => setConfirmPassword(e.target.value)}
 							required
 							type='password'

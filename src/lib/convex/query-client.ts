@@ -1,7 +1,7 @@
 import type { DefaultOptions } from '@tanstack/react-query';
 import type { Value } from 'convex/values';
-import type { AuthStore } from 'kitcn/react';
 
+import { ConvexQueryClient } from '@convex-dev/react-query';
 import {
 	defaultShouldDehydrateQuery,
 	hashKey,
@@ -10,17 +10,9 @@ import {
 	QueryClient,
 } from '@tanstack/react-query';
 import { convexToJson } from 'convex/values';
-import { isCRPCClientError, isCRPCError } from 'kitcn/crpc';
-import {
-	ConvexReactClient,
-	getConvexQueryClientSingleton,
-	getQueryClientSingleton,
-} from 'kitcn/react';
 import SuperJSON from 'superjson';
 
 import { captureAppError } from '@/lib/posthog';
-
-export const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL);
 
 export const hydrationConfig: Pick<DefaultOptions, 'dehydrate' | 'hydrate'> = {
 	dehydrate: {
@@ -93,23 +85,13 @@ function safeOperationName(operationKey: ReadonlyArray<unknown> | undefined) {
 }
 
 function captureTanStackError(error: unknown, properties: Record<string, unknown>) {
-	const crpcProperties = isCRPCClientError(error)
-		? {
-				crpcCode: error.code,
-				crpcFunctionName: error.functionName,
-				source: 'crpc',
-			}
-		: {
-				source: 'tanstack-query',
-			};
-
 	captureAppError(error, {
-		...crpcProperties,
+		source: 'tanstack-query',
 		...properties,
 	});
 }
 
-export function createQueryClient() {
+export function createQueryClient(convexQueryClient?: ConvexQueryClient) {
 	return new QueryClient({
 		mutationCache: new MutationCache({
 			onError: (error, _variables, _context, mutation) => {
@@ -130,39 +112,43 @@ export function createQueryClient() {
 		defaultOptions: {
 			...hydrationConfig,
 			queries: {
+				...(convexQueryClient ? { queryFn: convexQueryClient.queryFn() } : {}),
 				// Convex subscriptions keep cached data live, so aggressive garbage
 				// collection only forces a re-suspension (skeleton) when navigating
 				// back after idling past the default 5-minute gcTime.
 				gcTime: 30 * 60 * 1000,
 				queryKeyHashFn: convexQueryKeyHashFn,
-				retry: (failureCount, error) => {
-					if (isCRPCError(error)) return false;
-					return failureCount < 3;
-				},
+				retry: (failureCount) => failureCount < 3,
 			},
 		},
 	});
 }
 
+let browserQueryClient: QueryClient | undefined;
+const convexClients = new WeakMap<QueryClient, ConvexQueryClient>();
+
 export function getAppQueryClient() {
-	return getQueryClientSingleton(createQueryClient);
+	if (typeof window === 'undefined') return createQueryClient();
+	return (browserQueryClient ??= createQueryClient());
 }
 
-export function getAppConvexQueryClient(queryClient: QueryClient, authStore?: AuthStore) {
-	const convexQueryClient = getConvexQueryClientSingleton({
-		authStore,
-		convex,
-		queryClient,
-	});
+export function getAppConvexQueryClient(queryClient: QueryClient) {
+	const existing = convexClients.get(queryClient);
+	if (existing) return existing;
+
+	const convexQueryClient = new ConvexQueryClient(import.meta.env.VITE_CONVEX_URL);
 
 	const options = queryClient.getDefaultOptions();
 	queryClient.setDefaultOptions({
 		...options,
 		queries: {
 			...options.queries,
+			queryFn: convexQueryClient.queryFn(),
 			queryKeyHashFn: convexQueryKeyHashFn,
 		},
 	});
+	convexQueryClient.connect(queryClient);
+	convexClients.set(queryClient, convexQueryClient);
 
 	return convexQueryClient;
 }

@@ -12,10 +12,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { iconRegistryOptions } from '@/icons';
-import { useCRPC } from '@/lib/convex/crpc';
-import { crpcServer } from '@/lib/convex/crpc-server';
+import { boardsServer as crpcServer, useBoardsAPI as useCRPC } from '@/lib/convex/boards-api';
+import { localizeError } from '@/lib/errors';
 import { projectTitle, titleMeta } from '@/lib/seo';
 import { boardFormSchema, FORM_LIMITS, validationMessage } from '@/lib/validation';
+import * as m from '@/paraglide/messages.js';
 
 export const Route = createFileRoute('/@{$org}/$project/feedback/boards/new')({
 	loader: async ({ context, params }) => {
@@ -33,7 +34,13 @@ export const Route = createFileRoute('/@{$org}/$project/feedback/boards/new')({
 		}
 	},
 	head: ({ params }) => ({
-		meta: [titleMeta(['New Board', 'Feedback', projectTitle(params.org, params.project)])],
+		meta: [
+			titleMeta([
+				m.board_new_title(),
+				m.project_nav_feedback(),
+				projectTitle(params.org, params.project),
+			]),
+		],
 	}),
 	component: NewBoardRoute,
 });
@@ -95,8 +102,8 @@ function NewBoardRoute() {
 	if (!projectQuery.data?.project || !projectQuery.data.permissions.canManageContent) {
 		return (
 			<EmptyState
-				title='Board creation unavailable'
-				description='Only project admins and assigned moderators can create feedback boards.'
+				title={m.project_boards_unavailable()}
+				description={m.project_boards_unavailable_description()}
 			/>
 		);
 	}
@@ -105,7 +112,7 @@ function NewBoardRoute() {
 		<div className='container'>
 			<div className='py-6'>
 				<h1 className='text-3xl font-bold'>
-					Create a new board for project {projectQuery.data.project.name}
+					{m.board_new_heading({ name: projectQuery.data.project.name })}
 				</h1>
 				<div className='mt-4'>
 					<form
@@ -119,10 +126,8 @@ function NewBoardRoute() {
 						<form.Field name='name'>
 							{(field) => (
 								<div className='grid gap-2'>
-									<label className='text-sm font-medium'>Name</label>
-									<p className='text-sm text-muted-foreground'>
-										Name of your public board. Must be unique to your project.
-									</p>
+									<label className='text-sm font-medium'>{m.board_name()}</label>
+									<p className='text-sm text-muted-foreground'>{m.board_name_help()}</p>
 									<Input
 										maxLength={FORM_LIMITS.boardName}
 										onChange={(event) => field.handleChange(event.target.value)}
@@ -134,10 +139,8 @@ function NewBoardRoute() {
 						<form.Field name='icon'>
 							{(field) => (
 								<div className='grid gap-2'>
-									<label className='text-sm font-medium'>Icon</label>
-									<p className='text-sm text-muted-foreground'>
-										Pick the visual marker used anywhere this board appears.
-									</p>
+									<label className='text-sm font-medium'>{m.board_icon()}</label>
+									<p className='text-sm text-muted-foreground'>{m.board_icon_help()}</p>
 									<IconSelector
 										contentClassName='w-96'
 										onValueChange={(value) => field.handleChange(value)}
@@ -150,10 +153,8 @@ function NewBoardRoute() {
 						<form.Field name='description'>
 							{(field) => (
 								<div className='grid gap-2'>
-									<label className='text-sm font-medium'>Description</label>
-									<p className='text-sm text-muted-foreground'>
-										Describe what feedback should belong in this board.
-									</p>
+									<label className='text-sm font-medium'>{m.board_description()}</label>
+									<p className='text-sm text-muted-foreground'>{m.board_description_help()}</p>
 									<Textarea
 										maxLength={FORM_LIMITS.boardDescription}
 										onChange={(event) => field.handleChange(event.target.value)}
@@ -171,7 +172,7 @@ function NewBoardRoute() {
 						</form.Subscribe>
 						{(formError ?? createMutation.error) ? (
 							<InlineAlert variant='danger'>
-								Unable to create board: {formError ?? createMutation.error?.message}
+								{formError ?? localizeError(createMutation.error)}
 							</InlineAlert>
 						) : null}
 						<div className='flex items-center gap-3'>
@@ -188,7 +189,9 @@ function NewBoardRoute() {
 
 									return (
 										<Button disabled={disabled} type='submit'>
-											{isSubmitting || createMutation.isPending ? 'Creating...' : 'Create'}
+											{isSubmitting || createMutation.isPending
+												? m.board_creating()
+												: m.board_create()}
 										</Button>
 									);
 								}}

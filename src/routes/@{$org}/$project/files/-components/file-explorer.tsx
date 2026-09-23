@@ -1,6 +1,6 @@
 'use client';
 
-import type { ApiOutputs } from '@convex/api';
+import type { ProjectFile } from '@/lib/convex/files-api';
 
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 
 import { MoveFileDialog } from '@/components/files/move-file-dialog';
+import { NativeFileThumbnail } from '@/components/files/native-file-thumbnail';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -28,7 +29,7 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useCRPC, useCRPCClient } from '@/lib/convex/crpc';
+import { useFilesAPI, useFilesClient } from '@/lib/convex/files-api';
 import { localizeError } from '@/lib/errors';
 import { capturePostHogEvent } from '@/lib/posthog';
 import { toast } from '@/lib/toast';
@@ -36,8 +37,6 @@ import * as m from '@/paraglide/messages.js';
 import { getLocale } from '@/paraglide/runtime.js';
 
 import { useFilesWorkspace } from './files-workspace-context';
-
-type ProjectFile = ApiOutputs['file']['listProjectFiles']['page'][number];
 
 export type FileExplorerSearch = {
 	cursor?: string;
@@ -61,8 +60,8 @@ export function FileExplorer({
 	search: FileExplorerSearch;
 }) {
 	const { canManage, folders, manageFolder, projectId } = useFilesWorkspace();
-	const crpc = useCRPC();
-	const crpcClient = useCRPCClient();
+	const crpc = useFilesAPI();
+	const crpcClient = useFilesClient();
 	const navigate = useNavigate();
 	const currentFolder = folderId ? folders.find((folder) => folder.id === folderId) : null;
 	const childFolders = folders.filter(
@@ -272,7 +271,7 @@ function FileRow({
 	onDownload: () => void;
 	params: { org: string; project: string };
 }) {
-	const crpc = useCRPC();
+	const crpc = useFilesAPI();
 	const removeMutation = useMutation(crpc.file.removeAsset.mutationOptions());
 	const [moveOpen, setMoveOpen] = useState(false);
 	const [thumbnailFailed, setThumbnailFailed] = useState(false);
@@ -302,7 +301,9 @@ function FileRow({
 						to='/@{$org}/$project/files/file/$fileId'
 					>
 						<span className='flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-lg border bg-muted/45'>
-							{file.thumbnailUrl && !thumbnailFailed ? (
+							{file.hasThumbnail ? (
+								<NativeFileThumbnail assetId={file.id} publicUrl={file.thumbnailUrl} />
+							) : file.thumbnailUrl && !thumbnailFailed ? (
 								<img
 									alt=''
 									className='size-full object-cover'
@@ -398,7 +399,7 @@ function categoryLabel(value: string) {
 		text: m.storage_label_text,
 		video: m.storage_label_video,
 	};
-	return labels[value]?.() ?? value;
+	return Object.hasOwn(labels, value) ? labels[value]() : value;
 }
 
 export function formatBytes(bytes: number) {

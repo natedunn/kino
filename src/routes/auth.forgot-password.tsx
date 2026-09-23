@@ -8,7 +8,7 @@ import { InlineAlert } from '@/components/inline-alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { trackAuthError, trackAuthSuccess } from '@/lib/auth-analytics';
-import { authClient } from '@/lib/convex/auth-client';
+import { requestPasswordReset } from '@/lib/auth/auth-client';
 import { titleMeta } from '@/lib/seo';
 import { m } from '@/paraglide/messages.js';
 
@@ -28,7 +28,7 @@ function ForgotPasswordPage() {
 		setError(null);
 		setPending(true);
 		try {
-			const res = await authClient.requestPasswordReset({
+			const res = await requestPasswordReset({
 				email,
 				redirectTo: new URL('/auth/reset-password', window.location.origin).toString(),
 			});

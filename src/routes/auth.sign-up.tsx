@@ -8,7 +8,7 @@ import { InlineAlert } from '@/components/inline-alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { trackAuthError, trackAuthSuccess } from '@/lib/auth-analytics';
-import { authClient } from '@/lib/convex/auth-client';
+import { signUpWithPassword } from '@/lib/auth/auth-client';
 import { titleMeta } from '@/lib/seo';
 import { m } from '@/paraglide/messages.js';
 
@@ -50,7 +50,7 @@ function SignUpPage() {
 		setError(null);
 		setPending(true);
 		try {
-			const res = await authClient.signUp.email({
+			const res = await signUpWithPassword({
 				name,
 				email,
 				password,
@@ -146,7 +146,7 @@ function SignUpPage() {
 						size='lg'
 						autoComplete='new-password'
 						id='password'
-						minLength={8}
+						minLength={10}
 						onChange={(e) => setPassword(e.target.value)}
 						required
 						type='password'
@@ -159,7 +159,7 @@ function SignUpPage() {
 						aria-invalid={showPasswordMismatch}
 						autoComplete='new-password'
 						id='confirm-password'
-						minLength={8}
+						minLength={10}
 						onChange={(e) => setConfirmPassword(e.target.value)}
 						required
 						type='password'

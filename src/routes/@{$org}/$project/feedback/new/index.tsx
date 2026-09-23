@@ -1,9 +1,12 @@
 import type { MarkdownEditorRef } from '@/components/editor/markdown-editor';
+import type { Id } from '../../../../../../convex/native/_generated/dataModel';
 
 import { useRef, useState } from 'react';
+import { convexQuery } from '@convex-dev/react-query';
 import { useForm } from '@tanstack/react-form';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { useMutation as useConvexMutation } from 'convex/react';
 
 import { BoardIcon } from '@/components/board-icon';
 import { LazyMarkdownEditor } from '@/components/editor/markdown-editor.lazy';
@@ -19,12 +22,14 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
+import { useAuthSession } from '@/lib/auth/auth-client';
 import { requireAuth } from '@/lib/auth/require-auth';
-import { authClient } from '@/lib/convex/auth-client';
-import { useCRPC } from '@/lib/convex/crpc';
+import { localizeError } from '@/lib/errors';
 import { projectTitle, titleMeta } from '@/lib/seo';
 import { cn } from '@/lib/utils';
 import { feedbackFormSchema, FORM_LIMITS, validationMessage } from '@/lib/validation';
+
+import { api as nativeApi } from '../../../../../../convex/native/_generated/api';
 
 export const Route = createFileRoute('/@{$org}/$project/feedback/new/')({
 	head: ({ params }) => ({
@@ -40,48 +45,56 @@ export const Route = createFileRoute('/@{$org}/$project/feedback/new/')({
 });
 
 function NewFeedbackRoute() {
+	return <NativeNewFeedbackRoute />;
+}
+
+function NativeNewFeedbackRoute() {
 	const params = Route.useParams();
-	const navigate = useNavigate();
-	const crpc = useCRPC();
-	const session = authClient.useSession();
-	const [formError, setFormError] = useState<string | null>(null);
-	const editorRef = useRef<MarkdownEditorRef>(null);
-
+	const session = useAuthSession();
 	const projectQuery = useQuery(
-		crpc.project.getDetails.queryOptions({
-			orgSlug: params.org,
-			slug: params.project,
+		convexQuery(nativeApi.projects.getBySlugs, {
+			organizationSlug: params.org,
+			projectSlug: params.project,
 		})
 	);
-	const boardsQuery = useQuery(
-		crpc.feedbackBoard.listProjectBoards.queryOptions(
-			{
-				projectId: projectQuery.data?.project?.id,
-			},
-			{ enabled: !!projectQuery.data?.project?.id }
-		)
-	);
-	const createMutation = useMutation(
-		crpc.feedback.create.mutationOptions({
-			onSuccess: (data) => {
-				editorRef.current?.clearLocalDraft();
-				navigate({
-					params: { ...params, slug: data.slug },
-					to: '/@{$org}/$project/feedback/$slug',
-				});
-			},
-		})
-	);
+	const projectId = projectQuery.data?.project?.id;
 
+	if (session.isPending) return null;
+	if (!session.user)
+		return (
+			<EmptyState
+				title='Sign in to create feedback'
+				description='Sign in, then come back here to post feedback.'
+			/>
+		);
+	if (projectQuery.isPending) return null;
+	if (!projectId || !projectQuery.data.permissions.canView)
+		return (
+			<EmptyState
+				title='Project not available'
+				description='The selected project cannot be loaded for feedback creation.'
+			/>
+		);
+	return <NativeNewFeedbackForm params={params} projectId={projectId} />;
+}
+
+function NativeNewFeedbackForm({
+	params,
+	projectId,
+}: {
+	params: { org: string; project: string };
+	projectId: Id<'projects'>;
+}) {
+	const navigate = useNavigate();
+	const [formError, setFormError] = useState<string | null>(null);
+	const [creating, setCreating] = useState(false);
+	const editorRef = useRef<MarkdownEditorRef>(null);
+	const boardsQuery = useQuery(convexQuery(nativeApi.feedbackBoards.list, { projectId }));
+	const createFeedback = useConvexMutation(nativeApi.feedback.create);
 	const form = useForm({
-		defaultValues: {
-			boardId: '',
-			firstComment: '',
-			title: '',
-		},
+		defaultValues: { boardId: '', firstComment: '', title: '' },
 		onSubmit: async ({ value }) => {
-			const project = projectQuery.data?.project;
-			if (!project) return;
+			if (!projectId) return;
 			setFormError(null);
 			const parsed = feedbackFormSchema.safeParse({
 				firstComment: sanitizeEditorContent(value.firstComment),
@@ -91,52 +104,42 @@ function NewFeedbackRoute() {
 				setFormError(validationMessage(parsed.error));
 				return;
 			}
-
-			await createMutation.mutateAsync({
-				boardId: value.boardId,
-				firstComment: parsed.data.firstComment,
-				projectId: project.id,
-				title: parsed.data.title,
-			});
+			setCreating(true);
+			try {
+				const result = await createFeedback({
+					boardId: value.boardId as Id<'feedbackBoards'>,
+					firstComment: parsed.data.firstComment,
+					projectId,
+					title: parsed.data.title,
+				});
+				editorRef.current?.clearLocalDraft();
+				await navigate({
+					params: { ...params, slug: result.slug },
+					to: '/@{$org}/$project/feedback/$slug',
+				});
+			} catch (error) {
+				setFormError(localizeError(error));
+			} finally {
+				setCreating(false);
+			}
 		},
 	});
-
-	const boards = boardsQuery.data ?? [];
-
-	if (!session.data?.user) {
-		return (
-			<EmptyState
-				title='Sign in to create feedback'
-				description='This route is wired to an authenticated mutation. Open the auth page first, then come back here to post feedback.'
-			/>
-		);
-	}
-
-	if (!projectQuery.data?.project || !projectQuery.data.permissions.canView) {
-		return (
-			<EmptyState
-				title='Project not available'
-				description='The selected project cannot be loaded for feedback creation.'
-			/>
-		);
-	}
+	const boards = (boardsQuery.data ?? []) as Array<{
+		id: string;
+		icon: string | null;
+		name: string;
+	}>;
 
 	return (
 		<div>
 			<div className='border-b bg-muted/50'>
 				<div className='container pt-12 pb-6'>
-					<div className='flex items-center justify-between'>
-						<div className='flex items-center gap-3'>
-							<h1 className='text-2xl font-bold md:text-3xl'>Add Feedback</h1>
-						</div>
-					</div>
+					<h1 className='text-2xl font-bold md:text-3xl'>Add Feedback</h1>
 				</div>
 			</div>
 			<div className='container py-6'>
 				<form
-					className={cn('flex flex-col gap-6', {
-						'pointer-events-none opacity-50': createMutation.isPending,
-					})}
+					className={cn('flex flex-col gap-6', { 'pointer-events-none opacity-50': creating })}
 					onSubmit={(event) => {
 						event.preventDefault();
 						event.stopPropagation();
@@ -144,44 +147,36 @@ function NewFeedbackRoute() {
 					}}
 				>
 					<form.Field name='boardId'>
-						{(field) => {
-							const boardItems = boards.map((board) => ({
-								label: board.name,
-								value: board.id,
-							}));
-
-							return (
-								<div className='flex flex-col gap-2'>
-									<label className='text-sm font-medium'>Board</label>
-									<Select
-										disabled={createMutation.isPending}
-										items={boardItems}
-										onValueChange={(value) => field.handleChange(value ?? '')}
-										value={field.state.value}
-									>
-										<SelectTrigger className='w-48'>
-											<SelectValue placeholder='Select Board' />
-										</SelectTrigger>
-										<SelectContent>
-											{boards.map((board) => (
-												<SelectItem key={board.id} value={board.id}>
-													<BoardIcon icon={board.icon} name={board.name} size='14px' />
-													{board.name}
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
-								</div>
-							);
-						}}
+						{(field) => (
+							<div className='flex flex-col gap-2'>
+								<label className='text-sm font-medium'>Board</label>
+								<Select
+									disabled={creating}
+									items={boards.map((item) => ({ label: item.name, value: item.id }))}
+									onValueChange={(value) => field.handleChange(value ?? '')}
+									value={field.state.value}
+								>
+									<SelectTrigger className='w-48'>
+										<SelectValue placeholder='Select Board' />
+									</SelectTrigger>
+									<SelectContent>
+										{boards.map((item) => (
+											<SelectItem key={item.id} value={item.id}>
+												<BoardIcon icon={item.icon} name={item.name} size='14px' />
+												{item.name}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+							</div>
+						)}
 					</form.Field>
-
 					<form.Field name='title'>
 						{(field) => (
 							<div className='flex flex-col gap-2'>
 								<label className='text-sm font-medium'>Title</label>
 								<Input
-									disabled={createMutation.isPending}
+									disabled={creating}
 									maxLength={FORM_LIMITS.feedbackTitle}
 									onChange={(event) => field.handleChange(event.target.value)}
 									value={field.state.value}
@@ -189,14 +184,13 @@ function NewFeedbackRoute() {
 							</div>
 						)}
 					</form.Field>
-
 					<form.Field name='firstComment'>
 						{(field) => (
 							<div className='flex flex-col gap-2'>
 								<label className='text-sm font-medium'>Content</label>
 								<LazyMarkdownEditor
 									ariaLabel='Feedback description'
-									disabled={createMutation.isPending}
+									disabled={creating}
 									localDraftKey='feedback-new-description'
 									minHeight='120px'
 									onChange={(html) => field.handleChange(html)}
@@ -208,44 +202,12 @@ function NewFeedbackRoute() {
 							</div>
 						)}
 					</form.Field>
-
-					{(formError ?? createMutation.error) ? (
-						<InlineAlert variant='danger'>
-							Unable to create feedback: {formError ?? createMutation.error?.message}
-						</InlineAlert>
+					{formError ? (
+						<InlineAlert variant='danger'>Unable to create feedback: {formError}</InlineAlert>
 					) : null}
-
-					<div className='flex items-center gap-3'>
-						<form.Subscribe
-							selector={(state) => ({
-								boardId: state.values.boardId,
-								firstComment: state.values.firstComment,
-								isSubmitting: state.isSubmitting,
-								title: state.values.title,
-							})}
-						>
-							{({ boardId, firstComment, isSubmitting, title }) => {
-								const visuallyDisabled =
-									!boardId ||
-									!title.trim() ||
-									!sanitizeEditorContent(firstComment) ||
-									isSubmitting ||
-									createMutation.isPending;
-
-								return (
-									<Button
-										className={cn({
-											'opacity-50 grayscale select-none': visuallyDisabled,
-										})}
-										disabled={createMutation.isPending}
-										type='submit'
-									>
-										{isSubmitting || createMutation.isPending ? 'Creating...' : 'Create'}
-									</Button>
-								);
-							}}
-						</form.Subscribe>
-					</div>
+					<Button disabled={creating} type='submit'>
+						{creating ? 'Creating...' : 'Create'}
+					</Button>
 				</form>
 			</div>
 		</div>

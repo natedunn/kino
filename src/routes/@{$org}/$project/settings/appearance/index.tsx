@@ -28,8 +28,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
-import { useCRPC } from '@/lib/convex/crpc';
-import { crpcServer } from '@/lib/convex/crpc-server';
+import { appearanceServer, useAppearanceAPI } from '@/lib/convex/appearance-api';
 import { capturePostHogEvent } from '@/lib/posthog';
 import { useProjectThemePreview } from '@/lib/project-theme';
 import { titleMeta } from '@/lib/seo';
@@ -41,11 +40,11 @@ export const Route = createFileRoute('/@{$org}/$project/settings/appearance/')({
 	head: () => ({ meta: [titleMeta([m.meta_appearance(), m.meta_project_settings()])] }),
 	loader: async ({ context, params }) => {
 		const details = await context.queryClient.ensureQueryData(
-			crpcServer.project.getDetails.queryOptions({ orgSlug: params.org, slug: params.project })
+				appearanceServer.project.getDetails.queryOptions({ orgSlug: params.org, slug: params.project })
 		);
 		if (details?.project) {
 			await context.queryClient.ensureQueryData(
-				crpcServer.projectTheme.getEditorState.queryOptions({ projectId: details.project.id })
+					appearanceServer.projectTheme.getEditorState.queryOptions({ projectId: details.project.id })
 			);
 		}
 	},
@@ -107,15 +106,15 @@ function ThemeSwatch({
 
 function ProjectAppearanceRoute() {
 	const params = Route.useParams();
-	const crpc = useCRPC();
+	const appearance = useAppearanceAPI();
 	const details = useQuery(
-		crpc.project.getDetails.queryOptions({ orgSlug: params.org, slug: params.project })
+		appearance.project.getDetails.queryOptions({ orgSlug: params.org, slug: params.project })
 	);
 	const projectId = details.data?.project?.id ?? '';
 	const editor = useQuery(
-		crpc.projectTheme.getEditorState.queryOptions({ projectId }, { enabled: !!projectId })
+		appearance.projectTheme.getEditorState.queryOptions({ projectId }, { enabled: !!projectId })
 	);
-	const publishMutation = useMutation(crpc.projectTheme.publish.mutationOptions());
+	const publishMutation = useMutation(appearance.projectTheme.publish.mutationOptions());
 	const setProjectThemePreview = useProjectThemePreview();
 
 	const [theme, setTheme] = useState<ProjectThemeInput | null>(null);

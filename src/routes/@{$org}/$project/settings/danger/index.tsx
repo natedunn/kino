@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 
 import { InlineAlert } from '@/components/inline-alert';
@@ -16,8 +16,7 @@ import {
 	DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { useCRPC } from '@/lib/convex/crpc';
-import { crpcServer } from '@/lib/convex/crpc-server';
+import { nativeFilesReads, useFilesAPI } from '@/lib/convex/files-api';
 import { localizeError } from '@/lib/errors';
 import { titleMeta } from '@/lib/seo';
 import * as m from '@/paraglide/messages.js';
@@ -28,7 +27,7 @@ export const Route = createFileRoute('/@{$org}/$project/settings/danger/')({
 	}),
 	loader: async ({ context, params }) => {
 		await context.queryClient.ensureQueryData(
-			crpcServer.project.getDetails.queryOptions({
+			nativeFilesReads.project.getDetails.queryOptions({
 				orgSlug: params.org,
 				slug: params.project,
 			})
@@ -40,8 +39,7 @@ export const Route = createFileRoute('/@{$org}/$project/settings/danger/')({
 function ProjectDangerSettingsRoute() {
 	const params = Route.useParams();
 	const navigate = useNavigate();
-	const crpc = useCRPC();
-	const queryClient = useQueryClient();
+	const crpc = useFilesAPI();
 
 	const detailsQuery = useQuery(
 		crpc.project.getDetails.queryOptions({
@@ -54,14 +52,6 @@ function ProjectDangerSettingsRoute() {
 
 	const project = detailsQuery.data?.project;
 	const canDelete = detailsQuery.data?.permissions.canDelete ?? false;
-
-	const invalidateDetails = () =>
-		queryClient.invalidateQueries({
-			queryKey: crpc.project.getDetails.queryKey({
-				orgSlug: params.org,
-				slug: params.project,
-			}),
-		});
 
 	if (detailsQuery.isLoading) {
 		return (
@@ -91,7 +81,6 @@ function ProjectDangerSettingsRoute() {
 			<DangerZone
 				onDelete={async () => {
 					await removeMutation.mutateAsync({ id: project.id });
-					await invalidateDetails();
 					await navigate({ params: { org: params.org }, to: '/@{$org}' });
 				}}
 				projectName={project.name}

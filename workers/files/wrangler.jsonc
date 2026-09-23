@@ -9,6 +9,7 @@
 		"head_sampling_rate": 1,
 	},
 	"workers_dev": false,
+	"vars": { "NATIVE_CONVEX_URL": "" },
 
 	// The root binding exists for local Wrangler development. Always specify
 	// --env preview or --env production when deploying this Worker.
@@ -16,11 +17,13 @@
 
 	"env": {
 		"preview": {
+			"vars": { "NATIVE_CONVEX_URL": "" },
 			"name": "kino-files-preview",
 			"routes": [{ "pattern": "files-preview.usekino.com", "custom_domain": true }],
 			"r2_buckets": [{ "binding": "ORG_UPLOADS", "bucket_name": "kino-dev-org-uploads" }],
 		},
 		"production": {
+			"vars": { "NATIVE_CONVEX_URL": "" },
 			"name": "kino-files",
 			"routes": [{ "pattern": "files.usekino.com", "custom_domain": true }],
 			"r2_buckets": [{ "binding": "ORG_UPLOADS", "bucket_name": "kino-prod-org-uploads" }],

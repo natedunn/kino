@@ -1,9 +1,10 @@
-import { useQuery } from '@tanstack/react-query';
+import { convexQuery } from '@convex-dev/react-query';
+import { useSuspenseQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 
-import { useCRPC } from '@/lib/convex/crpc';
 import { projectTitle, titleMeta } from '@/lib/seo';
 
+import { api as nativeApi } from '../../../../convex/native/_generated/api';
 import { OverviewActivity } from './-components/overview-activity';
 import { OverviewHeader } from './-components/overview-header';
 import { OverviewRecentUpdates } from './-components/overview-recent-updates';
@@ -18,23 +19,46 @@ export const Route = createFileRoute('/@{$org}/$project/')({
 });
 
 function ProjectIndexRoute() {
+	return <NativeProjectIndexRoute />;
+}
+
+function NativeProjectIndexRoute() {
 	const params = Route.useParams();
-	const crpc = useCRPC();
-
-	// The parent `$project` route loader already ensured this query, so it reads
-	// warm from cache with no loading flash. Only the header binds to this real
-	// data — every dashboard section below is a static draft (mock data).
-	const projectQuery = useQuery(
-		crpc.project.getDetails.queryOptions(
-			{ orgSlug: params.org, slug: params.project },
-			{ subscribe: false }
-		)
+	const { data } = useSuspenseQuery(
+		convexQuery(nativeApi.projects.getBySlugs, {
+			organizationSlug: params.org,
+			projectSlug: params.project,
+		})
 	);
+	return (
+		<ProjectOverview
+			project={data?.project}
+			params={params}
+			canEditSettings={data?.permissions.canEditSettings ?? false}
+			canManageAccess={data?.permissions.canManageAccess ?? false}
+		/>
+	);
+}
 
-	const project = projectQuery.data?.project;
-	const canEditSettings = projectQuery.data?.permissions.canEditSettings ?? false;
-	const canManageAccess = projectQuery.data?.permissions.canManageAccess ?? false;
-
+function ProjectOverview({
+	project,
+	params,
+	canEditSettings,
+	canManageAccess,
+}: {
+	project?: {
+		name: string;
+		description?: string | null;
+		visibility: 'public' | 'private' | 'archived';
+		logoUrl?: string | null;
+		urls?: Array<{ url: string; text: string }> | null;
+		updatedTime?: number | null;
+		createdAt?: number;
+	} | null;
+	params: { org: string; project: string };
+	canEditSettings: boolean;
+	canManageAccess: boolean;
+}) {
 	return (
 		<div className='container flex flex-1 flex-col'>
 			{/* Header + KPIs span the full width above the feed. */}

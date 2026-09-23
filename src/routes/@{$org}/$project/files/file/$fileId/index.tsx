@@ -1,6 +1,4 @@
-'use client';
-
-import type { ApiOutputs } from '@convex/api';
+import type { FileDetail } from '@/lib/convex/files-api';
 import type { FormEvent } from 'react';
 
 import { useState } from 'react';
@@ -21,8 +19,8 @@ import {
 	ResponsiveDialogFooter,
 	ResponsiveDialogHeader,
 } from '@/components/ui/responsive-dialog';
-import { useCRPC, useCRPCClient } from '@/lib/convex/crpc';
-import { crpcServer } from '@/lib/convex/crpc-server';
+import { useFileDelivery, useFilesAPI, useFilesClient } from '@/lib/convex/files-api';
+import { preloadNativeFiles } from '@/lib/convex/native-files';
 import { localizeError } from '@/lib/errors';
 import { capturePostHogEvent } from '@/lib/posthog';
 import { toast } from '@/lib/toast';
@@ -33,6 +31,8 @@ import { getLocale } from '@/paraglide/runtime.js';
 import { formatBytes } from '../../-components/file-explorer';
 import { fileCategoryIcon, FilePreviewBody } from '../../-components/file-preview-body';
 import { useFilesWorkspace } from '../../-components/files-workspace-context';
+
+('use client');
 
 type FileViewSearch = {
 	tab?: 'details' | 'preview';
@@ -46,19 +46,7 @@ function validateFileViewSearch(search: Record<string, unknown>): FileViewSearch
 
 export const Route = createFileRoute('/@{$org}/$project/files/file/$fileId/')({
 	component: FileWorkspacePreview,
-	loader: async ({ context, params }) => {
-		const projectData = await context.queryClient.ensureQueryData(
-			crpcServer.project.getDetails.queryOptions({ orgSlug: params.org, slug: params.project })
-		);
-		if (!projectData?.project) throw notFound();
-		const file = await context.queryClient.ensureQueryData(
-			crpcServer.file.getFileDetail.queryOptions({
-				assetId: params.fileId,
-				projectId: projectData.project.id,
-			})
-		);
-		if (!file) throw notFound();
-	},
+	loader: ({ context, params }) => preloadNativeFiles(context.queryClient, params),
 	validateSearch: validateFileViewSearch,
 });
 
@@ -67,17 +55,18 @@ function FileWorkspacePreview() {
 	const search = Route.useSearch();
 	const navigate = useNavigate({ from: Route.fullPath });
 	const { folders, projectId } = useFilesWorkspace();
-	const crpc = useCRPC();
-	const crpcClient = useCRPCClient();
+	const crpc = useFilesAPI();
+	const crpcClient = useFilesClient();
 	const [moveOpen, setMoveOpen] = useState(false);
 	const [renameOpen, setRenameOpen] = useState(false);
 	const [draftName, setDraftName] = useState('');
 	const [renameError, setRenameError] = useState('');
 	const renameMutation = useMutation(crpc.file.renameAsset.mutationOptions());
 	const removeMutation = useMutation(crpc.file.removeAsset.mutationOptions());
-	const { data: file } = useSuspenseQuery(
+	const { data: fileData } = useSuspenseQuery(
 		crpc.file.getFileDetail.queryOptions({ assetId: params.fileId, projectId })
 	);
+	const file = useFileDelivery(fileData);
 	if (!file) throw notFound();
 	const HeaderIcon = fileCategoryIcon(file.category);
 	const tab = search.tab ?? 'preview';
@@ -285,7 +274,7 @@ function FileDetails({
 	params,
 	removePending,
 }: {
-	file: NonNullable<ApiOutputs['file']['getFileDetail']>;
+	file: FileDetail;
 	onDelete: () => Promise<void>;
 	params: { fileId: string; org: string; project: string };
 	removePending: boolean;
@@ -420,7 +409,7 @@ function formatLabel(value: string) {
 		wiki_attachment: m.storage_label_wiki_attachment,
 		youtube: m.files_label_youtube,
 	};
-	if (labels[value]) return labels[value]();
+	if (Object.hasOwn(labels, value)) return labels[value]();
 	return value
 		.split('_')
 		.map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)

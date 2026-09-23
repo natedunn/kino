@@ -1,0 +1,12 @@
+{
+  "recordedAt": "2026-09-21T04:59:04.671Z",
+  "environment": "local HTTPS workerd + single-target gateway + actual GitHub OAuth",
+  "checks": [
+    "Secure HttpOnly cookies",
+    "no browser token storage",
+    "private SSR",
+    "reload retains identity",
+    "logout clears cookies",
+    "repeat login preserves user ID"
+  ]
+}

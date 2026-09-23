@@ -5,6 +5,7 @@ export const APP_ERROR_CODES = [
 	'ORGANIZATION_NOT_FOUND',
 	'PROJECT_NOT_FOUND',
 	'PROJECT_ARCHIVED',
+	'PROJECT_PUBLIC_REQUIRES_PUBLIC_ORGANIZATION',
 	'PERMISSION_DENIED',
 	'PROJECT_ARCHIVE_ADMIN_ONLY',
 	'ORGANIZATION_LIMIT_REACHED',
@@ -28,7 +29,7 @@ export type AppErrorCode = (typeof APP_ERROR_CODES)[number];
 export type AppErrorValues = Record<string, string | number>;
 
 export function isAppErrorCode(value: unknown): value is AppErrorCode {
-	return typeof value === 'string' && (APP_ERROR_CODES as readonly string[]).includes(value);
+	return typeof value === 'string' && (APP_ERROR_CODES as ReadonlyArray<string>).includes(value);
 }
 
 export function parseAppErrorValues(value: unknown): AppErrorValues {

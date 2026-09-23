@@ -1,0 +1,102 @@
+{
+  "startedAt": "2026-09-21T17:19:42.140Z",
+  "method": "Same production OAuth client, callback, scope and PKCE; isolated fresh browser context for each state variant. Callback intercepted before gateway; diagnostic variants cannot create app sessions.",
+  "cases": [
+    {
+      "variant": "original",
+      "stateLength": 1906,
+      "authorizationUrlLength": 2200,
+      "responses": [
+        {
+          "method": "GET",
+          "path": "/login/oauth/authorize",
+          "status": 302,
+          "requestId": "5A0A:75290:4145A6:557569:6AB16733"
+        },
+        {
+          "method": "GET",
+          "path": "/login",
+          "status": 200,
+          "requestId": "5A0A:75290:414621:5575E7:6AB16733"
+        },
+        {
+          "method": "POST",
+          "path": "/session",
+          "status": 500,
+          "requestId": "5A0A:75290:419529:55DAD1:6AB16734"
+        }
+      ],
+      "outcome": "github-server-error"
+    },
+    {
+      "variant": "short-random",
+      "stateLength": 48,
+      "authorizationUrlLength": 342,
+      "responses": [
+        {
+          "method": "GET",
+          "path": "/login/oauth/authorize",
+          "status": 302,
+          "requestId": "5A81:388C3F:3FD310:55D7FA:6AB16748"
+        },
+        {
+          "method": "GET",
+          "path": "/login",
+          "status": 200,
+          "requestId": "5A81:388C3F:3FD366:55D874:6AB16748"
+        },
+        {
+          "method": "POST",
+          "path": "/session",
+          "status": 302,
+          "requestId": "5A81:388C3F:3FEEF8:55FD67:6AB16749"
+        },
+        {
+          "method": "GET",
+          "path": "/sessions/two-factor/mobile",
+          "status": 200,
+          "requestId": "5A81:388C3F:3FF299:56025E:6AB16750"
+        },
+        {
+          "method": "GET",
+          "path": "/sessions/two-factor/mobile",
+          "status": 302,
+          "requestId": "5A81:388C3F:401A82:56385A:6AB1675A"
+        },
+        {
+          "method": "GET",
+          "path": "/login/oauth/authorize",
+          "status": 200,
+          "requestId": "5A81:388C3F:401ACE:5638DF:6AB1675A"
+        }
+      ],
+      "outcome": "github-returned-to-callback"
+    },
+    {
+      "variant": "same-length-random",
+      "stateLength": 1906,
+      "authorizationUrlLength": 2200,
+      "responses": [
+        {
+          "method": "GET",
+          "path": "/login/oauth/authorize",
+          "status": 302,
+          "requestId": "5ABC:1DABB8:3EC860:535903:6AB1675C"
+        },
+        {
+          "method": "GET",
+          "path": "/login",
+          "status": 200,
+          "requestId": "5ABC:1DABB8:3EC8C1:53598D:6AB1675C"
+        },
+        {
+          "method": "POST",
+          "path": "/session",
+          "status": 500,
+          "requestId": "5ABC:1DABB8:3EF8C5:5398AA:6AB1675D"
+        }
+      ],
+      "outcome": "github-server-error"
+    }
+  ]
+}

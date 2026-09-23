@@ -1,0 +1,12 @@
+{
+  "recordedAt": "2026-09-21T18:56:35.565Z",
+  "environment": "two deployed Cloudflare apps and Convex previews, one gateway, actual GitHub OAuth; native callbacks synchronized with browser routing barriers",
+  "results": [
+    "both previews initiate outstanding flows through the same callback URL",
+    "both real GitHub callbacks traverse the gateway concurrently to their own apps",
+    "unconsumed completion tickets cannot cross preview backends",
+    "same GitHub account maps to independent backend users, host-only cookies, private SSR and reload",
+    "cross-backend access JWTs and consumed gateway callbacks are rejected",
+    "data mutations and logout in alpha leave beta data and session intact"
+  ]
+}

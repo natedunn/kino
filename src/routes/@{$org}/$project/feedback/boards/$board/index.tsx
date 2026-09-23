@@ -2,8 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 
 import { EmptyState } from '@/components/kino/common';
-import { useCRPC } from '@/lib/convex/crpc';
-import { crpcServer } from '@/lib/convex/crpc-server';
+import { boardsServer as crpcServer, useBoardsAPI as useCRPC } from '@/lib/convex/boards-api';
 import { projectTitle, titleMeta } from '@/lib/seo';
 
 export const Route = createFileRoute('/@{$org}/$project/feedback/boards/$board/')({

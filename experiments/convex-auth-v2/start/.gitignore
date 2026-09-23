@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.output/
+.tanstack/
+.env*
+
+.certs/
+.wrangler/
+dist-cloudflare/
+
+dist-cloudflare-beta/

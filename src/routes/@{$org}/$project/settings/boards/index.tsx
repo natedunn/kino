@@ -7,8 +7,7 @@ import { EmptyState } from '@/components/kino/common';
 import { Button, buttonVariants } from '@/components/ui/button';
 import Eye from '@/icons/eye';
 import Pen from '@/icons/pen';
-import { useCRPC } from '@/lib/convex/crpc';
-import { crpcServer } from '@/lib/convex/crpc-server';
+import { boardsServer as crpcServer, useBoardsAPI as useCRPC } from '@/lib/convex/boards-api';
 import { titleMeta } from '@/lib/seo';
 import * as m from '@/paraglide/messages.js';
 

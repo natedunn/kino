@@ -54,4 +54,10 @@ describe('localizeError', () => {
 			'Safe fallback'
 		);
 	});
+
+	it('localizes native Convex string error codes', () => {
+		expect(localizeError({ data: 'FORBIDDEN' })).toBe(m.server_error_permission_denied());
+		expect(localizeError({ data: 'FEEDBACK_NOT_FOUND' })).toBe(m.server_error_not_found());
+		expect(localizeError({ data: 'INVALID_COMMENT' })).toBe(m.server_error_invalid_request());
+	});
 });

@@ -1,0 +1,6 @@
+{
+  "name": "kino-github-v2-live-proof",
+  "private": true,
+  "type": "module",
+  "dependencies": { "convex": "1.46.0" }
+}

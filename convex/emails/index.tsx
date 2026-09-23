@@ -4,10 +4,8 @@ import { getEmailCopy } from './i18n';
 import { EmailButton, EmailFallbackLink, EmailHeading, EmailLayout, EmailText } from './layout';
 
 /**
- * React Email templates for Better Auth transactional mail. Each component takes
- * the props the matching Better Auth callback provides (mapped in
- * convex/functions/auth.ts) and is rendered to HTML + sent via Bento by
- * convex/emails/send.ts.
+ * React Email templates for native Convex Auth transactional mail. Native
+ * actions render these components to HTML and send them through Bento.
  */
 
 type EmailUser = { name?: string | null; email: string };
@@ -61,10 +59,11 @@ export function OrganizationInvitationEmail({
 	siteUrl,
 }: OrganizationInvitationEmailProps) {
 	const copy = getEmailCopy(locale);
-	const inviterName = inviter.user.name || inviter.user.email || copy.invitation.someone;
-	const role = copy.roles[invitation.role as keyof typeof copy.roles] ?? invitation.role;
-	// Better Auth's acceptInvitation is keyed by the invitation id; the frontend
-	// route reads it from the URL.
+	const inviterName = inviter.user.name || inviter.user.email;
+	const roles: Partial<Record<string, string>> = copy.roles;
+	const role = roles[invitation.role] ?? invitation.role;
+	// Invitation acceptance is keyed by the invitation id; the frontend route
+	// reads it from the URL.
 	const acceptUrl = `${siteUrl.replace(/\/$/, '')}/auth/accept-invitation?invitationId=${invitation.id}`;
 	return (
 		<EmailLayout locale={locale} preview={copy.invitation.preview(organization.name)}>

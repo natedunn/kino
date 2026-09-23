@@ -1,11 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 
-import { useCRPC } from '@/lib/convex/crpc';
+import { useProfileAPI } from '@/lib/convex/profile-api';
 
 import { MainNav } from './main-nav';
 
 export function PublicMainNav() {
-	const crpc = useCRPC();
+	const crpc = useProfileAPI();
 	const currentViewerQuery = useQuery(
 		crpc.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
 	);

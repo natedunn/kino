@@ -1,4 +1,3 @@
-import type { API } from '@/lib/api';
 import type { ComponentType } from 'react';
 
 import { useMutation } from '@tanstack/react-query';
@@ -34,7 +33,7 @@ export function UserDropdown({
 	user,
 }: {
 	orgSlug?: string;
-	user: NonNullable<API['profile']['findMyProfile']>;
+	user: { username: string; imageUrl?: string | null };
 }) {
 	const navigate = useNavigate();
 	const shortcuts = useShortcuts();
@@ -45,7 +44,7 @@ export function UserDropdown({
 			<DropdownMenuTrigger asChild>
 				<NavButton className='h-8 w-8 rounded-full px-0 min-[460px]:w-auto min-[460px]:min-w-28 min-[460px]:rounded-md min-[460px]:px-2.5'>
 					<Avatar className='size-6 border' fallbackName={user.username}>
-						<AvatarImage alt={user.username} src={user.imageUrl} />
+						<AvatarImage alt={user.username} src={user.imageUrl ?? undefined} />
 						<AvatarFallback />
 					</Avatar>
 					<span className='hidden text-sm font-medium sm:inline'>{user.username}</span>

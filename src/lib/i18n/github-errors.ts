@@ -1,7 +1,7 @@
 import { extractErrorMessage } from '@/lib/errors';
 import * as m from '@/paraglide/messages.js';
 
-const GITHUB_ERROR_MESSAGES: Record<string, () => string> = {
+const GITHUB_ERROR_MESSAGES: Partial<Record<string, () => string>> = {
 	'Feedback not found': m.github_error_feedback_not_found,
 	'GitHub connection state expired': m.github_error_state_expired,
 	'GitHub connection state is invalid': m.github_error_state_invalid,

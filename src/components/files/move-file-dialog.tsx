@@ -16,7 +16,7 @@ import {
 	ResponsiveDialogFooter,
 	ResponsiveDialogHeader,
 } from '@/components/ui/responsive-dialog';
-import { useCRPC } from '@/lib/convex/crpc';
+import { useFilesAPI } from '@/lib/convex/files-api';
 import { localizeError } from '@/lib/errors';
 import { toast } from '@/lib/toast';
 import * as m from '@/paraglide/messages.js';
@@ -33,7 +33,7 @@ type MoveFileDialogProps = {
 };
 
 export function MoveFileDialog({ file, folders, onOpenChange, open }: MoveFileDialogProps) {
-	const crpc = useCRPC();
+	const crpc = useFilesAPI();
 	const moveMutation = useMutation(crpc.file.moveAsset.mutationOptions());
 	const currentFolderId = file.folderId ?? null;
 	const [destinationFolderId, setDestinationFolderId] = useState<string | null>(currentFolderId);

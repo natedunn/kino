@@ -1,0 +1,412 @@
+--- a/src/components/core/schema.ts
++++ b/src/components/core/schema.ts
+@@ -2,6 +2,11 @@
+ import { v } from "convex/values";
+ 
+ export default defineSchema({
++  // Keep this record after revocation: deleting it could revive generation-zero sessions.
++  sessionGenerations: defineTable({
++    userId: v.string(),
++    generation: v.number(),
++  }).index("by_user", ["userId"]),
+   // Maps a provider-scoped identity to an opaque app user id. The app owns the
+   // actual users table; we only store the id string it gives us back.
+   accounts: defineTable({
+@@ -15,6 +20,8 @@
+   // One row per active session, holding only the *current* refresh token's
+   // SHA-256 hash. The raw refresh token is never stored.
+   sessions: defineTable({
++    // Absent on existing sessions; interpreted as generation zero.
++    generation: v.optional(v.number()),
+     userId: v.string(),
+     accountId: v.id("accounts"),
+     refreshTokenHash: v.string(),
+--- a/src/components/core/public.ts
++++ b/src/components/core/public.ts
+@@ -218,6 +218,30 @@
+   });
+ }
+ 
++/** Component API: the host must authorize the operation (e.g. consume a reset proof).
++ * Not re-exported as a public application mutation accepting arbitrary user IDs.
++ * Revocation is O(1); expired-generation records are retained for separate cleanup.
++ */
++export const revokeUserSessions = mutation({
++  args: { userId: v.string() },
++  returns: v.null(),
++  handler: async (ctx, { userId }) => {
++    const state = await ctx.db.query("sessionGenerations")
++      .withIndex("by_user", q => q.eq("userId", userId)).unique();
++    if (state === null) {
++      await ctx.db.insert("sessionGenerations", { userId, generation: 1 });
++    } else {
++      await ctx.db.patch("sessionGenerations", state._id, { generation: state.generation + 1 });
++    }
++    return null;
++  },
++});
++
++async function currentGeneration(ctx: QueryCtx, userId: string): Promise<number> {
++  return (await ctx.db.query("sessionGenerations")
++    .withIndex("by_user", q => q.eq("userId", userId)).unique())?.generation ?? 0;
++}
++
+ async function issueSession(
+   ctx: MutationCtx,
+   accountId: Id<"accounts">,
+@@ -229,6 +253,7 @@
+   const refreshTokenHash = await sha256Hex(refreshToken);
+   const refreshTokenExpiresAt = Date.now() + ttl.refreshTokenTtlSeconds * 1000;
+   await ctx.db.insert("sessions", {
++    generation: await currentGeneration(ctx, userId),
+     userId,
+     accountId,
+     refreshTokenHash,
+@@ -655,6 +680,12 @@
+       ({ session, isValid } = await sessionBySpentHash(ctx, hash));
+     }
+     if (session === null) return { kind: "noSession" };
++    // Check both current-token and grace-window/spent-token paths before minting.
++    // The shared generation read makes issuance/refresh conflict with revocation
++    // under Convex's serializable transactions. Rotation never upgrades generation.
++    if ((session.generation ?? 0) !== await currentGeneration(ctx, session.userId)) {
++      return { kind: "noSession" };
++    }
+     if (!isValid) {
+       // Past its refresh-token lifetime or a spent token past the grace
+       // window: delete the session and grant no more tokens.
+--- a/src/oauth/component/convex.config.ts
++++ b/src/oauth/component/convex.config.ts
+@@ -29,6 +29,7 @@
+   env: {
+     CLIENT_ID: v.string(),
+     CLIENT_SECRET: v.string(),
++    CALLBACK_URL: v.optional(v.string()),
+   },
+ });
+ 
+--- a/src/oauth/shared/dbHelpers.ts
++++ b/src/oauth/shared/dbHelpers.ts
+@@ -72,7 +72,12 @@
+         "functions (get-convex/convex-backend@64c163a, July 2026).",
+     );
+   }
+-  const callbackUrl = `${siteUrl}${CALLBACK_PATH}`;
++  const callbackUrl = process.env.CALLBACK_URL ?? `${siteUrl}${CALLBACK_PATH}`;
++  const parsed = new URL(callbackUrl);
++  const loopback = parsed.hostname === "127.0.0.1" || parsed.hostname === "localhost";
++  if ((parsed.protocol !== "https:" && !(parsed.protocol === "http:" && loopback)) || parsed.username || parsed.password || parsed.search || parsed.hash) {
++    throw new Error("CALLBACK_URL must be HTTPS (or HTTP loopback), without credentials, query, or fragment");
++  }
+   await ctx.db.insert("authorizationRequests", {
+     ...fields,
+     callbackUrl,
+diff --git a/dist/components/core/public.d.ts b/dist/components/core/public.d.ts
+index 5a4fb3c..ec9a1fb 100644
+--- a/dist/components/core/public.d.ts
++++ b/dist/components/core/public.d.ts
+@@ -1,5 +1,12 @@
+ export declare const REFRESH_GRACE_MS: number;
+ export declare const SPENT_TOKEN_HORIZON_MS: number;
++/** Component API: the host must authorize the operation (e.g. consume a reset proof).
++ * Not re-exported as a public application mutation accepting arbitrary user IDs.
++ * Revocation is O(1); expired-generation records are retained for separate cleanup.
++ */
++export declare const revokeUserSessions: import("convex/server").RegisteredMutation<"public", {
++    userId: string;
++}, Promise<null>>;
+ /**
+  * Performs an app-integrated new user sign-up.
+  *
+@@ -22,22 +29,22 @@ export declare const SPENT_TOKEN_HORIZON_MS: number;
+  * return-visit path.
+  */
+ export declare const signUp: import("convex/server").RegisteredMutation<"public", {
++    onSignInHandle?: string | undefined;
+     accessTokenTtlSeconds?: number | undefined;
+     refreshTokenTtlSeconds?: number | undefined;
+-    onSignInHandle?: string | undefined;
+-    issuer: string;
+     claims: {
+-        providerName: string;
+         providerAccountId: string;
++        providerName: string;
+         profile: any;
+     };
+     createUserHandle: string;
++    issuer: string;
+ }, Promise<{
++    userId: string;
++    refreshTokenExpiresAt: number;
+     accessToken: string;
+     accessTokenExpiresAt: number;
+     refreshToken: string;
+-    refreshTokenExpiresAt: number;
+-    userId: string;
+ }>>;
+ /**
+  * Performs an app-integrated user sign-in.
+@@ -56,21 +63,21 @@ export declare const signUp: import("convex/server").RegisteredMutation<"public"
+  * Throws when the identity has no account.
+  */
+ export declare const signIn: import("convex/server").RegisteredMutation<"public", {
++    onSignInHandle?: string | undefined;
+     accessTokenTtlSeconds?: number | undefined;
+     refreshTokenTtlSeconds?: number | undefined;
+-    onSignInHandle?: string | undefined;
+-    issuer: string;
+     claims: {
+-        providerName: string;
+         providerAccountId: string;
++        providerName: string;
+         profile: any;
+     };
++    issuer: string;
+ }, Promise<{
++    userId: string;
++    refreshTokenExpiresAt: number;
+     accessToken: string;
+     accessTokenExpiresAt: number;
+     refreshToken: string;
+-    refreshTokenExpiresAt: number;
+-    userId: string;
+ }>>;
+ /**
+  * Create the account and the app user for a provider's verified identity
+@@ -87,8 +94,8 @@ export declare const signIn: import("convex/server").RegisteredMutation<"public"
+  */
+ export declare const signUpWithoutSession: import("convex/server").RegisteredMutation<"public", {
+     claims: {
+-        providerName: string;
+         providerAccountId: string;
++        providerName: string;
+         profile: any;
+     };
+     createUserHandle: string;
+@@ -108,8 +115,8 @@ export declare const signUpWithoutSession: import("convex/server").RegisteredMut
+  * provider's own public API decides what, if anything, to reveal.
+  */
+ export declare const getUserIdByAccount: import("convex/server").RegisteredQuery<"public", {
+-    providerAccountId: string;
+     provider: string;
++    providerAccountId: string;
+ }, Promise<string | null>>;
+ /**
+  * Exchange a refresh token for a fresh access token, rotating when the
+@@ -148,18 +155,18 @@ export declare const refresh: import("convex/server").RegisteredMutation<"public
+     issuer: string;
+ }, Promise<{
+     tokens: {
++        userId: string;
++        refreshTokenExpiresAt: number;
+         accessToken: string;
+         accessTokenExpiresAt: number;
+         refreshToken: string;
+-        refreshTokenExpiresAt: number;
+-        userId: string;
+     };
+     kind: "rotated";
+ } | {
++    userId: string;
++    refreshTokenExpiresAt: number;
+     accessToken: string;
+     accessTokenExpiresAt: number;
+-    refreshTokenExpiresAt: number;
+-    userId: string;
+     kind: "reused";
+ } | {
+     kind: "noSession";
+diff --git a/dist/components/core/public.js b/dist/components/core/public.js
+index e444cef..fd0d16d 100644
+--- a/dist/components/core/public.js
++++ b/dist/components/core/public.js
+@@ -138,11 +138,35 @@ async function mintAccessToken(userId, issuer, ttlSeconds) {
+         expiresInSeconds: ttlSeconds,
+     });
+ }
++/** Component API: the host must authorize the operation (e.g. consume a reset proof).
++ * Not re-exported as a public application mutation accepting arbitrary user IDs.
++ * Revocation is O(1); expired-generation records are retained for separate cleanup.
++ */
++export const revokeUserSessions = mutation({
++    args: { userId: v.string() },
++    returns: v.null(),
++    handler: async (ctx, { userId }) => {
++        const state = await ctx.db.query("sessionGenerations")
++            .withIndex("by_user", q => q.eq("userId", userId)).unique();
++        if (state === null) {
++            await ctx.db.insert("sessionGenerations", { userId, generation: 1 });
++        }
++        else {
++            await ctx.db.patch("sessionGenerations", state._id, { generation: state.generation + 1 });
++        }
++        return null;
++    },
++});
++async function currentGeneration(ctx, userId) {
++    return (await ctx.db.query("sessionGenerations")
++        .withIndex("by_user", q => q.eq("userId", userId)).unique())?.generation ?? 0;
++}
+ async function issueSession(ctx, accountId, userId, issuer, ttl) {
+     const refreshToken = generateRefreshToken();
+     const refreshTokenHash = await sha256Hex(refreshToken);
+     const refreshTokenExpiresAt = Date.now() + ttl.refreshTokenTtlSeconds * 1000;
+     await ctx.db.insert("sessions", {
++        generation: await currentGeneration(ctx, userId),
+         userId,
+         accountId,
+         refreshTokenHash,
+@@ -481,6 +505,12 @@ export const refresh = mutation({
+         }
+         if (session === null)
+             return { kind: "noSession" };
++        // Check both current-token and grace-window/spent-token paths before minting.
++        // The shared generation read makes issuance/refresh conflict with revocation
++        // under Convex's serializable transactions. Rotation never upgrades generation.
++        if ((session.generation ?? 0) !== await currentGeneration(ctx, session.userId)) {
++            return { kind: "noSession" };
++        }
+         if (!isValid) {
+             // Past its refresh-token lifetime or a spent token past the grace
+             // window: delete the session and grant no more tokens.
+diff --git a/dist/components/core/schema.d.ts b/dist/components/core/schema.d.ts
+index 94263cd..172cb5a 100644
+--- a/dist/components/core/schema.d.ts
++++ b/dist/components/core/schema.d.ts
+@@ -1,29 +1,40 @@
+ declare const _default: import("convex/server").SchemaDefinition<{
++    sessionGenerations: import("convex/server").TableDefinition<import("convex/values").VObject<{
++        userId: string;
++        generation: number;
++    }, {
++        userId: import("convex/values").VString<string, "required">;
++        generation: import("convex/values").VFloat64<number, "required">;
++    }, "required", "userId" | "generation">, {
++        by_user: ["userId", "_creationTime"];
++    }, {}, {}>;
+     accounts: import("convex/server").TableDefinition<import("convex/values").VObject<{
+         userId: string;
+-        providerAccountId: string;
+         provider: string;
++        providerAccountId: string;
+     }, {
+         provider: import("convex/values").VString<string, "required">;
+         providerAccountId: import("convex/values").VString<string, "required">;
+         userId: import("convex/values").VString<string, "required">;
+-    }, "required", "userId" | "providerAccountId" | "provider">, {
++    }, "required", "userId" | "provider" | "providerAccountId">, {
+         by_provider_account: ["provider", "providerAccountId", "_creationTime"];
+         by_user: ["userId", "_creationTime"];
+     }, {}, {}>;
+     sessions: import("convex/server").TableDefinition<import("convex/values").VObject<{
+-        refreshTokenExpiresAt: number;
++        generation?: number | undefined;
+         userId: string;
+         accountId: import("convex/values").GenericId<"accounts">;
+         refreshTokenHash: string;
++        refreshTokenExpiresAt: number;
+         lastRefreshedAt: number;
+     }, {
++        generation: import("convex/values").VFloat64<number | undefined, "optional">;
+         userId: import("convex/values").VString<string, "required">;
+         accountId: import("convex/values").VId<import("convex/values").GenericId<"accounts">, "required">;
+         refreshTokenHash: import("convex/values").VString<string, "required">;
+         refreshTokenExpiresAt: import("convex/values").VFloat64<number, "required">;
+         lastRefreshedAt: import("convex/values").VFloat64<number, "required">;
+-    }, "required", "refreshTokenExpiresAt" | "userId" | "accountId" | "refreshTokenHash" | "lastRefreshedAt">, {
++    }, "required", "userId" | "generation" | "accountId" | "refreshTokenHash" | "refreshTokenExpiresAt" | "lastRefreshedAt">, {
+         by_refresh_hash: ["refreshTokenHash", "_creationTime"];
+         by_user: ["userId", "_creationTime"];
+     }, {}, {}>;
+diff --git a/dist/components/core/schema.js b/dist/components/core/schema.js
+index f6f633c..beb9f01 100644
+--- a/dist/components/core/schema.js
++++ b/dist/components/core/schema.js
+@@ -1,6 +1,11 @@
+ import { defineSchema, defineTable } from "convex/server";
+ import { v } from "convex/values";
+ export default defineSchema({
++    // Keep this record after revocation: deleting it could revive generation-zero sessions.
++    sessionGenerations: defineTable({
++        userId: v.string(),
++        generation: v.number(),
++    }).index("by_user", ["userId"]),
+     // Maps a provider-scoped identity to an opaque app user id. The app owns the
+     // actual users table; we only store the id string it gives us back.
+     accounts: defineTable({
+@@ -13,6 +18,8 @@ export default defineSchema({
+     // One row per active session, holding only the *current* refresh token's
+     // SHA-256 hash. The raw refresh token is never stored.
+     sessions: defineTable({
++        // Absent on existing sessions; interpreted as generation zero.
++        generation: v.optional(v.number()),
+         userId: v.string(),
+         accountId: v.id("accounts"),
+         refreshTokenHash: v.string(),
+diff --git a/dist/oauth/component/convex.config.d.ts b/dist/oauth/component/convex.config.d.ts
+index f646826..aab43a8 100644
+--- a/dist/oauth/component/convex.config.d.ts
++++ b/dist/oauth/component/convex.config.d.ts
+@@ -25,6 +25,7 @@
+ declare const component: import("convex/server").ComponentDefinition<any, {
+     readonly CLIENT_ID: import("convex/values").VString<string, "required">;
+     readonly CLIENT_SECRET: import("convex/values").VString<string, "required">;
++    readonly CALLBACK_URL: import("convex/values").VString<string | undefined, "optional">;
+ }>;
+ export default component;
+ //# sourceMappingURL=convex.config.d.ts.map
+\ No newline at end of file
+diff --git a/dist/oauth/component/convex.config.js b/dist/oauth/component/convex.config.js
+index decf2c0..95415fe 100644
+--- a/dist/oauth/component/convex.config.js
++++ b/dist/oauth/component/convex.config.js
+@@ -28,6 +28,7 @@ const component = defineComponent("oauth", {
+     env: {
+         CLIENT_ID: v.string(),
+         CLIENT_SECRET: v.string(),
++        CALLBACK_URL: v.optional(v.string()),
+     },
+ });
+ export default component;
+diff --git a/dist/oauth/shared/dbHelpers.js b/dist/oauth/shared/dbHelpers.js
+index 83fef57..3a3b50a 100644
+--- a/dist/oauth/shared/dbHelpers.js
++++ b/dist/oauth/shared/dbHelpers.js
+@@ -25,7 +25,12 @@ export async function insertAuthorizationRequest(ctx, fields) {
+             "This requires a Convex backend with system env vars in component " +
+             "functions (get-convex/convex-backend@64c163a, July 2026).");
+     }
+-    const callbackUrl = `${siteUrl}${CALLBACK_PATH}`;
++    const callbackUrl = process.env.CALLBACK_URL ?? `${siteUrl}${CALLBACK_PATH}`;
++    const parsed = new URL(callbackUrl);
++    const loopback = parsed.hostname === "127.0.0.1" || parsed.hostname === "localhost";
++    if ((parsed.protocol !== "https:" && !(parsed.protocol === "http:" && loopback)) || parsed.username || parsed.password || parsed.search || parsed.hash) {
++        throw new Error("CALLBACK_URL must be HTTPS (or HTTP loopback), without credentials, query, or fragment");
++    }
+     await ctx.db.insert("authorizationRequests", {
+         ...fields,
+         callbackUrl,
+--- a/src/components/core/_generated/component.ts
++++ b/src/components/core/_generated/component.ts
+@@ -24,6 +24,9 @@
+ export type ComponentApi<Name extends string | undefined = string | undefined> =
+   {
+     public: {
++    revokeUserSessions: FunctionReference<
++      "mutation", "internal", { userId: string }, null, Name
++    >;
+       getUserIdByAccount: FunctionReference<
+         "query",
+         "internal",
+--- a/dist/components/core/_generated/component.d.ts
++++ b/dist/components/core/_generated/component.d.ts
+@@ -20,6 +20,9 @@
+  */
+ export type ComponentApi<Name extends string | undefined = string | undefined> = {
+     public: {
++      revokeUserSessions: FunctionReference<
++        "mutation", "internal", { userId: string }, null, Name
++      >;
+         getUserIdByAccount: FunctionReference<"query", "internal", {
+             provider: string;
+             providerAccountId: string;
