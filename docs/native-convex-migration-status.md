@@ -54,7 +54,7 @@ but the PR preview is the release candidate.
 - [x] Complete the final native authorization, tenant-boundary, indexed-read,
       relationship, cascade, scheduled-cleanup, and deployment audit. Resolve or
       explicitly record every material finding.
-- [ ] On the actual PR preview, repeat verified email signup, verification,
+- [x] On the actual PR preview, repeat verified email signup, verification,
       password recovery, reset replay rejection, and rejection of the old session.
 - [ ] On the actual PR preview, accept an invitation and exercise a representative
       private-organization/private-project permission and revocation flow.
@@ -1230,14 +1230,27 @@ of the reset email. Reset, old-session rejection, old-password rejection,
 new-password sign-in, and used-link rejection passed. A later browser session
 intermittently signed out during token refresh; the PR now opts into Convex's
 supported `initialAuthTokenReuse` behavior to avoid an unnecessary refresh on
-each hydration. The updated preview still needs a timed browser recheck. The
-initial email failure was sender authorization, not Gmail plus-address routing.
+each hydration. On the rebuilt preview, a fresh Chrome session survived 170
+seconds, three scheduled refreshes, and two full navigations; no navigation
+triggered an extra refresh or lost either auth cookie. The initial email failure
+was sender authorization, not Gmail plus-address routing.
 
 The same acceptance run found that a new private project's overview still
 showed sample counts, people, updates, and activity. The PR now reads those
 from a bounded, access-scoped native overview query with honest empty states.
 The corrected overview has local type, translation, and private-access test
-coverage; it also needs confirmation on the updated preview.
+coverage. The rebuilt preview showed five true zero counts, its actual owner,
+and empty updates/activity. The first navigation across that deployment
+transition rendered a 404, while a hard reload resolved the new route; the
+deployment-transition checklist remains open until the stale-route behavior is
+handled or conclusively classified.
+
+The preview acceptance account also created a private organization and a private
+project. The project creation UI correctly locked visibility to private, and
+anonymous requests to both URLs returned 404. A moderator invitation scoped to
+that project was created and Bento accepted its email. Acceptance, authorized
+moderator access, and revocation await the invited GitHub identity's browser
+sign-in.
 
 The basic real GitHub sign-in question is answered. Remaining checks improve
 coverage; they are not evidence that the initial sign-in was unconfirmed.
