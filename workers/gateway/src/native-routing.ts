@@ -8,7 +8,7 @@ const key = (secret: string) => {
 	if (secret.length < 32) throw new Error('Routing key must be at least 32 characters');
 	return new TextEncoder().encode(secret);
 };
-function validateRoute(route: Route) {
+export function validateRoute(route: Route) {
 	for (const [value, path] of [
 		[route.backendCallback, '/oauth/github/callback'],
 		[route.appCallback, '/api/auth/github/callback'],
@@ -36,8 +36,13 @@ export function parseNativeRoutes(raw: string | undefined): Routes | null {
 		for (const [id, value] of entries) {
 			if (!/^[a-z0-9-]{1,64}$/.test(id) || !value || typeof value !== 'object') return null;
 			const route = value as Route;
-			if (typeof route.secret !== 'string' || route.secret.length < 32 ||
-				typeof route.backendCallback !== 'string' || typeof route.appCallback !== 'string') return null;
+			if (
+				typeof route.secret !== 'string' ||
+				route.secret.length < 32 ||
+				typeof route.backendCallback !== 'string' ||
+				typeof route.appCallback !== 'string'
+			)
+				return null;
 			validateRoute(route);
 			routes[id] = route;
 		}

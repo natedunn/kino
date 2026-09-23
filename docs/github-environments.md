@@ -255,14 +255,16 @@ env vars — note these apply **at deployment creation**, not retroactively.
 | `NATIVE_APP_ORIGIN_PRODUCTION`                              | Workers Builds env    | exact production Start Worker origin                                    |
 | `NATIVE_APP_PREVIEW_HOST_SUFFIX`                            | Workers Builds env    | preview host suffix after `<alias>-`, e.g. `kino.hello-fc8.workers.dev` |
 | `NATIVE_GITHUB_GATEWAY_URL_PREVIEW` / `_PRODUCTION`         | Workers Builds env    | exact native `/oauth/github/callback` URL                               |
-| `NATIVE_GITHUB_ROUTE_ID_PREVIEW` / `_PRODUCTION`            | Workers Builds env    | opaque-state route ID for the tier                                      |
+| `NATIVE_GITHUB_ROUTE_ID_PRODUCTION`                         | Workers Builds env    | fixed production opaque-state route ID                                  |
 | `NATIVE_GITHUB_ROUTE_SECRET_PREVIEW` / `_PRODUCTION`        | Workers Builds secret | opaque-state route signing secret for the tier                          |
 | `CONVEX_MANAGEMENT_TOKEN`                                   | Workers Builds secret | management token used to create/reuse and provision branch previews     |
 | `CONVEX_TEAM_SLUG` / `CONVEX_PROJECT_SLUG`                  | Workers Builds env    | exact project selector used by preview provisioning                     |
 
 The branch-suffixed split exists because Workers Builds env vars apply to all
 branches; the mapping in `cloudflare-build.sh` makes cross-tier registration
-structurally impossible. Cloudflare's stable preview URL is derived as
+structurally impossible. Cloudflare Worker Previews isolate preview runtime
+settings and receive the route signing key through Wrangler's secrets file.
+Cloudflare's stable preview URL is derived as
 `https://<40-character-normalized-alias>-<NATIVE_APP_PREVIEW_HOST_SUFFIX>`;
 Convex keeps its independently normalized 48-character preview reference. The
 build uses the management token because the current Convex CLI cannot authorize
@@ -270,6 +272,22 @@ a specific preview for environment updates with either a preview deploy key or
 a project deploy key. Shared secrets stay in Convex preview defaults and are
 never copied through shell arguments. Convex validates all six required
 deployment variables during its push.
+
+Each preview's route ID is `preview-` plus the first 40 hex characters of the
+SHA-256 hash of its exact app origin. The build registers that route with the
+dev gateway's authenticated `/oauth/routes/:id` API, including the exact
+Convex and app callback URLs. Routes expire after 14 days unless a build renews
+them. The Start Worker derives the same ID from the request origin, while the
+shared preview secret is uploaded as a Worker Preview secret. Production keeps
+its explicit route ID and static gateway route.
+
+The `kino` Worker uses Cloudflare Worker Previews (`wrangler preview`, Wrangler
+4.135 or newer) rather than aliased production versions. Enable Worker Previews
+in the Worker's Settings > Builds once, with preview command
+`pnpm run deploy:preview`; that script invokes `npx wrangler preview` using the
+generated server bundle. The preview's gateway URL is declared in
+`wrangler.jsonc` under `previews.vars`, and the build supplies its signing key
+through `--secrets-file`. Preview settings do not inherit production settings.
 
 Set the preview defaults for `AUTH_PRIVATE_KEY`, `AUTH_JWKS`,
 `AUTH_GITHUB_CLIENT_ID`, and `AUTH_GITHUB_CLIENT_SECRET` before enabling the

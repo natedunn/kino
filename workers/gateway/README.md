@@ -62,6 +62,31 @@ in `wrangler.jsonc`, a command argument, or a log. Use interactive
 in a gitignored local file. The native Convex deployment must advertise
 `AUTH_GITHUB_CALLBACK_URL=https://gateway-dev.usekino.com/oauth/github/callback`.
 
+For branch previews, the dev gateway also accepts expiring routes through its
+admin API. This uses the existing `TARGETS` KV binding and
+`GATEWAY_ADMIN_TOKEN`; it is unavailable in production. After creating the
+Convex preview and learning its `.convex.site` URL, CI registers its exact
+callback pair before publishing the app. Send a private JSON file containing
+`backendCallback`, `appCallback`, and `secret` as the request body:
+
+```sh
+curl -X PUT "https://gateway-dev.usekino.com/oauth/routes/<preview-route-id>" \
+  -H "Authorization: Bearer $GATEWAY_ADMIN_TOKEN_PREVIEW" \
+  -H 'Content-Type: application/json' \
+  --data-binary @<private-route-json-file>
+```
+
+The route ID must contain only lowercase letters, digits, and hyphens (at most
+64 characters). The backend must be an exact `.convex.site` callback, and the
+app must be an exact `*.workers.dev` callback allowed by the dev gateway's
+`TRUSTED_TARGET_PATTERNS`. The shared preview signing secret must be at least
+32 characters and match the Start Worker's runtime secret. `GET` on the same
+URL returns only the callback URLs for verification; `DELETE` removes the route.
+All three methods require the admin token. A `PUT` renews the route's 14-day
+TTL. KV writes can take time to reach every edge location, so CI should verify
+the registered route and allow a brief propagation window before a browser
+sign-in check. The static secret map remains a fallback for existing routes.
+
 The new `OAuthState` Durable Object class is a Cloudflare migration boundary:
 Cloudflare cannot roll back to a version published before its class migration.
 Deploy a migration-bearing version that serves only legacy routes first, then

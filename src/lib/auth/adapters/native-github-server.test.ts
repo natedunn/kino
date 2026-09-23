@@ -24,6 +24,26 @@ describe('native GitHub return targets', () => {
 	});
 });
 
+describe('native GitHub route IDs', () => {
+	test('derives a stable preview route ID from the exact request origin', async () => {
+		expect(
+			await nativeGithubTestHelpers.resolveRouteId('https://abc-kino.hello-fc8.workers.dev')
+		).toBe('preview-5645ab3ffbaf11875e4b9fab0ad8b009c4f5da06');
+		expect(await nativeGithubTestHelpers.resolveRouteId('https://abc.example')).toBe(
+			'preview-a802f9321394cc72a90122c4606d2e7af6c01da8'
+		);
+	});
+
+	test('keeps an explicit production or local proof route ID', async () => {
+		expect(
+			await nativeGithubTestHelpers.resolveRouteId(
+				'https://abc-kino.hello-fc8.workers.dev',
+				'kino-production'
+			)
+		).toBe('kino-production');
+	});
+});
+
 describe('native GitHub callback failures', () => {
 	test('rejects malformed cookie encoding without throwing', async () => {
 		const response = await completeNativeGithub(

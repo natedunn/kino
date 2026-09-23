@@ -10,9 +10,18 @@ const AUTHORIZATION_URL_BUDGET = 1024;
 
 type ProxySignIn = (request: Request) => Promise<Response>;
 
-function gatewayConfig() {
+async function resolveRouteId(origin: string, explicitRouteId?: string) {
+	if (explicitRouteId) return explicitRouteId;
+	const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(origin));
+	const hex = Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join(
+		''
+	);
+	return `preview-${hex.slice(0, 40)}`;
+}
+
+async function gatewayConfig(origin: string) {
 	const gatewayValue = process.env.NATIVE_GITHUB_GATEWAY_URL;
-	const routeId = process.env.NATIVE_GITHUB_ROUTE_ID;
+	const routeId = await resolveRouteId(origin, process.env.NATIVE_GITHUB_ROUTE_ID);
 	const secret = process.env.NATIVE_GITHUB_ROUTE_SECRET;
 	if (!gatewayValue || !routeId || !secret) throw new Error('Missing native GitHub configuration');
 	const gateway = new URL(gatewayValue);
@@ -89,9 +98,9 @@ export async function startNativeGithub(request: Request) {
 	const requestUrl = new URL(request.url);
 	if (request.headers.get('origin') !== requestUrl.origin)
 		return new Response('Forbidden', { status: 403 });
-	let config: ReturnType<typeof gatewayConfig>;
+	let config: Awaited<ReturnType<typeof gatewayConfig>>;
 	try {
-		config = gatewayConfig();
+		config = await gatewayConfig(requestUrl.origin);
 	} catch {
 		return new Response('Native GitHub is not configured', { status: 503 });
 	}
@@ -200,4 +209,4 @@ export async function completeNativeGithub(request: Request, proxySignIn: ProxyS
 	return response;
 }
 
-export const nativeGithubTestHelpers = { safeReturnPath };
+export const nativeGithubTestHelpers = { safeReturnPath, resolveRouteId };

@@ -25,6 +25,12 @@ esac
 
 node scripts/gateway-webhook-target.mjs register "${VITE_CONVEX_SITE_URL}/api/github/webhook" || true
 
+# Every preview has its own exact app and Convex callback. Register that pair
+# before publishing the frontend so GitHub can never return to another branch.
+if [ "${NATIVE_GITHUB_REGISTER_PREVIEW_ROUTE:-}" = true ]; then
+  node scripts/gateway-native-route.mjs
+fi
+
 pnpm run build
 
 sh scripts/posthog-sourcemaps.sh

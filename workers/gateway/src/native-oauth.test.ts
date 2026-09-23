@@ -4,9 +4,9 @@ import type { Routes } from './native-routing';
 import { describe, expect, it, vi } from 'vitest';
 
 import worker from './index';
-import stage from './stage';
 import { handleNativeOAuth } from './native-oauth';
 import { parseNativeRoutes, signRoute } from './native-routing';
+import stage from './stage';
 
 const routes: Routes = {
 	alpha: {
@@ -44,52 +44,228 @@ const ctx = {} as ExecutionContext;
 const base = 'https://gateway.example/oauth/github/callback';
 
 async function register(env: GatewayEnv, route = 'alpha') {
-	const envelope = await signRoute(route, 'original-provider-state-value-123', routes[route].secret);
+	const envelope = await signRoute(
+		route,
+		'original-provider-state-value-123',
+		routes[route].secret
+	);
 	const response = await handleNativeOAuth(
 		new Request('https://gateway.example/oauth/state', {
 			method: 'POST',
 			body: JSON.stringify({ envelope }),
-		}), env, routes
+		}),
+		env,
+		routes
 	);
 	expect(response.status).toBe(200);
-	const body = await response.json() as { state: string };
+	const body = (await response.json()) as { state: string };
 	expect(body.state).toMatch(/^[A-Za-z0-9_-]{43}$/);
 	return body.state;
 }
 
 describe('native OAuth gateway', () => {
+	it('registers an expiring dev preview route and completes its callback without exposing the secret', async () => {
+		const values = new Map<string, string>();
+		const put = vi.fn(async (key: string, value: string) => {
+			values.set(key, value);
+		});
+		const env: GatewayEnv = {
+			...fixtureEnv(),
+			TARGETS: {
+				get: async (key: string) => JSON.parse(values.get(key) ?? 'null'),
+				put,
+				delete: async (key: string) => {
+					values.delete(key);
+				},
+			} as unknown as KVNamespace,
+			QUICK_TUNNEL_TARGETS_ENABLED: 'true',
+			TRUSTED_TARGET_PATTERNS: 'https://*-kino.hello-fc8.workers.dev,https://*.convex.site',
+			GATEWAY_ADMIN_TOKEN: 'admin-secret',
+		};
+		const id = `preview-${'a'.repeat(40)}`;
+		const route = {
+			backendCallback: 'https://native-preview.convex.site/oauth/github/callback',
+			appCallback: 'https://some-branch-kino.hello-fc8.workers.dev/api/auth/github/callback',
+			secret: 's'.repeat(64),
+		};
+		const address = `https://gateway.example/oauth/routes/${id}`;
+		const authorized = { authorization: 'Bearer admin-secret' };
+		expect(
+			(
+				await worker.fetch(
+					new Request(address, {
+						method: 'PUT',
+						body: JSON.stringify(route),
+					}),
+					env,
+					ctx
+				)
+			).status
+		).toBe(401);
+		const registration = await worker.fetch(
+			new Request(address, {
+				method: 'PUT',
+				headers: authorized,
+				body: JSON.stringify(route),
+			}),
+			env,
+			ctx
+		);
+		expect(registration.status).toBe(200);
+		expect(await registration.text()).not.toContain(route.secret);
+		expect(put.mock.calls[0][0]).toBe(`native-oauth-route:${id}`);
+		expect(
+			(put.mock.calls[0] as unknown as [string, string, KVNamespacePutOptions])[2].expirationTtl
+		).toBe(14 * 24 * 60 * 60);
+		const inspect = await worker.fetch(new Request(address, { headers: authorized }), env, ctx);
+		expect(inspect.status).toBe(200);
+		expect(await inspect.text()).not.toContain(route.secret);
+
+		const envelope = await signRoute(id, 'original-provider-state-value-123', route.secret);
+		const stateResponse = await worker.fetch(
+			new Request('https://gateway.example/oauth/state', {
+				method: 'POST',
+				body: JSON.stringify({ envelope }),
+			}),
+			env,
+			ctx
+		);
+		expect(stateResponse.status).toBe(200);
+		const { state } = (await stateResponse.json()) as { state: string };
+		const send = vi.fn<typeof fetch>().mockResolvedValue(
+			new Response(null, {
+				status: 302,
+				headers: { Location: `${route.appCallback}?convexAuthCode=ticket` },
+			})
+		);
+		const callback = await handleNativeOAuth(
+			new Request(`${base}?state=${state}&code=provider-code`),
+			env,
+			{},
+			send
+		);
+		expect(callback.status).toBe(302);
+		expect(String(send.mock.calls[0][0])).toContain(route.backendCallback);
+		expect(
+			(
+				await worker.fetch(
+					new Request(address, { method: 'DELETE', headers: authorized }),
+					env,
+					ctx
+				)
+			).status
+		).toBe(200);
+		expect(
+			(await worker.fetch(new Request(address, { headers: authorized }), env, ctx)).status
+		).toBe(404);
+	});
+
+	it('refuses untrusted preview callbacks and disables route management in production', async () => {
+		const env: GatewayEnv = {
+			...fixtureEnv(),
+			TARGETS: {} as KVNamespace,
+			QUICK_TUNNEL_TARGETS_ENABLED: 'true',
+			TRUSTED_TARGET_PATTERNS: 'https://*-kino.hello-fc8.workers.dev,https://*.convex.site',
+			GATEWAY_ADMIN_TOKEN: 'admin-secret',
+		};
+		const address = 'https://gateway.example/oauth/routes/preview-alpha';
+		const headers = { authorization: 'Bearer admin-secret' };
+		const route = {
+			backendCallback: 'https://native-preview.convex.site/oauth/github/callback',
+			appCallback: 'https://evil.example/api/auth/github/callback',
+			secret: 's'.repeat(64),
+		};
+		expect(
+			(
+				await worker.fetch(
+					new Request(address, {
+						method: 'PUT',
+						headers,
+						body: JSON.stringify(route),
+					}),
+					env,
+					ctx
+				)
+			).status
+		).toBe(400);
+		expect(
+			(
+				await worker.fetch(
+					new Request(address, {
+						method: 'PUT',
+						headers,
+						body: JSON.stringify({
+							...route,
+							appCallback: 'https://native-preview.convex.site/api/auth/github/callback',
+						}),
+					}),
+					env,
+					ctx
+				)
+			).status
+		).toBe(400);
+		expect(
+			(
+				await worker.fetch(
+					new Request(address, { headers }),
+					{
+						...env,
+						QUICK_TUNNEL_TARGETS_ENABLED: undefined,
+					},
+					ctx
+				)
+			).status
+		).toBe(404);
+	});
+
 	it('stages storage while leaving native routes closed, with no secrets in health', async () => {
 		const env = { ...fixtureEnv(), NATIVE_GITHUB_ROUTES: JSON.stringify(routes) };
 		const staged = await stage.fetch(new Request('https://gateway.example/health'), env, ctx);
-		const stageHealth = await staged.json() as { nativeGithub: { enabled: boolean; storage: boolean } };
+		const stageHealth = (await staged.json()) as {
+			nativeGithub: { enabled: boolean; storage: boolean };
+		};
 		expect(stageHealth.nativeGithub).toMatchObject({ storage: true, enabled: false });
 		expect(JSON.stringify(stageHealth)).not.toContain(routes.alpha.secret);
 		expect((await stage.fetch(new Request(base), env, ctx)).status).toBe(404);
 		const active = await worker.fetch(new Request('https://gateway.example/health'), env, ctx);
-		expect((await active.json() as { nativeGithub: { enabled: boolean } }).nativeGithub.enabled).toBe(true);
+		expect(
+			((await active.json()) as { nativeGithub: { enabled: boolean } }).nativeGithub.enabled
+		).toBe(true);
 		expect((await worker.fetch(new Request(base), fixtureEnv(), ctx)).status).toBe(503);
 	});
 
 	it('requires an exact validated route registry', () => {
 		expect(parseNativeRoutes(undefined)).toBeNull();
 		expect(parseNativeRoutes('{}')).toBeNull();
-		expect(parseNativeRoutes(JSON.stringify({ alpha: { ...routes.alpha, backendCallback: 'http://evil.test/oauth/github/callback' } }))).toBeNull();
+		expect(
+			parseNativeRoutes(
+				JSON.stringify({
+					alpha: { ...routes.alpha, backendCallback: 'http://evil.test/oauth/github/callback' },
+				})
+			)
+		).toBeNull();
 		expect(parseNativeRoutes(JSON.stringify(routes))).toEqual(routes);
 	});
 
 	it('forwards one opaque callback to its exact backend and refuses replay', async () => {
 		const env = fixtureEnv();
 		const reference = await register(env);
-		const send = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, {
-			status: 302,
-			headers: { Location: routes.alpha.appCallback + '?convexAuthCode=ticket' },
-		}));
-		const request = new Request(`${base}?state=${reference}&code=provider-code&target=https://evil.test`);
+		const send = vi.fn<typeof fetch>().mockResolvedValue(
+			new Response(null, {
+				status: 302,
+				headers: { Location: routes.alpha.appCallback + '?convexAuthCode=ticket' },
+			})
+		);
+		const request = new Request(
+			`${base}?state=${reference}&code=provider-code&target=https://evil.test`
+		);
 		const response = await handleNativeOAuth(request, env, routes, send);
 		expect(response.status).toBe(302);
 		expect(response.headers.get('location')).toContain('alpha.example');
 		expect(response.headers.get('referrer-policy')).toBe('no-referrer');
-		expect(String(send.mock.calls[0][0])).toBe(routes.alpha.backendCallback + '?code=provider-code&state=original-provider-state-value-123');
+		expect(String(send.mock.calls[0][0])).toBe(
+			routes.alpha.backendCallback + '?code=provider-code&state=original-provider-state-value-123'
+		);
 		expect(new Headers(send.mock.calls[0][1]?.headers).has('cookie')).toBe(false);
 		expect((await handleNativeOAuth(request, env, routes, send)).status).toBe(400);
 		expect(send).toHaveBeenCalledTimes(1);
@@ -98,24 +274,61 @@ describe('native OAuth gateway', () => {
 	it('rejects cross-preview redirect, malformed callback, and unknown state before forwarding', async () => {
 		const env = fixtureEnv();
 		const reference = await register(env);
-		const send = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, {
-			status: 302,
-			headers: { Location: routes.beta.appCallback + '?convexAuthCode=ticket' },
-		}));
-		expect((await handleNativeOAuth(new Request(`${base}?state=${reference}&code=a&code=b`), env, routes, send)).status).toBe(400);
+		const send = vi.fn<typeof fetch>().mockResolvedValue(
+			new Response(null, {
+				status: 302,
+				headers: { Location: routes.beta.appCallback + '?convexAuthCode=ticket' },
+			})
+		);
+		expect(
+			(
+				await handleNativeOAuth(
+					new Request(`${base}?state=${reference}&code=a&code=b`),
+					env,
+					routes,
+					send
+				)
+			).status
+		).toBe(400);
 		// Malformed input does not consume a legitimate reference.
-		expect((await handleNativeOAuth(new Request(`${base}?state=${reference}&code=provider-code`), env, routes, send)).status).toBe(502);
-		expect((await handleNativeOAuth(new Request(`${base}?state=${'x'.repeat(43)}&code=a`), env, routes, send)).status).toBe(400);
+		expect(
+			(
+				await handleNativeOAuth(
+					new Request(`${base}?state=${reference}&code=provider-code`),
+					env,
+					routes,
+					send
+				)
+			).status
+		).toBe(502);
+		expect(
+			(
+				await handleNativeOAuth(
+					new Request(`${base}?state=${'x'.repeat(43)}&code=a`),
+					env,
+					routes,
+					send
+				)
+			).status
+		).toBe(400);
 		expect(send).toHaveBeenCalledTimes(1);
 	});
 
 	it('rejects a signed state from an unknown or mismatched preview', async () => {
 		const env = fixtureEnv();
-		for (const [id, secret] of [['unknown', routes.alpha.secret], ['alpha', routes.beta.secret]]) {
+		for (const [id, secret] of [
+			['unknown', routes.alpha.secret],
+			['alpha', routes.beta.secret],
+		]) {
 			const envelope = await signRoute(id, 'original-provider-state-value-123', secret);
-			const response = await handleNativeOAuth(new Request('https://gateway.example/oauth/state', {
-				method: 'POST', body: JSON.stringify({ envelope }),
-			}), env, routes);
+			const response = await handleNativeOAuth(
+				new Request('https://gateway.example/oauth/state', {
+					method: 'POST',
+					body: JSON.stringify({ envelope }),
+				}),
+				env,
+				routes
+			);
 			expect(response.status).toBe(400);
 		}
 	});

@@ -45,8 +45,11 @@ else
   fi
   export VITE_SITE_URL="https://${cloudflare_alias}-${preview_host_suffix}"
   export NATIVE_GITHUB_GATEWAY_URL="${NATIVE_GITHUB_GATEWAY_URL_PREVIEW:-}"
-  export NATIVE_GITHUB_ROUTE_ID="${NATIVE_GITHUB_ROUTE_ID_PREVIEW:-}"
+  # The Start Worker derives a distinct route ID from its exact preview origin.
+  # A shared route ID would send OAuth callbacks to whichever branch registered last.
+  export NATIVE_GITHUB_ROUTE_ID=""
   export NATIVE_GITHUB_ROUTE_SECRET="${NATIVE_GITHUB_ROUTE_SECRET_PREVIEW:-}"
+  export NATIVE_GITHUB_REGISTER_PREVIEW_ROUTE=true
 fi
 
 if [ -z "$VITE_SITE_URL" ]; then
@@ -57,8 +60,8 @@ if [ -z "$NATIVE_GITHUB_GATEWAY_URL" ]; then
   echo "Native deploy requires the tier's NATIVE_GITHUB_GATEWAY_URL_*." >&2
   exit 1
 fi
-if [ -z "$NATIVE_GITHUB_ROUTE_ID" ] || [ -z "$NATIVE_GITHUB_ROUTE_SECRET" ]; then
-  echo "Native deploy requires the tier's NATIVE_GITHUB_ROUTE_ID_* and NATIVE_GITHUB_ROUTE_SECRET_*." >&2
+if { [ "$branch" = "$production_branch" ] && [ -z "$NATIVE_GITHUB_ROUTE_ID" ]; } || [ -z "$NATIVE_GITHUB_ROUTE_SECRET" ]; then
+  echo "Native deploy requires the tier's GitHub route ID (production) and route secret." >&2
   exit 1
 fi
 export VITE_NATIVE_GITHUB_ENABLED=true
@@ -122,9 +125,9 @@ else
   # authorize a specific preview for environment updates.
   unset CONVEX_DEPLOY_KEY CONVEX_DEPLOYMENT_TOKEN
   export CONVEX_OVERRIDE_ACCESS_TOKEN="$CONVEX_MANAGEMENT_TOKEN"
-  preview_selector="${CONVEX_TEAM_SLUG}:${CONVEX_PROJECT_SLUG}:${convex_preview_name}"
+  preview_selector="${CONVEX_TEAM_SLUG}:${CONVEX_PROJECT_SLUG}:preview/${convex_preview_name}"
   if ! npx convex env list --deployment "$preview_selector" --names-only >/dev/null 2>&1; then
-    npx convex deployment create "$preview_selector" \
+    npx convex deployment create "${CONVEX_TEAM_SLUG}:${CONVEX_PROJECT_SLUG}:${convex_preview_name}" \
       --type preview \
       --expiration "${CONVEX_PREVIEW_EXPIRATION:-in 14 days}"
   fi

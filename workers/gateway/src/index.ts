@@ -2,6 +2,7 @@ import type { GatewayEnv } from './env';
 
 import legacy from './legacy';
 import { handleNativeOAuth } from './native-oauth';
+import { dynamicNativeRoutesEnabled, handleNativeRouteApi } from './native-route-registry';
 import { parseNativeRoutes } from './native-routing';
 
 export { OAuthState } from './native-state-object';
@@ -15,19 +16,21 @@ export default {
 			const health: {
 				nativeGithub: { enabled: boolean };
 			} = await response.json();
-			health.nativeGithub.enabled = !!routes && !!env.OAUTH_STATES;
+			health.nativeGithub.enabled =
+				(!!routes || dynamicNativeRoutesEnabled(env)) && !!env.OAUTH_STATES;
 			return Response.json(health, {
 				status: 200,
 				headers: { 'Cache-Control': 'no-store', 'Content-Type': 'application/json' },
 			});
 		}
+		if (url.pathname.startsWith('/oauth/routes/')) return handleNativeRouteApi(env, request);
 		if (url.pathname === '/oauth/state' || url.pathname === '/oauth/github/callback') {
-			if (!routes || !env.OAUTH_STATES)
+			if ((!routes && !dynamicNativeRoutesEnabled(env)) || !env.OAUTH_STATES)
 				return new Response('Native GitHub is not configured', {
 					status: 503,
 					headers: { 'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer' },
 				});
-			return handleNativeOAuth(request, env, routes);
+			return handleNativeOAuth(request, env, routes ?? {});
 		}
 		return legacy.fetch(request, env, ctx);
 	},
