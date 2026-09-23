@@ -67,8 +67,10 @@ but the PR preview is the release candidate.
       and earlier hosted evidence; this check verifies the final deployed pair.
 - [x] Repeat a deployment-transition navigation/reload check so a stale route asset
       either refreshes cleanly or shows the existing new-version prompt.
-- [ ] Capture and resolve the intermittent loss of both browser auth cookies
-      observed during the compact PR-preview pass.
+- [ ] Resolve or explicitly accept the remaining lost-refresh-response risk.
+      The observed sign-out was caused by reuse of a spent refresh token after
+      its grace window; browser navigation is now mitigated, but an interrupted
+      SSR response or network loss can still discard a newly rotated cookie.
 - [x] Run the final root, native Convex, gateway, and Files Worker checks plus
       `pnpm run verify:pr`, lint, and the production build from the frozen commit.
 
@@ -1293,10 +1295,23 @@ though it does not explain the separate cookie-loss event below.
 
 During this pass both auth cookies disappeared once without an intentional
 sign-out; subsequent private document requests correctly returned 404 and the
-dashboard redirected to sign-in. Re-login restored the cookies, and later
-scheduled refreshes and full navigations passed. The response that deleted the
-cookies was not captured, so the cause remains open. Do not count this as a
-deployment-transition failure or claim it is resolved by the cached-null fix.
+dashboard redirected to sign-in. Preview Convex logs at 10:18 a.m. local time
+show the auth component rejected a spent refresh token after its 30-second
+grace window and revoked that session. A controlled test reproduced the same
+failure: rotating a preview session while deliberately discarding the response
+left Chrome with the old cookie, and a request 32 seconds later returned 401
+with both cookie deletions. The original lost response was not captured, so
+the reason Chrome missed the replacement cookie remains unconfirmed.
+
+The PR now sends browser refresh requests with Fetch `keepalive` to preserve
+them across document navigation. The rebuilt preview emitted a scheduled
+refresh with that option. A delayed refresh followed by immediate navigation
+still rotated the cookie, and the dashboard stayed signed in. Twenty further
+full navigations across dashboard and a private project, including one browser
+refresh, kept both cookies and had no 401 or private-page failure. This
+mitigates navigation loss; it does not make token rotation recoverable when a
+server-rendered response or network response is discarded. The release check
+above remains open for that protocol-level decision.
 
 The basic real GitHub sign-in question is answered. Remaining checks improve
 coverage; they are not evidence that the initial sign-in was unconfirmed.
