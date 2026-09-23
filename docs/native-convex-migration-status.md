@@ -82,7 +82,7 @@ and rerun password-reset, GitHub callback, SSR, and session-edge proofs.
       password recovery, reset replay rejection, and rejection of the old session.
 - [x] On the actual PR preview, accept an invitation and exercise a representative
       private-organization/private-project permission and revocation flow.
-- [ ] Complete a compact browser pass through dashboard, organizations, projects,
+- [x] Complete a compact browser pass through dashboard, organizations, projects,
       boards, Feedback, Updates, Files, settings, Relay, and the important mobile
       layouts. Include populated data, file preview/upload/delete, and the
       non-manager organization summary.
@@ -1285,9 +1285,14 @@ project. A signed-in non-manager could not open member management. Removing
 the disposable membership as the owner deleted its project assignment and the
 same GitHub browser immediately received 404 for both private URLs. The
 non-manager organization overview showed fabricated summary counts and
-activity. The PR now replaces those with a real access-checked member count,
-visible-project count, and history from visible projects; preview browser
-acceptance of that UI remains part of the compact pass.
+activity. The PR replaced those with a real access-checked member count,
+visible-project count, and history from visible projects. A second preview
+acceptance on September 23 confirmed that the signed-in moderator saw the
+actual two-member count, one assigned private project, its creation history,
+and restricted-roster copy. No organization settings link was shown, and a
+direct member-management URL returned to the dashboard. The owner then
+removed this disposable membership; the still-signed-in moderator received
+404 for both the private organization and project.
 
 An old preview tab once showed a project 404 immediately after a preview
 rebuild, while direct authenticated backend queries succeeded and a hard reload
