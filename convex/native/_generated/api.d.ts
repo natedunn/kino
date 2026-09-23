@@ -1338,6 +1338,14 @@ export declare const api: {
       null
     >;
   };
+  organizationOverview: {
+    get: FunctionReference<
+      "query",
+      "public",
+      { organizationId: Id<"organizations"> },
+      null | { memberCount: number }
+    >;
+  };
   organizations: {
     create: FunctionReference<
       "mutation",
@@ -2033,6 +2041,7 @@ export declare const api: {
       "public",
       { limit?: number; organizationId: Id<"organizations"> },
       Array<{
+        createdAt: number;
         description: string;
         id: Id<"projects">;
         name: string;

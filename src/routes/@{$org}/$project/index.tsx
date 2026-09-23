@@ -5,6 +5,10 @@ import { convexQuery } from '@convex-dev/react-query';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { createFileRoute, notFound } from '@tanstack/react-router';
 
+import {
+	getProjectForRoute,
+	getProjectOverviewForRoute,
+} from '@/lib/convex/route-visibility-query';
 import { projectTitle, titleMeta } from '@/lib/seo';
 
 import { api as nativeApi } from '../../../../convex/native/_generated/api';
@@ -16,16 +20,9 @@ import { OverviewTeam } from './-components/overview-team';
 
 export const Route = createFileRoute('/@{$org}/$project/')({
 	loader: async ({ context, params }) => {
-		const data = await context.queryClient.ensureQueryData(
-			convexQuery(nativeApi.projects.getBySlugs, {
-				organizationSlug: params.org,
-				projectSlug: params.project,
-			})
-		);
+		const data = await getProjectForRoute(context.queryClient, params);
 		if (!data?.project) throw notFound();
-		await context.queryClient.ensureQueryData(
-			convexQuery(nativeApi.projectOverview.get, { projectId: data.project.id })
-		);
+		await getProjectOverviewForRoute(context.queryClient, data.project.id);
 	},
 	head: ({ params }) => ({
 		meta: [titleMeta([projectTitle(params.org, params.project)])],

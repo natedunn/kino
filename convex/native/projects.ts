@@ -13,6 +13,7 @@ const projectPermissionsValidator = v.object({
 	canDelete: v.boolean(),
 });
 const projectListItemValidator = v.object({
+	createdAt: v.number(),
 	description: v.string(),
 	id: v.id('projects'),
 	name: v.string(),
@@ -123,6 +124,7 @@ export const listByOrganization = query({
 				const access = await resolveProjectAccess(ctx, project._id);
 				return access.project
 					? {
+							createdAt: project._creationTime,
 							description: project.description ?? '',
 							id: project._id,
 							name: project.name,

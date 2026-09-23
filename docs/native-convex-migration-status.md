@@ -1,6 +1,6 @@
 # Native Convex migration: status and follow-up checklist
 
-Last updated: September 22, 2026 (America/Mexico_City).
+Last updated: September 23, 2026 (America/Mexico_City).
 
 This is the working record for the Kitcn migration investigation. The
 **Authoritative current status** and **Remaining release checklist** below govern
@@ -56,7 +56,7 @@ but the PR preview is the release candidate.
       explicitly record every material finding.
 - [x] On the actual PR preview, repeat verified email signup, verification,
       password recovery, reset replay rejection, and rejection of the old session.
-- [ ] On the actual PR preview, accept an invitation and exercise a representative
+- [x] On the actual PR preview, accept an invitation and exercise a representative
       private-organization/private-project permission and revocation flow.
 - [ ] Complete a compact browser pass through dashboard, organizations, projects,
       boards, Feedback, Updates, Files, settings, Relay, and the important mobile
@@ -1248,9 +1248,24 @@ handled or conclusively classified.
 The preview acceptance account also created a private organization and a private
 project. The project creation UI correctly locked visibility to private, and
 anonymous requests to both URLs returned 404. A moderator invitation scoped to
-that project was created and Bento accepted its email. Acceptance, authorized
-moderator access, and revocation await the invited GitHub identity's browser
-sign-in.
+that project was created and Bento accepted its email; Nate confirmed inbox
+delivery. The existing verified GitHub identity for `hello@natedunn.net`
+accepted it, gained the scoped moderator assignment, and viewed the private
+project. A signed-in non-manager could not open member management. Removing
+the disposable membership as the owner deleted its project assignment and the
+same GitHub browser immediately received 404 for both private URLs. The
+non-manager organization overview showed fabricated summary counts and
+activity. The PR now replaces those with a real access-checked member count,
+visible-project count, and history from visible projects; preview browser
+acceptance of that UI remains part of the compact pass.
+
+An old preview tab once showed a project 404 immediately after a preview
+rebuild, while direct authenticated backend queries succeeded and a hard reload
+resolved it. No network trace survived, so its exact cause is unconfirmed. A
+concrete cache bug was fixed in the PR: route loaders previously reused a
+cached null for a newly granted private organization or project forever;
+they now fetch once before returning 404. Focused regression tests cover that
+case, but a deployment-transition browser rehearsal remains open.
 
 The basic real GitHub sign-in question is answered. Remaining checks improve
 coverage; they are not evidence that the initial sign-in was unconfirmed.

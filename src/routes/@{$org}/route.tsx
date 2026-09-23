@@ -6,6 +6,7 @@ import { DefaultCatchBoundary } from '@/components/_default-catch-boundary';
 import { NotFound } from '@/components/_not-found';
 import { AppShell } from '@/components/app-shell';
 import { MainNav } from '@/components/site-nav/main-nav';
+import { getOrganizationForRoute } from '@/lib/convex/route-visibility-query';
 import { ProjectThemeBoundary, resolveProjectTheme } from '@/lib/project-theme';
 import { titleFromSlug, titleMeta } from '@/lib/seo';
 
@@ -18,9 +19,7 @@ export const Route = createFileRoute('/@{$org}')({
 	}),
 	loader: async ({ context, params }) => {
 		const [organization] = await Promise.all([
-			context.queryClient.ensureQueryData(
-				convexQuery(nativeApi.organizations.getBySlug, { slug: params.org })
-			),
+			getOrganizationForRoute(context.queryClient, params.org),
 			context.queryClient.ensureQueryData(convexQuery(nativeApi.profiles.me, {})),
 		]);
 		if (!organization) throw notFound();
