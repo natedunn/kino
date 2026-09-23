@@ -25,11 +25,12 @@ const AuthContext = createContext<{
 
 let activeClient: AuthClientType | null = null;
 
-async function post(path: string) {
+async function post(path: string, keepalive = false) {
 	const response = await fetch(path, {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
 		body: '{}',
+		keepalive,
 	});
 	if (response.status !== 401 && !response.ok) throw new Error('AUTH_TRANSPORT_FAILED');
 	return (await response.json()) as { tokens: SlimTokenBundle | null };
@@ -74,7 +75,10 @@ export function NativeAuthProvider({
 				storageNamespace: 'kino-native-auth',
 				authApi: {
 					refreshSession: async () => {
-						const tokens = (await post('/api/auth/refresh')).tokens;
+						// A document navigation can discard an in-flight response after
+						// Convex has already rotated the refresh token. Keep this tiny
+						// request alive so its replacement cookie can reach the browser.
+						const tokens = (await post('/api/auth/refresh', true)).tokens;
 						if (!tokens) redirectExpiredNativeSession();
 						return tokens;
 					},
