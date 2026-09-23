@@ -65,8 +65,10 @@ but the PR preview is the release candidate.
 - [x] Confirm cancellation, expired, tampered, and replayed OAuth state fail safely
       against the release-candidate preview. The protocol already has automated
       and earlier hosted evidence; this check verifies the final deployed pair.
-- [ ] Repeat a deployment-transition navigation/reload check so a stale route asset
+- [x] Repeat a deployment-transition navigation/reload check so a stale route asset
       either refreshes cleanly or shows the existing new-version prompt.
+- [ ] Capture and resolve the intermittent loss of both browser auth cookies
+      observed during the compact PR-preview pass.
 - [x] Run the final root, native Convex, gateway, and Files Worker checks plus
       `pnpm run verify:pr`, lint, and the production build from the frozen commit.
 
@@ -1241,9 +1243,8 @@ from a bounded, access-scoped native overview query with honest empty states.
 The corrected overview has local type, translation, and private-access test
 coverage. The rebuilt preview showed five true zero counts, its actual owner,
 and empty updates/activity. The first navigation across that deployment
-transition rendered a 404, while a hard reload resolved the new route; the
-deployment-transition checklist remains open until the stale-route behavior is
-handled or conclusively classified.
+transition rendered a 404, while a hard reload resolved the new route. A later
+controlled deployment-transition rehearsal passed, as recorded below.
 
 The preview acceptance account also created a private organization and a private
 project. The project creation UI correctly locked visibility to private, and
@@ -1265,20 +1266,30 @@ resolved it. No network trace survived, so its exact cause is unconfirmed. A
 concrete cache bug was fixed in the PR: route loaders previously reused a
 cached null for a newly granted private organization or project forever;
 they now fetch once before returning 404. Focused regression tests cover that
-case, but a deployment-transition browser rehearsal remains open.
+case. A subsequent deployment-transition browser rehearsal passed.
 
 The September 23 compact PR-preview browser pass has confirmed real private
 organization/project counts and history, a populated feedback board/detail,
 voting and commenting, board creation, an Updates draft, project and
 organization settings, and narrow-width project/feedback/settings layouts.
-The current Files upload could not complete: the preview initially lacked
-`NATIVE_R2_*` variables (now mapped from its existing preview bucket), then
-R2 rejected the browser PUT preflight because that bucket lacks the PR origin
-in its CORS policy. Upload, preview, and delete must be repeated after the
-policy is added. The pass also found clipped mobile Files content and misleading
-upload copy; the PR fixes both pending rebuilt-preview acceptance. An inherited
-Roadmap placeholder displayed fabricated cards on every project; the PR now
-shows a localized coming-soon state until real Roadmap data exists.
+The preview initially lacked `NATIVE_R2_*` variables; the build now provisions
+them from the existing preview bucket. R2 then rejected browser PUT preflight
+until Nate added the PR origin to that bucket's CORS policy. Its OPTIONS response
+now allows the exact origin, PUT, and Content-Type. The rebuilt preview uploaded
+a disposable 296 KiB image, rendered its R2-backed preview at its natural size,
+and deleted it through the Files action menu. The row disappeared immediately;
+storage usage remained charged while asynchronous object cleanup was pending.
+The mobile Files layout now shows a direct Upload action, name/actions table,
+and touch-oriented empty copy without horizontal document overflow. The upload
+dialog's label and privacy-neutral copy were also verified. An inherited Roadmap
+placeholder had displayed fabricated cards on every project; the rebuilt preview
+now shows the localized coming-soon state instead.
+
+An authenticated private-project tab stayed open while commit `9347f1d0` built.
+On refocus it showed the existing localized new-version prompt. Clicking Reload
+kept the same private project visible and both auth cookies present; a newly
+visited Files route also loaded. This closes the deployment-transition check,
+though it does not explain the separate cookie-loss event below.
 
 During this pass both auth cookies disappeared once without an intentional
 sign-out; subsequent private document requests correctly returned 404 and the
