@@ -51,7 +51,7 @@ but the PR preview is the release candidate.
 
 ### Before marking the PR ready
 
-- [ ] Complete the final native authorization, tenant-boundary, indexed-read,
+- [x] Complete the final native authorization, tenant-boundary, indexed-read,
       relationship, cascade, scheduled-cleanup, and deployment audit. Resolve or
       explicitly record every material finding.
 - [ ] On the actual PR preview, repeat verified email signup, verification,
@@ -67,7 +67,7 @@ but the PR preview is the release candidate.
       and earlier hosted evidence; this check verifies the final deployed pair.
 - [ ] Repeat a deployment-transition navigation/reload check so a stale route asset
       either refreshes cleanly or shows the existing new-version prompt.
-- [ ] Run the final root, native Convex, gateway, and Files Worker checks plus
+- [x] Run the final root, native Convex, gateway, and Files Worker checks plus
       `pnpm run verify:pr`, lint, and the production build from the frozen commit.
 
 ### Production preparation
