@@ -143,9 +143,10 @@ upstream check, and upgrade procedure live in
 
 ### Release and acceptance
 
-- [ ] Change the production Kino Auth OAuth app callback to
-      `https://gateway.usekino.com/oauth/github/callback` at the coordinated
-      cutover point. Leave the Kino Relay registration unchanged.
+- [x] Add the native redirect URI
+      `https://gateway.usekino.com/oauth/github/callback` to the production Kino
+      Auth GitHub App, leaving its legacy URI and the Kino Relay registration
+      unchanged. Confirmed after a GitHub settings reload on September 23.
 - [ ] Release the native Convex and app Worker from the frozen commit, then test
       logged-out GitHub sign-in, protected reload/logout, verified email and
       recovery, private access, Relay, Files, and one representative write.

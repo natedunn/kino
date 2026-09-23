@@ -12,7 +12,7 @@ Three things, three names — used consistently in env vars, URLs, code, docs:
 
 | Name                   | What it is                                                     | Env prefix       |
 | ---------------------- | -------------------------------------------------------------- | ---------------- |
-| **Kino Auth** (+ Dev)  | GitHub **OAuth app** — native Convex Auth user login           | `GITHUB_AUTH_*`  |
+| **Kino Auth** (+ Dev)  | GitHub **App** — user login through its OAuth flow             | `GITHUB_AUTH_*`  |
 | **Kino Relay** (+ Dev) | **GitHub App** — org/repo sync, installations, webhooks        | `GITHUB_RELAY_*` |
 | **Gateway**            | Per-tier Cloudflare Worker owning the stable URLs GitHub needs | `GATEWAY_*`      |
 
@@ -27,8 +27,9 @@ Two tiers, fully isolated:
 
 ## Why the gateway exists
 
-GitHub hard limits: an OAuth app has **one** callback URL; a GitHub App has
-**one** webhook URL. The gateway is a tiny, independently deployed Worker that
+The Kino Auth GitHub App accepts multiple strict redirect URIs, but the gateway
+provides one stable callback per tier across app deployments. The Kino Relay
+GitHub App has one webhook URL. The gateway is a tiny, independently deployed Worker that
 owns those URLs per tier, so the app's release cadence is decoupled from
 GitHub's registration and every app environment (prod included) is identical —
 no environment special-casing exists anywhere in app code.
@@ -73,9 +74,10 @@ site origins in the dev gateway.
    cookies on the app origin.
 
 Production uses a fixed static route in `NATIVE_GITHUB_ROUTES`. Dev previews
-use the authenticated, expiring route registry. The current production Kino Auth
-registration remains on the legacy `/api/auth/callback/github` path until the
-coordinated cutover changes it to `/oauth/github/callback`.
+use the authenticated, expiring route registry. The production Kino Auth GitHub
+App has both the legacy `/api/auth/callback/github` and native
+`/oauth/github/callback` redirect URIs registered; the legacy URI remains for
+rollback during acceptance.
 
 ### Temporary legacy rollback flow
 
@@ -230,7 +232,7 @@ point at the wrong app.
 
 | Var                                                                                                                            | Meaning                                                                |
 | ------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------- |
-| `AUTH_GITHUB_CLIENT_ID` / `AUTH_GITHUB_CLIENT_SECRET`                                                                          | tier Kino Auth OAuth app used by native Convex Auth                    |
+| `AUTH_GITHUB_CLIENT_ID` / `AUTH_GITHUB_CLIENT_SECRET`                                                                          | tier Kino Auth GitHub App OAuth credentials used by native Convex Auth |
 | `GITHUB_RELAY_APP_ID`, `GITHUB_RELAY_CLIENT_ID`, `GITHUB_RELAY_CLIENT_SECRET`, `GITHUB_RELAY_PRIVATE_KEY`, `GITHUB_RELAY_SLUG` | tier Kino Relay app                                                    |
 | `GITHUB_RELAY_STATE_SECRET`                                                                                                    | HMAC for the install trampoline's signed state (required, no fallback) |
 | `GITHUB_RELAY_WEBHOOK_SECRET`                                                                                                  | webhook HMAC                                                           |
@@ -317,10 +319,10 @@ the endpoint is absent. Never add the variable to production.
 
 ### GitHub registration settings (per tier)
 
-OAuth app (native login): callback `https://<gateway>/oauth/github/callback`.
-Before cutover, production still uses the rollback callback
-`https://<gateway>/api/auth/callback/github`; change it only at the coordinated
-release point.
+Kino Auth GitHub App (user login): native redirect URI
+`https://<gateway>/oauth/github/callback`. Production also retains the legacy
+`https://<gateway>/api/auth/callback/github` URI during acceptance; both are
+registered, while each login flow explicitly requests its matching URI.
 GitHub App (sync): callback `https://<gateway>/github-relay/oauth-callback`;
 webhook `https://<gateway>/hooks/github` with the tier webhook secret;
 permissions Issues R/W, Discussions R/W, Metadata R; events Issues, Issue
@@ -390,7 +392,7 @@ release before it changes Convex. This check does not deploy the gateway.
    Confirm the active version with `wrangler deployments list --env production`
    from `workers/gateway`. Preserve the legacy proxy, redirect rewrite, and
    Relay paths through the acceptance window.
-6. Change the production Kino Auth OAuth callback to
+6. Confirm the production Kino Auth GitHub App lists
    `https://gateway.usekino.com/oauth/github/callback`, release the app/Convex
    changes, and complete a real production GitHub login.
    Inspect Convex callback logs and verify the signed-in protected page. Record

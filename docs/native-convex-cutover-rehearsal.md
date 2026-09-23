@@ -5,7 +5,7 @@ runtime deployment not yet authorized**. Updated September 23, 2026
 (America/Mexico City).
 
 This runbook covers one coordinated release unit: the native Convex deployment,
-Kino Start Worker, Kino Files Worker, production OAuth gateway, GitHub OAuth app,
+Kino Start Worker, Kino Files Worker, production OAuth gateway, Kino Auth GitHub App,
 and Kino Relay continuity. PR #154 is native-only: root `convex.json` targets
 `convex/native`, and the app no longer contains a Kitcn runtime or auth feature
 flag. Better Auth remains only in the standalone gateway as a temporary legacy
@@ -230,9 +230,10 @@ Production actions require explicit authorization.
 5. Verify the production build's native GitHub route ID/key agree with the
    gateway's static route mapping. The app deployment supplies the runtime
    bindings when it publishes.
-6. Change the existing Kino Auth OAuth app's callback to
-   `https://gateway.usekino.com/oauth/github/callback`. Do not change the Kino
-   Relay GitHub App registration.
+6. Confirm the Kino Auth GitHub App has the native redirect URI
+   `https://gateway.usekino.com/oauth/github/callback`. It was added on
+   September 23 with strict matching while retaining the legacy gateway URI.
+   Do not change the Kino Relay GitHub App registration.
 7. Release the frozen app commit. `scripts/cloudflare-build.sh` deploys native
    Convex first; the later deploy command publishes the app Worker.
 8. Complete a real logged-out GitHub sign-in, protected reload and logout,
@@ -250,10 +251,9 @@ an immediate forward deploy.
 
 ### Before the native app is published
 
-No native app traffic exists. Restore GitHub's callback to
-`https://gateway.usekino.com/api/auth/callback/github` if it was changed. The
-migration-bearing gateway stage preserves legacy login and Relay. Fix the native
-configuration and retry later.
+No native app traffic exists. The legacy GitHub redirect URI remains registered,
+and the migration-bearing gateway stage preserves legacy login and Relay. Fix
+the native configuration and retry later.
 
 ### After publish, before accepting native writes
 
