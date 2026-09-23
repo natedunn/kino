@@ -282,7 +282,7 @@ function FilesWorkspaceRoute() {
 	const fileTreeActions = canManage ? (
 		<div className='mb-4 flex w-full items-center gap-2'>
 			<Button
-				aria-label={m.files_new_folder_button()}
+				aria-label={m.files_upload_button()}
 				className='min-w-0 flex-1 px-2'
 				onClick={() => {
 					setMobileTreeOpen(false);
@@ -532,6 +532,16 @@ function FilesWorkspaceRoute() {
 											<FolderTreeIcon />
 										</Button>
 										<div className='min-w-0 flex-1'>{location}</div>
+										{canManage ? (
+											<Button
+												className='shrink-0 lg:hidden'
+												onClick={() => openFileAction('upload')}
+												size='sm'
+											>
+												<Upload className='size-3.5' />
+												{m.files_upload_button()}
+											</Button>
+										) : null}
 									</div>
 									<div
 										data-files-sidebar-main

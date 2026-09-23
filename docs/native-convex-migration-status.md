@@ -1267,6 +1267,26 @@ cached null for a newly granted private organization or project forever;
 they now fetch once before returning 404. Focused regression tests cover that
 case, but a deployment-transition browser rehearsal remains open.
 
+The September 23 compact PR-preview browser pass has confirmed real private
+organization/project counts and history, a populated feedback board/detail,
+voting and commenting, board creation, an Updates draft, project and
+organization settings, and narrow-width project/feedback/settings layouts.
+The current Files upload could not complete: the preview initially lacked
+`NATIVE_R2_*` variables (now mapped from its existing preview bucket), then
+R2 rejected the browser PUT preflight because that bucket lacks the PR origin
+in its CORS policy. Upload, preview, and delete must be repeated after the
+policy is added. The pass also found clipped mobile Files content and misleading
+upload copy; the PR fixes both pending rebuilt-preview acceptance. An inherited
+Roadmap placeholder displayed fabricated cards on every project; the PR now
+shows a localized coming-soon state until real Roadmap data exists.
+
+During this pass both auth cookies disappeared once without an intentional
+sign-out; subsequent private document requests correctly returned 404 and the
+dashboard redirected to sign-in. Re-login restored the cookies, and later
+scheduled refreshes and full navigations passed. The response that deleted the
+cookies was not captured, so the cause remains open. Do not count this as a
+deployment-transition failure or claim it is resolved by the cached-null fix.
+
 The basic real GitHub sign-in question is answered. Remaining checks improve
 coverage; they are not evidence that the initial sign-in was unconfirmed.
 

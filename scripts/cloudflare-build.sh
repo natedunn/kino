@@ -163,6 +163,42 @@ else
   fi
   npx convex env set --deployment "$preview_selector" AUTH_APP_ORIGIN "$VITE_SITE_URL"
   npx convex env set --deployment "$preview_selector" AUTH_GITHUB_CALLBACK_URL "$NATIVE_GITHUB_GATEWAY_URL"
+  # Preview deployments still inherit the existing preview R2 credentials.
+  # Give the native Files actions their own names before publishing an app that
+  # exposes upload controls. Never copy a production bucket into a preview.
+  preview_storage_names="$(npx convex env list --deployment "$preview_selector" --names-only)"
+  preview_bucket="$(npx convex env get --deployment "$preview_selector" R2_ORG_UPLOADS_BUCKET)"
+  if [ "$preview_bucket" != 'kino-preview-org-uploads' ]; then
+    echo "Native preview storage must use kino-preview-org-uploads." >&2
+    exit 1
+  fi
+  for storage_pair in \
+    NATIVE_R2_ENDPOINT:R2_ORG_UPLOADS_ENDPOINT \
+    NATIVE_R2_BUCKET:R2_ORG_UPLOADS_BUCKET \
+    NATIVE_R2_ACCESS_KEY_ID:R2_ORG_UPLOADS_ACCESS_KEY_ID \
+    NATIVE_R2_SECRET_ACCESS_KEY:R2_ORG_UPLOADS_SECRET_ACCESS_KEY; do
+    storage_target="${storage_pair%%:*}"
+    storage_source="${storage_pair#*:}"
+    if ! printf '%s\n' "$preview_storage_names" | grep -Fxq "$storage_target"; then
+      storage_value="$(npx convex env get --deployment "$preview_selector" "$storage_source")"
+      if [ -z "$storage_value" ]; then
+        echo "Native preview storage source $storage_source is missing." >&2
+        exit 1
+      fi
+      printf '%s' "$storage_value" | npx convex env set --deployment "$preview_selector" "$storage_target"
+      unset storage_value
+    fi
+    storage_value="$(npx convex env get --deployment "$preview_selector" "$storage_target")"
+    if [ -z "$storage_value" ]; then
+      echo "Native preview storage value $storage_target is empty." >&2
+      exit 1
+    fi
+    if [ "$storage_target" = 'NATIVE_R2_BUCKET' ] && [ "$storage_value" != "$preview_bucket" ]; then
+      echo "Native preview storage bucket does not match the preview bucket." >&2
+      exit 1
+    fi
+    unset storage_value
+  done
   validate_native_github_credentials "$preview_selector" preview
   # This pinned Convex CLI accepts --deployment for env commands, but deploy
   # selects previews through a preview deploy key plus --preview-name.
