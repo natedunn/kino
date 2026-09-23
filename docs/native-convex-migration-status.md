@@ -95,7 +95,7 @@ and rerun password-reset, GitHub callback, SSR, and session-edge proofs.
       The observed sign-out coincided with a spent refresh-token rejection after
       its grace window; browser navigation is now mitigated, but an interrupted
       SSR response or network loss can still discard a newly rotated cookie.
-- [ ] Review the two existing Convex Auth v2 compatibility patches against the
+- [x] Review the two existing Convex Auth v2 compatibility patches against the
       chosen upstream revision and record their replacement/removal path. Keep
       Kino-specific transport and authorization outside the auth component.
 - [x] Run the final root, native Convex, gateway, and Files Worker checks plus
