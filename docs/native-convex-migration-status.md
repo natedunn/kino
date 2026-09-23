@@ -113,9 +113,12 @@ upstream check, and upgrade procedure live in
 - [x] Set and verify the native production environment: the six required auth
       values; Bento sender credentials; operations alert recipient; Relay
       credentials/callback; R2 credentials; Files origin; and cache-purge zone/token.
-- [ ] Configure and deploy the production Files Worker with the native production
+- [x] Configure and deploy the production Files Worker with the native production
       `NATIVE_CONVEX_URL`, confirm the `kino-prod-org-uploads` binding, and verify
       `https://files.usekino.com/health` before enabling native file URLs.
+      Version `8d2e539c-f6a5-492b-8558-230582879d1f` passed the live health and
+      missing-file/native-lookup checks; rollback version is
+      `9d47763d-45ba-4e03-903e-b66cf0af753a`.
 - [ ] Deploy the production gateway's migration-bearing legacy stage first and
       record that compatible rollback version. Then configure its fixed native
       `NATIVE_GITHUB_ROUTES` entry, deploy the reviewed dual-protocol version, and

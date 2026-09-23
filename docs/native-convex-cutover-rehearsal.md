@@ -142,6 +142,14 @@ runtime `NATIVE_CONVEX_URL` to the native production Convex cloud URL, deploy
 before enabling native public file URLs. The Git-connected `kino` build does not
 deploy this standalone Worker.
 
+Completed September 23: version
+`8d2e539c-f6a5-492b-8558-230582879d1f` is deployed at 100% with
+`NATIVE_CONVEX_URL=https://brainy-boar-871.convex.cloud` and the
+`kino-prod-org-uploads` binding. The live health endpoint returned 200 and a
+nonexistent public ID returned the expected 404 through the native lookup path.
+The pre-cutover rollback version is
+`9d47763d-45ba-4e03-903e-b66cf0af753a`.
+
 ### Gateway
 
 The production gateway needs two reviewed deployments because Cloudflare cannot
