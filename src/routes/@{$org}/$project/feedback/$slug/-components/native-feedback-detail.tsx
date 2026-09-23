@@ -259,9 +259,7 @@ export function NativeFeedbackDetailRoute() {
 				paginationOpts: { cursor, numItems: 20 },
 			});
 			if (page) {
-				setExtraTimeline((current) =>
-					mergeNativeFeedbackTimeline(page.page as Array<Timeline>, current)
-				);
+				setExtraTimeline((current) => mergeNativeFeedbackTimeline(page.page, current));
 				setCursor(page.isDone ? null : page.continueCursor);
 			}
 		} catch (loadError) {
@@ -482,7 +480,9 @@ export function NativeFeedbackDetailRoute() {
 				feedbackId={feedback.id}
 				orgSlug={params.org}
 				projectSlug={params.project}
-				canManage={detail.permissions.canManageContent && !projectData.isArchived}
+				canManage={
+					detail.permissions.canManageContent && projectData.project.visibility !== 'archived'
+				}
 			/>
 			<SidebarSection
 				icon={<Users className='size-3.5' />}

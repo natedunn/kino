@@ -47,7 +47,7 @@ export const Route = createFileRoute('/@{$org}/$project/updates/$slug/')({
 			})
 		);
 
-		if (!projectData?.project?.id) {
+		if (!projectData?.project.id) {
 			throw notFound();
 		}
 
@@ -135,7 +135,7 @@ function UpdateDetailRoute() {
 		})
 	);
 
-	if (!projectData?.project?.id) {
+	if (!projectData?.project.id) {
 		throw notFound();
 	}
 

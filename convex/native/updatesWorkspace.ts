@@ -365,6 +365,7 @@ export const searchFeedback = query({
 			...args,
 			paginationOpts: { cursor: null, numItems: 20 },
 		});
+		if (!result) return [];
 		return Promise.all(
 			result.page.map(async (f: { id: Doc<'feedback'>['_id'] }) =>
 				feedbackView(ctx, (await ctx.db.get('feedback', f.id))!)

@@ -316,7 +316,7 @@ function NewUpdateRoute() {
 										{(field) => (
 											<FeaturedField
 												checked={field.state.value}
-												mode={project?.updatesFeaturedMode ?? 'latest'}
+												mode={project.updatesFeaturedMode}
 												onChange={(checked) => field.handleChange(checked)}
 											/>
 										)}

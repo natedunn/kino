@@ -2,9 +2,12 @@
 
 Last updated: September 22, 2026 (America/Mexico_City).
 
-This is the working record for the Kitcn migration investigation. It separates
-completed evidence, proposed work, and manual checks. It is not an approved full
-migration plan or a production-readiness declaration.
+This is the working record for the Kitcn migration investigation. The
+**Authoritative current status** and **Remaining release checklist** below govern
+the cutover. Later dated checkpoints preserve the evidence available when they
+were written; statements there about the then-current default runtime, feature
+flags, deployment scripts, or remaining work are historical unless repeated in
+the authoritative sections.
 
 ## Cutover decision
 
@@ -22,7 +25,118 @@ should use a forward fix on the native backend. The prelaunch rehearsal still
 proves Worker and gateway version recovery, but it does not establish a data
 bridge between the separate databases.
 
-## Where we are
+## Authoritative current status
+
+PR #154 is native-only. The root `convex.json` targets `convex/native`; the app
+no longer includes the Kitcn ORM/cRPC/auth runtime, its generated application,
+or a build-time auth-runtime selector. Better Auth remains only in the standalone
+gateway so the old production OAuth proxy can stay available during the cutover
+acceptance window. It is not part of the native application runtime.
+
+The PR's Cloudflare Worker Preview and matching Convex preview are isolated from
+production. The build provisions their exact auth origins, validates non-placeholder
+GitHub credentials, registers a branch-specific expiring route with the shared dev
+gateway, and publishes the route signing key as a Worker Preview secret. Real
+GitHub sign-in returned to `/dashboard`, and a reload remained authenticated.
+The final Cloudflare preview build and `pnpm run verify:pr` pass. Production has
+not been changed.
+
+The native implementation now covers auth, SSR and live TanStack Query data,
+organizations and permissions, projects and boards, Feedback, Updates, Files,
+settings, admin operations, email, GitHub Relay, storage accounting and cleanup,
+and the current product UI. Dated proof deployments below remain useful evidence,
+but the PR preview is the release candidate.
+
+## Remaining release checklist
+
+### Before marking the PR ready
+
+- [ ] Complete the final native authorization, tenant-boundary, indexed-read,
+      relationship, cascade, scheduled-cleanup, and deployment audit. Resolve or
+      explicitly record every material finding.
+- [ ] On the actual PR preview, repeat verified email signup, verification,
+      password recovery, reset replay rejection, and rejection of the old session.
+- [ ] On the actual PR preview, accept an invitation and exercise a representative
+      private-organization/private-project permission and revocation flow.
+- [ ] Complete a compact browser pass through dashboard, organizations, projects,
+      boards, Feedback, Updates, Files, settings, Relay, and the important mobile
+      layouts. Include populated data, file preview/upload/delete, and the
+      non-manager organization summary.
+- [ ] Confirm cancellation, expired, tampered, and replayed OAuth state fail safely
+      against the release-candidate preview. The protocol already has automated
+      and earlier hosted evidence; this check verifies the final deployed pair.
+- [ ] Repeat a deployment-transition navigation/reload check so a stale route asset
+      either refreshes cleanly or shows the existing new-version prompt.
+- [ ] Run the final root, native Convex, gateway, and Files Worker checks plus
+      `pnpm run verify:pr`, lint, and the production build from the frozen commit.
+
+### Production preparation
+
+- [ ] Select a distinct native production Convex deployment and record its exact
+      cloud/site URLs. Point `CONVEX_PROD_DEPLOY_KEY` at it. Do not replace the
+      legacy deployment in place unless its documents have first been inspected
+      and proven compatible with the native schema.
+- [ ] Set and verify the native production environment: the six required auth
+      values; Bento sender credentials; operations alert recipient; Relay
+      credentials/callback; R2 credentials; Files origin; and cache-purge zone/token.
+- [ ] Configure and deploy the production Files Worker with the native production
+      `NATIVE_CONVEX_URL`, confirm the `kino-prod-org-uploads` binding, and verify
+      `https://files.usekino.com/health` before enabling native file URLs.
+- [ ] Deploy the production gateway's migration-bearing legacy stage first and
+      record that compatible rollback version. Then configure its fixed native
+      `NATIVE_GITHUB_ROUTES` entry, deploy the reviewed dual-protocol version, and
+      verify health, the retained legacy proxy, Relay, and native state storage.
+- [ ] Configure Workers Builds with the production Convex key, exact app origin,
+      gateway URL/admin token, fixed native route ID/secret, and existing PostHog
+      values. Separately configure the `kino` Worker's runtime bindings
+      `NATIVE_GITHUB_GATEWAY_URL`, `NATIVE_GITHUB_ROUTE_ID`, and secret
+      `NATIVE_GITHUB_ROUTE_SECRET`; suffixed build variables do not create those
+      runtime bindings, and the production deploy intentionally uses `--keep-vars`.
+- [ ] Freeze the app commit, native Convex deployment, Files Worker version,
+      gateway stage/active versions, auth package revision, callback URLs, and a
+      non-secret fingerprint of the native route mapping.
+- [ ] Review the exact release sequence and rollback/forward-fix thresholds, then
+      obtain explicit production deployment authorization.
+
+### Release and acceptance
+
+- [ ] Change the production Kino Auth OAuth app callback to
+      `https://gateway.usekino.com/oauth/github/callback` at the coordinated
+      cutover point. Leave the Kino Relay registration unchanged.
+- [ ] Release the native Convex and app Worker from the frozen commit, then test
+      logged-out GitHub sign-in, protected reload/logout, verified email and
+      recovery, private access, Relay, Files, and one representative write.
+- [ ] Inspect Convex errors and operations jobs, gateway and Files logs, Bento
+      delivery, and Relay webhook receipts immediately after release.
+
+### Cleanup after acceptance
+
+- [ ] Rotate the root worktree's previously exposed `CONVEX_MANAGEMENT_TOKEN`.
+- [ ] Delete the temporary **Kino Convex v2 Proof** OAuth app and disposable proof
+      Workers/Convex deployments; remove ignored proof credentials and state.
+- [ ] Retry `node scripts/native-settings-live-proof.mjs cleanup-visual` until the
+      retained proof folder is removed.
+- [ ] Delete preview OAuth route records when convenient or allow their 14-day TTL
+      to expire; the preview cleanup workflow deletes the Worker and Convex preview
+      but does not currently delete the route record directly.
+- [ ] After an agreed native stability window, remove the gateway's legacy Better
+      Auth proxy, its rollback secrets/tests, and obsolete legacy documentation.
+
+### Deferred scale follow-ups
+
+These are not prelaunch blockers at the current data volume:
+
+- [ ] Move user-data export to an asynchronous job/download flow before raising
+      the current synchronous cap of 200 comments per source.
+- [ ] Paginate or rotate the operations incident scan beyond the oldest
+      `PER_KIND_LIMIT=25` rows so a large persistent stalled backlog cannot
+      starve later jobs of inspection and alerts.
+
+## Historical evidence log
+
+The checkpoints below are dated observations. They intentionally preserve the
+state and limitations recorded during the investigation and are not the current
+release checklist.
 
 ### September 22 equivalent dashboard timing checkpoint
 
@@ -705,8 +819,7 @@ inspection/recovery remains in the operations stage. Public thumbnails use
 stable URLs without signed-URL polling; private delivery refreshes short-lived
 URLs. Root system-folder names are reserved case-insensitively.
 
-**We have started Kino's parallel native foundation without changing the default
-authentication runtime.**
+**Historical direction recorded during the parallel-foundation phase:**
 
 - Preferred direction: native Convex with official Convex Auth v2 (`reboot`).
 - Preserve verified email/password signup, login, and password recovery.
@@ -716,13 +829,10 @@ authentication runtime.**
 - Prelaunch data migration is a low priority; correctness and future maintenance
   are priorities.
 
-Kino still defaults to Kitcn/Better Auth. A local `VITE_AUTH_RUNTIME=native`
-integration now runs the actual TanStack Start application against the isolated
-native backend. No migration merge or production release has been performed in
-this work. Kino's existing GitHub OAuth registration and stable gateway were not changed.
-The hosted integration proof used only the separate temporary OAuth app, a new
-disposable Convex preview, a new disposable Kino Worker, and an added route in
-the already-disposable proof gateway.
+At this checkpoint Kino still defaulted to Kitcn/Better Auth and selected the
+native backend with `VITE_AUTH_RUNTIME=native`. That selector and the legacy app
+runtime have since been removed in PR #154. The production OAuth registration,
+app, and production gateway still have not been changed.
 
 ## Do I test now or after merging?
 
@@ -750,7 +860,7 @@ deploying the app does not deploy its standalone OAuth gateway**. Follow
 | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | App inventory                     | Completed initial scan                                                                                                               | Auth, cRPC, ORM, schema side effects, routing, files, GitHub, tooling, and existing tests inventoried; inventory summarized below                                                                                                                                                    |
 | Isolated proof harness            | 263 tests in 26 files pass; TypeScript passes                                                                                        | Rechecked September 21 after adding native organizations, invitations, policy, relationship cascades, storage cleanup, and project/storage integration                                                                                                                               |
-| Kino integration foundation       | `verify:pr`, native production build, and 392 tests in 62 files pass                                                                 | Convex 1.46 plus the pinned/patched v2 package coexist with Kitcn; Kino-owned client/server auth boundaries can select the isolated native backend while Kitcn remains the default provider                                                                                          |
+| Kino integration foundation       | Historical parallel-runtime checkpoint passed                                                                                        | PR #154 subsequently removed the Kitcn application runtime and made `convex/native` the root application; see the authoritative status above                                                                                                                                         |
 | Core session lifecycle            | Local component tests pass                                                                                                           | Includes no-session signup, later sign-in, rotation, replay handling, and sign-out; not the custom email workflow                                                                                                                                                                    |
 | Password component                | Actual WASM hashing and component tests pass                                                                                         | Does not establish complete recovery or post-reset session revocation                                                                                                                                                                                                                |
 | Request-scoped auth adapter       | Unit and live Start checks pass                                                                                                      | Actual server function/routes, HttpOnly cookies, parallel-token refresh sharing, anonymous isolation and logout verified; Local HTTPS/workerd and deployed GitHub cookie-session checks pass; broader refresh/streaming edge cases remain open                                       |
@@ -761,8 +871,8 @@ deploying the app does not deploy its standalone OAuth gateway**. Follow
 | Local account/session linkage     | Confirmed by read-only inspection                                                                                                    | One app user, one GitHub account, one session; account/user/session references agree                                                                                                                                                                                                 |
 | Live proof TypeScript             | Passes                                                                                                                               | Frontend and backend checked                                                                                                                                                                                                                                                         |
 | Email/password lifecycle proof    | 14 new local tests pass; TypeScript passes                                                                                           | Actual core/password components with captured mail delivery; verification, login, replacement, expiry/replay and rollback covered                                                                                                                                                    |
-| Recovery session revocation       | **Unmet requirement demonstrated**                                                                                                   | A pre-reset refresh token still rotates after the password changes; test success documents this gap                                                                                                                                                                                  |
-| Proposed core revocation fix      | **Local proof passes**                                                                                                               | Separate core patch blocks old refresh tokens; 11 new tests plus 37 core regressions pass; installed in the isolated proof backends and Kino's pinned package, but not active in Kino until the v2 components are mounted                                                            |
+| Upstream recovery revocation gap  | **Demonstrated at the pinned upstream revision**                                                                                     | The unpatched upstream core allowed a pre-reset refresh token to rotate after the password changed                                                                                                                                                                                   |
+| Kino recovery revocation patch    | **Installed and exercised**                                                                                                          | Kino's pinned core patch blocks old refresh tokens; native component and browser recovery checks reject old sessions and spent-token replay                                                                                                                                          |
 | Live email proof                  | Browser signup, unverified-login rejection, inbox verification, authenticated query and reload pass; second session has same user ID | Local backend 4420/4421, browser 5180; Delivered reset link consumed; both old sessions and spent refresh token rejected; old password rejected; new-password login/reload preserve user ID; reset replay rejected; see [email proof](../experiments/convex-auth-v2/email/README.md) |
 | GitHub + Start + local gateway    | Real GitHub flow passes                                                                                                              | Secure/HttpOnly cookies, private SSR, reload, logout, repeat identity; Nate completed consent; [evidence](../experiments/convex-auth-v2/gateway/README.md)                                                                                                                           |
 | Cloudflare runtime and packaging  | Local HTTPS browser checks, build and matching-toolchain dry-run pass                                                                | Exact-origin host adaptation required; plugin/standalone Wrangler mismatch documented; isolated cloud deployment now exists; real cloud OAuth, private SSR, reload, logout and repeat identity pass                                                                                  |
@@ -783,8 +893,8 @@ alpha and assume these results still apply.
 
 ## Latest application integration
 
-The native backend now lives in `convex/native/` and deploys separately through
-`integrations/native-convex/convex.json`. Its core/password/GitHub components and
+The native backend lives in `convex/native/` and is now selected by the root
+`convex.json`. The integration config remains for isolated proof tooling. Its core/password/GitHub components and
 users/profiles schema are mounted on the dedicated local backend at 4440/4441.
 Verified email/password signup, localized Bento sending, resend, recovery with
 core session revocation, and personal-organization/owner bootstrap are now
@@ -799,8 +909,9 @@ the separate Node-only sourcemap test; `verify:pr`; focused lint/format checks;
 and the local native smoke all pass. Bento inbox delivery and native UI
 acceptance pass on the isolated local backend.
 
-The application defaults to Kitcn/Better Auth. Its temporary build-selected native Start
-integration now covers request-scoped cookies, SSR token handoff, native query
+At the time of this checkpoint, the application still defaulted to Kitcn/Better
+Auth. PR #154 has since removed that default and the temporary whole-build
+selector. The native Start integration covers request-scoped cookies, SSR token handoff, native query
 keys, the localized email/password UI, protected dashboard, organization
 creation/listing, invitation management, role changes, removal, and switching.
 A disposable hosted Kino preview passes the native GitHub gateway path, email
@@ -808,9 +919,9 @@ verification and invitation delivery, reload, sign-out, repeat login, switching,
 and immediate membership revocation. The first product-data slice is deployed
 to that isolated preview and its authenticated browser acceptance run passes.
 
-The runtime selector is a migration seam for whole-build comparison. It is not
-a permanent feature-flag system and does not select individual native features.
-After cutover, remove the Kitcn branch and the selector together.
+The former runtime selector was a migration seam for whole-build comparison,
+not a feature-flag system. PR #154 removed it together with the Kitcn application
+branch.
 
 ### September 21: real Kino organization integration passed
 
@@ -908,13 +1019,10 @@ permission regression tests, and performance measurements are engineering work.
 
 ## Current migration checklist
 
-This is the current ordered path from the isolated proof into Kino. Stages 1 and
-2 are complete, and the first Stage 3 product slice is implemented and deployed
-to the isolated preview. The native auth package is pinned, Kino-owned auth
-boundaries isolate the current provider, and the native core, password, GitHub,
-organization, project, and feedback functions run against a separate integration
-backend. Kino still defaults to the legacy backend and can select the native
-backend at build time with `VITE_AUTH_RUNTIME=native`.
+Stages 1 through 4 are complete in the native-only PR. Stage 5 now consists of
+final audit and release-candidate acceptance, production preparation, the
+authorized coordinated release, and post-release smoke testing. The detailed
+authoritative checklist is at the top of this document.
 
 ### Stage 1: architecture and risk proofs
 
@@ -944,9 +1052,9 @@ backend at build time with `VITE_AUTH_RUNTIME=native`.
       [the auth integration contract](native-convex-auth-contract.md).
 - [x] Install the exact v2 Git revision with a reproducible pnpm patch, upgrade
       the shared Convex runtime to 1.46, and verify the emitted patched runtime
-      during `verify:pr`. Kitcn's temporary peer override remains until removal.
-- [x] Add native Convex schema/function modules alongside the current Kitcn
-      runtime: `convex/native/` has a separate generated API and isolated local
+      during `verify:pr`.
+- [x] Add the native Convex schema/function modules and make them the root
+      application: `convex/native/` has a separate generated API and isolated local
       deployment. Core/password/GitHub mounts, JWT/profile reads and real WASM
       password checks pass. See [integration runbook](../integrations/native-convex/README.md).
 - [x] Wire the native request/session adapter into Kino's actual TanStack Start
@@ -1055,19 +1163,20 @@ complete legacy UI or file/publication-side-effect parity.
 
 ### Stage 5: cutover and removal
 
-- [ ] Compare equivalent current/native flows for cold and warm login, first
+- [x] Compare equivalent current/native flows for cold and warm login, first
       useful content, SSR, reads, and subscription activity at p50/p95.
 - [ ] Complete preview acceptance, browser coverage, failure rehearsal, and a
-      coordinated app/Convex/gateway rollback plan.
+      coordinated app/Convex/gateway release and recovery plan.
 
 The [partial rehearsal and full sequence](native-convex-cutover-rehearsal.md)
 record the pinned disposable app Worker rollback, the shared dev gateway's
 live state/rollback proof, and the remaining app/backend, data, and acceptance
 gates. The combined checkbox stays open.
 
-- [ ] Cut routes to the native implementation in reviewed batches.
-- [ ] Remove Kitcn ORM/cRPC/auth generation and Better Auth only after the last
-      dependent route, job, migration, and gateway path has moved.
+- [x] Cut application routes to the native implementation.
+- [x] Remove Kitcn ORM/cRPC/auth generation and the application's Better Auth
+      dependency. The gateway keeps its isolated legacy Better Auth proxy only
+      through the production acceptance window.
 - [ ] Run `pnpm run verify:pr`, deploy in the documented order, and repeat the
       production auth/data smoke tests.
 
@@ -1095,8 +1204,11 @@ rather than reasons to delay those application ports.
 ### 1. Close out GitHub provider behavior
 
 - [x] Record the sign-out/repeat-login result: Nate confirmed the same user ID.
-- [ ] Verify cancellation, expired state, and replay fail safely in the live flow.
-- [ ] Keep direct-provider success distinct from gateway/SSR success.
+- [x] Verify cancellation, expired state, tampering, and replay fail safely in
+      hosted gateway flows. Repeat this compact negative-flow check on the final
+      PR preview before release.
+- [x] Keep direct-provider success distinct from gateway/SSR success in the
+      recorded evidence.
 
 The basic real GitHub sign-in question is answered. Remaining checks improve
 coverage; they are not evidence that the initial sign-in was unconfirmed.
@@ -1160,10 +1272,11 @@ Known constraints at the pinned revision:
 - [ ] Broaden browser/lifecycle coverage: Safari/Firefox, actual OS sleep, back/forward cache, and longer concurrency stress.
 - [x] Prove loader prefetch + `useSuspenseQuery` + live subscription hydration
       against a real backend, including actual hover navigation.
-- [ ] Keep optional viewer data from blocking public content and the app shell.
+- [x] Keep optional viewer data from blocking public content and the app shell.
 - [x] Verify local workerd HTTPS behavior, Cloudflare bundle and matching-toolchain packaging dry-run.
 - [x] Verify GitHub cookie sessions, private SSR, reload, logout and repeat identity on an isolated deployed edge preview.
-- [ ] Align the eventual Kino app deployment toolchain; this proof uses the Vite plugin's matching bundled Wrangler.
+- [x] Align Kino's deployment toolchain on the root native Convex application,
+      Cloudflare Worker Previews, and the pinned Wrangler toolchain.
 
 The [session edge proof](../experiments/convex-auth-v2/start/SESSION-EDGES.md) found
 and fixed missing cross-tab invalidation in the app adapter. Credential-free
@@ -1194,14 +1307,16 @@ preview; production routing remains unchanged.
 
 - [x] Design isolated preview routing with signed state, exact target mappings and separate keys.
 - [x] Prove synchronized real GitHub OAuth through one gateway into two deployed previews, with ticket/JWT, user/data, cookie and logout isolation.
-- [ ] Integrate routing lifecycle with local sharing, preview provisioning, and production rollout.
+- [ ] Complete the production routing rollout. Local sharing and branch-preview
+      provisioning are integrated.
 - [x] Preserve exact origin trust, state/PKCE checks, and callback replay defenses.
-- [ ] Keep Kino Auth OAuth separate from Kino Relay installation/webhook flows.
+- [x] Keep Kino Auth OAuth separate from Kino Relay installation/webhook flows.
 - [x] Deploy and exercise the dev gateway with a matching integration preview.
 - [x] Capture an initial current/candidate sign-in-to-useful-content and protected
       reload comparison; the single-login and unequal-workload limits are recorded.
-- [ ] Measure public/protected SSR, hover navigation, backend calls, reads, and
-      subscription activity; compare p50/p95 under comparable conditions.
+- [x] Measure public/protected SSR, hover navigation, backend calls, reads, and
+      subscription activity. The same-component dashboard p50/p95 comparison and
+      its account/backend limitations are recorded above.
 
 An initial [deployed performance benchmark](../experiments/convex-auth-v2/performance/README.md)
 is recorded: 20 measured OAuth-initiation requests per target and ten native
@@ -1283,14 +1398,17 @@ or authorization. Helper choices remain subject to targeted tests and review.
 
 ## Before an integration PR or release
 
-- [ ] Convert the proven approach into a reviewed implementation plan.
+- [x] Convert the proven approach into a reviewed implementation plan and
+      native-only implementation PR.
 - [ ] Preserve or explicitly replace every inventoried behavior.
-- [ ] Run the existing and new permission/auth/data-integrity regression checks.
-- [ ] Run `pnpm run verify:pr` before opening/updating an application PR; review
+- [x] Run the existing and new permission/auth/data-integrity regression checks.
+- [x] Run `pnpm run verify:pr` before opening/updating the application PR; review
       generated changes and rerun if needed.
-- [ ] Validate the actual preview, including the separately deployed dev gateway.
+- [x] Validate the actual PR preview's native GitHub login and reload through the
+      separately deployed dev gateway. The broader acceptance pass remains above.
 - [ ] Reassess upstream v2 readiness and alpha upgrade limitations at launch time.
-- [ ] Prepare a coordinated app/Convex/gateway rollout and rollback procedure.
+- [ ] Prepare and review the coordinated app/Convex/Files/gateway release and
+      phase-specific rollback/forward-fix procedure.
 - [ ] Repeat deployment-level smoke tests after release.
 
 As work proceeds, update this document with evidence and dates. Keep outstanding

@@ -133,7 +133,7 @@ export function CommandPalette({
 		}),
 		enabled: mode !== 'commands' && !!projectSearchContext,
 	});
-	const projectId = projectQuery.data?.project?.id;
+	const projectId = projectQuery.data?.project.id;
 	const filesQuery = useQuery({
 		...filesAPI.file.listProjectFiles.queryOptions({
 			cursor: null,

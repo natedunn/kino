@@ -1,7 +1,7 @@
 import type { Doc, Id } from './_generated/dataModel';
 import type { MutationCtx, QueryCtx } from './_generated/server';
 
-import { paginationOptsValidator } from 'convex/server';
+import { paginationOptsValidator, paginationResultValidator } from 'convex/server';
 import { ConvexError, v } from 'convex/values';
 
 import { internal } from './_generated/api';
@@ -13,6 +13,92 @@ import { feedbackPriority, feedbackStatus, targetGranularity } from './schema';
 
 const MAX_COMMENT_EMOTES = 100;
 const DELETE_BATCH_SIZE = 100;
+const profileSummaryValidator = v.union(
+	v.null(),
+	v.object({
+		id: v.id('profiles'),
+		imageUrl: v.union(v.string(), v.null()),
+		name: v.string(),
+		username: v.string(),
+	})
+);
+const projectPermissionsValidator = v.object({
+	canView: v.boolean(),
+	canManageContent: v.boolean(),
+	canEditSettings: v.boolean(),
+	canManageAccess: v.boolean(),
+	canManageIntegrations: v.boolean(),
+	canDelete: v.boolean(),
+});
+const enrichedCommentValidator = v.object({
+	id: v.id('feedbackComments'),
+	creationTime: v.number(),
+	author: profileSummaryValidator,
+	canDelete: v.boolean(),
+	canEdit: v.boolean(),
+	content: v.string(),
+	emotes: v.array(
+		v.object({ content: v.string(), authorProfileIds: v.array(v.string()), count: v.number() })
+	),
+	initial: v.boolean(),
+	replyFeedbackCommentId: v.union(v.id('feedbackComments'), v.null()),
+	updatedTime: v.union(v.number(), v.null()),
+});
+const timelineItemValidator = v.union(
+	v.object({
+		type: v.literal('comment'),
+		creationTime: v.number(),
+		data: enrichedCommentValidator,
+	}),
+	v.object({
+		type: v.literal('event'),
+		creationTime: v.number(),
+		data: v.object({
+			id: v.id('feedbackEvents'),
+			actor: profileSummaryValidator,
+			eventType: v.union(
+				v.literal('status_changed'),
+				v.literal('priority_changed'),
+				v.literal('title_changed'),
+				v.literal('board_changed'),
+				v.literal('answer_marked'),
+				v.literal('answer_unmarked'),
+				v.literal('assigned'),
+				v.literal('unassigned')
+			),
+			metadata: v.union(
+				v.null(),
+				v.object({
+					oldValue: v.optional(v.string()),
+					newValue: v.optional(v.string()),
+					targetProfileId: v.optional(v.id('profiles')),
+				})
+			),
+		}),
+	})
+);
+const feedbackListItemValidator = v.object({
+	id: v.id('feedback'),
+	slug: v.string(),
+	title: v.string(),
+	status: feedbackStatus,
+	priority: feedbackPriority,
+	upvotes: v.number(),
+	hasUpvoted: v.boolean(),
+	firstComment: v.union(v.null(), v.object({ content: v.string() })),
+	board: v.object({
+		id: v.id('feedbackBoards'),
+		icon: v.union(v.string(), v.null()),
+		name: v.string(),
+		slug: v.string(),
+	}),
+});
+const relatedFeedbackValidator = v.object({
+	id: v.id('feedback'),
+	slug: v.string(),
+	status: feedbackStatus,
+	title: v.string(),
+});
 
 async function currentProfile(ctx: QueryCtx) {
 	const user = await requireCurrentUser(ctx);
@@ -157,6 +243,11 @@ export const create = mutation({
 		projectId: v.id('projects'),
 		title: v.string(),
 	},
+	returns: v.object({
+		feedbackCommentId: v.id('feedbackComments'),
+		feedbackId: v.id('feedback'),
+		slug: v.string(),
+	}),
 	handler: async (ctx, args) => {
 		const profile = await currentProfile(ctx);
 		const access = await requireProjectAccess(ctx, args.projectId);
@@ -202,6 +293,7 @@ export const list = query({
 		search: v.optional(v.string()),
 		paginationOpts: paginationOptsValidator,
 	},
+	returns: v.union(v.null(), paginationResultValidator(feedbackListItemValidator)),
 	handler: async (ctx, args) => {
 		const access = await resolveProjectAccess(ctx, args.projectId);
 		if (!access.project) return null;
@@ -289,6 +381,46 @@ export const list = query({
 
 export const getDetail = query({
 	args: { projectId: v.id('projects'), slug: v.string() },
+	returns: v.union(
+		v.null(),
+		v.object({
+			author: profileSummaryValidator,
+			board: v.union(
+				v.null(),
+				v.object({
+					id: v.id('feedbackBoards'),
+					icon: v.union(v.string(), v.null()),
+					name: v.string(),
+					slug: v.string(),
+				})
+			),
+			assignedProfile: profileSummaryValidator,
+			currentProfile: profileSummaryValidator,
+			feedback: v.object({
+				createdAt: v.number(),
+				id: v.id('feedback'),
+				answerCommentId: v.union(v.id('feedbackComments'), v.null()),
+				assignedProfileId: v.union(v.id('profiles'), v.null()),
+				boardId: v.id('feedbackBoards'),
+				priority: feedbackPriority,
+				slug: v.string(),
+				status: feedbackStatus,
+				tags: v.array(v.string()),
+				target: v.union(v.string(), v.null()),
+				targetGranularity: v.union(targetGranularity, v.null()),
+				title: v.string(),
+				upvotes: v.number(),
+			}),
+			firstComment: v.union(enrichedCommentValidator, v.null()),
+			following: v.boolean(),
+			hasUpvoted: v.boolean(),
+			permissions: projectPermissionsValidator,
+			related: v.array(relatedFeedbackValidator),
+			timeline: v.array(timelineItemValidator),
+			timelineCursor: v.union(v.string(), v.null()),
+			watchers: v.array(profileSummaryValidator),
+		})
+	),
 	handler: async (ctx, args) => {
 		const access = await resolveProjectAccess(ctx, args.projectId);
 		if (!access.project) return null;
@@ -418,6 +550,7 @@ export const getDetail = query({
 
 export const listTimelinePage = query({
 	args: { feedbackId: v.id('feedback'), paginationOpts: paginationOptsValidator },
+	returns: v.union(v.null(), paginationResultValidator(timelineItemValidator)),
 	handler: async (ctx, args) => {
 		const feedback = await ctx.db.get('feedback', args.feedbackId);
 		if (!feedback || !(await isFeedbackLive(ctx, feedback))) return null;
@@ -449,6 +582,7 @@ export const listTimelinePage = query({
 
 export const searchForLinking = query({
 	args: { projectId: v.id('projects'), search: v.string() },
+	returns: v.array(relatedFeedbackValidator),
 	handler: async (ctx, args) => {
 		const access = await resolveProjectAccess(ctx, args.projectId);
 		if (!access.project) return [];
@@ -479,6 +613,7 @@ export const searchForLinking = query({
 
 export const toggleUpvote = mutation({
 	args: { feedbackId: v.id('feedback') },
+	returns: v.object({ count: v.number(), upvoted: v.boolean() }),
 	handler: async (ctx, { feedbackId }) => {
 		const { feedback, profile } = await feedbackWriteAccess(ctx, feedbackId);
 		const existing = await ctx.db
@@ -609,6 +744,14 @@ async function canBeAssigned(ctx: QueryCtx, project: Doc<'projects'>, profile: D
 
 export const listAssignableProfiles = query({
 	args: { projectId: v.id('projects') },
+	returns: v.array(
+		v.object({
+			id: v.id('profiles'),
+			imageUrl: v.union(v.string(), v.null()),
+			name: v.string(),
+			username: v.string(),
+		})
+	),
 	handler: async (ctx, { projectId }) => {
 		const access = await resolveProjectAccess(ctx, projectId);
 		if (!access.project || !access.permissions.canManageContent) return [];
@@ -727,6 +870,7 @@ export const setAnswerComment = mutation({
 
 export const toggleFollow = mutation({
 	args: { feedbackId: v.id('feedback') },
+	returns: v.object({ following: v.boolean() }),
 	handler: async (ctx, { feedbackId }) => {
 		const { feedback, profile } = await feedbackWriteAccess(ctx, feedbackId);
 		const existing = await ctx.db

@@ -147,13 +147,13 @@ function ProjectGeneralSettingsRoute() {
 			description: project?.description ?? '',
 			name: project?.name ?? '',
 			slug: project?.slug ?? '',
-			updatesFeaturedMode: (project?.updatesFeaturedMode ?? 'latest') as UpdatesFeaturedMode,
+			updatesFeaturedMode: project?.updatesFeaturedMode ?? 'latest',
 			urls: initialUrls.map((entry) => ({
 				source: entry.source ?? undefined,
 				text: entry.text,
 				url: entry.url,
 			})),
-			visibility: (project?.visibility ?? 'public') as ProjectVisibility,
+			visibility: project?.visibility ?? 'public',
 		} satisfies GeneralSettingsFormValues,
 		onSubmit: async ({ value, formApi }) => {
 			if (!project) return;

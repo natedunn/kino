@@ -154,10 +154,11 @@ function UpdatesDashboard({ canDelete, pageSize }: { canDelete: boolean; pageSiz
 		})
 	);
 
-	const projectId = projectData?.project?.id;
-	if (!projectId) {
+	const project = projectData?.project;
+	if (!project) {
 		throw notFound();
 	}
+	const projectId = project.id;
 
 	const [pagination, setPagination] = useState({
 		pageIndex: 0,

@@ -10,9 +10,10 @@ import { configureTestAuth, issuer } from '../testing/setup.testing';
 import schema from './schema';
 
 const modules = import.meta.glob(['./**/*.ts', '!./**/*.test.ts', '!./**/*.testing.ts']);
+const generatedAt = Date.UTC(2026, 8, 22);
 const exportData = makeFunctionReference<
 	'query',
-	{ sections?: Array<'comments'> },
+	{ generatedAt: number; sections?: Array<'comments'> },
 	{
 		format: 'kino-user-data-export';
 		version: number;
@@ -176,14 +177,15 @@ describe('native user data export', () => {
 	test('requires the signed-in current user for sections and exports', async () => {
 		const t = setup();
 		await expect(t.query(getAvailableSections, {})).rejects.toThrow('UNAUTHORIZED');
-		await expect(t.query(exportData, {})).rejects.toThrow('UNAUTHORIZED');
+		await expect(t.query(exportData, { generatedAt })).rejects.toThrow('UNAUTHORIZED');
 
 		const user = await addUser(t, 'Owner');
 		expect(await user.caller.query(getAvailableSections, {})).toEqual([
 			expect.objectContaining({ id: 'comments', includedByDefault: true }),
 		]);
-		const result = await user.caller.query(exportData, { sections: [] });
+		const result = await user.caller.query(exportData, { generatedAt, sections: [] });
 		expect(result.sections).toEqual({});
+		expect(result.generatedAt).toBe(new Date(generatedAt).toISOString());
 		expect(result.account).toEqual({
 			userId: user.userId,
 			profileId: user.profileId,
@@ -215,7 +217,7 @@ describe('native user data export', () => {
 			content: 'Looks good',
 		});
 
-		const result = await owner.caller.query(exportData, {});
+		const result = await owner.caller.query(exportData, { generatedAt });
 		const comments = result.sections.comments!;
 		expect(comments.counts).toEqual({ feedbackComments: 1, updateComments: 1, total: 2 });
 		expect(comments.feedbackComments[0]).toMatchObject({
@@ -257,7 +259,7 @@ describe('native user data export', () => {
 			status: 'draft',
 		});
 
-		const comments = (await author.caller.query(exportData, {})).sections.comments!;
+		const comments = (await author.caller.query(exportData, { generatedAt })).sections.comments!;
 		expect(comments.feedbackComments[0].context).toMatchObject({
 			contextAccess: 'inaccessible',
 			projectId: project.projectId,
@@ -288,7 +290,7 @@ describe('native user data export', () => {
 			await ctx.db.patch('updates', tombstoned.updateId, { deletingAt: Date.now() });
 		});
 
-		const comments = (await owner.caller.query(exportData, {})).sections.comments!;
+		const comments = (await owner.caller.query(exportData, { generatedAt })).sections.comments!;
 		expect(comments.feedbackComments[0].context).toEqual({
 			contextAccess: 'missing',
 			feedbackId: deleted.feedbackId,
@@ -299,7 +301,7 @@ describe('native user data export', () => {
 		});
 	});
 
-	test('rejects a source over 750 comments before resolving contexts', async () => {
+	test('rejects a source over 200 comments before resolving contexts', async () => {
 		const t = setup();
 		const owner = await addUser(t, 'Owner');
 		const project = await addProject(t, owner.userId);
@@ -310,7 +312,7 @@ describe('native user data export', () => {
 			content: 'First',
 		});
 		await t.run(async (ctx) => {
-			for (let index = 1; index <= 750; index += 1) {
+			for (let index = 1; index <= 200; index += 1) {
 				await ctx.db.insert('feedbackComments', {
 					feedbackId: parent.feedbackId,
 					authorProfileId: owner.profileId,
@@ -319,7 +321,7 @@ describe('native user data export', () => {
 				});
 			}
 		});
-		await expect(owner.caller.query(exportData, {})).rejects.toThrow(
+		await expect(owner.caller.query(exportData, { generatedAt })).rejects.toThrow(
 			/comments export is too large/i
 		);
 	});
@@ -334,7 +336,7 @@ describe('native user data export', () => {
 			content: 'x'.repeat(901_000),
 		});
 
-		await expect(owner.caller.query(exportData, {})).rejects.toThrow(
+		await expect(owner.caller.query(exportData, { generatedAt })).rejects.toThrow(
 			/Your export is too large for immediate download/i
 		);
 	});

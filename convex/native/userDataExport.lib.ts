@@ -9,7 +9,10 @@ import { isFeedbackLive } from './feedbackLifecycle';
 export const EXPORT_FORMAT = 'kino-user-data-export' as const;
 export const EXPORT_VERSION = 1;
 export const COMMENTS_SECTION_VERSION = 1;
-export const MAX_COMMENTS_PER_SOURCE = 750;
+// Context resolution performs several indexed/document reads per comment inside
+// one query transaction. Keep synchronous exports comfortably below Convex's
+// read limits until large exports move to an asynchronous job.
+export const MAX_COMMENTS_PER_SOURCE = 200;
 export const MAX_EXPORT_BYTES = 900_000;
 
 export const exportSectionIds = ['comments'] as const;

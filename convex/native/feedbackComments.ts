@@ -3,7 +3,8 @@ import type { QueryCtx } from './_generated/server';
 
 import { ConvexError, v } from 'convex/values';
 
-import { mutation } from './_generated/server';
+import { internal } from './_generated/api';
+import { internalMutation, mutation } from './_generated/server';
 import { assertProjectWritable, requireProjectAccess } from './access';
 import { isFeedbackLive } from './feedbackLifecycle';
 import { requireCurrentUser } from './identity';
@@ -31,6 +32,7 @@ export const create = mutation({
 		content: v.string(),
 		replyFeedbackCommentId: v.optional(v.id('feedbackComments')),
 	},
+	returns: v.object({ id: v.id('feedbackComments') }),
 	handler: async (ctx, args) => {
 		const [profile, { feedback }] = await Promise.all([
 			profileForWrite(ctx),
@@ -97,32 +99,41 @@ export const remove = mutation({
 		if (comment.authorProfileId !== profile._id && !access.permissions.canManageContent)
 			throw new ConvexError('FORBIDDEN');
 
-		const [emotes, replies, timelineEntries] = await Promise.all([
-			ctx.db
-				.query('feedbackCommentEmotes')
-				.withIndex('by_feedbackCommentId', (q) => q.eq('feedbackCommentId', commentId))
-				.take(101),
-			ctx.db
-				.query('feedbackComments')
-				.withIndex('by_replyFeedbackCommentId', (q) => q.eq('replyFeedbackCommentId', commentId))
-				.take(101),
-			ctx.db
-				.query('feedbackTimelineEntries')
-				.withIndex('by_commentId', (q) => q.eq('commentId', commentId))
-				.take(101),
-		]);
-		if (emotes.length > 100 || replies.length > 100 || timelineEntries.length > 100)
-			throw new ConvexError('CASCADE_TOO_LARGE');
-		for (const emote of emotes) await ctx.db.delete('feedbackCommentEmotes', emote._id);
-		for (const entry of timelineEntries) await ctx.db.delete('feedbackTimelineEntries', entry._id);
-		for (const reply of replies)
-			await ctx.db.patch('feedbackComments', reply._id, { replyFeedbackCommentId: undefined });
 		if (feedback.answerCommentId === commentId)
 			await ctx.db.patch('feedback', feedback._id, {
 				answerCommentId: undefined,
 				updatedAt: Date.now(),
 			});
 		await ctx.db.delete('feedbackComments', commentId);
+		await ctx.scheduler.runAfter(0, internal.feedbackComments.cleanComment, { commentId });
+		return null;
+	},
+});
+
+export const cleanComment = internalMutation({
+	args: { commentId: v.id('feedbackComments') },
+	returns: v.null(),
+	handler: async (ctx, { commentId }) => {
+		const [emotes, replies, timelineEntries] = await Promise.all([
+			ctx.db
+				.query('feedbackCommentEmotes')
+				.withIndex('by_feedbackCommentId', (q) => q.eq('feedbackCommentId', commentId))
+				.take(100),
+			ctx.db
+				.query('feedbackComments')
+				.withIndex('by_replyFeedbackCommentId', (q) => q.eq('replyFeedbackCommentId', commentId))
+				.take(100),
+			ctx.db
+				.query('feedbackTimelineEntries')
+				.withIndex('by_commentId', (q) => q.eq('commentId', commentId))
+				.take(100),
+		]);
+		for (const emote of emotes) await ctx.db.delete('feedbackCommentEmotes', emote._id);
+		for (const entry of timelineEntries) await ctx.db.delete('feedbackTimelineEntries', entry._id);
+		for (const reply of replies)
+			await ctx.db.patch('feedbackComments', reply._id, { replyFeedbackCommentId: undefined });
+		if (emotes.length === 100 || replies.length === 100 || timelineEntries.length === 100)
+			await ctx.scheduler.runAfter(0, internal.feedbackComments.cleanComment, { commentId });
 		return null;
 	},
 });
@@ -133,6 +144,7 @@ export const toggleEmote = mutation({
 		feedbackCommentId: v.id('feedbackComments'),
 		content: v.string(),
 	},
+	returns: v.object({ action: v.union(v.literal('added'), v.literal('removed')) }),
 	handler: async (ctx, args) => {
 		const [profile, { feedback }] = await Promise.all([
 			profileForWrite(ctx),

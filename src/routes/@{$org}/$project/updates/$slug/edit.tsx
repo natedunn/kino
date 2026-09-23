@@ -71,7 +71,7 @@ export const Route = createFileRoute('/@{$org}/$project/updates/$slug/edit')({
 			})
 		);
 
-		if (!projectData?.project?.id) {
+		if (!projectData?.project.id) {
 			throw notFound();
 		}
 
@@ -132,7 +132,7 @@ function EditUpdateRoute() {
 	const updateQuery = useQuery(
 		crpc.update.getBySlug.queryOptions(
 			{
-				projectId: projectQuery.data?.project?.id ?? '',
+				projectId: projectQuery.data?.project.id ?? '',
 				slug: params.slug,
 			},
 			{ enabled: !!projectQuery.data?.project }
@@ -394,7 +394,7 @@ function EditUpdateRoute() {
 									{(field) => (
 										<FeaturedField
 											checked={field.state.value}
-											mode={project.updatesFeaturedMode ?? 'latest'}
+											mode={project.updatesFeaturedMode}
 											onChange={(checked) => field.handleChange(checked)}
 										/>
 									)}

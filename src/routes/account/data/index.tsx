@@ -139,6 +139,7 @@ function AuthenticatedDataRoute() {
 		setIsExporting(true);
 		try {
 			const exportDocument = await api.userDataExport.exportData.query({
+				generatedAt: Date.now(),
 				sections: activeSectionIds,
 			});
 			capturePostHogEvent(

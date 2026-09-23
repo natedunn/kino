@@ -226,11 +226,15 @@ describe('native organization authorization', () => {
 			role: 'admin',
 			projectIds: [],
 		});
-		expect(await s.admin.caller.query(api.invitations.inspect, { invitationId })).toMatchObject({
+		expect(
+			await s.admin.caller.query(api.invitations.inspect, { invitationId, now: Date.now() })
+		).toMatchObject({
 			state: 'pending',
 			organizationSlug: 'acme',
 		});
-		expect(await s.outsider.caller.query(api.invitations.inspect, { invitationId })).toEqual({
+		expect(
+			await s.outsider.caller.query(api.invitations.inspect, { invitationId, now: Date.now() })
+		).toEqual({
 			state: 'wrong_account',
 		});
 		await expect(

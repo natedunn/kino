@@ -307,6 +307,69 @@ describe('native project feedback vertical slice', () => {
 		});
 	});
 
+	test('deletes popular comments and drains their descendants in bounded batches', async () => {
+		const s = await fixture();
+		const created = await s.owner.caller.mutation(api.feedback.create, {
+			boardId: s.boards[0].id,
+			firstComment: '<p>Initial</p>',
+			projectId: s.projectId,
+			title: 'Popular comment',
+		});
+		const comment = await s.owner.caller.mutation(api.feedbackComments.create, {
+			feedbackId: created.feedbackId,
+			content: '<p>Remove me</p>',
+		});
+		await s.t.run(async (ctx) => {
+			await ctx.db.patch('feedback', created.feedbackId, { answerCommentId: comment.id });
+			for (let index = 0; index < 105; index += 1) {
+				await ctx.db.insert('feedbackCommentEmotes', {
+					feedbackId: created.feedbackId,
+					feedbackCommentId: comment.id,
+					authorProfileId: s.owner.profileId,
+					content: `reaction-${index}`,
+					updatedAt: index,
+				});
+				await ctx.db.insert('feedbackComments', {
+					feedbackId: created.feedbackId,
+					authorProfileId: s.owner.profileId,
+					content: `<p>Reply ${index}</p>`,
+					initial: false,
+					replyFeedbackCommentId: comment.id,
+				});
+				await ctx.db.insert('feedbackTimelineEntries', {
+					feedbackId: created.feedbackId,
+					kind: 'comment',
+					commentId: comment.id,
+				});
+			}
+		});
+
+		vi.useFakeTimers();
+		await s.owner.caller.mutation(api.feedbackComments.remove, { commentId: comment.id });
+		expect(await s.t.run((ctx) => ctx.db.get('feedbackComments', comment.id))).toBeNull();
+		expect(
+			(await s.t.run((ctx) => ctx.db.get('feedback', created.feedbackId)))?.answerCommentId
+		).toBe(undefined);
+		await s.t.finishAllScheduledFunctions(vi.runAllTimers);
+		vi.useRealTimers();
+
+		const remaining = await s.t.run(async (ctx) => ({
+			emotes: await ctx.db
+				.query('feedbackCommentEmotes')
+				.withIndex('by_feedbackCommentId', (q) => q.eq('feedbackCommentId', comment.id))
+				.collect(),
+			replies: await ctx.db
+				.query('feedbackComments')
+				.withIndex('by_replyFeedbackCommentId', (q) => q.eq('replyFeedbackCommentId', comment.id))
+				.collect(),
+			timeline: await ctx.db
+				.query('feedbackTimelineEntries')
+				.withIndex('by_commentId', (q) => q.eq('commentId', comment.id))
+				.collect(),
+		}));
+		expect(remaining).toEqual({ emotes: [], replies: [], timeline: [] });
+	});
+
 	test('revocation and archive state stop every feedback write on the next transaction', async () => {
 		const s = await fixture();
 		await directMember(s, s.member.userId);

@@ -123,7 +123,7 @@ export const getAvailableSections = query({
 });
 
 export const exportData = query({
-	args: { sections: v.optional(v.array(sectionId)) },
+	args: { generatedAt: v.number(), sections: v.optional(v.array(sectionId)) },
 	returns: v.object({
 		format: v.literal(EXPORT_FORMAT),
 		version: v.number(),
@@ -150,7 +150,7 @@ export const exportData = query({
 		const exportDocument = {
 			format: EXPORT_FORMAT,
 			version: EXPORT_VERSION,
-			generatedAt: new Date().toISOString(),
+			generatedAt: new Date(args.generatedAt).toISOString(),
 			account: {
 				userId: user._id,
 				profileId: profile._id,

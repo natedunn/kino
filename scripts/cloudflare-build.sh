@@ -10,6 +10,31 @@ branch="${branch:-local}"
 production_branch="${PRODUCTION_BRANCH:-main}"
 build_cmd='sh scripts/cloudflare-vite-build.sh'
 
+validate_native_github_credentials() {
+  deployment_selector="$1"
+  deployment_label="$2"
+  if [ -n "$deployment_selector" ]; then
+    github_client_id="$(npx convex env get AUTH_GITHUB_CLIENT_ID --deployment "$deployment_selector")"
+    github_client_secret="$(npx convex env get AUTH_GITHUB_CLIENT_SECRET --deployment "$deployment_selector")"
+  else
+    github_client_id="$(npx convex env get AUTH_GITHUB_CLIENT_ID)"
+    github_client_secret="$(npx convex env get AUTH_GITHUB_CLIENT_SECRET)"
+  fi
+  case "$github_client_id" in
+    '' | local-not-configured | placeholder | changeme)
+      echo "Convex $deployment_label GitHub OAuth client ID is missing or a placeholder." >&2
+      exit 1
+      ;;
+  esac
+  case "$github_client_secret" in
+    '' | local-not-configured | placeholder | changeme)
+      echo "Convex $deployment_label GitHub OAuth client secret is missing or a placeholder." >&2
+      exit 1
+      ;;
+  esac
+  unset github_client_id github_client_secret
+}
+
 convex_preview_name="$(sh scripts/preview-name.sh "$branch" 48)"
 cloudflare_alias="$(sh scripts/preview-name.sh "$branch" 40)"
 
@@ -95,6 +120,7 @@ if [ "$branch" = "$production_branch" ]; then
   # exact deployment before Convex validates the declared environment.
   npx convex env set AUTH_APP_ORIGIN "$VITE_SITE_URL"
   npx convex env set AUTH_GITHUB_CALLBACK_URL "$NATIVE_GITHUB_GATEWAY_URL"
+  validate_native_github_credentials '' production
   # This Cloudflare "build" step intentionally deploys Convex as a prerequisite
   # for the Worker deploy that runs later in `scripts/cloudflare-deploy.sh`.
   # That means one Workers Builds job has two deploy phases:
@@ -137,14 +163,7 @@ else
   fi
   npx convex env set --deployment "$preview_selector" AUTH_APP_ORIGIN "$VITE_SITE_URL"
   npx convex env set --deployment "$preview_selector" AUTH_GITHUB_CALLBACK_URL "$NATIVE_GITHUB_GATEWAY_URL"
-  preview_github_client_id="$(npx convex env get AUTH_GITHUB_CLIENT_ID --deployment "$preview_selector")"
-  preview_github_client_secret="$(npx convex env get AUTH_GITHUB_CLIENT_SECRET --deployment "$preview_selector")"
-  if [ -z "$preview_github_client_id" ] || [ "$preview_github_client_id" = 'local-not-configured' ] || \
-    [ -z "$preview_github_client_secret" ] || [ "$preview_github_client_secret" = 'local-not-configured' ]; then
-    echo "Convex preview GitHub OAuth credentials are missing or placeholders." >&2
-    exit 1
-  fi
-  unset preview_github_client_id preview_github_client_secret
+  validate_native_github_credentials "$preview_selector" preview
   # This pinned Convex CLI accepts --deployment for env commands, but deploy
   # selects previews through a preview deploy key plus --preview-name.
   unset CONVEX_OVERRIDE_ACCESS_TOKEN

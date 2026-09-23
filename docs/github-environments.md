@@ -12,7 +12,7 @@ Three things, three names — used consistently in env vars, URLs, code, docs:
 
 | Name                   | What it is                                                     | Env prefix       |
 | ---------------------- | -------------------------------------------------------------- | ---------------- |
-| **Kino Auth** (+ Dev)  | GitHub **OAuth app** — user login via Better Auth              | `GITHUB_AUTH_*`  |
+| **Kino Auth** (+ Dev)  | GitHub **OAuth app** — native Convex Auth user login           | `GITHUB_AUTH_*`  |
 | **Kino Relay** (+ Dev) | **GitHub App** — org/repo sync, installations, webhooks        | `GITHUB_RELAY_*` |
 | **Gateway**            | Per-tier Cloudflare Worker owning the stable URLs GitHub needs | `GATEWAY_*`      |
 
@@ -38,8 +38,8 @@ GitHub (tier registrations)
   │ callbacks / webhook (single stable URLs)
   ▼
 gateway[-dev].usekino.com          (workers/gateway, deployed via wrangler)
-  ├─ /api/auth/*                   Better Auth oAuthProxy production leg
-  │                                  └─ redirect rewritten to the app origin
+  ├─ /api/auth/*                   Temporary Better Auth rollback proxy
+  │                                  └─ redirect rewritten to the legacy app origin
   ├─ /oauth/state                 Native Convex Auth signed-state registration
   ├─ /oauth/github/callback       Native GitHub return via single-use state
   ├─ /github-relay/oauth-callback  Kino Relay signed-state trampoline
@@ -56,36 +56,33 @@ registration. `pnpm dev:share` temporarily tunnels the app plus the local
 Convex cloud/site endpoints and registers only that session's exact app and
 site origins in the dev gateway.
 
-## Login flow (identical in every environment)
+## Native login flow
 
-1. App env starts sign-in. The `oAuthProxy` plugin (configured in
-   `convex/functions/auth.ts`) rewrites GitHub's `redirect_uri` to the tier
-   gateway, taken from `OAUTH_PROXY_PRODUCTION_URL`.
-2. GitHub redirects to the gateway. Its better-auth instance
-   (`workers/gateway/src/auth.ts`) decrypts the proxy state with the shared
-   tier `OAUTH_PROXY_SECRET`, exchanges the code, fetches the profile,
-   encrypts it, and 302s toward the originating env's
-   `/api/auth/oauth-proxy-callback`.
-3. **`workers/gateway/src/redirect-rewrite.ts` rewrites that redirect's host**
-   from the env's convex.site URL to the app origin embedded in the inner
-   `callbackURL` (validated against `TRUSTED_TARGET_PATTERNS` or an active,
-   exact dev share-origin registration). Without this
-   the session cookies land on `*.convex.site` and the user stays logged out —
-   see Invariant 2.
-4. The app origin proxies `/api/auth/*` to its Convex deployment
-   (`src/lib/convex/auth-server.ts`), which creates the session and sets
+1. The Start Worker asks its native Convex deployment to begin GitHub OAuth,
+   preserving the provider state in a short-lived HttpOnly cookie.
+2. The Start Worker signs that provider state with the deployment's fixed or
+   branch-derived route ID and route secret, then registers the envelope at
+   `POST /oauth/state`.
+3. The gateway stores the envelope
+   in a ten-minute SQLite Durable Object and sends GitHub a 43-character opaque
+   reference.
+4. GitHub returns to `GET /oauth/github/callback`. The gateway consumes the
+   reference once, forwards only the callback fields to the exact native Convex
+   site URL, and permits a redirect only to the exact registered Start callback.
+5. The Start callback completes the native session and sets secure HttpOnly
    cookies on the app origin.
 
-The native Convex Auth path is separate during migration. Its Start Worker
-registers a signed route envelope at `POST /oauth/state`; the gateway stores it
-in a ten-minute SQLite Durable Object and sends GitHub a 43-character opaque
-reference. `GET /oauth/github/callback` consumes that reference once, forwards
-only the callback fields to the exact native Convex site URL, and permits a
-redirect only to the exact registered Start callback. The current production
-Kino Auth registration still points at `/api/auth/callback/github`; native
-login needs a separate OAuth registration or a coordinated callback change.
-The shared dev gateway now supports both protocols; its proof route registry
-does not itself reconfigure an app or GitHub registration.
+Production uses a fixed static route in `NATIVE_GITHUB_ROUTES`. Dev previews
+use the authenticated, expiring route registry. The current production Kino Auth
+registration remains on the legacy `/api/auth/callback/github` path until the
+coordinated cutover changes it to `/oauth/github/callback`.
+
+### Temporary legacy rollback flow
+
+The gateway retains `/api/auth/*`, its pinned Better Auth proxy, and the
+load-bearing redirect rewrite during the production acceptance window. These
+exist only to recover the prelaunch app before native writes are accepted. They
+are not dependencies of the native Kino application.
 
 ## Webhook flow
 
@@ -93,10 +90,10 @@ does not itself reconfigure an app or GitHub registration.
 2. The gateway verifies `X-Hub-Signature-256` against the tier
    `GITHUB_RELAY_WEBHOOK_SECRET`, then forwards the **raw body with the
    original signature** to every registered target (`workers/gateway/src/hooks.ts`).
-3. Each target (`POST /api/github/webhook`, `convex/functions/githubRoutes.ts`)
+3. Each target (`POST /api/github/webhook`, `convex/native/http.ts`)
    re-verifies the HMAC, dedupes on `X-GitHub-Delivery` (the
    `githubWebhookDelivery` table), and dispatches by event type in
-   `processWebhookEvent` (`convex/functions/github.ts`). Receiving events for
+   the native Relay functions. Receiving events for
    unknown installations is **normal** under the broadcast model — record and
    ignore, never error.
 4. Target registration is automatic and best-effort (missing env = silent
@@ -134,15 +131,15 @@ To add sync features (issues/discussions): extend the dispatch in
    Redeployment preserves the object namespace, but an in-flight login must
    restart if its route/key is removed or its callback cannot be handled by the
    new version. Do not assume a Worker rollback restores object data.
-5. **No environment special-casing in app code.** Production is just another
-   environment behind its gateway. `OAUTH_PROXY_PRODUCTION_URL` must be set
-   explicitly per environment (no default — a wrong fallback sends GitHub a
-   `redirect_uri` it rejects, which breaks login with a misleading GitHub-side
-   error).
-6. **Secrets are shared within a tier, never across tiers.**
-   `OAUTH_PROXY_SECRET`, `GITHUB_RELAY_STATE_SECRET`, and
-   `GITHUB_RELAY_WEBHOOK_SECRET` must be identical between a tier's gateway
-   and its app deployments.
+5. **No environment special-casing in app code.** Production is another exact
+   route behind its gateway. Native callback, route ID, route key, Convex site,
+   and app origin must all describe the same environment. The legacy
+   `OAUTH_PROXY_PRODUCTION_URL` remains explicit only while the rollback proxy
+   exists.
+6. **Secrets are shared within a tier, never across tiers.** A native route key
+   must match only its Start Worker and gateway route. Relay state/webhook
+   secrets must match the tier's gateway and native Convex deployment. The
+   legacy `OAUTH_PROXY_SECRET` remains tier-scoped only during rollback support.
 7. **Target trust stays exact or deliberately patterned.**
    `TRUSTED_TARGET_PATTERNS` is the static allowlist for auth redirects and
    webhook targets. The dev-only `/dev/share-origins` registry adds exact
@@ -219,7 +216,7 @@ curl -H "Authorization: Bearer $GATEWAY_ADMIN_TOKEN" https://gateway-dev.usekino
 
 ## Environment variable reference
 
-### App (Convex deployments: dev, preview defaults, prod)
+### Native app (Convex deployments: dev, preview defaults, prod)
 
 The native backend requires these values on every target before deployment:
 `AUTH_PRIVATE_KEY`, `AUTH_JWKS`, `AUTH_GITHUB_CLIENT_ID`,
@@ -233,14 +230,17 @@ point at the wrong app.
 
 | Var                                                                                                                            | Meaning                                                                |
 | ------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------- |
-| `GITHUB_AUTH_CLIENT_ID` / `GITHUB_AUTH_CLIENT_SECRET`                                                                          | tier Kino Auth OAuth app                                               |
+| `AUTH_GITHUB_CLIENT_ID` / `AUTH_GITHUB_CLIENT_SECRET`                                                                          | tier Kino Auth OAuth app used by native Convex Auth                    |
 | `GITHUB_RELAY_APP_ID`, `GITHUB_RELAY_CLIENT_ID`, `GITHUB_RELAY_CLIENT_SECRET`, `GITHUB_RELAY_PRIVATE_KEY`, `GITHUB_RELAY_SLUG` | tier Kino Relay app                                                    |
 | `GITHUB_RELAY_STATE_SECRET`                                                                                                    | HMAC for the install trampoline's signed state (required, no fallback) |
 | `GITHUB_RELAY_WEBHOOK_SECRET`                                                                                                  | webhook HMAC                                                           |
 | `GITHUB_RELAY_CALLBACK_TARGET_URL`                                                                                             | optional explicit install-callback target override                     |
-| `OAUTH_PROXY_SECRET`                                                                                                           | shared tier secret for proxy state/profile encryption                  |
-| `OAUTH_PROXY_PRODUCTION_URL`                                                                                                   | the tier gateway origin (required for the proxy to mount)              |
+| `NATIVE_GITHUB_GATEWAY_URL` / route ID / route secret                                                                          | Start Worker native OAuth routing; route secret is a Worker secret     |
 | `AUTH_DEBUG=1`                                                                                                                 | (app Worker) opt-in structured auth flow logging                       |
+
+The production gateway also retains `GITHUB_AUTH_CLIENT_ID`,
+`GITHUB_AUTH_CLIENT_SECRET`, `OAUTH_PROXY_SECRET`, and
+`OAUTH_PROXY_PRODUCTION_URL` while the legacy rollback proxy is available.
 
 Convex preview deployments inherit values from the dashboard's preview default
 env vars — note these apply **at deployment creation**, not retroactively.
@@ -257,6 +257,7 @@ env vars — note these apply **at deployment creation**, not retroactively.
 | `NATIVE_GITHUB_GATEWAY_URL_PREVIEW` / `_PRODUCTION`         | Workers Builds env    | exact native `/oauth/github/callback` URL                               |
 | `NATIVE_GITHUB_ROUTE_ID_PRODUCTION`                         | Workers Builds env    | fixed production opaque-state route ID                                  |
 | `NATIVE_GITHUB_ROUTE_SECRET_PREVIEW` / `_PRODUCTION`        | Workers Builds secret | opaque-state route signing secret for the tier                          |
+| `CONVEX_PROD_DEPLOY_KEY`                                    | Workers Builds secret | distinct native production deployment key                               |
 | `CONVEX_MANAGEMENT_TOKEN`                                   | Workers Builds secret | management token used to create/reuse and provision branch previews     |
 | `CONVEX_PREVIEW_DEPLOY_KEY`                                 | Workers Builds secret | project preview key used by `convex deploy --preview-name`              |
 | `CONVEX_TEAM_SLUG` / `CONVEX_PROJECT_SLUG`                  | Workers Builds env    | exact project selector used by preview provisioning                     |
@@ -293,6 +294,14 @@ declared in `wrangler.jsonc` under `previews.vars`, and the build supplies its
 signing key through `--secrets-file`. Preview settings do not inherit production
 settings.
 
+Production uses `wrangler deploy --keep-vars`. The suffixed Workers Builds
+values are build inputs and validation; they do not create runtime bindings on
+the deployed `kino` Worker. Before release, separately set and verify runtime
+`NATIVE_GITHUB_GATEWAY_URL`, `NATIVE_GITHUB_ROUTE_ID`, and secret
+`NATIVE_GITHUB_ROUTE_SECRET` on that Worker. The production gateway's static
+`NATIVE_GITHUB_ROUTES` entry must use the same route ID/key and exact native
+Convex/app callbacks.
+
 Set the preview defaults for `AUTH_PRIVATE_KEY`, `AUTH_JWKS`,
 `AUTH_GITHUB_CLIENT_ID`, and `AUTH_GITHUB_CLIENT_SECRET` before enabling the
 build. `AUTH_GITHUB_CALLBACK_URL` may also have the dev gateway value as a
@@ -309,7 +318,10 @@ the endpoint is absent. Never add the variable to production.
 
 ### GitHub registration settings (per tier)
 
-OAuth app (login): callback `https://<gateway>/api/auth/callback/github`.
+OAuth app (native login): callback `https://<gateway>/oauth/github/callback`.
+Before cutover, production still uses the rollback callback
+`https://<gateway>/api/auth/callback/github`; change it only at the coordinated
+release point.
 GitHub App (sync): callback `https://<gateway>/github-relay/oauth-callback`;
 webhook `https://<gateway>/hooks/github` with the tier webhook secret;
 permissions Issues R/W, Discussions R/W, Metadata R; events Issues, Issue
@@ -322,13 +334,14 @@ webhook URLs on **both** apps — a stale webhook URL fails with GitHub's
 ### Standing up a new tier
 
 1. Register a new Kino Auth + Kino Relay pair pointing at the new gateway
-   hostname.
+   hostname. Use `/oauth/github/callback` for native Kino Auth.
 2. Create `workers/gateway/secrets.<tier>.local` (5× `openssl rand -hex 32`
    for the shared secrets/tokens + the GitHub creds), add an env block to
    `wrangler.jsonc` (name, custom domain, `GATEWAY_ORIGIN`,
    `TRUSTED_TARGET_PATTERNS`, KV namespace via
    `wrangler kv namespace create TARGETS --env <tier>`).
-3. `wrangler secret put` the seven secrets; deploy; `curl /health`.
+3. `wrangler secret put` the gateway secrets, including a static production
+   `NATIVE_GITHUB_ROUTES` mapping when applicable; deploy; `curl /health`.
 4. Point the tier's Convex deployments at it (env table above).
 
 ### Rotating a shared secret
@@ -359,26 +372,28 @@ release before it changes Convex. This check does not deploy the gateway.
 
 ### Rollout order (including first installation of this gate)
 
-1. When the legacy proxy dependency changes, update the gateway's package pin
-   and standalone lockfile. Install it with `pnpm --dir workers/gateway install
---frozen-lockfile`; run its typecheck and tests. Native app dependencies do
-   not participate in this pin.
-2. Deploy the gateway from the reviewed commit to the dev tier first, then check
-   it from the repository root:
+1. Install the standalone gateway package with
+   `pnpm --dir workers/gateway install --frozen-lockfile`; run its typecheck and
+   tests. Native app dependencies do not participate in the legacy proxy pin.
+2. Deploy the reviewed gateway to dev first, then check:
    `node scripts/check-gateway-auth-version.mjs https://gateway-dev.usekino.com`.
-   For the first rollout, old gateways lack the version field and intentionally
-   fail the check until this gateway code is deployed. Deploying the dev gateway
-   from the PR branch lets the preview build pass before merge.
 3. Exercise native GitHub login on a matching app preview through
    `/oauth/github/callback`, session creation, and a protected page. Synthetic
    callback tests do not replace a real GitHub exchange against the deployed
    Convex backend.
-4. With production deployment authorization, deploy the same gateway commit using
-   `pnpm --dir workers/gateway run deploy:production`, then run
+4. With production deployment authorization, first run
+   `pnpm --dir workers/gateway run deploy:stage:production`. Record that
+   migration-bearing legacy version and verify legacy login plus Relay; it is the
+   compatible rollback point across the Durable Object migration.
+5. Configure the reviewed static `NATIVE_GITHUB_ROUTES` secret, deploy the active
+   gateway with `pnpm --dir workers/gateway run deploy:production`, then run
    `node scripts/check-gateway-auth-version.mjs https://gateway.usekino.com`.
    Confirm the active version with `wrangler deployments list --env production`
-   from `workers/gateway`. Preserve existing secrets and the redirect rewrite.
-5. Release the app/Convex changes and complete a real production GitHub login.
+   from `workers/gateway`. Preserve the legacy proxy, redirect rewrite, and
+   Relay paths through the acceptance window.
+6. Change the production Kino Auth OAuth callback to
+   `https://gateway.usekino.com/oauth/github/callback`, release the app/Convex
+   changes, and complete a real production GitHub login.
    Inspect Convex callback logs and verify the signed-in protected page. Record
    the gateway deployment ID, app commit, and auth versions in the release notes.
 

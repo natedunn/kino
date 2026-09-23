@@ -47,9 +47,9 @@ function BoardsIndexRoute() {
 	const boardsQuery = useQuery(
 		crpc.feedbackBoard.listProjectBoards.queryOptions(
 			{
-				projectId: projectQuery.data?.project?.id,
+				projectId: projectQuery.data?.project.id,
 			},
-			{ enabled: !!projectQuery.data?.project?.id }
+			{ enabled: !!projectQuery.data?.project.id }
 		)
 	);
 

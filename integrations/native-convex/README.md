@@ -2,8 +2,9 @@
 
 This directory selects the real native backend in `convex/native/`. It uses
 the root install and its pinned, patched Convex Auth package. Do not run a
-separate dependency install here. The existing app still selects
-`convex/functions/` through the root `convex.json`.
+separate dependency install here. Root `convex.json` now selects
+`convex/native/`; this directory remains for isolated proof configuration and
+historical evidence.
 
 ## Deployment boundary
 
@@ -40,12 +41,11 @@ generated API, and authentication configuration. The first local target uses
 ports **4440/4441** and project-local state in this directory's `.convex/`.
 It does not share the root worktree's local database or the old proof databases.
 
-Better Auth and Convex Auth v2 both default to the deployment site URL as JWT
-issuer and `convex` as audience. Separate deployments avoid introducing a
-combined keyset or a new issuer patch solely for temporary coexistence.
-Kino's integration preview will select the native backend; existing product
-routes continue using the old backend until ported. No cross-backend identity
-or product-data bridge exists in this milestone.
+During the parallel proof, Better Auth and Convex Auth v2 both defaulted to the
+deployment site URL as JWT issuer and `convex` as audience. Separate deployments
+avoided a combined keyset during temporary coexistence. PR #154 has since made
+the native backend the only application runtime. No cross-backend identity or
+product-data bridge exists or is required for the prelaunch cutover.
 
 ## Implemented
 
@@ -135,26 +135,24 @@ pnpm exec vitest run convex/native
 pnpm run auth:native:smoke
 ```
 
-To run the actual Kino TanStack Start application against this backend, keep the
-native watcher running and start Vite with the native runtime selected:
+To run Kino against a manually started backend, keep the native watcher running
+and start Vite with its URLs:
 
 ```sh
-VITE_AUTH_RUNTIME=native \
 VITE_CONVEX_URL=http://127.0.0.1:4440 \
 VITE_CONVEX_SITE_URL=http://127.0.0.1:4441 \
 VITE_SITE_URL=http://127.0.0.1:5190 \
 PORT=5190 pnpm exec vite dev --host 127.0.0.1 --port 5190 --strictPort
 ```
 
-The default runtime remains Kitcn. The native flag selects Kino-owned Start
-request handlers, HttpOnly refresh cookies, the official Convex query adapter,
-and the native auth provider. A request shares a single token refresh across
-parallel SSR consumers. Protected loaders warm the same `convexQuery` keys that
-`useSuspenseQuery` reads after hydration.
+Kino now always uses the native request handlers, HttpOnly refresh cookies, the
+official Convex query adapter, and the native auth provider. A request shares a
+single token refresh across parallel SSR consumers. Protected loaders warm the
+same `convexQuery` keys that `useSuspenseQuery` reads after hydration.
 
-Native GitHub login is a separate opt-in because its callback must use the
-opaque-state gateway. Set `VITE_NATIVE_GITHUB_ENABLED=true` only when all of the
-following are configured for the same environment:
+Native GitHub login requires the opaque-state gateway. Hosted builds set
+`VITE_NATIVE_GITHUB_ENABLED=true` only when all of the following are configured
+for the same environment:
 
 - Convex: `AUTH_GITHUB_CLIENT_ID`, `AUTH_GITHUB_CLIENT_SECRET`, and
   `AUTH_GITHUB_CALLBACK_URL=https://<gateway>/oauth/github/callback`.

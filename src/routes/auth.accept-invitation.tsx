@@ -31,6 +31,7 @@ function AcceptInvitationPage() {
 
 function NativeAcceptInvitationPage() {
 	const { invitationId } = Route.useSearch();
+	const [inspectionTime] = useState(() => Date.now());
 	const session = useAuthSession();
 	const navigate = useNavigate();
 	const acceptInvitation = useConvexMutation(nativeApi.invitations.accept);
@@ -38,6 +39,7 @@ function NativeAcceptInvitationPage() {
 	const invitationState = useQuery({
 		...convexQuery(nativeApi.invitations.inspect, {
 			invitationId: invitationId as Id<'invitations'>,
+			now: inspectionTime,
 		}),
 		enabled: !!invitationId && !!session.user,
 		retry: false,

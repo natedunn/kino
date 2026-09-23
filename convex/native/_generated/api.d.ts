@@ -248,13 +248,155 @@ export declare const api: {
         projectId: Id<"projects">;
         title: string;
       },
-      any
+      {
+        feedbackCommentId: Id<"feedbackComments">;
+        feedbackId: Id<"feedback">;
+        slug: string;
+      }
     >;
     getDetail: FunctionReference<
       "query",
       "public",
       { projectId: Id<"projects">; slug: string },
-      any
+      null | {
+        assignedProfile: null | {
+          id: Id<"profiles">;
+          imageUrl: string | null;
+          name: string;
+          username: string;
+        };
+        author: null | {
+          id: Id<"profiles">;
+          imageUrl: string | null;
+          name: string;
+          username: string;
+        };
+        board: null | {
+          icon: string | null;
+          id: Id<"feedbackBoards">;
+          name: string;
+          slug: string;
+        };
+        currentProfile: null | {
+          id: Id<"profiles">;
+          imageUrl: string | null;
+          name: string;
+          username: string;
+        };
+        feedback: {
+          answerCommentId: Id<"feedbackComments"> | null;
+          assignedProfileId: Id<"profiles"> | null;
+          boardId: Id<"feedbackBoards">;
+          createdAt: number;
+          id: Id<"feedback">;
+          priority: "none" | "low" | "medium" | "high" | "urgent";
+          slug: string;
+          status: "open" | "in-progress" | "closed" | "completed" | "paused";
+          tags: Array<string>;
+          target: string | null;
+          targetGranularity: "day" | "month" | "quarter" | "year" | null;
+          title: string;
+          upvotes: number;
+        };
+        firstComment: {
+          author: null | {
+            id: Id<"profiles">;
+            imageUrl: string | null;
+            name: string;
+            username: string;
+          };
+          canDelete: boolean;
+          canEdit: boolean;
+          content: string;
+          creationTime: number;
+          emotes: Array<{
+            authorProfileIds: Array<string>;
+            content: string;
+            count: number;
+          }>;
+          id: Id<"feedbackComments">;
+          initial: boolean;
+          replyFeedbackCommentId: Id<"feedbackComments"> | null;
+          updatedTime: number | null;
+        } | null;
+        following: boolean;
+        hasUpvoted: boolean;
+        permissions: {
+          canDelete: boolean;
+          canEditSettings: boolean;
+          canManageAccess: boolean;
+          canManageContent: boolean;
+          canManageIntegrations: boolean;
+          canView: boolean;
+        };
+        related: Array<{
+          id: Id<"feedback">;
+          slug: string;
+          status: "open" | "in-progress" | "closed" | "completed" | "paused";
+          title: string;
+        }>;
+        timeline: Array<
+          | {
+              creationTime: number;
+              data: {
+                author: null | {
+                  id: Id<"profiles">;
+                  imageUrl: string | null;
+                  name: string;
+                  username: string;
+                };
+                canDelete: boolean;
+                canEdit: boolean;
+                content: string;
+                creationTime: number;
+                emotes: Array<{
+                  authorProfileIds: Array<string>;
+                  content: string;
+                  count: number;
+                }>;
+                id: Id<"feedbackComments">;
+                initial: boolean;
+                replyFeedbackCommentId: Id<"feedbackComments"> | null;
+                updatedTime: number | null;
+              };
+              type: "comment";
+            }
+          | {
+              creationTime: number;
+              data: {
+                actor: null | {
+                  id: Id<"profiles">;
+                  imageUrl: string | null;
+                  name: string;
+                  username: string;
+                };
+                eventType:
+                  | "status_changed"
+                  | "priority_changed"
+                  | "title_changed"
+                  | "board_changed"
+                  | "answer_marked"
+                  | "answer_unmarked"
+                  | "assigned"
+                  | "unassigned";
+                id: Id<"feedbackEvents">;
+                metadata: null | {
+                  newValue?: string;
+                  oldValue?: string;
+                  targetProfileId?: Id<"profiles">;
+                };
+              };
+              type: "event";
+            }
+        >;
+        timelineCursor: string | null;
+        watchers: Array<null | {
+          id: Id<"profiles">;
+          imageUrl: string | null;
+          name: string;
+          username: string;
+        }>;
+      }
     >;
     list: FunctionReference<
       "query",
@@ -273,13 +415,39 @@ export declare const api: {
         search?: string;
         status?: "open" | "in-progress" | "closed" | "completed" | "paused";
       },
-      any
+      null | {
+        continueCursor: string;
+        isDone: boolean;
+        page: Array<{
+          board: {
+            icon: string | null;
+            id: Id<"feedbackBoards">;
+            name: string;
+            slug: string;
+          };
+          firstComment: null | { content: string };
+          hasUpvoted: boolean;
+          id: Id<"feedback">;
+          priority: "none" | "low" | "medium" | "high" | "urgent";
+          slug: string;
+          status: "open" | "in-progress" | "closed" | "completed" | "paused";
+          title: string;
+          upvotes: number;
+        }>;
+        pageStatus?: "SplitRecommended" | "SplitRequired" | null;
+        splitCursor?: string | null;
+      }
     >;
     listAssignableProfiles: FunctionReference<
       "query",
       "public",
       { projectId: Id<"projects"> },
-      any
+      Array<{
+        id: Id<"profiles">;
+        imageUrl: string | null;
+        name: string;
+        username: string;
+      }>
     >;
     listTimelinePage: FunctionReference<
       "query",
@@ -295,7 +463,66 @@ export declare const api: {
           numItems: number;
         };
       },
-      any
+      null | {
+        continueCursor: string;
+        isDone: boolean;
+        page: Array<
+          | {
+              creationTime: number;
+              data: {
+                author: null | {
+                  id: Id<"profiles">;
+                  imageUrl: string | null;
+                  name: string;
+                  username: string;
+                };
+                canDelete: boolean;
+                canEdit: boolean;
+                content: string;
+                creationTime: number;
+                emotes: Array<{
+                  authorProfileIds: Array<string>;
+                  content: string;
+                  count: number;
+                }>;
+                id: Id<"feedbackComments">;
+                initial: boolean;
+                replyFeedbackCommentId: Id<"feedbackComments"> | null;
+                updatedTime: number | null;
+              };
+              type: "comment";
+            }
+          | {
+              creationTime: number;
+              data: {
+                actor: null | {
+                  id: Id<"profiles">;
+                  imageUrl: string | null;
+                  name: string;
+                  username: string;
+                };
+                eventType:
+                  | "status_changed"
+                  | "priority_changed"
+                  | "title_changed"
+                  | "board_changed"
+                  | "answer_marked"
+                  | "answer_unmarked"
+                  | "assigned"
+                  | "unassigned";
+                id: Id<"feedbackEvents">;
+                metadata: null | {
+                  newValue?: string;
+                  oldValue?: string;
+                  targetProfileId?: Id<"profiles">;
+                };
+              };
+              type: "event";
+            }
+        >;
+        pageStatus?: "SplitRecommended" | "SplitRequired" | null;
+        splitCursor?: string | null;
+      }
     >;
     remove: FunctionReference<
       "mutation",
@@ -313,7 +540,12 @@ export declare const api: {
       "query",
       "public",
       { projectId: Id<"projects">; search: string },
-      any
+      Array<{
+        id: Id<"feedback">;
+        slug: string;
+        status: "open" | "in-progress" | "closed" | "completed" | "paused";
+        title: string;
+      }>
     >;
     setAnswerComment: FunctionReference<
       "mutation",
@@ -325,13 +557,13 @@ export declare const api: {
       "mutation",
       "public",
       { feedbackId: Id<"feedback"> },
-      any
+      { following: boolean }
     >;
     toggleUpvote: FunctionReference<
       "mutation",
       "public",
       { feedbackId: Id<"feedback"> },
-      any
+      { count: number; upvoted: boolean }
     >;
     updateAssigned: FunctionReference<
       "mutation",
@@ -453,7 +685,7 @@ export declare const api: {
         feedbackId: Id<"feedback">;
         replyFeedbackCommentId?: Id<"feedbackComments">;
       },
-      any
+      { id: Id<"feedbackComments"> }
     >;
     remove: FunctionReference<
       "mutation",
@@ -469,7 +701,7 @@ export declare const api: {
         feedbackCommentId: Id<"feedbackComments">;
         feedbackId: Id<"feedback">;
       },
-      any
+      { action: "added" | "removed" }
     >;
     update: FunctionReference<
       "mutation",
@@ -1013,7 +1245,7 @@ export declare const api: {
     inspect: FunctionReference<
       "query",
       "public",
-      { invitationId: Id<"invitations"> },
+      { invitationId: Id<"invitations">; now: number },
       | { state: "unavailable" }
       | { state: "wrong_account" }
       | {
@@ -1338,13 +1570,66 @@ export declare const api: {
       "query",
       "public",
       { organizationId: Id<"organizations"> },
-      any
+      {
+        membership: {
+          _creationTime: number;
+          _id: Id<"memberships">;
+          organizationId: Id<"organizations">;
+          role: "owner" | "admin" | "moderator";
+          userId: Id<"users">;
+        } | null;
+        organization: {
+          _creationTime: number;
+          _id: Id<"organizations">;
+          logoStorageId?: Id<"_storage">;
+          name: string;
+          personalOwnerId?: Id<"users">;
+          slug: string;
+          visibility: "public" | "private";
+        } | null;
+        permissions: {
+          canCreateProjects: boolean;
+          canDelete: boolean;
+          canEdit: boolean;
+          canManageMembers: boolean;
+          canView: boolean;
+        };
+        role: "system:admin" | "owner" | "admin" | "moderator" | null;
+      }
     >;
     viewProject: FunctionReference<
       "query",
       "public",
       { projectId: Id<"projects"> },
-      any
+      {
+        isArchived: boolean;
+        permissions: {
+          canDelete: boolean;
+          canEditSettings: boolean;
+          canManageAccess: boolean;
+          canManageContent: boolean;
+          canManageIntegrations: boolean;
+          canView: boolean;
+        };
+        project: {
+          _creationTime: number;
+          _id: Id<"projects">;
+          deletingAt?: number;
+          description?: string;
+          name: string;
+          organizationId: Id<"organizations">;
+          slug: string;
+          storageDeletingAt?: number;
+          updatesFeaturedMode?: "latest" | "manual";
+          urls?: Array<{
+            source: string;
+            text: string;
+            url: string;
+            verifiedAt: null | number;
+          }>;
+          visibility: "public" | "private" | "archived";
+        } | null;
+      }
     >;
   };
   profiles: {
@@ -1642,13 +1927,79 @@ export declare const api: {
       "query",
       "public",
       { organizationSlug: string; projectSlug: string },
-      any
+      null | {
+        organization: {
+          id: Id<"organizations">;
+          name: string;
+          slug: string;
+          visibility: "public" | "private";
+        };
+        permissions: {
+          canDelete: boolean;
+          canEditSettings: boolean;
+          canManageAccess: boolean;
+          canManageContent: boolean;
+          canManageIntegrations: boolean;
+          canView: boolean;
+        };
+        project: {
+          createdAt: number;
+          description: string;
+          id: Id<"projects">;
+          name: string;
+          slug: string;
+          updatesFeaturedMode: "latest" | "manual";
+          urls: Array<{
+            source: string;
+            text: string;
+            url: string;
+            verifiedAt: null | number;
+          }>;
+          visibility: "public" | "private" | "archived";
+        };
+        publishedTheme: null | {
+          dark: {
+            background: string;
+            foreground: string;
+            primary: string;
+            primaryForeground: string;
+            surface: string;
+            surfaceForeground: string;
+          };
+          light: {
+            background: string;
+            foreground: string;
+            primary: string;
+            primaryForeground: string;
+            surface: string;
+            surfaceForeground: string;
+          };
+          presetId:
+            | "kino"
+            | "red"
+            | "orange"
+            | "golden"
+            | "forest"
+            | "teal"
+            | "purple"
+            | "sunset"
+            | "monochrome"
+            | "custom";
+          version: number;
+        };
+      }
     >;
     listByOrganization: FunctionReference<
       "query",
       "public",
       { limit?: number; organizationId: Id<"organizations"> },
-      any
+      Array<{
+        description: string;
+        id: Id<"projects">;
+        name: string;
+        slug: string;
+        visibility: "public" | "private" | "archived";
+      }>
     >;
   };
   relay: {
@@ -2468,7 +2819,7 @@ export declare const api: {
     exportData: FunctionReference<
       "query",
       "public",
-      { sections?: Array<"comments"> },
+      { generatedAt: number; sections?: Array<"comments"> },
       {
         account: {
           email: string | null;
@@ -2613,6 +2964,14 @@ export declare const internal: {
       "mutation",
       "internal",
       { boardId: Id<"feedbackBoards"> },
+      null
+    >;
+  };
+  feedbackComments: {
+    cleanComment: FunctionReference<
+      "mutation",
+      "internal",
+      { commentId: Id<"feedbackComments"> },
       null
     >;
   };
@@ -2848,7 +3207,7 @@ export declare const internal: {
     pending: FunctionReference<
       "query",
       "internal",
-      { challengeId: Id<"authChallenges">; code: string },
+      { challengeId: Id<"authChallenges">; code: string; now: number },
       null | {
         email: string;
         locale: "en-US" | "es-419" | "zh-Hans";
@@ -2859,8 +3218,16 @@ export declare const internal: {
     pendingInvitation: FunctionReference<
       "query",
       "internal",
-      { invitationId: Id<"invitations"> },
-      any
+      { invitationId: Id<"invitations">; now: number },
+      null | {
+        email: string;
+        invitationId: Id<"invitations">;
+        inviterEmail: string;
+        inviterName: string;
+        locale: "en-US" | "es-419" | "zh-Hans";
+        organizationName: string;
+        role: "admin" | "moderator";
+      }
     >;
     recordInvitationDelivery: FunctionReference<
       "mutation",

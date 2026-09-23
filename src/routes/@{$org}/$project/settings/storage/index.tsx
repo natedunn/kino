@@ -26,7 +26,7 @@ function ProjectStorageSettings() {
 	const details = useQuery(
 		crpc.project.getDetails.queryOptions({ orgSlug: params.org, slug: params.project })
 	);
-	const projectId = details.data?.project?.id ?? '';
+	const projectId = details.data?.project.id ?? '';
 	const usage = useQuery(
 		crpc.file.getProjectUsage.queryOptions(
 			{ projectId },

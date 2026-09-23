@@ -40,11 +40,14 @@ export const Route = createFileRoute('/@{$org}/$project/settings/appearance/')({
 	head: () => ({ meta: [titleMeta([m.meta_appearance(), m.meta_project_settings()])] }),
 	loader: async ({ context, params }) => {
 		const details = await context.queryClient.ensureQueryData(
-				appearanceServer.project.getDetails.queryOptions({ orgSlug: params.org, slug: params.project })
+			appearanceServer.project.getDetails.queryOptions({
+				orgSlug: params.org,
+				slug: params.project,
+			})
 		);
 		if (details?.project) {
 			await context.queryClient.ensureQueryData(
-					appearanceServer.projectTheme.getEditorState.queryOptions({ projectId: details.project.id })
+				appearanceServer.projectTheme.getEditorState.queryOptions({ projectId: details.project.id })
 			);
 		}
 	},
@@ -110,7 +113,7 @@ function ProjectAppearanceRoute() {
 	const details = useQuery(
 		appearance.project.getDetails.queryOptions({ orgSlug: params.org, slug: params.project })
 	);
-	const projectId = details.data?.project?.id ?? '';
+	const projectId = details.data?.project.id ?? '';
 	const editor = useQuery(
 		appearance.projectTheme.getEditorState.queryOptions({ projectId }, { enabled: !!projectId })
 	);

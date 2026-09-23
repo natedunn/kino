@@ -2,9 +2,64 @@ import { v } from 'convex/values';
 
 import { query } from './_generated/server';
 import { resolveProjectAccess } from './access';
+import { projectThemePalette, projectThemePreset, projectVisibility } from './schema';
+
+const projectPermissionsValidator = v.object({
+	canView: v.boolean(),
+	canManageContent: v.boolean(),
+	canEditSettings: v.boolean(),
+	canManageAccess: v.boolean(),
+	canManageIntegrations: v.boolean(),
+	canDelete: v.boolean(),
+});
+const projectListItemValidator = v.object({
+	description: v.string(),
+	id: v.id('projects'),
+	name: v.string(),
+	slug: v.string(),
+	visibility: projectVisibility,
+});
 
 export const getBySlugs = query({
 	args: { organizationSlug: v.string(), projectSlug: v.string() },
+	returns: v.union(
+		v.null(),
+		v.object({
+			publishedTheme: v.union(
+				v.null(),
+				v.object({
+					version: v.number(),
+					presetId: projectThemePreset,
+					light: projectThemePalette,
+					dark: projectThemePalette,
+				})
+			),
+			organization: v.object({
+				id: v.id('organizations'),
+				name: v.string(),
+				slug: v.string(),
+				visibility: v.union(v.literal('public'), v.literal('private')),
+			}),
+			permissions: projectPermissionsValidator,
+			project: v.object({
+				createdAt: v.number(),
+				description: v.string(),
+				urls: v.array(
+					v.object({
+						source: v.string(),
+						text: v.string(),
+						url: v.string(),
+						verifiedAt: v.union(v.null(), v.number()),
+					})
+				),
+				id: v.id('projects'),
+				name: v.string(),
+				slug: v.string(),
+				visibility: projectVisibility,
+				updatesFeaturedMode: v.union(v.literal('latest'), v.literal('manual')),
+			}),
+		})
+	),
 	handler: async (ctx, args) => {
 		const organization = await ctx.db
 			.query('organizations')
@@ -56,6 +111,7 @@ export const getBySlugs = query({
 
 export const listByOrganization = query({
 	args: { organizationId: v.id('organizations'), limit: v.optional(v.number()) },
+	returns: v.array(projectListItemValidator),
 	handler: async (ctx, args) => {
 		const limit = Math.max(1, Math.min(args.limit ?? 50, 100));
 		const projects = await ctx.db

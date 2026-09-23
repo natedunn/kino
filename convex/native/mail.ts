@@ -13,10 +13,10 @@ import {
 import { internal } from './_generated/api';
 import { env, internalAction, internalMutation, internalQuery } from './_generated/server';
 import { emailCredentials } from './mailConfig';
-import { challengePurpose, localeValidator } from './schema';
+import { assignableOrganizationRole, challengePurpose, localeValidator } from './schema';
 
 export const pending = internalQuery({
-	args: { challengeId: v.id('authChallenges'), code: v.string() },
+	args: { challengeId: v.id('authChallenges'), code: v.string(), now: v.number() },
 	returns: v.union(
 		v.null(),
 		v.object({
@@ -26,10 +26,9 @@ export const pending = internalQuery({
 			locale: localeValidator,
 		})
 	),
-	handler: async (ctx, { challengeId, code }) => {
+	handler: async (ctx, { challengeId, code, now }) => {
 		const proof = await ctx.db.get('authChallenges', challengeId);
-		if (!proof || proof.expiresAt <= Date.now() || proof.hash !== (await sha256Hex(code)))
-			return null;
+		if (!proof || proof.expiresAt <= now || proof.hash !== (await sha256Hex(code))) return null;
 		const user = await ctx.db.get('users', proof.userId);
 		if (
 			!user?.passwordEmail ||
@@ -54,6 +53,7 @@ export const deliver = internalAction({
 		const delivery = await ctx.runQuery(internal.mail.pending, {
 			challengeId: args.challengeId,
 			code: args.code,
+			now: Date.now(),
 		});
 		if (!delivery) return null;
 		const credentials = emailCredentials();
@@ -112,11 +112,22 @@ export const deliver = internalAction({
 });
 
 export const pendingInvitation = internalQuery({
-	args: { invitationId: v.id('invitations') },
-	handler: async (ctx, { invitationId }) => {
+	args: { invitationId: v.id('invitations'), now: v.number() },
+	returns: v.union(
+		v.null(),
+		v.object({
+			email: v.string(),
+			invitationId: v.id('invitations'),
+			inviterEmail: v.string(),
+			inviterName: v.string(),
+			locale: localeValidator,
+			organizationName: v.string(),
+			role: assignableOrganizationRole,
+		})
+	),
+	handler: async (ctx, { invitationId, now }) => {
 		const invitation = await ctx.db.get('invitations', invitationId);
-		if (!invitation || invitation.status !== 'pending' || invitation.expiresAt <= Date.now())
-			return null;
+		if (!invitation || invitation.status !== 'pending' || invitation.expiresAt <= now) return null;
 		const [organization, inviter] = await Promise.all([
 			ctx.db.get('organizations', invitation.organizationId),
 			ctx.db.get('users', invitation.inviterId),
@@ -163,6 +174,7 @@ export const deliverInvitation = internalAction({
 	handler: async (ctx, args) => {
 		const delivery = await ctx.runQuery(internal.mail.pendingInvitation, {
 			invitationId: args.invitationId,
+			now: Date.now(),
 		});
 		if (!delivery) return null;
 		const credentials = emailCredentials();

@@ -12,9 +12,24 @@ import {
 	resolveProjectAccess,
 } from './access';
 import { requireCurrentUser } from './identity';
-import { projectVisibility } from './schema';
+import schema, { organizationRole, projectVisibility } from './schema';
 
 const PROJECT_LIMITS = { user: 1, 'system:admin': 100 } as const;
+const organizationPermissionsValidator = v.object({
+	canView: v.boolean(),
+	canCreateProjects: v.boolean(),
+	canEdit: v.boolean(),
+	canManageMembers: v.boolean(),
+	canDelete: v.boolean(),
+});
+const projectPermissionsValidator = v.object({
+	canView: v.boolean(),
+	canManageContent: v.boolean(),
+	canEditSettings: v.boolean(),
+	canManageAccess: v.boolean(),
+	canManageIntegrations: v.boolean(),
+	canDelete: v.boolean(),
+});
 
 async function canAddProject(
 	ctx: QueryCtx,
@@ -92,11 +107,22 @@ async function insertProject(
 
 export const viewOrganization = query({
 	args: { organizationId: v.id('organizations') },
+	returns: v.object({
+		organization: v.union(schema.doc('organizations'), v.null()),
+		membership: v.union(schema.doc('memberships'), v.null()),
+		role: v.union(v.literal('system:admin'), organizationRole, v.null()),
+		permissions: organizationPermissionsValidator,
+	}),
 	handler: (ctx, { organizationId }) => resolveOrganizationAccess(ctx, organizationId),
 });
 
 export const viewProject = query({
 	args: { projectId: v.id('projects') },
+	returns: v.object({
+		project: v.union(schema.doc('projects'), v.null()),
+		isArchived: v.boolean(),
+		permissions: projectPermissionsValidator,
+	}),
 	handler: (ctx, { projectId }) => resolveProjectAccess(ctx, projectId),
 });
 

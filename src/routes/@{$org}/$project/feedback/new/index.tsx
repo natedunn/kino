@@ -57,7 +57,8 @@ function NativeNewFeedbackRoute() {
 			projectSlug: params.project,
 		})
 	);
-	const projectId = projectQuery.data?.project?.id;
+	const projectData = projectQuery.data;
+	const projectId = projectData?.project.id;
 
 	if (session.isPending) return null;
 	if (!session.user)
@@ -68,7 +69,7 @@ function NativeNewFeedbackRoute() {
 			/>
 		);
 	if (projectQuery.isPending) return null;
-	if (!projectId || !projectQuery.data.permissions.canView)
+	if (!projectData || !projectId || !projectData.permissions.canView)
 		return (
 			<EmptyState
 				title='Project not available'

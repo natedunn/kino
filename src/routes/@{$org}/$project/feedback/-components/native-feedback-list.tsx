@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react';
-import type { Id } from '../../../../../../convex/native/_generated/dataModel';
 
 import { useState } from 'react';
 import { convexQuery } from '@convex-dev/react-query';
@@ -29,8 +28,6 @@ import { FeedbackToolbar } from './feedback-toolbar';
 
 const ROUTE = '/@{$org}/$project/feedback/' as const;
 const PAGE_SIZE = 50;
-type NativeBoard = { id: Id<'feedbackBoards'>; icon: string | null; name: string; slug: string };
-
 function Notice({ icon, children }: { icon: ReactNode; children: ReactNode }) {
 	return (
 		<div className='text-bold flex items-center justify-center gap-3 rounded-lg border bg-muted p-4 text-xl text-muted-foreground md:p-10'>
@@ -79,7 +76,7 @@ export function NativeFeedbackListRoute() {
 	const { data: boards } = useSuspenseQuery(
 		convexQuery(nativeApi.feedbackBoards.list, { projectId })
 	);
-	const boardId = (boards as Array<NativeBoard> | null)?.find((item) => item.slug === board)?.id;
+	const boardId = boards?.find((item) => item.slug === board)?.id;
 	const firstArgs = {
 		projectId,
 		...(boardId ? { boardId } : {}),
@@ -101,14 +98,14 @@ export function NativeFeedbackListRoute() {
 	const pages = firstPage ? [firstPage, ...morePages] : morePages;
 	const lastPage = morePages.at(-1) ?? firstPage;
 	const feedback = pages
-		.flatMap((page) => page?.page ?? [])
+		.flatMap((page) => page.page)
 		.filter(
 			(item, index, items) => items.findIndex((candidate) => candidate.id === item.id) === index
 		);
 	const canLoadMore = !!lastPage && !lastPage.isDone && !!lastPage.continueCursor;
 
 	async function loadMore() {
-		if (!canLoadMore || loadingMore || !lastPage) return;
+		if (!canLoadMore || loadingMore) return;
 		setLoadError(null);
 		setLoadingMore(true);
 		try {

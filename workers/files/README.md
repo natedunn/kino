@@ -58,12 +58,14 @@ domain declaration. Before the first production deployment, verify that
 `kino-prod-org-uploads` is the production organization-upload bucket; the
 development bucket is `kino-dev-org-uploads`.
 
-Set the Convex `FILES_ORIGIN` environment variable alongside the deployment:
+Set the Convex `NATIVE_FILES_ORIGIN` environment variable alongside the
+deployment. Also set the Files Worker's runtime `NATIVE_CONVEX_URL` to the exact
+matching Convex cloud URL before deploying the Worker:
 
 - Shared preview deployments, after the Worker is live: `https://files-preview.usekino.com`
 - Production: `https://files.usekino.com`
 
-When `FILES_ORIGIN` is unset, assets that already satisfy the current public ID
+When `NATIVE_FILES_ORIGIN` is unset, assets that already satisfy the current public ID
 and deterministic object-key contract use authorized, short-lived signed R2
 delivery. Legacy public objects do not receive this fallback. Private and
 unlisted assets retain their authorized, short-lived signed delivery path. Set

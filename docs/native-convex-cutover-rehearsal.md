@@ -1,157 +1,204 @@
-# Native Convex cutover rehearsal
+# Native Convex cutover and recovery runbook
 
-Status: **partial preview rehearsal, not production cutover approval**. Updated
-September 22, 2026 (America/Mexico City). This runbook covers one coordinated
-release unit: native Convex, the Kino Start Worker, the native Files Worker, and
-the OAuth gateway. Kino Relay and the existing Better Auth route must keep
-working throughout the transition.
+Status: **release-candidate preview validated; production cutover not yet
+authorized**. Updated September 22, 2026 (America/Mexico City).
 
-Kino is prelaunch, so the intended release is now a native-only cutover in one
-PR rather than a live migration with legacy-user continuity. Legacy runtime
-checks below are retained only where they protect development previews, the
-shared gateway, or Relay. Once public native writes begin, recovery is a forward
-fix; the separate legacy database is not a data rollback target.
+This runbook covers one coordinated release unit: the native Convex deployment,
+Kino Start Worker, Kino Files Worker, production OAuth gateway, GitHub OAuth app,
+and Kino Relay continuity. PR #154 is native-only: root `convex.json` targets
+`convex/native`, and the app no longer contains a Kitcn runtime or auth feature
+flag. Better Auth remains only in the standalone gateway as a temporary legacy
+proxy during the acceptance window.
 
-## What was actually rehearsed
+Kino is prelaunch and has no legacy-user or product-data migration requirement.
+Use a distinct native production Convex deployment. Once native writes are
+accepted, the separate legacy database is not a rollback target; recovery is a
+forward fix on the native stack.
 
-The disposable `kino-native-auth-proof-c318c09d` Worker was pinned at version
-`f82c7f3c-6e79-4967-9986-76a9c5c6d003` (100% traffic). Wrangler rolled it
-back to the immediately prior version
-`9e25cba8-e123-4bb7-a655-a09814719699`, then restored the pinned version.
-`wrangler deployments status` confirmed 100% traffic on each selected version.
-On both versions, `/` and `/auth` returned 200 and an anonymous `/dashboard`
-request returned a 307 to `/auth?redirect=%2Fdashboard`. The restored deployment
-was `cb94bfa7-e264-4b89-bc22-3c9920ccc614`. During that app Worker switch, no
-Convex, gateway, Files Worker, or production deployment was changed.
-Authenticated behavior was not retested after this brief version switch;
-earlier hosted proof results remain separate.
+## Current release-candidate evidence
 
-Inventory after the isolated preview deploy and OAuth rebind:
+The PR branch now builds an isolated Cloudflare Worker Preview and a matching
+Convex preview. CI writes the branch-specific app origin and dev-gateway callback
+to that exact Convex preview, rejects placeholder GitHub credentials, registers
+an expiring branch-specific OAuth route, and publishes the route key as a Worker
+Preview secret. Real GitHub sign-in returned to `/dashboard`, and reload remained
+authenticated. The Cloudflare build and `pnpm run verify:pr` pass.
 
-| Resource                 | Target                             | Observed state                                                                                                                             |
-| ------------------------ | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| Native app Worker        | `kino-native-auth-proof-c318c09d`  | Code deployed as `853e90d4-b419-428e-9d3a-6c48cdee5762`; routing secrets rebound in version `739dee9f-eeac-4e13-a89b-1a07af274996` at 100% |
-| Native Convex preview    | `giant-jaguar-319`                 | Native functions pushed; `AUTH_GITHUB_CALLBACK_URL` now targets the shared dev gateway; separate database                                  |
-| Native Files Worker      | `kino-native-files-proof-c318c09d` | Version `c602e4ce-98a6-40f7-914c-22ed03a6b929`; unchanged                                                                                  |
-| Disposable OAuth gateway | `kino-v2-gateway-proof-c318c09d`   | Version `06a14c38-fb42-449b-ade8-3908cbe065c1`; `/health` reports `opaque-state-v1` with storage ready                                     |
-| Shared dev gateway       | `gateway-dev.usekino.com`          | Version `d5a5a65c-e0f7-4091-8779-e09e8f345c29` at 100%; Better Auth `1.7.1`, native protocol/storage enabled                               |
+Earlier disposable proofs remain useful historical evidence:
 
-The shared dev gateway was then staged with the SQLite Durable Object and its
-legacy routes (version `144384cf-2e1f-40f7-9bbe-51368e8b6da2`). Adding the
-two disposable proof routes as a dev-only secret produced the pinned compatible
-rollback version `680f6c11-cc0c-4936-9e50-8c8f0bc7917d`. The active
-dual-protocol version `3a1f4405-e404-4a8a-9a7a-2e639fd51a61` retained
-Better Auth `1.7.1` and exposed native protocol/storage readiness. A live
-signed registration returned a 43-character reference; a malformed callback
-did not consume it, the next callback did, replay failed, and a signature from
-the wrong preview was rejected. The gateway was rolled back to the pinned
-legacy-behavior version and restored to the dual-protocol version. Health,
-route status, and the Better Auth version gate passed at both points. Edge
-propagation briefly served mixed old/new responses immediately after deploy;
-the recorded checks used the settled state.
+- The native app Worker was rolled back one version and restored. Anonymous
+  route behavior passed at both versions.
+- The shared dev gateway staged the SQLite Durable Object while preserving
+  legacy behavior, activated dual-protocol routing, rolled back to the
+  migration-compatible stage, and restored native routing.
+- Real GitHub login, private SSR, reload, sign-out, repeat identity, malformed
+  state, wrong-secret rejection, single-use consumption, and replay rejection
+  passed on the shared dev gateway.
+- Native Files, cache purge, Relay webhook transport/deduplication, issue linking,
+  and cleanup passed against disposable resources.
 
-The dev-only route registry was then extended with a distinct integrated Kino
-preview route, producing gateway version
-`d5a5a65c-e0f7-4091-8779-e09e8f345c29`. Its live registration,
-wrong-secret rejection, malformed callback, single-use callback, and replay
-checks passed. The guarded preview script deployed native Convex code and the
-matching Start build, then the proof Worker's route ID, route secret, and
-gateway callback were rebound. The native Convex preview callback was changed
-to `https://gateway-dev.usekino.com/oauth/github/callback`. `/` and `/auth`
-return 200; anonymous `/dashboard` redirects to auth. The temporary GitHub
-OAuth app registration was changed to the same shared dev callback. Real Chrome
-GitHub login returned to the dashboard as the existing `natedunn` GitHub user;
-reload, sign-out, and repeat login all passed. The separate `hello` password
-user was unchanged, matching the deliberate no-automatic-email-linking policy.
-The Files Worker was not redeployed in this pass.
+Those checks do not authorize production and do not replace the final PR-preview
+acceptance list in `native-convex-migration-status.md`.
 
-The integrated app was then rolled back from
-`739dee9f-eeac-4e13-a89b-1a07af274996` to the pinned pre-cutover version
-`f82c7f3c-6e79-4967-9986-76a9c5c6d003`. Its routes passed and the live
-`natedunn` session survived a dashboard reload. The app was restored to
-`739dee9f-eeac-4e13-a89b-1a07af274996`. The shared dev gateway was rolled back
-to compatible legacy-behavior version
-`680f6c11-cc0c-4936-9e50-8c8f0bc7917d`: native state registration returned
-404 while the legacy auth route returned 200 and native storage remained bound.
-Restoring `d5a5a65c-e0f7-4091-8779-e09e8f345c29` re-enabled native routing;
-signed registration, signature rejection, malformed-state handling,
-single-use consumption, and replay rejection passed again. A fresh browser
-login after restoration also returned as `natedunn`.
+## Freeze the release
 
-Existing legacy OAuth and Relay/webhook paths were retained in code and their
-focused tests passed; a real post-deployment legacy login and Relay webhook were
-not repeated.
+Record these values without recording secret contents:
 
-## Rehearsal gate before a production switch
+- app commit and expected `kino` Worker version;
+- native production Convex cloud/site URLs and deployment identifier;
+- Files Worker version, route, `NATIVE_CONVEX_URL`, and production R2 bucket;
+- gateway migration-stage version and active dual-protocol version;
+- pinned Convex Auth revision and gateway Better Auth version;
+- GitHub OAuth and Relay callback/webhook URLs;
+- production native route ID and a fingerprint of its route mapping/key.
 
-1. **Freeze an exact release pair.** Record app and Files Worker version IDs,
-   native and legacy Convex deployment names and code revisions, gateway
-   version, auth package versions, exact callback origins, and a fingerprint of
-   each route mapping. Store no secret values in this record. Complete
-   `pnpm run verify:pr`, native Convex tests, gateway tests, Files Worker tests,
-   and a native production build against the intended `VITE_CONVEX_URL` and
-   `VITE_CONVEX_SITE_URL`. The local `auth:native:smoke` command exercises only
-   the anonymous loopback backend; it does not validate hosted OAuth.
-2. **Stage the shared gateway without changing login behavior.** Add the
-   opaque-state routes, route registry, and SQLite Durable Object to the dev
-   gateway while retaining `/api/auth/*`, redirect rewriting, Relay callbacks,
-   and webhooks. First deploy a gateway version with the new Durable Object
-   class/binding but legacy behavior, and record it as a compatible rollback
-   point. Then enable native routing and verify `/health` exposes both the
-   Better Auth version and native protocol/storage readiness. The dev gateway
-   staging, active-route, storage, rollback, restore, and integrated native Kino
-   browser checks above pass; its legacy/Relay end-to-end checks remain.
-3. **Switch only an isolated preview.** Deploy native Convex explicitly through
-   `integrations/native-convex/convex.json`; deploy the matching native Files
-   Worker and Start build. Verify the exact Convex callback URL, app callback
-   URL, gateway route ID/secret, Bento origin, Relay target, and Files Worker
-   `NATIVE_CONVEX_URL` all identify the same preview. Do not infer target from
-   `VITE_AUTH_RUNTIME=native` alone: the current Cloudflare build script still
-   deploys root Kitcn/Convex first.
-4. **Exercise complete behavior.** Test logged-out GitHub sign-in through the
-   real callback, private SSR, reload, sign-out, repeat login, password signup
-   and recovery, invitations, revocation, project/board/feedback/Updates/Files
-   writes and reads, and Relay. Include cancelled, expired, tampered, replayed,
-   and cross-preview OAuth state. Check anonymous denial and public pages, file
-   cache purge/physical deletion, in-progress cascade recovery, and old route
-   links. Confirm existing Better Auth login, Relay installs, and webhooks still
-   work on the same dev gateway. A successful OAuth initiation or HTTP health
-   response alone is insufficient.
-5. **Rehearse the whole rollback while writes are controlled.** Keep the legacy
-   backend intact. Restore the pinned legacy app build/config and matching Files
-   Worker target, then verify old cookies or fresh legacy login, protected SSR,
-   and legacy data. Keep the dual-protocol gateway available while native flows
-   may be in flight; only then restore its known-good compatible version and
-   repeat both legacy auth and Relay checks. A Convex code rollback must be
-   checked separately against its current schema/data. Repeat forward rollout
-   once to prove the preview can return to native without account confusion.
+From the frozen commit, complete `pnpm run verify:pr`, root and native Convex
+tests, gateway tests/typecheck, Files Worker tests/typecheck, lint, and a
+production build. The local `auth:native:smoke` command exercises only the
+anonymous loopback backend and is not hosted OAuth evidence.
 
-## Unresolved conditions
+## Production prerequisites
 
-- **Gateway legacy regression:** The shared dev gateway's native Kino flow and
-  compatible rollback/restore now pass end to end. A real post-deployment
-  Better Auth login and Relay installation/webhook should still be repeated on
-  the shared dev gateway. No production gateway change was made.
-- **Release pipeline:** `scripts/cloudflare-build.sh` now invokes native
-  `convex deploy` from the root `convex.json` and validates the tier-specific
-  app origin, callback, route credentials, and deployed gateway before push.
-  Production still requires a coordinated, explicitly authorized rollout.
-- **Data on rollback:** Native and Kitcn use different Convex databases, users,
-  sessions, and signing keys, with no bridge. Reverting code cannot make writes
-  from the native window appear in the legacy database. A preview rehearsal can
-  use disposable writes, but a production decision requires a write freeze,
-  reconciliation/reverse migration, or an explicit decision to discard those
-  writes. Worker rollback also does not restore connected resource data.
-- **Gateway rollback compatibility:** Cloudflare disallows Worker rollback
-  across a Durable Object class lifecycle change. The rollback target must be
-  deployed after the new class/binding has been staged, or a forward deploy of
-  compatible code is required. See [Cloudflare's rollback limits](https://developers.cloudflare.com/workers/versions-and-deployments/rollbacks/).
-- **Acceptance:** The board-detail route's native adapter fix is typechecked,
-  covered by native board tests, and deployed to the isolated preview; it still
-  needs browser acceptance with populated content. Remaining populated-content,
-  mobile, and release-transition checks stay on the migration checklist.
+### Native Convex
 
-The broader [migration checklist](native-convex-migration-status.md) stays open
-until the shared-gateway integration and full preview forward/rollback sequence
-pass. The [gateway environment guide](github-environments.md) governs separate
-gateway deployment and production OAuth verification.
+Create or select a distinct native production deployment and point
+`CONVEX_PROD_DEPLOY_KEY` at it. Do not aim that key at the legacy database unless
+existing documents have been inspected and proven compatible with the native
+schema.
+
+Configure and verify:
+
+- required auth: `AUTH_PRIVATE_KEY`, `AUTH_JWKS`, `AUTH_GITHUB_CLIENT_ID`,
+  `AUTH_GITHUB_CLIENT_SECRET`, `AUTH_GITHUB_CALLBACK_URL`, `AUTH_APP_ORIGIN`;
+- Bento: `BENTO_PUBLISHABLE_KEY`, `BENTO_SECRET_KEY`, `BENTO_SITE_UUID`,
+  `BENTO_FROM`, and `NATIVE_OPERATIONS_ALERT_EMAIL`;
+- Relay: `GITHUB_RELAY_APP_ID`, `GITHUB_RELAY_CLIENT_ID`,
+  `GITHUB_RELAY_CLIENT_SECRET`, `GITHUB_RELAY_PRIVATE_KEY`,
+  `GITHUB_RELAY_SLUG`, `GITHUB_RELAY_STATE_SECRET`,
+  `GITHUB_RELAY_WEBHOOK_SECRET`, and the callback target when explicitly set;
+- storage: `NATIVE_R2_ENDPOINT`, `NATIVE_R2_BUCKET`,
+  `NATIVE_R2_ACCESS_KEY_ID`, `NATIVE_R2_SECRET_ACCESS_KEY`,
+  `NATIVE_FILES_ORIGIN`, `NATIVE_FILES_PURGE_ZONE_ID`, and
+  `NATIVE_FILES_PURGE_TOKEN`.
+
+Use exact production values:
+
+- `AUTH_APP_ORIGIN=https://usekino.com`
+- `AUTH_GITHUB_CALLBACK_URL=https://gateway.usekino.com/oauth/github/callback`
+- `NATIVE_FILES_ORIGIN=https://files.usekino.com`
+
+### Files Worker
+
+Confirm the production binding is `kino-prod-org-uploads`. Set the Worker's
+runtime `NATIVE_CONVEX_URL` to the native production Convex cloud URL, deploy
+`workers/files` to production, and verify `https://files.usekino.com/health`
+before enabling native public file URLs. The Git-connected `kino` build does not
+deploy this standalone Worker.
+
+### Gateway
+
+The production gateway needs two reviewed deployments because Cloudflare cannot
+roll back across the Durable Object class migration:
+
+1. Run `pnpm --dir workers/gateway run deploy:stage:production`. This deploys
+   the migration-bearing legacy entrypoint, preserves Better Auth and Relay, and
+   creates the only safe pre-native rollback version. Record its version ID and
+   verify legacy login and Relay.
+2. Set the production `NATIVE_GITHUB_ROUTES` secret to a static mapping whose
+   fixed route ID, secret, native Convex callback, and app callback exactly match
+   the production configuration. Never enable the dev dynamic-route API in
+   production.
+3. Run `pnpm --dir workers/gateway run deploy:production`. Verify `/health`
+   reports the expected Better Auth version and native protocol/storage readiness,
+   and recheck legacy login plus Relay before changing GitHub's OAuth callback.
+
+The native callbacks are:
+
+- backend: `https://<native-production>.convex.site/oauth/github/callback`
+- app: `https://usekino.com/api/auth/github/callback`
+
+### App Worker and Workers Builds
+
+Configure Workers Builds with `CONVEX_PROD_DEPLOY_KEY`,
+`NATIVE_APP_ORIGIN_PRODUCTION`, `NATIVE_GITHUB_GATEWAY_URL_PRODUCTION`,
+`NATIVE_GITHUB_ROUTE_ID_PRODUCTION`, `NATIVE_GITHUB_ROUTE_SECRET_PRODUCTION`,
+the production gateway URL/admin token, and the existing PostHog values.
+
+Separately configure the deployed `kino` Worker's runtime values:
+
+- `NATIVE_GITHUB_GATEWAY_URL=https://gateway.usekino.com/oauth/github/callback`
+- `NATIVE_GITHUB_ROUTE_ID=<the fixed production route ID>`
+- secret `NATIVE_GITHUB_ROUTE_SECRET=<the matching route key>`
+
+The suffixed Workers Builds values are build inputs. They do not by themselves
+create the Worker's runtime bindings. Production deploy uses `--keep-vars`, so
+stage and verify those runtime bindings before releasing.
+
+## Coordinated release order
+
+Production actions require explicit authorization.
+
+1. Freeze the release and complete all checks and PR-preview acceptance.
+2. Prepare the distinct native production Convex deployment and environment.
+3. Deploy and verify the production Files Worker.
+4. Deploy and verify the migration-bearing gateway stage, then the reviewed
+   dual-protocol gateway. Keep the legacy proxy and Relay paths working.
+5. Stage the production app Worker's native GitHub runtime bindings and verify
+   the static route mapping agrees with them.
+6. Change the existing Kino Auth OAuth app's callback to
+   `https://gateway.usekino.com/oauth/github/callback`. Do not change the Kino
+   Relay GitHub App registration.
+7. Release the frozen app commit. `scripts/cloudflare-build.sh` deploys native
+   Convex first; the later deploy command publishes the app Worker.
+8. Complete a real logged-out GitHub sign-in, protected reload and logout,
+   verified email signup/recovery, invitation/private access, Relay, Files, and
+   one representative write.
+9. Record the deployed IDs and inspect Convex operations/errors, gateway and
+   Files logs, Bento delivery, and Relay webhook receipts.
+
+The Convex and Worker phases are not atomic. If Convex succeeds and Wrangler
+fails, the previous app Worker remains live. Native backend changes must remain
+compatible with that Worker until the new Worker publishes, or the recovery is
+an immediate forward deploy.
+
+## Recovery phases
+
+### Before the native app is published
+
+No native app traffic exists. Restore GitHub's callback to
+`https://gateway.usekino.com/api/auth/callback/github` if it was changed. The
+migration-bearing gateway stage preserves legacy login and Relay. Fix the native
+configuration and retry later.
+
+### After publish, before accepting native writes
+
+A coordinated prelaunch rollback is still possible: stop acceptance testing,
+restore the frozen legacy app Worker version and GitHub callback, verify legacy
+protected SSR/data, and keep the dual-protocol gateway deployed until all native
+OAuth attempts have expired. The Files Worker may remain deployed because it is
+not selected by the legacy app.
+
+### After native writes are accepted
+
+Do not point users back at the legacy database. Pause writes or place the app in
+maintenance if necessary, then forward-fix the native app/backend. A gateway
+recovery must deploy a version that retains the Durable Object class/binding and
+native protocol; the legacy-only migration stage is no longer sufficient while
+native OAuth is live. Roll Convex code back only when its current schema and data
+are compatible with that revision. A Worker rollback does not restore Convex,
+R2, KV, Durable Object, or GitHub state.
+
+## Acceptance and cleanup
+
+The final preview acceptance items live in the authoritative checklist in
+`native-convex-migration-status.md`. After production acceptance:
+
+- rotate the previously exposed Convex management token;
+- delete temporary OAuth/proof resources and ignored credentials;
+- remove any retained visual-test folder after its storage cleanup finishes;
+- delete preview route records or allow their 14-day TTL to expire;
+- after the agreed stability window, remove the gateway's legacy Better Auth
+  proxy and rollback-only secrets/tests.
+
+Keep the gateway environment guide authoritative for callback ownership,
+standalone gateway deployment, and Relay invariants.

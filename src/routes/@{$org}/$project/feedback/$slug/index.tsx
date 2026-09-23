@@ -15,7 +15,7 @@ export const Route = createFileRoute('/@{$org}/$project/feedback/$slug/')({
 				projectSlug: params.project,
 			})
 		);
-		if (!projectData?.project?.id) throw notFound();
+		if (!projectData?.project.id) throw notFound();
 		const [feedbackData] = await Promise.all([
 			context.queryClient.ensureQueryData(
 				convexQuery(nativeApi.feedback.getDetail, {

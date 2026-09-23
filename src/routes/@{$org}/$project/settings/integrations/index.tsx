@@ -75,7 +75,7 @@ function GitHubIntegrationRoute() {
 	const detailsQuery = useQuery(
 		crpc.project.getDetails.queryOptions({ orgSlug: params.org, slug: params.project })
 	);
-	const isArchived = detailsQuery.data?.project?.visibility === 'archived';
+	const isArchived = detailsQuery.data?.project.visibility === 'archived';
 	const repositoriesQuery = useMutation(
 		crpc.githubExternal.listInstallationRepositoriesForProject.mutationOptions()
 	);

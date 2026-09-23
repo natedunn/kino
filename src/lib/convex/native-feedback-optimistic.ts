@@ -3,13 +3,6 @@ import type { Id } from '../../../convex/native/_generated/dataModel';
 
 import { api as nativeApi } from '../../../convex/native/_generated/api';
 
-type FeedbackListItem = {
-	id: Id<'feedback'>;
-	hasUpvoted: boolean;
-	upvotes: number;
-	[key: string]: unknown;
-};
-
 export function optimisticallyToggleFeedbackUpvote(
 	localStore: OptimisticLocalStore,
 	args: { feedbackId: Id<'feedback'> }
@@ -33,7 +26,7 @@ export function optimisticallyToggleFeedbackUpvote(
 		if (!current) continue;
 		localStore.setQuery(nativeApi.feedback.list, query.args, {
 			...current,
-			page: current.page.map((item: FeedbackListItem) => {
+			page: current.page.map((item) => {
 				if (item.id !== args.feedbackId) return item;
 				const hasUpvoted = !item.hasUpvoted;
 				return {

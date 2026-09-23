@@ -91,7 +91,7 @@ export const create = mutation({
 });
 
 export const inspect = query({
-	args: { invitationId: v.id('invitations') },
+	args: { invitationId: v.id('invitations'), now: v.number() },
 	returns: v.union(
 		v.object({ state: v.literal('unavailable') }),
 		v.object({ state: v.literal('wrong_account') }),
@@ -108,7 +108,7 @@ export const inspect = query({
 			expiresAt: v.number(),
 		})
 	),
-	handler: async (ctx, { invitationId }) => {
+	handler: async (ctx, { invitationId, now }) => {
 		const user = await getCurrentUser(ctx);
 		if (!user) return { state: 'unavailable' as const };
 		const invitation = await ctx.db.get('invitations', invitationId);
@@ -128,7 +128,7 @@ export const inspect = query({
 					}
 				: { state: 'unavailable' as const };
 		}
-		if (invitation.status !== 'pending' || invitation.expiresAt <= Date.now())
+		if (invitation.status !== 'pending' || invitation.expiresAt <= now)
 			return { state: 'unavailable' as const };
 		return {
 			state: 'pending' as const,
