@@ -156,13 +156,18 @@ upstream check, and upgrade procedure live in
 ### Cleanup after acceptance
 
 - [ ] Rotate the root worktree's previously exposed `CONVEX_MANAGEMENT_TOKEN`.
-- [ ] Delete the temporary **Kino Convex v2 Proof** OAuth app and disposable proof
-      Workers/Convex deployments; remove ignored proof credentials and state.
-      The currently inventoried proof Workers are
+- [x] Delete the disposable proof Workers and Convex previews. Completed September
+      23: all five Workers and the three stale proof previews were removed, and
+      the preview cleanup unregistered their gateway webhook targets. The removed
+      Workers were
       `kino-native-files-proof-c318c09d`, `kino-native-auth-proof-c318c09d`,
       `kino-auth-v2-proof-beta-c318c09d`, `kino-auth-v2-proof-c318c09d`, and
-      `kino-v2-gateway-proof-c318c09d`. Keep the shared dev/preview Workers and
-      shared preview R2 bucket.
+      `kino-v2-gateway-proof-c318c09d`; the removed Convex previews were
+      `graceful-elephant-103`, `cautious-oriole-896`, and `giant-jaguar-319`.
+      The shared dev/preview Workers, current PR preview, production resources,
+      and shared preview R2 bucket were preserved and their health rechecked.
+- [ ] Delete the temporary **Kino Convex v2 Proof** OAuth app and remove ignored
+      proof credentials and state.
 - [ ] Retry `node scripts/native-settings-live-proof.mjs cleanup-visual` until the
       retained proof folder is removed.
 - [ ] Delete preview OAuth route records when convenient or allow their 14-day TTL
