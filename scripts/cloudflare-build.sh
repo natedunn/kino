@@ -157,7 +157,11 @@ else
   export CONVEX_OVERRIDE_ACCESS_TOKEN="$CONVEX_MANAGEMENT_TOKEN"
   preview_selector="${CONVEX_TEAM_SLUG}:${CONVEX_PROJECT_SLUG}:preview/${convex_preview_name}"
   if ! npx convex env list --deployment "$preview_selector" --names-only >/dev/null 2>&1; then
-    npx convex deployment create "${CONVEX_TEAM_SLUG}:${CONVEX_PROJECT_SLUG}:${convex_preview_name}" \
+    # In Cloudflare CI, `deployment create` still needs a deploy key to select
+    # the project before it parses the fully qualified reference. Keep the
+    # management token for authorization and scope the preview key to creation;
+    # subsequent env commands select the exact branch preview explicitly.
+    CONVEX_DEPLOY_KEY="$CONVEX_PREVIEW_DEPLOY_KEY" npx convex deployment create "${CONVEX_TEAM_SLUG}:${CONVEX_PROJECT_SLUG}:${convex_preview_name}" \
       --type preview \
       --expiration "${CONVEX_PREVIEW_EXPIRATION:-in 14 days}"
   fi
