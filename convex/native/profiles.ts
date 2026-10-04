@@ -5,7 +5,7 @@ import { ConvexError, v } from 'convex/values';
 
 import { httpUrlSchema, orgNameSchema, urlListSchema, usernameSchema } from '../shared/validation';
 import { internalMutation, mutation, query } from './_generated/server';
-import { getCurrentUser, requireCurrentUser } from './identity';
+import { canUseReservedProjectSlugs, getCurrentUser, requireCurrentUser } from './identity';
 import { assertImageUploadUnclaimed, deleteUnclaimedImageUpload } from './imageUpload';
 import { localeValidator } from './schema';
 
@@ -23,6 +23,7 @@ const organizationValidator = v.object({
 	visibility: v.union(v.literal('public'), v.literal('private')),
 });
 const currentProfileValidator = v.object({
+	canUseReservedProjectSlugs: v.boolean(),
 	id: v.id('users'),
 	profileId: v.id('profiles'),
 	name: v.string(),
@@ -88,6 +89,7 @@ async function currentProfile(ctx: QueryCtx, user: Awaited<ReturnType<typeof get
 	return {
 		id: user._id,
 		profileId: profile._id,
+		canUseReservedProjectSlugs: canUseReservedProjectSlugs(user),
 		name: profile.name,
 		username: profile.username,
 		bio: profile.bio ?? null,

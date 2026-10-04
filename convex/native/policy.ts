@@ -3,6 +3,7 @@ import type { MutationCtx, QueryCtx } from './_generated/server';
 
 import { ConvexError, v } from 'convex/values';
 
+import { isReservedHandle } from '../shared/validation';
 import { mutation, query } from './_generated/server';
 import {
 	assertProjectWritable,
@@ -11,7 +12,7 @@ import {
 	resolveOrganizationAccess,
 	resolveProjectAccess,
 } from './access';
-import { requireCurrentUser } from './identity';
+import { canUseReservedProjectSlugs, requireCurrentUser } from './identity';
 import schema, { organizationRole, projectVisibility } from './schema';
 
 const PROJECT_LIMITS = { user: 1, 'system:admin': 100 } as const;
@@ -79,6 +80,8 @@ async function insertProject(
 	const name = args.name.trim();
 	const slug = args.slug.trim().toLowerCase();
 	if (!name || name.length > 100 || !/^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$/.test(slug))
+		throw new ConvexError('INVALID_PROJECT');
+	if (isReservedHandle(slug) && !canUseReservedProjectSlugs(user))
 		throw new ConvexError('INVALID_PROJECT');
 	if (
 		await ctx.db

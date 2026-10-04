@@ -1,3 +1,4 @@
+import type { Doc } from './_generated/dataModel';
 import type { QueryCtx } from './_generated/server';
 
 import { ConvexError } from 'convex/values';
@@ -17,4 +18,16 @@ export async function requireCurrentUser(ctx: Pick<QueryCtx, 'auth' | 'db'>) {
 	const user = await getCurrentUser(ctx);
 	if (!user) throw new ConvexError('UNAUTHORIZED');
 	return user;
+}
+
+// This grants only the reserved project-slug exception, never a system role.
+export function canUseReservedProjectSlugs(user: Doc<'users'> | null) {
+	const adminEmail = env.SUPER_ADMIN_EMAIL?.trim().toLowerCase();
+	if (!adminEmail || user?.status !== 'active') return false;
+	return (
+		(user.passwordEmailVerifiedAt !== undefined &&
+			user.passwordEmail?.trim().toLowerCase() === adminEmail) ||
+		(user.githubEmailVerifiedAt !== undefined &&
+			user.githubEmail?.trim().toLowerCase() === adminEmail)
+	);
 }

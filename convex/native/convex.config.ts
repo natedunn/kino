@@ -7,6 +7,7 @@ import { v } from 'convex/values';
 
 const app = defineApp({
 	env: {
+		SUPER_ADMIN_EMAIL: v.optional(v.string()),
 		GITHUB_RELAY_APP_ID: v.optional(v.string()),
 		GITHUB_RELAY_CLIENT_ID: v.optional(v.string()),
 		GITHUB_RELAY_CLIENT_SECRET: v.optional(v.string()),

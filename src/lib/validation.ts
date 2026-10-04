@@ -220,7 +220,7 @@ export function filterUsernameInput(value: string, max: number) {
 		.slice(0, max);
 }
 
-const slug = (max: number) =>
+const slug = (max: number, allowReserved = false) =>
 	z
 		.string()
 		.trim()
@@ -230,7 +230,7 @@ const slug = (max: number) =>
 		.regex(SLUG_PATTERN, {
 			message: 'Use lowercase letters, numbers, and single hyphens',
 		})
-		.refine((value) => !isReservedHandle(value), {
+		.refine((value) => allowReserved || !isReservedHandle(value), {
 			message: 'This slug is reserved',
 		});
 
@@ -268,13 +268,16 @@ export const projectUrlSchema = z.object({
 
 export const projectUrlListSchema = z.array(projectUrlSchema).max(MAX_PROJECT_URLS);
 
-export const projectFormSchema = z.object({
-	description: z.string().trim().max(FORM_LIMITS.projectDescription).optional(),
-	name: z.string().trim().min(1, 'Project name is required').max(FORM_LIMITS.projectName),
-	slug: slug(FORM_LIMITS.projectSlug),
-	urls: projectUrlListSchema.optional(),
-	visibility: z.enum(['public', 'private', 'archived']).default('public'),
-});
+export const createProjectFormSchema = (allowReserved = false) =>
+	z.object({
+		description: z.string().trim().max(FORM_LIMITS.projectDescription).optional(),
+		name: z.string().trim().min(1, 'Project name is required').max(FORM_LIMITS.projectName),
+		slug: slug(FORM_LIMITS.projectSlug, allowReserved),
+		urls: projectUrlListSchema.optional(),
+		visibility: z.enum(['public', 'private', 'archived']).default('public'),
+	});
+
+export const projectFormSchema = createProjectFormSchema();
 
 export const profileFormSchema = z.object({
 	name: z.string().trim().min(1, 'Name is required').max(FORM_LIMITS.orgName),

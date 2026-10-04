@@ -21,13 +21,14 @@ import {
 	creationServer,
 	useCreationAPI,
 } from '@/lib/convex/creation-api';
+import { profileServer } from '@/lib/convex/profile-api';
 import { localizeError } from '@/lib/errors';
 import { titleFromSlug, titleMeta } from '@/lib/seo';
 import { cn } from '@/lib/utils';
 import {
+	createProjectFormSchema,
 	filterSlugInput,
 	FORM_LIMITS,
-	projectFormSchema,
 	SLUG_INPUT_PATTERN,
 	validationMessage,
 } from '@/lib/validation';
@@ -60,6 +61,10 @@ function CreateProjectRoute() {
 	const navigate = useNavigate();
 	const creation = useCreationAPI();
 	const [formError, setFormError] = useState<string | null>(null);
+	const profileQuery = useQuery(profileServer.profile.findMyProfile.queryOptions({}));
+	const projectFormSchema = createProjectFormSchema(
+		profileQuery.data?.canUseReservedProjectSlugs ?? false
+	);
 
 	const orgQuery = useQuery(
 		creation.org.getDetails.queryOptions({

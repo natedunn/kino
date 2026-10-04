@@ -243,6 +243,7 @@ function makeReadSlugSchema(max: number) {
 export const orgSlugSchema = makeReadSlugSchema(VALIDATION_LIMITS.orgSlug);
 export const projectSlugSchema = makeReadSlugSchema(VALIDATION_LIMITS.projectSlug);
 export const orgSlugWriteSchema = makeReservedSlugSchema(VALIDATION_LIMITS.orgSlug);
+export const projectSlugFormatSchema = makeSlugSchema(VALIDATION_LIMITS.projectSlug);
 export const projectSlugWriteSchema = makeReservedSlugSchema(VALIDATION_LIMITS.projectSlug);
 // Read/lookup schema for system-generated slugs (feedback/update permalinks).
 // Lenient (size-only) for the same reason as the other read slug schemas.
