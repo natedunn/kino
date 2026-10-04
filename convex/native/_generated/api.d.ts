@@ -1694,6 +1694,7 @@ export declare const api: {
       {},
       null | {
         bio: null | string;
+        canUseReservedProjectSlugs: boolean;
         email: string;
         id: Id<"users">;
         imageUrl: null | string;
@@ -1731,6 +1732,7 @@ export declare const api: {
       },
       {
         bio: null | string;
+        canUseReservedProjectSlugs: boolean;
         email: string;
         id: Id<"users">;
         imageUrl: null | string;

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+	createProjectFormSchema,
 	emailSchema,
 	filterSlugInput,
 	filterUsernameInput,
@@ -53,6 +54,17 @@ describe('client slug validation', () => {
 		expect(filterUsernameInput('My_User', FORM_LIMITS.username)).toBe('my_user');
 		expect(filterUsernameInput('a b', FORM_LIMITS.username)).toBe('a_b');
 		expect(filterUsernameInput('bad-name!', FORM_LIMITS.username)).toBe('badname');
+	});
+
+	it('allows reserved project slugs only with the explicit server capability', () => {
+		const schema = createProjectFormSchema(true);
+		expect(schema.safeParse({ name: 'Kino', slug: 'kino' }).success).toBe(true);
+		for (const slug of ['bad--slug', 'bad_slug', 'a'.repeat(FORM_LIMITS.projectSlug + 1)]) {
+			expect(schema.safeParse({ name: 'Kino', slug }).success).toBe(false);
+		}
+		expect(createProjectFormSchema(false).safeParse({ name: 'Kino', slug: 'kino' }).success).toBe(
+			false
+		);
 	});
 
 	it('rejects reserved slugs and usernames', () => {

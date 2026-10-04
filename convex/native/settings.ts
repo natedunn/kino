@@ -5,11 +5,13 @@ import {
 	orgSlugWriteSchema,
 	projectDescriptionSchema,
 	projectNameSchema,
+	projectSlugFormatSchema,
 	projectSlugWriteSchema,
 	urlListSchema,
 } from '../shared/validation';
 import { internalQuery, mutation, query } from './_generated/server';
 import { requireOrganizationManager, requireProjectAccess } from './access';
+import { canUseReservedProjectSlugs, requireCurrentUser } from './identity';
 import { view } from './relay';
 import { connectionView, installationView } from './relaySchema';
 import { projectVisibility } from './schema';
@@ -61,7 +63,10 @@ export const updateProject = mutation({
 			throw new ConvexError('FORBIDDEN');
 		const parsed = {
 			name: projectNameSchema.safeParse(args.name),
-			slug: projectSlugWriteSchema.safeParse(args.slug),
+			slug: (canUseReservedProjectSlugs(await requireCurrentUser(ctx))
+				? projectSlugFormatSchema
+				: projectSlugWriteSchema
+			).safeParse(args.slug),
 			description: projectDescriptionSchema.safeParse(args.description),
 			urls: urlListSchema.safeParse(args.urls),
 		};

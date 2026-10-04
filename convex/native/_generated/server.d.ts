@@ -56,6 +56,7 @@ type Env = {
   readonly NATIVE_R2_BUCKET: string | undefined;
   readonly NATIVE_R2_ENDPOINT: string | undefined;
   readonly NATIVE_R2_SECRET_ACCESS_KEY: string | undefined;
+  readonly SUPER_ADMIN_EMAIL: string | undefined;
 };
 
 /**
