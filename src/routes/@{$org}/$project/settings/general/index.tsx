@@ -28,15 +28,16 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { GithubIcon } from '@/icons';
+import { profileServer } from '@/lib/convex/profile-api';
 import { settingsServer, useSettingsAPI } from '@/lib/convex/settings-api';
 import { localizeError } from '@/lib/errors';
 import { titleMeta } from '@/lib/seo';
 import { cn } from '@/lib/utils';
 import {
+	createProjectFormSchema,
 	filterSlugInput,
 	FORM_LIMITS,
 	MAX_PROJECT_URLS,
-	projectFormSchema,
 	SLUG_INPUT_PATTERN,
 	validationMessage,
 } from '@/lib/validation';
@@ -119,6 +120,10 @@ function ProjectGeneralSettingsRoute() {
 	const navigate = useNavigate();
 	const crpc = useSettingsAPI();
 	const [formError, setFormError] = useState<string | null>(null);
+	const profileQuery = useQuery(profileServer.profile.findMyProfile.queryOptions({}));
+	const projectFormSchema = createProjectFormSchema(
+		profileQuery.data?.canUseReservedProjectSlugs ?? false
+	);
 
 	const detailsQuery = useQuery(
 		crpc.project.getDetails.queryOptions({
