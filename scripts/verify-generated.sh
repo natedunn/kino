@@ -11,7 +11,7 @@ pnpm run codegen
 # It is intentionally excluded here because it is tooling documentation, not
 # application runtime code.
 generated_status=$(git status --short --untracked-files=all -- \
-  convex/native/_generated)
+  convex/native/_generated ':(exclude)convex/native/_generated/ai')
 
 if [[ -n "$generated_status" ]]; then
   echo >&2

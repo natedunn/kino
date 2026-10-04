@@ -33,6 +33,40 @@ does not invalidate a current refresh token.
 
 ## Upstream review
 
+### October 3, 2026 review
+
+Reviewed `reboot` through `de1ddf385d3723dea832cbcb7e548b08dbc7b5d4`
+(October 2), 43 commits beyond the installed pin and 34 beyond the previous
+review. The npm alpha tag still points to `2.0.0-alpha.2`. Kino intentionally
+retains the installed pin and all three compatibility patches; this review does
+not establish compatibility with the newer source.
+
+- The core session implementation, schema, and generated component interface
+  are unchanged from the installed pin. Upstream still has no equivalent
+  reset-time session revocation or recoverable refresh successor.
+- GitHub and Google now have dedicated OAuth components. A future upgrade must
+  move Kino's GitHub registration to
+  `@convex-dev/auth/providers/oauth/github/convex.config`, add `CALLBACK_URL` to
+  that component, and preserve the shared callback override. The generic
+  component's existing patch alone will not cover the new GitHub component.
+  Update `patchTargets`, the emitted-runtime marker check, generated bindings,
+  and OAuth component test fixtures together.
+- The new email/password recipe uses Resend, browser-bound email challenges,
+  user-ID account mappings, and empty callback profiles. Recovery issues a new
+  session without revoking old sessions. Adopting it is a separate migration
+  from Kino's Bento delivery, app-owned challenges, email account mappings,
+  registration metadata, and reset-without-sign-in contract.
+- Email challenge ownership checks and rate-limited email lookup affect the
+  upstream email component, which Kino's custom password flow does not use.
+  Initial TOTP enrollment does not replace any Kino compatibility patch.
+
+The installed package/runtime marker check and 58 targeted backend, route,
+client, and server auth tests passed. No upgrade or deployed OAuth proof was
+performed. See the
+[upstream comparison](https://github.com/get-convex/convex-auth/compare/50082b5951118e11365dac2042c587881c2b19a1...de1ddf385d3723dea832cbcb7e548b08dbc7b5d4).
+
+### Review procedure
+
 The weekly `Check Convex Auth v2 upstream` workflow compares the recorded
 reviewed `reboot` head with the live branch. Run it locally with:
 
