@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { withSecurityHeaders } from './response-headers';
+import { localConvexConnectSources, withSecurityHeaders } from './response-headers';
 
 describe('withSecurityHeaders', () => {
 	it('hardens HTTPS responses while preserving status, body and cookies', async () => {
@@ -38,5 +38,38 @@ describe('withSecurityHeaders', () => {
 
 		expect(secured.headers.get('referrer-policy')).toBe('no-referrer');
 		expect(secured.headers.has('strict-transport-security')).toBe(false);
+	});
+
+	it('allows only the configured local Convex backend in development', () => {
+		const connectSources = localConvexConnectSources('http://127.0.0.1:20372');
+		expect(connectSources).toEqual(['http://127.0.0.1:20372', 'ws://127.0.0.1:20372']);
+
+		const secured = withSecurityHeaders(
+			new Request('https://t3code-015108e7.kino.localhost:1355/'),
+			new Response(null),
+			{ connectSources }
+		);
+		const policy = secured.headers.get('content-security-policy');
+		expect(policy).toContain(
+			"connect-src 'self' https: wss: http://127.0.0.1:20372 ws://127.0.0.1:20372;"
+		);
+		// Another worktree's backend stays blocked.
+		expect(policy).not.toContain('127.0.0.1:*');
+		expect(policy).not.toContain('127.0.0.1:20316');
+	});
+
+	it('never widens the policy for remote, HTTPS or malformed Convex URLs', () => {
+		expect(localConvexConnectSources('https://happy-otter-123.convex.cloud')).toEqual([]);
+		expect(localConvexConnectSources('http://convex.example.com:3210')).toEqual([]);
+		expect(localConvexConnectSources('http://127.0.0.1')).toEqual([]);
+		expect(localConvexConnectSources('not a url')).toEqual([]);
+		expect(localConvexConnectSources(undefined)).toEqual([]);
+
+		const secured = withSecurityHeaders(new Request('https://usekino.com/'), new Response(null), {
+			connectSources: [],
+		});
+		expect(secured.headers.get('content-security-policy')).toContain(
+			"connect-src 'self' https: wss:;"
+		);
 	});
 });
