@@ -52,6 +52,16 @@ export function deriveClientDefinitelyAuthed(snap: AuthSnapshot): boolean {
 }
 
 /**
+ * Whether to render the viewer as signed in. Until the client auth bridge
+ * settles, trust what the server saw on the request (`hadServerSession`) so
+ * SSR and hydration agree without waiting on a Convex round-trip; afterwards
+ * the live bridge wins, so a sign-out or expired token updates immediately.
+ */
+export function deriveViewerSignedIn(snap: AuthSnapshot, hadServerSession: boolean): boolean {
+	return snap.isLoading ? hadServerSession : snap.isAuthenticated;
+}
+
+/**
  * Whether `beforeLoad` should consider this client navigation authenticated.
  * Fails OPEN while the bridge is still loading — used by `requireAuth`, whose
  * job is to keep authed users in; an SSR-authed user mid-load is never bounced,

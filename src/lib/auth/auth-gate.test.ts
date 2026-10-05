@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import {
 	deriveClientAuthed,
 	deriveClientDefinitelyAuthed,
+	deriveViewerSignedIn,
 	isClientAuthed,
 	isClientDefinitelyAuthed,
 	setAuthSnapshot,
@@ -73,5 +74,20 @@ describe('auth-snapshot server safety', () => {
 		setAuthSnapshot({ isAuthenticated: true, isLoading: false });
 		expect(isClientAuthed()).toBe(false);
 		expect(isClientDefinitelyAuthed()).toBe(false);
+	});
+});
+
+describe('deriveViewerSignedIn', () => {
+	it('uses the server session while the client auth bridge is loading', () => {
+		const loading = { isAuthenticated: false, isLoading: true };
+		expect(deriveViewerSignedIn(loading, false)).toBe(false);
+		expect(deriveViewerSignedIn(loading, true)).toBe(true);
+	});
+
+	it('follows the settled client state over the server session', () => {
+		// Signed out (or token expired) after the server rendered a session.
+		expect(deriveViewerSignedIn({ isAuthenticated: false, isLoading: false }, true)).toBe(false);
+		// Signed in on the client after a signed-out server render.
+		expect(deriveViewerSignedIn({ isAuthenticated: true, isLoading: false }, false)).toBe(true);
 	});
 });
