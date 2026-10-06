@@ -2,6 +2,7 @@ import { ConvexHttpClient } from 'convex/browser';
 import { SignJWT } from 'jose';
 
 import { api } from '../../../../convex/native/_generated/api';
+import { localGithubCallbackUrl } from '../runtime';
 
 const STATE_COOKIE = 'kinoNativeGithubState';
 const RETURN_COOKIE = 'kinoNativeGithubReturn';
@@ -98,11 +99,19 @@ export async function startNativeGithub(request: Request) {
 	const requestUrl = new URL(request.url);
 	if (request.headers.get('origin') !== requestUrl.origin)
 		return new Response('Forbidden', { status: 403 });
-	let config: Awaited<ReturnType<typeof gatewayConfig>>;
-	try {
-		config = await gatewayConfig(requestUrl.origin);
-	} catch {
-		return new Response('Native GitHub is not configured', { status: 503 });
+	// Local dev returns straight to this worktree's loopback Convex site; every
+	// deployed environment registers the flow with the gateway.
+	const localCallback = localGithubCallbackUrl(
+		import.meta.env.VITE_CONVEX_SITE_URL,
+		import.meta.env.DEV
+	);
+	let config: Awaited<ReturnType<typeof gatewayConfig>> | null = null;
+	if (!localCallback) {
+		try {
+			config = await gatewayConfig(requestUrl.origin);
+		} catch {
+			return new Response('Native GitHub is not configured', { status: 503 });
+		}
 	}
 	let input: unknown;
 	try {
@@ -127,6 +136,11 @@ export async function startNativeGithub(request: Request) {
 	const redirect = new URL(flow.redirect);
 	const originalState = redirect.searchParams.get('state');
 	const providerCallback = redirect.searchParams.get('redirect_uri');
+	if (!config) {
+		if (!originalState || providerCallback !== localCallback)
+			throw new Error('Unexpected native GitHub provider redirect');
+		return authorizationResponse(request, redirect, flow.state, callbackURL);
+	}
 	if (!originalState || providerCallback !== config.gateway.href)
 		throw new Error('Unexpected native GitHub provider redirect');
 
@@ -164,12 +178,20 @@ export async function startNativeGithub(request: Request) {
 	redirect.searchParams.set('state', registeredBody.state);
 	if (new TextEncoder().encode(redirect.href).length > AUTHORIZATION_URL_BUDGET)
 		throw new Error('Native GitHub authorization URL exceeds its budget');
+	return authorizationResponse(request, redirect, flow.state, callbackURL);
+}
 
+function authorizationResponse(
+	request: Request,
+	redirect: URL,
+	flowState: string,
+	callbackURL: string
+) {
 	const response = Response.json(
 		{ redirect: redirect.href },
 		{ headers: { 'Cache-Control': 'private, no-store', 'Referrer-Policy': 'no-referrer' } }
 	);
-	response.headers.append('Set-Cookie', cookie(request, STATE_COOKIE, flow.state, 600));
+	response.headers.append('Set-Cookie', cookie(request, STATE_COOKIE, flowState, 600));
 	response.headers.append('Set-Cookie', cookie(request, RETURN_COOKIE, callbackURL, 600));
 	return response;
 }

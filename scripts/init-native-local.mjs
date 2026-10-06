@@ -106,6 +106,42 @@ const appOrigin =
 authEnv.AUTH_APP_ORIGIN = new URL(appOrigin).origin;
 authEnv.AUTH_GITHUB_CALLBACK_URL = `http://127.0.0.1:${ports.site}/oauth/github/callback`;
 
+// Local GitHub login uses the Kino Auth Dev app that workspace setup copies into
+// the gateway's dev secrets. GitHub returns straight to this worktree's loopback
+// Convex site (the dev gateway can only reach HTTPS backends), so the app needs
+// `http://127.0.0.1/oauth/github/callback` registered; loopback ports may vary.
+const devGatewaySecrets = readEnvFile(
+	path.join(workspaceRoot, 'workers', 'gateway', 'secrets.dev.local')
+);
+if (devGatewaySecrets.GITHUB_AUTH_CLIENT_ID && devGatewaySecrets.GITHUB_AUTH_CLIENT_SECRET) {
+	authEnv.AUTH_GITHUB_CLIENT_ID = devGatewaySecrets.GITHUB_AUTH_CLIENT_ID;
+	authEnv.AUTH_GITHUB_CLIENT_SECRET = devGatewaySecrets.GITHUB_AUTH_CLIENT_SECRET;
+} else {
+	console.warn(
+		'[native-local] GitHub login is disabled: workers/gateway/secrets.dev.local has no Kino Auth Dev credentials.'
+	);
+}
+
+// Transactional email (sign-up verification, password reset, invitations) uses
+// the Bento credentials that workspace setup copies into `convex/.env`. Forward
+// only that allowlist; without them password sign-up returns EMAIL_UNAVAILABLE.
+const EMAIL_ENV_NAMES = [
+	'BENTO_PUBLISHABLE_KEY',
+	'BENTO_SECRET_KEY',
+	'BENTO_SITE_UUID',
+	'BENTO_FROM',
+];
+const sharedConvexEnvPath = path.join(workspaceRoot, 'convex', '.env');
+const sharedConvexEnv = readEnvFile(sharedConvexEnvPath);
+const emailEnv = EMAIL_ENV_NAMES.filter((name) => sharedConvexEnv[name]);
+if (emailEnv.length === EMAIL_ENV_NAMES.length) {
+	for (const name of EMAIL_ENV_NAMES) authEnv[name] = sharedConvexEnv[name];
+} else {
+	console.warn(
+		`[native-local] email is disabled: convex/.env is missing ${EMAIL_ENV_NAMES.filter((name) => !emailEnv.includes(name)).join(', ')}. Password sign-up will return EMAIL_UNAVAILABLE.`
+	);
+}
+
 const temporaryEnvPath = path.join(os.tmpdir(), `kino-native-local-${process.pid}.env`);
 fs.writeFileSync(
 	temporaryEnvPath,

@@ -57,6 +57,30 @@ registration. `pnpm dev:share` temporarily tunnels the app plus the local
 Convex cloud/site endpoints and registers only that session's exact app and
 site origins in the dev gateway.
 
+### Local login (anonymous Convex)
+
+The gateway reaches backends server-side and only over HTTPS, so it cannot
+serve a worktree's loopback Convex. Local sign-in therefore skips it:
+
+- `scripts/init-native-local.mjs` gives each worktree's local deployment the
+  Kino Auth Dev credentials from `workers/gateway/secrets.dev.local` and the
+  Bento keys from `convex/.env` (password verification mail), with
+  `AUTH_GITHUB_CALLBACK_URL=http://127.0.0.1:<site-port>/oauth/github/callback`.
+- In dev builds only, the Start adapter sends GitHub straight to that loopback
+  callback when the provider's `redirect_uri` exactly matches the worktree's
+  `VITE_CONVEX_SITE_URL` (`localGithubCallbackUrl`). Every deployed
+  environment still registers the flow with the gateway.
+- In dev builds only, `/api/auth/*` rebuilds the request URL from Portless's
+  `x-forwarded-host`/`x-forwarded-proto` (`*.localhost` hosts only), so origin
+  checks and redirects use the browser's origin instead of the loopback Vite
+  port. Deployed environments never trust forwarded headers.
+- The Kino Auth Dev GitHub App must list
+  `http://127.0.0.1/oauth/github/callback` as a callback URL. GitHub accepts
+  any port on a loopback callback, so one entry covers every worktree.
+
+Existing worktrees pick up the credentials by stopping dev and rerunning
+`pnpm convex:local:init` (without `--reset-local-state`, local data is kept).
+
 ## Native login flow
 
 1. The Start Worker asks its native Convex deployment to begin GitHub OAuth,

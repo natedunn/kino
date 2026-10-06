@@ -1,6 +1,6 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, it, test } from 'vitest';
 
-import { handleNativeAuthRequest } from './native-server';
+import { handleNativeAuthRequest, withPublicDevUrl } from './native-server';
 
 describe('native Start auth routes', () => {
 	test('does not expose auth handlers over GET', async () => {
@@ -35,4 +35,41 @@ describe('native Start auth routes', () => {
 			expect(response.headers.get('cache-control')).toBe('private, no-store');
 		}
 	);
+});
+
+describe('withPublicDevUrl', () => {
+	const forwarded = {
+		'x-forwarded-host': 't3code-015108e7.kino.localhost:1355',
+		'x-forwarded-proto': 'https',
+	};
+
+	it('restores the Portless origin for dev requests proxied to a loopback port', async () => {
+		const request = new Request('https://127.0.0.1:4655/api/auth/github/start?x=1', {
+			method: 'POST',
+			headers: forwarded,
+			body: '{"callbackURL":"/dashboard"}',
+		});
+		const result = withPublicDevUrl(request, true);
+		expect(result.url).toBe(
+			'https://t3code-015108e7.kino.localhost:1355/api/auth/github/start?x=1'
+		);
+		expect(result.method).toBe('POST');
+		expect(await result.text()).toBe('{"callbackURL":"/dashboard"}');
+	});
+
+	it('never trusts forwarded headers outside dev, off loopback, or for non-localhost hosts', () => {
+		const loopback = 'https://127.0.0.1:4655/api/auth/signin';
+		const cases: Array<[string, Record<string, string>, boolean]> = [
+			[loopback, forwarded, false],
+			['https://usekino.com/api/auth/signin', forwarded, true],
+			[loopback, { ...forwarded, 'x-forwarded-host': 'evil.example.com' }, true],
+			[loopback, { ...forwarded, 'x-forwarded-host': 'a.localhost/@evil.example.com' }, true],
+			[loopback, { ...forwarded, 'x-forwarded-proto': 'javascript' }, true],
+			[loopback, { 'x-forwarded-proto': 'https' }, true],
+		];
+		for (const [url, headers, isDev] of cases) {
+			const request = new Request(url, { headers });
+			expect(withPublicDevUrl(request, isDev)).toBe(request);
+		}
+	});
 });
