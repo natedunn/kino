@@ -57,6 +57,45 @@ registration. `pnpm dev:share` temporarily tunnels the app plus the local
 Convex cloud/site endpoints and registers only that session's exact app and
 site origins in the dev gateway.
 
+### Local login (anonymous Convex)
+
+Local worktrees use the dev gateway like every other dev-tier environment; only
+the final hop differs. A worktree's Convex runs on loopback, which Cloudflare
+cannot reach, so its route is registered as `local`:
+
+1. `pnpm dev` runs `scripts/gateway-local-route.mjs`, which registers
+   `local-<first 40 hex of sha256(app origin)>` with the dev gateway's
+   `/oauth/routes/:id` API: backend `http://127.0.0.1:<site-port>/oauth/github/callback`,
+   app `https://<worktree>.kino.localhost:1355/api/auth/github/callback`, and a
+   per-worktree route key kept in `.env.local`. It writes
+   `NATIVE_GITHUB_GATEWAY_URL`, `NATIVE_GITHUB_ROUTE_ID`,
+   `NATIVE_GITHUB_ROUTE_SECRET`, and `VITE_NATIVE_GITHUB_ENABLED` there. Without
+   `GATEWAY_URL`/`GATEWAY_ADMIN_TOKEN` or a loopback Convex site, GitHub login
+   stays off and dev continues.
+2. `scripts/init-native-local.mjs` gives the local deployment the Kino Auth Dev
+   credentials from `workers/gateway/secrets.dev.local`,
+   `AUTH_GITHUB_CALLBACK_URL=https://gateway-dev.usekino.com/oauth/github/callback`,
+   and the Bento keys from `convex/.env`.
+3. GitHub returns to the gateway as usual. For a `local` route, the gateway
+   answers with a browser redirect to the loopback backend instead of calling
+   it server-side; the local backend still verifies state and PKCE and
+   redirects only to its exact app callback.
+
+`local` routes are accepted only by the dev gateway's runtime registry
+(`QUICK_TUNNEL_TARGETS_ENABLED`), only for an exact `http://127.0.0.1:<port>`
+backend and `https://*.localhost:<port>` app callback that also match
+`TRUSTED_TARGET_PATTERNS`. Static `NATIVE_GITHUB_ROUTES` (production) reject
+them. The app code path is identical to previews: no environment special-casing.
+
+In dev builds only, `/api/auth/*` rebuilds the request URL from Portless's
+`x-forwarded-host`/`x-forwarded-proto` (`*.localhost` hosts only) so origin
+checks and redirects use the browser's origin rather than the loopback Vite
+port. Deployed environments never trust forwarded headers.
+
+Existing worktrees pick up the Convex-side credentials by stopping dev and
+rerunning `pnpm convex:local:init` (local data is kept without
+`--reset-local-state`).
+
 ## Native login flow
 
 1. The Start Worker asks its native Convex deployment to begin GitHub OAuth,

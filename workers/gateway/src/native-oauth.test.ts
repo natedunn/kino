@@ -218,6 +218,130 @@ describe('native OAuth gateway', () => {
 		).toBe(404);
 	});
 
+	it('hands a local worktree callback to the browser instead of fetching loopback', async () => {
+		const values = new Map<string, string>();
+		const env: GatewayEnv = {
+			...fixtureEnv(),
+			TARGETS: {
+				get: async (key: string) => JSON.parse(values.get(key) ?? 'null'),
+				put: async (key: string, value: string) => {
+					values.set(key, value);
+				},
+				delete: async (key: string) => {
+					values.delete(key);
+				},
+			} as unknown as KVNamespace,
+			QUICK_TUNNEL_TARGETS_ENABLED: 'true',
+			TRUSTED_TARGET_PATTERNS:
+				'https://*.kino.localhost:*,http://127.0.0.1:*,https://*.convex.site',
+			GATEWAY_ADMIN_TOKEN: 'admin-secret',
+		};
+		const id = `local-${'c'.repeat(40)}`;
+		const route = {
+			backendCallback: 'http://127.0.0.1:20373/oauth/github/callback',
+			appCallback: 'https://feature.kino.localhost:1355/api/auth/github/callback',
+			secret: 's'.repeat(64),
+			local: true,
+		};
+		const address = `https://gateway.example/oauth/routes/${id}`;
+		const registration = await worker.fetch(
+			new Request(address, {
+				method: 'PUT',
+				headers: { authorization: 'Bearer admin-secret' },
+				body: JSON.stringify(route),
+			}),
+			env,
+			ctx
+		);
+		expect(registration.status).toBe(200);
+		expect(await registration.json()).toMatchObject({ id, local: true });
+
+		const envelope = await signRoute(id, 'original-provider-state-value-123', route.secret);
+		const { state } = (await (
+			await worker.fetch(
+				new Request('https://gateway.example/oauth/state', {
+					method: 'POST',
+					body: JSON.stringify({ envelope }),
+				}),
+				env,
+				ctx
+			)
+		).json()) as { state: string };
+		const send = vi.fn<typeof fetch>();
+		const callback = await handleNativeOAuth(
+			new Request(`${base}?state=${state}&code=provider-code`),
+			env,
+			{},
+			send
+		);
+		expect(send).not.toHaveBeenCalled();
+		expect(callback.status).toBe(302);
+		const location = new URL(callback.headers.get('location')!);
+		expect(location.origin + location.pathname).toBe(route.backendCallback);
+		expect(location.searchParams.get('code')).toBe('provider-code');
+		expect(location.searchParams.get('state')).toBe('original-provider-state-value-123');
+		expect(callback.headers.get('referrer-policy')).toBe('no-referrer');
+		// Single use, like every opaque state.
+		expect(
+			(
+				await handleNativeOAuth(
+					new Request(`${base}?state=${state}&code=provider-code`),
+					env,
+					{},
+					send
+				)
+			).status
+		).toBe(400);
+	});
+
+	it('only accepts exact loopback and localhost callbacks for local routes', async () => {
+		const env: GatewayEnv = {
+			...fixtureEnv(),
+			TARGETS: { put: async () => undefined } as unknown as KVNamespace,
+			QUICK_TUNNEL_TARGETS_ENABLED: 'true',
+			TRUSTED_TARGET_PATTERNS:
+				'https://*.kino.localhost:*,http://127.0.0.1:*,https://*.convex.site',
+			GATEWAY_ADMIN_TOKEN: 'admin-secret',
+		};
+		const valid = {
+			backendCallback: 'http://127.0.0.1:20373/oauth/github/callback',
+			appCallback: 'https://feature.kino.localhost:1355/api/auth/github/callback',
+			secret: 's'.repeat(64),
+			local: true,
+		};
+		const put = (body: unknown, environment = env) =>
+			worker.fetch(
+				new Request(`https://gateway.example/oauth/routes/local-${'d'.repeat(40)}`, {
+					method: 'PUT',
+					headers: { authorization: 'Bearer admin-secret' },
+					body: JSON.stringify(body),
+				}),
+				environment,
+				ctx
+			);
+		for (const invalid of [
+			{ ...valid, backendCallback: 'http://10.0.0.5:20373/oauth/github/callback' },
+			{ ...valid, backendCallback: 'http://127.0.0.1/oauth/github/callback' },
+			{ ...valid, backendCallback: 'https://alpha.convex.site/oauth/github/callback' },
+			{ ...valid, backendCallback: 'http://127.0.0.1:20373/oauth/github/callback?x=1' },
+			{ ...valid, appCallback: 'https://evil.example/api/auth/github/callback' },
+			{ ...valid, appCallback: 'https://other.localhost:1355/api/auth/github/callback' },
+			{ ...valid, appCallback: 'http://feature.kino.localhost:1355/api/auth/github/callback' },
+			{ ...valid, local: false },
+			{ ...valid, local: 'yes' },
+		])
+			expect((await put(invalid)).status).toBe(400);
+		// A preview-shaped route can't smuggle a loopback backend without `local`.
+		const { local: _local, ...unmarked } = valid;
+		expect((await put(unmarked)).status).toBe(400);
+		expect((await put(valid)).status).toBe(200);
+		// Production keeps dynamic routes closed, and static routes never accept `local`.
+		expect((await put(valid, { ...env, QUICK_TUNNEL_TARGETS_ENABLED: undefined })).status).toBe(
+			404
+		);
+		expect(parseNativeRoutes(JSON.stringify({ dev: valid }))).toBeNull();
+	});
+
 	it('stages storage while leaving native routes closed, with no secrets in health', async () => {
 		const env = { ...fixtureEnv(), NATIVE_GITHUB_ROUTES: JSON.stringify(routes) };
 		const staged = await stage.fetch(new Request('https://gateway.example/health'), env, ctx);
