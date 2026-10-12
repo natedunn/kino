@@ -36,6 +36,25 @@ export function getRouter() {
 		defaultErrorComponent: DefaultCatchBoundary,
 	});
 
+	// Restored SSR queries subscribe as soon as the query cache hydrates, long
+	// before the auth provider settles and calls setAuth. Hand the browser's
+	// Convex client the server-validated session token first, so those queries
+	// never run anonymously and overwrite signed-in SSR data (hydration
+	// mismatches, UNAUTHORIZED). The auth provider later swaps in refreshable
+	// auth. Runs before the query integration, which wraps these hooks.
+	router.options.dehydrate = () => {
+		const root = router.state.matches.find((match) => match.routeId === '__root__');
+		const token = (root?.loaderData as { loaderToken?: string | null } | undefined)?.loaderToken;
+		return { convexAuthToken: token ?? null };
+	};
+	router.options.hydrate = (dehydrated: { convexAuthToken?: string | null }) => {
+		const token = dehydrated.convexAuthToken;
+		if (token)
+			convexQueryClient.convexClient.setAuth(({ forceRefreshToken }) =>
+				Promise.resolve(forceRefreshToken ? null : token)
+			);
+	};
+
 	setupRouterSsrQueryIntegration({
 		dehydrateOptions: hydrationConfig.dehydrate,
 		// The integration currently exposes the core hydrate shape through a
