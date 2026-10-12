@@ -27,11 +27,14 @@ jobs:
         with:
           node-version: 22
 
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10.28.2
-
-      - run: pnpm install --frozen-lockfile --ignore-scripts
+      # Cleanup needs only the Wrangler CLI (Convex cleanup is plain API calls).
+      # Installing the app would build its git-pinned @convex-dev/auth, which
+      # --ignore-scripts skips, so its patch fails and the job never runs.
+      # Keep this version in sync with wrangler in pnpm-lock.yaml.
+      - name: Install Wrangler
+        run: |
+          npm install --prefix "$RUNNER_TEMP/tools" --no-save --no-audit --no-fund --ignore-scripts wrangler@4.137.0
+          echo "$RUNNER_TEMP/tools/node_modules/.bin" >> "$GITHUB_PATH"
 
       - name: Resolve preview names
         id: preview

@@ -13,10 +13,12 @@ if (!process.env.CLOUDFLARE_ACCOUNT_ID || !process.env.CLOUDFLARE_API_TOKEN) {
 	process.exit(0);
 }
 
+// `wrangler` resolves from node_modules/.bin under `pnpm run`, and from the
+// pinned install on PATH in the preview cleanup workflow.
 const result = spawnSync(
-	'pnpm',
+	'wrangler',
 	[
-		'exec', 'wrangler', 'preview', 'delete',
+		'preview', 'delete',
 		'--config', 'wrangler.jsonc',
 		'--worker-name', process.env.CLOUDFLARE_WORKER_NAME ?? 'kino',
 		'--name', name,
