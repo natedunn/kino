@@ -106,6 +106,26 @@ const appOrigin =
 authEnv.AUTH_APP_ORIGIN = new URL(appOrigin).origin;
 authEnv.AUTH_GITHUB_CALLBACK_URL = `http://127.0.0.1:${ports.site}/oauth/github/callback`;
 
+// Transactional email (sign-up verification, password reset, invitations) uses
+// the Bento credentials that workspace setup copies into `convex/.env`. Forward
+// only that allowlist; without them password sign-up returns EMAIL_UNAVAILABLE.
+const EMAIL_ENV_NAMES = [
+	'BENTO_PUBLISHABLE_KEY',
+	'BENTO_SECRET_KEY',
+	'BENTO_SITE_UUID',
+	'BENTO_FROM',
+];
+const sharedConvexEnvPath = path.join(workspaceRoot, 'convex', '.env');
+const sharedConvexEnv = readEnvFile(sharedConvexEnvPath);
+const emailEnv = EMAIL_ENV_NAMES.filter((name) => sharedConvexEnv[name]);
+if (emailEnv.length === EMAIL_ENV_NAMES.length) {
+	for (const name of EMAIL_ENV_NAMES) authEnv[name] = sharedConvexEnv[name];
+} else {
+	console.warn(
+		`[native-local] email is disabled: convex/.env is missing ${EMAIL_ENV_NAMES.filter((name) => !emailEnv.includes(name)).join(', ')}. Password sign-up will return EMAIL_UNAVAILABLE.`
+	);
+}
+
 const temporaryEnvPath = path.join(os.tmpdir(), `kino-native-local-${process.pid}.env`);
 fs.writeFileSync(
 	temporaryEnvPath,
