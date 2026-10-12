@@ -22,7 +22,7 @@ export function PublicMainNav() {
 	return (
 		<MainNav
 			context={{ type: 'global' }}
-			isUserPending={signedIn && viewerQuery.data === undefined}
+			isUserPending={signedIn && viewerQuery.isPending}
 			user={signedIn ? viewerQuery.data : null}
 		/>
 	);
