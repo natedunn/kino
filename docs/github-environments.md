@@ -359,7 +359,8 @@ the endpoint is absent. Never add the variable to production.
 ### GitHub registration settings (per tier)
 
 Kino Auth GitHub App (user login): native redirect URI
-`https://<gateway>/oauth/github/callback`. Production also retains the legacy
+`https://<gateway>/oauth/github/callback`, registered on **each tier's** app
+(Kino Auth → `gateway.usekino.com`, Kino Auth (Dev) → `gateway-dev.usekino.com`). Production also retains the legacy
 `https://<gateway>/api/auth/callback/github` URI during acceptance; both are
 registered, while each login flow explicitly requests its matching URI.
 GitHub App (sync): callback `https://<gateway>/github-relay/oauth-callback`;
