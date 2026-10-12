@@ -106,6 +106,30 @@ const appOrigin =
 authEnv.AUTH_APP_ORIGIN = new URL(appOrigin).origin;
 authEnv.AUTH_GITHUB_CALLBACK_URL = `http://127.0.0.1:${ports.site}/oauth/github/callback`;
 
+// GitHub login uses the Kino Auth Dev app through the dev gateway, like every
+// dev-tier environment: GitHub returns to the gateway, and the `local` route that
+// `pnpm dev` registers redirects the browser on to this worktree's Convex site.
+const localEnvFile = readEnvFile(path.join(workspaceRoot, '.env.local'));
+const devGatewaySecrets = readEnvFile(
+	path.join(workspaceRoot, 'workers', 'gateway', 'secrets.dev.local')
+);
+if (
+	localEnvFile.GATEWAY_URL &&
+	devGatewaySecrets.GITHUB_AUTH_CLIENT_ID &&
+	devGatewaySecrets.GITHUB_AUTH_CLIENT_SECRET
+) {
+	authEnv.AUTH_GITHUB_CALLBACK_URL = new URL(
+		'/oauth/github/callback',
+		localEnvFile.GATEWAY_URL
+	).href;
+	authEnv.AUTH_GITHUB_CLIENT_ID = devGatewaySecrets.GITHUB_AUTH_CLIENT_ID;
+	authEnv.AUTH_GITHUB_CLIENT_SECRET = devGatewaySecrets.GITHUB_AUTH_CLIENT_SECRET;
+} else {
+	console.warn(
+		'[native-local] GitHub login is disabled: needs GATEWAY_URL in .env.local and Kino Auth Dev credentials in workers/gateway/secrets.dev.local.'
+	);
+}
+
 // Transactional email (sign-up verification, password reset, invitations) uses
 // the Bento credentials that workspace setup copies into `convex/.env`. Forward
 // only that allowlist; without them password sign-up returns EMAIL_UNAVAILABLE.

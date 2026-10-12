@@ -80,6 +80,11 @@ export async function handleNativeOAuth(
 		if (value) target.searchParams.set(key, value);
 	}
 	target.searchParams.set('state', resolved.state);
+	// A worktree's loopback Convex is reachable only from the developer's
+	// browser, so hand the callback over by redirect; the local backend still
+	// checks state and PKCE and redirects to its exact app callback.
+	if (resolved.route.local === true)
+		return new Response(null, { status: 302, headers: { ...headers, Location: target.href } });
 	let response: Response;
 	try {
 		response = await send(target, {

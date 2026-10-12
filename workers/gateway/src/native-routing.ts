@@ -1,14 +1,39 @@
 // Server-only routing envelopes. The registry, never the browser, owns URLs.
 import { jwtVerify, SignJWT } from 'jose';
 
-export type Route = { backendCallback: string; appCallback: string; secret: string };
+// `local` routes serve a developer worktree: the backend is that worktree's
+// loopback Convex site, which only the developer's browser can reach.
+export type Route = { backendCallback: string; appCallback: string; secret: string; local?: true };
 export type Routes = Record<string, Route>;
 const audience = 'kino-convex-v2-github-gateway';
 const key = (secret: string) => {
 	if (secret.length < 32) throw new Error('Routing key must be at least 32 characters');
 	return new TextEncoder().encode(secret);
 };
+function validateLocalRoute(route: Route) {
+	const backend = new URL(route.backendCallback);
+	const app = new URL(route.appCallback);
+	for (const url of [backend, app])
+		if (url.username || url.password || url.search || url.hash)
+			throw new Error('Local routing requires exact callback URLs');
+	if (
+		backend.href !== route.backendCallback ||
+		backend.protocol !== 'http:' ||
+		backend.hostname !== '127.0.0.1' ||
+		!backend.port ||
+		backend.pathname !== '/oauth/github/callback' ||
+		app.href !== route.appCallback ||
+		app.protocol !== 'https:' ||
+		!app.hostname.endsWith('.localhost') ||
+		app.pathname !== '/api/auth/github/callback'
+	)
+		throw new Error('Local routing requires exact loopback and localhost callback URLs');
+}
 export function validateRoute(route: Route) {
+	// Routes come from KV, request bodies, and secrets, so check the kind at runtime.
+	const kind: unknown = route.local;
+	if (kind === true) return validateLocalRoute(route);
+	if (kind !== undefined) throw new Error('Invalid route kind');
 	for (const [value, path] of [
 		[route.backendCallback, '/oauth/github/callback'],
 		[route.appCallback, '/api/auth/github/callback'],
@@ -36,7 +61,10 @@ export function parseNativeRoutes(raw: string | undefined): Routes | null {
 		for (const [id, value] of entries) {
 			if (!/^[a-z0-9-]{1,64}$/.test(id) || !value || typeof value !== 'object') return null;
 			const route = value as Route;
+			// Static routes describe deployed environments; local routes are only
+			// ever registered at runtime in the dev gateway.
 			if (
+				Object.hasOwn(route, 'local') ||
 				typeof route.secret !== 'string' ||
 				route.secret.length < 32 ||
 				typeof route.backendCallback !== 'string' ||

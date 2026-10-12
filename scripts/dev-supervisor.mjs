@@ -1,4 +1,4 @@
-import { spawn } from "node:child_process"
+import { spawn, spawnSync } from "node:child_process"
 import fs from "node:fs"
 import os from "node:os"
 import path from "node:path"
@@ -139,6 +139,16 @@ if (convexMode === "anonymous") {
     `Unknown KINO_CONVEX_MODE "${convexMode}". Expected "anonymous" or "shared".`
   )
   process.exit(1)
+}
+
+// Local Convex is reachable only from this machine, so GitHub login runs through
+// a `local` route on the dev gateway. Register it before Vite reads `.env.local`.
+if (convexMode === "anonymous") {
+  spawnSync("node", [path.join("scripts", "gateway-local-route.mjs")], {
+    stdio: "inherit",
+    cwd: workspaceRoot,
+    timeout: 20_000,
+  })
 }
 
 const localEnv = readLocalEnv(workspaceRoot)

@@ -37,10 +37,31 @@ function validPreviewRoute(env: GatewayEnv, route: Route) {
 	}
 }
 
+// A developer worktree: the app behind Portless and its loopback Convex site,
+// both within the dev gateway's static trust patterns.
+function validLocalRoute(env: GatewayEnv, route: Route) {
+	try {
+		validateRoute(route);
+		return (
+			route.local === true &&
+			isStaticallyTrustedTargetOrigin(env, new URL(route.appCallback).origin) &&
+			isStaticallyTrustedTargetOrigin(env, new URL(route.backendCallback).origin) &&
+			route.secret.length >= 32 &&
+			route.secret.length <= 512
+		);
+	} catch {
+		return false;
+	}
+}
+
+function validDynamicRoute(env: GatewayEnv, route: Route) {
+	return route.local === true ? validLocalRoute(env, route) : validPreviewRoute(env, route);
+}
+
 async function getDynamicRoute(env: GatewayEnv, id: string): Promise<Route | null> {
 	if (!dynamicNativeRoutesEnabled(env) || !ID_PATTERN.test(id)) return null;
 	const route = await env.TARGETS.get<Route>(`${PREFIX}${id}`, 'json');
-	return route && validPreviewRoute(env, route) ? route : null;
+	return route && validDynamicRoute(env, route) ? route : null;
 }
 
 export async function routesForEnvelope(
@@ -71,7 +92,12 @@ export async function handleNativeRouteApi(env: GatewayEnv, request: Request): P
 		const route = await getDynamicRoute(env, id);
 		if (!route) return new Response('Not found', { status: 404 });
 		return Response.json(
-			{ id, backendCallback: route.backendCallback, appCallback: route.appCallback },
+			{
+				id,
+				backendCallback: route.backendCallback,
+				appCallback: route.appCallback,
+				local: route.local === true,
+			},
 			{ headers }
 		);
 	}
@@ -87,23 +113,36 @@ export async function handleNativeRouteApi(env: GatewayEnv, request: Request): P
 		if (raw.length > 4096) throw new Error();
 		const parsed: unknown = JSON.parse(raw);
 		if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error();
-		const candidate = parsed as Partial<Route>;
+		const candidate = parsed as Partial<Record<keyof Route, unknown>>;
 		if (
 			typeof candidate.backendCallback !== 'string' ||
 			typeof candidate.appCallback !== 'string' ||
-			typeof candidate.secret !== 'string'
+			typeof candidate.secret !== 'string' ||
+			(candidate.local !== undefined && candidate.local !== true)
 		)
 			throw new Error();
-		route = candidate as Route;
+		route = {
+			backendCallback: candidate.backendCallback,
+			appCallback: candidate.appCallback,
+			secret: candidate.secret,
+			...(candidate.local ? { local: true as const } : {}),
+		};
 	} catch {
 		return new Response('Invalid route body', { status: 400 });
 	}
-	if (!validPreviewRoute(env, route)) {
-		return new Response('Route callbacks must be exact trusted preview URLs', { status: 400 });
+	if (!validDynamicRoute(env, route)) {
+		return new Response('Route callbacks must be exact trusted preview or local URLs', {
+			status: 400,
+		});
 	}
 	await env.TARGETS.put(key, JSON.stringify(route), { expirationTtl: TTL_SECONDS });
 	return Response.json(
-		{ id, backendCallback: route.backendCallback, appCallback: route.appCallback },
+		{
+			id,
+			backendCallback: route.backendCallback,
+			appCallback: route.appCallback,
+			local: route.local === true,
+		},
 		{ headers }
 	);
 }

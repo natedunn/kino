@@ -147,6 +147,12 @@ upstream check, and upgrade procedure live in
       `https://gateway.usekino.com/oauth/github/callback` to the production Kino
       Auth GitHub App, leaving its legacy URI and the Kino Relay registration
       unchanged. Confirmed after a GitHub settings reload on September 23.
+- [x] Add the native redirect URI
+      `https://gateway-dev.usekino.com/oauth/github/callback` to the Kino Auth
+      (Dev) GitHub App, keeping its legacy URI. The cutover only updated the
+      production app, so dev-tier native logins (local worktrees and previews)
+      were rejected with "redirect_uri is not associated with this application"
+      until this was added on October 11.
 - [ ] Release the native Convex and app Worker from the frozen commit, then test
       logged-out GitHub sign-in, protected reload/logout, verified email and
       recovery, private access, Relay, Files, and one representative write.
