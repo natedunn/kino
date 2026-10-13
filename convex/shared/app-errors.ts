@@ -23,6 +23,7 @@ export const APP_ERROR_CODES = [
 	'FOLDER_NOT_EMPTY',
 	'FILE_IN_USE',
 	'INVALID_IMAGE_FORMAT',
+	'DISCUSSIONS_TEAM_ONLY',
 ] as const;
 
 export type AppErrorCode = (typeof APP_ERROR_CODES)[number];

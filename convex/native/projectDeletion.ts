@@ -3,6 +3,7 @@ import { ConvexError, v } from 'convex/values';
 import { internal } from './_generated/api';
 import { internalMutation, mutation } from './_generated/server';
 import { requireProjectAccess } from './access';
+import { deleteDiscussionBatch } from './discussions';
 import { deleteChildBatch } from './feedback';
 
 // The same request resumes an interrupted cascade. The project remains as a
@@ -85,6 +86,15 @@ export const batch = internalMutation({
 		if (update) {
 			await ctx.db.patch('updates', update._id, { deletingAt: update.deletingAt ?? Date.now() });
 			await ctx.runMutation(internal.updates.deleteBatch, { id: update._id });
+			await again();
+			return null;
+		}
+		const discussion = await ctx.db
+			.query('discussions')
+			.withIndex('by_projectId_and_lastActivityAt', (q) => q.eq('projectId', args.projectId))
+			.first();
+		if (discussion) {
+			await deleteDiscussionBatch(ctx, discussion._id);
 			await again();
 			return null;
 		}

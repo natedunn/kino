@@ -2,7 +2,12 @@ import { v } from 'convex/values';
 
 import { query } from './_generated/server';
 import { resolveProjectAccess } from './access';
-import { projectThemePalette, projectThemePreset, projectVisibility } from './schema';
+import {
+	discussionsPostingPolicy,
+	projectThemePalette,
+	projectThemePreset,
+	projectVisibility,
+} from './schema';
 
 const projectPermissionsValidator = v.object({
 	canView: v.boolean(),
@@ -58,6 +63,7 @@ export const getBySlugs = query({
 				slug: v.string(),
 				visibility: projectVisibility,
 				updatesFeaturedMode: v.union(v.literal('latest'), v.literal('manual')),
+				discussionsPostingPolicy,
 			}),
 		})
 	),
@@ -105,6 +111,7 @@ export const getBySlugs = query({
 				slug: project.slug,
 				visibility: project.visibility,
 				updatesFeaturedMode: project.updatesFeaturedMode ?? 'latest',
+				discussionsPostingPolicy: project.discussionsPostingPolicy ?? 'everyone',
 			},
 		};
 	},

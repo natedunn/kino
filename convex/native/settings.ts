@@ -14,7 +14,7 @@ import { requireOrganizationManager, requireProjectAccess } from './access';
 import { canUseReservedProjectSlugs, requireCurrentUser } from './identity';
 import { view } from './relay';
 import { connectionView, installationView } from './relaySchema';
-import { projectVisibility } from './schema';
+import { discussionsPostingPolicy, projectVisibility } from './schema';
 
 const urlInput = v.object({ source: v.optional(v.string()), text: v.string(), url: v.string() });
 export const projectFields = {
@@ -24,6 +24,7 @@ export const projectFields = {
 	description: v.string(),
 	visibility: projectVisibility,
 	updatesFeaturedMode: v.union(v.literal('latest'), v.literal('manual')),
+	discussionsPostingPolicy,
 	urls: v.array(
 		v.object({
 			source: v.string(),
@@ -43,6 +44,7 @@ export const updateProject = mutation({
 		description: v.string(),
 		visibility: projectVisibility,
 		updatesFeaturedMode: v.union(v.literal('latest'), v.literal('manual')),
+		discussionsPostingPolicy: v.optional(discussionsPostingPolicy),
 		urls: v.array(urlInput),
 	},
 	returns: v.object(projectFields),
@@ -117,6 +119,8 @@ export const updateProject = mutation({
 			urls,
 			visibility: args.visibility,
 			updatesFeaturedMode: args.updatesFeaturedMode,
+			discussionsPostingPolicy:
+				args.discussionsPostingPolicy ?? access.project.discussionsPostingPolicy ?? 'everyone',
 		};
 		await ctx.db.patch('projects', args.id, patch);
 		// All content/storage relations use immutable IDs. Only active Relay views

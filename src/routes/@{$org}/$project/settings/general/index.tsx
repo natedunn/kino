@@ -67,8 +67,16 @@ const FEATURED_MODE_LABELS: Record<UpdatesFeaturedMode, () => string> = {
 	manual: m.updates_featured_mode_manual,
 };
 
+type DiscussionsPostingPolicy = 'everyone' | 'team';
+
+const POSTING_POLICY_LABELS: Record<DiscussionsPostingPolicy, () => string> = {
+	everyone: m.discussions_posting_policy_everyone,
+	team: m.discussions_posting_policy_team,
+};
+
 type GeneralSettingsFormValues = {
 	description: string;
+	discussionsPostingPolicy: DiscussionsPostingPolicy;
 	name: string;
 	slug: string;
 	updatesFeaturedMode: UpdatesFeaturedMode;
@@ -150,6 +158,7 @@ function ProjectGeneralSettingsRoute() {
 	const form = useForm({
 		defaultValues: {
 			description: project?.description ?? '',
+			discussionsPostingPolicy: project?.discussionsPostingPolicy ?? 'everyone',
 			name: project?.name ?? '',
 			slug: project?.slug ?? '',
 			updatesFeaturedMode: project?.updatesFeaturedMode ?? 'latest',
@@ -183,6 +192,7 @@ function ProjectGeneralSettingsRoute() {
 			try {
 				const updated = await updateMutation.mutateAsync({
 					description: parsed.data.description ?? '',
+					discussionsPostingPolicy: value.discussionsPostingPolicy,
 					id: project.id,
 					name: parsed.data.name,
 					slug: parsed.data.slug,
@@ -193,6 +203,7 @@ function ProjectGeneralSettingsRoute() {
 
 				formApi.reset({
 					description: updated.description,
+					discussionsPostingPolicy: updated.discussionsPostingPolicy,
 					name: updated.name,
 					slug: updated.slug,
 					updatesFeaturedMode: updated.updatesFeaturedMode,
@@ -513,6 +524,32 @@ function ProjectGeneralSettingsRoute() {
 									<SelectContent>
 										<SelectItem value='latest'>{m.updates_featured_mode_latest()}</SelectItem>
 										<SelectItem value='manual'>{m.updates_featured_mode_manual()}</SelectItem>
+									</SelectContent>
+								</Select>
+							)}
+						</form.Field>
+					</SectionCard>
+
+					<SectionCard
+						description={m.discussions_posting_policy_description()}
+						label={m.discussions_posting_policy_label()}
+					>
+						<form.Field name='discussionsPostingPolicy'>
+							{(field) => (
+								<Select
+									onValueChange={(value) => field.handleChange(value as DiscussionsPostingPolicy)}
+									value={field.state.value}
+								>
+									<SelectTrigger className='w-full sm:w-72'>
+										<SelectValue>
+											{(value) => POSTING_POLICY_LABELS[value as DiscussionsPostingPolicy]()}
+										</SelectValue>
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value='everyone'>
+											{m.discussions_posting_policy_everyone()}
+										</SelectItem>
+										<SelectItem value='team'>{m.discussions_posting_policy_team()}</SelectItem>
 									</SelectContent>
 								</Select>
 							)}

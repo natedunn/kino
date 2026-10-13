@@ -43,6 +43,19 @@ export const updateCategory = v.union(
 	v.literal('announcement')
 );
 export const updateStatus = v.union(v.literal('draft'), v.literal('published'));
+export const discussionsPostingPolicy = v.union(v.literal('everyone'), v.literal('team'));
+export const emoteReaction = v.union(
+	v.literal('heart'),
+	v.literal('thumbsUp'),
+	v.literal('thumbsDown'),
+	v.literal('laugh'),
+	v.literal('questionMark'),
+	v.literal('sad'),
+	v.literal('tada'),
+	v.literal('eyes'),
+	v.literal('skull'),
+	v.literal('explodingHead')
+);
 export const operationalJobKind = v.union(
 	v.literal('storage_cleanup'),
 	v.literal('project_deletion'),
@@ -194,6 +207,7 @@ export default defineSchema({
 		deletingAt: v.optional(v.number()),
 		storageDeletingAt: v.optional(v.number()),
 		updatesFeaturedMode: v.optional(v.union(v.literal('latest'), v.literal('manual'))),
+		discussionsPostingPolicy: v.optional(discussionsPostingPolicy),
 		organizationId: v.id('organizations'),
 		name: v.string(),
 		slug: v.string(),
@@ -444,6 +458,46 @@ export default defineSchema({
 		content: v.string(),
 	})
 		.index('by_updateId', ['updateId'])
+		.index('by_commentId_and_authorProfileId_and_content', [
+			'commentId',
+			'authorProfileId',
+			'content',
+		]),
+	// A discussion's body is its `initial` comment so it renders and reacts like
+	// every reply. `commentCount` excludes that initial comment.
+	discussions: defineTable({
+		projectId: v.id('projects'),
+		authorProfileId: v.id('profiles'),
+		firstCommentId: v.optional(v.id('discussionComments')),
+		slug: v.string(),
+		title: v.string(),
+		searchContent: v.string(),
+		commentCount: v.number(),
+		lastActivityAt: v.number(),
+		deletingAt: v.optional(v.number()),
+	})
+		.index('by_projectId_and_slug', ['projectId', 'slug'])
+		.index('by_projectId_and_lastActivityAt', ['projectId', 'lastActivityAt'])
+		.searchIndex('search_by_searchContent', {
+			searchField: 'searchContent',
+			filterFields: ['projectId'],
+		}),
+	discussionComments: defineTable({
+		discussionId: v.id('discussions'),
+		authorProfileId: v.id('profiles'),
+		content: v.string(),
+		initial: v.boolean(),
+		updatedAt: v.optional(v.number()),
+	})
+		.index('by_discussionId_and_initial', ['discussionId', 'initial'])
+		.index('by_authorProfileId', ['authorProfileId']),
+	discussionCommentEmotes: defineTable({
+		discussionId: v.id('discussions'),
+		commentId: v.id('discussionComments'),
+		authorProfileId: v.id('profiles'),
+		content: emoteReaction,
+	})
+		.index('by_discussionId', ['discussionId'])
 		.index('by_commentId_and_authorProfileId_and_content', [
 			'commentId',
 			'authorProfileId',

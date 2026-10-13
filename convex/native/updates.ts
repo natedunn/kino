@@ -12,7 +12,7 @@ import { assertProjectWritable, requireProjectAccess, resolveProjectAccess } fro
 import { isFeedbackLive } from './feedbackLifecycle';
 import { detachUpdateFiles } from './files.lib';
 import { getCurrentUser, requireCurrentUser } from './identity';
-import schema, { updateCategory, updateStatus } from './schema';
+import schema, { emoteReaction, updateCategory, updateStatus } from './schema';
 
 const limits = new RateLimiter(components.authLimits, {
 	updateWrite: { kind: 'token bucket', rate: 60, period: 60_000, capacity: 60 },
@@ -46,19 +46,6 @@ const editFields = {
 	featured: v.boolean(),
 	relatedFeedbackIds: v.array(v.id('feedback')),
 };
-const reaction = v.union(
-	v.literal('heart'),
-	v.literal('thumbsUp'),
-	v.literal('thumbsDown'),
-	v.literal('laugh'),
-	v.literal('questionMark'),
-	v.literal('sad'),
-	v.literal('tada'),
-	v.literal('eyes'),
-	v.literal('skull'),
-	v.literal('explodingHead')
-);
-
 export function summary(profile: Doc<'profiles'> | null) {
 	return profile
 		? {
@@ -465,7 +452,7 @@ export const toggleReaction = mutation({
 	args: {
 		updateId: v.id('updates'),
 		commentId: v.optional(v.id('updateComments')),
-		content: reaction,
+		content: emoteReaction,
 	},
 	returns: v.boolean(),
 	handler: async (ctx, args) => {

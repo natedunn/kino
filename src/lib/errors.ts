@@ -90,6 +90,8 @@ function translateAppError(code: unknown, values: unknown): string | undefined {
 			return m.server_error_file_in_use();
 		case 'INVALID_IMAGE_FORMAT':
 			return m.server_error_invalid_image_format();
+		case 'DISCUSSIONS_TEAM_ONLY':
+			return m.server_error_discussions_team_only();
 	}
 }
 
