@@ -1,5 +1,8 @@
 import { useMemo } from 'react';
-import { useConvexAuth, useQuery } from 'convex/react';
+import { convexQuery } from '@convex-dev/react-query';
+import { useQuery } from '@tanstack/react-query';
+import { getRouteApi } from '@tanstack/react-router';
+import { useConvexAuth } from 'convex/react';
 
 import {
 	nativeRequestEmail,
@@ -10,6 +13,7 @@ import {
 	nativeVerifyEmail,
 } from '@/lib/auth/adapters/native-actions';
 import { signOutNativeSession } from '@/lib/auth/adapters/native-client';
+import { deriveViewerSignedIn } from '@/lib/auth/auth-snapshot';
 import { getLocale } from '@/paraglide/runtime.js';
 
 import { api as nativeApi } from '../../../convex/native/_generated/api';
@@ -40,12 +44,24 @@ export function useIsAuthenticated() {
 	return useConvexAuth().isAuthenticated;
 }
 
+const rootRoute = getRouteApi('__root__');
+
+/**
+ * The signed-in viewer. Until the Convex auth handshake settles, trust the
+ * session the server validated for this request and read the profile the root
+ * `beforeLoad` prefetched, so SSR and the first client render already show the
+ * signed-in UI instead of flashing signed-out states after every hard load.
+ */
 export function useAuthSession(): { isPending: boolean; user: AppAuthUser | null } {
 	const auth = useConvexAuth();
-	const profile = useQuery(nativeApi.profiles.me, auth.isAuthenticated ? {} : 'skip');
+	const { loaderToken } = rootRoute.useLoaderData();
+	const signedIn = deriveViewerSignedIn(auth, !!loaderToken);
+	const { data: profile, isPending: profilePending } = useQuery(
+		convexQuery(nativeApi.profiles.me, signedIn ? {} : 'skip')
+	);
 	return useMemo(
 		() => ({
-			isPending: auth.isLoading || (auth.isAuthenticated && profile === undefined),
+			isPending: signedIn && profilePending,
 			user: profile
 				? {
 						email: profile.email,
@@ -55,7 +71,7 @@ export function useAuthSession(): { isPending: boolean; user: AppAuthUser | null
 					}
 				: null,
 		}),
-		[auth.isAuthenticated, auth.isLoading, profile]
+		[signedIn, profilePending, profile]
 	);
 }
 
