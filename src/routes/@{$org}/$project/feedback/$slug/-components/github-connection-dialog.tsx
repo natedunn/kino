@@ -111,7 +111,7 @@ function GitHubConnectionDialogBody({
 	const [localError, setLocalError] = useState('');
 
 	const availabilityQuery = useQuery(
-		crpc.feedbackGithub.getAvailability.queryOptions({ feedbackId }, { skipUnauth: true })
+		crpc.feedbackGithub.getAvailability.queryOptions({ feedbackId })
 	);
 	const availability = availabilityQuery.data;
 	const sourceDisabled = !!availability && !availability.issuesEnabled;

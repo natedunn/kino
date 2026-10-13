@@ -48,12 +48,8 @@ export const Route = createFileRoute('/create/team/')({
 		}
 
 		await Promise.all([
-			context.queryClient.ensureQueryData(
-				profileServer.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
-			),
-			context.queryClient.ensureQueryData(
-				creationServer.org.findMyOrgs.queryOptions({}, { skipUnauth: true })
-			),
+			context.queryClient.ensureQueryData(profileServer.profile.findMyProfile.queryOptions({})),
+			context.queryClient.ensureQueryData(creationServer.org.findMyOrgs.queryOptions({})),
 		]);
 	},
 	component: CreateTeamRoute,
@@ -74,10 +70,8 @@ function AuthenticatedCreateTeamRoute() {
 	const profile = useProfileAPI();
 	const [formError, setFormError] = useState<string>();
 	// Warms the profile cache the shell header reads, so it never shows a skeleton.
-	useSuspenseQuery(profile.profile.findMyProfile.queryOptions({}, { skipUnauth: true }));
-	const { data: orgsData } = useSuspenseQuery(
-		creation.org.findMyOrgs.queryOptions({}, { skipUnauth: true })
-	);
+	useSuspenseQuery(profile.profile.findMyProfile.queryOptions({}));
+	const { data: orgsData } = useSuspenseQuery(creation.org.findMyOrgs.queryOptions({}));
 	const createMutation = useMutation(
 		creation.org.create.mutationOptions({
 			onError: (error) => setFormError(localizeError(error, m.common_try_again())),

@@ -6,7 +6,7 @@ import { useConvex } from 'convex/react';
 
 import { api } from '../../../convex/native/_generated/api';
 
-type Extra = { enabled?: boolean; skipUnauth?: boolean };
+type Extra = { enabled?: boolean };
 type QueryOptions<TQueryFnData, TData = TQueryFnData> = Omit<
 	UseQueryOptions<TQueryFnData, Error, TData>,
 	'queryFn'

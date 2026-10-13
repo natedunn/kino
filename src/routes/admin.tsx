@@ -31,7 +31,7 @@ export const Route = createFileRoute('/admin')({
 		// handles it. Server procedures remain the real boundary regardless.
 		if (!context.loaderToken) return;
 		const profile = await context.queryClient.ensureQueryData(
-			profileServer.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
+			profileServer.profile.findMyProfile.queryOptions({})
 		);
 		if (profile?.role !== 'system:admin') {
 			throw redirect({ to: '/dashboard' });
@@ -65,9 +65,7 @@ function AdminPage() {
 
 function AuthedAdmin() {
 	const api = useProfileAPI();
-	const { data: profile } = useSuspenseQuery(
-		api.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
-	);
+	const { data: profile } = useSuspenseQuery(api.profile.findMyProfile.queryOptions({}));
 
 	// System-admin only. Anyone else is bounced to their dashboard.
 	if (!profile || profile.role !== 'system:admin') {

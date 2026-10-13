@@ -90,7 +90,7 @@ function AdvancedUpdatesSearch() {
 	const projectId = projectData.project.id;
 	const hasFilters = Boolean(search.category || search.q);
 	const currentProfileQuery = useQuery(
-		crpc.profile.findMyProfile.queryOptions({}, { skipUnauth: true, subscribe: false })
+		crpc.profile.findMyProfile.queryOptions({}, { subscribe: false })
 	);
 	const firstPageQuery = useQuery({
 		...crpc.update.searchProject.queryOptions({

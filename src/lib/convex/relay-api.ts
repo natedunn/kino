@@ -9,7 +9,7 @@ import { getFunctionName } from 'convex/server';
 import { api } from '../../../convex/native/_generated/api';
 
 type Options<T> = Omit<UseQueryOptions<T>, 'queryFn'> & { queryFn?: QueryFunction<T> };
-type Extra = { enabled?: boolean; skipUnauth?: boolean; subscribe?: boolean };
+type Extra = { enabled?: boolean; subscribe?: boolean };
 function read<TFunction extends FunctionReference<'query'>, TArgs>(
 	fn: TFunction,
 	args: (a: TArgs) => FunctionArgs<TFunction>

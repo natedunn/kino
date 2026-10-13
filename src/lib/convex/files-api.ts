@@ -12,7 +12,7 @@ export type FileFolder = FunctionReturnType<typeof api.filesWorkspace.folders>[n
 export type ProjectFile = FunctionReturnType<typeof api.filesWorkspace.list>['page'][number];
 export type FileDetail = NonNullable<FunctionReturnType<typeof api.filesWorkspace.detail>>;
 type Options<T> = Omit<UseQueryOptions<T>, 'queryFn'> & { queryFn?: QueryFunction<T> };
-type Extra = { enabled?: boolean; skipUnauth?: boolean };
+type Extra = { enabled?: boolean };
 function read<TFunction extends FunctionReference<'query'>, TArgs>(
 	fn: TFunction,
 	args: (a: TArgs) => FunctionArgs<TFunction>

@@ -10,7 +10,7 @@ function write<TArgs, TResult>(mutationFn: (args: TArgs) => Promise<TResult>) {
 	return { mutationOptions: (): UseMutationOptions<TResult, Error, TArgs> => ({ mutationFn }) };
 }
 type OrgArgs = { slug: string; organizationId?: string };
-type Extra = { enabled?: boolean; skipUnauth?: boolean };
+type Extra = { enabled?: boolean };
 const orgId = (args: OrgArgs, extra?: Extra) =>
 	args.organizationId && extra?.enabled !== false
 		? { organizationId: args.organizationId as Id<'organizations'> }

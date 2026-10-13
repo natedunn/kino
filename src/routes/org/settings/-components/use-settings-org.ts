@@ -34,7 +34,7 @@ export function persistSettingsOrg(slug: string) {
 /** Loads the organizations the signed-in user can manage (owner/admin). */
 export function useEditableOrgs() {
 	const crpc = useFilesAPI();
-	return useSuspenseQuery(crpc.org.findMyEditableOrgs.queryOptions({}, { skipUnauth: true }));
+	return useSuspenseQuery(crpc.org.findMyEditableOrgs.queryOptions({}));
 }
 
 /**

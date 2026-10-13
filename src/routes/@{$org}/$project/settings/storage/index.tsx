@@ -28,10 +28,7 @@ function ProjectStorageSettings() {
 	);
 	const projectId = details.data?.project.id ?? '';
 	const usage = useQuery(
-		crpc.file.getProjectUsage.queryOptions(
-			{ projectId },
-			{ enabled: !!projectId, skipUnauth: true }
-		)
+		crpc.file.getProjectUsage.queryOptions({ projectId }, { enabled: !!projectId })
 	);
 	if (details.isPending || usage.isPending)
 		return <div className='h-48 animate-pulse rounded-xl bg-muted' />;
