@@ -1,6 +1,6 @@
 import type { Editor } from '@tiptap/react';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useEditorState } from '@tiptap/react';
 import {
 	Bold,
@@ -267,7 +267,8 @@ export function EditorToolbar({ editor }: { editor: Editor | null }) {
 		setOverflowItems(overflow);
 	}, [items]);
 
-	useEffect(() => {
+	// Measure before paint so the toolbar never shows a frame with no buttons.
+	useLayoutEffect(() => {
 		calculateOverflow();
 		const resizeObserver = new ResizeObserver(calculateOverflow);
 		if (toolbarRef.current) resizeObserver.observe(toolbarRef.current);
