@@ -152,7 +152,7 @@ function FilesWorkspaceRoute() {
 	const usageQuery = useQuery(
 		crpc.file.getProjectUsage.queryOptions(
 			{ projectId: project.id },
-			{ enabled: canManage && !isAdvancedSearch, skipUnauth: true }
+			{ enabled: canManage && !isAdvancedSearch }
 		)
 	);
 	const activeFileId = looseParams.fileId;

@@ -31,7 +31,7 @@ export const Route = createFileRoute('/org/settings/integrations/')({
 		// Access (canEdit) is gated once on the `/org/settings` layout loader. Warm
 		// the integration cache without blocking navigation.
 		void context.queryClient.ensureQueryData(
-			crpcServer.github.getOrgIntegration.queryOptions({ orgSlug }, { skipUnauth: true })
+			crpcServer.github.getOrgIntegration.queryOptions({ orgSlug })
 		);
 	},
 	component: IntegrationsSettingsRoute,
@@ -61,7 +61,7 @@ function IntegrationsSettingsRoute() {
 			{
 				orgSlug: orgSlug ?? '',
 			},
-			{ enabled: !!orgSlug, skipUnauth: true }
+			{ enabled: !!orgSlug }
 		)
 	);
 	const startConnection = useMutation(

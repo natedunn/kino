@@ -32,9 +32,7 @@ const LABEL_BY_VALUE = Object.fromEntries(
 
 export function LanguageSelector({ className }: { className?: string }) {
 	const crpc = useProfileAPI();
-	const profileQuery = useQuery(
-		crpc.profile.findMyProfile.queryOptions({}, { skipUnauth: true, subscribe: false })
-	);
+	const profileQuery = useQuery(crpc.profile.findMyProfile.queryOptions({}, { subscribe: false }));
 	const updateLocale = useMutation(crpc.profile.updateLocale.mutationOptions());
 	const [isChanging, setIsChanging] = useState(false);
 	const locale = getLocale();

@@ -19,9 +19,7 @@ export const Route = createFileRoute('/u/$username/')({
 					username: params.username,
 				})
 			),
-			context.queryClient.ensureQueryData(
-				profileServer.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
-			),
+			context.queryClient.ensureQueryData(profileServer.profile.findMyProfile.queryOptions({})),
 		]);
 	},
 	component: PublicProfileRoute,

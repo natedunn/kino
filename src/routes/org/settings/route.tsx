@@ -56,7 +56,7 @@ export const Route = createFileRoute('/org/settings')({
 		}
 
 		const editableOrgs = await context.queryClient.ensureQueryData(
-			nativeFilesReads.org.findMyEditableOrgs.queryOptions({}, { skipUnauth: true })
+			nativeFilesReads.org.findMyEditableOrgs.queryOptions({})
 		);
 		if (editableOrgs.length === 0) {
 			throw redirect({ to: '/dashboard' });
@@ -95,9 +95,7 @@ function AuthenticatedOrgSettingsShell() {
 		select: (state) => state.location.pathname,
 	});
 	// Warms the profile cache the shell header reads, so it never shows a skeleton.
-	const profile = useSuspenseQuery(
-		crpc.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
-	);
+	const profile = useSuspenseQuery(crpc.profile.findMyProfile.queryOptions({}));
 	const { activeOrg, activeSlug, isEmpty, orgs, setOrg } = useSettingsOrgController();
 	// Whole settings area is an organization-management surface.
 	// `findMyEditableOrgs` returns owner/admin memberships only.

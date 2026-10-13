@@ -17,9 +17,7 @@ export const Route = createFileRoute('/account/security/')({
 			return;
 		}
 
-		await context.queryClient.ensureQueryData(
-			profileServer.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
-		);
+		await context.queryClient.ensureQueryData(profileServer.profile.findMyProfile.queryOptions({}));
 	},
 	// Auth entry is gated by the parent `/account` route's `beforeLoad`, and
 	// in-place sign-out by its `AccountRoute` guard — no child guard needed.
@@ -28,9 +26,7 @@ export const Route = createFileRoute('/account/security/')({
 
 function AuthenticatedSecurityRoute() {
 	const crpc = useProfileAPI();
-	const profileQuery = useSuspenseQuery(
-		crpc.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
-	);
+	const profileQuery = useSuspenseQuery(crpc.profile.findMyProfile.queryOptions({}));
 	const profile = profileQuery.data;
 
 	if (!profile) {

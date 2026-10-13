@@ -20,9 +20,7 @@ export const Route = createFileRoute('/account')({
 			return;
 		}
 
-		await context.queryClient.ensureQueryData(
-			profileServer.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
-		);
+		await context.queryClient.ensureQueryData(profileServer.profile.findMyProfile.queryOptions({}));
 	},
 	component: AccountRoute,
 });
@@ -77,7 +75,7 @@ function AuthenticatedAccountShell() {
 	// Suspense guarantees the profile is resolved by the time we render, so the
 	// nav never needs a pending state here.
 	// Warms the profile cache the shell header reads, so it never shows a skeleton.
-	useSuspenseQuery(crpc.profile.findMyProfile.queryOptions({}, { skipUnauth: true }));
+	useSuspenseQuery(crpc.profile.findMyProfile.queryOptions({}));
 	const selectItems = navItems.map((item) => {
 		const Icon = item.icon;
 		const active = pathname === item.to || pathname.startsWith(`${item.to}/`);

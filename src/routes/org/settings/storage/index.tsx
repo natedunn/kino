@@ -17,10 +17,7 @@ function OrganizationStorageSettings() {
 	const orgSlug = useSettingsOrgSlug();
 	const crpc = useFilesAPI();
 	const usage = useQuery(
-		crpc.file.getOrgUsage.queryOptions(
-			{ orgSlug: orgSlug ?? '' },
-			{ enabled: !!orgSlug, skipUnauth: true }
-		)
+		crpc.file.getOrgUsage.queryOptions({ orgSlug: orgSlug ?? '' }, { enabled: !!orgSlug })
 	);
 	if (!orgSlug || usage.isPending)
 		return <div className='h-48 animate-pulse rounded-xl bg-muted' />;

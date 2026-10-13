@@ -47,7 +47,7 @@ export const Route = createFileRoute('/@{$org}/create-project/')({
 	}),
 	loader: async ({ context, params }) => {
 		const orgData = await context.queryClient.ensureQueryData(
-			creationServer.org.getDetails.queryOptions({ slug: params.org }, { skipUnauth: true })
+			creationServer.org.getDetails.queryOptions({ slug: params.org })
 		);
 		if (!canCreateProjectInOrganization(orgData)) {
 			throw redirect({ to: '/@{$org}', params: { org: params.org } });
@@ -74,7 +74,7 @@ function CreateProjectRoute() {
 	const limitsQuery = useQuery(
 		creation.org.getMyPermission.queryOptions(
 			{ slug: params.org },
-			{ enabled: canCreateProjectInOrganization(orgQuery.data), skipUnauth: true }
+			{ enabled: canCreateProjectInOrganization(orgQuery.data) }
 		)
 	);
 

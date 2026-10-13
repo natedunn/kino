@@ -37,9 +37,7 @@ export const Route = createFileRoute('/account/profile/')({
 			return;
 		}
 
-		await context.queryClient.ensureQueryData(
-			profileServer.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
-		);
+		await context.queryClient.ensureQueryData(profileServer.profile.findMyProfile.queryOptions({}));
 	},
 	// Auth is gated by the parent `/account` route (beforeLoad + AccountRoute).
 	component: AuthenticatedProfileSettingsRoute,
@@ -84,9 +82,7 @@ function AuthenticatedProfileSettingsRoute() {
 	const syncMetadataMutation = useMutation(crpc.profile.syncMetadata.mutationOptions());
 	const updateMutation = useMutation(crpc.profile.update.mutationOptions());
 	const [formError, setFormError] = useState<string | null>(null);
-	const profileQuery = useSuspenseQuery(
-		crpc.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
-	);
+	const profileQuery = useSuspenseQuery(crpc.profile.findMyProfile.queryOptions({}));
 	const profile = profileQuery.data;
 	const formDefaultValues = useMemo<ProfileSettingsFormValues>(
 		() => ({

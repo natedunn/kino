@@ -26,14 +26,9 @@ export const Route = createFileRoute('/account/data/')({
 		}
 
 		await Promise.all([
+			context.queryClient.ensureQueryData(profileServer.profile.findMyProfile.queryOptions({})),
 			context.queryClient.ensureQueryData(
-				profileServer.profile.findMyProfile.queryOptions({}, { skipUnauth: true })
-			),
-			context.queryClient.ensureQueryData(
-				userDataExportServer.userDataExport.getAvailableSections.queryOptions(
-					{},
-					{ skipUnauth: true }
-				)
+				userDataExportServer.userDataExport.getAvailableSections.queryOptions({})
 			),
 		]);
 	},
@@ -104,9 +99,7 @@ function downloadJson(filename: string, data: unknown) {
 
 function AuthenticatedDataRoute() {
 	const api = useUserDataExportAPI();
-	const sectionsQuery = useSuspenseQuery(
-		api.userDataExport.getAvailableSections.queryOptions({}, { skipUnauth: true })
-	);
+	const sectionsQuery = useSuspenseQuery(api.userDataExport.getAvailableSections.queryOptions({}));
 	const defaultSectionIds = useMemo(
 		() =>
 			sectionsQuery.data

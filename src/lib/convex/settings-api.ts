@@ -15,7 +15,7 @@ function read<TFunction extends FunctionReference<'query'>, TArgs>(
 ) {
 	const queryOptions = (
 		a: TArgs,
-		extra?: { enabled?: boolean; skipUnauth?: boolean }
+		extra?: { enabled?: boolean }
 	): Options<FunctionReturnType<TFunction>> =>
 		({
 			...(extra?.enabled === false

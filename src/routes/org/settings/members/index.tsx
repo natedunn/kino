@@ -82,10 +82,7 @@ function MembersSettingsRoute() {
 	const crpc = useOrganizationMembersAPI();
 
 	const orgQuery = useQuery(
-		crpc.org.getDetails.queryOptions(
-			{ slug: orgSlug ?? '' },
-			{ enabled: !!orgSlug, skipUnauth: true }
-		)
+		crpc.org.getDetails.queryOptions({ slug: orgSlug ?? '' }, { enabled: !!orgSlug })
 	);
 	const membersQuery = useQuery(
 		crpc.orgMember.listMembers.queryOptions(
