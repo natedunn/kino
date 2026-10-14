@@ -110,6 +110,9 @@ function AvatarImage({
 
 	return (
 		<img
+			// Until it loads, the fallback is still mounted and is the accessible
+			// alternative; don't let assistive tech announce both.
+			aria-hidden={status === 'loaded' ? undefined : true}
 			data-slot='avatar-image'
 			ref={imageRef}
 			src={src}
