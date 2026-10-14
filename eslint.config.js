@@ -9,7 +9,6 @@ export default [
 	{
 		ignores: [
 			'.tmp/**',
-			'experiments/**',
 			'integrations/**',
 			'src/paraglide/**',
 			'convex/native/_generated/**/*.{ts,tsx,js}',

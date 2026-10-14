@@ -8,5 +8,3 @@ dist/
 **/build
 convex/native/_generated/
 src/routeTree.gen.ts
-experiments/**/.upstream/
-experiments/**/.revocation/
