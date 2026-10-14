@@ -4,6 +4,7 @@ import type { MutationCtx, QueryCtx } from './_generated/server';
 import { paginationOptsValidator, paginationResultValidator } from 'convex/server';
 import { ConvexError, v } from 'convex/values';
 
+import { sanitizeStoredContent } from '../shared/rich-text';
 import { internal } from './_generated/api';
 import { internalMutation, mutation, query } from './_generated/server';
 import { assertProjectWritable, requireProjectAccess, resolveProjectAccess } from './access';
@@ -256,7 +257,7 @@ export const create = mutation({
 		if (!board || board.projectId !== args.projectId || board.deletingAt !== undefined)
 			throw new ConvexError('INVALID_BOARD');
 		const title = args.title.trim();
-		const firstComment = args.firstComment.trim();
+		const firstComment = sanitizeStoredContent(args.firstComment);
 		if (!title || title.length > 200) throw new ConvexError('INVALID_TITLE');
 		if (!firstComment || firstComment.length > 50_000) throw new ConvexError('INVALID_COMMENT');
 		const slug = await uniqueSlug(ctx, args.projectId);

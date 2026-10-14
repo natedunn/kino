@@ -7,6 +7,7 @@ import StarterKit from '@tiptap/starter-kit';
 
 import { cn } from '@/lib/utils';
 
+import { EditorPlaceholder } from './editor-placeholder';
 import { EditorToolbar } from './editor-toolbar';
 import { createLowlightCodeBlock } from './extensions/lowlight-code-block';
 import {
@@ -229,6 +230,23 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
 			},
 			insertText: (text: string) => editor?.chain().focus().insertContent(text).run(),
 		}));
+
+		// `immediatelyRender: false` leaves the editor null on the first client
+		// render; keep showing the same replica the lazy fallback rendered.
+		if (!editor) {
+			return (
+				<EditorPlaceholder
+					className={className}
+					contentClassName={contentClassName}
+					disabled={disabled}
+					maxHeight={maxHeight}
+					minHeight={minHeight}
+					placeholder={placeholder}
+					value={value}
+					variant={variant}
+				/>
+			);
+		}
 
 		return (
 			<div

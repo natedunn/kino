@@ -1,4 +1,5 @@
 import { startTransition, useEffect, useMemo, useState } from 'react';
+import { isRichTextHtml, sanitizeRichText } from '@convex/rich-text';
 
 import { cn } from '@/lib/utils';
 
@@ -11,9 +12,9 @@ type EditorContentDisplayProps = {
 };
 
 export function EditorContentDisplay({ className, content }: EditorContentDisplayProps) {
-	const isHTML = content.startsWith('<') && content.includes('</');
+	const isHTML = isRichTextHtml(content);
 	const baseContent = useMemo(
-		() => (isHTML ? sanitizeEditorContent(content) : content),
+		() => (isHTML ? sanitizeRichText(sanitizeEditorContent(content)) : content),
 		[content, isHTML]
 	);
 	const hasCodeBlock = baseContent.includes('<pre') && baseContent.includes('<code');
