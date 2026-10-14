@@ -218,7 +218,7 @@ production GitHub `/session` failure occurred when GitHub was logged out;
 pre-signing into GitHub allowed the benchmark to complete. No production fix
 was deployed. Anonymous public feedback-list timing also passed, but the
 native fixture is empty while production has one item. See the
-[performance report](../experiments/convex-auth-v2/performance/README.md).
+[performance report](https://github.com/natedunn/kino/blob/1348f490/experiments/convex-auth-v2/performance/README.md).
 
 The native expired-access SSR probe also passed with a fresh, untouched
 refresh cookie after 75 seconds: the dashboard remained private in server HTML,
@@ -926,34 +926,34 @@ deploying the app does not deploy its standalone OAuth gateway**. Follow
 
 ## Completed evidence
 
-| Area                              | Result                                                                                                                               | Evidence / limits                                                                                                                                                                                                                                                                    |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| App inventory                     | Completed initial scan                                                                                                               | Auth, cRPC, ORM, schema side effects, routing, files, GitHub, tooling, and existing tests inventoried; inventory summarized below                                                                                                                                                    |
-| Isolated proof harness            | 263 tests in 26 files pass; TypeScript passes                                                                                        | Rechecked September 21 after adding native organizations, invitations, policy, relationship cascades, storage cleanup, and project/storage integration                                                                                                                               |
-| Kino integration foundation       | Historical parallel-runtime checkpoint passed                                                                                        | PR #154 subsequently removed the Kitcn application runtime and made `convex/native` the root application; see the authoritative status above                                                                                                                                         |
-| Core session lifecycle            | Local component tests pass                                                                                                           | Includes no-session signup, later sign-in, rotation, replay handling, and sign-out; not the custom email workflow                                                                                                                                                                    |
-| Password component                | Actual WASM hashing and component tests pass                                                                                         | Does not establish complete recovery or post-reset session revocation                                                                                                                                                                                                                |
-| Request-scoped auth adapter       | Unit and live Start checks pass                                                                                                      | Actual server function/routes, HttpOnly cookies, parallel-token refresh sharing, anonymous isolation and logout verified; Local HTTPS/workerd and deployed GitHub cookie-session checks pass; broader refresh/streaming edge cases remain open                                       |
-| Suspense SSR, hydration and hover | Local browser proof passes on dev and built preview                                                                                  | Real Start + official adapter + local backend; private HTML, hydration, external mutation updates, and hover subscription reuse verified; [evidence](../experiments/convex-auth-v2/start/README.md)                                                                                  |
-| Temporary GitHub OAuth app        | Created and configured by Nate                                                                                                       | Separate registration; credentials stay in a gitignored local file                                                                                                                                                                                                                   |
-| Live v2 GitHub sign-in            | **Confirmed by Nate**                                                                                                                | “Signed in with a user ID; reload also works.”                                                                                                                                                                                                                                       |
-| Live sign-out and repeat login    | **Confirmed by Nate**                                                                                                                | Completed the requested sequence and confirmed the same app user ID                                                                                                                                                                                                                  |
-| Local account/session linkage     | Confirmed by read-only inspection                                                                                                    | One app user, one GitHub account, one session; account/user/session references agree                                                                                                                                                                                                 |
-| Live proof TypeScript             | Passes                                                                                                                               | Frontend and backend checked                                                                                                                                                                                                                                                         |
-| Email/password lifecycle proof    | 14 new local tests pass; TypeScript passes                                                                                           | Actual core/password components with captured mail delivery; verification, login, replacement, expiry/replay and rollback covered                                                                                                                                                    |
-| Upstream recovery revocation gap  | **Demonstrated at the pinned upstream revision**                                                                                     | The unpatched upstream core allowed a pre-reset refresh token to rotate after the password changed                                                                                                                                                                                   |
-| Kino recovery revocation patch    | **Installed and exercised**                                                                                                          | Kino's pinned core patch blocks old refresh tokens; native component and browser recovery checks reject old sessions and spent-token replay                                                                                                                                          |
-| Live email proof                  | Browser signup, unverified-login rejection, inbox verification, authenticated query and reload pass; second session has same user ID | Local backend 4420/4421, browser 5180; Delivered reset link consumed; both old sessions and spent refresh token rejected; old password rejected; new-password login/reload preserve user ID; reset replay rejected; see [email proof](../experiments/convex-auth-v2/email/README.md) |
-| GitHub + Start + local gateway    | Real GitHub flow passes                                                                                                              | Secure/HttpOnly cookies, private SSR, reload, logout, repeat identity; Nate completed consent; [evidence](../experiments/convex-auth-v2/gateway/README.md)                                                                                                                           |
-| Cloudflare runtime and packaging  | Local HTTPS browser checks, build and matching-toolchain dry-run pass                                                                | Exact-origin host adaptation required; plugin/standalone Wrangler mismatch documented; isolated cloud deployment now exists; real cloud OAuth, private SSR, reload, logout and repeat identity pass                                                                                  |
-| Access tokens after reset         | Explicit bounded-expiry proof                                                                                                        | Previously issued JWTs remain valid until their original expiry (60-second default); immediate denial is not implemented                                                                                                                                                             |
+| Area                              | Result                                                                                                                               | Evidence / limits                                                                                                                                                                                                                                                                                                                |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| App inventory                     | Completed initial scan                                                                                                               | Auth, cRPC, ORM, schema side effects, routing, files, GitHub, tooling, and existing tests inventoried; inventory summarized below                                                                                                                                                                                                |
+| Isolated proof harness            | 263 tests in 26 files pass; TypeScript passes                                                                                        | Rechecked September 21 after adding native organizations, invitations, policy, relationship cascades, storage cleanup, and project/storage integration                                                                                                                                                                           |
+| Kino integration foundation       | Historical parallel-runtime checkpoint passed                                                                                        | PR #154 subsequently removed the Kitcn application runtime and made `convex/native` the root application; see the authoritative status above                                                                                                                                                                                     |
+| Core session lifecycle            | Local component tests pass                                                                                                           | Includes no-session signup, later sign-in, rotation, replay handling, and sign-out; not the custom email workflow                                                                                                                                                                                                                |
+| Password component                | Actual WASM hashing and component tests pass                                                                                         | Does not establish complete recovery or post-reset session revocation                                                                                                                                                                                                                                                            |
+| Request-scoped auth adapter       | Unit and live Start checks pass                                                                                                      | Actual server function/routes, HttpOnly cookies, parallel-token refresh sharing, anonymous isolation and logout verified; Local HTTPS/workerd and deployed GitHub cookie-session checks pass; broader refresh/streaming edge cases remain open                                                                                   |
+| Suspense SSR, hydration and hover | Local browser proof passes on dev and built preview                                                                                  | Real Start + official adapter + local backend; private HTML, hydration, external mutation updates, and hover subscription reuse verified; [evidence](https://github.com/natedunn/kino/blob/1348f490/experiments/convex-auth-v2/start/README.md)                                                                                  |
+| Temporary GitHub OAuth app        | Created and configured by Nate                                                                                                       | Separate registration; credentials stay in a gitignored local file                                                                                                                                                                                                                                                               |
+| Live v2 GitHub sign-in            | **Confirmed by Nate**                                                                                                                | “Signed in with a user ID; reload also works.”                                                                                                                                                                                                                                                                                   |
+| Live sign-out and repeat login    | **Confirmed by Nate**                                                                                                                | Completed the requested sequence and confirmed the same app user ID                                                                                                                                                                                                                                                              |
+| Local account/session linkage     | Confirmed by read-only inspection                                                                                                    | One app user, one GitHub account, one session; account/user/session references agree                                                                                                                                                                                                                                             |
+| Live proof TypeScript             | Passes                                                                                                                               | Frontend and backend checked                                                                                                                                                                                                                                                                                                     |
+| Email/password lifecycle proof    | 14 new local tests pass; TypeScript passes                                                                                           | Actual core/password components with captured mail delivery; verification, login, replacement, expiry/replay and rollback covered                                                                                                                                                                                                |
+| Upstream recovery revocation gap  | **Demonstrated at the pinned upstream revision**                                                                                     | The unpatched upstream core allowed a pre-reset refresh token to rotate after the password changed                                                                                                                                                                                                                               |
+| Kino recovery revocation patch    | **Installed and exercised**                                                                                                          | Kino's pinned core patch blocks old refresh tokens; native component and browser recovery checks reject old sessions and spent-token replay                                                                                                                                                                                      |
+| Live email proof                  | Browser signup, unverified-login rejection, inbox verification, authenticated query and reload pass; second session has same user ID | Local backend 4420/4421, browser 5180; Delivered reset link consumed; both old sessions and spent refresh token rejected; old password rejected; new-password login/reload preserve user ID; reset replay rejected; see [email proof](https://github.com/natedunn/kino/blob/1348f490/experiments/convex-auth-v2/email/README.md) |
+| GitHub + Start + local gateway    | Real GitHub flow passes                                                                                                              | Secure/HttpOnly cookies, private SSR, reload, logout, repeat identity; Nate completed consent; [evidence](https://github.com/natedunn/kino/blob/1348f490/experiments/convex-auth-v2/gateway/README.md)                                                                                                                           |
+| Cloudflare runtime and packaging  | Local HTTPS browser checks, build and matching-toolchain dry-run pass                                                                | Exact-origin host adaptation required; plugin/standalone Wrangler mismatch documented; isolated cloud deployment now exists; real cloud OAuth, private SSR, reload, logout and repeat identity pass                                                                                                                              |
+| Access tokens after reset         | Explicit bounded-expiry proof                                                                                                        | Previously issued JWTs remain valid until their original expiry (60-second default); immediate denial is not implemented                                                                                                                                                                                                         |
 
 Detailed evidence:
 
-- [Local harness and limitations](../experiments/convex-auth-v2/README.md)
-- [Live GitHub proof and restart commands](../experiments/convex-auth-v2/github/README.md)
-- [Email/password proof and recovery gap](../experiments/convex-auth-v2/EMAIL-PROOF.md)
-- [Proposed core revocation fix and remaining policy](../experiments/convex-auth-v2/SESSION-REVOCATION.md)
+- [Local harness and limitations](https://github.com/natedunn/kino/blob/1348f490/experiments/convex-auth-v2/README.md)
+- [Live GitHub proof and restart commands](https://github.com/natedunn/kino/blob/1348f490/experiments/convex-auth-v2/github/README.md)
+- [Email/password proof and recovery gap](https://github.com/natedunn/kino/blob/1348f490/experiments/convex-auth-v2/EMAIL-PROOF.md)
+- [Proposed core revocation fix and remaining policy](https://github.com/natedunn/kino/blob/1348f490/experiments/convex-auth-v2/SESSION-REVOCATION.md)
 
 All auth source evidence is pinned to upstream commit
 `1d105a04d124785441ce655cef33b54103c7bc2e`. Its package version says
@@ -1022,7 +1022,7 @@ Cloud cancellation, replay rejection, exact routing, PKCE and state cookies pass
 Real cloud GitHub login, private SSR, reload, logout and repeat identity pass.
 Two-target routing is unit-tested;
 both cloud backends now pass synchronized real OAuth and live negative routing
-checks, including cross-preview ticket/JWT, data and logout isolation. See the [cloud proof runbook](../experiments/convex-auth-v2/cloud/README.md)
+checks, including cross-preview ticket/JWT, data and logout isolation. See the [cloud proof runbook](https://github.com/natedunn/kino/blob/1348f490/experiments/convex-auth-v2/cloud/README.md)
 for URLs, the temporary GitHub app change, cleanup, and credential follow-up.
 
 **Credential follow-up:** rotate the root worktree's `CONVEX_MANAGEMENT_TOKEN`;
@@ -1166,7 +1166,7 @@ The deployed integrated feedback benchmark confirms SSR without browser HTTP
 query fallbacks and useful hover work before navigation. With a 700ms dwell,
 eight subscriptions started before click in every sample and median
 click-to-detail fell from 833.8ms to 76.4ms after completing loader coverage.
-See [the performance evidence](../experiments/convex-auth-v2/performance/README.md).
+See [the performance evidence](https://github.com/natedunn/kino/blob/1348f490/experiments/convex-auth-v2/performance/README.md).
 
 The final feedback parity pass keeps the latest 20 activity items live while
 loading older cursor pages in chronological order, localizes native validation
@@ -1251,7 +1251,7 @@ gates. The combined checkbox stays open.
       production auth/data smoke tests.
 
 The same-component dashboard timing run and a read-only backend-log follow-up
-are recorded in the [performance evidence](../experiments/convex-auth-v2/performance/README.md).
+are recorded in the [performance evidence](https://github.com/natedunn/kino/blob/1348f490/experiments/convex-auth-v2/performance/README.md).
 Both stacks' dashboard queries were mostly cached during the sampled minute;
 production token/session endpoints took hundreds of milliseconds per call,
 whereas the native refresh mutation's median was 53ms. These windows also
@@ -1467,14 +1467,14 @@ Known constraints at the pinned revision:
 - [x] Align Kino's deployment toolchain on the root native Convex application,
       Cloudflare Worker Previews, and the pinned Wrangler toolchain.
 
-The [session edge proof](../experiments/convex-auth-v2/start/SESSION-EDGES.md) found
+The [session edge proof](https://github.com/natedunn/kino/blob/1348f490/experiments/convex-auth-v2/start/SESSION-EDGES.md) found
 and fixed missing cross-tab invalidation in the app adapter. Credential-free
 notifications and identity checks now rebuild page/query state on account changes.
 The same eight checks now pass on the deployed preview. Deployment caught a
 module-scope random-number generation error; lazy browser initialization fixed it.
 No new user consent or email was required.
 
-The [Start proof](../experiments/convex-auth-v2/start/README.md) now passes browser
+The [Start proof](https://github.com/natedunn/kino/blob/1348f490/experiments/convex-auth-v2/start/README.md) now passes browser
 checks against local dev and a built preview. Local timings are recorded there;
 they are not a deployed performance comparison.
 
@@ -1483,14 +1483,14 @@ real cookies and private SSR; the deployed follow-up is tracked separately above
 
 ### 4. Prove gateway compatibility and performance
 
-The isolated [single-target v2 gateway](../experiments/convex-auth-v2/gateway/README.md)
+The isolated [single-target v2 gateway](https://github.com/natedunn/kino/blob/1348f490/experiments/convex-auth-v2/gateway/README.md)
 now passes real GitHub sign-in through HTTPS Start cookies. Cancellation, replay,
 and missing browser state checks also pass. This required a second small proposed
 upstream patch for a server-configured callback URL. Signed multi-target routing
 now passes unit tests, and a separate cloud proof gateway now routes two preview backends. Live
 cancellation, tampering and cross-backend state checks pass. The real synchronized
 OAuth check also passes, including ticket/JWT rejection, SSR/reload and mutation/logout
-isolation, as recorded in the [two-preview proof](../experiments/convex-auth-v2/cloud/TWO-PREVIEWS.md).
+isolation, as recorded in the [two-preview proof](https://github.com/natedunn/kino/blob/1348f490/experiments/convex-auth-v2/cloud/TWO-PREVIEWS.md).
 Integration with Kino's real dev gateway now passes in the disposable Kino
 preview; production routing remains unchanged.
 
@@ -1507,7 +1507,7 @@ preview; production routing remains unchanged.
       subscription activity. The same-component dashboard p50/p95 comparison and
       its account/backend limitations are recorded above.
 
-An initial [deployed performance benchmark](../experiments/convex-auth-v2/performance/README.md)
+An initial [deployed performance benchmark](https://github.com/natedunn/kino/blob/1348f490/experiments/convex-auth-v2/performance/README.md)
 is recorded: 20 measured OAuth-initiation requests per target and ten native
 protected SSR/hover samples. Initiation medians were 2,433.8ms on the working
 September 17 Kino preview and 208.2ms on the proof. Native protected content was
@@ -1615,7 +1615,7 @@ The gateway and both preview apps passed deployed negative checks and the full
 real GitHub OAuth runner on this protocol (September 21, 18:56 UTC); current
 Kino production remains unchanged. All 198 tests pass, including real local
 workerd/SQLite concurrency and expiration checks. See
-[opaque-state design and validation](../experiments/convex-auth-v2/gateway/OPAQUE-STATE.md).
+[opaque-state design and validation](https://github.com/natedunn/kino/blob/1348f490/experiments/convex-auth-v2/gateway/OPAQUE-STATE.md).
 New-protocol evidence confirms the fresh signed-out GitHub login, simultaneous
 alpha/beta callbacks, cross-preview ticket/JWT rejection, private SSR/reload,
 reference replay rejection and mutation/logout isolation. The proof browser
@@ -1634,7 +1634,7 @@ is atomic. Owner role freezing and last-owner protection are tested.
 This is not full organization parity: invitations, public/project-member and
 system-admin access, archived write guards, deployed reactivity, and large
 cascades remain outstanding. The assignment cap is explicitly 50 for this proof.
-See the [organization proof and next gates](../experiments/convex-auth-v2/organizations/README.md).
+See the [organization proof and next gates](https://github.com/natedunn/kino/blob/1348f490/experiments/convex-auth-v2/organizations/README.md).
 
 ### September 21: native invitation lifecycle
 
@@ -1656,7 +1656,7 @@ shared native authorization functions. Bento accepted one invitation to
 hello@natedunn.net, and Nate confirmed inbox arrival. Automated Chromium passed
 anonymous-to-password-login return, actual verified-account acceptance, reload,
 live membership listing, and authenticated organization SSR. Evidence:
-`experiments/convex-auth-v2/organizations/results-browser.json`.
+[`experiments/convex-auth-v2/organizations/results-browser.json`](https://github.com/natedunn/kino/blob/1348f490/experiments/convex-auth-v2/organizations/results-browser.json).
 
 GitHub invitation identity requires an explicit provider-verified email marker;
 old proof accounts without it fail closed. Tests deny unmarked OAuth emails and
@@ -1675,7 +1675,7 @@ membership immediately removed it from the live list; replay could not restore
 access. Chromium completed with no browser exceptions and closed normally.
 Bento accepted the preview invitation (preview inbox arrival not separately
 confirmed). Evidence:
-`experiments/convex-auth-v2/organizations/results-github-preview.json`.
+[`experiments/convex-auth-v2/organizations/results-github-preview.json`](https://github.com/natedunn/kino/blob/1348f490/experiments/convex-auth-v2/organizations/results-github-preview.json).
 
 The fresh GitHub onSignIn hook now refreshes verified-email evidence for old
 accounts and rejects account mismatches/unverified provider email. This closes
@@ -1720,7 +1720,7 @@ include negative authorization, rollback-safe overflow refusal, duplicate/reorde
 work, owner-only resume, and preserving another project's data. The fixture graph
 is representative, not full product parity. Inventory and remaining file/R2,
 GitHub, defaults, counters and search hooks are documented in
-`experiments/convex-auth-v2/relationships/README.md`.
+[`experiments/convex-auth-v2/relationships/README.md`](https://github.com/natedunn/kino/blob/1348f490/experiments/convex-auth-v2/relationships/README.md).
 
 ### September 21: expanded cascade proof
 
@@ -1740,12 +1740,12 @@ preview or production data changed. It does not establish full product parity.
 
 Next gate: prove durable external file/R2 cleanup, retry/acknowledgement and quota
 reconciliation with disposable objects. The contract and remaining product graphs
-are in `experiments/convex-auth-v2/relationships/README.md`. No user action is
+are in [`experiments/convex-auth-v2/relationships/README.md`](https://github.com/natedunn/kino/blob/1348f490/experiments/convex-auth-v2/relationships/README.md). No user action is
 required for the completed database cascade proof.
 
 ### September 21: external file cleanup protocol
 
-Added `experiments/convex-auth-v2/storage/README.md` and an isolated native schema.
+Added [`experiments/convex-auth-v2/storage/README.md`](https://github.com/natedunn/kino/blob/1348f490/experiments/convex-auth-v2/storage/README.md) and an isolated native schema.
 Seven Convex tests prove durable deletion jobs, write/read fences, reference
 restrictions, lease recovery, three-attempt caps and owner resume, stale/duplicate
 acknowledgement rejection, and exactly-once used/reserved quota release.

@@ -136,10 +136,8 @@ const config = defineConfig({
 		...(Number.isFinite(port) ? { port, strictPort: true } : {}),
 	},
 	test: {
-		// Experiments pin their own dependencies and run with their own config.
 		exclude: [
 			...configDefaults.exclude,
-			'experiments/**',
 			// Script tests use node:test; `pnpm run test:scripts` runs them.
 			'scripts/**/*.test.mjs',
 			'workers/gateway/**',

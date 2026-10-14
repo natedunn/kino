@@ -2,7 +2,7 @@ packages:
   - .
 
 # Convex Auth v2 is pinned to a reviewed git commit until its reboot branch has
-# a release matching the source proven in experiments/convex-auth-v2.
+# a release matching the source proven during the native Convex migration.
 onlyBuiltDependencies:
   - '@convex-dev/auth'
 
