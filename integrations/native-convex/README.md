@@ -41,9 +41,10 @@ external dependency bundling. Keep the local manifest and the Sharp external
 package entry in `convex.json` together.
 
 The native backend has its own Convex deployment, database, signing keys,
-generated API, and authentication configuration. The first local target uses
-ports **4440/4441** and project-local state in this directory's `.convex/`.
-It does not share the root worktree's local database or the old proof databases.
+generated API, and authentication configuration. Locally, each worktree runs its
+own anonymous backend (state in the worktree's root `.convex/`, created by
+`pnpm convex:local:init`; see [Local setup](#local-setup)), so worktrees never
+share a local database.
 
 During the parallel proof, Better Auth and Convex Auth v2 both defaulted to the
 deployment site URL as JWT issuer and `convex` as audience. Separate deployments

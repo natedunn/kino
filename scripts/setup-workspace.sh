@@ -82,7 +82,6 @@ setup_workspace() {
     ".env"
     ".env.local.example"
     "convex/.env"
-    ".convex/shared-dev-deployment.env"
   )
 
   for f in "${FILES[@]}"; do

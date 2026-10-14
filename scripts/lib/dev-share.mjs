@@ -37,13 +37,27 @@ export function appendTunnelOutput(previous, chunk, maxLength = 64_000) {
   return next.length <= maxLength ? next : next.slice(-maxLength)
 }
 
+export function isShareMode(processEnv) {
+  return processEnv.KINO_SHARE === "1"
+}
+
+// The dev gateway accepts `local` GitHub login routes only for a
+// `https://*.localhost` app, so a Quick Tunnel session never registers one.
+export function shouldRegisterLocalGatewayRoute(processEnv) {
+  return !isShareMode(processEnv)
+}
+
 export function mergeFrontendEnv(processEnv, localEnv) {
   const result = { ...processEnv, ...localEnv }
-  if (processEnv.KINO_SHARE !== "1") return result
+  if (!isShareMode(processEnv)) return result
 
   for (const key of SHARE_ENV_KEYS) {
     if (processEnv[key] !== undefined) result[key] = processEnv[key]
   }
+  // `.env.local`'s GitHub route points at this worktree's Portless app and
+  // loopback Convex site, which a Quick Tunnel visitor cannot reach. Turn the
+  // login button off for this session without rewriting `.env.local`.
+  result.VITE_NATIVE_GITHUB_ENABLED = "false"
   return result
 }
 
