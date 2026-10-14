@@ -26,7 +26,9 @@ Workspace setup also runs `pnpm run verify:generated`, and the
 so stale generated runtime code cannot merge silently. The workflow uses a
 throwaway anonymous local Convex backend with no secrets. Convex codegen pushes
 functions to a deployment, so never run this check in the Cloudflare build,
-where it would target the preview or production deployment.
+where it would target the preview or production deployment. The same workflow
+runs `pnpm run test:scripts`, the `node:test` suites for `scripts/` (vitest
+excludes `scripts/**/*.test.mjs`).
 
 Do not run `npx convex ai-files update` as part of normal setup or PR
 verification. Convex AI guidance and installed skills are tooling documentation,

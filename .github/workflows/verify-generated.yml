@@ -51,6 +51,10 @@ jobs:
       # this job holds no secrets.
       - run: pnpm install --frozen-lockfile
 
+      # Script tests use node:test and are excluded from vitest (vite.config.ts).
+      - name: Run script tests
+        run: pnpm run test:scripts
+
       - name: Initialize an anonymous local Convex backend
         run: pnpm convex:local:init --reset-local-state
 

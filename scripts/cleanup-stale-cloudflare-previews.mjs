@@ -3,20 +3,24 @@
 import { execFileSync } from "node:child_process"
 import { existsSync, readFileSync } from "node:fs"
 
+import {
+  CLOUDFLARE_PREVIEW_NAME_LENGTH,
+  previewName,
+} from "./lib/preview-name.mjs"
+
 loadEnvFiles()
 
 const args = process.argv.slice(2)
 const shouldDelete = args.includes("--delete")
 const remote =
   getArgValue("--remote") ?? process.env.PREVIEW_CLEANUP_REMOTE ?? "origin"
-const accountId = process.env.CLOUDFLARE_ACCOUNT_ID ?? process.env.CF_ACCOUNT_ID
-const apiToken = process.env.CLOUDFLARE_API_TOKEN ?? process.env.CF_API_TOKEN
-const workerName =
-  process.env.CLOUDFLARE_WORKER_NAME ?? process.env.CF_WORKER_NAME ?? "kino"
+const accountId = process.env.CLOUDFLARE_ACCOUNT_ID
+const apiToken = process.env.CLOUDFLARE_API_TOKEN
+const workerName = process.env.CLOUDFLARE_WORKER_NAME ?? "kino"
 
 if (!accountId || !apiToken) {
   console.log(
-    "Skipping stale Cloudflare preview cleanup: missing CLOUDFLARE_ACCOUNT_ID/CF_ACCOUNT_ID or CLOUDFLARE_API_TOKEN/CF_API_TOKEN."
+    "Skipping stale Cloudflare preview cleanup: missing CLOUDFLARE_ACCOUNT_ID or CLOUDFLARE_API_TOKEN."
   )
   process.exit(0)
 }
@@ -44,17 +48,6 @@ function getArgValue(name) {
   return args[index + 1] ?? null
 }
 
-function previewName(branch, maxLength) {
-  const normalized = branch
-    .toLowerCase()
-    .replace(/[^a-z0-9-]/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "")
-    .slice(0, maxLength)
-
-  return normalized || "preview"
-}
-
 function listRemoteBranches() {
   const output = execFileSync("git", ["ls-remote", "--heads", remote], {
     encoding: "utf8",
@@ -66,7 +59,7 @@ function listRemoteBranches() {
     .filter(Boolean)
 }
 
-async function cloudflareFetch(url, init = {}, { throwOnError = true } = {}) {
+async function cloudflareFetch(url, init = {}) {
   const response = await fetch(url, {
     ...init,
     headers: {
@@ -81,13 +74,10 @@ async function cloudflareFetch(url, init = {}, { throwOnError = true } = {}) {
     const message =
       body?.errors?.map((error) => error.message).join("; ") ??
       `${response.status} ${response.statusText}`
-    if (!throwOnError) {
-      return { ok: false, message, status: response.status }
-    }
     throw new Error(message)
   }
 
-  return { ok: true, body }
+  return body
 }
 
 function formatCloudflareAuthError(message) {
@@ -101,100 +91,92 @@ function formatCloudflareAuthError(message) {
   return [
     `Cloudflare API auth failed for account '${accountId}'.`,
     "Use a Cloudflare API Token, not a Global API Key.",
-    "The token needs permission to read/delete Worker versions for this account.",
+    "The token needs permission to read/delete Workers Scripts for this account.",
     "If the GitHub cleanup action works but this local command fails, your local .env token does not match the GitHub secret.",
     `Original error: ${message}`,
   ].join(" ")
 }
 
-const encodedWorkerName = encodeURIComponent(workerName)
-const scriptsVersionsUrl = `https://api.cloudflare.com/client/v4/accounts/${accountId}/workers/scripts/${encodedWorkerName}/versions`
-const workerVersionsUrl = `https://api.cloudflare.com/client/v4/accounts/${accountId}/workers/workers/${encodedWorkerName}/versions`
+// Worker Previews created by `wrangler preview` (scripts/cloudflare-preview-upload.sh).
+// This is the same endpoint Wrangler uses for `wrangler preview delete`.
+const previewsUrl = `https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(
+  accountId
+)}/workers/workers/${encodeURIComponent(workerName)}/previews`
 
-async function listWorkerVersions() {
-  const versions = []
-  let cursor
+async function listWorkerPreviews() {
+  const previews = []
+  const perPage = 50
 
-  do {
-    const url = new URL(scriptsVersionsUrl)
-    if (cursor) url.searchParams.set("cursor", cursor)
+  for (let page = 1; ; page++) {
+    const url = new URL(previewsUrl)
+    url.searchParams.set("page", String(page))
+    url.searchParams.set("per_page", String(perPage))
 
-    const { body } = await cloudflareFetch(url)
-    const result = body.result
-    const items = Array.isArray(result?.items)
-      ? result.items
-      : Array.isArray(result)
-        ? result
-        : []
+    const body = await cloudflareFetch(url)
+    const items = Array.isArray(body?.result) ? body.result : []
+    previews.push(...items)
 
-    versions.push(...items)
-    cursor = body.result_info?.cursor
-  } while (cursor)
-
-  return versions
+    const totalCount = body?.result_info?.total_count
+    if (
+      items.length === 0 ||
+      (typeof totalCount === "number"
+        ? previews.length >= totalCount
+        : items.length < perPage)
+    ) {
+      return previews
+    }
+  }
 }
 
-async function deleteVersion(version) {
-  return cloudflareFetch(
-    `${workerVersionsUrl}/${encodeURIComponent(version.id)}`,
-    { method: "DELETE" },
-    { throwOnError: false }
-  )
+async function deletePreview(name) {
+  await cloudflareFetch(`${previewsUrl}/${encodeURIComponent(name)}`, {
+    method: "DELETE",
+  })
 }
 
 async function main() {
-  const activeAliases = new Set(
-    listRemoteBranches().map((branch) => previewName(branch, 40))
+  const activeNames = new Set(
+    listRemoteBranches().map((branch) =>
+      previewName(branch, CLOUDFLARE_PREVIEW_NAME_LENGTH)
+    )
   )
-  const versions = await listWorkerVersions()
-  const stalePreviewVersions = versions.filter((version) => {
-    const alias = version.annotations?.["workers/alias"]
-    return alias && !activeAliases.has(alias)
-  })
+  const previews = await listWorkerPreviews()
+  const stalePreviews = previews.filter(
+    (preview) => preview?.name && !activeNames.has(preview.name)
+  )
 
-  if (stalePreviewVersions.length === 0) {
+  if (stalePreviews.length === 0) {
     console.log(
-      `No stale Cloudflare preview Worker versions found for worker '${workerName}'.`
+      `No stale Cloudflare Worker Previews found for worker '${workerName}' (${previews.length} checked).`
     )
     return
   }
 
   const mode = shouldDelete ? "Deleting" : "Dry run: would delete"
   console.log(
-    `${mode} ${stalePreviewVersions.length} stale Cloudflare preview Worker version(s) for worker '${workerName}'.`
+    `${mode} ${stalePreviews.length} of ${previews.length} Cloudflare Worker Preview(s) for worker '${workerName}'.`
   )
 
-  for (const version of stalePreviewVersions) {
-    const alias = version.annotations?.["workers/alias"]
-    const createdAt =
-      version.created_on ?? version.created_at ?? version.metadata?.created_on
-    const suffix = createdAt ? ` created ${createdAt}` : ""
+  for (const preview of stalePreviews) {
+    const updatedAt = preview.deployed_on ?? preview.updated_on ?? preview.created_on
+    const suffix = updatedAt ? ` last deployed ${updatedAt}` : ""
 
     if (!shouldDelete) {
-      console.log(`- ${version.id} alias='${alias}'${suffix}`)
+      console.log(`- ${preview.name}${suffix}`)
       continue
     }
 
-    const result = await deleteVersion(version)
-    if (result.ok) {
-      console.log(`Deleted ${version.id} alias='${alias}'.`)
-      continue
+    try {
+      await deletePreview(preview.name)
+      console.log(`Deleted Cloudflare Worker Preview '${preview.name}'.`)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      console.warn(`Could not delete '${preview.name}': ${message}`)
     }
-
-    if (result.message.includes("latest version cannot be deleted")) {
-      console.warn(
-        `Skipped ${version.id} alias='${alias}': latest Worker version cannot be deleted yet. Rerun after a newer deployment.`
-      )
-      continue
-    }
-
-    console.warn(
-      `Could not delete ${version.id} alias='${alias}': ${result.message}`
-    )
   }
 
   if (!shouldDelete) {
-    console.log("Run again with --delete to delete these versions.")
+    console.log("Run again with --delete to delete these previews.")
   }
 }
 
