@@ -80,38 +80,52 @@ function Avatar({
 	);
 }
 
-function AvatarImage({ className, src, alt, ...props }: React.ComponentProps<'img'>) {
+// The <img> ships in the SSR HTML so the browser fetches it (or reads its cache)
+// before hydration, painting over the fallback the moment it decodes. It can
+// finish before React attaches `onLoad`, so the mount effect checks it too.
+function AvatarImage({
+	className,
+	src,
+	alt,
+	onError,
+	onLoad,
+	...props
+}: React.ComponentProps<'img'>) {
 	const { status, setStatus } = useAvatarContext();
+	const imageRef = React.useRef<HTMLImageElement>(null);
 
 	React.useEffect(() => {
 		if (!src) {
 			setStatus('error');
 			return;
 		}
-
-		setStatus('loading');
-
-		const image = new Image();
-		image.src = src;
-		image.onload = () => setStatus('loaded');
-		image.onerror = () => setStatus('error');
-
-		return () => {
-			image.onload = null;
-			image.onerror = null;
-		};
+		const image = imageRef.current;
+		if (image?.complete) setStatus(image.naturalWidth > 0 ? 'loaded' : 'error');
+		else setStatus('loading');
 	}, [src, setStatus]);
 
-	if (status !== 'loaded') {
+	if (!src || status === 'error') {
 		return null;
 	}
 
 	return (
 		<img
+			// Until it loads, the fallback is still mounted and is the accessible
+			// alternative; don't let assistive tech announce both.
+			aria-hidden={status === 'loaded' ? undefined : true}
 			data-slot='avatar-image'
+			ref={imageRef}
 			src={src}
 			alt={alt}
-			className={cn('aspect-square size-full', className)}
+			className={cn('absolute inset-0 z-[1] aspect-square size-full', className)}
+			onError={(event) => {
+				setStatus('error');
+				onError?.(event);
+			}}
+			onLoad={(event) => {
+				setStatus('loaded');
+				onLoad?.(event);
+			}}
 			{...props}
 		/>
 	);
