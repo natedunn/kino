@@ -2105,7 +2105,6 @@ export declare const api: {
           deletingAt?: number;
           description?: string;
           discussionsEnabled?: boolean;
-          discussionsPostingPolicy?: "everyone" | "team";
           name: string;
           organizationId: Id<"organizations">;
           slug: string;

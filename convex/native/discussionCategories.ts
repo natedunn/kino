@@ -15,12 +15,34 @@ const BACKFILL_BATCH_SIZE = 50;
 
 // Seeded into every project. Projects rename, reorder, add and remove freely.
 export const DEFAULT_CATEGORIES = [
-	{ name: 'General', slug: 'general', icon: 'chat', format: 'open', postingPolicy: 'everyone' },
-	{ name: 'Q&A', slug: 'q-a', icon: 'interview', format: 'qa', postingPolicy: 'everyone' },
-	{ name: 'Ideas', slug: 'ideas', icon: 'lightbulb', format: 'open', postingPolicy: 'everyone' },
+	{
+		name: 'General',
+		slug: 'general',
+		description: 'Chat about anything related to this project.',
+		icon: 'chat',
+		format: 'open',
+		postingPolicy: 'everyone',
+	},
+	{
+		name: 'Q&A',
+		slug: 'q-a',
+		description: 'Ask the community for help. Mark the reply that answers your question.',
+		icon: 'interview',
+		format: 'qa',
+		postingPolicy: 'everyone',
+	},
+	{
+		name: 'Ideas',
+		slug: 'ideas',
+		description: 'Share and talk through ideas before they become feedback.',
+		icon: 'lightbulb',
+		format: 'open',
+		postingPolicy: 'everyone',
+	},
 	{
 		name: 'Show and tell',
 		slug: 'show-and-tell',
+		description: 'Show off something you made with this project.',
 		icon: 'sparkle',
 		format: 'open',
 		postingPolicy: 'everyone',
@@ -28,12 +50,16 @@ export const DEFAULT_CATEGORIES = [
 	{
 		name: 'Announcements',
 		slug: 'announcements',
+		description: 'News from the project team.',
 		icon: 'megaphone',
 		format: 'open',
 		postingPolicy: 'team',
 	},
 ] as const satisfies ReadonlyArray<
-	Pick<Doc<'discussionCategories'>, 'name' | 'slug' | 'icon' | 'format' | 'postingPolicy'>
+	Pick<
+		Doc<'discussionCategories'>,
+		'name' | 'slug' | 'description' | 'icon' | 'format' | 'postingPolicy'
+	>
 >;
 
 export const categoryView = v.object({
@@ -81,12 +107,7 @@ function validSlug(value: string) {
 	return /^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$/.test(value);
 }
 
-function parseFields(args: {
-	name: string;
-	slug: string;
-	description?: string;
-	icon?: string;
-}) {
+function parseFields(args: { name: string; slug: string; description?: string; icon?: string }) {
 	const name = args.name.trim();
 	const slug = args.slug.trim().toLowerCase();
 	const description = args.description?.trim() ?? '';
@@ -286,7 +307,7 @@ export const fileUncategorized = internalMutation({
 	args: { projectId: v.id('projects') },
 	returns: v.null(),
 	handler: async (ctx, { projectId }) => {
-		const [first] = await liveCategories(ctx, projectId);
+		const first = (await liveCategories(ctx, projectId)).at(0);
 		if (!first) return null;
 		const discussions = await ctx.db
 			.query('discussions')

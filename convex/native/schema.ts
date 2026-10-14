@@ -209,8 +209,6 @@ export default defineSchema({
 		deletingAt: v.optional(v.number()),
 		storageDeletingAt: v.optional(v.number()),
 		updatesFeaturedMode: v.optional(v.union(v.literal('latest'), v.literal('manual'))),
-		// TEMP: legacy project-wide policy, superseded by per-category policies.
-		discussionsPostingPolicy: v.optional(discussionsPostingPolicy),
 		// Unset means enabled; projects can hide Discussions entirely.
 		discussionsEnabled: v.optional(v.boolean()),
 		organizationId: v.id('organizations'),

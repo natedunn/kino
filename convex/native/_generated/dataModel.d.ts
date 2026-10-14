@@ -1211,7 +1211,6 @@ export type DataModel = {
       deletingAt?: number;
       description?: string;
       discussionsEnabled?: boolean;
-      discussionsPostingPolicy?: "everyone" | "team";
       name: string;
       organizationId: Id<"organizations">;
       slug: string;
@@ -1233,7 +1232,6 @@ export type DataModel = {
       | "deletingAt"
       | "description"
       | "discussionsEnabled"
-      | "discussionsPostingPolicy"
       | "name"
       | "organizationId"
       | "slug"

@@ -11,6 +11,7 @@ import {
 	GitBranch,
 	HardDrive,
 	LayoutDashboard,
+	MessagesSquare,
 	Palette,
 	Settings,
 	TriangleAlert,
@@ -85,6 +86,12 @@ function ProjectSettingsRoute() {
 			label: m.settings_boards(),
 			to: '/@{$org}/$project/settings/boards' as const,
 			visible: permissions?.canManageContent,
+		},
+		{
+			icon: MessagesSquare,
+			label: m.settings_discussions(),
+			to: '/@{$org}/$project/settings/discussions' as const,
+			visible: permissions?.canEditSettings || permissions?.canManageContent,
 		},
 		{
 			icon: Palette,

@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import Box from './box';
 import Bug from './bug';
 import ChartUp from './chart-up';
+import Chat from './chat';
 import UpChevron from './chevron-up';
 import CircleCheck from './circle-check';
 import CircleDot from './circle-dot';
@@ -15,16 +16,23 @@ import Edit from './edit';
 import Github from './github';
 import GridDots from './grid-dots';
 import Improvements from './improvements';
+import Interview from './interview';
 import Lightbulb from './lightbulb';
+import Megaphone from './megaphone';
+import { AddMagicOutline18 } from './nucleo/AddMagicOutline18';
 import { Box2Outline18 } from './nucleo/Box2Outline18';
 import { BugOutline18 } from './nucleo/BugOutline18';
+import { BullhornOutline18 } from './nucleo/BullhornOutline18';
 import { ChartTrendUpOutline18 } from './nucleo/ChartTrendUpOutline18';
 import { CircleOpenArrowUpOutline18 } from './nucleo/CircleOpenArrowUpOutline18';
 import { GridDotsOutline18 } from './nucleo/GridDotsOutline18';
+import { InterviewOutline18 } from './nucleo/InterviewOutline18';
 import { Lightbulb2Outline18 } from './nucleo/Lightbulb2Outline18';
+import { MsgsOutline18 } from './nucleo/MsgsOutline18';
 import { PenOutline18 } from './nucleo/PenOutline18';
 import { SettingsWrenchOutline18 } from './nucleo/SettingsWrenchOutline18';
 import { VShapedArrowUpOutline18 } from './nucleo/VShapedArrowUpOutline18';
+import Sparkle from './sparkle';
 import UpArrowCircle from './up-arrow-circle';
 
 export const iconRegistry = {
@@ -38,6 +46,10 @@ export const iconRegistry = {
 	edit: { 'glyph-duo': Edit, outline: PenOutline18 },
 	upArrowCircle: { 'glyph-duo': UpArrowCircle, outline: CircleOpenArrowUpOutline18 },
 	upChevron: { 'glyph-duo': UpChevron, outline: VShapedArrowUpOutline18 },
+	chat: { 'glyph-duo': Chat, outline: MsgsOutline18 },
+	interview: { 'glyph-duo': Interview, outline: InterviewOutline18 },
+	sparkle: { 'glyph-duo': Sparkle, outline: AddMagicOutline18 },
+	megaphone: { 'glyph-duo': Megaphone, outline: BullhornOutline18 },
 } as const;
 
 export type IconValue = React.ComponentType<React.SVGProps<SVGSVGElement>>;
@@ -126,6 +138,34 @@ export const iconRegistryOptions: Array<IconRegistryOption> = [
 		label: 'Up Chevron',
 		tone: 'glyph-duo',
 		value: 'upChevron',
+	},
+	{
+		icon: iconRegistry.chat['glyph-duo'],
+		keywords: ['discussion', 'conversation', 'messages', 'general'],
+		label: 'Chat',
+		tone: 'glyph-duo',
+		value: 'chat',
+	},
+	{
+		icon: iconRegistry.interview['glyph-duo'],
+		keywords: ['question', 'answer', 'q&a', 'help'],
+		label: 'Interview',
+		tone: 'glyph-duo',
+		value: 'interview',
+	},
+	{
+		icon: iconRegistry.sparkle['glyph-duo'],
+		keywords: ['show and tell', 'magic', 'new', 'showcase'],
+		label: 'Sparkle',
+		tone: 'glyph-duo',
+		value: 'sparkle',
+	},
+	{
+		icon: iconRegistry.megaphone['glyph-duo'],
+		keywords: ['announcement', 'bullhorn', 'news'],
+		label: 'Megaphone',
+		tone: 'glyph-duo',
+		value: 'megaphone',
 	},
 ];
 

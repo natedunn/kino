@@ -78,6 +78,7 @@ import { Route as AtChar123orgChar125ProjectIntegrationsGithubIndexRouteImport }
 import { Route as AtChar123orgChar125ProjectSettingsAppearanceIndexRouteImport } from './routes/@{$org}/$project/settings/appearance/index'
 import { Route as AtChar123orgChar125ProjectSettingsBoardsIndexRouteImport } from './routes/@{$org}/$project/settings/boards/index'
 import { Route as AtChar123orgChar125ProjectSettingsDangerIndexRouteImport } from './routes/@{$org}/$project/settings/danger/index'
+import { Route as AtChar123orgChar125ProjectSettingsDiscussionsIndexRouteImport } from './routes/@{$org}/$project/settings/discussions/index'
 import { Route as AtChar123orgChar125ProjectSettingsGeneralIndexRouteImport } from './routes/@{$org}/$project/settings/general/index'
 import { Route as AtChar123orgChar125ProjectSettingsIntegrationsIndexRouteImport } from './routes/@{$org}/$project/settings/integrations/index'
 import { Route as AtChar123orgChar125ProjectSettingsMembersIndexRouteImport } from './routes/@{$org}/$project/settings/members/index'
@@ -466,6 +467,12 @@ const AtChar123orgChar125ProjectSettingsDangerIndexRoute =
     path: '/danger/',
     getParentRoute: () => AtChar123orgChar125ProjectSettingsRouteRoute,
   } as any)
+const AtChar123orgChar125ProjectSettingsDiscussionsIndexRoute =
+  AtChar123orgChar125ProjectSettingsDiscussionsIndexRouteImport.update({
+    id: '/discussions/',
+    path: '/discussions/',
+    getParentRoute: () => AtChar123orgChar125ProjectSettingsRouteRoute,
+  } as any)
 const AtChar123orgChar125ProjectSettingsGeneralIndexRoute =
   AtChar123orgChar125ProjectSettingsGeneralIndexRouteImport.update({
     id: '/general/',
@@ -615,6 +622,7 @@ export interface FileRoutesByFullPath {
   '/@{$org}/$project/settings/appearance/': typeof AtChar123orgChar125ProjectSettingsAppearanceIndexRoute
   '/@{$org}/$project/settings/boards/': typeof AtChar123orgChar125ProjectSettingsBoardsIndexRoute
   '/@{$org}/$project/settings/danger/': typeof AtChar123orgChar125ProjectSettingsDangerIndexRoute
+  '/@{$org}/$project/settings/discussions/': typeof AtChar123orgChar125ProjectSettingsDiscussionsIndexRoute
   '/@{$org}/$project/settings/general/': typeof AtChar123orgChar125ProjectSettingsGeneralIndexRoute
   '/@{$org}/$project/settings/integrations/': typeof AtChar123orgChar125ProjectSettingsIntegrationsIndexRoute
   '/@{$org}/$project/settings/members/': typeof AtChar123orgChar125ProjectSettingsMembersIndexRoute
@@ -690,6 +698,7 @@ export interface FileRoutesByTo {
   '/@{$org}/$project/settings/appearance': typeof AtChar123orgChar125ProjectSettingsAppearanceIndexRoute
   '/@{$org}/$project/settings/boards': typeof AtChar123orgChar125ProjectSettingsBoardsIndexRoute
   '/@{$org}/$project/settings/danger': typeof AtChar123orgChar125ProjectSettingsDangerIndexRoute
+  '/@{$org}/$project/settings/discussions': typeof AtChar123orgChar125ProjectSettingsDiscussionsIndexRoute
   '/@{$org}/$project/settings/general': typeof AtChar123orgChar125ProjectSettingsGeneralIndexRoute
   '/@{$org}/$project/settings/integrations': typeof AtChar123orgChar125ProjectSettingsIntegrationsIndexRoute
   '/@{$org}/$project/settings/members': typeof AtChar123orgChar125ProjectSettingsMembersIndexRoute
@@ -775,6 +784,7 @@ export interface FileRoutesById {
   '/@{$org}/$project/settings/appearance/': typeof AtChar123orgChar125ProjectSettingsAppearanceIndexRoute
   '/@{$org}/$project/settings/boards/': typeof AtChar123orgChar125ProjectSettingsBoardsIndexRoute
   '/@{$org}/$project/settings/danger/': typeof AtChar123orgChar125ProjectSettingsDangerIndexRoute
+  '/@{$org}/$project/settings/discussions/': typeof AtChar123orgChar125ProjectSettingsDiscussionsIndexRoute
   '/@{$org}/$project/settings/general/': typeof AtChar123orgChar125ProjectSettingsGeneralIndexRoute
   '/@{$org}/$project/settings/integrations/': typeof AtChar123orgChar125ProjectSettingsIntegrationsIndexRoute
   '/@{$org}/$project/settings/members/': typeof AtChar123orgChar125ProjectSettingsMembersIndexRoute
@@ -860,6 +870,7 @@ export interface FileRouteTypes {
     | '/@{$org}/$project/settings/appearance/'
     | '/@{$org}/$project/settings/boards/'
     | '/@{$org}/$project/settings/danger/'
+    | '/@{$org}/$project/settings/discussions/'
     | '/@{$org}/$project/settings/general/'
     | '/@{$org}/$project/settings/integrations/'
     | '/@{$org}/$project/settings/members/'
@@ -935,6 +946,7 @@ export interface FileRouteTypes {
     | '/@{$org}/$project/settings/appearance'
     | '/@{$org}/$project/settings/boards'
     | '/@{$org}/$project/settings/danger'
+    | '/@{$org}/$project/settings/discussions'
     | '/@{$org}/$project/settings/general'
     | '/@{$org}/$project/settings/integrations'
     | '/@{$org}/$project/settings/members'
@@ -1019,6 +1031,7 @@ export interface FileRouteTypes {
     | '/@{$org}/$project/settings/appearance/'
     | '/@{$org}/$project/settings/boards/'
     | '/@{$org}/$project/settings/danger/'
+    | '/@{$org}/$project/settings/discussions/'
     | '/@{$org}/$project/settings/general/'
     | '/@{$org}/$project/settings/integrations/'
     | '/@{$org}/$project/settings/members/'
@@ -1536,6 +1549,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AtChar123orgChar125ProjectSettingsDangerIndexRouteImport
       parentRoute: typeof AtChar123orgChar125ProjectSettingsRouteRoute
     }
+    '/@{$org}/$project/settings/discussions/': {
+      id: '/@{$org}/$project/settings/discussions/'
+      path: '/discussions'
+      fullPath: '/@{$org}/$project/settings/discussions/'
+      preLoaderRoute: typeof AtChar123orgChar125ProjectSettingsDiscussionsIndexRouteImport
+      parentRoute: typeof AtChar123orgChar125ProjectSettingsRouteRoute
+    }
     '/@{$org}/$project/settings/general/': {
       id: '/@{$org}/$project/settings/general/'
       path: '/general'
@@ -1692,6 +1712,7 @@ interface AtChar123orgChar125ProjectSettingsRouteRouteChildren {
   AtChar123orgChar125ProjectSettingsAppearanceIndexRoute: typeof AtChar123orgChar125ProjectSettingsAppearanceIndexRoute
   AtChar123orgChar125ProjectSettingsBoardsIndexRoute: typeof AtChar123orgChar125ProjectSettingsBoardsIndexRoute
   AtChar123orgChar125ProjectSettingsDangerIndexRoute: typeof AtChar123orgChar125ProjectSettingsDangerIndexRoute
+  AtChar123orgChar125ProjectSettingsDiscussionsIndexRoute: typeof AtChar123orgChar125ProjectSettingsDiscussionsIndexRoute
   AtChar123orgChar125ProjectSettingsGeneralIndexRoute: typeof AtChar123orgChar125ProjectSettingsGeneralIndexRoute
   AtChar123orgChar125ProjectSettingsIntegrationsIndexRoute: typeof AtChar123orgChar125ProjectSettingsIntegrationsIndexRoute
   AtChar123orgChar125ProjectSettingsMembersIndexRoute: typeof AtChar123orgChar125ProjectSettingsMembersIndexRoute
@@ -1708,6 +1729,8 @@ const AtChar123orgChar125ProjectSettingsRouteRouteChildren: AtChar123orgChar125P
       AtChar123orgChar125ProjectSettingsBoardsIndexRoute,
     AtChar123orgChar125ProjectSettingsDangerIndexRoute:
       AtChar123orgChar125ProjectSettingsDangerIndexRoute,
+    AtChar123orgChar125ProjectSettingsDiscussionsIndexRoute:
+      AtChar123orgChar125ProjectSettingsDiscussionsIndexRoute,
     AtChar123orgChar125ProjectSettingsGeneralIndexRoute:
       AtChar123orgChar125ProjectSettingsGeneralIndexRoute,
     AtChar123orgChar125ProjectSettingsIntegrationsIndexRoute:
