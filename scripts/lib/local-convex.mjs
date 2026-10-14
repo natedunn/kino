@@ -2,6 +2,19 @@ import { spawnSync } from "node:child_process"
 import fs from "node:fs"
 import path from "node:path"
 
+import {
+  findLiveSupervisors,
+  liveSessionMessage,
+  listProcesses,
+  ownerOf,
+  processCwd,
+  readDevSessionState,
+  selectOrphanGroups,
+  selectOrphanedDevPids,
+  selectRecordedGroups,
+} from "./dev-session.mjs"
+import { isShareOwnerCommand, readShareOwnerPid } from "./dev-share.mjs"
+
 export function anonymousEnvFilePath(workspaceRoot) {
   return path.join(workspaceRoot, ".convex", "anonymous.env")
 }
@@ -382,12 +395,80 @@ export function terminatePids(pids, signal) {
   }
 }
 
+function pidIsAlive(pid) {
+  try {
+    process.kill(pid, 0)
+    return true
+  } catch {
+    return false
+  }
+}
+
+function signalGroups(pgids, signal) {
+  for (const pgid of pgids) {
+    try {
+      process.kill(-pgid, signal)
+    } catch {
+      // Group is already gone.
+    }
+  }
+}
+
+// Live `pnpm dev` supervisors for this worktree (recorded in the session state
+// file, or found by command + working directory for sessions started by older
+// code). Never includes the calling process.
+export function liveDevSupervisors(workspaceRoot) {
+  if (process.platform === "win32") return []
+  return findLiveSupervisors({
+    processes: listProcesses(),
+    state: readDevSessionState(workspaceRoot),
+    workspaceRoot,
+    cwdOf: processCwd,
+    selfPid: process.pid,
+  })
+}
+
+// The live `pnpm dev:share` process for this worktree, or null.
+export function liveDevShareOwner(workspaceRoot) {
+  const ownerPid = readShareOwnerPid(workspaceRoot)
+  if (ownerPid === null || ownerPid === process.pid) return null
+  if (!isShareOwnerCommand(processCommand(ownerPid, workspaceRoot))) return null
+  return processCwd(ownerPid) === workspaceRoot ? ownerPid : null
+}
+
+// Print the standard "already running" message and return true when a live dev
+// session owns this worktree, so callers can refuse instead of killing it.
+export function refuseIfDevSessionRunning(workspaceRoot, logPrefix = "[dev]") {
+  const live = liveDevSupervisors(workspaceRoot)
+  if (live.length === 0) return false
+  console.error(`${logPrefix} ${liveSessionMessage(live)}.`)
+  return true
+}
+
 export function stopLocalBackendForWorkspace(
   workspaceRoot,
   { logPrefix = "[convex]", failOnStubborn = false } = {}
 ) {
   const { port, pids } = localBackendPidsForWorkspace(workspaceRoot)
   if (port === null || pids.length === 0) return true
+
+  // Never silently take the backend away from a running `pnpm dev`.
+  const processes = listProcesses()
+  const byPid = new Map(processes.map((proc) => [proc.pid, proc]))
+  const sessionOwned = pids.filter(
+    (pid) => byPid.has(pid) && ownerOf(pid, byPid, workspaceRoot) === "supervisor"
+  )
+  if (sessionOwned.length > 0) {
+    const live = liveDevSupervisors(workspaceRoot)
+    console.error(
+      `${logPrefix} this worktree's local Convex backend (pid ${sessionOwned.join(
+        ", "
+      )}) belongs to a running dev session; ${
+        live.length > 0 ? liveSessionMessage(live) : "stop it with `pnpm dev:stop` first"
+      }.`
+    )
+    return false
+  }
 
   console.log(
     `${logPrefix} stopping this worktree's local Convex backend on port ${port}: ${pids.join(
@@ -411,85 +492,98 @@ export function stopLocalBackendForWorkspace(
   return stopped
 }
 
-// Kill any dev processes left over from a previous `pnpm dev` of THIS worktree.
+function terminateAndWait(pids) {
+  if (pids.length === 0) return
+  terminatePids(pids, "SIGTERM")
+  if (waitForPidsToStop(pids, 5000)) return
+  const remaining = pids.filter(pidIsAlive)
+  terminatePids(remaining, "SIGKILL")
+  waitForPidsToStop(remaining, 2000)
+}
+
+// Reap dev processes of THIS worktree that were orphaned by a previous,
+// non-gracefully stopped `pnpm dev` (or `pnpm dev:share`).
 //
 // The supervisor spawns Convex (and Vite via portless) detached, so when the
 // shell/Helmor force-stops `pnpm dev` without a clean SIGTERM, the `convex dev`
 // CLI, its local backend, Vite, workerd, and the portless client get reparented
 // to launchd and keep running. Orphaned `convex dev` processes whose backend is
-// gone retry forever ("Retrying request…", "Failed to fetch logs", "Unable to
-// pull deployment config from …<old port>"), which is pure noise. Without this,
-// they accumulate one stack per run.
+// gone retry forever, and they accumulate one stack per run.
 //
-// Scoped to this worktree by matching its absolute path (plus a trailing
-// separator so `…/foo` never matches `…/foo-2`) in each process's command line.
-// The supervisor's own command is relative (`node scripts/dev-supervisor.mjs`)
-// and its pnpm/sh parents don't carry the worktree path, so they're never hit;
-// we also skip our own pid and parent for safety.
+// Only genuine orphans are reaped: a process is skipped when a live dev
+// supervisor (a running session) or any other live non-dev process (a shell
+// running `vite build`/`vite preview`, `wrangler dev`, `convex:local:init`, …)
+// is above it in the process tree. Matching is pinned to this worktree's exact
+// root (see `classifyDevCommand`), and the shared portless proxy daemon is
+// never a candidate. Recorded child process groups of a dead supervisor are
+// signalled too, so their non-matching intermediates (pnpm/sh) go with them.
 //
-// The shared portless proxy daemon (`portless … proxy start`) is deliberately
-// left alone even if it was started from this worktree's node_modules — every
-// other worktree routes through it on :1355, so killing it would drop their
-// tunnels. Only this worktree's portless *client* is stopped.
-//
-// Returns the list of pids it signalled (empty when nothing matched), so callers
-// can decide how to report it.
+// Returns the list of pids it signalled (empty when nothing matched).
 export function stopStaleWorktreeProcesses(workspaceRoot) {
   if (process.platform === "win32") return []
 
-  const marker = workspaceRoot.endsWith(path.sep)
-    ? workspaceRoot
-    : `${workspaceRoot}${path.sep}`
-  const stateDir = projectLocalStateDir(workspaceRoot)
-  const self = process.pid
-  const parent = process.ppid
-
-  const result = spawnSync("ps", ["-axww", "-o", "pid=,command="], {
-    encoding: "utf8",
-    stdio: ["ignore", "pipe", "ignore"],
+  const processes = listProcesses()
+  const state = readDevSessionState(workspaceRoot)
+  const exclude = [process.pid, process.ppid]
+  const victims = selectOrphanedDevPids({
+    processes,
+    workspaceRoot,
+    excludePids: exclude,
   })
-  if (result.status !== 0 || !result.stdout) return []
 
-  const victims = []
-  for (const line of result.stdout.split("\n")) {
-    const match = line.match(/^\s*(\d+)\s+(.*)$/)
-    if (!match) continue
-    const pid = Number(match[1])
-    const command = match[2]
-    if (pid === self || pid === parent) continue
-    if (!command.includes(marker)) continue
+  const ownPgid = processes.find((proc) => proc.pid === process.pid)?.pgid
+  const excludePgids = [...exclude, ...(ownPgid ? [ownPgid] : [])]
 
-    // Never touch the shared portless proxy daemon, even if it was launched from
-    // this worktree — other worktrees depend on it.
-    const isPortlessProxyDaemon =
-      /\/portless\/[^\s]*cli\.js\b[\s\S]*\bproxy\b[\s\S]*\bstart\b/.test(command)
-    if (isPortlessProxyDaemon) continue
+  // A recorded supervisor that is gone leaves its groups unowned; orphaned
+  // groups led by a dev wrapper (pnpm run dev:vite) go too.
+  const staleGroups = [
+    ...new Set([
+      ...(state && !pidIsAlive(state.supervisorPid)
+        ? selectRecordedGroups({ state, processes, workspaceRoot })
+        : []),
+      ...selectOrphanGroups({
+        processes,
+        orphanPids: victims,
+        workspaceRoot,
+        excludePgids,
+      }),
+    ]),
+  ].filter((pgid) => !excludePgids.includes(pgid))
+  signalGroups(staleGroups, "SIGTERM")
 
-    const isWorktreeDevProcess =
-      /\/convex\/bin\/main\.js\b[\s\S]*\bdev\b/.test(command) ||
-      (command.includes("convex-local-backend") &&
-        command.includes(stateDir)) ||
-      /\/vite\/bin\/vite\.js\b/.test(command) ||
-      command.includes("workerd serve") ||
-      /\/portless\/[^\s]*cli\.js\b/.test(command)
+  terminateAndWait(victims)
+  const survivors = listProcesses()
+  signalGroups(
+    staleGroups.filter((pgid) => survivors.some((proc) => proc.pgid === pgid)),
+    "SIGKILL"
+  )
+  return victims
+}
 
-    if (isWorktreeDevProcess) victims.push(pid)
+// Stop this worktree's live dev session (if any) on purpose — `pnpm dev:stop`.
+// The supervisor gets SIGTERM so it can shut its children down itself; anything
+// left afterwards is an orphan and is reaped by `stopStaleWorktreeProcesses`.
+// Returns the supervisor pids that were stopped.
+export function stopLiveDevSession(workspaceRoot) {
+  if (process.platform === "win32") return []
+
+  const supervisors = liveDevSupervisors(workspaceRoot)
+  if (supervisors.length === 0) return []
+
+  const state = readDevSessionState(workspaceRoot)
+  const groups =
+    state && supervisors.includes(state.supervisorPid)
+      ? selectRecordedGroups({ state, processes: listProcesses(), workspaceRoot })
+      : []
+
+  terminatePids(supervisors, "SIGTERM")
+  if (!waitForPidsToStop(supervisors, 5000)) {
+    terminatePids(supervisors.filter(pidIsAlive), "SIGKILL")
+    waitForPidsToStop(supervisors, 2000)
   }
 
-  if (victims.length === 0) return []
-
-  terminatePids(victims, "SIGTERM")
-  if (waitForPidsToStop(victims, 5000)) return victims
-
-  const remaining = victims.filter((pid) => {
-    try {
-      process.kill(pid, 0)
-      return true
-    } catch {
-      return false
-    }
-  })
-  terminatePids(remaining, "SIGKILL")
-  waitForPidsToStop(remaining, 2000)
-  return victims
+  // The supervisor SIGTERMs its groups on the way out; repeat in case it was
+  // force-killed, then give them a moment before the orphan sweep escalates.
+  signalGroups(groups, "SIGTERM")
+  return supervisors
 }

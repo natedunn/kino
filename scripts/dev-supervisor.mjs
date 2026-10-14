@@ -12,11 +12,17 @@ import {
   preserveSharedDevDeployment,
   projectLocalConfigPath as getProjectLocalConfigPath,
   readLocalEnv,
+  refuseIfDevSessionRunning,
   stopLocalBackendForWorkspace,
   stopStaleWorktreeProcesses,
   waitForLocalBackendToStart,
 } from "./lib/local-convex.mjs"
 import { mergeFrontendEnv } from "./lib/dev-share.mjs"
+import {
+  clearDevSessionState,
+  readDevSessionState,
+  writeDevSessionState,
+} from "./lib/dev-session.mjs"
 
 const workspaceRoot = process.cwd()
 const binDir = path.join(workspaceRoot, "node_modules", ".bin")
@@ -33,6 +39,49 @@ const anonymousEnvFilePath = getAnonymousEnvFilePath(workspaceRoot)
 const projectLocalConfigPath = getProjectLocalConfigPath(workspaceRoot)
 
 fs.mkdirSync(logDir, { recursive: true })
+
+// One dev session per worktree. A second `pnpm dev` used to reap the first
+// one's processes as "stale"; now it refuses and leaves the live session alone.
+if (refuseIfDevSessionRunning(workspaceRoot)) process.exit(1)
+
+// Reap Convex/Vite/portless processes orphaned by a previous, non-gracefully
+// stopped `pnpm dev` of this worktree. Otherwise orphaned `convex dev` CLIs
+// (whose backend is gone) retry forever and spam the console, and they pile up
+// one stack per run. Only orphans are touched — see stopStaleWorktreeProcesses.
+// Runs before this session is recorded so it can still read the dead session's
+// recorded process groups.
+const reaped = stopStaleWorktreeProcesses(workspaceRoot)
+if (reaped.length > 0) {
+  console.log(
+    `[dev] reaped ${reaped.length} orphaned dev process(es) from a previous run: ${reaped.join(
+      ", "
+    )}`
+  )
+}
+
+const sessionState = {
+  supervisorPid: process.pid,
+  startedAt: new Date().toISOString(),
+  mode: shareMode ? `${convexMode}+share` : convexMode,
+  children: [],
+}
+writeDevSessionState(workspaceRoot, sessionState)
+// Two `pnpm dev`s racing past the check above: the last writer wins and the
+// other backs off before starting anything.
+if (readDevSessionState(workspaceRoot)?.supervisorPid !== process.pid) {
+  console.error(
+    "[dev] another `pnpm dev` started in this worktree at the same time; stop it with `pnpm dev:stop` first."
+  )
+  process.exit(1)
+}
+process.on("exit", () => clearDevSessionState(workspaceRoot, process.pid))
+
+function recordChildGroup(name, child) {
+  if (!child.pid) return
+  // Children are spawned detached, so each child pid is its process group id.
+  sessionState.children.push({ name, pgid: child.pid })
+  writeDevSessionState(workspaceRoot, sessionState)
+}
 
 function startProcess(name, command, args, env = process.env) {
   const logPath = path.join(logDir, `${name}.log`)
@@ -59,23 +108,11 @@ function startProcess(name, command, args, env = process.env) {
   child.on("error", (error) => {
     console.error(`[${name}] failed to start:`, error)
   })
+  recordChildGroup(name, child)
 
   return { child }
 }
 function prepareAnonymousConvex() {
-  // Reap Convex/Vite/portless processes orphaned by a previous, non-gracefully
-  // stopped `pnpm dev` of this worktree. Otherwise orphaned `convex dev` CLIs
-  // (whose backend is gone) retry forever and spam the console, and they pile up
-  // one stack per run.
-  const reaped = stopStaleWorktreeProcesses(workspaceRoot)
-  if (reaped.length > 0) {
-    console.log(
-      `[dev] reaped ${reaped.length} stale dev process(es) from a previous run: ${reaped.join(
-        ", "
-      )}`
-    )
-  }
-
   preserveSharedDevDeployment(workspaceRoot, "scripts/dev-supervisor.mjs")
   ensureAnonymousEnvFile(workspaceRoot)
 

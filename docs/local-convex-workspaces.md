@@ -48,6 +48,37 @@ starts Vite. Logs live under `$TMPDIR/kino-dev/<workspace>/`. If the local
 deployment has not been initialized yet, run `pnpm convex:local:init` before
 starting development.
 
+## One dev session per worktree
+
+The dev supervisor records its session in
+`$TMPDIR/kino-dev/<workspace>/dev-session.json`: the supervisor pid and the
+process group of each child it starts (Convex, and Vite via portless).
+`pnpm dev:share` keeps its own `share-pids.json` beside it, including the
+`dev:share` process pid. Both files are removed on a clean exit.
+
+- **Starting dev when it is already running.** If this worktree already has a
+  live supervisor (recorded in the state file, or an unrecorded one started by
+  older code, found by command line and working directory), `pnpm dev`,
+  `pnpm dev:shared`, and `pnpm dev:share` refuse with
+  `dev is already running in this worktree (pid N); stop it with pnpm dev:stop first`
+  and leave the running session alone.
+- **Crash cleanup.** On startup the supervisor reaps only genuinely orphaned
+  dev processes of this worktree: the `convex dev` CLI, its local backend,
+  `vite dev`, workerd, and the portless client, when no live supervisor (or
+  other live process) sits above them in the process tree. Process groups
+  recorded by a dead supervisor are signalled too.
+- **`pnpm dev:stop`** stops this worktree's recorded `dev:share` and dev
+  sessions on purpose (the supervisor gets SIGTERM and stops its children),
+  then reaps whatever is left over as orphans.
+- **Never touched:** `vite build`, `vite preview`, `wrangler dev` for
+  `workers/*`, a hand-started `vite dev` from a shell, a running
+  `pnpm convex:local:init`, other worktrees (including worktrees nested inside
+  this one, such as `.claude/worktrees/...`; matching uses this worktree's
+  exact root), and the shared portless proxy daemon on `:1355`.
+- **`pnpm convex:local:init`** restarts this worktree's local backend, so it
+  refuses while a dev session is running instead of stopping that session's
+  backend. Run `pnpm dev:stop` first.
+
 The `.convex/shared-dev-deployment.env` file is retained only so the explicit
 `pnpm dev:shared` workflow can remember the prior cloud development target. It
 is not a seed source.

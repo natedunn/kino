@@ -12,6 +12,7 @@ import {
 	preserveSharedDevDeployment,
 	projectLocalConfigPath,
 	readEnvFile,
+	refuseIfDevSessionRunning,
 	stopLocalBackendForWorkspace,
 	waitForLocalBackendToStart,
 } from './lib/local-convex.mjs';
@@ -63,12 +64,20 @@ function stopChild(child) {
 	}
 }
 
+// Initialization restarts this worktree's local backend. Refuse rather than
+// pulling it out from under a running `pnpm dev`.
+if (refuseIfDevSessionRunning(workspaceRoot, '[native-local]')) process.exit(1);
+
 preserveSharedDevDeployment(workspaceRoot, 'scripts/init-native-local.mjs');
 ensureAnonymousEnvFile(workspaceRoot);
-stopLocalBackendForWorkspace(workspaceRoot, {
-	logPrefix: '[native-local]',
-	failOnStubborn: true,
-});
+if (
+	!stopLocalBackendForWorkspace(workspaceRoot, {
+		logPrefix: '[native-local]',
+		failOnStubborn: true,
+	})
+) {
+	process.exit(1);
+}
 
 const configPath = projectLocalConfigPath(workspaceRoot);
 if (reset && fs.existsSync(configPath)) {
