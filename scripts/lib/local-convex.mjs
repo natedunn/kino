@@ -414,7 +414,7 @@ export function stopLocalBackendForWorkspace(
 // Kill any dev processes left over from a previous `pnpm dev` of THIS worktree.
 //
 // The supervisor spawns Convex (and Vite via portless) detached, so when the
-// shell/Helmor force-stops `pnpm dev` without a clean SIGTERM, the `convex dev`
+// shell or agent app force-stops `pnpm dev` without a clean SIGTERM, the `convex dev`
 // CLI, its local backend, Vite, workerd, and the portless client get reparented
 // to launchd and keep running. Orphaned `convex dev` processes whose backend is
 // gone retry forever ("Retrying request…", "Failed to fetch logs", "Unable to

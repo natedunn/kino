@@ -104,31 +104,14 @@ product-data bridge exists or is required for the prelaunch cutover.
 
 ## Local setup
 
-From the repository root, run `pnpm install --frozen-lockfile`, then
-`pnpm run auth:native:prepare-local`. This creates a fresh signing key in the
-ignored, mode-0600 `.env.auth.local` file and never overwrites an existing file.
-The GitHub values are placeholders: this setup alone cannot complete OAuth.
-
-Start the dedicated local backend from this directory, with hosted-deployment
-selectors removed from the shell environment:
-
-```sh
-env -u CONVEX_DEPLOY_KEY -u CONVEX_DEPLOYMENT -u CONVEX_SELF_HOSTED_URL \
-  -u CONVEX_SELF_HOSTED_ADMIN_KEY CONVEX_AGENT_MODE=anonymous \
-  ../../node_modules/.bin/convex dev \
-  --local-cloud-port 4440 --local-site-port 4441 --tail-logs disable
-```
-
-On first startup it creates `.env.local` and local state; the first push waits
-for the required auth environment. Confirm `.env.local` selects the anonymous
-loopback backend, then from a second terminal in this directory load the file:
-
-```sh
-../../node_modules/.bin/convex env set --from-file .env.auth.local
-```
-
-The watcher then deploys the native components and generates
-`convex/native/_generated/`. Keep that generated output with source changes.
+From the repository root, run `pnpm run setup` (or `pnpm convex:local:init` on
+an already-installed worktree). `scripts/init-native-local.mjs` creates the
+worktree-local anonymous backend and, if `.convex/native-auth.env.local` is
+missing, calls `scripts/prepare-native-auth-local.mjs` to create it. That file is
+ignored, mode 0600, holds a fresh signing key, and is never overwritten. Its
+GitHub values are placeholders; `init-native-local.mjs` substitutes the dev
+gateway credentials when they are available locally. Then start Kino with
+`pnpm dev`.
 
 From the repository root:
 
@@ -136,18 +119,10 @@ From the repository root:
 pnpm run auth:native:verify-package
 pnpm run typecheck:convex:native
 pnpm exec vitest run convex/native
-pnpm run auth:native:smoke
 ```
 
-To run Kino against a manually started backend, keep the native watcher running
-and start Vite with its URLs:
-
-```sh
-VITE_CONVEX_URL=http://127.0.0.1:4440 \
-VITE_CONVEX_SITE_URL=http://127.0.0.1:4441 \
-VITE_SITE_URL=http://127.0.0.1:5190 \
-PORT=5190 pnpm exec vite dev --host 127.0.0.1 --port 5190 --strictPort
-```
+(The migration-era `pnpm run auth:native:smoke` script, which targeted a separate
+backend on 4440/4441, has since been removed.)
 
 Kino now always uses the native request handlers, HttpOnly refresh cookies, the
 official Convex query adapter, and the native auth provider. A request shares a
@@ -178,12 +153,6 @@ For a same-account `workers.dev` proof, the Start Worker also needs Cloudflare's
 the gateway Worker. The hosted proof used the compatibility flag only in its
 generated disposable configuration. Prefer the environment's gateway custom
 domain or a service binding for the durable deployment design.
-
-The smoke script refuses any target except the dedicated anonymous loopback
-backend on 4440/4441. It writes disposable user/password fixtures there,
-checks JWT validation and actual password WASM, and never prints credentials.
-It signs a local test JWT using the local key; it is **not** a GitHub browser
-exchange or a verified-email signup test.
 
 ## Email configuration and browser handoff
 

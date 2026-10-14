@@ -976,7 +976,7 @@ rejection, and deployed password WASM checks pass. See the
 
 Validation: 31 native component tests; 392 application tests in 62 files;
 the separate Node-only sourcemap test; `verify:pr`; focused lint/format checks;
-and the local native smoke all pass. Bento inbox delivery and native UI
+and the local native smoke (since removed) all pass. Bento inbox delivery and native UI
 acceptance pass on the isolated local backend.
 
 At the time of this checkpoint, the application still defaulted to Kitcn/Better
