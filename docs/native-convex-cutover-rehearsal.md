@@ -56,8 +56,8 @@ Record these values without recording secret contents:
 
 From the frozen commit, complete `pnpm run verify:pr`, root and native Convex
 tests, gateway tests/typecheck, Files Worker tests/typecheck, lint, and a
-production build. The local `auth:native:smoke` command exercises only the
-anonymous loopback backend and is not hosted OAuth evidence.
+production build. (The former local `auth:native:smoke` command has been
+removed; it only exercised a loopback backend and was never hosted OAuth evidence.)
 
 ## Production prerequisites
 

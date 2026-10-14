@@ -174,8 +174,10 @@ upstream check, and upgrade procedure live in
       and shared preview R2 bucket were preserved and their health rechecked.
 - [ ] Delete the temporary **Kino Convex v2 Proof** OAuth app and remove ignored
       proof credentials and state.
-- [ ] Retry `node scripts/native-settings-live-proof.mjs cleanup-visual` until the
-      retained proof folder is removed.
+- [x] ~~Retry `node scripts/native-settings-live-proof.mjs cleanup-visual` until the
+      retained proof folder is removed.~~ Closed as moot: the folder lived on
+      `giant-jaguar-319`, which was deleted September 23, and the script was
+      removed in the dead-scripts cleanup.
 - [ ] Delete preview OAuth route records when convenient or allow their 14-day TTL
       to expire; the preview cleanup workflow deletes the Worker and Convex preview
       but does not currently delete the route record directly.
@@ -408,6 +410,8 @@ comment, folder, and uploaded image; production was only read.
       disposable feedback/update/board fixture was removed. After the storage
       job completes, run `node scripts/native-settings-live-proof.mjs cleanup-visual`
       to remove the folder; the command safely reports if it is still waiting.
+      (Superseded: the script and its target deployment `giant-jaguar-319` have
+      both been removed; see "Cleanup after acceptance".)
 - [ ] This is layout parity for these specific states, not exhaustive visual
       parity. Feedback now shares the production target drawer; its tag editing
       control is still less polished than production's picker. Production has team badges,
@@ -628,8 +632,9 @@ lint, and the native production build pass. Deployed only to dev
 
 The reusable browser fixture is
 [`@native-settings-renamed/settings-renamed`](https://kino-native-auth-proof-c318c09d.hello-fc8.workers.dev/@native-settings-renamed/settings-renamed/settings/general).
-`scripts/native-settings-live-proof.mjs inspect` checks persisted fixture values;
-its admin impersonation is not evidence of login. The fixture remains private.
+`scripts/native-settings-live-proof.mjs inspect` checked persisted fixture values;
+its admin impersonation is not evidence of login. (The script was later removed
+because its target deployment, `giant-jaguar-319`, was deleted September 23.)
 
 ### September 22 project-navigation checkpoint
 
@@ -783,7 +788,8 @@ staging-to-final object promotion, folder operations, authorized delivery,
 Real browser checks exercised file upload, detail, rename, download initiation,
 cover upload/replacement, and deletion in the isolated application.
 
-`scripts/native-files-preview-proof.mjs` additionally passed real R2 upload and
+`scripts/native-files-preview-proof.mjs` (since removed; its target deployment
+`giant-jaguar-319` was deleted September 23) additionally passed real R2 upload and
 completion, GET, HEAD, byte ranges, thumbnail decoding, cached public-access
 revocation, rename/move, and immediate delivery denial after deletion. Its
 dedicated fixture identity tests storage, not OAuth. Fixture state is retained
@@ -808,7 +814,7 @@ Completed follow-up:
    readers remain rejected. Deployed this and the project-storage deletion barrier
    and extended upload-settlement window to the isolated native backend.
 4. Completed for the scripted fixture: `node scripts/native-files-preview-proof.mjs`
-   verifies acknowledged deletion and zero retained accounting. The seven earlier
+   (since removed with its deleted target deployment) verified acknowledged deletion and zero retained accounting. The seven earlier
    browser cleanup jobs also completed. That checkpoint's 1,335-byte update cover
    and Markdown acceptance file were subsequently removed through the UI. The PNG
    fixture remains; replacement-cover cleanup may retain quota until its upload
@@ -970,7 +976,7 @@ rejection, and deployed password WASM checks pass. See the
 
 Validation: 31 native component tests; 392 application tests in 62 files;
 the separate Node-only sourcemap test; `verify:pr`; focused lint/format checks;
-and the local native smoke all pass. Bento inbox delivery and native UI
+and the local native smoke (since removed) all pass. Bento inbox delivery and native UI
 acceptance pass on the isolated local backend.
 
 At the time of this checkpoint, the application still defaulted to Kitcn/Better
