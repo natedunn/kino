@@ -92,6 +92,28 @@ function EditorToolbarPlaceholder() {
 	);
 }
 
+const ENTITIES: Record<string, string> = {
+	'&amp;': '&',
+	'&gt;': '>',
+	'&lt;': '<',
+	'&nbsp;': ' ',
+	'&quot;': '"',
+	'&#39;': "'",
+};
+
+/** Block-level text of editor HTML, for display through React's escaping. */
+export function htmlToTextBlocks(html: string): Array<string> {
+	return html
+		.split(/<\/(?:p|h[1-6]|li|blockquote|pre)>|<br\s*\/?>/i)
+		.map((block) =>
+			block
+				.replace(/<[^>]*>/g, '')
+				.replace(/&(?:amp|gt|lt|nbsp|quot|#39);/g, (entity) => ENTITIES[entity])
+				.trim()
+		)
+		.filter(Boolean);
+}
+
 /**
  * Static stand-in for `MarkdownEditor` with the same frame, toolbar, and
  * placeholder text. Used as the lazy chunk's fallback and for the editor's
@@ -137,12 +159,13 @@ export function EditorPlaceholder({
 				style={{ maxHeight, minHeight }}
 			>
 				{value ? (
-					// Same stored HTML `EditorContentDisplay` renders, so editing existing
-					// content (e.g. an update) doesn't jump when Tiptap takes over.
-					<div
-						className='ProseMirror markdown-prose px-4 py-3'
-						dangerouslySetInnerHTML={{ __html: value }}
-					/>
+					// Existing content (e.g. editing an update) as escaped text, so the
+					// frame keeps roughly its final height without injecting stored HTML.
+					<div className='ProseMirror markdown-prose px-4 py-3'>
+						{htmlToTextBlocks(value).map((text, index) => (
+							<p key={index}>{text}</p>
+						))}
+					</div>
 				) : (
 					<div className='ProseMirror markdown-prose px-4 py-3'>
 						<p className='is-editor-empty' data-placeholder={placeholder} />
