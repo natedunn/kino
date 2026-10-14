@@ -6,14 +6,8 @@ import { existsSync, readFileSync } from "node:fs"
 loadEnvFiles()
 
 const previewIdentifier = process.argv[2]
-const token =
-  process.env.CONVEX_MANAGEMENT_TOKEN ??
-  process.env.CONVEX_API_TOKEN ??
-  process.env.CONVEX_AUTH_TOKEN
-const teamSlug =
-  process.env.CONVEX_TEAM_SLUG ??
-  process.env.CONVEX_TEAM_ID_OR_SLUG ??
-  "nate-dunn"
+const token = process.env.CONVEX_MANAGEMENT_TOKEN
+const teamSlug = process.env.CONVEX_TEAM_SLUG ?? "nate-dunn"
 const projectSlug = process.env.CONVEX_PROJECT_SLUG ?? "kino"
 const projectIdFromEnv = process.env.CONVEX_PROJECT_ID
 

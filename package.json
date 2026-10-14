@@ -32,6 +32,7 @@
 		"cf-typegen": "wrangler types",
 		"preview": "vite preview",
 		"test": "vitest run",
+		"test:scripts": "node --test scripts/*.test.mjs scripts/lib/*.test.mjs",
 		"lint": "eslint",
 		"format": "prettier --write \"**/*.{ts,tsx,js,jsx}\"",
 		"auth:native:verify-package": "node scripts/check-native-auth-package.mjs",

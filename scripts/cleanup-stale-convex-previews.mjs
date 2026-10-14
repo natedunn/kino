@@ -3,20 +3,19 @@
 import { execFileSync } from "node:child_process"
 import { existsSync, readFileSync } from "node:fs"
 
+import {
+  CONVEX_PREVIEW_NAME_LENGTH,
+  previewName,
+} from "./lib/preview-name.mjs"
+
 loadEnvFiles()
 
 const args = process.argv.slice(2)
 const shouldDelete = args.includes("--delete")
 const remote =
   getArgValue("--remote") ?? process.env.PREVIEW_CLEANUP_REMOTE ?? "origin"
-const token =
-  process.env.CONVEX_MANAGEMENT_TOKEN ??
-  process.env.CONVEX_API_TOKEN ??
-  process.env.CONVEX_AUTH_TOKEN
-const teamSlug =
-  process.env.CONVEX_TEAM_SLUG ??
-  process.env.CONVEX_TEAM_ID_OR_SLUG ??
-  "nate-dunn"
+const token = process.env.CONVEX_MANAGEMENT_TOKEN
+const teamSlug = process.env.CONVEX_TEAM_SLUG ?? "nate-dunn"
 const projectSlug = process.env.CONVEX_PROJECT_SLUG ?? "kino"
 const projectIdFromEnv = process.env.CONVEX_PROJECT_ID
 
@@ -48,17 +47,6 @@ function getArgValue(name) {
   const index = args.indexOf(name)
   if (index === -1) return null
   return args[index + 1] ?? null
-}
-
-function previewName(branch, maxLength) {
-  const normalized = branch
-    .toLowerCase()
-    .replace(/[^a-z0-9-]/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "")
-    .slice(0, maxLength)
-
-  return normalized || "preview"
 }
 
 function listRemoteBranches() {
@@ -142,7 +130,9 @@ async function getProjectId() {
 
 async function main() {
   const activePreviewIdentifiers = new Set(
-    listRemoteBranches().map((branch) => previewName(branch, 48))
+    listRemoteBranches().map((branch) =>
+      previewName(branch, CONVEX_PREVIEW_NAME_LENGTH)
+    )
   )
   const projectId = await getProjectId()
   const deployments = await convexFetch(
