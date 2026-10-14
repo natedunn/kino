@@ -18,11 +18,9 @@ rewrites, or imports that legacy data.
   recreate it.
 - `pnpm dev` or `pnpm dev:anonymous`: run the worktree-local Convex backend and
   Vite.
-- `pnpm dev:shared`: explicitly use the configured shared Convex development
-  deployment. Use this only when a cloud callback or shared integration is
-  required.
 - `pnpm dev:share`: run the local stack behind temporary Cloudflare Quick
-  Tunnels for testing on another device.
+  Tunnels for testing on another device. GitHub login is unavailable in this
+  mode (see Quick Tunnel notes).
 
 ## Worktree setup
 
@@ -62,8 +60,8 @@ process group of each child it starts (Convex, and Vite via portless).
 
 - **Starting dev when it is already running.** If this worktree already has a
   live supervisor (recorded in the state file, or an unrecorded one started by
-  older code, found by command line and working directory), `pnpm dev`,
-  `pnpm dev:shared`, and `pnpm dev:share` refuse with
+  older code, found by command line and working directory), `pnpm dev` and
+  `pnpm dev:share` refuse with
   `dev is already running in this worktree (pid N); stop it with pnpm dev:stop first`
   and leave the running session alone.
 - **Crash cleanup.** On startup the supervisor reaps only genuinely orphaned
@@ -83,10 +81,6 @@ process group of each child it starts (Convex, and Vite via portless).
   refuses while a dev session is running instead of stopping that session's
   backend. Run `pnpm dev:stop` first.
 
-The `.convex/shared-dev-deployment.env` file is retained only so the explicit
-`pnpm dev:shared` workflow can remember the prior cloud development target. It
-is not a seed source.
-
 ## Quick Tunnel notes
 
 Ordinary local Convex URLs cannot receive GitHub webhooks. `pnpm dev:share`
@@ -94,6 +88,12 @@ registers its temporary public Convex site with the dev gateway for the life of
 the session and unregisters it on shutdown. `GATEWAY_URL` and
 `GATEWAY_ADMIN_TOKEN` must be present locally, and the dev gateway must have
 temporary share-origin support deployed.
+
+GitHub login is unavailable in a share session. The dev gateway accepts `local`
+login routes only for `https://*.localhost` apps, so the supervisor skips
+`scripts/gateway-local-route.mjs` and starts Vite with
+`VITE_NATIVE_GITHUB_ENABLED=false`. `.env.local` is left untouched, and the next
+`pnpm dev` re-registers the worktree's ordinary local route.
 
 Quick Tunnel URLs change on every run and are publicly reachable by anyone who
 knows the URL while the command is active. Application authorization still

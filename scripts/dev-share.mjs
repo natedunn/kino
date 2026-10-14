@@ -320,7 +320,6 @@ async function main() {
   const shareEnv = {
     ...env,
     HOST: "127.0.0.1",
-    KINO_CONVEX_MODE: "anonymous",
     KINO_SHARE: "1",
     PORT: String(appPort),
     PORTLESS_URL: appTunnel.publicUrl,

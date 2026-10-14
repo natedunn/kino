@@ -5,6 +5,7 @@ import {
 	isOwnedShareCommand,
 	mergeFrontendEnv,
 	quickTunnelUrlFromOutput,
+	shouldRegisterLocalGatewayRoute,
 } from './dev-share.mjs';
 
 describe('Quick Tunnel development helpers', () => {
@@ -39,6 +40,20 @@ describe('Quick Tunnel development helpers', () => {
 		);
 		expect(result.VITE_CONVEX_URL).toBe('https://cloud.trycloudflare.com');
 		expect(result.VITE_SITE_URL).toBe('https://app.trycloudflare.com');
+	});
+
+	it('turns GitHub login off for share sessions without changing local dev', () => {
+		const local = { VITE_NATIVE_GITHUB_ENABLED: 'true', NATIVE_GITHUB_ROUTE_ID: 'local-abc' };
+		expect(mergeFrontendEnv({}, local).VITE_NATIVE_GITHUB_ENABLED).toBe('true');
+		const shared = mergeFrontendEnv({ KINO_SHARE: '1' }, local);
+		expect(shared.VITE_NATIVE_GITHUB_ENABLED).toBe('false');
+		expect(local.VITE_NATIVE_GITHUB_ENABLED).toBe('true');
+	});
+
+	it('registers the local gateway route only outside share mode', () => {
+		expect(shouldRegisterLocalGatewayRoute({})).toBe(true);
+		expect(shouldRegisterLocalGatewayRoute({ KINO_SHARE: '0' })).toBe(true);
+		expect(shouldRegisterLocalGatewayRoute({ KINO_SHARE: '1' })).toBe(false);
 	});
 
 	it('recognizes only worktree-owned share commands', () => {

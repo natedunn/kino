@@ -19,10 +19,6 @@ export function anonymousEnvFilePath(workspaceRoot) {
   return path.join(workspaceRoot, ".convex", "anonymous.env")
 }
 
-export function sharedDevStatePath(workspaceRoot) {
-  return path.join(workspaceRoot, ".convex", "shared-dev-deployment.env")
-}
-
 export function projectLocalStateDir(workspaceRoot) {
   return path.join(workspaceRoot, ".convex", "local", "default")
 }
@@ -78,29 +74,6 @@ export function anonymousConvexEnv(env = process.env) {
   delete result.CONVEX_SELF_HOSTED_URL
   delete result.CONVEX_SELF_HOSTED_ADMIN_KEY
   return result
-}
-
-export function preserveSharedDevDeployment(
-  workspaceRoot,
-  writtenBy = "local Convex workspace setup"
-) {
-  const localEnv = readLocalEnv(workspaceRoot)
-  const configuredDeployment = localEnv.CONVEX_DEPLOYMENT
-
-  if (!configuredDeployment?.startsWith("dev:")) return
-
-  const deploymentName = configuredDeployment.slice("dev:".length)
-  const statePath = sharedDevStatePath(workspaceRoot)
-  fs.mkdirSync(path.dirname(statePath), { recursive: true })
-  fs.writeFileSync(
-    statePath,
-    [
-      `# Written by ${writtenBy} before switching this worktree to anonymous Convex.`,
-      `KINO_CONVEX_SEED_SOURCE=${deploymentName}`,
-      `CONVEX_DEPLOYMENT=${configuredDeployment}`,
-      "",
-    ].join("\n")
-  )
 }
 
 export function ensureAnonymousEnvFile(workspaceRoot) {

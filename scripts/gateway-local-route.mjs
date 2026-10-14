@@ -6,30 +6,19 @@
 // docs/github-environments.md). Best-effort: without gateway credentials or a
 // loopback Convex site, GitHub login stays off and `pnpm dev` continues.
 import { spawnSync } from 'node:child_process';
-import { createHash, randomBytes } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 
+import { localRouteId, newRouteSecret, rewriteManagedEnv } from './lib/gateway-local-route.mjs';
 import { readEnvFile } from './lib/local-convex.mjs';
 
 const workspaceRoot = process.cwd();
 const envPath = path.join(workspaceRoot, '.env.local');
 const env = readEnvFile(envPath);
-const MANAGED = [
-	'NATIVE_GITHUB_GATEWAY_URL',
-	'NATIVE_GITHUB_ROUTE_ID',
-	'NATIVE_GITHUB_ROUTE_SECRET',
-	'VITE_NATIVE_GITHUB_ENABLED',
-];
 
 function writeEnv(values) {
-	const lines = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf8').split(/\r?\n/) : [];
-	const kept = lines.filter((line) => !MANAGED.some((name) => line.startsWith(`${name}=`)));
-	while (kept.length && kept.at(-1) === '') kept.pop();
-	const managed = MANAGED.filter((name) => values[name] !== undefined).map(
-		(name) => `${name}=${values[name]}`
-	);
-	fs.writeFileSync(envPath, `${[...kept, ...managed].join('\n')}\n`, { mode: 0o600 });
+	const content = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf8') : '';
+	fs.writeFileSync(envPath, rewriteManagedEnv(content, values), { mode: 0o600 });
 }
 
 function disable(reason) {
@@ -56,8 +45,9 @@ if (!site || site.protocol !== 'http:' || site.hostname !== '127.0.0.1' || !site
 
 const gateway = new URL(env.GATEWAY_URL);
 const app = appOrigin();
-const secret = env.NATIVE_GITHUB_ROUTE_SECRET || randomBytes(32).toString('hex');
-const routeId = `local-${createHash('sha256').update(app).digest('hex').slice(0, 40)}`;
+// Never reuse `.env.local`'s key: it may have been copied from another worktree.
+const secret = newRouteSecret();
+const routeId = localRouteId(app);
 
 let response;
 try {

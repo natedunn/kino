@@ -9,7 +9,6 @@ import {
 	anonymousEnvFilePath,
 	ensureAnonymousEnvFile,
 	ensureWorktreeLocalBackendPorts,
-	preserveSharedDevDeployment,
 	projectLocalConfigPath,
 	readEnvFile,
 	refuseIfDevSessionRunning,
@@ -68,7 +67,6 @@ function stopChild(child) {
 // pulling it out from under a running `pnpm dev`.
 if (refuseIfDevSessionRunning(workspaceRoot, '[native-local]')) process.exit(1);
 
-preserveSharedDevDeployment(workspaceRoot, 'scripts/init-native-local.mjs');
 ensureAnonymousEnvFile(workspaceRoot);
 if (
 	!stopLocalBackendForWorkspace(workspaceRoot, {
