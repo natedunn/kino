@@ -51,35 +51,61 @@ export function shareStatePath(workspaceRoot) {
   return path.join(os.tmpdir(), "kino-dev", path.basename(workspaceRoot), "share-pids.json")
 }
 
-export function writeSharePidState(workspaceRoot, pids) {
+export function writeSharePidState(workspaceRoot, pids, ownerPid = process.pid) {
   const statePath = shareStatePath(workspaceRoot)
   fs.mkdirSync(path.dirname(statePath), { recursive: true })
-  fs.writeFileSync(statePath, `${JSON.stringify({ pids: [...new Set(pids)], workspaceRoot })}\n`)
+  fs.writeFileSync(
+    statePath,
+    `${JSON.stringify({ ownerPid, pids: [...new Set(pids)], workspaceRoot })}\n`
+  )
 }
 
-export function readSharePidState(workspaceRoot) {
+function readShareState(workspaceRoot) {
   const statePath = shareStatePath(workspaceRoot)
-  if (!fs.existsSync(statePath)) return []
+  if (!fs.existsSync(statePath)) return null
 
   try {
     const state = JSON.parse(fs.readFileSync(statePath, "utf8"))
     if (state.workspaceRoot !== workspaceRoot || !Array.isArray(state.pids)) {
-      return []
+      return null
     }
-    return state.pids.filter((pid) => Number.isInteger(pid) && pid > 1)
+    return state
   } catch {
-    return []
+    return null
   }
+}
+
+export function readSharePidState(workspaceRoot) {
+  const state = readShareState(workspaceRoot)
+  if (!state) return []
+  return state.pids.filter((pid) => Number.isInteger(pid) && pid > 1)
+}
+
+// The `pnpm dev:share` process that wrote the state (null for older state files).
+export function readShareOwnerPid(workspaceRoot) {
+  const ownerPid = readShareState(workspaceRoot)?.ownerPid
+  return Number.isInteger(ownerPid) && ownerPid > 1 ? ownerPid : null
 }
 
 export function clearSharePidState(workspaceRoot) {
   fs.rmSync(shareStatePath(workspaceRoot), { force: true })
 }
 
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+}
+
+// Pinned to the exact worktree root: a sibling sharing a prefix (`kino` vs
+// `kino-2`) or a worktree nested below this one never matches.
 export function isOwnedShareCommand(command, workspaceRoot) {
-  if (!command.includes(workspaceRoot)) return false
+  const root = escapeRegExp(workspaceRoot)
   return (
-    /\bwrangler\b[\s\S]*\btunnel\b[\s\S]*\bquick-start\b/.test(command) ||
-    /scripts\/dev-supervisor\.mjs\b/.test(command)
+    (new RegExp(`--dir\\s+${root}(?:\\s|$)`).test(command) &&
+      /\bwrangler\b[\s\S]*\btunnel\b[\s\S]*\bquick-start\b/.test(command)) ||
+    new RegExp(`${root}/scripts/dev-supervisor\\.mjs\\b`).test(command)
   )
+}
+
+export function isShareOwnerCommand(command) {
+  return /(?:^|[\s/])scripts\/dev-share\.mjs(?:\s|$)/.test(command)
 }

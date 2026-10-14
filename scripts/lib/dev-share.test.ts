@@ -59,4 +59,17 @@ describe('Quick Tunnel development helpers', () => {
 			)
 		).toBe(false);
 	});
+
+	it('pins share command ownership to the exact worktree root', () => {
+		const root = '/worktrees/kino-a';
+		for (const other of ['/worktrees/kino-a-2', '/worktrees/kino-a/.claude/worktrees/x']) {
+			expect(
+				isOwnedShareCommand(
+					`pnpm --dir ${other} exec wrangler tunnel quick-start http://127.0.0.1:4000`,
+					root
+				)
+			).toBe(false);
+			expect(isOwnedShareCommand(`node ${other}/scripts/dev-supervisor.mjs`, root)).toBe(false);
+		}
+	});
 });

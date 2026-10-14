@@ -10,14 +10,17 @@ import {
   clearSharePidState,
   isOwnedShareCommand,
   quickTunnelUrlFromOutput,
+  readShareOwnerPid,
   readSharePidState,
   writeSharePidState,
 } from "./lib/dev-share.mjs"
 import {
   ensureWorktreeLocalBackendPorts,
+  liveDevShareOwner,
   processCommand,
   projectLocalConfigPath,
   readLocalEnv,
+  refuseIfDevSessionRunning,
   stopStaleWorktreeProcesses,
 } from "./lib/local-convex.mjs"
 
@@ -269,13 +272,16 @@ async function shutdown(exitCode = 0) {
     )
   }
   if (activeEnv) await unregisterOrigins(activeEnv)
-  clearSharePidState(workspaceRoot)
+  if (readShareOwnerPid(workspaceRoot) === process.pid) clearSharePidState(workspaceRoot)
   process.exit(exitCode)
 }
 
 async function main() {
   checkQuickTunnelConfig()
   stopRecordedShareProcesses()
+  // Claim the share state right away so a concurrent dev:share or dev:stop can
+  // see this session before its first tunnel starts.
+  writeSharePidState(workspaceRoot, [])
   stopStaleWorktreeProcesses(workspaceRoot)
 
   if (!fs.existsSync(projectLocalConfigPath(workspaceRoot))) {
@@ -344,6 +350,17 @@ async function main() {
   console.log(`[share] ${appTunnel.publicUrl}`)
   console.log("[share] Press Ctrl+C to stop sharing.\n")
 }
+
+// Refuse, without touching anything, when this worktree already has a live
+// `pnpm dev:share` or `pnpm dev` session.
+const liveShareOwner = liveDevShareOwner(workspaceRoot)
+if (liveShareOwner !== null) {
+  console.error(
+    `[share] dev:share is already running in this worktree (pid ${liveShareOwner}); stop it with \`pnpm dev:stop\` first.`
+  )
+  process.exit(1)
+}
+if (refuseIfDevSessionRunning(workspaceRoot, "[share]")) process.exit(1)
 
 process.on("SIGINT", () => void shutdown(130))
 process.on("SIGTERM", () => void shutdown(143))
