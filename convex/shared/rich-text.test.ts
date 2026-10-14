@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { sanitizeRichText } from './rich-text';
+import { sanitizeRichText, sanitizeStoredContent } from './rich-text';
 
 describe('sanitizeRichText', () => {
 	it('keeps everything the editor produces', () => {
@@ -34,5 +34,15 @@ describe('sanitizeRichText', () => {
 
 	it('leaves plain text alone apart from escaping markup', () => {
 		expect(sanitizeRichText('Just text & more')).toBe('Just text & more');
+	});
+
+	it('stores plain text verbatim and only sanitizes content that renders as HTML', () => {
+		expect(sanitizeStoredContent('  a < b && c > d, I <3 this  ')).toBe(
+			'a < b && c > d, I <3 this'
+		);
+		expect(sanitizeStoredContent('x<img src=x onerror=alert(1)>')).toBe(
+			'x<img src=x onerror=alert(1)>'
+		);
+		expect(sanitizeStoredContent(' <p>ok</p><img src=x onerror=alert(1)> ')).toBe('<p>ok</p>');
 	});
 });

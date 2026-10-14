@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { sanitizeRichText } from '@convex/rich-text';
+import { isRichTextHtml, sanitizeRichText } from '@convex/rich-text';
 import { Link } from '@tanstack/react-router';
 import { Calendar, Heart, MessageSquare } from 'lucide-react';
 
@@ -18,7 +18,7 @@ import { useEmoteToggle } from './use-emote-toggle';
 const SEARCH_PREVIEW_CHARS = 420;
 
 function UpdateCardContent({ content }: { content: string }) {
-	const isHTML = content.startsWith('<') && content.includes('</');
+	const isHTML = isRichTextHtml(content);
 
 	if (!isHTML) {
 		return (

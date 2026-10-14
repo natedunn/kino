@@ -3,7 +3,7 @@ import type { QueryCtx } from './_generated/server';
 
 import { ConvexError, v } from 'convex/values';
 
-import { sanitizeRichText } from '../shared/rich-text';
+import { sanitizeStoredContent } from '../shared/rich-text';
 import { internal } from './_generated/api';
 import { internalMutation, mutation } from './_generated/server';
 import { assertProjectWritable, requireProjectAccess } from './access';
@@ -39,7 +39,7 @@ export const create = mutation({
 			profileForWrite(ctx),
 			writableFeedback(ctx, args.feedbackId),
 		]);
-		const content = sanitizeRichText(args.content).trim();
+		const content = sanitizeStoredContent(args.content);
 		if (!content || content.length > 50_000) throw new ConvexError('INVALID_COMMENT');
 		if (args.replyFeedbackCommentId) {
 			const parent = await ctx.db.get('feedbackComments', args.replyFeedbackCommentId);
@@ -73,7 +73,7 @@ export const update = mutation({
 		if (!comment) throw new ConvexError('COMMENT_NOT_FOUND');
 		await writableFeedback(ctx, comment.feedbackId);
 		if (comment.authorProfileId !== profile._id) throw new ConvexError('FORBIDDEN');
-		const content = sanitizeRichText(args.content).trim();
+		const content = sanitizeStoredContent(args.content);
 		if (!content || content.length > 50_000) throw new ConvexError('INVALID_COMMENT');
 		await ctx.db.patch('feedbackComments', comment._id, { content, updatedAt: Date.now() });
 		if (comment.initial) {

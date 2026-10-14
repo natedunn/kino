@@ -5,7 +5,7 @@ import { RateLimiter } from '@convex-dev/rate-limiter';
 import { paginationOptsValidator, paginationResultValidator } from 'convex/server';
 import { ConvexError, v } from 'convex/values';
 
-import { sanitizeRichText } from '../shared/rich-text';
+import { sanitizeStoredContent } from '../shared/rich-text';
 import { buildUpdateSearchContent } from '../shared/update-content';
 import { components, internal } from './_generated/api';
 import { internalMutation, mutation, query } from './_generated/server';
@@ -103,7 +103,7 @@ async function validateFields(
 		relatedFeedbackIds: Array<Id<'feedback'>>;
 	}
 ) {
-	const content = sanitizeRichText(fields.content);
+	const content = sanitizeStoredContent(fields.content);
 	if (
 		!fields.title.trim() ||
 		fields.title.trim().length > 200 ||
@@ -398,7 +398,7 @@ export const saveComment = mutation({
 	returns: v.id('updateComments'),
 	handler: async (ctx, args) => {
 		const { item, profileId } = await writeAccess(ctx, args.updateId);
-		const content = sanitizeRichText(args.content).trim();
+		const content = sanitizeStoredContent(args.content);
 		if (!content || content.length > 1200) throw new ConvexError('INVALID_COMMENT');
 		if (args.id) {
 			const comment = await ctx.db.get('updateComments', args.id);

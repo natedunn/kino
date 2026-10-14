@@ -60,3 +60,18 @@ const filter = new FilterXSS({
 export function sanitizeRichText(html: string): string {
 	return filter.process(html);
 }
+
+/** How display components decide to render stored content as HTML. */
+export function isRichTextHtml(content: string): boolean {
+	return content.startsWith('<') && content.includes('</');
+}
+
+/**
+ * Normalize user content before storing it. Content that will render as HTML
+ * is allowlist-sanitized; anything else is always rendered as escaped text, so
+ * it is stored verbatim (sanitizing it would strip text like `a < b`).
+ */
+export function sanitizeStoredContent(content: string): string {
+	const trimmed = content.trim();
+	return isRichTextHtml(trimmed) ? sanitizeRichText(trimmed).trim() : trimmed;
+}
