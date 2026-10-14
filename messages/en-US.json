@@ -1265,6 +1265,7 @@
 	"discussions_body_too_long": "Keep the body to {count} characters or fewer.",
 	"discussions_cannot_create_title": "You can't start a discussion here",
 	"discussions_cannot_create_description": "This project only lets admins and moderators start discussions. You can still reply to existing ones.",
+	"discussions_cannot_create_archived_description": "This project is archived and read-only, so new discussions and replies are closed.",
 	"discussions_back": "All discussions",
 	"discussions_started_verb": "started this discussion",
 	"discussions_replied_verb": "replied",

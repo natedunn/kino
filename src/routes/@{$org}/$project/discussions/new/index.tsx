@@ -58,7 +58,11 @@ function NewDiscussionRoute() {
 							</Link>
 						</Button>
 					}
-					description={m.discussions_cannot_create_description()}
+					description={
+						access?.writable === false
+							? m.discussions_cannot_create_archived_description()
+							: m.discussions_cannot_create_description()
+					}
 					title={m.discussions_cannot_create_title()}
 				/>
 			</div>

@@ -1265,6 +1265,7 @@
 	"discussions_body_too_long": "El contenido debe tener {count} caracteres como máximo.",
 	"discussions_cannot_create_title": "No puedes iniciar una discusión aquí",
 	"discussions_cannot_create_description": "Este proyecto solo permite que administradores y moderadores inicien discusiones. Aun así, puedes responder a las existentes.",
+	"discussions_cannot_create_archived_description": "Este proyecto está archivado y es de solo lectura, así que no se pueden iniciar discusiones ni responder.",
 	"discussions_back": "Todas las discusiones",
 	"discussions_started_verb": "inició esta discusión",
 	"discussions_replied_verb": "respondió",

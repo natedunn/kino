@@ -162,6 +162,126 @@ describe('native project discussions', () => {
 		expect(stored).toEqual({ body: '<p>Hi</p>', reply: '<p>Edited</p>', plain: 'a < b' });
 	});
 
+	test('enforces visible-text limits on bodies and replies server-side', async () => {
+		const s = await fixture();
+		await expect(
+			s.visitor.caller.mutation(api.discussions.create, {
+				projectId: s.projectId,
+				title: 'Empty',
+				body: '<p></p><p> </p>',
+			})
+		).rejects.toThrow('INVALID_COMMENT');
+		const { id } = await s.visitor.caller.mutation(api.discussions.create, {
+			projectId: s.projectId,
+			title: 'Long',
+			body: `<p>${'a'.repeat(5000)}</p><p>${'b'.repeat(5000)}</p>`,
+		});
+		await expect(
+			s.visitor.caller.mutation(api.discussions.create, {
+				projectId: s.projectId,
+				title: 'Too long',
+				body: `<p>${'a'.repeat(10_001)}</p>`,
+			})
+		).rejects.toThrow('INVALID_COMMENT');
+		// Replies use the comment limit; markup and entities don't count.
+		const reply = await s.visitor.caller.mutation(api.discussions.addComment, {
+			discussionId: id,
+			content: `<p><strong>${'x'.repeat(1195)}</strong>&amp;</p><p>1234</p>`,
+		});
+		await expect(
+			s.visitor.caller.mutation(api.discussions.addComment, {
+				discussionId: id,
+				content: `<p>${'x'.repeat(1201)}</p>`,
+			})
+		).rejects.toThrow('INVALID_COMMENT');
+		await expect(
+			s.visitor.caller.mutation(api.discussions.updateComment, {
+				commentId: reply,
+				content: `<p>${'x'.repeat(1201)}</p>`,
+			})
+		).rejects.toThrow('INVALID_COMMENT');
+		const first = (await s.t.run((ctx) => ctx.db.get('discussions', id)))!.firstCommentId!;
+		await s.visitor.caller.mutation(api.discussions.updateComment, {
+			commentId: first,
+			content: `<p>${'c'.repeat(9000)}</p>`,
+		});
+	});
+
+	test('shows the viewer their own reaction past the reaction sample cap', async () => {
+		const s = await fixture();
+		const { id, slug } = await s.owner.caller.mutation(api.discussions.create, {
+			projectId: s.projectId,
+			title: 'Popular',
+			body: '<p>Body</p>',
+		});
+		const commentId = (await s.t.run((ctx) => ctx.db.get('discussions', id)))!.firstCommentId!;
+		// 101 reactors; the one that sorts last in the index falls outside the
+		// 100-row sample, so it is the viewer whose own reaction must still show.
+		const viewer = await s.t.run(async (ctx) => {
+			for (let index = 0; index < 101; index += 1) {
+				const userId = await ctx.db.insert('users', { status: 'active', systemRole: 'user' });
+				const authorProfileId = await ctx.db.insert('profiles', {
+					userId,
+					name: `fan${index}`,
+					username: `fan${index}`,
+				});
+				await ctx.db.patch('users', userId, { profileId: authorProfileId });
+				await ctx.db.insert('discussionCommentEmotes', {
+					discussionId: id,
+					commentId,
+					authorProfileId,
+					content: 'heart',
+				});
+			}
+			const last = await ctx.db
+				.query('discussionCommentEmotes')
+				.withIndex('by_commentId_and_authorProfileId_and_content', (q) =>
+					q.eq('commentId', commentId)
+				)
+				.order('desc')
+				.first();
+			const profile = await ctx.db.get('profiles', last!.authorProfileId);
+			return { profileId: profile!._id, userId: profile!.userId };
+		});
+		const detail = await s.t
+			.withIdentity({ issuer, subject: viewer.userId })
+			.query(api.discussions.detail, { projectId: s.projectId, slug });
+		const heart = detail!.firstComment!.emotes.find((emote) => emote.content === 'heart');
+		expect(heart?.authorProfileIds).toContain(viewer.profileId);
+		expect(heart?.count).toBe(101);
+	});
+
+	test('deleting replies rolls last activity back to what remains', async () => {
+		const s = await fixture();
+		const { id } = await s.visitor.caller.mutation(api.discussions.create, {
+			projectId: s.projectId,
+			title: 'Activity',
+			body: '<p>Body</p>',
+		});
+		vi.advanceTimersByTime(60_000);
+		const older = await s.visitor.caller.mutation(api.discussions.addComment, {
+			discussionId: id,
+			content: '<p>Older</p>',
+		});
+		vi.advanceTimersByTime(60_000);
+		const newer = await s.visitor.caller.mutation(api.discussions.addComment, {
+			discussionId: id,
+			content: '<p>Newer</p>',
+		});
+		const read = () =>
+			s.t.run(async (ctx) => ({
+				discussion: (await ctx.db.get('discussions', id))!,
+				older: await ctx.db.get('discussionComments', older),
+			}));
+		await s.visitor.caller.mutation(api.discussions.removeComment, { commentId: newer });
+		const afterNewer = await read();
+		expect(afterNewer.discussion.lastActivityAt).toBe(afterNewer.older!._creationTime);
+		await s.visitor.caller.mutation(api.discussions.removeComment, { commentId: older });
+		const afterOlder = await read();
+		expect(afterOlder.discussion.lastActivityAt).toBe(afterOlder.discussion._creationTime);
+		expect(afterOlder.discussion.commentCount).toBe(0);
+	});
+
 	test('team-only posting limits new discussions to admins and moderators', async () => {
 		const s = await fixture();
 		await setPolicy(s, 'team');

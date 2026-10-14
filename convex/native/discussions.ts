@@ -5,8 +5,8 @@ import { RateLimiter } from '@convex-dev/rate-limiter';
 import { paginationOptsValidator, paginationResultValidator } from 'convex/server';
 import { ConvexError, v } from 'convex/values';
 
-import { sanitizeStoredContent } from '../shared/rich-text';
-import { getUpdateListPreviewData } from '../shared/update-content';
+import { isRichTextHtml, sanitizeStoredContent } from '../shared/rich-text';
+import { decodeBasicHtmlEntities, getUpdateListPreviewData } from '../shared/update-content';
 import { VALIDATION_LIMITS } from '../shared/validation';
 import { components, internal } from './_generated/api';
 import { internalMutation, mutation, query } from './_generated/server';
@@ -15,7 +15,7 @@ import { getCurrentUser, requireCurrentUser } from './identity';
 import { discussionsPostingPolicy, emoteReaction } from './schema';
 import { profileValidator, summary } from './updates';
 
-// Stored HTML; the visible-text limit (VALIDATION_LIMITS.discussionBody) is enforced client-side.
+// Hard cap on stored HTML; visible-text limits are checked separately in validateContent.
 const MAX_CONTENT = 50_000;
 const MAX_COMMENT_EMOTES = 100;
 const EXCERPT_CHARS = 300;
@@ -93,11 +93,23 @@ function validateTitle(value: string) {
 	return title;
 }
 
+// Text the reader sees. Tags are dropped without inserting separators so the
+// count never exceeds the editor's `getText()` length the client checks against.
+function visibleText(content: string) {
+	return isRichTextHtml(content)
+		? decodeBasicHtmlEntities(content.replace(/<[^>]*>/g, ''))
+		: content;
+}
+
 // Every stored body and reply passes through here, so editor HTML is
 // allowlist-sanitized before the empty and length checks run on the result.
-function validateContent(value: string) {
+// `maxVisible` mirrors the client limit: discussionBody for the opening post,
+// comment for replies.
+function validateContent(value: string, maxVisible: number) {
 	const content = sanitizeStoredContent(value);
-	if (!content || content.length > MAX_CONTENT) throw new ConvexError('INVALID_COMMENT');
+	const text = visibleText(content);
+	if (!content || content.length > MAX_CONTENT || !text.trim() || text.length > maxVisible)
+		throw new ConvexError('INVALID_COMMENT');
 	return content;
 }
 
@@ -136,6 +148,19 @@ async function enrichComment(
 			)
 			.take(MAX_COMMENT_EMOTES),
 	]);
+	// The sample above is capped and ordered by author, so a capped sample may
+	// miss the viewer's own reactions; merge them in so the toggle state is right.
+	// Counts past the cap are a lower bound.
+	if (viewerProfileId && emotes.length === MAX_COMMENT_EMOTES) {
+		const own = await ctx.db
+			.query('discussionCommentEmotes')
+			.withIndex('by_commentId_and_authorProfileId_and_content', (q) =>
+				q.eq('commentId', comment._id).eq('authorProfileId', viewerProfileId)
+			)
+			.take(MAX_COMMENT_EMOTES);
+		const seen = new Set(emotes.map((emote) => emote._id));
+		emotes.push(...own.filter((emote) => !seen.has(emote._id)));
+	}
 	const grouped = new Map<
 		Doc<'discussionCommentEmotes'>['content'],
 		{ count: number; authorProfileIds: Array<Id<'profiles'>> }
@@ -330,7 +355,7 @@ export const create = mutation({
 		assertProjectWritable(access);
 		if (!canStartDiscussion(access)) throw new ConvexError('DISCUSSIONS_TEAM_ONLY');
 		const title = validateTitle(args.title);
-		const body = validateContent(args.body);
+		const body = validateContent(args.body, VALIDATION_LIMITS.discussionBody);
 		const slug = await uniqueSlug(ctx, args.projectId);
 		const now = Date.now();
 		const id = await ctx.db.insert('discussions', {
@@ -381,7 +406,7 @@ export const addComment = mutation({
 		const id = await ctx.db.insert('discussionComments', {
 			discussionId: discussion._id,
 			authorProfileId: profileId,
-			content: validateContent(args.content),
+			content: validateContent(args.content, VALIDATION_LIMITS.comment),
 			initial: false,
 		});
 		await ctx.db.patch('discussions', discussion._id, {
@@ -400,7 +425,10 @@ export const updateComment = mutation({
 		if (!comment) throw new ConvexError('COMMENT_NOT_FOUND');
 		const { discussion, profileId } = await writableDiscussion(ctx, comment.discussionId);
 		if (comment.authorProfileId !== profileId) throw new ConvexError('FORBIDDEN');
-		const content = validateContent(args.content);
+		const content = validateContent(
+			args.content,
+			comment.initial ? VALIDATION_LIMITS.discussionBody : VALIDATION_LIMITS.comment
+		);
 		await ctx.db.patch('discussionComments', comment._id, { content, updatedAt: Date.now() });
 		if (comment.initial)
 			await ctx.db.patch('discussions', discussion._id, {
@@ -421,8 +449,17 @@ export const removeComment = mutation({
 		if (comment.authorProfileId !== profileId && !access.permissions.canManageContent)
 			throw new ConvexError('FORBIDDEN');
 		await ctx.db.delete('discussionComments', comment._id);
+		// Activity falls back to the newest remaining reply, or the discussion itself.
+		const latest = await ctx.db
+			.query('discussionComments')
+			.withIndex('by_discussionId_and_initial', (q) =>
+				q.eq('discussionId', discussion._id).eq('initial', false)
+			)
+			.order('desc')
+			.first();
 		await ctx.db.patch('discussions', discussion._id, {
 			commentCount: Math.max(0, discussion.commentCount - 1),
+			lastActivityAt: latest?._creationTime ?? discussion._creationTime,
 		});
 		await ctx.scheduler.runAfter(0, internal.discussions.cleanComment, { commentId: comment._id });
 		return null;

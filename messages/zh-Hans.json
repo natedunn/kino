@@ -1205,6 +1205,7 @@
 	"discussions_body_too_long": "正文不能超过 {count} 个字符。",
 	"discussions_cannot_create_title": "你无法在此发起讨论",
 	"discussions_cannot_create_description": "此项目仅允许管理员和版主发起讨论。你仍然可以回复现有讨论。",
+	"discussions_cannot_create_archived_description": "此项目已归档且为只读，因此无法发起新讨论或回复。",
 	"discussions_back": "全部讨论",
 	"discussions_started_verb": "发起了此讨论",
 	"discussions_replied_verb": "回复了",
