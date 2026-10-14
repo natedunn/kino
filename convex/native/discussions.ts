@@ -5,6 +5,7 @@ import { RateLimiter } from '@convex-dev/rate-limiter';
 import { paginationOptsValidator, paginationResultValidator } from 'convex/server';
 import { ConvexError, v } from 'convex/values';
 
+import { sanitizeStoredContent } from '../shared/rich-text';
 import { getUpdateListPreviewData } from '../shared/update-content';
 import { VALIDATION_LIMITS } from '../shared/validation';
 import { components, internal } from './_generated/api';
@@ -92,8 +93,10 @@ function validateTitle(value: string) {
 	return title;
 }
 
+// Every stored body and reply passes through here, so editor HTML is
+// allowlist-sanitized before the empty and length checks run on the result.
 function validateContent(value: string) {
-	const content = value.trim();
+	const content = sanitizeStoredContent(value);
 	if (!content || content.length > MAX_CONTENT) throw new ConvexError('INVALID_COMMENT');
 	return content;
 }

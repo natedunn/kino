@@ -124,6 +124,44 @@ describe('native project discussions', () => {
 		).rejects.toThrow('INVALID_COMMENT');
 	});
 
+	test('sanitizes discussion and reply HTML before storing it', async () => {
+		const s = await fixture();
+		const created = await s.visitor.caller.mutation(api.discussions.create, {
+			projectId: s.projectId,
+			title: 'Sanitized',
+			body: '<p onclick="steal()">Hi<script>alert(1)</script></p><img src=x onerror=alert(1)>',
+		});
+		const reply = await s.visitor.caller.mutation(api.discussions.addComment, {
+			discussionId: created.id,
+			content: '<p><a href="javascript:alert(1)">x</a></p>',
+		});
+		await expect(
+			s.visitor.caller.mutation(api.discussions.addComment, {
+				discussionId: created.id,
+				content: '<script>alert(1)</script>',
+			})
+		).rejects.toThrow('INVALID_COMMENT');
+		await s.visitor.caller.mutation(api.discussions.updateComment, {
+			commentId: reply,
+			content: '<p>Edited<img src=x onerror=alert(1)></p>',
+		});
+		// Plain text renders as escaped text, so it is stored verbatim.
+		const plain = await s.visitor.caller.mutation(api.discussions.addComment, {
+			discussionId: created.id,
+			content: '  a < b  ',
+		});
+
+		const stored = await s.t.run(async (ctx) => {
+			const discussion = await ctx.db.get('discussions', created.id);
+			return {
+				body: (await ctx.db.get('discussionComments', discussion!.firstCommentId!))!.content,
+				reply: (await ctx.db.get('discussionComments', reply))!.content,
+				plain: (await ctx.db.get('discussionComments', plain))!.content,
+			};
+		});
+		expect(stored).toEqual({ body: '<p>Hi</p>', reply: '<p>Edited</p>', plain: 'a < b' });
+	});
+
 	test('team-only posting limits new discussions to admins and moderators', async () => {
 		const s = await fixture();
 		await setPolicy(s, 'team');
