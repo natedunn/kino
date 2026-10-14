@@ -28,9 +28,16 @@ jobs:
         with:
           version: 10.28.2
 
+      # pnpm/action-setup's default store lives under .../node_modules/.bin.
+      # Building the git-pinned @convex-dev/auth inside it makes tsc reject the
+      # package's declarations (TS2883), so keep the store outside node_modules.
+      # Must run before setup-node, whose pnpm cache uses the store path.
+      - name: Keep the pnpm store outside node_modules
+        run: pnpm config set store-dir "$HOME/.pnpm-store" --global
+
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: 22
           cache: pnpm
 
       - name: Cache the Convex local backend binary
