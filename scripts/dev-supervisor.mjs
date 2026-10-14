@@ -81,7 +81,7 @@ function prepareAnonymousConvex() {
 
   if (!fs.existsSync(projectLocalConfigPath)) {
     console.warn(
-      "[convex] anonymous local backend is not seeded yet. Run scripts/helmor-worktree-setup.sh to initialize and seed this worktree before dev."
+      "[convex] anonymous local backend is not seeded yet. Run `pnpm run setup` to initialize this worktree before dev."
     )
     return
   }
