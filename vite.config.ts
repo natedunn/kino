@@ -1,8 +1,8 @@
 import { execSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 
 import { cloudflare } from '@cloudflare/vite-plugin';
-import { paraglideVitePlugin } from '@inlang/paraglide-js';
+import { compile, paraglideVitePlugin } from '@inlang/paraglide-js';
 import tailwindcss from '@tailwindcss/vite';
 import { devtools } from '@tanstack/devtools-vite';
 import { tanstackStart } from '@tanstack/react-start/plugin/vite';
@@ -47,6 +47,32 @@ function resolveBuildId(): string {
 	} catch {
 		return `t${Date.now()}`;
 	}
+}
+
+const paraglideOptions = {
+	project: './project.inlang',
+	outdir: './src/paraglide',
+	outputStructure: 'message-modules',
+	cookieName: 'PARAGLIDE_LOCALE',
+	strategy: ['cookie', 'preferredLanguage', 'baseLocale'],
+} as const;
+
+// `src/paraglide` is gitignored and the Paraglide plugin only writes it once
+// the dev server is already starting. On a fresh worktree Vite's dependency
+// scan runs first, fails to resolve `@/paraglide/*`, and skips pre-bundling;
+// every dependency is then discovered one page at a time, each triggering a
+// full SSR reload (slow first loads, transient "Invalid hook call" errors from
+// mixed React copies). Compiling up front lets the scan see the whole app.
+// Check every generated entry the app imports, not just one, so an
+// interrupted compile that left a partial tree is regenerated too.
+const paraglideEntries = ['runtime.js', 'messages.js', 'server.js'];
+if (!paraglideEntries.every((file) => existsSync(`${paraglideOptions.outdir}/${file}`))) {
+	await compile({
+		...paraglideOptions,
+		// Match the Vite plugin's own default so its later compile is a no-op.
+		isServer: "import.meta.env?.SSR ?? typeof window === 'undefined'",
+		strategy: [...paraglideOptions.strategy],
+	});
 }
 
 const config = defineConfig({
@@ -97,11 +123,8 @@ const config = defineConfig({
 		}),
 		viteReact(),
 		paraglideVitePlugin({
-			project: './project.inlang',
-			outdir: './src/paraglide',
-			outputStructure: 'message-modules',
-			cookieName: 'PARAGLIDE_LOCALE',
-			strategy: ['cookie', 'preferredLanguage', 'baseLocale'],
+			...paraglideOptions,
+			strategy: [...paraglideOptions.strategy],
 		}),
 	],
 	resolve: {
