@@ -232,6 +232,68 @@ export declare const api: {
       null
     >;
   };
+  discussionCategories: {
+    create: FunctionReference<
+      "mutation",
+      "public",
+      {
+        description?: string;
+        format: "open" | "qa";
+        icon?: string;
+        name: string;
+        postingPolicy: "everyone" | "team";
+        projectId: Id<"projects">;
+        slug: string;
+      },
+      Id<"discussionCategories">
+    >;
+    list: FunctionReference<
+      "query",
+      "public",
+      { projectId: Id<"projects"> },
+      null | Array<{
+        description: string | null;
+        format: "open" | "qa";
+        icon: string | null;
+        id: Id<"discussionCategories">;
+        name: string;
+        postingPolicy: "everyone" | "team";
+        slug: string;
+      }>
+    >;
+    remove: FunctionReference<
+      "mutation",
+      "public",
+      {
+        categoryId: Id<"discussionCategories">;
+        moveToCategoryId: Id<"discussionCategories">;
+      },
+      null
+    >;
+    reorder: FunctionReference<
+      "mutation",
+      "public",
+      {
+        categoryIds: Array<Id<"discussionCategories">>;
+        projectId: Id<"projects">;
+      },
+      null
+    >;
+    update: FunctionReference<
+      "mutation",
+      "public",
+      {
+        categoryId: Id<"discussionCategories">;
+        description?: string;
+        format: "open" | "qa";
+        icon?: string;
+        name: string;
+        postingPolicy: "everyone" | "team";
+        slug: string;
+      },
+      null
+    >;
+  };
   discussions: {
     addComment: FunctionReference<
       "mutation",
@@ -239,10 +301,32 @@ export declare const api: {
       { content: string; discussionId: Id<"discussions"> },
       Id<"discussionComments">
     >;
+    addLink: FunctionReference<
+      "mutation",
+      "public",
+      {
+        discussionId: Id<"discussions">;
+        target:
+          | { id: Id<"feedback">; kind: "feedback" }
+          | { id: Id<"updates">; kind: "update" };
+      },
+      null
+    >;
+    convertToFeedback: FunctionReference<
+      "mutation",
+      "public",
+      { boardId: Id<"feedbackBoards">; discussionId: Id<"discussions"> },
+      { feedbackSlug: string }
+    >;
     create: FunctionReference<
       "mutation",
       "public",
-      { body: string; projectId: Id<"projects">; title: string },
+      {
+        body: string;
+        categoryId: Id<"discussionCategories">;
+        projectId: Id<"projects">;
+        title: string;
+      },
       { id: Id<"discussions">; slug: string }
     >;
     detail: FunctionReference<
@@ -250,6 +334,35 @@ export declare const api: {
       "public",
       { projectId: Id<"projects">; slug: string },
       null | {
+        answer: {
+          author: null | {
+            id: Id<"profiles">;
+            imageUrl: string | null;
+            name: string;
+            username: string;
+          };
+          canDelete: boolean;
+          canEdit: boolean;
+          content: string;
+          creationTime: number;
+          emotes: Array<{
+            authorProfileIds: Array<Id<"profiles">>;
+            content:
+              | "heart"
+              | "thumbsUp"
+              | "thumbsDown"
+              | "laugh"
+              | "questionMark"
+              | "sad"
+              | "tada"
+              | "eyes"
+              | "skull"
+              | "explodingHead";
+            count: number;
+          }>;
+          id: Id<"discussionComments">;
+          updatedTime: number | null;
+        } | null;
         author: null | {
           id: Id<"profiles">;
           imageUrl: string | null;
@@ -258,11 +371,27 @@ export declare const api: {
         };
         canDelete: boolean;
         canEditTitle: boolean;
+        canMarkAnswer: boolean;
+        canModerate: boolean;
+        canMove: boolean;
+        canReply: boolean;
+        category: {
+          description: string | null;
+          format: "open" | "qa";
+          icon: string | null;
+          id: Id<"discussionCategories">;
+          name: string;
+          postingPolicy: "everyone" | "team";
+          slug: string;
+        } | null;
         discussion: {
+          answerCommentId: Id<"discussionComments"> | null;
           commentCount: number;
           createdAt: number;
           id: Id<"discussions">;
           lastActivityAt: number;
+          locked: boolean;
+          pinned: boolean;
           slug: string;
           title: string;
         };
@@ -295,14 +424,62 @@ export declare const api: {
           id: Id<"discussionComments">;
           updatedTime: number | null;
         } | null;
+        links: Array<
+          | {
+              id: Id<"discussionLinks">;
+              kind: "feedback";
+              slug: string;
+              status:
+                | "open"
+                | "in-progress"
+                | "closed"
+                | "completed"
+                | "paused";
+              targetId: Id<"feedback">;
+              title: string;
+            }
+          | {
+              id: Id<"discussionLinks">;
+              kind: "update";
+              slug: string;
+              targetId: Id<"updates">;
+              title: string;
+            }
+        >;
+        participants: {
+          profiles: Array<null | {
+            id: Id<"profiles">;
+            imageUrl: string | null;
+            name: string;
+            username: string;
+          }>;
+          total: number;
+        };
+        viewerFollowing: boolean;
         viewerProfileId: Id<"profiles"> | null;
         writable: boolean;
       }
+    >;
+    linkCandidates: FunctionReference<
+      "query",
+      "public",
+      { discussionId: Id<"discussions">; search: string },
+      Array<
+        | {
+            id: Id<"feedback">;
+            kind: "feedback";
+            status: "open" | "in-progress" | "closed" | "completed" | "paused";
+            title: string;
+          }
+        | { id: Id<"updates">; kind: "update"; title: string }
+      >
     >;
     list: FunctionReference<
       "query",
       "public",
       {
+        categoryId?: Id<"discussionCategories">;
+        filter?: "unanswered" | "mine" | "following";
         paginationOpts: {
           cursor: string | null;
           endCursor?: string | null;
@@ -313,28 +490,69 @@ export declare const api: {
         };
         projectId: Id<"projects">;
         search?: string;
+        sort?: "activity" | "newest" | "replies";
       },
       {
         continueCursor: string;
         isDone: boolean;
         page: Array<{
+          answered: boolean;
           author: null | {
             id: Id<"profiles">;
             imageUrl: string | null;
             name: string;
             username: string;
           };
+          category: null | {
+            format: "open" | "qa";
+            icon: string | null;
+            id: Id<"discussionCategories">;
+            name: string;
+            slug: string;
+          };
           commentCount: number;
           createdAt: number;
           excerpt: string;
           id: Id<"discussions">;
           lastActivityAt: number;
+          locked: boolean;
+          pinned: boolean;
           slug: string;
           title: string;
         }>;
         pageStatus?: "SplitRecommended" | "SplitRequired" | null;
         splitCursor?: string | null;
       }
+    >;
+    pinned: FunctionReference<
+      "query",
+      "public",
+      { categoryId?: Id<"discussionCategories">; projectId: Id<"projects"> },
+      Array<{
+        answered: boolean;
+        author: null | {
+          id: Id<"profiles">;
+          imageUrl: string | null;
+          name: string;
+          username: string;
+        };
+        category: null | {
+          format: "open" | "qa";
+          icon: string | null;
+          id: Id<"discussionCategories">;
+          name: string;
+          slug: string;
+        };
+        commentCount: number;
+        createdAt: number;
+        excerpt: string;
+        id: Id<"discussions">;
+        lastActivityAt: number;
+        locked: boolean;
+        pinned: boolean;
+        slug: string;
+        title: string;
+      }>
     >;
     remove: FunctionReference<
       "mutation",
@@ -346,6 +564,12 @@ export declare const api: {
       "mutation",
       "public",
       { commentId: Id<"discussionComments"> },
+      null
+    >;
+    removeLink: FunctionReference<
+      "mutation",
+      "public",
+      { linkId: Id<"discussionLinks"> },
       null
     >;
     replies: FunctionReference<
@@ -398,6 +622,42 @@ export declare const api: {
         splitCursor?: string | null;
       }
     >;
+    setAnswer: FunctionReference<
+      "mutation",
+      "public",
+      {
+        commentId: Id<"discussionComments"> | null;
+        discussionId: Id<"discussions">;
+      },
+      null
+    >;
+    setCategory: FunctionReference<
+      "mutation",
+      "public",
+      {
+        categoryId: Id<"discussionCategories">;
+        discussionId: Id<"discussions">;
+      },
+      null
+    >;
+    setLocked: FunctionReference<
+      "mutation",
+      "public",
+      { discussionId: Id<"discussions">; locked: boolean },
+      null
+    >;
+    setPinned: FunctionReference<
+      "mutation",
+      "public",
+      { discussionId: Id<"discussions">; pinned: boolean },
+      null
+    >;
+    toggleFollow: FunctionReference<
+      "mutation",
+      "public",
+      { discussionId: Id<"discussions"> },
+      { following: boolean }
+    >;
     toggleReaction: FunctionReference<
       "mutation",
       "public",
@@ -435,7 +695,19 @@ export declare const api: {
       { projectId: Id<"projects"> },
       null | {
         canCreate: boolean;
-        postingPolicy: "everyone" | "team";
+        canManage: boolean;
+        categories: Array<{
+          canPost: boolean;
+          description: string | null;
+          format: "open" | "qa";
+          icon: string | null;
+          id: Id<"discussionCategories">;
+          name: string;
+          postingPolicy: "everyone" | "team";
+          slug: string;
+        }>;
+        enabled: boolean;
+        signedIn: boolean;
         writable: boolean;
       }
     >;
@@ -1832,6 +2104,7 @@ export declare const api: {
           _id: Id<"projects">;
           deletingAt?: number;
           description?: string;
+          discussionsEnabled?: boolean;
           discussionsPostingPolicy?: "everyone" | "team";
           name: string;
           organizationId: Id<"organizations">;
@@ -2203,7 +2476,7 @@ export declare const api: {
         project: {
           createdAt: number;
           description: string;
-          discussionsPostingPolicy: "everyone" | "team";
+          discussionsEnabled: boolean;
           id: Id<"projects">;
           name: string;
           slug: string;
@@ -2464,7 +2737,7 @@ export declare const api: {
       "public",
       {
         description: string;
-        discussionsPostingPolicy?: "everyone" | "team";
+        discussionsEnabled?: boolean;
         id: Id<"projects">;
         name: string;
         slug: string;
@@ -2474,7 +2747,7 @@ export declare const api: {
       },
       {
         description: string;
-        discussionsPostingPolicy: "everyone" | "team";
+        discussionsEnabled: boolean;
         id: Id<"projects">;
         name: string;
         slug: string;
@@ -3250,6 +3523,29 @@ export declare const api: {
  * ```
  */
 export declare const internal: {
+  discussionCategories: {
+    backfillDefaults: FunctionReference<
+      "mutation",
+      "internal",
+      { cursor?: string | null },
+      null
+    >;
+    fileUncategorized: FunctionReference<
+      "mutation",
+      "internal",
+      { projectId: Id<"projects"> },
+      null
+    >;
+    reassignBatch: FunctionReference<
+      "mutation",
+      "internal",
+      {
+        categoryId: Id<"discussionCategories">;
+        moveToCategoryId: Id<"discussionCategories">;
+      },
+      null
+    >;
+  };
   discussions: {
     cleanComment: FunctionReference<
       "mutation",

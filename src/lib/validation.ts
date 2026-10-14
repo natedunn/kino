@@ -6,6 +6,8 @@ export const FORM_LIMITS = {
 	boardName: 50,
 	comment: 1200,
 	discussionBody: 10000,
+	discussionCategoryDescription: 250,
+	discussionCategoryName: 50,
 	discussionTitle: 200,
 	discussionSearch: 100,
 	feedbackTitle: 100,

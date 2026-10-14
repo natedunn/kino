@@ -9,6 +9,8 @@ export const VALIDATION_LIMITS = {
 	comment: 1200,
 	cursor: 8192,
 	discussionBody: 10000,
+	discussionCategoryDescription: 250,
+	discussionCategoryName: 50,
 	discussionSearch: 100,
 	discussionTitle: 200,
 	feedbackSearch: 120,

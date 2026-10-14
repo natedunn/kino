@@ -237,6 +237,49 @@ async function uniqueSlug(ctx: MutationCtx, projectId: Id<'projects'>) {
 	throw new ConvexError('SLUG_GENERATION_FAILED');
 }
 
+/** Inserts a feedback item and its opening comment. Callers validate access. */
+export async function insertFeedback(
+	ctx: MutationCtx,
+	args: {
+		projectId: Id<'projects'>;
+		boardId: Id<'feedbackBoards'>;
+		authorProfileId: Id<'profiles'>;
+		title: string;
+		firstComment: string;
+	}
+) {
+	const board = await ctx.db.get('feedbackBoards', args.boardId);
+	if (!board || board.projectId !== args.projectId || board.deletingAt !== undefined)
+		throw new ConvexError('INVALID_BOARD');
+	const title = args.title.trim();
+	const firstComment = sanitizeStoredContent(args.firstComment);
+	if (!title || title.length > 200) throw new ConvexError('INVALID_TITLE');
+	if (!firstComment || firstComment.length > 50_000) throw new ConvexError('INVALID_COMMENT');
+	const slug = await uniqueSlug(ctx, args.projectId);
+	const now = Date.now();
+	const feedbackId = await ctx.db.insert('feedback', {
+		projectId: args.projectId,
+		boardId: args.boardId,
+		authorProfileId: args.authorProfileId,
+		slug,
+		title,
+		status: 'open',
+		priority: 'none',
+		upvotes: 0,
+		tags: [],
+		searchContent: `${title} ${firstComment}`,
+		updatedAt: now,
+	});
+	const feedbackCommentId = await ctx.db.insert('feedbackComments', {
+		feedbackId,
+		authorProfileId: args.authorProfileId,
+		content: firstComment,
+		initial: true,
+	});
+	await ctx.db.patch('feedback', feedbackId, { firstCommentId: feedbackCommentId });
+	return { feedbackCommentId, feedbackId, slug };
+}
+
 export const create = mutation({
 	args: {
 		boardId: v.id('feedbackBoards'),
@@ -253,36 +296,7 @@ export const create = mutation({
 		const profile = await currentProfile(ctx);
 		const access = await requireProjectAccess(ctx, args.projectId);
 		assertProjectWritable(access);
-		const board = await ctx.db.get('feedbackBoards', args.boardId);
-		if (!board || board.projectId !== args.projectId || board.deletingAt !== undefined)
-			throw new ConvexError('INVALID_BOARD');
-		const title = args.title.trim();
-		const firstComment = sanitizeStoredContent(args.firstComment);
-		if (!title || title.length > 200) throw new ConvexError('INVALID_TITLE');
-		if (!firstComment || firstComment.length > 50_000) throw new ConvexError('INVALID_COMMENT');
-		const slug = await uniqueSlug(ctx, args.projectId);
-		const now = Date.now();
-		const feedbackId = await ctx.db.insert('feedback', {
-			projectId: args.projectId,
-			boardId: args.boardId,
-			authorProfileId: profile._id,
-			slug,
-			title,
-			status: 'open',
-			priority: 'none',
-			upvotes: 0,
-			tags: [],
-			searchContent: `${title} ${firstComment}`,
-			updatedAt: now,
-		});
-		const feedbackCommentId = await ctx.db.insert('feedbackComments', {
-			feedbackId,
-			authorProfileId: profile._id,
-			content: firstComment,
-			initial: true,
-		});
-		await ctx.db.patch('feedback', feedbackId, { firstCommentId: feedbackCommentId });
-		return { feedbackCommentId, feedbackId, slug };
+		return insertFeedback(ctx, { ...args, authorProfileId: profile._id });
 	},
 });
 

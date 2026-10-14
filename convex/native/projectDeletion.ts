@@ -98,6 +98,11 @@ export const batch = internalMutation({
 			await again();
 			return null;
 		}
+		const categories = await ctx.db
+			.query('discussionCategories')
+			.withIndex('by_projectId_and_position', (q) => q.eq('projectId', args.projectId))
+			.take(50);
+		for (const row of categories) await ctx.db.delete('discussionCategories', row._id);
 		const boards = await ctx.db
 			.query('feedbackBoards')
 			.withIndex('by_projectId', (q) => q.eq('projectId', args.projectId))

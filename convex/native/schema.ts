@@ -44,6 +44,8 @@ export const updateCategory = v.union(
 );
 export const updateStatus = v.union(v.literal('draft'), v.literal('published'));
 export const discussionsPostingPolicy = v.union(v.literal('everyone'), v.literal('team'));
+// `qa` categories let the author or a moderator mark one reply as the answer.
+export const discussionCategoryFormat = v.union(v.literal('open'), v.literal('qa'));
 export const emoteReaction = v.union(
 	v.literal('heart'),
 	v.literal('thumbsUp'),
@@ -207,7 +209,10 @@ export default defineSchema({
 		deletingAt: v.optional(v.number()),
 		storageDeletingAt: v.optional(v.number()),
 		updatesFeaturedMode: v.optional(v.union(v.literal('latest'), v.literal('manual'))),
+		// TEMP: legacy project-wide policy, superseded by per-category policies.
 		discussionsPostingPolicy: v.optional(discussionsPostingPolicy),
+		// Unset means enabled; projects can hide Discussions entirely.
+		discussionsEnabled: v.optional(v.boolean()),
 		organizationId: v.id('organizations'),
 		name: v.string(),
 		slug: v.string(),
@@ -463,24 +468,56 @@ export default defineSchema({
 			'authorProfileId',
 			'content',
 		]),
+	// Topics a project's discussions are filed under. Each carries its own
+	// posting policy (Announcements are team-only) and format (Q&A answers).
+	discussionCategories: defineTable({
+		projectId: v.id('projects'),
+		name: v.string(),
+		slug: v.string(),
+		description: v.optional(v.string()),
+		icon: v.optional(v.string()),
+		format: discussionCategoryFormat,
+		postingPolicy: discussionsPostingPolicy,
+		position: v.number(),
+		updatedAt: v.optional(v.number()),
+		deletingAt: v.optional(v.number()),
+	})
+		.index('by_projectId_and_position', ['projectId', 'position'])
+		.index('by_projectId_and_slug', ['projectId', 'slug']),
 	// A discussion's body is its `initial` comment so it renders and reacts like
 	// every reply. `commentCount` excludes that initial comment.
 	discussions: defineTable({
 		projectId: v.id('projects'),
+		// Optional only for discussions created before categories existed.
+		categoryId: v.optional(v.id('discussionCategories')),
 		authorProfileId: v.id('profiles'),
 		firstCommentId: v.optional(v.id('discussionComments')),
+		answerCommentId: v.optional(v.id('discussionComments')),
 		slug: v.string(),
 		title: v.string(),
 		searchContent: v.string(),
 		commentCount: v.number(),
 		lastActivityAt: v.number(),
+		pinnedAt: v.optional(v.number()),
+		lockedAt: v.optional(v.number()),
 		deletingAt: v.optional(v.number()),
 	})
+		.index('by_projectId', ['projectId'])
 		.index('by_projectId_and_slug', ['projectId', 'slug'])
 		.index('by_projectId_and_lastActivityAt', ['projectId', 'lastActivityAt'])
+		.index('by_projectId_and_commentCount', ['projectId', 'commentCount'])
+		.index('by_projectId_and_pinnedAt', ['projectId', 'pinnedAt'])
+		.index('by_projectId_and_authorProfileId_and_lastActivityAt', [
+			'projectId',
+			'authorProfileId',
+			'lastActivityAt',
+		])
+		.index('by_categoryId', ['categoryId'])
+		.index('by_categoryId_and_lastActivityAt', ['categoryId', 'lastActivityAt'])
+		.index('by_categoryId_and_commentCount', ['categoryId', 'commentCount'])
 		.searchIndex('search_by_searchContent', {
 			searchField: 'searchContent',
-			filterFields: ['projectId'],
+			filterFields: ['projectId', 'categoryId'],
 		}),
 	discussionComments: defineTable({
 		discussionId: v.id('discussions'),
@@ -503,6 +540,25 @@ export default defineSchema({
 			'authorProfileId',
 			'content',
 		]),
+	// Following records interest today; notifications will read it later.
+	discussionWatchers: defineTable({
+		projectId: v.id('projects'),
+		discussionId: v.id('discussions'),
+		profileId: v.id('profiles'),
+	})
+		.index('by_discussionId_and_profileId', ['discussionId', 'profileId'])
+		.index('by_profileId_and_projectId', ['profileId', 'projectId']),
+	// Links from a discussion to feedback or an update in the same project.
+	discussionLinks: defineTable({
+		projectId: v.id('projects'),
+		discussionId: v.id('discussions'),
+		feedbackId: v.optional(v.id('feedback')),
+		updateId: v.optional(v.id('updates')),
+		createdByProfileId: v.id('profiles'),
+	})
+		.index('by_discussionId', ['discussionId'])
+		.index('by_feedbackId', ['feedbackId'])
+		.index('by_updateId', ['updateId']),
 	updateDeletionJobs: defineTable({ updateId: v.id('updates') }).index('by_updateId', ['updateId']),
 	projectModeratorAssignments: defineTable({
 		membershipId: v.id('memberships'),

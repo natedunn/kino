@@ -53,6 +53,43 @@ export type DataModel = {
     searchIndexes: {};
     vectorIndexes: {};
   };
+  discussionCategories: {
+    document: {
+      deletingAt?: number;
+      description?: string;
+      format: "open" | "qa";
+      icon?: string;
+      name: string;
+      position: number;
+      postingPolicy: "everyone" | "team";
+      projectId: Id<"projects">;
+      slug: string;
+      updatedAt?: number;
+      _id: Id<"discussionCategories">;
+      _creationTime: number;
+    };
+    fieldPaths:
+      | "_creationTime"
+      | "_id"
+      | "deletingAt"
+      | "description"
+      | "format"
+      | "icon"
+      | "name"
+      | "position"
+      | "postingPolicy"
+      | "projectId"
+      | "slug"
+      | "updatedAt";
+    indexes: {
+      by_id: ["_id"];
+      by_creation_time: ["_creationTime"];
+      by_projectId_and_position: ["projectId", "position", "_creationTime"];
+      by_projectId_and_slug: ["projectId", "slug", "_creationTime"];
+    };
+    searchIndexes: {};
+    vectorIndexes: {};
+  };
   discussionCommentEmotes: {
     document: {
       authorProfileId: Id<"profiles">;
@@ -120,13 +157,45 @@ export type DataModel = {
     searchIndexes: {};
     vectorIndexes: {};
   };
+  discussionLinks: {
+    document: {
+      createdByProfileId: Id<"profiles">;
+      discussionId: Id<"discussions">;
+      feedbackId?: Id<"feedback">;
+      projectId: Id<"projects">;
+      updateId?: Id<"updates">;
+      _id: Id<"discussionLinks">;
+      _creationTime: number;
+    };
+    fieldPaths:
+      | "_creationTime"
+      | "_id"
+      | "createdByProfileId"
+      | "discussionId"
+      | "feedbackId"
+      | "projectId"
+      | "updateId";
+    indexes: {
+      by_id: ["_id"];
+      by_creation_time: ["_creationTime"];
+      by_discussionId: ["discussionId", "_creationTime"];
+      by_feedbackId: ["feedbackId", "_creationTime"];
+      by_updateId: ["updateId", "_creationTime"];
+    };
+    searchIndexes: {};
+    vectorIndexes: {};
+  };
   discussions: {
     document: {
+      answerCommentId?: Id<"discussionComments">;
       authorProfileId: Id<"profiles">;
+      categoryId?: Id<"discussionCategories">;
       commentCount: number;
       deletingAt?: number;
       firstCommentId?: Id<"discussionComments">;
       lastActivityAt: number;
+      lockedAt?: number;
+      pinnedAt?: number;
       projectId: Id<"projects">;
       searchContent: string;
       slug: string;
@@ -137,11 +206,15 @@ export type DataModel = {
     fieldPaths:
       | "_creationTime"
       | "_id"
+      | "answerCommentId"
       | "authorProfileId"
+      | "categoryId"
       | "commentCount"
       | "deletingAt"
       | "firstCommentId"
       | "lastActivityAt"
+      | "lockedAt"
+      | "pinnedAt"
       | "projectId"
       | "searchContent"
       | "slug"
@@ -149,19 +222,70 @@ export type DataModel = {
     indexes: {
       by_id: ["_id"];
       by_creation_time: ["_creationTime"];
+      by_categoryId: ["categoryId", "_creationTime"];
+      by_categoryId_and_commentCount: [
+        "categoryId",
+        "commentCount",
+        "_creationTime",
+      ];
+      by_categoryId_and_lastActivityAt: [
+        "categoryId",
+        "lastActivityAt",
+        "_creationTime",
+      ];
+      by_projectId: ["projectId", "_creationTime"];
+      by_projectId_and_authorProfileId_and_lastActivityAt: [
+        "projectId",
+        "authorProfileId",
+        "lastActivityAt",
+        "_creationTime",
+      ];
+      by_projectId_and_commentCount: [
+        "projectId",
+        "commentCount",
+        "_creationTime",
+      ];
       by_projectId_and_lastActivityAt: [
         "projectId",
         "lastActivityAt",
         "_creationTime",
       ];
+      by_projectId_and_pinnedAt: ["projectId", "pinnedAt", "_creationTime"];
       by_projectId_and_slug: ["projectId", "slug", "_creationTime"];
     };
     searchIndexes: {
       search_by_searchContent: {
         searchField: "searchContent";
-        filterFields: "projectId";
+        filterFields: "categoryId" | "projectId";
       };
     };
+    vectorIndexes: {};
+  };
+  discussionWatchers: {
+    document: {
+      discussionId: Id<"discussions">;
+      profileId: Id<"profiles">;
+      projectId: Id<"projects">;
+      _id: Id<"discussionWatchers">;
+      _creationTime: number;
+    };
+    fieldPaths:
+      | "_creationTime"
+      | "_id"
+      | "discussionId"
+      | "profileId"
+      | "projectId";
+    indexes: {
+      by_id: ["_id"];
+      by_creation_time: ["_creationTime"];
+      by_discussionId_and_profileId: [
+        "discussionId",
+        "profileId",
+        "_creationTime",
+      ];
+      by_profileId_and_projectId: ["profileId", "projectId", "_creationTime"];
+    };
+    searchIndexes: {};
     vectorIndexes: {};
   };
   feedback: {
@@ -1086,6 +1210,7 @@ export type DataModel = {
     document: {
       deletingAt?: number;
       description?: string;
+      discussionsEnabled?: boolean;
       discussionsPostingPolicy?: "everyone" | "team";
       name: string;
       organizationId: Id<"organizations">;
@@ -1107,6 +1232,7 @@ export type DataModel = {
       | "_id"
       | "deletingAt"
       | "description"
+      | "discussionsEnabled"
       | "discussionsPostingPolicy"
       | "name"
       | "organizationId"
