@@ -9,14 +9,22 @@ import {
   configuredLocalBackendPort,
   ensureWorktreeLocalBackendPorts,
   ensureAnonymousEnvFile,
-  preserveSharedDevDeployment,
   projectLocalConfigPath as getProjectLocalConfigPath,
   readLocalEnv,
+  refuseIfDevSessionRunning,
   stopLocalBackendForWorkspace,
   stopStaleWorktreeProcesses,
   waitForLocalBackendToStart,
 } from "./lib/local-convex.mjs"
-import { mergeFrontendEnv } from "./lib/dev-share.mjs"
+import {
+  mergeFrontendEnv,
+  shouldRegisterLocalGatewayRoute,
+} from "./lib/dev-share.mjs"
+import {
+  clearDevSessionState,
+  readDevSessionState,
+  writeDevSessionState,
+} from "./lib/dev-session.mjs"
 
 const workspaceRoot = process.cwd()
 const binDir = path.join(workspaceRoot, "node_modules", ".bin")
@@ -27,12 +35,54 @@ const convexCmd = path.join(
 const shellCmd = process.platform === "win32" ? "sh.exe" : "sh"
 const pnpmCmd = process.platform === "win32" ? "pnpm.cmd" : "pnpm"
 const logDir = path.join(os.tmpdir(), "kino-dev", path.basename(workspaceRoot))
-const convexMode = process.env.KINO_CONVEX_MODE ?? "anonymous"
 const shareMode = process.env.KINO_SHARE === "1"
 const anonymousEnvFilePath = getAnonymousEnvFilePath(workspaceRoot)
 const projectLocalConfigPath = getProjectLocalConfigPath(workspaceRoot)
 
 fs.mkdirSync(logDir, { recursive: true })
+
+// One dev session per worktree. A second `pnpm dev` used to reap the first
+// one's processes as "stale"; now it refuses and leaves the live session alone.
+if (refuseIfDevSessionRunning(workspaceRoot)) process.exit(1)
+
+// Reap Convex/Vite/portless processes orphaned by a previous, non-gracefully
+// stopped `pnpm dev` of this worktree. Otherwise orphaned `convex dev` CLIs
+// (whose backend is gone) retry forever and spam the console, and they pile up
+// one stack per run. Only orphans are touched — see stopStaleWorktreeProcesses.
+// Runs before this session is recorded so it can still read the dead session's
+// recorded process groups.
+const reaped = stopStaleWorktreeProcesses(workspaceRoot)
+if (reaped.length > 0) {
+  console.log(
+    `[dev] reaped ${reaped.length} orphaned dev process(es) from a previous run: ${reaped.join(
+      ", "
+    )}`
+  )
+}
+
+const sessionState = {
+  supervisorPid: process.pid,
+  startedAt: new Date().toISOString(),
+  mode: shareMode ? "anonymous+share" : "anonymous",
+  children: [],
+}
+writeDevSessionState(workspaceRoot, sessionState)
+// Two `pnpm dev`s racing past the check above: the last writer wins and the
+// other backs off before starting anything.
+if (readDevSessionState(workspaceRoot)?.supervisorPid !== process.pid) {
+  console.error(
+    "[dev] another `pnpm dev` started in this worktree at the same time; stop it with `pnpm dev:stop` first."
+  )
+  process.exit(1)
+}
+process.on("exit", () => clearDevSessionState(workspaceRoot, process.pid))
+
+function recordChildGroup(name, child) {
+  if (!child.pid) return
+  // Children are spawned detached, so each child pid is its process group id.
+  sessionState.children.push({ name, pgid: child.pid })
+  writeDevSessionState(workspaceRoot, sessionState)
+}
 
 function startProcess(name, command, args, env = process.env) {
   const logPath = path.join(logDir, `${name}.log`)
@@ -59,29 +109,16 @@ function startProcess(name, command, args, env = process.env) {
   child.on("error", (error) => {
     console.error(`[${name}] failed to start:`, error)
   })
+  recordChildGroup(name, child)
 
   return { child }
 }
 function prepareAnonymousConvex() {
-  // Reap Convex/Vite/portless processes orphaned by a previous, non-gracefully
-  // stopped `pnpm dev` of this worktree. Otherwise orphaned `convex dev` CLIs
-  // (whose backend is gone) retry forever and spam the console, and they pile up
-  // one stack per run.
-  const reaped = stopStaleWorktreeProcesses(workspaceRoot)
-  if (reaped.length > 0) {
-    console.log(
-      `[dev] reaped ${reaped.length} stale dev process(es) from a previous run: ${reaped.join(
-        ", "
-      )}`
-    )
-  }
-
-  preserveSharedDevDeployment(workspaceRoot, "scripts/dev-supervisor.mjs")
   ensureAnonymousEnvFile(workspaceRoot)
 
   if (!fs.existsSync(projectLocalConfigPath)) {
     console.warn(
-      "[convex] anonymous local backend is not seeded yet. Run scripts/helmor-worktree-setup.sh to initialize and seed this worktree before dev."
+      "[convex] anonymous local backend is not seeded yet. Run `pnpm run setup` to initialize this worktree before dev."
     )
     return
   }
@@ -96,8 +133,6 @@ function prepareAnonymousConvex() {
 }
 
 function convexDevArgs() {
-  if (convexMode !== "anonymous") return ["dev"]
-
   const args = [
     "dev",
     "--env-file",
@@ -132,29 +167,27 @@ function killProcessGroup(child, signal) {
   }
 }
 
-if (convexMode === "anonymous") {
-  prepareAnonymousConvex()
-} else if (convexMode !== "shared") {
-  console.error(
-    `Unknown KINO_CONVEX_MODE "${convexMode}". Expected "anonymous" or "shared".`
-  )
-  process.exit(1)
-}
+prepareAnonymousConvex()
 
 // Local Convex is reachable only from this machine, so GitHub login runs through
 // a `local` route on the dev gateway. Register it before Vite reads `.env.local`.
-if (convexMode === "anonymous") {
+// Share mode skips it: the gateway accepts `local` routes only for
+// `https://*.localhost` apps, never a Quick Tunnel origin.
+if (shouldRegisterLocalGatewayRoute(process.env)) {
   spawnSync("node", [path.join("scripts", "gateway-local-route.mjs")], {
     stdio: "inherit",
     cwd: workspaceRoot,
     timeout: 20_000,
   })
+} else {
+  console.log(
+    "[dev] share mode: skipping the local GitHub login route; GitHub login is unavailable over Quick Tunnels."
+  )
 }
 
 const localEnv = readLocalEnv(workspaceRoot)
 const frontendEnv = mergeFrontendEnv(process.env, localEnv)
-const convexEnv =
-  convexMode === "anonymous" ? anonymousConvexEnv() : { ...process.env }
+const convexEnv = anonymousConvexEnv()
 
 // Best-effort: register this dev deployment's webhook receiver with the gateway
 // fan-out (no-op when gateway env vars are absent, or when the selected Convex
@@ -203,8 +236,7 @@ const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 // sticks. Returns "ready" | "exited" | "timeout".
 async function waitForConvexReady(logPath, child) {
   const pattern = /Convex functions ready!|Convex ready/i
-  const port =
-    convexMode === "anonymous" ? configuredLocalBackendPort(workspaceRoot) : null
+  const port = configuredLocalBackendPort(workspaceRoot)
   const deadlineMs = 120000
   const started = Date.now()
 

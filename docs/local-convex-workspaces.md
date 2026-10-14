@@ -10,7 +10,7 @@ rewrites, or imports that legacy data.
 
 ## Commands
 
-- `pnpm setup`: copy ignored local configuration from the main worktree,
+- `pnpm run setup`: copy ignored local configuration from the main worktree,
   install dependencies, initialize a fresh native local backend, and verify
   generated files.
 - `pnpm convex:local:init`: initialize the current worktree's native backend.
@@ -18,19 +18,21 @@ rewrites, or imports that legacy data.
   recreate it.
 - `pnpm dev` or `pnpm dev:anonymous`: run the worktree-local Convex backend and
   Vite.
-- `pnpm dev:shared`: explicitly use the configured shared Convex development
-  deployment. Use this only when a cloud callback or shared integration is
-  required.
 - `pnpm dev:share`: run the local stack behind temporary Cloudflare Quick
-  Tunnels for testing on another device.
+  Tunnels for testing on another device. GitHub login is unavailable in this
+  mode (see Quick Tunnel notes).
 
 ## Worktree setup
 
 New secondary worktrees should run:
 
 ```sh
-pnpm setup
+pnpm run setup
 ```
+
+Use `pnpm run setup`, not `pnpm setup`: `setup` (like `init`) is also a pnpm
+built-in command, and the short form runs pnpm's own "Sets up pnpm" step,
+which edits your shell configuration, instead of this script.
 
 Setup copies `.env.local`, optional local env files, and the gitignored gateway
 key backups from the main worktree. It then runs `pnpm convex:local:init
@@ -38,7 +40,7 @@ key backups from the main worktree. It then runs `pnpm convex:local:init
 configures the native auth component, pushes the native schema/functions, and
 stops its temporary initialization process. Run `pnpm dev` afterward.
 
-The main worktree is not reset by `pnpm setup`; its setup script exits early.
+The main worktree is not reset by `pnpm run setup`; its setup script exits early.
 No command copies cloud data into a local database.
 
 ## Dev startup ordering
@@ -48,9 +50,36 @@ starts Vite. Logs live under `$TMPDIR/kino-dev/<workspace>/`. If the local
 deployment has not been initialized yet, run `pnpm convex:local:init` before
 starting development.
 
-The `.convex/shared-dev-deployment.env` file is retained only so the explicit
-`pnpm dev:shared` workflow can remember the prior cloud development target. It
-is not a seed source.
+## One dev session per worktree
+
+The dev supervisor records its session in
+`$TMPDIR/kino-dev/<workspace>/dev-session.json`: the supervisor pid and the
+process group of each child it starts (Convex, and Vite via portless).
+`pnpm dev:share` keeps its own `share-pids.json` beside it, including the
+`dev:share` process pid. Both files are removed on a clean exit.
+
+- **Starting dev when it is already running.** If this worktree already has a
+  live supervisor (recorded in the state file, or an unrecorded one started by
+  older code, found by command line and working directory), `pnpm dev` and
+  `pnpm dev:share` refuse with
+  `dev is already running in this worktree (pid N); stop it with pnpm dev:stop first`
+  and leave the running session alone.
+- **Crash cleanup.** On startup the supervisor reaps only genuinely orphaned
+  dev processes of this worktree: the `convex dev` CLI, its local backend,
+  `vite dev`, workerd, and the portless client, when no live supervisor (or
+  other live process) sits above them in the process tree. Process groups
+  recorded by a dead supervisor are signalled too.
+- **`pnpm dev:stop`** stops this worktree's recorded `dev:share` and dev
+  sessions on purpose (the supervisor gets SIGTERM and stops its children),
+  then reaps whatever is left over as orphans.
+- **Never touched:** `vite build`, `vite preview`, `wrangler dev` for
+  `workers/*`, a hand-started `vite dev` from a shell, a running
+  `pnpm convex:local:init`, other worktrees (including worktrees nested inside
+  this one, such as `.claude/worktrees/...`; matching uses this worktree's
+  exact root), and the shared portless proxy daemon on `:1355`.
+- **`pnpm convex:local:init`** restarts this worktree's local backend, so it
+  refuses while a dev session is running instead of stopping that session's
+  backend. Run `pnpm dev:stop` first.
 
 ## Quick Tunnel notes
 
@@ -59,6 +88,12 @@ registers its temporary public Convex site with the dev gateway for the life of
 the session and unregisters it on shutdown. `GATEWAY_URL` and
 `GATEWAY_ADMIN_TOKEN` must be present locally, and the dev gateway must have
 temporary share-origin support deployed.
+
+GitHub login is unavailable in a share session. The dev gateway accepts `local`
+login routes only for `https://*.localhost` apps, so the supervisor skips
+`scripts/gateway-local-route.mjs` and starts Vite with
+`VITE_NATIVE_GITHUB_ENABLED=false`. `.env.local` is left untouched, and the next
+`pnpm dev` re-registers the worktree's ordinary local route.
 
 Quick Tunnel URLs change on every run and are publicly reachable by anyone who
 knows the URL while the command is active. Application authorization still

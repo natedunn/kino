@@ -69,9 +69,13 @@ cannot reach, so its route is registered as `local`:
    app `https://<worktree>.kino.localhost:1355/api/auth/github/callback`, and a
    per-worktree route key kept in `.env.local`. It writes
    `NATIVE_GITHUB_GATEWAY_URL`, `NATIVE_GITHUB_ROUTE_ID`,
-   `NATIVE_GITHUB_ROUTE_SECRET`, and `VITE_NATIVE_GITHUB_ENABLED` there. Without
+   `NATIVE_GITHUB_ROUTE_SECRET`, and `VITE_NATIVE_GITHUB_ENABLED` there. Every
+   run registers a fresh route key, so a key copied in with another checkout's
+   `.env.local` (as `pnpm run setup` does) is never reused. Without
    `GATEWAY_URL`/`GATEWAY_ADMIN_TOKEN` or a loopback Convex site, GitHub login
    stays off and dev continues.
+   `pnpm dev:share` skips this step (Quick Tunnel apps are not `*.localhost`),
+   so GitHub login is unavailable in share sessions.
 2. `scripts/init-native-local.mjs` gives the local deployment the Kino Auth Dev
    credentials from `workers/gateway/secrets.dev.local`,
    `AUTH_GITHUB_CALLBACK_URL=https://gateway-dev.usekino.com/oauth/github/callback`,

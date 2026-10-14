@@ -140,6 +140,7 @@ const config = defineConfig({
 		exclude: [
 			...configDefaults.exclude,
 			'experiments/**',
+			// Script tests use node:test; `pnpm run test:scripts` runs them.
 			'scripts/**/*.test.mjs',
 			'workers/gateway/**',
 		],

@@ -18,7 +18,7 @@ set -euo pipefail
 # against that local backend. Prelaunch workspaces intentionally do not import
 # the incompatible legacy Kitcn snapshot.
 
-readonly TOTAL_STEPS=5
+readonly TOTAL_STEPS=4
 CURRENT_STEP="Before setup steps"
 
 step() {
@@ -45,7 +45,7 @@ run_with_timeout() {
 }
 
 verify_generated() {
-  step 5 "Verify generated application files"
+  step 4 "Verify generated application files"
   detail "Running pnpm run verify:generated (timeout 120s)"
   run_with_timeout 120 pnpm run verify:generated
 }
@@ -82,7 +82,6 @@ setup_workspace() {
     ".env"
     ".env.local.example"
     "convex/.env"
-    ".convex/shared-dev-deployment.env"
   )
 
   for f in "${FILES[@]}"; do
@@ -136,10 +135,7 @@ setup_workspace() {
   detail "Running pnpm install (timeout 180s)"
   run_with_timeout 180 pnpm install
 
-  step 3 "Select native local initialization"
-  detail "Legacy Kitcn snapshot import is disabled for the native schema"
-
-  step 4 "Initialize a fresh native Convex workspace"
+  step 3 "Initialize a fresh native Convex workspace"
   detail "This resets only this worktree's anonymous local Convex database"
   pnpm convex:local:init --reset-local-state
 
