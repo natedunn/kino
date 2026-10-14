@@ -63,7 +63,10 @@ const paraglideOptions = {
 // every dependency is then discovered one page at a time, each triggering a
 // full SSR reload (slow first loads, transient "Invalid hook call" errors from
 // mixed React copies). Compiling up front lets the scan see the whole app.
-if (!existsSync(`${paraglideOptions.outdir}/runtime.js`)) {
+// Check every generated entry the app imports, not just one, so an
+// interrupted compile that left a partial tree is regenerated too.
+const paraglideEntries = ['runtime.js', 'messages.js', 'server.js'];
+if (!paraglideEntries.every((file) => existsSync(`${paraglideOptions.outdir}/${file}`))) {
 	await compile({
 		...paraglideOptions,
 		// Match the Vite plugin's own default so its later compile is a no-op.
