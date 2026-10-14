@@ -1,0 +1,58 @@
+name: Verify generated files
+
+# Convex codegen pushes functions to a deployment, so this runs against a
+# throwaway anonymous local backend on the runner: no deploy keys, no secrets,
+# and nothing reaches a real deployment. (It must not run in the Cloudflare
+# build, where codegen would push to the preview or production deployment.)
+on:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: verify-generated-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    env:
+      CONVEX_AGENT_MODE: anonymous
+      CONVEX_DEPLOYMENT: anonymous:anonymous-agent
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.28.2
+
+      # pnpm/action-setup's default store lives under .../node_modules/.bin.
+      # Building the git-pinned @convex-dev/auth inside it makes tsc reject the
+      # package's declarations (TS2883), so keep the store outside node_modules.
+      # Must run before setup-node, whose pnpm cache uses the store path.
+      - name: Keep the pnpm store outside node_modules
+        run: pnpm config set store-dir "$HOME/.pnpm-store" --global
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Cache the Convex local backend binary
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/convex/binaries
+          key: convex-local-backend-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: convex-local-backend-${{ runner.os }}-
+
+      # Install scripts are required to build the git-pinned @convex-dev/auth;
+      # this job holds no secrets.
+      - run: pnpm install --frozen-lockfile
+
+      - name: Initialize an anonymous local Convex backend
+        run: pnpm convex:local:init --reset-local-state
+
+      - name: Verify generated application files are committed
+        run: pnpm run verify:generated
