@@ -10,7 +10,7 @@ rewrites, or imports that legacy data.
 
 ## Commands
 
-- `pnpm setup`: copy ignored local configuration from the main worktree,
+- `pnpm run setup`: copy ignored local configuration from the main worktree,
   install dependencies, initialize a fresh native local backend, and verify
   generated files.
 - `pnpm convex:local:init`: initialize the current worktree's native backend.
@@ -29,8 +29,12 @@ rewrites, or imports that legacy data.
 New secondary worktrees should run:
 
 ```sh
-pnpm setup
+pnpm run setup
 ```
+
+Use `pnpm run setup`, not `pnpm setup`: `setup` (like `init`) is also a pnpm
+built-in command, and the short form runs pnpm's own "Sets up pnpm" step,
+which edits your shell configuration, instead of this script.
 
 Setup copies `.env.local`, optional local env files, and the gitignored gateway
 key backups from the main worktree. It then runs `pnpm convex:local:init
@@ -38,7 +42,7 @@ key backups from the main worktree. It then runs `pnpm convex:local:init
 configures the native auth component, pushes the native schema/functions, and
 stops its temporary initialization process. Run `pnpm dev` afterward.
 
-The main worktree is not reset by `pnpm setup`; its setup script exits early.
+The main worktree is not reset by `pnpm run setup`; its setup script exits early.
 No command copies cloud data into a local database.
 
 ## Dev startup ordering

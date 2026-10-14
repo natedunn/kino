@@ -15,9 +15,11 @@ Convex agent skills for common tasks can be installed by running
 ## Pull request verification
 
 Before opening or updating a pull request, run `pnpm run verify:pr`. This
-regenerates the Convex application files, fails if the committed
-generated output is stale, and then runs the TypeScript checks. If generation
-changes files, review and commit those files before rerunning the command.
+regenerates the Convex application files and fails if the committed generated
+output is stale, verifies the pinned Convex Auth package and its patches
+(`auth:native:verify-package`), and then runs the TypeScript checks. If
+generation changes files, review and commit those files before rerunning the
+command.
 
 Workspace setup also runs `pnpm run verify:generated`, and the
 `Verify generated files` GitHub Actions workflow runs it on every pull request,

@@ -11,11 +11,14 @@ fi
 branch="${branch:-local}"
 production_branch="${PRODUCTION_BRANCH:-main}"
 
-# Preview builds already bake their branch-specific gateway route into the
-# generated Wrangler config. Production uses fixed build variables and must
-# copy them into the app Worker's runtime bindings explicitly.
+# This command deploys the production `kino` Worker, so it only runs for the
+# production branch. Previews are Worker Previews uploaded by
+# `pnpm run deploy:preview` (scripts/cloudflare-preview-upload.sh); a plain
+# `wrangler deploy` from any other branch would replace production.
 if [ "$branch" != "$production_branch" ]; then
-  exec pnpm exec wrangler deploy --config dist/server/wrangler.json --keep-vars
+  echo "Refusing to deploy the production Worker from branch '$branch'." >&2
+  echo "Previews deploy with 'pnpm run deploy:preview'." >&2
+  exit 1
 fi
 
 if [ -z "${NATIVE_GITHUB_GATEWAY_URL_PRODUCTION:-}" ] || \

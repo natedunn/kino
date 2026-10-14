@@ -279,7 +279,7 @@ async function main() {
   stopStaleWorktreeProcesses(workspaceRoot)
 
   if (!fs.existsSync(projectLocalConfigPath(workspaceRoot))) {
-    fail("this worktree's anonymous Convex backend is not initialized; run `nr init` first")
+    fail("this worktree's anonymous Convex backend is not initialized; run `pnpm run setup` first")
   }
   const ports = ensureWorktreeLocalBackendPorts(workspaceRoot)
   if (!ports) fail("could not reserve this worktree's local Convex ports")
