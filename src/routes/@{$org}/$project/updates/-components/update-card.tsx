@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import { sanitizeRichText } from '@convex/rich-text';
 import { Link } from '@tanstack/react-router';
 import { Calendar, Heart, MessageSquare } from 'lucide-react';
 
@@ -27,7 +28,7 @@ function UpdateCardContent({ content }: { content: string }) {
 		);
 	}
 
-	const sanitizedContent = sanitizeEditorContent(content);
+	const sanitizedContent = sanitizeRichText(sanitizeEditorContent(content));
 	const formattedContent = sanitizedContent.includes('<pre')
 		? sanitizedContent
 		: formatInlineCode(sanitizedContent);

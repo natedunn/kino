@@ -256,6 +256,37 @@ describe('native project feedback vertical slice', () => {
 		).toBeNull();
 	});
 
+	test('sanitizes feedback and comment HTML before storing it', async () => {
+		const s = await fixture();
+		await directMember(s, s.member.userId);
+		const created = await s.member.caller.mutation(api.feedback.create, {
+			boardId: s.boards[0].id,
+			firstComment:
+				'<p onclick="steal()">Hi<script>alert(1)</script></p><img src=x onerror=alert(1)>',
+			projectId: s.projectId,
+			title: 'Feedback title',
+		});
+		const comment = await s.member.caller.mutation(api.feedbackComments.create, {
+			feedbackId: created.feedbackId,
+			content: '<p><a href="javascript:alert(1)">x</a></p>',
+		});
+		await expect(
+			s.member.caller.mutation(api.feedbackComments.create, {
+				feedbackId: created.feedbackId,
+				content: '<script>alert(1)</script>',
+			})
+		).rejects.toThrow('INVALID_COMMENT');
+
+		const stored = await s.t.run(async (ctx) => {
+			const feedback = await ctx.db.get('feedback', created.feedbackId);
+			return {
+				first: (await ctx.db.get('feedbackComments', feedback!.firstCommentId!))!.content,
+				reply: (await ctx.db.get('feedbackComments', comment.id))!.content,
+			};
+		});
+		expect(stored).toEqual({ first: '<p>Hi</p>', reply: '<p><a>x</a></p>' });
+	});
+
 	test('keeps votes, comments, reactions and timeline updates authorized and reactive', async () => {
 		const s = await fixture();
 		await directMember(s, s.member.userId);

@@ -5,6 +5,7 @@ import { RateLimiter } from '@convex-dev/rate-limiter';
 import { paginationOptsValidator, paginationResultValidator } from 'convex/server';
 import { ConvexError, v } from 'convex/values';
 
+import { sanitizeRichText } from '../shared/rich-text';
 import { buildUpdateSearchContent } from '../shared/update-content';
 import { components, internal } from './_generated/api';
 import { internalMutation, mutation, query } from './_generated/server';
@@ -102,11 +103,12 @@ async function validateFields(
 		relatedFeedbackIds: Array<Id<'feedback'>>;
 	}
 ) {
+	const content = sanitizeRichText(fields.content);
 	if (
 		!fields.title.trim() ||
 		fields.title.trim().length > 200 ||
-		!fields.content.trim() ||
-		fields.content.length > 50_000 ||
+		!content.trim() ||
+		content.length > 50_000 ||
 		fields.tags.length > 20 ||
 		fields.tags.some((tag) => !tag.trim() || tag.length > 40) ||
 		fields.relatedFeedbackIds.length > 100
@@ -119,10 +121,10 @@ async function validateFields(
 	}
 	const title = fields.title.trim();
 	const tags = [...new Set(fields.tags.map((tag) => tag.trim()))];
-	const searchContent = buildUpdateSearchContent({ title, tags, content: fields.content });
+	const searchContent = buildUpdateSearchContent({ title, tags, content });
 	return {
 		title,
-		content: fields.content,
+		content,
 		tags,
 		searchContent,
 		relatedFeedbackIds: [...new Set(fields.relatedFeedbackIds)],
@@ -396,14 +398,14 @@ export const saveComment = mutation({
 	returns: v.id('updateComments'),
 	handler: async (ctx, args) => {
 		const { item, profileId } = await writeAccess(ctx, args.updateId);
-		if (!args.content.trim() || args.content.length > 1200)
-			throw new ConvexError('INVALID_COMMENT');
+		const content = sanitizeRichText(args.content).trim();
+		if (!content || content.length > 1200) throw new ConvexError('INVALID_COMMENT');
 		if (args.id) {
 			const comment = await ctx.db.get('updateComments', args.id);
 			if (!comment || comment.updateId !== item._id) throw new ConvexError('COMMENT_NOT_FOUND');
 			if (comment.authorProfileId !== profileId) throw new ConvexError('FORBIDDEN');
 			await ctx.db.patch('updateComments', comment._id, {
-				content: args.content.trim(),
+				content,
 				updatedAt: Date.now(),
 			});
 			return comment._id;
@@ -416,7 +418,7 @@ export const saveComment = mutation({
 		const id = await ctx.db.insert('updateComments', {
 			updateId: item._id,
 			authorProfileId: profileId,
-			content: args.content.trim(),
+			content,
 			replyCommentId: args.replyCommentId,
 			emoteCounts: {},
 		});
