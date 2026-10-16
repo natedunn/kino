@@ -1361,6 +1361,5 @@
 	"discussions_detail_event_answer_marked": "将一条回复标记为答案",
 	"discussions_detail_event_answer_unmarked": "取消了答案标记",
 	"discussions_detail_event_converted": "将此讨论转为反馈",
-	"discussions_detail_moved_notice": "此对话已移至反馈，因此该讨论已锁定。请在这里继续：",
 	"feedback_imported_from_discussion": "从以下讨论导入了此反馈"
 }

@@ -1421,6 +1421,5 @@
 	"discussions_detail_event_answer_marked": "marcó una respuesta como la solución",
 	"discussions_detail_event_answer_unmarked": "desmarcó la solución",
 	"discussions_detail_event_converted": "convirtió esta discusión en feedback",
-	"discussions_detail_moved_notice": "Esta conversación se movió a Feedback, por eso esta discusión está bloqueada. Continúala aquí:",
 	"feedback_imported_from_discussion": "importó esto desde la discusión"
 }

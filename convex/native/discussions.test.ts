@@ -620,6 +620,7 @@ describe('native project discussions', () => {
 			{ eventType: 'category_changed', oldValue: 'General', newValue: 'Q&A' },
 			{ eventType: 'pinned', actor: { username: 'owner' } },
 			{ eventType: 'converted_to_feedback', feedback: { slug: feedbackSlug } },
+			{ eventType: 'locked', actor: { username: 'owner' } },
 		]);
 		expect(detail?.convertedTo).toMatchObject({ slug: feedbackSlug, title: 'CSV export ideas' });
 

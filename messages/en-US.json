@@ -1421,6 +1421,5 @@
 	"discussions_detail_event_answer_marked": "marked a reply as the answer",
 	"discussions_detail_event_answer_unmarked": "unmarked the answer",
 	"discussions_detail_event_converted": "converted this discussion to feedback",
-	"discussions_detail_moved_notice": "This conversation moved to Feedback, so this discussion is locked. Continue it here:",
 	"feedback_imported_from_discussion": "imported this from the discussion"
 }

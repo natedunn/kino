@@ -1181,6 +1181,9 @@ export const convertToFeedback = mutation({
 		await recordEvent(ctx, discussion._id, profileId, 'converted_to_feedback', {
 			feedbackId: created.feedbackId,
 		});
+		// Converting locks the discussion; record it like a manual lock.
+		if (discussion.lockedAt === undefined)
+			await recordEvent(ctx, discussion._id, profileId, 'locked');
 		await recordFeedbackEvent(ctx, {
 			actorProfileId: profileId,
 			feedbackId: created.feedbackId,

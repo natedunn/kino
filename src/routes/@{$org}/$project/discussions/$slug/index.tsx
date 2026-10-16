@@ -10,7 +10,6 @@ import { createFileRoute, Link, notFound, useRouter } from '@tanstack/react-rout
 import { useMutation, usePaginatedQuery } from 'convex/react';
 import {
 	ArrowLeft,
-	ArrowRightLeft,
 	Check,
 	CircleCheck,
 	Info,
@@ -32,7 +31,6 @@ import {
 	ResponsiveSideDrawerHeader,
 	ResponsiveSideDrawerTrigger,
 } from '@/components/ui/responsive-side-drawer';
-import { StatusIcon } from '@/icons';
 import { useAuthSession } from '@/lib/auth/auth-client';
 import { localizeError } from '@/lib/errors';
 import { projectTitle, titleFromSlug, titleMeta } from '@/lib/seo';
@@ -471,24 +469,7 @@ function DiscussionDetailRoute() {
 										</li>
 									) : null}
 								</ul>
-								{discussion.locked && detail.convertedTo ? (
-									<InlineAlert className='flex flex-wrap items-center gap-x-2 gap-y-1'>
-										<ArrowRightLeft className='size-4 shrink-0' />
-										<span>{m.discussions_detail_moved_notice()}</span>
-										<Link
-											className='link-text inline-flex items-center gap-1 font-medium'
-											params={{
-												org: params.org,
-												project: params.project,
-												slug: detail.convertedTo.slug,
-											}}
-											to='/@{$org}/$project/feedback/$slug'
-										>
-											<StatusIcon colored size='12' status={detail.convertedTo.status} />
-											{detail.convertedTo.title}
-										</Link>
-									</InlineAlert>
-								) : discussion.locked && detail.writable ? (
+								{discussion.locked && detail.writable ? (
 									<InlineAlert className='flex items-center gap-2'>
 										<Lock className='size-4 shrink-0' />
 										{detail.canReply
