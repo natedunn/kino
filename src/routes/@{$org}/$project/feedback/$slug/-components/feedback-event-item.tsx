@@ -186,7 +186,12 @@ function getEventDescription(event: FeedbackEventData) {
 		case 'answer_unmarked':
 			return <span>{m.feedback_unmarked_answer()}</span>;
 		case 'imported_from_discussion':
-			return <ImportedFromDiscussion discussion={event.discussion ?? null} />;
+			return (
+				<ImportedFromDiscussion
+					discussion={event.discussion ?? null}
+					savedTitle={metadata?.newValue ?? null}
+				/>
+			);
 		default:
 			return <span>{m.feedback_made_change()}</span>;
 	}
@@ -194,8 +199,11 @@ function getEventDescription(event: FeedbackEventData) {
 
 function ImportedFromDiscussion({
 	discussion,
+	savedTitle,
 }: {
 	discussion: { slug: string; title: string } | null;
+	// Title at import time, shown unlinked once the discussion is deleted.
+	savedTitle: string | null;
 }) {
 	const params = useParams({ from: '/@{$org}/$project/feedback/$slug/' });
 	return (
@@ -209,6 +217,8 @@ function ImportedFromDiscussion({
 				>
 					{discussion.title}
 				</Link>
+			) : savedTitle ? (
+				<span className='font-medium text-foreground'>{savedTitle}</span>
 			) : null}
 		</span>
 	);

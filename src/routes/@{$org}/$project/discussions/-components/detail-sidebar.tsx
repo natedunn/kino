@@ -364,21 +364,26 @@ export function DetailSidebarSections({
 									)}
 									{discussion.locked ? m.discussions_detail_unlock() : m.discussions_detail_lock()}
 								</Button>
-								<Button
-									className='justify-start'
-									disabled={busy}
-									onClick={() => setConvertOpen(true)}
-									variant='outline'
-								>
-									<ArrowRightLeft className='size-4' />
-									{m.discussions_detail_convert()}
-								</Button>
-								<DetailConvertDialog
-									discussionId={discussion.id}
-									onOpenChange={setConvertOpen}
-									open={convertOpen}
-									projectId={projectId}
-								/>
+								{/* Already converted: the notice in the thread links to the feedback. */}
+								{detail.convertedTo ? null : (
+									<>
+										<Button
+											className='justify-start'
+											disabled={busy}
+											onClick={() => setConvertOpen(true)}
+											variant='outline'
+										>
+											<ArrowRightLeft className='size-4' />
+											{m.discussions_detail_convert()}
+										</Button>
+										<DetailConvertDialog
+											discussionId={discussion.id}
+											onOpenChange={setConvertOpen}
+											open={convertOpen}
+											projectId={projectId}
+										/>
+									</>
+								)}
 							</>
 						) : null}
 						{detail.canDelete ? (
