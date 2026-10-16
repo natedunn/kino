@@ -37,6 +37,8 @@ interface DynamicNavigationProps {
 	orgSlug: string;
 	projectSlug: string;
 	canManageSettings: boolean;
+	/** Projects can switch Discussions off; the tab disappears with it. */
+	discussionsEnabled: boolean;
 	className?: string;
 }
 
@@ -44,6 +46,7 @@ export function DynamicNavigation({
 	orgSlug,
 	projectSlug,
 	canManageSettings,
+	discussionsEnabled,
 }: DynamicNavigationProps) {
 	const params = {
 		org: orgSlug,
@@ -80,12 +83,16 @@ export function DynamicNavigation({
 			to: '/@{$org}/$project/files',
 			params: (prev) => ({ ...prev, ...params }),
 		},
-		{
-			children: m.project_nav_discussions(),
-			icon: Interview,
-			to: '/@{$org}/$project/discussions',
-			params: (prev) => ({ ...prev, ...params }),
-		},
+		...(discussionsEnabled
+			? [
+					{
+						children: m.project_nav_discussions(),
+						icon: Interview,
+						to: '/@{$org}/$project/discussions',
+						params: (prev) => ({ ...prev, ...params }),
+					} satisfies NavigationItem,
+				]
+			: []),
 		...(canManageSettings
 			? [
 					{

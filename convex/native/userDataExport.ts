@@ -74,11 +74,26 @@ const updateContext = v.union(
 		}),
 	})
 );
+const discussionContext = v.union(
+	v.object({ contextAccess: v.literal('missing'), discussionId: v.id('discussions') }),
+	v.object({
+		contextAccess: v.literal('inaccessible'),
+		discussionId: v.id('discussions'),
+		projectId: v.id('projects'),
+	}),
+	v.object({
+		contextAccess: v.literal('visible'),
+		discussion: v.object({ id: v.id('discussions'), slug: v.string(), title: v.string() }),
+		organization: organizationSummary,
+		project: projectSummary,
+	})
+);
 const commentsSection = v.object({
 	version: v.number(),
 	counts: v.object({
 		feedbackComments: v.number(),
 		updateComments: v.number(),
+		discussionComments: v.number(),
 		total: v.number(),
 	}),
 	feedbackComments: v.array(
@@ -105,6 +120,18 @@ const commentsSection = v.object({
 			context: updateContext,
 		})
 	),
+	discussionComments: v.array(
+		v.object({
+			id: v.id('discussionComments'),
+			content: v.string(),
+			createdAt: v.union(v.string(), v.null()),
+			updatedAt: v.union(v.string(), v.null()),
+			discussionId: v.id('discussions'),
+			initial: v.boolean(),
+			source: v.literal('discussion'),
+			context: discussionContext,
+		})
+	),
 });
 
 export const getAvailableSections = query({
@@ -116,7 +143,7 @@ export const getAvailableSections = query({
 			id,
 			label: 'Comments',
 			description:
-				'Your feedback and update comments, with the visible project context needed to understand them.',
+				'Your feedback, update, and discussion comments, with the visible project context needed to understand them.',
 			includedByDefault: true,
 		}));
 	},
