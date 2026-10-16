@@ -1351,5 +1351,16 @@
 	"discussions_detail_unmark_answer": "取消标记答案",
 	"discussions_detail_answer_failed": "无法更新答案。",
 	"discussions_detail_locked_notice": "此讨论已锁定，无法再发表新回复。",
-	"discussions_detail_locked_notice_team": "此讨论已锁定。只有像你这样的管理员仍可回复。"
+	"discussions_detail_locked_notice_team": "此讨论已锁定。只有像你这样的管理员仍可回复。",
+	"discussions_detail_event_moved_from": "将此讨论从",
+	"discussions_detail_event_moved_to": "将此讨论移至",
+	"discussions_detail_event_pinned": "置顶了此讨论",
+	"discussions_detail_event_unpinned": "取消置顶了此讨论",
+	"discussions_detail_event_locked": "锁定了此讨论",
+	"discussions_detail_event_unlocked": "解锁了此讨论",
+	"discussions_detail_event_answer_marked": "将一条回复标记为答案",
+	"discussions_detail_event_answer_unmarked": "取消了答案标记",
+	"discussions_detail_event_converted": "将此讨论转为反馈",
+	"discussions_detail_moved_notice": "此对话已移至反馈，因此该讨论已锁定。请在这里继续：",
+	"feedback_imported_from_discussion": "从以下讨论导入了此反馈"
 }

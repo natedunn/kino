@@ -91,6 +91,7 @@ type Timeline =
 				actor: Comment['author'];
 				eventType: string;
 				metadata: { oldValue?: string; newValue?: string } | null;
+				discussion: { slug: string; title: string } | null;
 			};
 	  };
 type Detail = {
@@ -797,6 +798,7 @@ export function NativeFeedbackDetailRoute() {
 													createdAt: item.creationTime,
 													eventType: item.data.eventType,
 													metadata: item.data.metadata,
+													discussion: item.data.discussion,
 												}}
 												isLast={index === timeline.length - 1}
 											/>

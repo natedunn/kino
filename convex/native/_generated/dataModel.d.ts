@@ -157,6 +157,46 @@ export type DataModel = {
     searchIndexes: {};
     vectorIndexes: {};
   };
+  discussionEvents: {
+    document: {
+      actorProfileId: Id<"profiles">;
+      discussionId: Id<"discussions">;
+      eventType:
+        | "title_changed"
+        | "category_changed"
+        | "pinned"
+        | "unpinned"
+        | "locked"
+        | "unlocked"
+        | "answer_marked"
+        | "answer_unmarked"
+        | "converted_to_feedback";
+      metadata?: {
+        feedbackId?: Id<"feedback">;
+        newValue?: string;
+        oldValue?: string;
+      };
+      _id: Id<"discussionEvents">;
+      _creationTime: number;
+    };
+    fieldPaths:
+      | "_creationTime"
+      | "_id"
+      | "actorProfileId"
+      | "discussionId"
+      | "eventType"
+      | "metadata"
+      | "metadata.feedbackId"
+      | "metadata.newValue"
+      | "metadata.oldValue";
+    indexes: {
+      by_id: ["_id"];
+      by_creation_time: ["_creationTime"];
+      by_discussionId: ["discussionId", "_creationTime"];
+    };
+    searchIndexes: {};
+    vectorIndexes: {};
+  };
   discussionLinks: {
     document: {
       createdByProfileId: Id<"profiles">;
@@ -191,6 +231,7 @@ export type DataModel = {
       authorProfileId: Id<"profiles">;
       categoryId?: Id<"discussionCategories">;
       commentCount: number;
+      convertedFeedbackId?: Id<"feedback">;
       deletingAt?: number;
       firstCommentId?: Id<"discussionComments">;
       lastActivityAt: number;
@@ -210,6 +251,7 @@ export type DataModel = {
       | "authorProfileId"
       | "categoryId"
       | "commentCount"
+      | "convertedFeedbackId"
       | "deletingAt"
       | "firstCommentId"
       | "lastActivityAt"
@@ -483,9 +525,11 @@ export type DataModel = {
         | "answer_marked"
         | "answer_unmarked"
         | "assigned"
-        | "unassigned";
+        | "unassigned"
+        | "imported_from_discussion";
       feedbackId: Id<"feedback">;
       metadata?: {
+        discussionId?: Id<"discussions">;
         newValue?: string;
         oldValue?: string;
         targetProfileId?: Id<"profiles">;
@@ -500,6 +544,7 @@ export type DataModel = {
       | "eventType"
       | "feedbackId"
       | "metadata"
+      | "metadata.discussionId"
       | "metadata.newValue"
       | "metadata.oldValue"
       | "metadata.targetProfileId";

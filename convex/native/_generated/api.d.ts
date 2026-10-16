@@ -384,6 +384,11 @@ export declare const api: {
           postingPolicy: "everyone" | "team";
           slug: string;
         } | null;
+        convertedTo: {
+          slug: string;
+          status: "open" | "in-progress" | "closed" | "completed" | "paused";
+          title: string;
+        } | null;
         discussion: {
           answerCommentId: Id<"discussionComments"> | null;
           commentCount: number;
@@ -395,6 +400,33 @@ export declare const api: {
           slug: string;
           title: string;
         };
+        events: Array<{
+          actor: null | {
+            id: Id<"profiles">;
+            imageUrl: string | null;
+            name: string;
+            username: string;
+          };
+          createdAt: number;
+          eventType:
+            | "title_changed"
+            | "category_changed"
+            | "pinned"
+            | "unpinned"
+            | "locked"
+            | "unlocked"
+            | "answer_marked"
+            | "answer_unmarked"
+            | "converted_to_feedback";
+          feedback: {
+            slug: string;
+            status: "open" | "in-progress" | "closed" | "completed" | "paused";
+            title: string;
+          } | null;
+          id: Id<"discussionEvents">;
+          newValue: string | null;
+          oldValue: string | null;
+        }>;
         firstComment: {
           author: null | {
             id: Id<"profiles">;
@@ -850,6 +882,7 @@ export declare const api: {
                   name: string;
                   username: string;
                 };
+                discussion: null | { slug: string; title: string };
                 eventType:
                   | "status_changed"
                   | "priority_changed"
@@ -858,9 +891,11 @@ export declare const api: {
                   | "answer_marked"
                   | "answer_unmarked"
                   | "assigned"
-                  | "unassigned";
+                  | "unassigned"
+                  | "imported_from_discussion";
                 id: Id<"feedbackEvents">;
                 metadata: null | {
+                  discussionId?: Id<"discussions">;
                   newValue?: string;
                   oldValue?: string;
                   targetProfileId?: Id<"profiles">;
@@ -981,6 +1016,7 @@ export declare const api: {
                   name: string;
                   username: string;
                 };
+                discussion: null | { slug: string; title: string };
                 eventType:
                   | "status_changed"
                   | "priority_changed"
@@ -989,9 +1025,11 @@ export declare const api: {
                   | "answer_marked"
                   | "answer_unmarked"
                   | "assigned"
-                  | "unassigned";
+                  | "unassigned"
+                  | "imported_from_discussion";
                 id: Id<"feedbackEvents">;
                 metadata: null | {
+                  discussionId?: Id<"discussions">;
                   newValue?: string;
                   oldValue?: string;
                   targetProfileId?: Id<"profiles">;

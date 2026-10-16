@@ -76,7 +76,6 @@ async function fixture() {
 	};
 }
 
-
 const page = { cursor: null, numItems: 20 };
 
 describe('native project discussions', () => {
@@ -374,9 +373,9 @@ describe('native project discussions', () => {
 		});
 		await s.t.finishAllScheduledFunctions(vi.runAllTimers);
 		expect((await s.t.run((ctx) => ctx.db.get('discussions', id)))?.categoryId).toBe(s.general);
-		const slugs = (
-			await s.t.query(api.discussionCategories.list, { projectId: s.projectId })
-		)?.map((row) => row.slug);
+		const slugs = (await s.t.query(api.discussionCategories.list, { projectId: s.projectId }))?.map(
+			(row) => row.slug
+		);
 		expect(slugs).toEqual(['general', 'q-a', 'ideas', 'show-and-tell', 'announcements']);
 		const ids = (await s.t.query(api.discussionCategories.list, { projectId: s.projectId }))!.map(
 			(row) => row.id
@@ -586,6 +585,68 @@ describe('native project discussions', () => {
 		).toEqual([]);
 	});
 
+	test('records moderation events and links a converted discussion both ways', async () => {
+		const s = await fixture();
+		const { id, slug } = await s.visitor.caller.mutation(api.discussions.create, {
+			projectId: s.projectId,
+			categoryId: s.general,
+			title: 'Export ideas',
+			body: '<p>Body</p>',
+		});
+		await s.visitor.caller.mutation(api.discussions.updateTitle, {
+			discussionId: id,
+			title: 'CSV export ideas',
+		});
+		await s.visitor.caller.mutation(api.discussions.setCategory, {
+			discussionId: id,
+			categoryId: s.qa,
+		});
+		await s.owner.caller.mutation(api.discussions.setPinned, { discussionId: id, pinned: true });
+		// Repeating a state change records nothing.
+		await s.owner.caller.mutation(api.discussions.setPinned, { discussionId: id, pinned: true });
+		const boards = await s.t.query(api.feedbackBoards.list, { projectId: s.projectId });
+		const { feedbackSlug } = await s.owner.caller.mutation(api.discussions.convertToFeedback, {
+			discussionId: id,
+			boardId: boards![0]!.id,
+		});
+		const detail = await s.t.query(api.discussions.detail, { projectId: s.projectId, slug });
+		expect(detail?.events).toMatchObject([
+			{
+				eventType: 'title_changed',
+				actor: { username: 'visitor' },
+				oldValue: 'Export ideas',
+				newValue: 'CSV export ideas',
+			},
+			{ eventType: 'category_changed', oldValue: 'General', newValue: 'Q&A' },
+			{ eventType: 'pinned', actor: { username: 'owner' } },
+			{ eventType: 'converted_to_feedback', feedback: { slug: feedbackSlug } },
+		]);
+		expect(detail?.convertedTo).toMatchObject({ slug: feedbackSlug, title: 'CSV export ideas' });
+
+		const feedback = await s.t.run((ctx) =>
+			ctx.db
+				.query('feedback')
+				.withIndex('by_projectId_and_slug', (q) =>
+					q.eq('projectId', s.projectId).eq('slug', feedbackSlug)
+				)
+				.unique()
+		);
+		const timeline = await s.t.query(api.feedback.listTimelinePage, {
+			feedbackId: feedback!._id,
+			paginationOpts: page,
+		});
+		expect(timeline?.page).toMatchObject([
+			{
+				type: 'event',
+				data: {
+					eventType: 'imported_from_discussion',
+					actor: { username: 'owner' },
+					discussion: { slug, title: 'CSV export ideas' },
+				},
+			},
+		]);
+	});
+
 	test('disabling discussions hides them; only settings editors toggle it', async () => {
 		const s = await fixture();
 		const { slug } = await s.visitor.caller.mutation(api.discussions.create, {
@@ -615,9 +676,9 @@ describe('native project discussions', () => {
 		expect(
 			(await s.owner.caller.mutation(api.settings.updateProject, base)).discussionsEnabled
 		).toBe(false);
-		expect(
-			await s.t.query(api.discussions.viewerAccess, { projectId: s.projectId })
-		).toMatchObject({ enabled: false });
+		expect(await s.t.query(api.discussions.viewerAccess, { projectId: s.projectId })).toMatchObject(
+			{ enabled: false }
+		);
 		expect(await s.t.query(api.discussions.detail, { projectId: s.projectId, slug })).toBeNull();
 		await expect(
 			s.visitor.caller.mutation(api.discussions.create, {
@@ -791,14 +852,15 @@ describe('native project discussions', () => {
 			discussionId: id,
 			content: '<p>Reply</p>',
 		});
+		await s.owner.caller.mutation(api.discussions.setLocked, { discussionId: id, locked: true });
+		expect(await s.t.run((ctx) => ctx.db.query('discussionEvents').collect())).toHaveLength(1);
 		await s.owner.caller.mutation(api.projectDeletion.remove, { id: s.projectId });
 		await s.t.finishAllScheduledFunctions(vi.runAllTimers);
 		expect(await s.t.run((ctx) => ctx.db.query('discussions').collect())).toHaveLength(0);
 		expect(await s.t.run((ctx) => ctx.db.query('discussionComments').collect())).toHaveLength(0);
 		expect(await s.t.run((ctx) => ctx.db.query('discussionWatchers').collect())).toHaveLength(0);
-		expect(
-			await s.t.run((ctx) => ctx.db.query('discussionCategories').collect())
-		).toHaveLength(0);
+		expect(await s.t.run((ctx) => ctx.db.query('discussionEvents').collect())).toHaveLength(0);
+		expect(await s.t.run((ctx) => ctx.db.query('discussionCategories').collect())).toHaveLength(0);
 	});
 
 	test('backfill seeds categories for older projects and files their discussions', async () => {

@@ -1411,5 +1411,16 @@
 	"discussions_detail_unmark_answer": "Desmarcar respuesta",
 	"discussions_detail_answer_failed": "No pudimos actualizar la respuesta.",
 	"discussions_detail_locked_notice": "Esta discusión está bloqueada. Ya no se aceptan respuestas nuevas.",
-	"discussions_detail_locked_notice_team": "Esta discusión está bloqueada. Solo los moderadores como tú pueden seguir respondiendo."
+	"discussions_detail_locked_notice_team": "Esta discusión está bloqueada. Solo los moderadores como tú pueden seguir respondiendo.",
+	"discussions_detail_event_moved_from": "movió esto de",
+	"discussions_detail_event_moved_to": "movió esto a",
+	"discussions_detail_event_pinned": "fijó esta discusión",
+	"discussions_detail_event_unpinned": "dejó de fijar esta discusión",
+	"discussions_detail_event_locked": "bloqueó esta discusión",
+	"discussions_detail_event_unlocked": "desbloqueó esta discusión",
+	"discussions_detail_event_answer_marked": "marcó una respuesta como la solución",
+	"discussions_detail_event_answer_unmarked": "desmarcó la solución",
+	"discussions_detail_event_converted": "convirtió esta discusión en feedback",
+	"discussions_detail_moved_notice": "Esta conversación se movió a Feedback, por eso esta discusión está bloqueada. Continúala aquí:",
+	"feedback_imported_from_discussion": "importó esto desde la discusión"
 }

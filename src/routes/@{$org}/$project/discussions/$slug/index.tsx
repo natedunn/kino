@@ -10,6 +10,7 @@ import { createFileRoute, Link, notFound, useRouter } from '@tanstack/react-rout
 import { useMutation, usePaginatedQuery } from 'convex/react';
 import {
 	ArrowLeft,
+	ArrowRightLeft,
 	Check,
 	CircleCheck,
 	Info,
@@ -31,6 +32,7 @@ import {
 	ResponsiveSideDrawerHeader,
 	ResponsiveSideDrawerTrigger,
 } from '@/components/ui/responsive-side-drawer';
+import { StatusIcon } from '@/icons';
 import { useAuthSession } from '@/lib/auth/auth-client';
 import { localizeError } from '@/lib/errors';
 import { projectTitle, titleFromSlug, titleMeta } from '@/lib/seo';
@@ -39,6 +41,7 @@ import { FORM_LIMITS } from '@/lib/validation';
 import * as m from '@/paraglide/messages.js';
 
 import { DetailAnswer } from '../-components/detail-answer';
+import { DetailEventItem } from '../-components/detail-event-item';
 import { DetailFollowButton, DetailSidebarSections } from '../-components/detail-sidebar';
 import { CommentCard, CommentEditorProvider, CommentForm } from '../../-components/comment-thread';
 import { api as nativeApi } from '../../../../../../convex/native/_generated/api';
@@ -140,6 +143,18 @@ function DiscussionDetailRoute() {
 	const [detailsDrawerOpen, setDetailsDrawerOpen] = useState(false);
 	// Set when "Jump to reply" targets an answer that isn't loaded yet.
 	const [pendingJump, setPendingJump] = useState(false);
+	// Events sit between replies by time. Only show the ones up to the newest
+	// loaded reply, so older pages never slot in under later events.
+	const lastReplyTime = replies.results.at(-1)?.creationTime;
+	const visibleEvents = detail.events.filter(
+		(event) =>
+			replies.status === 'Exhausted' ||
+			(lastReplyTime !== undefined && event.createdAt <= lastReplyTime)
+	);
+	const timeline = [
+		...replies.results.map((reply) => ({ kind: 'reply' as const, at: reply.creationTime, reply })),
+		...visibleEvents.map((event) => ({ kind: 'event' as const, at: event.createdAt, event })),
+	].sort((a, b) => a.at - b.at);
 	const answerLoaded = !!answerId && replies.results.some((reply) => reply.id === answerId);
 
 	// Page through replies until the answer is rendered. Its CommentCard reads
@@ -366,7 +381,7 @@ function DiscussionDetailRoute() {
 							) : null}
 							<CommentEditorProvider>
 								<ul
-									className={`relative flex flex-col gap-6 ${replies.results.length || detail.answer ? 'before:absolute before:top-0 before:bottom-0 before:left-[33px] before:z-0 before:border-r before:border-border' : ''}`}
+									className={`relative flex flex-col gap-6 ${timeline.length || detail.answer ? 'before:absolute before:top-0 before:bottom-0 before:left-[33px] before:z-0 before:border-r before:border-border' : ''}`}
 								>
 									{detail.firstComment ? (
 										<CommentCard
@@ -386,7 +401,21 @@ function DiscussionDetailRoute() {
 											{m.discussions_replies_heading()}
 										</li>
 									) : null}
-									{replies.results.map((reply) => {
+									{timeline.map((item, index) => {
+										if (item.kind === 'event')
+											return (
+												<DetailEventItem
+													event={item.event}
+													isLast={
+														index === timeline.length - 1 &&
+														replies.status !== 'CanLoadMore' &&
+														replies.status !== 'LoadingMore'
+													}
+													key={item.event.id}
+													params={{ org: params.org, project: params.project }}
+												/>
+											);
+										const { reply } = item;
 										const isAnswer = reply.id === answerId;
 										const isAuthor = reply.author?.id === detail.author?.id;
 										return (
@@ -442,7 +471,24 @@ function DiscussionDetailRoute() {
 										</li>
 									) : null}
 								</ul>
-								{discussion.locked && detail.writable ? (
+								{discussion.locked && detail.convertedTo ? (
+									<InlineAlert className='flex flex-wrap items-center gap-x-2 gap-y-1'>
+										<ArrowRightLeft className='size-4 shrink-0' />
+										<span>{m.discussions_detail_moved_notice()}</span>
+										<Link
+											className='link-text inline-flex items-center gap-1 font-medium'
+											params={{
+												org: params.org,
+												project: params.project,
+												slug: detail.convertedTo.slug,
+											}}
+											to='/@{$org}/$project/feedback/$slug'
+										>
+											<StatusIcon colored size='12' status={detail.convertedTo.status} />
+											{detail.convertedTo.title}
+										</Link>
+									</InlineAlert>
+								) : discussion.locked && detail.writable ? (
 									<InlineAlert className='flex items-center gap-2'>
 										<Lock className='size-4 shrink-0' />
 										{detail.canReply

@@ -46,6 +46,17 @@ export const updateStatus = v.union(v.literal('draft'), v.literal('published'));
 export const discussionsPostingPolicy = v.union(v.literal('everyone'), v.literal('team'));
 // `qa` categories let the author or a moderator mark one reply as the answer.
 export const discussionCategoryFormat = v.union(v.literal('open'), v.literal('qa'));
+export const discussionEventType = v.union(
+	v.literal('title_changed'),
+	v.literal('category_changed'),
+	v.literal('pinned'),
+	v.literal('unpinned'),
+	v.literal('locked'),
+	v.literal('unlocked'),
+	v.literal('answer_marked'),
+	v.literal('answer_unmarked'),
+	v.literal('converted_to_feedback')
+);
 export const emoteReaction = v.union(
 	v.literal('heart'),
 	v.literal('thumbsUp'),
@@ -364,13 +375,15 @@ export default defineSchema({
 			v.literal('answer_marked'),
 			v.literal('answer_unmarked'),
 			v.literal('assigned'),
-			v.literal('unassigned')
+			v.literal('unassigned'),
+			v.literal('imported_from_discussion')
 		),
 		metadata: v.optional(
 			v.object({
 				oldValue: v.optional(v.string()),
 				newValue: v.optional(v.string()),
 				targetProfileId: v.optional(v.id('profiles')),
+				discussionId: v.optional(v.id('discussions')),
 			})
 		),
 	}).index('by_feedbackId', ['feedbackId']),
@@ -498,6 +511,8 @@ export default defineSchema({
 		lastActivityAt: v.number(),
 		pinnedAt: v.optional(v.number()),
 		lockedAt: v.optional(v.number()),
+		// Set when a moderator converts the discussion into feedback.
+		convertedFeedbackId: v.optional(v.id('feedback')),
 		deletingAt: v.optional(v.number()),
 	})
 		.index('by_projectId', ['projectId'])
@@ -546,6 +561,19 @@ export default defineSchema({
 	})
 		.index('by_discussionId_and_profileId', ['discussionId', 'profileId'])
 		.index('by_profileId_and_projectId', ['profileId', 'projectId']),
+	// Moderation and housekeeping changes, shown between replies in the thread.
+	discussionEvents: defineTable({
+		discussionId: v.id('discussions'),
+		actorProfileId: v.id('profiles'),
+		eventType: discussionEventType,
+		metadata: v.optional(
+			v.object({
+				oldValue: v.optional(v.string()),
+				newValue: v.optional(v.string()),
+				feedbackId: v.optional(v.id('feedback')),
+			})
+		),
+	}).index('by_discussionId', ['discussionId']),
 	// Links from a discussion to feedback or an update in the same project.
 	discussionLinks: defineTable({
 		projectId: v.id('projects'),

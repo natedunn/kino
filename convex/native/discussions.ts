@@ -12,10 +12,10 @@ import { components, internal } from './_generated/api';
 import { internalMutation, mutation, query } from './_generated/server';
 import { assertProjectWritable, requireProjectAccess, resolveProjectAccess } from './access';
 import { categoryView, liveCategories, toCategoryView } from './discussionCategories';
-import { insertFeedback } from './feedback';
+import { insertFeedback, recordEvent as recordFeedbackEvent } from './feedback';
 import { isFeedbackLive } from './feedbackLifecycle';
 import { getCurrentUser, requireCurrentUser } from './identity';
-import { emoteReaction, feedbackStatus } from './schema';
+import { discussionEventType, emoteReaction, feedbackStatus } from './schema';
 import { profileValidator, summary } from './updates';
 
 // Hard cap on stored HTML; visible-text limits are checked separately in validateContent.
@@ -29,6 +29,8 @@ const MAX_PARTICIPANTS = 12;
 // Comments scanned for the participant list; long threads show a lower bound.
 const PARTICIPANT_SCAN = 200;
 const LINK_CANDIDATES = 8;
+// Events returned with a discussion; older ones are dropped from the thread.
+const MAX_EVENTS = 100;
 
 const limits = new RateLimiter(components.authLimits, {
 	discussionWrite: { kind: 'token bucket', rate: 30, period: 60_000, capacity: 30 },
@@ -91,12 +93,22 @@ const linkValidator = v.union(
 		title: v.string(),
 	})
 );
+const feedbackSummaryValidator = v.object({
+	slug: v.string(),
+	title: v.string(),
+	status: feedbackStatus,
+});
+const eventValidator = v.object({
+	id: v.id('discussionEvents'),
+	createdAt: v.number(),
+	actor: profileValidator,
+	eventType: discussionEventType,
+	oldValue: v.union(v.string(), v.null()),
+	newValue: v.union(v.string(), v.null()),
+	feedback: v.union(feedbackSummaryValidator, v.null()),
+});
 const sortValidator = v.union(v.literal('activity'), v.literal('newest'), v.literal('replies'));
-const filterValidator = v.union(
-	v.literal('unanswered'),
-	v.literal('mine'),
-	v.literal('following')
-);
+const filterValidator = v.union(v.literal('unanswered'), v.literal('mine'), v.literal('following'));
 
 type Access = Awaited<ReturnType<typeof resolveProjectAccess>>;
 
@@ -147,11 +159,7 @@ async function liveCategory(
 	return category;
 }
 
-async function follow(
-	ctx: MutationCtx,
-	discussion: Doc<'discussions'>,
-	profileId: Id<'profiles'>
-) {
+async function follow(ctx: MutationCtx, discussion: Doc<'discussions'>, profileId: Id<'profiles'>) {
 	const existing = await ctx.db
 		.query('discussionWatchers')
 		.withIndex('by_discussionId_and_profileId', (q) =>
@@ -164,6 +172,47 @@ async function follow(
 			discussionId: discussion._id,
 			profileId,
 		});
+}
+
+async function recordEvent(
+	ctx: MutationCtx,
+	discussionId: Id<'discussions'>,
+	actorProfileId: Id<'profiles'>,
+	eventType: Doc<'discussionEvents'>['eventType'],
+	metadata?: Doc<'discussionEvents'>['metadata']
+) {
+	await ctx.db.insert('discussionEvents', {
+		discussionId,
+		actorProfileId,
+		eventType,
+		...(metadata ? { metadata } : {}),
+	});
+}
+
+async function liveFeedbackSummary(ctx: QueryCtx, feedbackId: Id<'feedback'> | undefined) {
+	if (!feedbackId) return null;
+	const feedback = await ctx.db.get('feedback', feedbackId);
+	if (!feedback || !(await isFeedbackLive(ctx, feedback))) return null;
+	return { slug: feedback.slug, title: feedback.title, status: feedback.status };
+}
+
+async function events(ctx: QueryCtx, discussionId: Id<'discussions'>) {
+	const rows = await ctx.db
+		.query('discussionEvents')
+		.withIndex('by_discussionId', (q) => q.eq('discussionId', discussionId))
+		.order('desc')
+		.take(MAX_EVENTS);
+	return Promise.all(
+		rows.reverse().map(async (row) => ({
+			id: row._id,
+			createdAt: row._creationTime,
+			actor: summary(await ctx.db.get('profiles', row.actorProfileId)),
+			eventType: row.eventType,
+			oldValue: row.metadata?.oldValue ?? null,
+			newValue: row.metadata?.newValue ?? null,
+			feedback: await liveFeedbackSummary(ctx, row.metadata?.feedbackId),
+		}))
+	);
 }
 
 async function isFollowing(
@@ -323,7 +372,10 @@ async function toListItems(ctx: QueryCtx, items: Array<ListItemSource>) {
 				let category: Doc<'discussionCategories'> | null = null;
 				if (item.categoryId) {
 					if (!categories.has(item.categoryId))
-						categories.set(item.categoryId, await ctx.db.get('discussionCategories', item.categoryId));
+						categories.set(
+							item.categoryId,
+							await ctx.db.get('discussionCategories', item.categoryId)
+						);
 					category = categories.get(item.categoryId) ?? null;
 				}
 				const [author, first] = await Promise.all([
@@ -377,9 +429,10 @@ export const list = query({
 			throw new ConvexError('INVALID_SEARCH');
 		const categoryId = args.categoryId;
 		if (categoryId) await liveCategory(ctx, args.projectId, categoryId);
-		const viewer = args.filter === 'mine' || args.filter === 'following'
-			? ((await getCurrentUser(ctx))?.profileId ?? null)
-			: null;
+		const viewer =
+			args.filter === 'mine' || args.filter === 'following'
+				? ((await getCurrentUser(ctx))?.profileId ?? null)
+				: null;
 		if ((args.filter === 'mine' || args.filter === 'following') && !viewer) return empty;
 		const sort = args.sort ?? 'activity';
 
@@ -564,6 +617,9 @@ export const detail = query({
 				total: v.number(),
 			}),
 			links: v.array(linkValidator),
+			events: v.array(eventValidator),
+			// The feedback this discussion was converted into, while it still exists.
+			convertedTo: v.union(feedbackSummaryValidator, v.null()),
 			viewerProfileId: v.union(v.id('profiles'), v.null()),
 			viewerFollowing: v.boolean(),
 			canEditTitle: v.boolean(),
@@ -619,6 +675,8 @@ export const detail = query({
 			answer: answer ? await enrichComment(ctx, answer, viewerProfileId, access) : null,
 			participants: await participants(ctx, discussion._id),
 			links: await links(ctx, discussion._id),
+			events: await events(ctx, discussion._id),
+			convertedTo: await liveFeedbackSummary(ctx, discussion.convertedFeedbackId),
 			viewerProfileId,
 			viewerFollowing: await isFollowing(ctx, discussion._id, viewerProfileId),
 			canEditTitle: writable && (manager || isAuthor),
@@ -720,6 +778,10 @@ export const updateTitle = mutation({
 		await ctx.db.patch('discussions', discussion._id, {
 			title,
 			searchContent: searchContent(title, first?.content ?? ''),
+		});
+		await recordEvent(ctx, discussion._id, profileId, 'title_changed', {
+			oldValue: discussion.title,
+			newValue: title,
 		});
 		return null;
 	},
@@ -852,10 +914,17 @@ export const setCategory = mutation({
 		// Authors can't move their discussion into a team-only category.
 		if (!canPostIn(access, category)) throw new ConvexError('DISCUSSIONS_TEAM_ONLY');
 		if (category._id === discussion.categoryId) return null;
+		const previous = discussion.categoryId
+			? await ctx.db.get('discussionCategories', discussion.categoryId)
+			: null;
 		await ctx.db.patch('discussions', discussion._id, {
 			categoryId: category._id,
 			// Answers only exist in Q&A categories.
 			...(category.format === 'qa' ? {} : { answerCommentId: undefined }),
+		});
+		await recordEvent(ctx, discussion._id, profileId, 'category_changed', {
+			...(previous ? { oldValue: previous.name } : {}),
+			newValue: category.name,
 		});
 		return null;
 	},
@@ -881,9 +950,16 @@ export const setAnswer = mutation({
 			if (!comment || comment.discussionId !== discussion._id || comment.initial)
 				throw new ConvexError('COMMENT_NOT_FOUND');
 		}
+		if ((args.commentId ?? undefined) === discussion.answerCommentId) return null;
 		await ctx.db.patch('discussions', discussion._id, {
 			answerCommentId: args.commentId ?? undefined,
 		});
+		await recordEvent(
+			ctx,
+			discussion._id,
+			profileId,
+			args.commentId ? 'answer_marked' : 'answer_unmarked'
+		);
 		return null;
 	},
 });
@@ -892,7 +968,7 @@ export const setPinned = mutation({
 	args: { discussionId: v.id('discussions'), pinned: v.boolean() },
 	returns: v.null(),
 	handler: async (ctx, args) => {
-		const { access, discussion } = await writableDiscussion(ctx, args.discussionId);
+		const { access, discussion, profileId } = await writableDiscussion(ctx, args.discussionId);
 		if (!isManager(access)) throw new ConvexError('FORBIDDEN');
 		if (args.pinned === (discussion.pinnedAt !== undefined)) return null;
 		if (args.pinned) {
@@ -908,6 +984,7 @@ export const setPinned = mutation({
 		await ctx.db.patch('discussions', discussion._id, {
 			pinnedAt: args.pinned ? Date.now() : undefined,
 		});
+		await recordEvent(ctx, discussion._id, profileId, args.pinned ? 'pinned' : 'unpinned');
 		return null;
 	},
 });
@@ -916,11 +993,13 @@ export const setLocked = mutation({
 	args: { discussionId: v.id('discussions'), locked: v.boolean() },
 	returns: v.null(),
 	handler: async (ctx, args) => {
-		const { access, discussion } = await writableDiscussion(ctx, args.discussionId);
+		const { access, discussion, profileId } = await writableDiscussion(ctx, args.discussionId);
 		if (!isManager(access)) throw new ConvexError('FORBIDDEN');
+		if (args.locked === (discussion.lockedAt !== undefined)) return null;
 		await ctx.db.patch('discussions', discussion._id, {
-			lockedAt: args.locked ? (discussion.lockedAt ?? Date.now()) : undefined,
+			lockedAt: args.locked ? Date.now() : undefined,
 		});
+		await recordEvent(ctx, discussion._id, profileId, args.locked ? 'locked' : 'unlocked');
 		return null;
 	},
 });
@@ -957,7 +1036,9 @@ async function addLinkRow(
 		.take(MAX_LINKS);
 	if (
 		existing.some((row) =>
-			'feedbackId' in target ? row.feedbackId === target.feedbackId : row.updateId === target.updateId
+			'feedbackId' in target
+				? row.feedbackId === target.feedbackId
+				: row.updateId === target.updateId
 		)
 	)
 		return;
@@ -1095,6 +1176,16 @@ export const convertToFeedback = mutation({
 		await addLinkRow(ctx, discussion, profileId, { feedbackId: created.feedbackId });
 		await ctx.db.patch('discussions', discussion._id, {
 			lockedAt: discussion.lockedAt ?? Date.now(),
+			convertedFeedbackId: created.feedbackId,
+		});
+		await recordEvent(ctx, discussion._id, profileId, 'converted_to_feedback', {
+			feedbackId: created.feedbackId,
+		});
+		await recordFeedbackEvent(ctx, {
+			actorProfileId: profileId,
+			feedbackId: created.feedbackId,
+			eventType: 'imported_from_discussion',
+			metadata: { discussionId: discussion._id, newValue: discussion.title },
 		});
 		return { feedbackSlug: created.slug };
 	},
@@ -1115,7 +1206,7 @@ export const remove = mutation({
 // Deletes one bounded batch of a discussion's children, then the discussion.
 // Returns true while more work remains.
 export async function deleteDiscussionBatch(ctx: MutationCtx, id: Id<'discussions'>) {
-	const [comments, emotes, watchers, links] = await Promise.all([
+	const [comments, emotes, watchers, links, discussionEvents] = await Promise.all([
 		ctx.db
 			.query('discussionComments')
 			.withIndex('by_discussionId_and_initial', (q) => q.eq('discussionId', id))
@@ -1132,12 +1223,21 @@ export async function deleteDiscussionBatch(ctx: MutationCtx, id: Id<'discussion
 			.query('discussionLinks')
 			.withIndex('by_discussionId', (q) => q.eq('discussionId', id))
 			.take(DELETE_BATCH_SIZE),
+		ctx.db
+			.query('discussionEvents')
+			.withIndex('by_discussionId', (q) => q.eq('discussionId', id))
+			.take(DELETE_BATCH_SIZE),
 	]);
 	for (const row of comments) await ctx.db.delete('discussionComments', row._id);
 	for (const row of emotes) await ctx.db.delete('discussionCommentEmotes', row._id);
 	for (const row of watchers) await ctx.db.delete('discussionWatchers', row._id);
 	for (const row of links) await ctx.db.delete('discussionLinks', row._id);
-	if ([comments, emotes, watchers, links].some((rows) => rows.length === DELETE_BATCH_SIZE))
+	for (const row of discussionEvents) await ctx.db.delete('discussionEvents', row._id);
+	if (
+		[comments, emotes, watchers, links, discussionEvents].some(
+			(rows) => rows.length === DELETE_BATCH_SIZE
+		)
+	)
 		return true;
 	await ctx.db.delete('discussions', id);
 	return false;

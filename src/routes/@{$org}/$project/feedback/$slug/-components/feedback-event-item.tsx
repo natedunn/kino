@@ -1,13 +1,14 @@
 import type { FeedbackEventData } from '../-types';
 
 import { memo } from 'react';
-import { Link } from '@tanstack/react-router';
+import { Link, useParams } from '@tanstack/react-router';
 import {
 	ArrowRightLeft,
 	Check,
 	CheckCircle2,
 	CircleX,
 	FolderInput,
+	MessagesSquare,
 	SignalHigh,
 	Tag,
 	UserMinus,
@@ -99,6 +100,8 @@ function getEventIcon(eventType: FeedbackEventData['eventType']) {
 			return CheckCircle2;
 		case 'answer_unmarked':
 			return CircleX;
+		case 'imported_from_discussion':
+			return MessagesSquare;
 		default:
 			return Check;
 	}
@@ -182,9 +185,33 @@ function getEventDescription(event: FeedbackEventData) {
 			return <span>{m.feedback_marked_comment_answer()}</span>;
 		case 'answer_unmarked':
 			return <span>{m.feedback_unmarked_answer()}</span>;
+		case 'imported_from_discussion':
+			return <ImportedFromDiscussion discussion={event.discussion ?? null} />;
 		default:
 			return <span>{m.feedback_made_change()}</span>;
 	}
+}
+
+function ImportedFromDiscussion({
+	discussion,
+}: {
+	discussion: { slug: string; title: string } | null;
+}) {
+	const params = useParams({ from: '/@{$org}/$project/feedback/$slug/' });
+	return (
+		<span className='inline-flex flex-wrap items-center gap-1'>
+			{m.feedback_imported_from_discussion()}
+			{discussion ? (
+				<Link
+					className='link-text font-medium'
+					params={{ org: params.org, project: params.project, slug: discussion.slug }}
+					to='/@{$org}/$project/discussions/$slug'
+				>
+					{discussion.title}
+				</Link>
+			) : null}
+		</span>
+	);
 }
 
 const PRIORITY_DOT_CLASS: Record<string, string> = {

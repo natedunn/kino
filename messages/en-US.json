@@ -1411,5 +1411,16 @@
 	"discussions_detail_unmark_answer": "Unmark answer",
 	"discussions_detail_answer_failed": "We couldn't update the answer.",
 	"discussions_detail_locked_notice": "This discussion is locked. New replies are turned off.",
-	"discussions_detail_locked_notice_team": "This discussion is locked. Only moderators like you can still reply."
+	"discussions_detail_locked_notice_team": "This discussion is locked. Only moderators like you can still reply.",
+	"discussions_detail_event_moved_from": "moved this from",
+	"discussions_detail_event_moved_to": "moved this to",
+	"discussions_detail_event_pinned": "pinned this discussion",
+	"discussions_detail_event_unpinned": "unpinned this discussion",
+	"discussions_detail_event_locked": "locked this discussion",
+	"discussions_detail_event_unlocked": "unlocked this discussion",
+	"discussions_detail_event_answer_marked": "marked a reply as the answer",
+	"discussions_detail_event_answer_unmarked": "unmarked the answer",
+	"discussions_detail_event_converted": "converted this discussion to feedback",
+	"discussions_detail_moved_notice": "This conversation moved to Feedback, so this discussion is locked. Continue it here:",
+	"feedback_imported_from_discussion": "imported this from the discussion"
 }
