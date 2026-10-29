@@ -54,10 +54,13 @@ Upstream replacements for each patch change:
 | 2. Server-configured OAuth callback URL | None; no upstream PR | No. Carry as a patch on whichever release Kino adopts |
 | 3. Deterministic refresh successors | Issued/redeemed refresh tokens [#686](https://github.com/get-convex/convex-auth/pull/686) | Yes, in `2.0.0-beta.0` |
 
-Last evaluated release: `2.0.0-beta.0` (October 29, 2026). Not adopted: it
-predates the session revocation work, so patch change 1 would have to be
-re-ported onto its rewritten session schema only to be dropped again in the
-next release. Update this line whenever a newer beta or stable is evaluated.
+Adopted release: none yet; the git pin is still installed.
+
+Target release: `2.0.0-beta.0` (chosen October 29, 2026). It replaces patch
+change 3, so Kino moves to it with a regenerated patch carrying changes 1 and 2.
+Change 1 must be re-ported onto beta.0's rewritten session schema and can be
+dropped at the first release that includes #757-#779. Once the upgrade merges,
+record the version here as the adopted release.
 
 ## Upstream review
 
