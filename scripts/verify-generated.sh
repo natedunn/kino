@@ -7,7 +7,8 @@ cd "$WORKTREE_ROOT"
 echo "Regenerating native Convex source files..."
 pnpm run codegen
 
-# Convex AI guidance is updated separately with `npx convex ai-files update`.
+# Convex AI guidance is refreshed by the Convex CLI on local deployment setup
+# and committed as its own change (see AGENTS.md).
 # It is intentionally excluded here because it is tooling documentation, not
 # application runtime code.
 generated_status=$(git status --short --untracked-files=all -- \

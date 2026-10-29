@@ -30,10 +30,15 @@ where it would target the preview or production deployment. The same workflow
 runs `pnpm run test:scripts`, the `node:test` suites for `scripts/` (vitest
 excludes `scripts/**/*.test.mjs`).
 
-Do not run `npx convex ai-files update` as part of normal setup or PR
-verification. Convex AI guidance and installed skills are tooling documentation,
-not application runtime output; update and commit them only as an explicit
-maintenance change.
+Convex AI guidance and installed skills (`.agents/skills/`, `.claude/skills/`,
+`skills-lock.json`, `convex/native/_generated/ai/`) are tooling documentation,
+not application runtime output, so `verify:generated` ignores them. The Convex
+CLI refreshes them to the latest version whenever it sets up a new local
+deployment, which happens on a worktree's first `pnpm dev`. When that leaves
+them changed, commit them in the feature's pull request as their own
+"Update Convex AI files" commit rather than leaving them uncommitted. If two
+branches conflict on these files, take the newer version. Do not add
+`npx convex ai-files update` to setup or verification scripts.
 
 ## GitHub integration & gateway
 

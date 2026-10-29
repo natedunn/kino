@@ -173,6 +173,30 @@ async function addUpdateComment(
 	});
 }
 
+async function addDiscussionComment(
+	t: Backend,
+	args: { authorProfileId: Id<'profiles'>; projectId: Id<'projects'>; content: string }
+) {
+	return t.run(async (ctx) => {
+		const discussionId = await ctx.db.insert('discussions', {
+			projectId: args.projectId,
+			authorProfileId: args.authorProfileId,
+			slug: `discussion-${Math.random().toString(36).slice(2)}`,
+			title: 'Discussion title',
+			searchContent: 'Discussion title',
+			commentCount: 0,
+			lastActivityAt: Date.now(),
+		});
+		await ctx.db.insert('discussionComments', {
+			discussionId,
+			authorProfileId: args.authorProfileId,
+			content: args.content,
+			initial: true,
+		});
+		return discussionId;
+	});
+}
+
 describe('native user data export', () => {
 	test('requires the signed-in current user for sections and exports', async () => {
 		const t = setup();
@@ -216,10 +240,29 @@ describe('native user data export', () => {
 			projectId: project.projectId,
 			content: 'Looks good',
 		});
+		await addDiscussionComment(t, {
+			authorProfileId: owner.profileId,
+			projectId: project.projectId,
+			content: 'Has anyone tried this?',
+		});
 
 		const result = await owner.caller.query(exportData, { generatedAt });
 		const comments = result.sections.comments!;
-		expect(comments.counts).toEqual({ feedbackComments: 1, updateComments: 1, total: 2 });
+		expect(comments.counts).toEqual({
+			feedbackComments: 1,
+			updateComments: 1,
+			discussionComments: 1,
+			total: 3,
+		});
+		expect(comments.discussionComments[0]).toMatchObject({
+			content: 'Has anyone tried this?',
+			initial: true,
+			context: {
+				contextAccess: 'visible',
+				discussion: { title: 'Discussion title' },
+				project: { slug: 'roadmap' },
+			},
+		});
 		expect(comments.feedbackComments[0]).toMatchObject({
 			content: 'Please fix this',
 			context: {

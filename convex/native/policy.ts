@@ -14,6 +14,7 @@ import {
 } from './access';
 import { canUseReservedProjectSlugs, requireCurrentUser } from './identity';
 import schema, { organizationRole, projectVisibility } from './schema';
+import { seedDefaultCategories } from './discussionCategories';
 
 const PROJECT_LIMITS = { user: 1, 'system:admin': 100 } as const;
 const organizationPermissionsValidator = v.object({
@@ -105,6 +106,7 @@ async function insertProject(
 	]) {
 		await ctx.db.insert('feedbackBoards', { projectId, ...board });
 	}
+	await seedDefaultCategories(ctx, projectId);
 	return { id: projectId, slug };
 }
 
