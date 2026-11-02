@@ -15,9 +15,9 @@ overrides:
   postcss@>=8.0.0 <8.5.23: 8.5.28
 
 patchedDependencies:
-  '@convex-dev/auth@2.0.0-alpha.2':
-    hash: 269ba5c544fe9399bfdf9cc8bcdc52f229e69fc2b80351ab646ea9ca0ea1bc55
-    path: patches/convex-auth-v2-reboot.patch
+  '@convex-dev/auth@2.0.0-beta.0':
+    hash: 6d6ac3bc3c0c7a9e868cb70126333bd3e071aeec7b9011d5955301eaddc04cd8
+    path: patches/convex-auth-v2-beta.0.patch
 
 importers:
 
@@ -39,8 +39,8 @@ importers:
         specifier: ^2.6.0
         version: 2.6.0(blobatar@2.6.0(react@19.2.6))(react@19.2.6)
       '@convex-dev/auth':
-        specifier: github:get-convex/convex-auth#1d105a04d124785441ce655cef33b54103c7bc2e&path:packages/core
-        version: https://codeload.github.com/get-convex/convex-auth/tar.gz/1d105a04d124785441ce655cef33b54103c7bc2e#path:packages/core(patch_hash=269ba5c544fe9399bfdf9cc8bcdc52f229e69fc2b80351ab646ea9ca0ea1bc55)(@standard-schema/spec@1.1.0)(convex@1.46.0(react@19.2.6))(hono@4.13.8)(react@19.2.6)(typescript@5.9.3)(zod@4.4.3)
+        specifier: 2.0.0-beta.0
+        version: 2.0.0-beta.0(patch_hash=6d6ac3bc3c0c7a9e868cb70126333bd3e071aeec7b9011d5955301eaddc04cd8)(@standard-schema/spec@1.1.0)(convex@1.46.0(react@19.2.6))(hono@4.13.8)(react@19.2.6)(typescript@5.9.3)(zod@4.4.3)
       '@convex-dev/r2':
         specifier: ^0.10.2
         version: 0.10.2(@standard-schema/spec@1.1.0)(convex@1.46.0(react@19.2.6))(hono@4.13.8)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3)(zod@4.4.3)
@@ -679,15 +679,17 @@ packages:
     peerDependencies:
       convex: ^1.24.8
 
-  '@convex-dev/auth@https://codeload.github.com/get-convex/convex-auth/tar.gz/1d105a04d124785441ce655cef33b54103c7bc2e#path:packages/core':
-    resolution: {path: packages/core, tarball: https://codeload.github.com/get-convex/convex-auth/tar.gz/1d105a04d124785441ce655cef33b54103c7bc2e}
-    version: 2.0.0-alpha.2
+  '@convex-dev/auth@2.0.0-beta.0':
+    resolution: {integrity: sha512-GNIYITbRvLg8Ev5YW3j/rJ71Dft/fGYO5kkTJigVwuYCcn3WOeVY9+1IpKDntzMOZou1uDZwlPnR0BcWZWGaKg==}
     hasBin: true
     peerDependencies:
+      '@convex-dev/resend': ^0.2.8
       convex: ^1.46.0
       next: ^16.0.0
       react: ^18.0.0 || ^19.0.0
     peerDependenciesMeta:
+      '@convex-dev/resend':
+        optional: true
       next:
         optional: true
       react:
@@ -6763,7 +6765,7 @@ snapshots:
     dependencies:
       convex: 1.46.0(react@19.2.6)
 
-  '@convex-dev/auth@https://codeload.github.com/get-convex/convex-auth/tar.gz/1d105a04d124785441ce655cef33b54103c7bc2e#path:packages/core(patch_hash=269ba5c544fe9399bfdf9cc8bcdc52f229e69fc2b80351ab646ea9ca0ea1bc55)(@standard-schema/spec@1.1.0)(convex@1.46.0(react@19.2.6))(hono@4.13.8)(react@19.2.6)(typescript@5.9.3)(zod@4.4.3)':
+  '@convex-dev/auth@2.0.0-beta.0(patch_hash=6d6ac3bc3c0c7a9e868cb70126333bd3e071aeec7b9011d5955301eaddc04cd8)(@standard-schema/spec@1.1.0)(convex@1.46.0(react@19.2.6))(hono@4.13.8)(react@19.2.6)(typescript@5.9.3)(zod@4.4.3)':
     dependencies:
       '@babel/code-frame': 7.29.7
       '@convex-dev/batch-worker': 0.3.4(@standard-schema/spec@1.1.0)(convex@1.46.0(react@19.2.6))(hono@4.13.8)(react@19.2.6)(typescript@5.9.3)(zod@4.4.3)

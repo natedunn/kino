@@ -11,21 +11,26 @@ feature components.
 
 ## Pinned runtime
 
-- Repository: `get-convex/convex-auth`, branch `reboot`
-- Tested source commit: `1d105a04d124785441ce655cef33b54103c7bc2e`
-- Source package version: `2.0.0-alpha.2`
-- Required Convex version in the proof: `1.46.0`
-- Do not substitute the differently-built published alpha without repeating the
-  auth, SSR, OAuth, and regression proofs.
+- Package: `@convex-dev/auth@2.0.0-beta.0` from npm, pinned exactly
+- Required Convex version: `1.46.0`
+- Kino follows npm beta and stable releases; see the release policy in
+  [Convex Auth v2 patch maintenance](convex-auth-v2-maintenance.md).
 
-The integration must carry three isolated patches until equivalent upstream
-behavior is available:
+The integration carries one pnpm patch, `patches/convex-auth-v2-beta.0.patch`,
+for what the release still lacks:
 
-1. Password reset increments a core-owned session generation so every old
-   refresh token is rejected after the credential change.
-2. OAuth supports a server-configured callback URL for the stable gateway.
-3. A retry of the immediately previous refresh token inside the grace window
-   recovers the exact successor, including when the first response was lost.
+1. Password reset revokes every session of the user through a core
+   `revokeUserSessions` mutation, so every old refresh token is rejected after
+   the credential change.
+2. The GitHub OAuth component accepts a server-configured callback URL for the
+   stable gateway.
+3. The package exports `@convex-dev/auth/components/password/validation`, which
+   Kino's password method uses to validate a new password before creating the
+   user.
+
+Kino's password method also uses `AuthCore.bindProvider`, which the release
+publishes only under the `convex-auth-internal-types` export condition (enabled
+in the root and Convex tsconfigs).
 
 The patch removal conditions and current upstream assessment are maintained in
 [Convex Auth v2 patch maintenance](convex-auth-v2-maintenance.md).
@@ -34,13 +39,12 @@ The short opaque OAuth state registry is Kino gateway infrastructure. It is not
 implemented by either auth provider and remains required after the provider
 change.
 
-The root package now installs that exact Git commit and applies
-`patches/convex-auth-v2-reboot.patch` reproducibly through pnpm. The package
-verification script checks both the pin and the emitted `dist` runtime, because
-patching only the package's TypeScript source would leave consumers executing
-the original compiled JavaScript. Kino uses the tested Convex 1.46 runtime;
-`verify:pr` checks generated application files, the installed auth package, and
-TypeScript compatibility.
+The patch covers both the package's TypeScript source and its emitted `dist`
+runtime and declarations, because patching only the source would leave
+consumers executing the original compiled JavaScript. The package verification
+script checks both the exact pin and the emitted runtime. `verify:pr` checks
+generated application files, the installed auth package, and TypeScript
+compatibility.
 
 ## Stable browser surface
 

@@ -1,9 +1,7 @@
 import type { Id } from './_generated/dataModel';
 import type { MutationCtx } from './_generated/server';
 
-import { sha256Hex } from '@convex-dev/auth/lib/crypto';
-import { vSignInComplete } from '@convex-dev/auth/lib/types';
-import { validateNewPassword } from '@convex-dev/auth/providers/password/validation';
+import { validateNewPassword } from '@convex-dev/auth/components/password/validation';
 import { MINUTE, RateLimiter } from '@convex-dev/rate-limiter';
 import { ConvexError, v } from 'convex/values';
 
@@ -13,6 +11,7 @@ import { core } from './auth';
 import { emailCredentials } from './mailConfig';
 import { ensurePersonalOrganization } from './organizations';
 import { ensureProfile } from './profiles';
+import { sha256Hex } from './relayClient';
 import { challengePurpose, localeValidator } from './schema';
 
 const providerValidator = v.object({
@@ -32,6 +31,17 @@ const { authMutation } = core.bindProvider({
 const limits = new RateLimiter(components.authLimits, {
 	email: { kind: 'token bucket', rate: 3, period: MINUTE, capacity: 3 },
 	login: { kind: 'token bucket', rate: 5, period: MINUTE, capacity: 5 },
+});
+// Mirrors upstream's vSignInComplete, which 2.0.0-beta.0 no longer exports.
+const vSignInComplete = v.object({
+	status: v.literal('complete'),
+	tokens: v.object({
+		accessToken: v.string(),
+		accessTokenExpiresAt: v.number(),
+		refreshToken: v.string(),
+		refreshTokenExpiresAt: v.number(),
+		userId: v.string(),
+	}),
 });
 const accepted = { status: 'accepted' as const };
 const failure = (error: string) => ({ status: 'error' as const, userError: { error } });

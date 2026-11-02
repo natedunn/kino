@@ -1,66 +1,70 @@
 # Convex Auth v2 patch maintenance
 
-Kino pins `@convex-dev/auth` to commit
-`1d105a04d124785441ce655cef33b54103c7bc2e` on the upstream `reboot`
-branch, with one reproducible pnpm patch at
-`patches/convex-auth-v2-reboot.patch`. Do not move it to a newer `reboot`
-commit, a tag, or a range as routine dependency maintenance; see the release
-policy below for when the pin changes.
+Kino pins `@convex-dev/auth` to the exact npm release `2.0.0-beta.0`, with one
+reproducible pnpm patch at `patches/convex-auth-v2-beta.0.patch`. Do not move
+it to a `reboot` commit, a tag, or a range; see the release policy below for
+when the pin changes.
 
 ## Patch inventory
 
 The patch contains three isolated compatibility changes:
 
-1. Session generations let a completed password reset revoke every existing
-   refresh session for that user. Remove this when upstream exposes equivalent
-   transactional revocation.
-2. A server-configured OAuth callback URL lets the stable Kino gateway front
+1. `revokeUserSessions` in the core component deletes every session of a user
+   and its refresh tokens, so a completed password reset revokes every existing
+   refresh session (`convex/native/password.ts`). It runs in the reset mutation's
+   transaction. Remove it when a release ships equivalent revocation callable
+   from an app mutation, and call that instead.
+2. A server-configured OAuth callback URL (`CALLBACK_URL` on the GitHub
+   component, read in `lib/oauth/dbHelpers`) lets the stable Kino gateway front
    environment-specific Convex callbacks. Remove this when upstream supports
-   the same callback boundary without a core patch.
-3. Deterministic refresh successors let a retry inside the existing 30-second
-   grace window recover the exact token produced by the first rotation. This
-   prevents a lost refresh response from forcing a later sign-in. Remove it when
-   upstream offers equivalent idempotent or acknowledged refresh recovery.
+   the same callback boundary without a patch.
+3. A package export for `@convex-dev/auth/components/password/validation`.
+   Kino's password method calls `validateNewPassword` before creating the user,
+   so a rejected password creates no account. Remove it when upstream exports
+   password validation publicly, or when Kino stops pre-validating.
 
-The refresh patch stores only hashes, as upstream does. It derives a successor
-with HMAC-SHA-256 from the auth private key, session ID, and previous token hash.
-The domain string is `kino-convex-auth-refresh-recovery-v1`. A client holding the
-immediately previous token can recover its successor during the existing grace
-window; after the session advances again it receives only upstream's access-token
-reuse response, and replay outside the grace window still revokes the session.
-This is an explicit availability/security tradeoff. Rotating `AUTH_PRIVATE_KEY`
-can prevent recovery of an in-flight old response during that brief window, but
-does not invalidate a current refresh token.
+Kino's password method also calls `AuthCore.bindProvider`, which beta.0 marks
+`@internal` and publishes only under the `convex-auth-internal-types` export
+condition. The root and Convex tsconfigs enable that condition; no patch is
+needed, but the API may change without notice in a later release.
+
+Each change is applied to the package's TypeScript source and to its emitted
+`dist` runtime and declarations (including `dist/internal-types`).
+`scripts/check-native-auth-package.mjs` checks the exact pin and the emitted
+markers, so a missing patch or accidental upgrade fails PR verification.
+
+The former refresh-successor patch was dropped in the beta.0 upgrade: upstream's
+issued/redeemed refresh tokens keep the most recently redeemed token valid, so a
+client whose refresh response was lost can retry with the token it still holds
+and receive a fresh successor.
 
 ## Release policy
 
 Kino follows npm releases of `@convex-dev/auth` (beta, then stable), not
 `reboot` commits, and carries a patch only where a release falls short.
 
-- Stay on the current git pin until the first npm beta or stable release that,
-  together with a patch regenerated against it, covers all three patch changes
-  above.
-- Then pin that exact version (no range), regenerate or remove the patch, and
-  follow later beta and stable releases from there. Alpha releases are skipped.
+- Pin the exact version (no range), regenerate or remove the patch, and follow
+  later beta and stable releases. Alpha releases are skipped.
 - Each upgrade is its own PR, "Upgrade @convex-dev/auth to <version>", with
   the manual steps for every environment (table clears, env var changes,
   expected sign-outs) in its description.
 
-Upstream replacements for each patch change:
+Upstream replacements for each patch change, and for the patch changes the
+beta.0 upgrade retired:
 
-| Patch change | Upstream replacement | Released? |
-| --- | --- | --- |
-| 1. Session generations (reset revokes sessions) | Stateful sessions [#757](https://github.com/get-convex/convex-auth/pull/757), `listSessions`/`revokeSessions` [#759](https://github.com/get-convex/convex-auth/pull/759), password-reset revocation [#775](https://github.com/get-convex/convex-auth/pull/775) and [#779](https://github.com/get-convex/convex-auth/pull/779) | No. Merged to `reboot` October 26-28, 2026, after `2.0.0-beta.0` |
-| 2. Server-configured OAuth callback URL | None; no upstream PR | No. Carry as a patch on whichever release Kino adopts |
-| 3. Deterministic refresh successors | Issued/redeemed refresh tokens [#686](https://github.com/get-convex/convex-auth/pull/686) | Yes, in `2.0.0-beta.0` |
+| Patch change                                                   | Upstream replacement                                                                                                                                                                                                                                                                                                          | Released?                                                                                        |
+| -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Session revocation on password reset (was session generations) | Stateful sessions [#757](https://github.com/get-convex/convex-auth/pull/757), `listSessions`/`revokeSessions` [#759](https://github.com/get-convex/convex-auth/pull/759), password-reset revocation [#775](https://github.com/get-convex/convex-auth/pull/775) and [#779](https://github.com/get-convex/convex-auth/pull/779) | No. Merged to `reboot` October 26-28, 2026, after `2.0.0-beta.0`; ported as `revokeUserSessions` |
+| Server-configured OAuth callback URL                           | None; no upstream PR                                                                                                                                                                                                                                                                                                          | No. Carried as a patch                                                                           |
+| Password validation export                                     | None; trimmed from the public API in [#691](https://github.com/get-convex/convex-auth/pull/691)                                                                                                                                                                                                                               | No. Carried as a patch                                                                           |
+| Deterministic refresh successors (dropped)                     | Issued/redeemed refresh tokens [#686](https://github.com/get-convex/convex-auth/pull/686)                                                                                                                                                                                                                                     | Yes, in `2.0.0-beta.0`                                                                           |
 
-Adopted release: none yet; the git pin is still installed.
+Adopted release: `2.0.0-beta.0` (upgrade opened November 2, 2026).
 
-Target release: `2.0.0-beta.0` (chosen October 29, 2026). It replaces patch
-change 3, so Kino moves to it with a regenerated patch carrying changes 1 and 2.
-Change 1 must be re-ported onto beta.0's rewritten session schema and can be
-dropped at the first release that includes #757-#779. Once the upgrade merges,
-record the version here as the adopted release.
+Target release: the next beta or stable release. Expect it to include #757-#787:
+session IDs in the JWT `sub` (so `convex/native/identity.ts` must use
+`getAuthUserId`), deployment-issued JWTs (no `AUTH_PRIVATE_KEY`/`AUTH_JWKS`,
+Convex 1.48), and another `auth/sessions` and `auth/refreshTokens` clear.
 
 ## Upstream review
 

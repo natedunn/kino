@@ -11,6 +11,9 @@
 		"module": "esnext",
 		"moduleDetection": "force",
 		"moduleResolution": "bundler",
+		// Kino's password method uses AuthCore.bindProvider, which @convex-dev/auth
+		// publishes only under this condition (internal until upstream stabilizes it).
+		"customConditions": ["convex-auth-internal-types"],
 		"noEmit": true,
 		"noUnusedLocals": false,
 		"noUnusedParameters": false,

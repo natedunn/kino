@@ -1,7 +1,7 @@
 // @vitest-environment edge-runtime
-import type { GithubProfile } from '@convex-dev/auth/providers/oauth/github';
+import type { GithubProfile } from '@convex-dev/auth/methods/github/server';
 
-import { registerCore } from '@convex-dev/auth/providers/testing/core';
+import { registerCore } from '@convex-dev/auth/test';
 import { convexTest } from 'convex-test';
 import { createFunctionHandle } from 'convex/server';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';

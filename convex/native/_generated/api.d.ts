@@ -216,13 +216,6 @@ export declare const api: {
             userId: string;
           };
         }
-      | {
-          accessToken: string;
-          accessTokenExpiresAt: number;
-          kind: "reused";
-          refreshTokenExpiresAt: number;
-          userId: string;
-        }
       | { kind: "noSession" }
     >;
     signOut: FunctionReference<
@@ -3654,8 +3647,8 @@ export declare const internal: {
 };
 
 export declare const components: {
-  auth: import("@convex-dev/auth/core/_generated/component.js").ComponentApi<"auth">;
-  password: import("@convex-dev/auth/providers/password/_generated/component.js").ComponentApi<"password">;
+  auth: import("@convex-dev/auth/_generated/component.js").ComponentApi<"auth">;
+  password: import("@convex-dev/auth/components/password/_generated/component.js").ComponentApi<"password">;
   authLimits: import("@convex-dev/rate-limiter/_generated/component.js").ComponentApi<"authLimits">;
-  oauthGithub: import("@convex-dev/auth/providers/oauth/_generated/component.js").ComponentApi<"oauthGithub">;
+  oauthGithub: import("@convex-dev/auth/components/github/_generated/component.js").ComponentApi<"oauthGithub">;
 };

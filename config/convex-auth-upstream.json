@@ -3,10 +3,10 @@
 	"branch": "reboot",
 	"reviewedUpstreamSha": "de1ddf385d3723dea832cbcb7e548b08dbc7b5d4",
 	"patchTargets": [
-		"packages/core/src/components/core/public.ts",
-		"packages/core/src/components/core/schema.ts",
-		"packages/core/src/components/core/_generated/component.ts",
-		"packages/core/src/oauth/component/convex.config.ts",
-		"packages/core/src/oauth/shared/dbHelpers.ts"
+		"packages/core/src/component/public.ts",
+		"packages/core/src/component/_generated/component.ts",
+		"packages/core/src/components/github/convex.config.ts",
+		"packages/core/src/lib/oauth/dbHelpers.ts",
+		"packages/core/package.json"
 	]
 }

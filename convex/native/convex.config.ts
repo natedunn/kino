@@ -1,6 +1,6 @@
-import auth from '@convex-dev/auth/core/convex.config';
-import oauth from '@convex-dev/auth/providers/oauth/convex.config';
-import password from '@convex-dev/auth/providers/password/convex.config';
+import github from '@convex-dev/auth/components/github/convex.config';
+import password from '@convex-dev/auth/components/password/convex.config';
+import auth from '@convex-dev/auth/convex.config';
 import rateLimiter from '@convex-dev/rate-limiter/convex.config';
 import { defineApp } from 'convex/server';
 import { v } from 'convex/values';
@@ -47,7 +47,7 @@ app.use(auth, {
 });
 app.use(password, { name: 'password' });
 app.use(rateLimiter, { name: 'authLimits' });
-app.use(oauth, {
+app.use(github, {
 	name: 'oauthGithub',
 	httpPrefix: '/oauth/github',
 	env: {
