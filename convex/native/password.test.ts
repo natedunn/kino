@@ -1,6 +1,6 @@
 // @vitest-environment edge-runtime
-import { registerCore } from '@convex-dev/auth/providers/testing/core';
-import { registerPasswordProvider } from '@convex-dev/auth/providers/testing/password';
+import { registerPasswordProvider } from '@convex-dev/auth/components/password/test';
+import { registerCore } from '@convex-dev/auth/test';
 import { register as registerRateLimiter } from '@convex-dev/rate-limiter/test';
 import { convexTest } from 'convex-test';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
@@ -160,7 +160,7 @@ describe('native verified password lifecycle', () => {
 			status: 'complete',
 		});
 	});
-	test('a lost refresh response can recover the exact successor once', async () => {
+	test('a lost refresh response is recovered by retrying the redeemed token', async () => {
 		const t = setup();
 		const initial = await verified(t);
 		const first = await t.mutation(api.auth.refreshSession, {
@@ -169,34 +169,25 @@ describe('native verified password lifecycle', () => {
 		if (first.kind !== 'rotated') throw new Error('Expected initial rotation');
 
 		// Simulate the first response being lost: the browser retries the token it
-		// still has and must receive the exact same successor, not a second rotation.
+		// still has. Upstream keeps the redeemed token valid and issues a sibling.
 		const recovered = await t.mutation(api.auth.refreshSession, {
 			refreshToken: initial.tokens.refreshToken,
 		});
-		expect(recovered).toMatchObject({ kind: 'rotated' });
 		if (recovered.kind !== 'rotated') throw new Error('Expected recovered rotation');
-		expect(recovered.tokens.refreshToken).toBe(first.tokens.refreshToken);
+		expect(recovered.tokens.refreshToken).not.toBe(first.tokens.refreshToken);
 
 		const second = await t.mutation(api.auth.refreshSession, {
 			refreshToken: recovered.tokens.refreshToken,
 		});
-		expect(second).toMatchObject({ kind: 'rotated' });
+		if (second.kind !== 'rotated') throw new Error('Expected second rotation');
 
-		// Once the session has advanced again, the older token cannot reconstruct
-		// the current credential and retains upstream's access-only grace behavior.
+		// The lost sibling was dropped when the recovered token was redeemed, so
+		// presenting it looks like a forked session and revokes the session.
 		expect(
 			await t.mutation(api.auth.refreshSession, {
-				refreshToken: initial.tokens.refreshToken,
-			})
-		).toMatchObject({ kind: 'reused' });
-
-		vi.advanceTimersByTime(31_000);
-		expect(
-			await t.mutation(api.auth.refreshSession, {
-				refreshToken: recovered.tokens.refreshToken,
+				refreshToken: first.tokens.refreshToken,
 			})
 		).toEqual({ kind: 'noSession' });
-		if (second.kind !== 'rotated') throw new Error('Expected second rotation');
 		expect(
 			await t.mutation(api.auth.refreshSession, {
 				refreshToken: second.tokens.refreshToken,

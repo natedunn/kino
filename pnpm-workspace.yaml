@@ -1,10 +1,7 @@
 packages:
   - .
 
-# Convex Auth v2 is pinned to a reviewed git commit until its reboot branch has
-# a release matching the source proven during the native Convex migration.
-onlyBuiltDependencies:
-  - '@convex-dev/auth'
-
+# Convex Auth v2 follows npm beta and stable releases. Kino patches only what
+# the pinned release still lacks; see docs/convex-auth-v2-maintenance.md.
 patchedDependencies:
-  '@convex-dev/auth@2.0.0-alpha.2': patches/convex-auth-v2-reboot.patch
+  '@convex-dev/auth@2.0.0-beta.0': patches/convex-auth-v2-beta.0.patch

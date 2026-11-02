@@ -1,4 +1,4 @@
-import { setupGithub, vGithubProfile } from '@convex-dev/auth/providers/oauth/github';
+import { setupGithub, vGithubProfile } from '@convex-dev/auth/methods/github/server';
 import { ConvexError, v } from 'convex/values';
 
 import { components, internal } from './_generated/api';
@@ -64,7 +64,11 @@ export const onSignIn = internalMutation({
 	},
 });
 
-export const { startSignInGithub, completeSignInGithub } = setupGithub(core, {
+// Keep Kino's public function names; the gateway and SSR adapter call them.
+export const {
+	startSignInWithGithub: startSignInGithub,
+	completeSignInWithGithub: completeSignInGithub,
+} = setupGithub(core, {
 	component: components.oauthGithub,
 	allowedRedirectOrigins: [env.AUTH_APP_ORIGIN],
 }).attachUserCallbacks({

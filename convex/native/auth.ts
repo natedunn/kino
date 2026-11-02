@@ -1,11 +1,11 @@
-import { setupCore } from '@convex-dev/auth/core/setup';
+import { setupConvexAuth } from '@convex-dev/auth/server';
 import { v } from 'convex/values';
 
 import { components } from './_generated/api';
 import { query } from './_generated/server';
 import { getCurrentUser } from './identity';
 
-export const core = setupCore({ component: components.auth, usersTable: 'users' });
+export const core = setupConvexAuth({ component: components.auth, usersTable: 'users' });
 export const { refreshSession, signOut } = core;
 
 // The upstream predicate only checks for any verified JWT. Kino also requires

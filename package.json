@@ -51,7 +51,7 @@
 		"@base-ui/react": "^1.4.1",
 		"@bentonow/bento-node-sdk": "^2.0.0",
 		"@blobatar/react": "^2.6.0",
-		"@convex-dev/auth": "github:get-convex/convex-auth#1d105a04d124785441ce655cef33b54103c7bc2e&path:packages/core",
+		"@convex-dev/auth": "2.0.0-beta.0",
 		"@convex-dev/r2": "^0.10.2",
 		"@convex-dev/rate-limiter": "0.3.2",
 		"@convex-dev/react-query": "0.1.0",
