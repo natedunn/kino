@@ -64,6 +64,35 @@ record the version here as the adopted release.
 
 ## Upstream review
 
+### November 2, 2026 review
+
+Reviewed `reboot` from `db15c82e6f568d7717563783447010f9a5534359` (the end of
+the October 29 review) through `07911f86230f86ff61655559e8fd278a843ca084`
+(November 2), 2 commits. npm is unchanged: `beta` → `2.0.0-beta.0`, `alpha` →
+`2.0.0-alpha.2`, `latest` → `0.0.96`. `reviewedUpstreamSha` stays at
+`de1ddf38` because the target release upgrade is still open.
+
+- [#783](https://github.com/get-convex/convex-auth/pull/783) caps a user at 100
+  sessions, evicting the least recently refreshed on sign-in. It bounds
+  `listSessions` and session revocation, which matters for patch change 1's
+  upstream replacement.
+- [#781](https://github.com/get-convex/convex-auth/pull/781) derives
+  refresh-token expiry from the issue time and the current TTL, removing
+  `refreshTokens.expiresAt`. The PR says to clear `auth/refreshTokens` and
+  `auth/sessions` before updating, so the next release needs a table clear
+  again.
+- `component/public.ts`, `schema.ts`, and `_generated/component.ts` changed
+  (`listSessions` no longer returns `expiresAt`). The callback code
+  (`lib/oauth/dbHelpers.ts`) and the OAuth component configs are unchanged.
+
+Removal conditions: patch change 1 (session revocation) is still unreleased.
+Patch change 2 (callback URL) still has no upstream equivalent. Patch change 3
+(refresh successors) is covered by `2.0.0-beta.0`. Recommendation: proceed
+with the `2.0.0-beta.0` upgrade
+([#181](https://github.com/natedunn/kino/pull/181)); nothing in this range
+changes it. See the
+[upstream comparison](https://github.com/get-convex/convex-auth/compare/db15c82e6f568d7717563783447010f9a5534359...07911f86230f86ff61655559e8fd278a843ca084).
+
 ### October 29, 2026 review
 
 Reviewed `reboot` from `de1ddf385d3723dea832cbcb7e548b08dbc7b5d4` through
