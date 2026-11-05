@@ -64,6 +64,72 @@ record the version here as the adopted release.
 
 ## Upstream review
 
+### November 5, 2026 review
+
+Reviewed `reboot` from `07911f86230f86ff61655559e8fd278a843ca084` (the end of
+the November 2 review, [#182](https://github.com/natedunn/kino/pull/182))
+through `a7bdf81d2eb8c63b9bf4d7a78e30b2402f07ea40` (November 4), 5 commits. npm
+is unchanged: `beta` → `2.0.0-beta.0`, `alpha` → `2.0.0-alpha.2`, `latest` →
+`0.0.96`. No released version contains anything in this range, so the
+`2.0.0-beta.0` upgrade ([#181](https://github.com/natedunn/kino/pull/181)) is
+unaffected. `reviewedUpstreamSha` stays at `de1ddf38` because that upgrade is
+still open.
+
+Changes per patch target:
+
+- `component/public.ts` and `component/_generated/component.ts`: session and
+  TTL helpers moved to `component/sessions.ts` and `component/expiry.ts`
+  ([#784](https://github.com/get-convex/convex-auth/pull/784)), including
+  `deleteSession`. TTL values are now required component args, resolved in
+  `setupConvexAuth` ([#801](https://github.com/get-convex/convex-auth/pull/801)).
+- `component/schema.ts`: comments only.
+- `components/oauth/convex.config.ts`, `components/github/convex.config.ts`,
+  `lib/oauth/dbHelpers.ts`: unchanged. `CHANGELOG.md` and `KNOWN_ISSUES.md` are
+  also unchanged in this range.
+
+Removal conditions:
+
+- Session generations (reset revokes sessions): met on `reboot`, still
+  unreleased.
+- Callback URL: not met. No upstream equivalent and no open PR.
+- Refresh successors: covered by `2.0.0-beta.0`.
+
+The next release after beta.0 will need these changes in Kino, on top of those
+listed in the October 29 review:
+
+- Session lifetime: [#798](https://github.com/get-convex/convex-auth/pull/798)
+  splits the refresh TTL into `refreshInactivityTimeoutSeconds` and
+  `sessionMaxLifetimeSeconds`. The default max lifetime is 30 days from session
+  creation, however often the session refreshes. Kino sets no TTL in
+  `convex/native/auth.ts`, so active users, who now stay signed in as long as
+  they keep refreshing, would be signed out every 30 days. Decide on a value
+  and set `sessionMaxLifetimeSeconds` during that upgrade.
+- JWT audience: [#800](https://github.com/get-convex/convex-auth/pull/800)
+  changes `aud` to `convex-auth`. `convex/native/auth.config.ts` hard-codes
+  `applicationID: 'convex'`, so every token would be rejected. Together with
+  deployment-issued JWTs, the fix is to use `convexAuthProvider()`.
+- Reactive sign-out: [#761](https://github.com/get-convex/convex-auth/pull/761)
+  adds `AuthStateWatcher` to upstream's React and Next.js providers. Kino
+  renders its own `ConvexProviderWithAuth` in
+  `src/lib/auth/adapters/native-client.tsx`, so it needs an equivalent to sign
+  clients out when a session is revoked.
+
+Open upstream PRs to watch:
+[#803](https://github.com/get-convex/convex-auth/pull/803) and
+[#806](https://github.com/get-convex/convex-auth/pull/806) lower the password
+component's minimum to 8 characters and make `minimumLength` a required
+`setPassword` argument. Kino calls `setPassword` twice in
+`convex/native/password.ts` and must pass 10 to keep its current minimum, and
+its password validation export may need to change.
+[#799](https://github.com/get-convex/convex-auth/pull/799) schedules refresh
+token cleanup after a session is deleted, and
+[#786](https://github.com/get-convex/convex-auth/pull/786) changes the
+`revokeOtherSessions` count.
+
+Recommendation: no change to the beta.0 upgrade. Take these items into the
+upgrade to the next release. See the
+[upstream comparison](https://github.com/get-convex/convex-auth/compare/07911f86230f86ff61655559e8fd278a843ca084...a7bdf81d2eb8c63b9bf4d7a78e30b2402f07ea40).
+
 ### October 29, 2026 review
 
 Reviewed `reboot` from `de1ddf385d3723dea832cbcb7e548b08dbc7b5d4` through
