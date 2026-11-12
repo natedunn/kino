@@ -64,6 +64,81 @@ record the version here as the adopted release.
 
 ## Upstream review
 
+### November 12, 2026 review
+
+Upstream merged `reboot` into `main` on November 10 and now publishes v2 from
+`main` ([#880](https://github.com/get-convex/convex-auth/pull/880)). The
+`reboot` branch is gone, so `config/convex-auth-upstream.json` now tracks
+`main`. Before that change, `pnpm run auth:native:check-upstream` and the weekly
+workflow failed with a GitHub 422 rather than reporting upstream changes.
+
+Reviewed v2 commits from `a7bdf81d2eb8c63b9bf4d7a78e30b2402f07ea40` (the end of
+the November 5 review, [#183](https://github.com/natedunn/kino/pull/183))
+through `ce75973934ec54a3f7c86246c334cc890e92b194` on `main` (November 12),
+about 65 commits excluding the merged v1 history. npm `beta` is still
+`2.0.0-beta.0`. `latest` moved to `0.0.98`, which is a v1 release and not
+relevant. `reviewedUpstreamSha` stays at `de1ddf38` because the
+`2.0.0-beta.0` upgrade ([#181](https://github.com/natedunn/kino/pull/181)) is
+still open.
+
+Changes per patch target:
+
+- `component/public.ts`: the core sign-in functions are now
+  `_internal_dangerous_signUp`, `_internal_dangerous_signIn` and
+  `_internal_dangerous_signUpWithoutSession`
+  ([#877](https://github.com/get-convex/convex-auth/pull/877),
+  [#881](https://github.com/get-convex/convex-auth/pull/881)). `listSessions`
+  and `revokeSessions` keep their names. `getUserIdByAccount` left the core.
+- `component/schema.ts`: `auth/accounts` moved into the method components
+  ([#818](https://github.com/get-convex/convex-auth/pull/818),
+  [#819](https://github.com/get-convex/convex-auth/pull/819)), and `sessions`
+  records its `component` ([#861](https://github.com/get-convex/convex-auth/pull/861)).
+- `lib/oauth/dbHelpers.ts`: the callback URL is still
+  `${CONVEX_SITE_URL}${CALLBACK_PATH}`. The GitHub component config still
+  declares only `CLIENT_ID` and `CLIENT_SECRET`.
+- Password validation is still not a public export.
+
+Removal conditions:
+
+- Session revocation on password reset: met on `main` (`revokeSessions`,
+  `ctx.convexAuth.revokeAllSessions`), still unreleased.
+- Callback URL: not met. No upstream equivalent and no open PR.
+- Refresh successors: covered by `2.0.0-beta.0`.
+
+The next release after beta.0 adds these to the October 29 and November 5
+lists. The CHANGELOG's "Unreleased" section has the upgrade steps.
+
+- Accounts move to components: an upgrade must copy the GitHub rows of
+  `auth/accounts` into the GitHub component's `accounts` table before deleting
+  `auth/accounts`. Otherwise every GitHub user gets a new, empty Kino user on
+  their next sign-in, because `convex/native/github.ts` `createUser` inserts a
+  fresh user. Kino's password method signs up through
+  `signUpWithoutSession` with the email as `providerAccountId`. Upstream
+  removed `providerAccountId` from the `ctx.convexAuth` helpers, and
+  `completeSignIn` now takes a `userId`, so Kino must resolve password users
+  itself (it already looks them up by email).
+- Method API renames: `bindProvider` is now `bindMethod`
+  ([#889](https://github.com/get-convex/convex-auth/pull/889)). The user
+  callbacks receive `method: { name, profile }` instead of
+  `provider: { name, accountId, profile }`, so the validators in `github.ts`
+  and `password.ts` change. Upstream says this API isn't stable yet.
+- `setPassword` requires `minimumLength`
+  ([#806](https://github.com/get-convex/convex-auth/pull/806)) and the
+  component minimum drops to 8
+  ([#803](https://github.com/get-convex/convex-auth/pull/803)). Kino's two
+  calls in `password.ts` must pass 10.
+- Tables to clear: `auth/sessions` and `auth/refreshTokens` again, which signs
+  everyone out.
+- The core must be mounted as `auth`
+  ([#842](https://github.com/get-convex/convex-auth/pull/842)). Kino already
+  does.
+
+Recommendation: no change to the beta.0 upgrade (#181). Treat the next release
+as a data migration: plan the GitHub account copy before taking it. Upstream
+also calls the method API unstable, so wait for a release before porting Kino's
+password method. See the
+[upstream comparison](https://github.com/get-convex/convex-auth/compare/a7bdf81d2eb8c63b9bf4d7a78e30b2402f07ea40...ce75973934ec54a3f7c86246c334cc890e92b194).
+
 ### October 29, 2026 review
 
 Reviewed `reboot` from `de1ddf385d3723dea832cbcb7e548b08dbc7b5d4` through
