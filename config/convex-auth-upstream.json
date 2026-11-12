@@ -1,6 +1,6 @@
 {
 	"repository": "get-convex/convex-auth",
-	"branch": "reboot",
+	"branch": "main",
 	"reviewedUpstreamSha": "de1ddf385d3723dea832cbcb7e548b08dbc7b5d4",
 	"patchTargets": [
 		"packages/core/src/components/core/public.ts",
