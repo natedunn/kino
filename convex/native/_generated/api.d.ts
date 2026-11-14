@@ -210,18 +210,10 @@ export declare const api: {
           kind: "rotated";
           tokens: {
             accessToken: string;
-            accessTokenExpiresAt: number;
             refreshToken: string;
             refreshTokenExpiresAt: number;
             userId: string;
           };
-        }
-      | {
-          accessToken: string;
-          accessTokenExpiresAt: number;
-          kind: "reused";
-          refreshTokenExpiresAt: number;
-          userId: string;
         }
       | { kind: "noSession" }
     >;
@@ -1203,7 +1195,6 @@ export declare const api: {
           status: "complete";
           tokens: {
             accessToken: string;
-            accessTokenExpiresAt: number;
             refreshToken: string;
             refreshTokenExpiresAt: number;
             userId: string;
@@ -1487,7 +1478,6 @@ export declare const api: {
           status: "complete";
           tokens: {
             accessToken: string;
-            accessTokenExpiresAt: number;
             refreshToken: string;
             refreshTokenExpiresAt: number;
             userId: string;
@@ -1514,7 +1504,6 @@ export declare const api: {
         status: "complete";
         tokens: {
           accessToken: string;
-          accessTokenExpiresAt: number;
           refreshToken: string;
           refreshTokenExpiresAt: number;
           userId: string;
@@ -3197,8 +3186,7 @@ export declare const internal: {
       "mutation",
       "internal",
       {
-        provider: {
-          accountId: string;
+        method: {
           name: "github";
           profile: {
             avatarUrl?: string;
@@ -3216,8 +3204,7 @@ export declare const internal: {
       "mutation",
       "internal",
       {
-        provider: {
-          accountId: string;
+        method: {
           name: "github";
           profile: {
             avatarUrl?: string;
@@ -3363,8 +3350,7 @@ export declare const internal: {
       "mutation",
       "internal",
       {
-        provider: {
-          accountId: string;
+        method: {
           name: "emailPassword";
           profile: {
             email: string;
@@ -3379,8 +3365,7 @@ export declare const internal: {
       "mutation",
       "internal",
       {
-        provider: {
-          accountId: string;
+        method: {
           name: "emailPassword";
           profile: {
             email: string;
@@ -3654,8 +3639,8 @@ export declare const internal: {
 };
 
 export declare const components: {
-  auth: import("@convex-dev/auth/core/_generated/component.js").ComponentApi<"auth">;
-  password: import("@convex-dev/auth/providers/password/_generated/component.js").ComponentApi<"password">;
+  auth: import("@convex-dev/auth/_generated/component.js").ComponentApi<"auth">;
+  password: import("@convex-dev/auth/components/password/_generated/component.js").ComponentApi<"password">;
   authLimits: import("@convex-dev/rate-limiter/_generated/component.js").ComponentApi<"authLimits">;
-  oauthGithub: import("@convex-dev/auth/providers/oauth/_generated/component.js").ComponentApi<"oauthGithub">;
+  oauthGithub: import("@convex-dev/auth/components/github/_generated/component.js").ComponentApi<"oauthGithub">;
 };

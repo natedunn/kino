@@ -1,12 +1,10 @@
 {
 	"repository": "get-convex/convex-auth",
-	"branch": "reboot",
-	"reviewedUpstreamSha": "de1ddf385d3723dea832cbcb7e548b08dbc7b5d4",
+	"branch": "main",
+	"reviewedUpstreamSha": "f73ec4399f1883ba383817bdc34350669ef5e6d3",
 	"patchTargets": [
-		"packages/core/src/components/core/public.ts",
-		"packages/core/src/components/core/schema.ts",
-		"packages/core/src/components/core/_generated/component.ts",
-		"packages/core/src/oauth/component/convex.config.ts",
-		"packages/core/src/oauth/shared/dbHelpers.ts"
+		"packages/core/src/components/github/convex.config.ts",
+		"packages/core/src/lib/oauth/dbHelpers.ts",
+		"packages/core/package.json"
 	]
 }

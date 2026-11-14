@@ -1,12 +1,12 @@
 // @vitest-environment edge-runtime
-import type { GithubProfile } from '@convex-dev/auth/providers/oauth/github';
+import type { GithubProfile } from '@convex-dev/auth/methods/github/server';
 
-import { registerCore } from '@convex-dev/auth/providers/testing/core';
+import { registerCore, sessionIdentity } from '@convex-dev/auth/test';
 import { convexTest } from 'convex-test';
 import { createFunctionHandle } from 'convex/server';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { configureTestAuth, issuer } from '../testing/setup.testing';
+import { configureTestAuth } from '../testing/setup.testing';
 import { api, components, internal } from './_generated/api';
 import schema from './schema';
 
@@ -30,31 +30,47 @@ function setup() {
 }
 type Backend = ReturnType<typeof setup>;
 
+const ttl = {
+	accessTokenTtlSeconds: 60,
+	refreshInactivityTimeoutSeconds: 30 * 24 * 60 * 60,
+	sessionMaxLifetimeSeconds: 30 * 24 * 60 * 60,
+};
+
+// What the GitHub method does after the OAuth callback, for an account its
+// component does not know yet: create (or find) the user, then sign in.
 function signUp(t: Backend, input = profile) {
 	return t.run(async (ctx) =>
-		ctx.runMutation(components.auth.public.signUp, {
-			claims: { providerName: 'github', providerAccountId: input.id, profile: input },
+		ctx.runMutation(components.auth.public._internal_dangerous_signUp, {
+			claims: { method: 'github', profile: input },
+			componentPath: 'oauthGithub',
 			createUserHandle: await createFunctionHandle(internal.github.createUser),
 			onSignInHandle: await createFunctionHandle(internal.github.onSignIn),
-			issuer,
+			...ttl,
 		})
 	);
 }
+// The return visit: the component maps the GitHub account to its user.
 function signIn(t: Backend, input = profile) {
-	return t.run(async (ctx) =>
-		ctx.runMutation(components.auth.public.signIn, {
-			claims: { providerName: 'github', providerAccountId: input.id, profile: input },
+	return t.run(async (ctx) => {
+		const user = await ctx.db
+			.query('users')
+			.withIndex('by_githubAccountId', (q) => q.eq('githubAccountId', input.id))
+			.unique();
+		return ctx.runMutation(components.auth.public._internal_dangerous_signIn, {
+			claims: { method: 'github', profile: input },
+			componentPath: 'oauthGithub',
+			userId: user!._id,
 			onSignInHandle: await createFunctionHandle(internal.github.onSignIn),
-			issuer,
-		})
-	);
+			...ttl,
+		});
+	});
 }
 
 describe('native identity and profile bootstrap', () => {
-	test('creates the app user, profile, provider account and session together', async () => {
+	test('creates the app user, profile and session together', async () => {
 		const t = setup();
 		const tokens = await signUp(t);
-		const caller = t.withIdentity({ issuer, subject: tokens.userId });
+		const caller = t.withIdentity(sessionIdentity(tokens));
 		expect(await caller.query(api.auth.isAuthenticated, {})).toBe(true);
 		expect(await caller.query(api.profiles.me, {})).toMatchObject({
 			id: tokens.userId,
@@ -63,14 +79,6 @@ describe('native identity and profile bootstrap', () => {
 			email: profile.email,
 			systemRole: 'user',
 		});
-		expect(
-			await t.run((ctx) =>
-				ctx.runQuery(components.auth.public.getUserIdByAccount, {
-					provider: 'github',
-					providerAccountId: '1234',
-				})
-			)
-		).toBe(tokens.userId);
 	});
 
 	test('repeat login preserves app profile edits and refreshes verified email', async () => {
@@ -86,9 +94,11 @@ describe('native identity and profile bootstrap', () => {
 			email: 'new@example.test',
 		});
 		expect(second.userId).toBe(first.userId);
-		expect(
-			await t.withIdentity({ issuer, subject: second.userId }).query(api.profiles.me, {})
-		).toMatchObject({ name: 'Edited name', username: 'edited', email: 'new@example.test' });
+		expect(await t.withIdentity(sessionIdentity(second)).query(api.profiles.me, {})).toMatchObject({
+			name: 'Edited name',
+			username: 'edited',
+			email: 'new@example.test',
+		});
 		expect(await t.run((ctx) => ctx.db.query('profiles').collect())).toHaveLength(1);
 	});
 
@@ -109,57 +119,62 @@ describe('native identity and profile bootstrap', () => {
 		expect(new Set(rows.map((row) => row.username)).size).toBe(2);
 	});
 
-	test('unverified email rolls the user/account/profile creation back', async () => {
+	test('unverified email rolls the user/profile creation back', async () => {
 		const t = setup();
 		await expect(signUp(t, { ...profile, emailVerified: false })).rejects.toThrow(
 			'VERIFIED_EMAIL_REQUIRED'
 		);
 		expect(await t.run((ctx) => ctx.db.query('users').collect())).toEqual([]);
 		expect(await t.run((ctx) => ctx.db.query('profiles').collect())).toEqual([]);
-		expect(
-			await t.run((ctx) =>
-				ctx.runQuery(components.auth.public.getUserIdByAccount, {
-					provider: 'github',
-					providerAccountId: '1234',
-				})
-			)
-		).toBeNull();
+	});
+
+	test('a GitHub account with an existing user gets that user back', async () => {
+		// Convex Auth 2.0 starts the oauthGithub accounts table empty, so the first
+		// sign-in after the upgrade goes through createUser again.
+		const t = setup();
+		const first = await signUp(t);
+		const again = await signUp(t);
+		expect(again.userId).toBe(first.userId);
+		expect(await t.run((ctx) => ctx.db.query('users').collect())).toHaveLength(1);
+		expect(await t.run((ctx) => ctx.db.query('profiles').collect())).toHaveLength(1);
+		await t.run(async (ctx) => {
+			const user = await ctx.db.query('users').unique();
+			await ctx.db.patch('users', user!._id, { status: 'disabled' });
+		});
+		await expect(signUp(t)).rejects.toThrow('SIGN_IN_REJECTED');
+		expect(await t.run((ctx) => ctx.db.query('users').collect())).toHaveLength(1);
 	});
 
 	test('refuses mismatched provider account evidence', async () => {
 		const t = setup();
-		await expect(
-			t.mutation(internal.github.createUser, {
-				provider: { name: 'github', accountId: 'other', profile },
-			})
-		).rejects.toThrow('GITHUB_ACCOUNT_MISMATCH');
 		const tokens = await signUp(t);
 		await expect(
 			t.run(async (ctx) => {
 				const user = await ctx.db.query('users').unique();
 				return ctx.runMutation(internal.github.onSignIn, {
 					userId: user!._id,
-					provider: { name: 'github', accountId: '5678', profile: { ...profile, id: '5678' } },
+					method: { name: 'github', profile: { ...profile, id: '5678' } },
 				});
 			})
 		).rejects.toThrow('GITHUB_ACCOUNT_MISMATCH');
-		expect(
-			await t.withIdentity({ issuer, subject: tokens.userId }).query(api.auth.isAuthenticated, {})
-		).toBe(true);
+		expect(await t.withIdentity(sessionIdentity(tokens)).query(api.auth.isAuthenticated, {})).toBe(
+			true
+		);
 	});
 
-	test('refuses anonymous, wrong issuer, malformed subject, pending, missing and disabled users', async () => {
+	test('refuses anonymous, non-session subject, pending, missing and disabled users', async () => {
 		const t = setup();
 		const tokens = await signUp(t);
 		for (const caller of [
 			t,
-			t.withIdentity({ issuer: 'https://other.convex.site', subject: tokens.userId }),
-			t.withIdentity({ issuer, subject: 'not-a-document-id' }),
+			// A user id is not a session id: 2.0 tokens name the session.
+			t.withIdentity({ subject: tokens.userId }),
+			t.withIdentity({ subject: 'not-a-document-id' }),
 		]) {
 			expect(await caller.query(api.auth.isAuthenticated, {})).toBe(false);
 			expect(await caller.query(api.profiles.me, {})).toBeNull();
 		}
-		const caller = t.withIdentity({ issuer, subject: tokens.userId });
+		const caller = t.withIdentity(sessionIdentity(tokens));
 		for (const status of ['pendingVerification', 'disabled'] as const) {
 			await t.run(async (ctx) => {
 				const user = await ctx.db.query('users').unique();
@@ -180,9 +195,9 @@ describe('native identity and profile bootstrap', () => {
 		vi.stubEnv('SUPER_ADMIN_EMAIL', profile.email!);
 		const t = setup();
 		const tokens = await signUp(t);
-		expect(
-			await t.withIdentity({ issuer, subject: tokens.userId }).query(api.profiles.me, {})
-		).toMatchObject({ systemRole: 'user' });
+		expect(await t.withIdentity(sessionIdentity(tokens)).query(api.profiles.me, {})).toMatchObject({
+			systemRole: 'user',
+		});
 	});
 
 	test('refreshes and signs out using the mounted core', async () => {
@@ -193,7 +208,11 @@ describe('native identity and profile bootstrap', () => {
 		});
 		expect(refreshed.kind).toBe('rotated');
 		if (refreshed.kind !== 'rotated') throw new Error('Expected rotation');
+		const caller = t.withIdentity(sessionIdentity(tokens));
+		expect(await caller.query(api.auth.isAuthenticated, {})).toBe(true);
 		await t.mutation(api.auth.signOut, { refreshToken: refreshed.tokens.refreshToken });
+		// The access token outlives the session, but the session lookup does not.
+		expect(await caller.query(api.auth.isAuthenticated, {})).toBe(false);
 		expect(
 			await t.mutation(api.auth.refreshSession, { refreshToken: refreshed.tokens.refreshToken })
 		).toEqual({ kind: 'noSession' });
@@ -203,8 +222,8 @@ describe('native identity and profile bootstrap', () => {
 		const t = setup();
 		const first = await signUp(t);
 		const second = await signUp(t, { ...profile, id: 'other-account' });
-		const alice = t.withIdentity({ issuer, subject: first.userId });
-		const bob = t.withIdentity({ issuer, subject: second.userId });
+		const alice = t.withIdentity(sessionIdentity(first));
+		const bob = t.withIdentity(sessionIdentity(second));
 		const firstOrg = await alice.query(api.organizations.personal, {});
 		const secondOrg = await bob.query(api.organizations.personal, {});
 		expect(firstOrg?.id).not.toBe(secondOrg?.id);
@@ -234,9 +253,7 @@ describe('native identity and profile bootstrap', () => {
 			});
 			await expect(signIn(t)).rejects.toThrow('PERSONAL_ORGANIZATION_CONFLICT');
 			expect(
-				await t
-					.withIdentity({ issuer, subject: tokens.userId })
-					.query(api.organizations.personal, {})
+				await t.withIdentity(sessionIdentity(tokens)).query(api.organizations.personal, {})
 			).toBeNull();
 			const memberships = await t.run((ctx) => ctx.db.query('memberships').collect());
 			expect(memberships.some((member) => member.role === 'owner')).toBe(false);

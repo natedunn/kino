@@ -1,4 +1,4 @@
-import { httpCookies, ServerAuthSession, setupConvexAuthServer } from '@convex-dev/auth/server';
+import { httpCookies, ServerAuthSession, setupConvexAuthServer } from '@convex-dev/auth/ssr';
 import { getRequest, setResponseHeader } from '@tanstack/react-start/server';
 import { ConvexHttpClient } from 'convex/browser';
 

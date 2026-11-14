@@ -1,8 +1,9 @@
 // @vitest-environment edge-runtime
+import { registerCore } from '@convex-dev/auth/test';
 import { convexTest } from 'convex-test';
 import { beforeEach, expect, test } from 'vitest';
 
-import { configureTestAuth, issuer } from '../testing/setup.testing';
+import { configureTestAuth, sessionFor } from '../testing/setup.testing';
 import { api } from './_generated/api';
 import schema from './schema';
 
@@ -10,6 +11,7 @@ const modules = import.meta.glob(['./**/*.ts', '!./**/*.test.ts', '!./**/*.testi
 beforeEach(configureTestAuth);
 async function fixture() {
 	const t = convexTest(schema, modules);
+	registerCore(t);
 	const data = await t.run(async (ctx) => {
 		const owner = await ctx.db.insert('users', { status: 'active', systemRole: 'user' });
 		const outsider = await ctx.db.insert('users', { status: 'active', systemRole: 'user' });
@@ -79,9 +81,9 @@ async function fixture() {
 	return {
 		t,
 		...data,
-		ownerClient: t.withIdentity({ issuer, subject: data.owner }),
-		moderatorClient: t.withIdentity({ issuer, subject: data.moderator }),
-		outsiderClient: t.withIdentity({ issuer, subject: data.outsider }),
+		ownerClient: t.withIdentity(await sessionFor(t, data.owner)),
+		moderatorClient: t.withIdentity(await sessionFor(t, data.moderator)),
+		outsiderClient: t.withIdentity(await sessionFor(t, data.outsider)),
 	};
 }
 const input = {
