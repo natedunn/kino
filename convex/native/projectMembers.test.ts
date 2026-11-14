@@ -1,8 +1,9 @@
 // @vitest-environment edge-runtime
+import { registerCore } from '@convex-dev/auth/test';
 import { convexTest } from 'convex-test';
 import { beforeEach, expect, test } from 'vitest';
 
-import { configureTestAuth, issuer } from '../testing/setup.testing';
+import { configureTestAuth, sessionFor } from '../testing/setup.testing';
 import { api } from './_generated/api';
 import schema from './schema';
 
@@ -10,6 +11,7 @@ const modules = import.meta.glob(['./**/*.ts', '!./**/*.test.ts', '!./**/*.testi
 beforeEach(configureTestAuth);
 async function fixture() {
 	const t = convexTest(schema, modules);
+	registerCore(t);
 	const ids = await t.run(async (ctx) => {
 		const owner = await ctx.db.insert('users', { status: 'active', systemRole: 'user' });
 		const member = await ctx.db.insert('users', {
@@ -57,9 +59,9 @@ async function fixture() {
 	return {
 		t,
 		...ids,
-		ownerClient: t.withIdentity({ issuer, subject: ids.owner }),
-		memberClient: t.withIdentity({ issuer, subject: ids.member }),
-		moderatorClient: t.withIdentity({ issuer, subject: ids.moderator }),
+		ownerClient: t.withIdentity(await sessionFor(t, ids.owner)),
+		memberClient: t.withIdentity(await sessionFor(t, ids.member)),
+		moderatorClient: t.withIdentity(await sessionFor(t, ids.moderator)),
 	};
 }
 

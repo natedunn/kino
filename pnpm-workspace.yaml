@@ -4,4 +4,4 @@ packages:
 # Convex Auth v2 follows npm beta and stable releases. Kino patches only what
 # the pinned release still lacks; see docs/convex-auth-v2-maintenance.md.
 patchedDependencies:
-  '@convex-dev/auth@2.0.0-beta.0': patches/convex-auth-v2-beta.0.patch
+  '@convex-dev/auth@2.0.0': patches/convex-auth-v2.0.0.patch

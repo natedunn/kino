@@ -1,9 +1,10 @@
 // @vitest-environment edge-runtime
+import { registerCore } from '@convex-dev/auth/test';
 import { register as registerRateLimiter } from '@convex-dev/rate-limiter/test';
 import { convexTest } from 'convex-test';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
-import { configureTestAuth, issuer } from '../testing/setup.testing';
+import { configureTestAuth, sessionFor } from '../testing/setup.testing';
 import { api } from './_generated/api';
 import schema from './schema';
 
@@ -18,6 +19,7 @@ afterEach(() => {
 });
 async function fixture() {
 	const t = convexTest(schema, modules);
+	registerCore(t);
 	registerRateLimiter(t, 'authLimits');
 	const ids = await t.run(async (ctx) => {
 		const owner = await ctx.db.insert('users', { status: 'active', systemRole: 'user' });
@@ -49,8 +51,8 @@ async function fixture() {
 		});
 		return { owner, reader, ownerProfile, readerProfile, projectId, organizationId };
 	});
-	const owner = t.withIdentity({ subject: ids.owner, issuer });
-	const reader = t.withIdentity({ subject: ids.reader, issuer });
+	const owner = t.withIdentity(await sessionFor(t, ids.owner));
+	const reader = t.withIdentity(await sessionFor(t, ids.reader));
 	const fields = {
 		projectId: ids.projectId,
 		title: 'Update',

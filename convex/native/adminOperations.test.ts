@@ -1,8 +1,9 @@
 // @vitest-environment edge-runtime
+import { registerCore } from '@convex-dev/auth/test';
 import { convexTest } from 'convex-test';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
-import { configureTestAuth, issuer } from '../testing/setup.testing';
+import { configureTestAuth, sessionFor } from '../testing/setup.testing';
 import { api } from './_generated/api';
 import schema from './schema';
 
@@ -17,6 +18,7 @@ afterEach(() => vi.useRealTimers());
 
 test('only system admins can inspect and resume stalled operational jobs', async () => {
 	const t = convexTest(schema, modules);
+	registerCore(t);
 	const ids = await t.run(async (ctx) => {
 		const adminId = await ctx.db.insert('users', { status: 'active', systemRole: 'system:admin' });
 		const outsiderId = await ctx.db.insert('users', { status: 'active', systemRole: 'user' });
@@ -61,8 +63,8 @@ test('only system admins can inspect and resume stalled operational jobs', async
 		await ctx.db.delete('updates', updateId);
 		return { adminId, boardId, orphanedUpdateJobId, outsiderId };
 	});
-	const admin = t.withIdentity({ issuer, subject: ids.adminId });
-	const outsider = t.withIdentity({ issuer, subject: ids.outsiderId });
+	const admin = t.withIdentity(await sessionFor(t, ids.adminId));
+	const outsider = t.withIdentity(await sessionFor(t, ids.outsiderId));
 
 	await expect(outsider.query(api.adminOperations.list, {})).rejects.toThrow('FORBIDDEN');
 	await expect(
@@ -103,6 +105,7 @@ test('only system admins can inspect and resume stalled operational jobs', async
 
 test('system metrics count all accounts and return only five verified recent sign-ups', async () => {
 	const t = convexTest(schema, modules);
+	registerCore(t);
 	const identities = await t.run(async (ctx) => {
 		const adminId = await ctx.db.insert('users', { status: 'active', systemRole: 'system:admin' });
 		const ordinaryId = await ctx.db.insert('users', { status: 'active', systemRole: 'user' });
@@ -162,8 +165,8 @@ test('system metrics count all accounts and return only five verified recent sig
 		});
 		return { adminId, ordinaryId };
 	});
-	const admin = t.withIdentity({ issuer, subject: identities.adminId });
-	const ordinary = t.withIdentity({ issuer, subject: identities.ordinaryId });
+	const admin = t.withIdentity(await sessionFor(t, identities.adminId));
+	const ordinary = t.withIdentity(await sessionFor(t, identities.ordinaryId));
 	await expect(t.query(api.adminOperations.getSystemMetrics, {})).rejects.toThrow('UNAUTHORIZED');
 	await expect(ordinary.query(api.adminOperations.getSystemMetrics, {})).rejects.toThrow(
 		'FORBIDDEN'

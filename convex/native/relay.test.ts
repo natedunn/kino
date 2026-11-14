@@ -1,9 +1,10 @@
 // @vitest-environment edge-runtime
+import { registerCore } from '@convex-dev/auth/test';
 import { register as registerRateLimiter } from '@convex-dev/rate-limiter/test';
 import { convexTest } from 'convex-test';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
-import { configureTestAuth, issuer } from '../testing/setup.testing';
+import { configureTestAuth, sessionFor, testRsaPrivateKeyPem } from '../testing/setup.testing';
 import { api, internal } from './_generated/api';
 import schema from './schema';
 
@@ -28,6 +29,7 @@ afterEach(() => {
 });
 async function fixture() {
 	const t = convexTest(schema, modules);
+	registerCore(t);
 	registerRateLimiter(t, 'authLimits');
 	const ids = await t.run(async (ctx) => {
 		const user = await ctx.db.insert('users', { status: 'active', systemRole: 'user' }),
@@ -74,8 +76,8 @@ async function fixture() {
 		});
 		return { user, other, profile, org, member, project, feedback };
 	});
-	const owner = t.withIdentity({ subject: ids.user, issuer }),
-		other = t.withIdentity({ subject: ids.other, issuer });
+	const owner = t.withIdentity(await sessionFor(t, ids.user)),
+		other = t.withIdentity(await sessionFor(t, ids.other));
 	const start = async () => {
 		const { url } = await owner.mutation(api.relay.start, { orgSlug: 'org' });
 		return new URL(url).searchParams.get('state')!;
@@ -353,7 +355,7 @@ test('signed repository removal is deduplicated and installation suspension bloc
 
 test('repository verification and issue actions use scoped GitHub tokens and recheck writes', async () => {
 	const f = await connected();
-	vi.stubEnv('GITHUB_RELAY_PRIVATE_KEY', atob(process.env.AUTH_PRIVATE_KEY!));
+	vi.stubEnv('GITHUB_RELAY_PRIVATE_KEY', await testRsaPrivateKeyPem());
 	const writes: Array<string> = [];
 	vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
 		const url = String(input);

@@ -1,11 +1,11 @@
 // @vitest-environment edge-runtime
-import { registerPasswordProvider } from '@convex-dev/auth/components/password/test';
-import { registerCore } from '@convex-dev/auth/test';
+import { registerPassword } from '@convex-dev/auth/components/password/test';
+import { registerCore, sessionIdentity } from '@convex-dev/auth/test';
 import { register as registerRateLimiter } from '@convex-dev/rate-limiter/test';
 import { convexTest } from 'convex-test';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { configureTestAuth, issuer } from '../testing/setup.testing';
+import { configureTestAuth } from '../testing/setup.testing';
 import { api, internal } from './_generated/api';
 import schema from './schema';
 
@@ -39,7 +39,7 @@ afterEach(() => {
 function setup() {
 	const t = convexTest(schema, modules);
 	registerCore(t);
-	registerPasswordProvider(t, 'password');
+	registerPassword(t, 'password');
 	registerRateLimiter(t, 'authLimits');
 	return t;
 }
@@ -77,7 +77,7 @@ describe('native verified password lifecycle', () => {
 				userError: { error: 'INVALID_CREDENTIALS' },
 			});
 			const result = await t.mutation(api.password.verifyEmail, { code: proof });
-			const caller = t.withIdentity({ issuer, subject: result.tokens.userId });
+			const caller = t.withIdentity(sessionIdentity(result.tokens));
 			expect(await caller.query(api.profiles.me, {})).toMatchObject({
 				name: 'Native User',
 				email,
@@ -150,6 +150,11 @@ describe('native verified password lifecycle', () => {
 				kind: 'noSession',
 			});
 		}
+		// Unexpired access tokens of the revoked sessions stop working at once.
+		for (const tokens of [initial.tokens, second.tokens])
+			expect(
+				await t.withIdentity(sessionIdentity(tokens)).query(api.auth.isAuthenticated, {})
+			).toBe(false);
 		await expect(t.mutation(api.password.resetPassword, { code: proof, password })).rejects.toThrow(
 			'INVALID_PROOF'
 		);

@@ -210,7 +210,6 @@ export declare const api: {
           kind: "rotated";
           tokens: {
             accessToken: string;
-            accessTokenExpiresAt: number;
             refreshToken: string;
             refreshTokenExpiresAt: number;
             userId: string;
@@ -1196,7 +1195,6 @@ export declare const api: {
           status: "complete";
           tokens: {
             accessToken: string;
-            accessTokenExpiresAt: number;
             refreshToken: string;
             refreshTokenExpiresAt: number;
             userId: string;
@@ -1480,7 +1478,6 @@ export declare const api: {
           status: "complete";
           tokens: {
             accessToken: string;
-            accessTokenExpiresAt: number;
             refreshToken: string;
             refreshTokenExpiresAt: number;
             userId: string;
@@ -1507,7 +1504,6 @@ export declare const api: {
         status: "complete";
         tokens: {
           accessToken: string;
-          accessTokenExpiresAt: number;
           refreshToken: string;
           refreshTokenExpiresAt: number;
           userId: string;
@@ -3190,8 +3186,7 @@ export declare const internal: {
       "mutation",
       "internal",
       {
-        provider: {
-          accountId: string;
+        method: {
           name: "github";
           profile: {
             avatarUrl?: string;
@@ -3209,8 +3204,7 @@ export declare const internal: {
       "mutation",
       "internal",
       {
-        provider: {
-          accountId: string;
+        method: {
           name: "github";
           profile: {
             avatarUrl?: string;
@@ -3356,8 +3350,7 @@ export declare const internal: {
       "mutation",
       "internal",
       {
-        provider: {
-          accountId: string;
+        method: {
           name: "emailPassword";
           profile: {
             email: string;
@@ -3372,8 +3365,7 @@ export declare const internal: {
       "mutation",
       "internal",
       {
-        provider: {
-          accountId: string;
+        method: {
           name: "emailPassword";
           profile: {
             email: string;

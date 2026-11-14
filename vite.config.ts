@@ -145,7 +145,12 @@ const config = defineConfig({
 		// convex-test must be inlined so its module graph runs in the test runtime.
 		// Per-file environment is set via a `// @vitest-environment edge-runtime`
 		// docblock on the convex-test suites (others stay on the default env).
-		server: { deps: { inline: ['convex-test', 'argon2id-wasm'] } },
+		// password-hash-wasm (Convex Auth 2.0 password hashing) is inlined so the
+		// .wasm loader plugin above handles its import.
+		server: { deps: { inline: ['convex-test', 'password-hash-wasm'] } },
+		// Convex Auth 2.0 checks token issuers against it, and convex-test signs
+		// tokens under it; deployments set it themselves.
+		env: { CONVEX_CLOUD_URL: 'https://native-integration.convex.cloud' },
 		// convex-test mutation invocations pay a one-time native auth/component
 		// cold-start that can exceed the default 5s on first run.
 		testTimeout: 30_000,

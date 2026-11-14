@@ -23,8 +23,6 @@ const app = defineApp({
 		NATIVE_FILES_ORIGIN: v.optional(v.string()),
 		NATIVE_FILES_PURGE_ZONE_ID: v.optional(v.string()),
 		NATIVE_FILES_PURGE_TOKEN: v.optional(v.string()),
-		AUTH_PRIVATE_KEY: v.string(),
-		AUTH_JWKS: v.string(),
 		AUTH_GITHUB_CLIENT_ID: v.string(),
 		AUTH_GITHUB_CLIENT_SECRET: v.string(),
 		AUTH_GITHUB_CALLBACK_URL: v.string(),
@@ -37,14 +35,8 @@ const app = defineApp({
 	},
 });
 
-app.use(auth, {
-	name: 'auth',
-	httpPrefix: '/auth',
-	env: {
-		AUTH_PRIVATE_KEY: app.env.AUTH_PRIVATE_KEY,
-		AUTH_JWKS: app.env.AUTH_JWKS,
-	},
-});
+// convexAuthProvider() and getAuthUserId expect the core under its default name, auth.
+app.use(auth);
 app.use(password, { name: 'password' });
 app.use(rateLimiter, { name: 'authLimits' });
 app.use(github, {

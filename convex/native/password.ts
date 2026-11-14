@@ -14,16 +14,17 @@ import { ensureProfile } from './profiles';
 import { sha256Hex } from './relayClient';
 import { challengePurpose, localeValidator } from './schema';
 
-const providerValidator = v.object({
+// Kino's minimum for new passwords; the password component needs it on every set.
+const PASSWORD_MIN_LENGTH = 10;
+const methodValidator = v.object({
 	name: v.literal('emailPassword'),
-	accountId: v.string(),
 	profile: v.object({
 		email: v.string(),
 		name: v.optional(v.string()),
 		locale: v.optional(localeValidator),
 	}),
 });
-const { authMutation } = core.bindProvider({
+const { authMutation } = core.bindMethod({
 	name: 'emailPassword',
 	createUser: internal.password.createUser,
 	onSignIn: internal.password.onSignIn,
@@ -32,12 +33,11 @@ const limits = new RateLimiter(components.authLimits, {
 	email: { kind: 'token bucket', rate: 3, period: MINUTE, capacity: 3 },
 	login: { kind: 'token bucket', rate: 5, period: MINUTE, capacity: 5 },
 });
-// Mirrors upstream's vSignInComplete, which 2.0.0-beta.0 no longer exports.
+// Mirrors upstream's complete sign-in result, which 2.0.0 does not export.
 const vSignInComplete = v.object({
 	status: v.literal('complete'),
 	tokens: v.object({
 		accessToken: v.string(),
-		accessTokenExpiresAt: v.number(),
 		refreshToken: v.string(),
 		refreshTokenExpiresAt: v.number(),
 		userId: v.string(),
@@ -63,32 +63,30 @@ const findUser = (ctx: MutationCtx, email: string) =>
 		.unique();
 
 export const createUser = internalMutation({
-	args: { provider: providerValidator },
+	args: { method: methodValidator },
 	returns: v.id('users'),
-	handler: async (ctx, { provider }) => {
-		const email = normalize(provider.profile.email);
-		if (provider.accountId !== email) throw new ConvexError('PASSWORD_ACCOUNT_MISMATCH');
+	handler: async (ctx, { method }) => {
+		const email = normalize(method.profile.email);
 		if (await findUser(ctx, email)) throw new ConvexError('DUPLICATE_EMAIL');
 		return ctx.db.insert('users', {
 			status: 'pendingVerification',
 			systemRole: 'user',
 			passwordEmail: email,
-			registrationName: provider.profile.name?.trim().slice(0, 200) || email.split('@')[0],
-			registrationLocale: provider.profile.locale ?? 'en-US',
+			registrationName: method.profile.name?.trim().slice(0, 200) || email.split('@')[0],
+			registrationLocale: method.profile.locale ?? 'en-US',
 		});
 	},
 });
 export const onSignIn = internalMutation({
-	args: { provider: providerValidator, userId: v.id('users') },
+	args: { method: methodValidator, userId: v.id('users') },
 	returns: v.null(),
-	handler: async (ctx, { provider, userId }) => {
+	handler: async (ctx, { method, userId }) => {
 		const user = await ctx.db.get('users', userId);
 		if (
 			!user ||
 			user.status !== 'active' ||
 			user.passwordEmailVerifiedAt === undefined ||
-			user.passwordEmail !== provider.accountId ||
-			user.passwordEmail !== provider.profile.email
+			user.passwordEmail !== method.profile.email
 		)
 			throw new ConvexError('SIGN_IN_REJECTED');
 		const profileId = await ensureProfile(ctx, userId, {
@@ -153,19 +151,22 @@ export const signUp = authMutation({
 		const email = normalize(raw);
 		if (!emailCredentials()) return failure('EMAIL_UNAVAILABLE');
 		if (!(await limits.limit(ctx, 'email', { key: email })).ok) return failure('RATE_LIMITED');
-		const invalid = validateNewPassword(password);
+		const invalid = validateNewPassword(password, PASSWORD_MIN_LENGTH);
 		if (invalid) return failure(invalid.error);
 		if (!name.trim() || name.trim().length > 200) return failure('INVALID_NAME');
 		// Never overwrite an existing credential or automatically link OAuth accounts.
 		if (await findUser(app, email)) return accepted;
 		const { userId } = await ctx.convexAuth.signUpWithoutSession({
-			providerAccountId: email,
 			profile: { email, name: name.trim(), locale: locale ?? 'en-US' },
 		});
-		const result = await ctx.runMutation(components.password.public.setPassword, {
-			userId,
-			password,
-		});
+		const result = await ctx.runMutation(
+			components.password.public._internal_dangerous_setPassword,
+			{
+				userId,
+				password,
+				minimumLength: PASSWORD_MIN_LENGTH,
+			}
+		);
 		if (!result.success) throw new ConvexError(result.userError.error);
 		const id = app.db.normalizeId('users', userId);
 		if (!id) throw new Error('Invalid native user id');
@@ -207,8 +208,9 @@ export const verifyEmail = authMutation({
 		return {
 			status: 'complete' as const,
 			tokens: await ctx.convexAuth.completeSignIn({
-				providerAccountId: user.passwordEmail!,
+				userId: user._id,
 				profile: { email: user.passwordEmail! },
+				authenticatedBy: components.password,
 			}),
 		};
 	},
@@ -229,7 +231,11 @@ export const signIn = authMutation({
 		if (!result.success) return failure('INVALID_CREDENTIALS');
 		return {
 			status: 'complete' as const,
-			tokens: await ctx.convexAuth.completeSignIn({ providerAccountId: email, profile: { email } }),
+			tokens: await ctx.convexAuth.completeSignIn({
+				userId: user._id,
+				profile: { email },
+				authenticatedBy: components.password,
+			}),
 		};
 	},
 });
@@ -239,15 +245,19 @@ export const resetPassword = authMutation({
 	handler: async (ctx, { code, password }) => {
 		const app = ctx as MutationCtx;
 		const { proof, user } = await challenge(app, code, 'reset');
-		const invalid = validateNewPassword(password);
+		const invalid = validateNewPassword(password, PASSWORD_MIN_LENGTH);
 		if (invalid) return failure(invalid.error);
-		const result = await ctx.runMutation(components.password.public.setPassword, {
-			userId: user._id,
-			password,
-		});
+		const result = await ctx.runMutation(
+			components.password.public._internal_dangerous_setPassword,
+			{
+				userId: user._id,
+				password,
+				minimumLength: PASSWORD_MIN_LENGTH,
+			}
+		);
 		if (!result.success) throw new ConvexError(result.userError.error);
 		await app.db.delete('authChallenges', proof._id);
-		await ctx.runMutation(components.auth.public.revokeUserSessions, { userId: user._id });
+		await ctx.convexAuth.revokeAllSessions(user._id);
 		return { status: 'passwordUpdated' as const };
 	},
 });

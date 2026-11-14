@@ -11,24 +11,25 @@ feature components.
 
 ## Pinned runtime
 
-- Package: `@convex-dev/auth@2.0.0-beta.0` from npm, pinned exactly
-- Required Convex version: `1.46.0`
+- Package: `@convex-dev/auth@2.0.0` from npm, pinned exactly
+- Required Convex version: `1.48.0` (deployment-signed access tokens)
 - Kino follows npm beta and stable releases; see the release policy in
   [Convex Auth v2 patch maintenance](convex-auth-v2-maintenance.md).
 
-The integration carries one pnpm patch, `patches/convex-auth-v2-beta.0.patch`,
+The integration carries one pnpm patch, `patches/convex-auth-v2.0.0.patch`,
 for what the release still lacks:
 
-1. Password reset revokes every session of the user through a core
-   `revokeUserSessions` mutation, so every old refresh token is rejected after
-   the credential change.
-2. The GitHub OAuth component accepts a server-configured callback URL for the
+1. The GitHub OAuth component accepts a server-configured callback URL for the
    stable gateway.
-3. The package exports `@convex-dev/auth/components/password/validation`, which
+2. The package exports `@convex-dev/auth/components/password/validation`, which
    Kino's password method uses to validate a new password before creating the
    user.
 
-Kino's password method also uses `AuthCore.bindProvider`, which the release
+Password reset revokes every session of the user with the release's
+`revokeAllSessions`, so every old refresh token, and every unexpired access
+token, stops working after the credential change.
+
+Kino's password method also uses `AuthCore.bindMethod`, which the release
 publishes only under the `convex-auth-internal-types` export condition (enabled
 in the root and Convex tsconfigs).
 
@@ -100,7 +101,7 @@ See [the native integration runbook](../integrations/native-convex/README.md).
 ## Identity rules
 
 - Convex Auth owns provider account mappings, credentials, and sessions; the
-  pinned reboot delegates app-user creation to Kino's callbacks.
+  pinned release delegates app-user creation to Kino's callbacks.
 - Kino owns users, profiles, organizations, memberships, invitations, system roles,
   project membership, and authorization.
 - Backend authorization derives the caller from verified auth identity. It does

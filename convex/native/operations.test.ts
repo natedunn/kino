@@ -1,8 +1,9 @@
 // @vitest-environment edge-runtime
+import { registerCore } from '@convex-dev/auth/test';
 import { convexTest } from 'convex-test';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
-import { configureTestAuth, issuer } from '../testing/setup.testing';
+import { configureTestAuth, sessionFor } from '../testing/setup.testing';
 import { api, internal } from './_generated/api';
 import schema from './schema';
 
@@ -21,6 +22,7 @@ afterEach(() => {
 
 test('operational alerts use the configured Bento recipient without exposing credentials', async () => {
 	const t = convexTest(schema, modules);
+	registerCore(t);
 	for (const key of ['BENTO_PUBLISHABLE_KEY', 'BENTO_SECRET_KEY', 'BENTO_SITE_UUID', 'BENTO_FROM'])
 		vi.stubEnv(key, 'test-only');
 	vi.stubEnv('NATIVE_OPERATIONS_ALERT_EMAIL', 'operator@example.test');
@@ -64,6 +66,7 @@ test('operational alerts use the configured Bento recipient without exposing cre
 
 test('alerts are deduplicated, delivered once per incident, resolved, and retained for 90 days', async () => {
 	const t = convexTest(schema, modules);
+	registerCore(t);
 	const ids = await t.run(async (ctx) => {
 		const userId = await ctx.db.insert('users', { status: 'active', systemRole: 'user' });
 		const organizationId = await ctx.db.insert('organizations', {
@@ -167,6 +170,7 @@ test('alerts are deduplicated, delivered once per incident, resolved, and retain
 
 test('system admins can preview and repair aggregate drift with bounded resumable jobs', async () => {
 	const t = convexTest(schema, modules);
+	registerCore(t);
 	const ids = await t.run(async (ctx) => {
 		const adminId = await ctx.db.insert('users', { status: 'active', systemRole: 'system:admin' });
 		const outsiderId = await ctx.db.insert('users', { status: 'active', systemRole: 'user' });
@@ -233,8 +237,8 @@ test('system admins can preview and repair aggregate drift with bounded resumabl
 		});
 		return { adminId, feedbackId, outsiderId, updateId };
 	});
-	const admin = t.withIdentity({ issuer, subject: ids.adminId });
-	const outsider = t.withIdentity({ issuer, subject: ids.outsiderId });
+	const admin = t.withIdentity(await sessionFor(t, ids.adminId));
+	const outsider = t.withIdentity(await sessionFor(t, ids.outsiderId));
 
 	await expect(
 		outsider.mutation(api.adminOperations.startMaintenance, {

@@ -7,7 +7,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const packageJson = JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8'));
 // Kino follows npm beta and stable releases of Convex Auth v2, pinned exactly
 // (docs/convex-auth-v2-maintenance.md, "Release policy").
-const expectedVersion = '2.0.0-beta.0';
+const expectedVersion = '2.0.0';
 
 assert.equal(
 	packageJson.dependencies?.['@convex-dev/auth'],
@@ -16,8 +16,8 @@ assert.equal(
 );
 assert.equal(
 	packageJson.dependencies?.convex,
-	'1.46.0',
-	'Convex Auth v2 requires the tested Convex 1.46.0 runtime'
+	'1.48.0',
+	'Convex Auth 2.0 requires Convex 1.48.0 or later; Kino pins the tested 1.48.0'
 );
 
 const authPackageJsonPath = import.meta.resolve('@convex-dev/auth/package.json');
@@ -27,9 +27,6 @@ const installedPackage = JSON.parse(await readFile(fileURLToPath(authPackageJson
 assert.equal(installedPackage.version, expectedVersion);
 
 const requiredMarkers = [
-	['dist/component/public.js', 'revokeUserSessions'],
-	['dist/component/_generated/component.d.ts', 'revokeUserSessions'],
-	['dist/internal-types/component/_generated/component.d.ts', 'revokeUserSessions'],
 	['dist/components/github/convex.config.js', 'CALLBACK_URL'],
 	['dist/lib/oauth/dbHelpers.js', 'process.env.CALLBACK_URL'],
 	['package.json', '"./components/password/validation"'],
