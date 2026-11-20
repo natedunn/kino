@@ -2,6 +2,8 @@ import type { ReactNode } from 'react';
 import type { AppCommand, CommandRegistration } from './types';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { convexQuery } from '@convex-dev/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useParams, useRouterState } from '@tanstack/react-router';
 import { Home, MoonStar, Settings, User } from 'lucide-react';
 
@@ -15,6 +17,7 @@ import { useAuthSession } from '@/lib/auth/auth-client';
 import { toggleThemePreference } from '@/lib/theme';
 import * as m from '@/paraglide/messages.js';
 
+import { api } from '../../../convex/native/_generated/api';
 import { CommandContext } from './command-context';
 
 const COMMAND_PALETTE_IDLE_TIMEOUT_MS = 2_000;
@@ -62,6 +65,14 @@ export function CommandProvider({ children }: { children: ReactNode }) {
 
 	const orgSlug = orgParams?.org;
 	const projectSlug = projectParams?.project;
+	// Already cached by the project layout; hides commands for features a project turned off.
+	const { data: projectData } = useQuery(
+		convexQuery(
+			api.projects.getBySlugs,
+			orgSlug && projectSlug ? { organizationSlug: orgSlug, projectSlug } : 'skip'
+		)
+	);
+	const discussionsEnabled = projectData?.project.discussionsEnabled !== false;
 	const isAuthenticated = !!session.user;
 	const preloadPalette = useCallback(() => {
 		void loadCommandPaletteModule().then((module) => {
@@ -183,20 +194,21 @@ export function CommandProvider({ children }: { children: ReactNode }) {
 					keywords: ['project', 'files', 'assets', 'documents'],
 					title: m.command_go_files(),
 					run: () => navigate({ params, to: '/@{$org}/$project/files' }),
-				},
-				{
+				}
+			);
+			if (discussionsEnabled)
+				commands.push({
 					group: 'Navigation',
 					icon: InterviewOutline18,
 					id: 'project.discussions',
 					keywords: ['project', 'discussions'],
 					title: m.command_go_discussions(),
 					run: () => navigate({ params, to: '/@{$org}/$project/discussions' }),
-				}
-			);
+				});
 		}
 
 		return commands;
-	}, [isAuthenticated, navigate, orgSlug, projectSlug]);
+	}, [discussionsEnabled, isAuthenticated, navigate, orgSlug, projectSlug]);
 
 	const commands = useMemo(
 		() => [

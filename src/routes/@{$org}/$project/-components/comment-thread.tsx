@@ -129,6 +129,7 @@ export function CommentCard({
 	dropdownItems,
 	isDeleting,
 	isUpdating,
+	maxLength = FORM_LIMITS.comment,
 	onDelete,
 	onToggleEmote,
 	onUnauthenticated,
@@ -144,6 +145,8 @@ export function CommentCard({
 	dropdownItems?: ReactNode;
 	isDeleting?: boolean;
 	isUpdating?: boolean;
+	// Visible-text limit for edits; discussion bodies allow more than replies.
+	maxLength?: number;
 	onDelete?: (commentId: string) => void;
 	onToggleEmote?: (commentId: string, content: EmoteContent) => void;
 	// Called when a signed-out visitor tries to react, so callers can prompt them
@@ -209,8 +212,8 @@ export function CommentCard({
 		const sanitizedContent = sanitizeEditorContent(html);
 		if (!sanitizedContent) return;
 		// Count visible text, not HTML markup (see CommentForm.handleSubmit).
-		if (text.length > FORM_LIMITS.comment) {
-			setEditError(m.feedback_comment_too_long({ count: FORM_LIMITS.comment }));
+		if (text.length > maxLength) {
+			setEditError(m.feedback_comment_too_long({ count: maxLength }));
 			return;
 		}
 
@@ -348,7 +351,7 @@ export function CommentCard({
 													className='cursor-pointer border-b border-dotted border-foreground/50 text-foreground/70'
 													suppressHydrationWarning
 												>
-													edited
+													{m.comment_edited()}
 												</span>
 											</TooltipTrigger>
 											<TooltipContent>
@@ -603,7 +606,7 @@ function CollapsibleContent({ children }: { children: ReactNode }) {
 			{isOverflowing && !isExpanded ? (
 				<div className='absolute inset-x-0 bottom-0 flex h-20 items-end justify-center bg-gradient-to-t from-background to-transparent'>
 					<Button className='mb-2' onClick={() => setIsExpanded(true)} size='sm' variant='outline'>
-						Show more
+						{m.comment_show_more()}
 					</Button>
 				</div>
 			) : null}

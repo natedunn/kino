@@ -67,6 +67,8 @@ import { Route as OrgSettingsIntegrationsIndexRouteImport } from './routes/org/s
 import { Route as OrgSettingsMembersIndexRouteImport } from './routes/org/settings/members/index'
 import { Route as OrgSettingsStorageIndexRouteImport } from './routes/org/settings/storage/index'
 import { Route as AtChar123orgChar125ProjectAssetLibraryFileIdIndexRouteImport } from './routes/@{$org}/$project/asset-library/$fileId/index'
+import { Route as AtChar123orgChar125ProjectDiscussionsSlugIndexRouteImport } from './routes/@{$org}/$project/discussions/$slug/index'
+import { Route as AtChar123orgChar125ProjectDiscussionsNewIndexRouteImport } from './routes/@{$org}/$project/discussions/new/index'
 import { Route as AtChar123orgChar125ProjectFeedbackSlugIndexRouteImport } from './routes/@{$org}/$project/feedback/$slug/index'
 import { Route as AtChar123orgChar125ProjectFeedbackBoardsIndexRouteImport } from './routes/@{$org}/$project/feedback/boards/index'
 import { Route as AtChar123orgChar125ProjectFeedbackBoardsNewRouteImport } from './routes/@{$org}/$project/feedback/boards/new'
@@ -76,6 +78,7 @@ import { Route as AtChar123orgChar125ProjectIntegrationsGithubIndexRouteImport }
 import { Route as AtChar123orgChar125ProjectSettingsAppearanceIndexRouteImport } from './routes/@{$org}/$project/settings/appearance/index'
 import { Route as AtChar123orgChar125ProjectSettingsBoardsIndexRouteImport } from './routes/@{$org}/$project/settings/boards/index'
 import { Route as AtChar123orgChar125ProjectSettingsDangerIndexRouteImport } from './routes/@{$org}/$project/settings/danger/index'
+import { Route as AtChar123orgChar125ProjectSettingsDiscussionsIndexRouteImport } from './routes/@{$org}/$project/settings/discussions/index'
 import { Route as AtChar123orgChar125ProjectSettingsGeneralIndexRouteImport } from './routes/@{$org}/$project/settings/general/index'
 import { Route as AtChar123orgChar125ProjectSettingsIntegrationsIndexRouteImport } from './routes/@{$org}/$project/settings/integrations/index'
 import { Route as AtChar123orgChar125ProjectSettingsMembersIndexRouteImport } from './routes/@{$org}/$project/settings/members/index'
@@ -398,6 +401,18 @@ const AtChar123orgChar125ProjectAssetLibraryFileIdIndexRoute =
     path: '/asset-library/$fileId/',
     getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
   } as any)
+const AtChar123orgChar125ProjectDiscussionsSlugIndexRoute =
+  AtChar123orgChar125ProjectDiscussionsSlugIndexRouteImport.update({
+    id: '/discussions/$slug/',
+    path: '/discussions/$slug/',
+    getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
+  } as any)
+const AtChar123orgChar125ProjectDiscussionsNewIndexRoute =
+  AtChar123orgChar125ProjectDiscussionsNewIndexRouteImport.update({
+    id: '/discussions/new/',
+    path: '/discussions/new/',
+    getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
+  } as any)
 const AtChar123orgChar125ProjectFeedbackSlugIndexRoute =
   AtChar123orgChar125ProjectFeedbackSlugIndexRouteImport.update({
     id: '/$slug/',
@@ -450,6 +465,12 @@ const AtChar123orgChar125ProjectSettingsDangerIndexRoute =
   AtChar123orgChar125ProjectSettingsDangerIndexRouteImport.update({
     id: '/danger/',
     path: '/danger/',
+    getParentRoute: () => AtChar123orgChar125ProjectSettingsRouteRoute,
+  } as any)
+const AtChar123orgChar125ProjectSettingsDiscussionsIndexRoute =
+  AtChar123orgChar125ProjectSettingsDiscussionsIndexRouteImport.update({
+    id: '/discussions/',
+    path: '/discussions/',
     getParentRoute: () => AtChar123orgChar125ProjectSettingsRouteRoute,
   } as any)
 const AtChar123orgChar125ProjectSettingsGeneralIndexRoute =
@@ -591,6 +612,8 @@ export interface FileRoutesByFullPath {
   '/@{$org}/$project/feedback/boards/new': typeof AtChar123orgChar125ProjectFeedbackBoardsNewRoute
   '/@{$org}/$project/updates/$slug/edit': typeof AtChar123orgChar125ProjectUpdatesSlugEditRoute
   '/@{$org}/$project/asset-library/$fileId/': typeof AtChar123orgChar125ProjectAssetLibraryFileIdIndexRoute
+  '/@{$org}/$project/discussions/$slug/': typeof AtChar123orgChar125ProjectDiscussionsSlugIndexRoute
+  '/@{$org}/$project/discussions/new/': typeof AtChar123orgChar125ProjectDiscussionsNewIndexRoute
   '/@{$org}/$project/feedback/$slug/': typeof AtChar123orgChar125ProjectFeedbackSlugIndexRoute
   '/@{$org}/$project/feedback/boards/': typeof AtChar123orgChar125ProjectFeedbackBoardsIndexRoute
   '/@{$org}/$project/feedback/new/': typeof AtChar123orgChar125ProjectFeedbackNewIndexRoute
@@ -599,6 +622,7 @@ export interface FileRoutesByFullPath {
   '/@{$org}/$project/settings/appearance/': typeof AtChar123orgChar125ProjectSettingsAppearanceIndexRoute
   '/@{$org}/$project/settings/boards/': typeof AtChar123orgChar125ProjectSettingsBoardsIndexRoute
   '/@{$org}/$project/settings/danger/': typeof AtChar123orgChar125ProjectSettingsDangerIndexRoute
+  '/@{$org}/$project/settings/discussions/': typeof AtChar123orgChar125ProjectSettingsDiscussionsIndexRoute
   '/@{$org}/$project/settings/general/': typeof AtChar123orgChar125ProjectSettingsGeneralIndexRoute
   '/@{$org}/$project/settings/integrations/': typeof AtChar123orgChar125ProjectSettingsIntegrationsIndexRoute
   '/@{$org}/$project/settings/members/': typeof AtChar123orgChar125ProjectSettingsMembersIndexRoute
@@ -664,6 +688,8 @@ export interface FileRoutesByTo {
   '/@{$org}/$project/feedback/boards/new': typeof AtChar123orgChar125ProjectFeedbackBoardsNewRoute
   '/@{$org}/$project/updates/$slug/edit': typeof AtChar123orgChar125ProjectUpdatesSlugEditRoute
   '/@{$org}/$project/asset-library/$fileId': typeof AtChar123orgChar125ProjectAssetLibraryFileIdIndexRoute
+  '/@{$org}/$project/discussions/$slug': typeof AtChar123orgChar125ProjectDiscussionsSlugIndexRoute
+  '/@{$org}/$project/discussions/new': typeof AtChar123orgChar125ProjectDiscussionsNewIndexRoute
   '/@{$org}/$project/feedback/$slug': typeof AtChar123orgChar125ProjectFeedbackSlugIndexRoute
   '/@{$org}/$project/feedback/boards': typeof AtChar123orgChar125ProjectFeedbackBoardsIndexRoute
   '/@{$org}/$project/feedback/new': typeof AtChar123orgChar125ProjectFeedbackNewIndexRoute
@@ -672,6 +698,7 @@ export interface FileRoutesByTo {
   '/@{$org}/$project/settings/appearance': typeof AtChar123orgChar125ProjectSettingsAppearanceIndexRoute
   '/@{$org}/$project/settings/boards': typeof AtChar123orgChar125ProjectSettingsBoardsIndexRoute
   '/@{$org}/$project/settings/danger': typeof AtChar123orgChar125ProjectSettingsDangerIndexRoute
+  '/@{$org}/$project/settings/discussions': typeof AtChar123orgChar125ProjectSettingsDiscussionsIndexRoute
   '/@{$org}/$project/settings/general': typeof AtChar123orgChar125ProjectSettingsGeneralIndexRoute
   '/@{$org}/$project/settings/integrations': typeof AtChar123orgChar125ProjectSettingsIntegrationsIndexRoute
   '/@{$org}/$project/settings/members': typeof AtChar123orgChar125ProjectSettingsMembersIndexRoute
@@ -747,6 +774,8 @@ export interface FileRoutesById {
   '/@{$org}/$project/feedback/boards/new': typeof AtChar123orgChar125ProjectFeedbackBoardsNewRoute
   '/@{$org}/$project/updates/$slug/edit': typeof AtChar123orgChar125ProjectUpdatesSlugEditRoute
   '/@{$org}/$project/asset-library/$fileId/': typeof AtChar123orgChar125ProjectAssetLibraryFileIdIndexRoute
+  '/@{$org}/$project/discussions/$slug/': typeof AtChar123orgChar125ProjectDiscussionsSlugIndexRoute
+  '/@{$org}/$project/discussions/new/': typeof AtChar123orgChar125ProjectDiscussionsNewIndexRoute
   '/@{$org}/$project/feedback/$slug/': typeof AtChar123orgChar125ProjectFeedbackSlugIndexRoute
   '/@{$org}/$project/feedback/boards/': typeof AtChar123orgChar125ProjectFeedbackBoardsIndexRoute
   '/@{$org}/$project/feedback/new/': typeof AtChar123orgChar125ProjectFeedbackNewIndexRoute
@@ -755,6 +784,7 @@ export interface FileRoutesById {
   '/@{$org}/$project/settings/appearance/': typeof AtChar123orgChar125ProjectSettingsAppearanceIndexRoute
   '/@{$org}/$project/settings/boards/': typeof AtChar123orgChar125ProjectSettingsBoardsIndexRoute
   '/@{$org}/$project/settings/danger/': typeof AtChar123orgChar125ProjectSettingsDangerIndexRoute
+  '/@{$org}/$project/settings/discussions/': typeof AtChar123orgChar125ProjectSettingsDiscussionsIndexRoute
   '/@{$org}/$project/settings/general/': typeof AtChar123orgChar125ProjectSettingsGeneralIndexRoute
   '/@{$org}/$project/settings/integrations/': typeof AtChar123orgChar125ProjectSettingsIntegrationsIndexRoute
   '/@{$org}/$project/settings/members/': typeof AtChar123orgChar125ProjectSettingsMembersIndexRoute
@@ -830,6 +860,8 @@ export interface FileRouteTypes {
     | '/@{$org}/$project/feedback/boards/new'
     | '/@{$org}/$project/updates/$slug/edit'
     | '/@{$org}/$project/asset-library/$fileId/'
+    | '/@{$org}/$project/discussions/$slug/'
+    | '/@{$org}/$project/discussions/new/'
     | '/@{$org}/$project/feedback/$slug/'
     | '/@{$org}/$project/feedback/boards/'
     | '/@{$org}/$project/feedback/new/'
@@ -838,6 +870,7 @@ export interface FileRouteTypes {
     | '/@{$org}/$project/settings/appearance/'
     | '/@{$org}/$project/settings/boards/'
     | '/@{$org}/$project/settings/danger/'
+    | '/@{$org}/$project/settings/discussions/'
     | '/@{$org}/$project/settings/general/'
     | '/@{$org}/$project/settings/integrations/'
     | '/@{$org}/$project/settings/members/'
@@ -903,6 +936,8 @@ export interface FileRouteTypes {
     | '/@{$org}/$project/feedback/boards/new'
     | '/@{$org}/$project/updates/$slug/edit'
     | '/@{$org}/$project/asset-library/$fileId'
+    | '/@{$org}/$project/discussions/$slug'
+    | '/@{$org}/$project/discussions/new'
     | '/@{$org}/$project/feedback/$slug'
     | '/@{$org}/$project/feedback/boards'
     | '/@{$org}/$project/feedback/new'
@@ -911,6 +946,7 @@ export interface FileRouteTypes {
     | '/@{$org}/$project/settings/appearance'
     | '/@{$org}/$project/settings/boards'
     | '/@{$org}/$project/settings/danger'
+    | '/@{$org}/$project/settings/discussions'
     | '/@{$org}/$project/settings/general'
     | '/@{$org}/$project/settings/integrations'
     | '/@{$org}/$project/settings/members'
@@ -985,6 +1021,8 @@ export interface FileRouteTypes {
     | '/@{$org}/$project/feedback/boards/new'
     | '/@{$org}/$project/updates/$slug/edit'
     | '/@{$org}/$project/asset-library/$fileId/'
+    | '/@{$org}/$project/discussions/$slug/'
+    | '/@{$org}/$project/discussions/new/'
     | '/@{$org}/$project/feedback/$slug/'
     | '/@{$org}/$project/feedback/boards/'
     | '/@{$org}/$project/feedback/new/'
@@ -993,6 +1031,7 @@ export interface FileRouteTypes {
     | '/@{$org}/$project/settings/appearance/'
     | '/@{$org}/$project/settings/boards/'
     | '/@{$org}/$project/settings/danger/'
+    | '/@{$org}/$project/settings/discussions/'
     | '/@{$org}/$project/settings/general/'
     | '/@{$org}/$project/settings/integrations/'
     | '/@{$org}/$project/settings/members/'
@@ -1433,6 +1472,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AtChar123orgChar125ProjectAssetLibraryFileIdIndexRouteImport
       parentRoute: typeof AtChar123orgChar125ProjectRouteRoute
     }
+    '/@{$org}/$project/discussions/$slug/': {
+      id: '/@{$org}/$project/discussions/$slug/'
+      path: '/discussions/$slug'
+      fullPath: '/@{$org}/$project/discussions/$slug/'
+      preLoaderRoute: typeof AtChar123orgChar125ProjectDiscussionsSlugIndexRouteImport
+      parentRoute: typeof AtChar123orgChar125ProjectRouteRoute
+    }
+    '/@{$org}/$project/discussions/new/': {
+      id: '/@{$org}/$project/discussions/new/'
+      path: '/discussions/new'
+      fullPath: '/@{$org}/$project/discussions/new/'
+      preLoaderRoute: typeof AtChar123orgChar125ProjectDiscussionsNewIndexRouteImport
+      parentRoute: typeof AtChar123orgChar125ProjectRouteRoute
+    }
     '/@{$org}/$project/feedback/$slug/': {
       id: '/@{$org}/$project/feedback/$slug/'
       path: '/$slug'
@@ -1494,6 +1547,13 @@ declare module '@tanstack/react-router' {
       path: '/danger'
       fullPath: '/@{$org}/$project/settings/danger/'
       preLoaderRoute: typeof AtChar123orgChar125ProjectSettingsDangerIndexRouteImport
+      parentRoute: typeof AtChar123orgChar125ProjectSettingsRouteRoute
+    }
+    '/@{$org}/$project/settings/discussions/': {
+      id: '/@{$org}/$project/settings/discussions/'
+      path: '/discussions'
+      fullPath: '/@{$org}/$project/settings/discussions/'
+      preLoaderRoute: typeof AtChar123orgChar125ProjectSettingsDiscussionsIndexRouteImport
       parentRoute: typeof AtChar123orgChar125ProjectSettingsRouteRoute
     }
     '/@{$org}/$project/settings/general/': {
@@ -1652,6 +1712,7 @@ interface AtChar123orgChar125ProjectSettingsRouteRouteChildren {
   AtChar123orgChar125ProjectSettingsAppearanceIndexRoute: typeof AtChar123orgChar125ProjectSettingsAppearanceIndexRoute
   AtChar123orgChar125ProjectSettingsBoardsIndexRoute: typeof AtChar123orgChar125ProjectSettingsBoardsIndexRoute
   AtChar123orgChar125ProjectSettingsDangerIndexRoute: typeof AtChar123orgChar125ProjectSettingsDangerIndexRoute
+  AtChar123orgChar125ProjectSettingsDiscussionsIndexRoute: typeof AtChar123orgChar125ProjectSettingsDiscussionsIndexRoute
   AtChar123orgChar125ProjectSettingsGeneralIndexRoute: typeof AtChar123orgChar125ProjectSettingsGeneralIndexRoute
   AtChar123orgChar125ProjectSettingsIntegrationsIndexRoute: typeof AtChar123orgChar125ProjectSettingsIntegrationsIndexRoute
   AtChar123orgChar125ProjectSettingsMembersIndexRoute: typeof AtChar123orgChar125ProjectSettingsMembersIndexRoute
@@ -1668,6 +1729,8 @@ const AtChar123orgChar125ProjectSettingsRouteRouteChildren: AtChar123orgChar125P
       AtChar123orgChar125ProjectSettingsBoardsIndexRoute,
     AtChar123orgChar125ProjectSettingsDangerIndexRoute:
       AtChar123orgChar125ProjectSettingsDangerIndexRoute,
+    AtChar123orgChar125ProjectSettingsDiscussionsIndexRoute:
+      AtChar123orgChar125ProjectSettingsDiscussionsIndexRoute,
     AtChar123orgChar125ProjectSettingsGeneralIndexRoute:
       AtChar123orgChar125ProjectSettingsGeneralIndexRoute,
     AtChar123orgChar125ProjectSettingsIntegrationsIndexRoute:
@@ -1694,6 +1757,8 @@ interface AtChar123orgChar125ProjectRouteRouteChildren {
   AtChar123orgChar125ProjectUpdatesIndexRoute: typeof AtChar123orgChar125ProjectUpdatesIndexRoute
   AtChar123orgChar125ProjectUpdatesSlugEditRoute: typeof AtChar123orgChar125ProjectUpdatesSlugEditRoute
   AtChar123orgChar125ProjectAssetLibraryFileIdIndexRoute: typeof AtChar123orgChar125ProjectAssetLibraryFileIdIndexRoute
+  AtChar123orgChar125ProjectDiscussionsSlugIndexRoute: typeof AtChar123orgChar125ProjectDiscussionsSlugIndexRoute
+  AtChar123orgChar125ProjectDiscussionsNewIndexRoute: typeof AtChar123orgChar125ProjectDiscussionsNewIndexRoute
   AtChar123orgChar125ProjectIntegrationsGithubIndexRoute: typeof AtChar123orgChar125ProjectIntegrationsGithubIndexRoute
   AtChar123orgChar125ProjectUpdatesSlugIndexRoute: typeof AtChar123orgChar125ProjectUpdatesSlugIndexRoute
   AtChar123orgChar125ProjectUpdatesEditIndexRoute: typeof AtChar123orgChar125ProjectUpdatesEditIndexRoute
@@ -1722,6 +1787,10 @@ const AtChar123orgChar125ProjectRouteRouteChildren: AtChar123orgChar125ProjectRo
       AtChar123orgChar125ProjectUpdatesSlugEditRoute,
     AtChar123orgChar125ProjectAssetLibraryFileIdIndexRoute:
       AtChar123orgChar125ProjectAssetLibraryFileIdIndexRoute,
+    AtChar123orgChar125ProjectDiscussionsSlugIndexRoute:
+      AtChar123orgChar125ProjectDiscussionsSlugIndexRoute,
+    AtChar123orgChar125ProjectDiscussionsNewIndexRoute:
+      AtChar123orgChar125ProjectDiscussionsNewIndexRoute,
     AtChar123orgChar125ProjectIntegrationsGithubIndexRoute:
       AtChar123orgChar125ProjectIntegrationsGithubIndexRoute,
     AtChar123orgChar125ProjectUpdatesSlugIndexRoute:

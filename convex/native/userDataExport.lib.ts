@@ -122,8 +122,32 @@ async function updateCommentContext(ctx: QueryCtx, comment: Doc<'updateComments'
 	};
 }
 
+async function discussionCommentContext(ctx: QueryCtx, comment: Doc<'discussionComments'>) {
+	const discussion = await ctx.db.get('discussions', comment.discussionId);
+	if (!discussion || discussion.deletingAt !== undefined) {
+		return { contextAccess: 'missing' as const, discussionId: comment.discussionId };
+	}
+
+	const access = await resolveProjectAccess(ctx, discussion.projectId);
+	const organization =
+		access.project && (await ctx.db.get('organizations', access.project.organizationId));
+	if (!access.project || !organization) {
+		return {
+			contextAccess: 'inaccessible' as const,
+			discussionId: discussion._id,
+			projectId: discussion.projectId,
+		};
+	}
+	return {
+		contextAccess: 'visible' as const,
+		discussion: { id: discussion._id, slug: discussion.slug, title: discussion.title },
+		organization: await visibleOrganizationSummary(ctx, organization._id),
+		project: projectSummary(access.project, organization),
+	};
+}
+
 export async function buildCommentsSection(ctx: QueryCtx, profile: Doc<'profiles'>) {
-	const [feedbackComments, updateComments] = await Promise.all([
+	const [feedbackComments, updateComments, discussionComments] = await Promise.all([
 		ctx.db
 			.query('feedbackComments')
 			.withIndex('by_authorProfileId', (q) => q.eq('authorProfileId', profile._id))
@@ -134,11 +158,17 @@ export async function buildCommentsSection(ctx: QueryCtx, profile: Doc<'profiles
 			.withIndex('by_authorProfileId', (q) => q.eq('authorProfileId', profile._id))
 			.order('asc')
 			.take(MAX_COMMENTS_PER_SOURCE + 1),
+		ctx.db
+			.query('discussionComments')
+			.withIndex('by_authorProfileId', (q) => q.eq('authorProfileId', profile._id))
+			.order('asc')
+			.take(MAX_COMMENTS_PER_SOURCE + 1),
 	]);
 
 	if (
 		feedbackComments.length > MAX_COMMENTS_PER_SOURCE ||
-		updateComments.length > MAX_COMMENTS_PER_SOURCE
+		updateComments.length > MAX_COMMENTS_PER_SOURCE ||
+		discussionComments.length > MAX_COMMENTS_PER_SOURCE
 	) {
 		throw new ConvexError({
 			code: 'BAD_REQUEST',
@@ -152,7 +182,8 @@ export async function buildCommentsSection(ctx: QueryCtx, profile: Doc<'profiles
 		counts: {
 			feedbackComments: feedbackComments.length,
 			updateComments: updateComments.length,
-			total: feedbackComments.length + updateComments.length,
+			discussionComments: discussionComments.length,
+			total: feedbackComments.length + updateComments.length + discussionComments.length,
 		},
 		feedbackComments: await Promise.all(
 			feedbackComments.map(async (comment) => ({
@@ -176,6 +207,18 @@ export async function buildCommentsSection(ctx: QueryCtx, profile: Doc<'profiles
 				updateId: comment.updateId,
 				source: 'update' as const,
 				context: await updateCommentContext(ctx, comment),
+			}))
+		),
+		discussionComments: await Promise.all(
+			discussionComments.map(async (comment) => ({
+				id: comment._id,
+				content: comment.content,
+				createdAt: toExportDate(comment._creationTime),
+				updatedAt: toExportDate(comment.updatedAt),
+				discussionId: comment.discussionId,
+				initial: comment.initial,
+				source: 'discussion' as const,
+				context: await discussionCommentContext(ctx, comment),
 			}))
 		),
 	};
