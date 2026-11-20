@@ -1,8 +1,9 @@
 // @vitest-environment edge-runtime
+import { registerCore } from '@convex-dev/auth/test';
 import { convexTest } from 'convex-test';
 import { beforeEach, expect, test } from 'vitest';
 
-import { configureTestAuth, issuer } from '../testing/setup.testing';
+import { configureTestAuth, sessionFor } from '../testing/setup.testing';
 import { api } from './_generated/api';
 import schema from './schema';
 
@@ -11,6 +12,7 @@ beforeEach(configureTestAuth);
 
 test('organization summary counts members without exposing the roster or hidden projects', async () => {
 	const t = convexTest(schema, modules);
+	registerCore(t);
 	const ids = await t.run(async (ctx) => {
 		const owner = await ctx.db.insert('users', { status: 'active', systemRole: 'user' });
 		const moderator = await ctx.db.insert('users', { status: 'active', systemRole: 'user' });
@@ -46,9 +48,9 @@ test('organization summary counts members without exposing the roster or hidden 
 		});
 		return { organizationId, owner, moderator, outsider };
 	});
-	const owner = t.withIdentity({ issuer, subject: ids.owner });
-	const moderator = t.withIdentity({ issuer, subject: ids.moderator });
-	const outsider = t.withIdentity({ issuer, subject: ids.outsider });
+	const owner = t.withIdentity(await sessionFor(t, ids.owner));
+	const moderator = t.withIdentity(await sessionFor(t, ids.moderator));
+	const outsider = t.withIdentity(await sessionFor(t, ids.outsider));
 	const args = { organizationId: ids.organizationId };
 
 	expect(await outsider.query(api.organizationOverview.get, args)).toBeNull();

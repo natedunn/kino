@@ -1604,6 +1604,7 @@ export type DataModel = {
     indexes: {
       by_id: ["_id"];
       by_creation_time: ["_creationTime"];
+      by_githubAccountId: ["githubAccountId", "_creationTime"];
       by_githubEmail: ["githubEmail", "_creationTime"];
       by_passwordEmail: ["passwordEmail", "_creationTime"];
       by_status: ["status", "_creationTime"];

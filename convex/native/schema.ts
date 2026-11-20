@@ -97,7 +97,8 @@ export default defineSchema({
 	})
 		.index('by_status', ['status'])
 		.index('by_passwordEmail', ['passwordEmail'])
-		.index('by_githubEmail', ['githubEmail']),
+		.index('by_githubEmail', ['githubEmail'])
+		.index('by_githubAccountId', ['githubAccountId']),
 	profiles: defineTable({
 		userId: v.id('users'),
 		name: v.string(),

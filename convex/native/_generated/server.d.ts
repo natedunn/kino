@@ -34,8 +34,6 @@ type Env = {
   readonly AUTH_GITHUB_CALLBACK_URL: string;
   readonly AUTH_GITHUB_CLIENT_ID: string;
   readonly AUTH_GITHUB_CLIENT_SECRET: string;
-  readonly AUTH_JWKS: string;
-  readonly AUTH_PRIVATE_KEY: string;
   readonly BENTO_FROM: string | undefined;
   readonly BENTO_PUBLISHABLE_KEY: string | undefined;
   readonly BENTO_SECRET_KEY: string | undefined;

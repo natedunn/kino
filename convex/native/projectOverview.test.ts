@@ -1,8 +1,9 @@
 // @vitest-environment edge-runtime
+import { registerCore } from '@convex-dev/auth/test';
 import { convexTest } from 'convex-test';
 import { beforeEach, expect, test } from 'vitest';
 
-import { configureTestAuth, issuer } from '../testing/setup.testing';
+import { configureTestAuth, sessionFor } from '../testing/setup.testing';
 import { api } from './_generated/api';
 import schema from './schema';
 
@@ -11,6 +12,7 @@ beforeEach(configureTestAuth);
 
 test('overview uses project data and hides private projects from outsiders', async () => {
 	const t = convexTest(schema, modules);
+	registerCore(t);
 	const ids = await t.run(async (ctx) => {
 		const owner = await ctx.db.insert('users', { status: 'active', systemRole: 'user' });
 		const outsider = await ctx.db.insert('users', { status: 'active', systemRole: 'user' });
@@ -38,8 +40,8 @@ test('overview uses project data and hides private projects from outsiders', asy
 		});
 		return { owner, outsider, profile, projectId, boardId };
 	});
-	const owner = t.withIdentity({ issuer, subject: ids.owner });
-	const outsider = t.withIdentity({ issuer, subject: ids.outsider });
+	const owner = t.withIdentity(await sessionFor(t, ids.owner));
+	const outsider = t.withIdentity(await sessionFor(t, ids.outsider));
 
 	expect(await outsider.query(api.projectOverview.get, { projectId: ids.projectId })).toBeNull();
 	expect(await owner.query(api.projectOverview.get, { projectId: ids.projectId })).toMatchObject({

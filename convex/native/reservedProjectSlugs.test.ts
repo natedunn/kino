@@ -1,8 +1,9 @@
 // @vitest-environment edge-runtime
+import { registerCore } from '@convex-dev/auth/test';
 import { convexTest } from 'convex-test';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
-import { configureTestAuth, issuer } from '../testing/setup.testing';
+import { configureTestAuth, sessionFor } from '../testing/setup.testing';
 import { api } from './_generated/api';
 import schema from './schema';
 
@@ -12,6 +13,7 @@ afterEach(() => vi.unstubAllEnvs());
 
 async function fixture(provider: 'github' | 'password' = 'github', verified = true) {
 	const t = convexTest(schema, modules);
+	registerCore(t);
 	const ids = await t.run(async (ctx) => {
 		const userId = await ctx.db.insert('users', {
 			status: 'active',
@@ -37,7 +39,7 @@ async function fixture(provider: 'github' | 'password' = 'github', verified = tr
 		await ctx.db.insert('memberships', { organizationId, userId, role: 'owner' });
 		return { userId, organizationId };
 	});
-	return { t, ...ids, caller: t.withIdentity({ issuer, subject: ids.userId }) };
+	return { t, ...ids, caller: t.withIdentity(await sessionFor(t, ids.userId)) };
 }
 
 const create = { orgSlug: 'test-team', name: 'Kino', slug: 'kino', visibility: 'public' as const };
@@ -91,7 +93,10 @@ test.each(['missing', 'blank', 'different', 'unverified', 'spoofed'] as const)(
 		const s = await fixture('github', evidence !== 'unverified');
 		const caller =
 			evidence === 'spoofed'
-				? s.t.withIdentity({ issuer, subject: s.userId, email: 'other@example.test' })
+				? s.t.withIdentity({
+						...(await sessionFor(s.t, s.userId)),
+						email: 'other@example.test',
+					})
 				: s.caller;
 		await expect(caller.mutation(api.policy.createProjectForRoute, create)).rejects.toThrow(
 			'INVALID_PROJECT'
