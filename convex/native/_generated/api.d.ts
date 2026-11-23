@@ -1222,6 +1222,7 @@ export declare const api: {
       {
         body: string;
         categoryId: Id<"forumCategories">;
+        poll?: { multiple: boolean; options: Array<string> };
         projectId: Id<"projects">;
         title: string;
       },
@@ -1443,6 +1444,7 @@ export declare const api: {
           commentCount: number;
           createdAt: number;
           excerpt: string;
+          hasPoll: boolean;
           id: Id<"forumTopics">;
           lastActivityAt: number;
           locked: boolean;
@@ -1476,6 +1478,7 @@ export declare const api: {
         commentCount: number;
         createdAt: number;
         excerpt: string;
+        hasPoll: boolean;
         id: Id<"forumTopics">;
         lastActivityAt: number;
         locked: boolean;
@@ -1692,6 +1695,35 @@ export declare const api: {
         postingPolicy: "everyone" | "team";
         slug: string;
       },
+      null
+    >;
+  };
+  forumPolls: {
+    get: FunctionReference<
+      "query",
+      "public",
+      { topicId: Id<"forumTopics"> },
+      null | {
+        canClose: boolean;
+        canVote: boolean;
+        closed: boolean;
+        id: Id<"forumPolls">;
+        multiple: boolean;
+        options: Array<{ id: string; label: string; votes: number }>;
+        viewerOptionIds: Array<string>;
+        voterCount: number;
+      }
+    >;
+    setClosed: FunctionReference<
+      "mutation",
+      "public",
+      { closed: boolean; pollId: Id<"forumPolls"> },
+      null
+    >;
+    vote: FunctionReference<
+      "mutation",
+      "public",
+      { optionIds: Array<string>; pollId: Id<"forumPolls"> },
       null
     >;
   };

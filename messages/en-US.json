@@ -1288,6 +1288,46 @@
 	"forum_body_required": "Add a body.",
 	"forum_title_too_long": "Keep the title to {count} characters or fewer.",
 	"forum_body_too_long": "Keep the body to {count} characters or fewer.",
+	"forum_poll_add": "Add poll",
+	"forum_poll_remove": "Remove poll",
+	"forum_poll_heading": "Poll",
+	"forum_poll_option_label": "Option {number}",
+	"forum_poll_option_remove": "Remove option {number}",
+	"forum_poll_option_add": "Add option",
+	"forum_poll_multiple": "Allow multiple choices",
+	"forum_poll_options_hint": "Add 2 to {count} options for people to choose from.",
+	"forum_poll_option_required": "Fill in every poll option, or remove the empty ones.",
+	"forum_poll_option_too_long": "Keep each poll option to {count} characters or fewer.",
+	"forum_poll_option_duplicate": "Each poll option needs to be different.",
+	"forum_poll_choose_one": "Choose one option.",
+	"forum_poll_choose_many": "Choose one or more options.",
+	"forum_poll_vote": "Vote",
+	"forum_poll_voting": "Voting…",
+	"forum_poll_change_vote": "Change vote",
+	"forum_poll_withdraw_vote": "Remove my vote",
+	"forum_poll_your_vote": "Your vote",
+	"forum_poll_closed": "Closed",
+	"forum_poll_close": "Close poll",
+	"forum_poll_reopen": "Reopen poll",
+	"forum_poll_sign_in_to_vote": "Sign in to vote",
+	"forum_poll_vote_failed": "We couldn't save your vote.",
+	"forum_poll_close_failed": "We couldn't update the poll.",
+	"forum_list_poll": "Poll",
+	"server_error_forum_poll_closed": "This poll is closed, so votes can no longer change.",
+	"forum_poll_voter_count": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": { "countPlural=one": "{count} voter", "countPlural=other": "{count} voters" }
+		}
+	],
+	"forum_poll_vote_count": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": { "countPlural=one": "{count} vote", "countPlural=other": "{count} votes" }
+		}
+	],
 	"forum_cannot_create_title": "You can't start a topic here",
 	"forum_cannot_create_archived_description": "This project is archived and read-only, so new topics and replies are closed.",
 	"forum_back": "All topics",

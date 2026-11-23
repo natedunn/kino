@@ -1288,6 +1288,49 @@
 	"forum_body_required": "Agrega contenido.",
 	"forum_title_too_long": "El título debe tener {count} caracteres como máximo.",
 	"forum_body_too_long": "El contenido debe tener {count} caracteres como máximo.",
+	"forum_poll_add": "Agregar encuesta",
+	"forum_poll_remove": "Quitar encuesta",
+	"forum_poll_heading": "Encuesta",
+	"forum_poll_option_label": "Opción {number}",
+	"forum_poll_option_remove": "Quitar opción {number}",
+	"forum_poll_option_add": "Agregar opción",
+	"forum_poll_multiple": "Permitir elegir varias opciones",
+	"forum_poll_options_hint": "Agrega de 2 a {count} opciones para que la gente elija.",
+	"forum_poll_option_required": "Completa todas las opciones de la encuesta o quita las vacías.",
+	"forum_poll_option_too_long": "Cada opción de la encuesta debe tener {count} caracteres como máximo.",
+	"forum_poll_option_duplicate": "Cada opción de la encuesta debe ser distinta.",
+	"forum_poll_choose_one": "Elige una opción.",
+	"forum_poll_choose_many": "Elige una o más opciones.",
+	"forum_poll_vote": "Votar",
+	"forum_poll_voting": "Votando…",
+	"forum_poll_change_vote": "Cambiar voto",
+	"forum_poll_withdraw_vote": "Quitar mi voto",
+	"forum_poll_your_vote": "Tu voto",
+	"forum_poll_closed": "Cerrada",
+	"forum_poll_close": "Cerrar encuesta",
+	"forum_poll_reopen": "Reabrir encuesta",
+	"forum_poll_sign_in_to_vote": "Inicia sesión para votar",
+	"forum_poll_vote_failed": "No pudimos guardar tu voto.",
+	"forum_poll_close_failed": "No pudimos actualizar la encuesta.",
+	"forum_list_poll": "Encuesta",
+	"server_error_forum_poll_closed": "Esta encuesta está cerrada, así que los votos ya no se pueden cambiar.",
+	"forum_poll_voter_count": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} persona votó",
+				"countPlural=other": "{count} personas votaron"
+			}
+		}
+	],
+	"forum_poll_vote_count": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": { "countPlural=one": "{count} voto", "countPlural=other": "{count} votos" }
+		}
+	],
 	"forum_cannot_create_title": "No puedes iniciar un tema aquí",
 	"forum_cannot_create_archived_description": "Este proyecto está archivado y es de solo lectura, así que no se pueden iniciar temas nuevos ni responder.",
 	"forum_back": "Todos los temas",

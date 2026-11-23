@@ -31,6 +31,7 @@ export const APP_ERROR_CODES = [
 	'CATEGORY_LIMIT',
 	'ANSWERS_NOT_ENABLED',
 	'LINK_LIMIT',
+	'POLL_CLOSED',
 ] as const;
 
 export type AppErrorCode = (typeof APP_ERROR_CODES)[number];

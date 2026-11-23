@@ -1228,6 +1228,46 @@
 	"forum_body_required": "请添加正文。",
 	"forum_title_too_long": "标题不能超过 {count} 个字符。",
 	"forum_body_too_long": "正文不能超过 {count} 个字符。",
+	"forum_poll_add": "添加投票",
+	"forum_poll_remove": "移除投票",
+	"forum_poll_heading": "投票",
+	"forum_poll_option_label": "选项 {number}",
+	"forum_poll_option_remove": "移除选项 {number}",
+	"forum_poll_option_add": "添加选项",
+	"forum_poll_multiple": "允许多选",
+	"forum_poll_options_hint": "添加 2 到 {count} 个选项供大家选择。",
+	"forum_poll_option_required": "请填写所有投票选项，或移除空白选项。",
+	"forum_poll_option_too_long": "每个投票选项不能超过 {count} 个字符。",
+	"forum_poll_option_duplicate": "投票选项不能重复。",
+	"forum_poll_choose_one": "请选择一个选项。",
+	"forum_poll_choose_many": "请选择一个或多个选项。",
+	"forum_poll_vote": "投票",
+	"forum_poll_voting": "正在投票…",
+	"forum_poll_change_vote": "更改投票",
+	"forum_poll_withdraw_vote": "撤回我的投票",
+	"forum_poll_your_vote": "你的选择",
+	"forum_poll_closed": "已结束",
+	"forum_poll_close": "结束投票",
+	"forum_poll_reopen": "重新开放投票",
+	"forum_poll_sign_in_to_vote": "登录后投票",
+	"forum_poll_vote_failed": "无法保存你的投票。",
+	"forum_poll_close_failed": "无法更新投票。",
+	"forum_list_poll": "投票",
+	"server_error_forum_poll_closed": "此投票已结束，无法再更改投票。",
+	"forum_poll_voter_count": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": { "countPlural=one": "{count} 人已投票", "countPlural=other": "{count} 人已投票" }
+		}
+	],
+	"forum_poll_vote_count": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": { "countPlural=one": "{count} 票", "countPlural=other": "{count} 票" }
+		}
+	],
 	"forum_cannot_create_title": "你无法在此发起主题",
 	"forum_cannot_create_archived_description": "此项目已归档且为只读，因此无法发起新主题或回复。",
 	"forum_back": "全部主题",
