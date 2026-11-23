@@ -629,6 +629,32 @@ export const listTimelinePage = query({
 	},
 });
 
+async function liveOnly(ctx: QueryCtx, items: Array<Doc<'feedback'>>) {
+	const live = await Promise.all(items.map((item) => isFeedbackLive(ctx, item)));
+	return items.filter((_item, index) => live[index]);
+}
+
+/**
+ * Live feedback in a project matching `search`, in relevance order. Reads at
+ * most `scan` rows, so fewer may come back. Callers check project access.
+ */
+export async function searchLiveFeedback(
+	ctx: QueryCtx,
+	projectId: Id<'projects'>,
+	search: string,
+	scan: number
+) {
+	return liveOnly(
+		ctx,
+		await ctx.db
+			.query('feedback')
+			.withSearchIndex('search_by_searchContent', (q) =>
+				q.search('searchContent', search).eq('projectId', projectId)
+			)
+			.take(scan)
+	);
+}
+
 export const searchForLinking = query({
 	args: { projectId: v.id('projects'), search: v.string() },
 	returns: v.array(relatedFeedbackValidator),
@@ -637,26 +663,21 @@ export const searchForLinking = query({
 		if (!access.project) return [];
 		const search = args.search.trim();
 		const items = search
-			? await ctx.db
-					.query('feedback')
-					.withSearchIndex('search_by_searchContent', (q) =>
-						q.search('searchContent', search).eq('projectId', args.projectId)
-					)
-					.take(20)
-			: await ctx.db
-					.query('feedback')
-					.withIndex('by_projectId', (q) => q.eq('projectId', args.projectId))
-					.order('desc')
-					.take(20);
-		const live = await Promise.all(items.map((item) => isFeedbackLive(ctx, item)));
-		return items
-			.filter((_item, index) => live[index])
-			.map((item) => ({
-				id: item._id,
-				slug: item.slug,
-				status: item.status,
-				title: item.title,
-			}));
+			? await searchLiveFeedback(ctx, args.projectId, search, 20)
+			: await liveOnly(
+					ctx,
+					await ctx.db
+						.query('feedback')
+						.withIndex('by_projectId', (q) => q.eq('projectId', args.projectId))
+						.order('desc')
+						.take(20)
+				);
+		return items.map((item) => ({
+			id: item._id,
+			slug: item.slug,
+			status: item.status,
+			title: item.title,
+		}));
 	},
 });
 
