@@ -103,6 +103,23 @@ export async function seedDefaultCategories(ctx: MutationCtx, projectId: Id<'pro
 		await ctx.db.insert('forumCategories', { projectId, position, ...category });
 }
 
+/**
+ * Keeps `topicCount` in step as live topics enter (+1) or leave (-1) a
+ * category. Topics being deleted have already left their category.
+ */
+export async function adjustTopicCount(
+	ctx: MutationCtx,
+	categoryId: Id<'forumCategories'> | undefined,
+	delta: number
+) {
+	if (!categoryId || delta === 0) return;
+	const category = await ctx.db.get('forumCategories', categoryId);
+	if (!category) return;
+	await ctx.db.patch('forumCategories', categoryId, {
+		topicCount: Math.max(0, (category.topicCount ?? 0) + delta),
+	});
+}
+
 function validSlug(value: string) {
 	return /^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$/.test(value);
 }
@@ -269,6 +286,11 @@ export const reassignBatch = internalMutation({
 			.take(REASSIGN_BATCH_SIZE);
 		for (const topic of topics)
 			await ctx.db.patch('forumTopics', topic._id, { categoryId: args.moveToCategoryId });
+		await adjustTopicCount(
+			ctx,
+			args.moveToCategoryId,
+			topics.filter((topic) => topic.deletingAt === undefined).length
+		);
 		if (topics.length === REASSIGN_BATCH_SIZE)
 			await ctx.scheduler.runAfter(0, internal.forumCategories.reassignBatch, args);
 		else await ctx.db.delete('forumCategories', category._id);
@@ -316,6 +338,11 @@ export const fileUncategorized = internalMutation({
 			.take(REASSIGN_BATCH_SIZE);
 		for (const topic of topics)
 			await ctx.db.patch('forumTopics', topic._id, { categoryId: first._id });
+		await adjustTopicCount(
+			ctx,
+			first._id,
+			topics.filter((topic) => topic.deletingAt === undefined).length
+		);
 		if (topics.length === REASSIGN_BATCH_SIZE)
 			await ctx.scheduler.runAfter(0, internal.forumCategories.fileUncategorized, {
 				projectId,

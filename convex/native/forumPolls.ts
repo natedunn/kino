@@ -6,6 +6,7 @@ import { ConvexError, v } from 'convex/values';
 import { VALIDATION_LIMITS } from '../shared/validation';
 import { mutation, query } from './_generated/server';
 import { isManager, readableTopic, writableTopic } from './forum';
+import { adjustScore } from './forumStats';
 import { getCurrentUser } from './identity';
 
 export const MIN_POLL_OPTIONS = 2;
@@ -171,6 +172,8 @@ export const vote = mutation({
 			})),
 			voterCount: Math.max(0, poll.voterCount - Number(!!existing) + Number(optionIds.length > 0)),
 		});
+		// Voters count toward the topic's "Top" score; changing a vote doesn't.
+		await adjustScore(ctx, topic._id, Number(optionIds.length > 0) - Number(!!existing));
 		return null;
 	},
 });

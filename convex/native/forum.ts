@@ -15,9 +15,10 @@ import { assertProjectWritable, requireProjectAccess, resolveProjectAccess } fro
 import { commentAuthors } from './commentAuthors';
 import { insertFeedback, recordEvent as recordFeedbackEvent } from './feedback';
 import { isFeedbackLive } from './feedbackLifecycle';
-import { categoryView, liveCategories, toCategoryView } from './forumCategories';
+import { adjustTopicCount, categoryView, liveCategories, toCategoryView } from './forumCategories';
 import { deleteTopicPollBatch, insertPoll, topicHasPoll } from './forumPolls';
 import { forumReader, recordRead, topicUnread, unreadValidator } from './forumReads';
+import { adjustScore, nextScore } from './forumStats';
 import { getCurrentUser, requireCurrentUser } from './identity';
 import { emoteReaction, feedbackStatus, forumEventType } from './schema';
 import { profileValidator, summary } from './updates';
@@ -35,6 +36,9 @@ const PARTICIPANT_SCAN = 200;
 const LINK_CANDIDATES = 8;
 // Events returned with a topic; older ones are dropped from the thread.
 const MAX_EVENTS = 100;
+// Index rows one page of a time-windowed "Top" list may read. Older topics
+// outside the window are read and skipped; past this the client splits the page.
+const TOP_MAX_ROWS_READ = 500;
 
 const limits = new RateLimiter(components.authLimits, {
 	forumWrite: { kind: 'token bucket', rate: 30, period: 60_000, capacity: 30 },
@@ -78,6 +82,7 @@ const listItemValidator = v.object({
 	author: profileValidator,
 	category: categorySummaryValidator,
 	commentCount: v.number(),
+	score: v.number(),
 	createdAt: v.number(),
 	lastActivityAt: v.number(),
 	pinned: v.boolean(),
@@ -118,7 +123,12 @@ const eventValidator = v.object({
 	newValue: v.union(v.string(), v.null()),
 	feedback: v.union(feedbackSummaryValidator, v.null()),
 });
-const sortValidator = v.union(v.literal('activity'), v.literal('newest'), v.literal('replies'));
+const sortValidator = v.union(
+	v.literal('activity'),
+	v.literal('newest'),
+	v.literal('replies'),
+	v.literal('top')
+);
 const filterValidator = v.union(v.literal('unanswered'), v.literal('mine'), v.literal('following'));
 
 type Access = Awaited<ReturnType<typeof resolveProjectAccess>>;
@@ -439,6 +449,7 @@ async function toListItems(ctx: QueryCtx, items: Array<ListItemSource>) {
 								}
 							: null,
 					commentCount: item.commentCount,
+					score: item.score ?? 0,
 					createdAt: item._creationTime,
 					lastActivityAt: item.lastActivityAt,
 					pinned: item.pinnedAt !== undefined,
@@ -457,6 +468,9 @@ export const list = query({
 		categoryId: v.optional(v.id('forumCategories')),
 		search: v.optional(v.string()),
 		sort: v.optional(sortValidator),
+		// "Top" only: topics created before this are left out. Clients round it
+		// (to the hour) so the paginated query's args stay stable.
+		since: v.optional(v.number()),
 		filter: v.optional(filterValidator),
 		paginationOpts: paginationOptsValidator,
 	},
@@ -532,11 +546,13 @@ export const list = query({
 			query = (
 				sort === 'replies'
 					? base.withIndex('by_categoryId_and_commentCount', (q) => q.eq('categoryId', categoryId))
-					: sort === 'newest'
-						? base.withIndex('by_categoryId', (q) => q.eq('categoryId', categoryId))
-						: base.withIndex('by_categoryId_and_lastActivityAt', (q) =>
-								q.eq('categoryId', categoryId)
-							)
+					: sort === 'top'
+						? base.withIndex('by_categoryId_and_score', (q) => q.eq('categoryId', categoryId))
+						: sort === 'newest'
+							? base.withIndex('by_categoryId', (q) => q.eq('categoryId', categoryId))
+							: base.withIndex('by_categoryId_and_lastActivityAt', (q) =>
+									q.eq('categoryId', categoryId)
+								)
 			).order('desc');
 		} else {
 			query = (
@@ -544,16 +560,34 @@ export const list = query({
 					? base.withIndex('by_projectId_and_commentCount', (q) =>
 							q.eq('projectId', args.projectId)
 						)
-					: sort === 'newest'
-						? base.withIndex('by_projectId', (q) => q.eq('projectId', args.projectId))
-						: base.withIndex('by_projectId_and_lastActivityAt', (q) =>
-								q.eq('projectId', args.projectId)
-							)
+					: sort === 'top'
+						? base.withIndex('by_projectId_and_score', (q) => q.eq('projectId', args.projectId))
+						: sort === 'newest'
+							? base.withIndex('by_projectId', (q) => q.eq('projectId', args.projectId))
+							: base.withIndex('by_projectId_and_lastActivityAt', (q) =>
+									q.eq('projectId', args.projectId)
+								)
 			).order('desc');
 		}
 		if (args.filter === 'unanswered')
 			query = query.filter((q) => q.eq(q.field('answerCommentId'), undefined));
-		const result = await query.paginate(args.paginationOpts);
+		// A period narrows "Top" to recent topics. The score index can't range
+		// over creation time, so older topics are read and skipped; the row
+		// budget keeps each page's scan bounded, and the client splits and
+		// continues pages that hit it.
+		const since = sort === 'top' && args.filter !== 'mine' ? args.since : undefined;
+		if (since !== undefined)
+			// Bounded by maximumRowsRead below.
+			// eslint-disable-next-line @convex-dev/no-filter-in-query
+			query = query.filter((q) => q.gte(q.field('_creationTime'), since));
+		const result = await query.paginate(
+			since === undefined
+				? args.paginationOpts
+				: {
+						...args.paginationOpts,
+						maximumRowsRead: args.paginationOpts.maximumRowsRead ?? TOP_MAX_ROWS_READ,
+					}
+		);
 		return { ...result, page: await toListItems(ctx, result.page) };
 	},
 });
@@ -775,8 +809,10 @@ export async function insertTopic(
 		title: args.title,
 		searchContent: searchContent(args.title, args.body),
 		commentCount: 0,
+		score: 0,
 		lastActivityAt: Date.now(),
 	});
+	await adjustTopicCount(ctx, args.categoryId, 1);
 	const firstCommentId = await ctx.db.insert('forumComments', {
 		topicId: id,
 		authorProfileId: args.authorProfileId,
@@ -871,7 +907,11 @@ export const addComment = mutation({
 			initial: false,
 			...(args.replyToCommentId ? { replyToCommentId: args.replyToCommentId } : {}),
 		});
-		const activity = { commentCount: topic.commentCount + 1, lastActivityAt: Date.now() };
+		const activity = {
+			commentCount: topic.commentCount + 1,
+			score: nextScore(topic, 1),
+			lastActivityAt: Date.now(),
+		};
 		await ctx.db.patch('forumTopics', topic._id, activity);
 		await follow(ctx, topic, profileId);
 		// Repliers have read the thread up to their own reply.
@@ -920,6 +960,7 @@ export const removeComment = mutation({
 			.first();
 		await ctx.db.patch('forumTopics', topic._id, {
 			commentCount: Math.max(0, topic.commentCount - 1),
+			score: nextScore(topic, -1),
 			lastActivityAt: latest?._creationTime ?? topic._creationTime,
 			...(topic.answerCommentId === comment._id ? { answerCommentId: undefined } : {}),
 		});
@@ -967,8 +1008,10 @@ export const toggleReaction = mutation({
 				q.eq('commentId', comment._id).eq('authorProfileId', profileId).eq('content', args.content)
 			)
 			.unique();
+		// Only reactions on the opening post count toward the topic's score.
 		if (existing) {
 			await ctx.db.delete('forumCommentEmotes', existing._id);
+			if (comment.initial) await adjustScore(ctx, topic._id, -1);
 			return false;
 		}
 		await ctx.db.insert('forumCommentEmotes', {
@@ -977,6 +1020,7 @@ export const toggleReaction = mutation({
 			authorProfileId: profileId,
 			content: args.content,
 		});
+		if (comment.initial) await adjustScore(ctx, topic._id, 1);
 		return true;
 	},
 });
@@ -1000,6 +1044,8 @@ export const setCategory = mutation({
 			// Answers only exist in Q&A categories.
 			...(category.format === 'qa' ? {} : { answerCommentId: undefined }),
 		});
+		await adjustTopicCount(ctx, topic.categoryId, -1);
+		await adjustTopicCount(ctx, category._id, 1);
 		await recordEvent(ctx, topic._id, profileId, 'category_changed', {
 			...(previous ? { oldValue: previous.name } : {}),
 			newValue: category.name,
@@ -1278,6 +1324,8 @@ export const remove = mutation({
 		const { access, topic } = await writableTopic(ctx, args.topicId);
 		if (!access.permissions.canManageContent) throw new ConvexError('FORBIDDEN');
 		await ctx.db.patch('forumTopics', topic._id, { deletingAt: Date.now() });
+		// The topic leaves its category now, though its rows go in batches.
+		await adjustTopicCount(ctx, topic.categoryId, -1);
 		await ctx.scheduler.runAfter(0, internal.forum.deleteBatch, { id: topic._id });
 		return null;
 	},

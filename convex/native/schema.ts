@@ -514,6 +514,8 @@ export default defineSchema({
 		format: forumCategoryFormat,
 		postingPolicy: forumPostingPolicy,
 		position: v.number(),
+		// Live (not deleting) topics filed here. Unset until backfilled; read as 0.
+		topicCount: v.optional(v.number()),
 		updatedAt: v.optional(v.number()),
 		deletingAt: v.optional(v.number()),
 	})
@@ -532,6 +534,9 @@ export default defineSchema({
 		title: v.string(),
 		searchContent: v.string(),
 		commentCount: v.number(),
+		// Ranks the "Top" view: replies, reactions on the opening post and poll
+		// voters. Unset until backfilled; read as 0.
+		score: v.optional(v.number()),
 		lastActivityAt: v.number(),
 		pinnedAt: v.optional(v.number()),
 		lockedAt: v.optional(v.number()),
@@ -543,6 +548,7 @@ export default defineSchema({
 		.index('by_projectId_and_slug', ['projectId', 'slug'])
 		.index('by_projectId_and_lastActivityAt', ['projectId', 'lastActivityAt'])
 		.index('by_projectId_and_commentCount', ['projectId', 'commentCount'])
+		.index('by_projectId_and_score', ['projectId', 'score'])
 		.index('by_projectId_and_pinnedAt', ['projectId', 'pinnedAt'])
 		.index('by_projectId_and_authorProfileId_and_lastActivityAt', [
 			'projectId',
@@ -552,6 +558,7 @@ export default defineSchema({
 		.index('by_categoryId', ['categoryId'])
 		.index('by_categoryId_and_lastActivityAt', ['categoryId', 'lastActivityAt'])
 		.index('by_categoryId_and_commentCount', ['categoryId', 'commentCount'])
+		.index('by_categoryId_and_score', ['categoryId', 'score'])
 		.searchIndex('search_by_searchContent', {
 			searchField: 'searchContent',
 			filterFields: ['projectId', 'categoryId'],
