@@ -1201,6 +1201,30 @@
 	"forum_list_sort_activity": "最近活动",
 	"forum_list_sort_newest": "最新",
 	"forum_list_sort_replies": "回复最多",
+	"forum_list_sort_top": "热门",
+	"forum_list_period_label": "时间范围",
+	"forum_list_period_week": "最近一周",
+	"forum_list_period_month": "最近一个月",
+	"forum_list_period_year": "最近一年",
+	"forum_list_period_all": "全部时间",
+	"forum_list_score": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": { "countPlural=one": "回复、反应和投票共 {count} 分", "countPlural=other": "回复、反应和投票共 {count} 分" }
+		}
+	],
+	"forum_overview_latest": "最新",
+	"forum_overview_topic_count": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": { "countPlural=one": "{count} 个主题", "countPlural=other": "{count} 个主题" }
+		}
+	],
+	"forum_overview_latest_topic": "最新主题",
+	"forum_overview_no_topics": "暂无主题",
+	"forum_list_empty_period": "这段时间内没有新发起的主题。",
 	"forum_list_pinned": "已置顶",
 	"forum_list_locked": "已锁定",
 	"forum_list_answered": "已解答",

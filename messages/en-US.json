@@ -1261,6 +1261,30 @@
 	"forum_list_sort_activity": "Latest activity",
 	"forum_list_sort_newest": "Newest",
 	"forum_list_sort_replies": "Most replies",
+	"forum_list_sort_top": "Top",
+	"forum_list_period_label": "Time period",
+	"forum_list_period_week": "Past week",
+	"forum_list_period_month": "Past month",
+	"forum_list_period_year": "Past year",
+	"forum_list_period_all": "All time",
+	"forum_list_score": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": { "countPlural=one": "{count} point from replies, reactions and poll votes", "countPlural=other": "{count} points from replies, reactions and poll votes" }
+		}
+	],
+	"forum_overview_latest": "Latest",
+	"forum_overview_topic_count": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": { "countPlural=one": "{count} topic", "countPlural=other": "{count} topics" }
+		}
+	],
+	"forum_overview_latest_topic": "Latest topic",
+	"forum_overview_no_topics": "No topics yet",
+	"forum_list_empty_period": "No topics were started in this period.",
 	"forum_list_pinned": "Pinned",
 	"forum_list_locked": "Locked",
 	"forum_list_answered": "Answered",
