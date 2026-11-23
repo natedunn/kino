@@ -308,7 +308,17 @@ export declare const api: {
           }>;
           id: Id<"feedbackComments">;
           initial: boolean;
+          isTeamMember: boolean;
           replyFeedbackCommentId: Id<"feedbackComments"> | null;
+          replyTo: null | {
+            author: null | {
+              id: Id<"profiles">;
+              imageUrl: string | null;
+              name: string;
+              username: string;
+            };
+            id: Id<"feedbackComments">;
+          };
           updatedTime: number | null;
         } | null;
         following: boolean;
@@ -348,7 +358,17 @@ export declare const api: {
                 }>;
                 id: Id<"feedbackComments">;
                 initial: boolean;
+                isTeamMember: boolean;
                 replyFeedbackCommentId: Id<"feedbackComments"> | null;
+                replyTo: null | {
+                  author: null | {
+                    id: Id<"profiles">;
+                    imageUrl: string | null;
+                    name: string;
+                    username: string;
+                  };
+                  id: Id<"feedbackComments">;
+                };
                 updatedTime: number | null;
               };
               type: "comment";
@@ -482,7 +502,17 @@ export declare const api: {
                 }>;
                 id: Id<"feedbackComments">;
                 initial: boolean;
+                isTeamMember: boolean;
                 replyFeedbackCommentId: Id<"feedbackComments"> | null;
+                replyTo: null | {
+                  author: null | {
+                    id: Id<"profiles">;
+                    imageUrl: string | null;
+                    name: string;
+                    username: string;
+                  };
+                  id: Id<"feedbackComments">;
+                };
                 updatedTime: number | null;
               };
               type: "comment";
@@ -1196,7 +1226,11 @@ export declare const api: {
     addComment: FunctionReference<
       "mutation",
       "public",
-      { content: string; topicId: Id<"forumTopics"> },
+      {
+        content: string;
+        replyToCommentId?: Id<"forumComments">;
+        topicId: Id<"forumTopics">;
+      },
       Id<"forumComments">
     >;
     addLink: FunctionReference<
@@ -1259,6 +1293,16 @@ export declare const api: {
             count: number;
           }>;
           id: Id<"forumComments">;
+          isTeamMember: boolean;
+          replyTo: null | {
+            author: null | {
+              id: Id<"profiles">;
+              imageUrl: string | null;
+              name: string;
+              username: string;
+            };
+            id: Id<"forumComments">;
+          };
           updatedTime: number | null;
         } | null;
         author: null | {
@@ -1341,6 +1385,16 @@ export declare const api: {
             count: number;
           }>;
           id: Id<"forumComments">;
+          isTeamMember: boolean;
+          replyTo: null | {
+            author: null | {
+              id: Id<"profiles">;
+              imageUrl: string | null;
+              name: string;
+              username: string;
+            };
+            id: Id<"forumComments">;
+          };
           updatedTime: number | null;
         } | null;
         links: Array<
@@ -1546,6 +1600,16 @@ export declare const api: {
             count: number;
           }>;
           id: Id<"forumComments">;
+          isTeamMember: boolean;
+          replyTo: null | {
+            author: null | {
+              id: Id<"profiles">;
+              imageUrl: string | null;
+              name: string;
+              username: string;
+            };
+            id: Id<"forumComments">;
+          };
           updatedTime: number | null;
         }>;
         pageStatus?: "SplitRecommended" | "SplitRequired" | null;

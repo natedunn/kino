@@ -1,5 +1,6 @@
 import type { Doc, Id } from './_generated/dataModel';
 import type { MutationCtx, QueryCtx } from './_generated/server';
+import type { CommentAuthors } from './commentAuthors';
 
 import { paginationOptsValidator, paginationResultValidator } from 'convex/server';
 import { ConvexError, v } from 'convex/values';
@@ -8,6 +9,7 @@ import { sanitizeStoredContent } from '../shared/rich-text';
 import { internal } from './_generated/api';
 import { internalMutation, mutation, query } from './_generated/server';
 import { assertProjectWritable, requireProjectAccess, resolveProjectAccess } from './access';
+import { commentAuthors } from './commentAuthors';
 import { isFeedbackLive } from './feedbackLifecycle';
 import { requireCurrentUser } from './identity';
 import { feedbackPriority, feedbackStatus, targetGranularity } from './schema';
@@ -42,7 +44,14 @@ const enrichedCommentValidator = v.object({
 		v.object({ content: v.string(), authorProfileIds: v.array(v.string()), count: v.number() })
 	),
 	initial: v.boolean(),
+	// The author belongs to the project's organization.
+	isTeamMember: v.boolean(),
 	replyFeedbackCommentId: v.union(v.id('feedbackComments'), v.null()),
+	// The comment this one replies to, while it still exists.
+	replyTo: v.union(
+		v.null(),
+		v.object({ id: v.id('feedbackComments'), author: profileSummaryValidator })
+	),
 	updatedTime: v.union(v.number(), v.null()),
 });
 const timelineItemValidator = v.union(
@@ -124,14 +133,32 @@ function profileSummary(profile: Doc<'profiles'> | null) {
 		: null;
 }
 
+// What enriching a thread's comments shares across one query call.
+type CommentScope = {
+	authors: CommentAuthors;
+	canManageContent: boolean;
+	viewerProfileId: Id<'profiles'> | null;
+};
+
+async function replyTarget(
+	ctx: QueryCtx,
+	comment: Doc<'feedbackComments'>,
+	authors: CommentAuthors
+) {
+	if (!comment.replyFeedbackCommentId) return null;
+	const target = await ctx.db.get('feedbackComments', comment.replyFeedbackCommentId);
+	if (!target) return null;
+	return { id: target._id, author: profileSummary(await authors.profile(target.authorProfileId)) };
+}
+
 async function enrichComment(
 	ctx: QueryCtx,
 	comment: Doc<'feedbackComments'>,
-	viewerProfileId: Id<'profiles'> | null,
-	canManageContent: boolean
+	{ authors, canManageContent, viewerProfileId }: CommentScope
 ) {
-	const [author, emotes] = await Promise.all([
-		ctx.db.get('profiles', comment.authorProfileId),
+	const [author, replyTo, emotes] = await Promise.all([
+		authors.profile(comment.authorProfileId),
+		replyTarget(ctx, comment, authors),
 		ctx.db
 			.query('feedbackCommentEmotes')
 			.withIndex('by_feedbackCommentId', (q) => q.eq('feedbackCommentId', comment._id))
@@ -154,7 +181,9 @@ async function enrichComment(
 		content: comment.content,
 		emotes: Array.from(emoteCounts, ([content, value]) => ({ content, ...value })),
 		initial: comment.initial,
+		isTeamMember: await authors.isTeamMember(author),
 		replyFeedbackCommentId: comment.replyFeedbackCommentId ?? null,
+		replyTo,
 		updatedTime: comment.updatedAt ?? null,
 	};
 }
@@ -194,8 +223,7 @@ export async function recordEvent(
 async function enrichTimelineEntry(
 	ctx: QueryCtx,
 	entry: Doc<'feedbackTimelineEntries'>,
-	viewerProfileId: Id<'profiles'> | null,
-	canManageContent: boolean
+	scope: CommentScope
 ) {
 	if (entry.kind === 'comment' && entry.commentId) {
 		const comment = await ctx.db.get('feedbackComments', entry.commentId);
@@ -203,7 +231,7 @@ async function enrichTimelineEntry(
 		return {
 			type: 'comment' as const,
 			creationTime: entry._creationTime,
-			data: await enrichComment(ctx, comment, viewerProfileId, canManageContent),
+			data: await enrichComment(ctx, comment, scope),
 		};
 	}
 	if (entry.kind === 'event' && entry.eventId) {
@@ -506,17 +534,17 @@ export const getDetail = query({
 				.withIndex('by_feedbackId', (q) => q.eq('feedbackId', feedback._id))
 				.take(50),
 		]);
+		const scope = {
+			authors: commentAuthors(ctx, access.project.organizationId),
+			canManageContent: access.permissions.canManageContent,
+			viewerProfileId: viewer?._id ?? null,
+		};
 		const timeline = (
 			await Promise.all(
 				[...timelinePage.page]
 					.reverse()
 					.map((entry) =>
-						enrichTimelineEntry(
-							ctx,
-							entry,
-							viewer?._id ?? null,
-							access.permissions.canManageContent
-						)
+enrichTimelineEntry(ctx, entry, scope)
 					)
 			)
 		).filter((item) => item !== null);
@@ -553,12 +581,7 @@ export const getDetail = query({
 				upvotes: feedback.upvotes,
 			},
 			firstComment: firstComment
-				? await enrichComment(
-						ctx,
-						firstComment,
-						viewer?._id ?? null,
-						access.permissions.canManageContent
-					)
+				? await enrichComment(ctx, firstComment, scope)
 				: null,
 			following: !!watcher,
 			hasUpvoted: !!upvote,
@@ -582,6 +605,11 @@ export const listTimelinePage = query({
 		const access = await resolveProjectAccess(ctx, feedback.projectId);
 		if (!access.project) return null;
 		const viewer = await currentProfile(ctx).catch(() => null);
+		const scope = {
+			authors: commentAuthors(ctx, access.project.organizationId),
+			canManageContent: access.permissions.canManageContent,
+			viewerProfileId: viewer?._id ?? null,
+		};
 		const page = await ctx.db
 			.query('feedbackTimelineEntries')
 			.withIndex('by_feedbackId', (q) => q.eq('feedbackId', feedback._id))
@@ -592,12 +620,7 @@ export const listTimelinePage = query({
 				[...page.page]
 					.reverse()
 					.map((entry) =>
-						enrichTimelineEntry(
-							ctx,
-							entry,
-							viewer?._id ?? null,
-							access.permissions.canManageContent
-						)
+enrichTimelineEntry(ctx, entry, scope)
 					)
 			)
 		).filter((item) => item !== null);

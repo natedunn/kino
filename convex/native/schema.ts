@@ -536,12 +536,15 @@ export default defineSchema({
 	forumComments: defineTable({
 		topicId: v.id('forumTopics'),
 		authorProfileId: v.id('profiles'),
+		// The reply this one answers. Threads stay flat; this only links back.
+		replyToCommentId: v.optional(v.id('forumComments')),
 		content: v.string(),
 		initial: v.boolean(),
 		updatedAt: v.optional(v.number()),
 	})
 		.index('by_topicId_and_initial', ['topicId', 'initial'])
-		.index('by_authorProfileId', ['authorProfileId']),
+		.index('by_authorProfileId', ['authorProfileId'])
+		.index('by_replyToCommentId', ['replyToCommentId']),
 	forumCommentEmotes: defineTable({
 		topicId: v.id('forumTopics'),
 		commentId: v.id('forumComments'),
