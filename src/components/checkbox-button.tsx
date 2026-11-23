@@ -50,6 +50,8 @@ interface CheckboxButtonProps {
 	onChange?: (checked: boolean) => void;
 	disabled?: boolean;
 	className?: string;
+	/** Exposes the checked state to assistive tech; `radio` also rounds the indicator. */
+	role?: 'checkbox' | 'radio';
 }
 
 export default function CheckboxButton({
@@ -60,6 +62,7 @@ export default function CheckboxButton({
 	disabled = false,
 	className,
 	size = 'default',
+	role,
 }: CheckboxButtonProps & VariantProps<typeof checkboxButtonVariants>) {
 	const [internalChecked, setInternalChecked] = useState(defaultChecked);
 
@@ -80,6 +83,8 @@ export default function CheckboxButton({
 	return (
 		<button
 			type='button'
+			role={role}
+			aria-checked={role ? isChecked : undefined}
 			onClick={handleToggle}
 			disabled={disabled}
 			className={cn(
@@ -94,6 +99,7 @@ export default function CheckboxButton({
 				data-slot='checkbox-button-indicator'
 				className={cn(
 					checkboxButtonIndicatorVariants({ size }),
+					role === 'radio' && 'rounded-full',
 					isChecked
 						? 'border-primary bg-primary text-primary-foreground'
 						: 'border-muted-foreground/30 bg-background'

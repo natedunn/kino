@@ -7,6 +7,8 @@ export const FORM_LIMITS = {
 	comment: 1200,
 	forumCategoryDescription: 250,
 	forumCategoryName: 50,
+	forumPollOption: 80,
+	forumPollOptions: 10,
 	forumSearch: 100,
 	forumTopicBody: 10000,
 	forumTopicTitle: 200,

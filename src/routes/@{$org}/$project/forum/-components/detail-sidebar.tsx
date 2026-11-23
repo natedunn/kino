@@ -80,7 +80,7 @@ export function DetailFollowButton({
 				<Link
 					search={
 						{
-							redirect: `/@${params.org}/${params.project}/topics/${params.slug}`,
+							redirect: `/@${params.org}/${params.project}/forum/${params.slug}`,
 						} as never
 					}
 					to='/auth'

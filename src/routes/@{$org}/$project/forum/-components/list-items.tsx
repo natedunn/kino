@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import type { api as nativeApi } from '../../../../../../convex/native/_generated/api';
 
 import { Link } from '@tanstack/react-router';
-import { CircleCheck, Lock, MessageSquare, Pin } from 'lucide-react';
+import { ChartBar, CircleCheck, Lock, MessageSquare, Pin } from 'lucide-react';
 
 import { BoardIcon } from '@/components/board-icon';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -131,6 +131,11 @@ function TopicMarkers({ item }: { item: TopicListItem }) {
 			{item.locked ? (
 				<Marker label={m.forum_list_locked()}>
 					<Lock aria-hidden='true' className='size-3.5' />
+				</Marker>
+			) : null}
+			{item.hasPoll ? (
+				<Marker label={m.forum_list_poll()}>
+					<ChartBar aria-hidden='true' className='size-3.5' />
 				</Marker>
 			) : null}
 			{item.answered && item.category?.format === 'qa' ? <AnsweredBadge /> : null}

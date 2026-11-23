@@ -106,6 +106,8 @@ function translateAppError(code: unknown, values: unknown): string | undefined {
 			return m.server_error_forum_answers_not_enabled();
 		case 'LINK_LIMIT':
 			return m.server_error_forum_link_limit();
+		case 'POLL_CLOSED':
+			return m.server_error_forum_poll_closed();
 	}
 }
 

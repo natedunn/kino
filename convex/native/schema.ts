@@ -484,6 +484,25 @@ export default defineSchema({
 			'authorProfileId',
 			'content',
 		]),
+	// One poll per topic, created with it. Option labels are fixed once posted;
+	// `votes` and `voterCount` are kept in step with forumPollVotes.
+	forumPolls: defineTable({
+		projectId: v.id('projects'),
+		topicId: v.id('forumTopics'),
+		options: v.array(v.object({ id: v.string(), label: v.string(), votes: v.number() })),
+		multiple: v.boolean(),
+		voterCount: v.number(),
+		closedAt: v.optional(v.number()),
+	}).index('by_topicId', ['topicId']),
+	// A voter's current choices; one row per voter, replaced when they change it.
+	forumPollVotes: defineTable({
+		pollId: v.id('forumPolls'),
+		topicId: v.id('forumTopics'),
+		profileId: v.id('profiles'),
+		optionIds: v.array(v.string()),
+	})
+		.index('by_pollId_and_profileId', ['pollId', 'profileId'])
+		.index('by_topicId', ['topicId']),
 	// Categories a project's topics are filed under. Each carries its own
 	// posting policy (Announcements are team-only) and format (Q&A answers).
 	forumCategories: defineTable({

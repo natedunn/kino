@@ -14,6 +14,7 @@ import { assertProjectWritable, requireProjectAccess, resolveProjectAccess } fro
 import { insertFeedback, recordEvent as recordFeedbackEvent } from './feedback';
 import { isFeedbackLive } from './feedbackLifecycle';
 import { categoryView, liveCategories, toCategoryView } from './forumCategories';
+import { deleteTopicPollBatch, insertPoll, topicHasPoll } from './forumPolls';
 import { getCurrentUser, requireCurrentUser } from './identity';
 import { emoteReaction, feedbackStatus, forumEventType } from './schema';
 import { profileValidator, summary } from './updates';
@@ -75,6 +76,7 @@ const listItemValidator = v.object({
 	pinned: v.boolean(),
 	locked: v.boolean(),
 	answered: v.boolean(),
+	hasPoll: v.boolean(),
 });
 const linkValidator = v.union(
 	v.object({
@@ -121,7 +123,7 @@ function canPostIn(access: Access, category: Doc<'forumCategories'>) {
 	return category.postingPolicy === 'everyone' || access.permissions.canManageContent;
 }
 
-function isManager(access: Access) {
+export function isManager(access: Access) {
 	return access.permissions.canManageContent;
 }
 
@@ -133,13 +135,13 @@ export async function actor(ctx: MutationCtx) {
 	return user.profileId;
 }
 
-async function readableTopic(ctx: QueryCtx, topic: Doc<'forumTopics'> | null) {
+export async function readableTopic(ctx: QueryCtx, topic: Doc<'forumTopics'> | null) {
 	if (!topic || topic.deletingAt !== undefined) return null;
 	const access = await resolveProjectAccess(ctx, topic.projectId);
 	return access.project && forumEnabled(access.project) ? access : null;
 }
 
-async function writableTopic(ctx: MutationCtx, topicId: Id<'forumTopics'>) {
+export async function writableTopic(ctx: MutationCtx, topicId: Id<'forumTopics'>) {
 	const profileId = await actor(ctx);
 	const topic = await ctx.db.get('forumTopics', topicId);
 	const access = await readableTopic(ctx, topic);
@@ -375,9 +377,10 @@ async function toListItems(ctx: QueryCtx, items: Array<ListItemSource>) {
 						categories.set(item.categoryId, await ctx.db.get('forumCategories', item.categoryId));
 					category = categories.get(item.categoryId) ?? null;
 				}
-				const [author, first] = await Promise.all([
+				const [author, first, hasPoll] = await Promise.all([
 					ctx.db.get('profiles', item.authorProfileId),
 					item.firstCommentId ? ctx.db.get('forumComments', item.firstCommentId) : null,
+					topicHasPoll(ctx, item._id),
 				]);
 				const text = first ? plainText(first.content) : '';
 				return {
@@ -402,6 +405,7 @@ async function toListItems(ctx: QueryCtx, items: Array<ListItemSource>) {
 					pinned: item.pinnedAt !== undefined,
 					locked: item.lockedAt !== undefined,
 					answered: item.answerCommentId !== undefined,
+					hasPoll,
 				};
 			})
 	);
@@ -754,6 +758,7 @@ export const create = mutation({
 		categoryId: v.id('forumCategories'),
 		title: v.string(),
 		body: v.string(),
+		poll: v.optional(v.object({ options: v.array(v.string()), multiple: v.boolean() })),
 	},
 	returns: v.object({ id: v.id('forumTopics'), slug: v.string() }),
 	handler: async (ctx, args) => {
@@ -763,13 +768,16 @@ export const create = mutation({
 		if (!forumEnabled(access.project)) throw new ConvexError('FORUM_DISABLED');
 		const category = await liveCategory(ctx, args.projectId, args.categoryId);
 		if (!canPostIn(access, category)) throw new ConvexError('FORUM_TEAM_ONLY');
-		return insertTopic(ctx, {
+		const created = await insertTopic(ctx, {
 			projectId: args.projectId,
 			categoryId: category._id,
 			authorProfileId: profileId,
 			title: validateTitle(args.title),
 			body: validateContent(args.body, VALIDATION_LIMITS.forumTopicBody),
 		});
+		if (args.poll)
+			await insertPoll(ctx, { projectId: args.projectId, topicId: created.id }, args.poll);
+		return created;
 	},
 });
 
@@ -1242,7 +1250,9 @@ export async function deleteTopicBatch(ctx: MutationCtx, id: Id<'forumTopics'>) 
 	for (const row of watchers) await ctx.db.delete('forumWatchers', row._id);
 	for (const row of links) await ctx.db.delete('forumLinks', row._id);
 	for (const row of forumEvents) await ctx.db.delete('forumEvents', row._id);
+	const pollRowsRemain = await deleteTopicPollBatch(ctx, id, DELETE_BATCH_SIZE);
 	if (
+		pollRowsRemain ||
 		[comments, emotes, watchers, links, forumEvents].some(
 			(rows) => rows.length === DELETE_BATCH_SIZE
 		)

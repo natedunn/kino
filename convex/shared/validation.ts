@@ -10,6 +10,8 @@ export const VALIDATION_LIMITS = {
 	cursor: 8192,
 	forumCategoryDescription: 250,
 	forumCategoryName: 50,
+	forumPollOption: 80,
+	forumPollOptions: 10,
 	forumSearch: 100,
 	forumTopicBody: 10000,
 	forumTopicTitle: 200,

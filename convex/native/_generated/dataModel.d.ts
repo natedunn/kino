@@ -779,6 +779,59 @@ export type DataModel = {
     searchIndexes: {};
     vectorIndexes: {};
   };
+  forumPolls: {
+    document: {
+      closedAt?: number;
+      multiple: boolean;
+      options: Array<{ id: string; label: string; votes: number }>;
+      projectId: Id<"projects">;
+      topicId: Id<"forumTopics">;
+      voterCount: number;
+      _id: Id<"forumPolls">;
+      _creationTime: number;
+    };
+    fieldPaths:
+      | "_creationTime"
+      | "_id"
+      | "closedAt"
+      | "multiple"
+      | "options"
+      | "projectId"
+      | "topicId"
+      | "voterCount";
+    indexes: {
+      by_id: ["_id"];
+      by_creation_time: ["_creationTime"];
+      by_topicId: ["topicId", "_creationTime"];
+    };
+    searchIndexes: {};
+    vectorIndexes: {};
+  };
+  forumPollVotes: {
+    document: {
+      optionIds: Array<string>;
+      pollId: Id<"forumPolls">;
+      profileId: Id<"profiles">;
+      topicId: Id<"forumTopics">;
+      _id: Id<"forumPollVotes">;
+      _creationTime: number;
+    };
+    fieldPaths:
+      | "_creationTime"
+      | "_id"
+      | "optionIds"
+      | "pollId"
+      | "profileId"
+      | "topicId";
+    indexes: {
+      by_id: ["_id"];
+      by_creation_time: ["_creationTime"];
+      by_pollId_and_profileId: ["pollId", "profileId", "_creationTime"];
+      by_topicId: ["topicId", "_creationTime"];
+    };
+    searchIndexes: {};
+    vectorIndexes: {};
+  };
   forumTopics: {
     document: {
       answerCommentId?: Id<"forumComments">;
