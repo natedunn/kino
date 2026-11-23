@@ -58,6 +58,7 @@ export const getBySlugs = query({
 				slug: v.string(),
 				visibility: projectVisibility,
 				updatesFeaturedMode: v.union(v.literal('latest'), v.literal('manual')),
+				forumEnabled: v.boolean(),
 			}),
 		})
 	),
@@ -105,6 +106,7 @@ export const getBySlugs = query({
 				slug: project.slug,
 				visibility: project.visibility,
 				updatesFeaturedMode: project.updatesFeaturedMode ?? 'latest',
+				forumEnabled: project.forumEnabled !== false,
 			},
 		};
 	},

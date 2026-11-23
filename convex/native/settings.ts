@@ -24,6 +24,7 @@ export const projectFields = {
 	description: v.string(),
 	visibility: projectVisibility,
 	updatesFeaturedMode: v.union(v.literal('latest'), v.literal('manual')),
+	forumEnabled: v.boolean(),
 	urls: v.array(
 		v.object({
 			source: v.string(),
@@ -43,6 +44,7 @@ export const updateProject = mutation({
 		description: v.string(),
 		visibility: projectVisibility,
 		updatesFeaturedMode: v.union(v.literal('latest'), v.literal('manual')),
+		forumEnabled: v.optional(v.boolean()),
 		urls: v.array(urlInput),
 	},
 	returns: v.object(projectFields),
@@ -117,6 +119,7 @@ export const updateProject = mutation({
 			urls,
 			visibility: args.visibility,
 			updatesFeaturedMode: args.updatesFeaturedMode,
+			forumEnabled: args.forumEnabled ?? access.project.forumEnabled !== false,
 		};
 		await ctx.db.patch('projects', args.id, patch);
 		// All content/storage relations use immutable IDs. Only active Relay views

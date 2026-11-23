@@ -13,7 +13,6 @@ import {
 	Link as LinkIcon,
 	MessageSquare,
 	Rss,
-	Users,
 } from 'lucide-react';
 
 import { EditorContentDisplay } from '@/components/editor/editor-content-display';
@@ -35,7 +34,12 @@ import * as m from '@/paraglide/messages.js';
 
 import { CategoryBadge } from '../-components/category-badge';
 import { useEmoteToggle } from '../-components/use-emote-toggle';
-import { CommentEditorProvider, CommentForm, CommentList } from '../../-components/comment-thread';
+import {
+	CommentEditorProvider,
+	CommentForm,
+	CommentList,
+	TeamBadge,
+} from '../../-components/comment-thread';
 
 export const Route = createFileRoute('/@{$org}/$project/updates/$slug/')({
 	component: UpdateDetailRoute,
@@ -543,14 +547,7 @@ function UpdateDetailRoute() {
 								<CommentList
 									comments={comments}
 									currentProfileId={currentProfile?.id}
-									getBadges={(comment) =>
-										comment.isTeamMember ? (
-											<span className='inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'>
-												<Users className='h-3 w-3' />
-												Team
-											</span>
-										) : null
-									}
+									getBadges={(comment) => (comment.isTeamMember ? <TeamBadge /> : null)}
 									isDeleting={commentDeleteMutation.isPending}
 									isUpdating={commentUpdateMutation.isPending}
 									onDelete={(commentId) => commentDeleteMutation.mutate({ _id: commentId })}

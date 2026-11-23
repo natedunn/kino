@@ -90,6 +90,24 @@ function translateAppError(code: unknown, values: unknown): string | undefined {
 			return m.server_error_file_in_use();
 		case 'INVALID_IMAGE_FORMAT':
 			return m.server_error_invalid_image_format();
+		case 'FORUM_TEAM_ONLY':
+			return m.server_error_forum_team_only();
+		case 'FORUM_DISABLED':
+			return m.server_error_forum_disabled();
+		case 'TOPIC_LOCKED':
+			return m.server_error_forum_locked();
+		case 'PIN_LIMIT':
+			return m.server_error_forum_pin_limit();
+		case 'CATEGORY_SLUG_TAKEN':
+			return m.server_error_forum_category_slug_taken();
+		case 'CATEGORY_LIMIT':
+			return m.server_error_forum_category_limit();
+		case 'ANSWERS_NOT_ENABLED':
+			return m.server_error_forum_answers_not_enabled();
+		case 'LINK_LIMIT':
+			return m.server_error_forum_link_limit();
+		case 'POLL_CLOSED':
+			return m.server_error_forum_poll_closed();
 	}
 }
 

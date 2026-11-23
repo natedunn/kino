@@ -122,8 +122,32 @@ async function updateCommentContext(ctx: QueryCtx, comment: Doc<'updateComments'
 	};
 }
 
+async function topicCommentContext(ctx: QueryCtx, comment: Doc<'forumComments'>) {
+	const topic = await ctx.db.get('forumTopics', comment.topicId);
+	if (!topic || topic.deletingAt !== undefined) {
+		return { contextAccess: 'missing' as const, topicId: comment.topicId };
+	}
+
+	const access = await resolveProjectAccess(ctx, topic.projectId);
+	const organization =
+		access.project && (await ctx.db.get('organizations', access.project.organizationId));
+	if (!access.project || !organization) {
+		return {
+			contextAccess: 'inaccessible' as const,
+			topicId: topic._id,
+			projectId: topic.projectId,
+		};
+	}
+	return {
+		contextAccess: 'visible' as const,
+		topic: { id: topic._id, slug: topic.slug, title: topic.title },
+		organization: await visibleOrganizationSummary(ctx, organization._id),
+		project: projectSummary(access.project, organization),
+	};
+}
+
 export async function buildCommentsSection(ctx: QueryCtx, profile: Doc<'profiles'>) {
-	const [feedbackComments, updateComments] = await Promise.all([
+	const [feedbackComments, updateComments, forumComments] = await Promise.all([
 		ctx.db
 			.query('feedbackComments')
 			.withIndex('by_authorProfileId', (q) => q.eq('authorProfileId', profile._id))
@@ -134,11 +158,17 @@ export async function buildCommentsSection(ctx: QueryCtx, profile: Doc<'profiles
 			.withIndex('by_authorProfileId', (q) => q.eq('authorProfileId', profile._id))
 			.order('asc')
 			.take(MAX_COMMENTS_PER_SOURCE + 1),
+		ctx.db
+			.query('forumComments')
+			.withIndex('by_authorProfileId', (q) => q.eq('authorProfileId', profile._id))
+			.order('asc')
+			.take(MAX_COMMENTS_PER_SOURCE + 1),
 	]);
 
 	if (
 		feedbackComments.length > MAX_COMMENTS_PER_SOURCE ||
-		updateComments.length > MAX_COMMENTS_PER_SOURCE
+		updateComments.length > MAX_COMMENTS_PER_SOURCE ||
+		forumComments.length > MAX_COMMENTS_PER_SOURCE
 	) {
 		throw new ConvexError({
 			code: 'BAD_REQUEST',
@@ -152,7 +182,8 @@ export async function buildCommentsSection(ctx: QueryCtx, profile: Doc<'profiles
 		counts: {
 			feedbackComments: feedbackComments.length,
 			updateComments: updateComments.length,
-			total: feedbackComments.length + updateComments.length,
+			forumComments: forumComments.length,
+			total: feedbackComments.length + updateComments.length + forumComments.length,
 		},
 		feedbackComments: await Promise.all(
 			feedbackComments.map(async (comment) => ({
@@ -176,6 +207,18 @@ export async function buildCommentsSection(ctx: QueryCtx, profile: Doc<'profiles
 				updateId: comment.updateId,
 				source: 'update' as const,
 				context: await updateCommentContext(ctx, comment),
+			}))
+		),
+		forumComments: await Promise.all(
+			forumComments.map(async (comment) => ({
+				id: comment._id,
+				content: comment.content,
+				createdAt: toExportDate(comment._creationTime),
+				updatedAt: toExportDate(comment.updatedAt),
+				topicId: comment.topicId,
+				initial: comment.initial,
+				source: 'forum' as const,
+				context: await topicCommentContext(ctx, comment),
 			}))
 		),
 	};

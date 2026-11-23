@@ -1,13 +1,14 @@
 import type { FeedbackEventData } from '../-types';
 
 import { memo } from 'react';
-import { Link } from '@tanstack/react-router';
+import { Link, useParams } from '@tanstack/react-router';
 import {
 	ArrowRightLeft,
 	Check,
 	CheckCircle2,
 	CircleX,
 	FolderInput,
+	MessagesSquare,
 	SignalHigh,
 	Tag,
 	UserMinus,
@@ -99,6 +100,9 @@ function getEventIcon(eventType: FeedbackEventData['eventType']) {
 			return CheckCircle2;
 		case 'answer_unmarked':
 			return CircleX;
+		case 'imported_from_forum':
+		case 'moved_to_forum':
+			return MessagesSquare;
 		default:
 			return Check;
 	}
@@ -182,9 +186,52 @@ function getEventDescription(event: FeedbackEventData) {
 			return <span>{m.feedback_marked_comment_answer()}</span>;
 		case 'answer_unmarked':
 			return <span>{m.feedback_unmarked_answer()}</span>;
+		case 'imported_from_forum':
+		case 'moved_to_forum':
+			return (
+				<ForumTopicEvent
+					label={
+						eventType === 'imported_from_forum'
+							? m.feedback_imported_from_forum()
+							: m.feedback_moved_to_forum()
+					}
+					topic={event.topic ?? null}
+					savedTitle={metadata?.newValue ?? null}
+				/>
+			);
 		default:
 			return <span>{m.feedback_made_change()}</span>;
 	}
+}
+
+// An import from, or a move to, a forum topic.
+function ForumTopicEvent({
+	label,
+	topic,
+	savedTitle,
+}: {
+	label: string;
+	topic: { slug: string; title: string } | null;
+	// Title at import/move time, shown unlinked once the topic is deleted.
+	savedTitle: string | null;
+}) {
+	const params = useParams({ from: '/@{$org}/$project/feedback/$slug/' });
+	return (
+		<span className='inline-flex flex-wrap items-center gap-1'>
+			{label}
+			{topic ? (
+				<Link
+					className='link-text font-medium'
+					params={{ org: params.org, project: params.project, slug: topic.slug }}
+					to='/@{$org}/$project/forum/$slug'
+				>
+					{topic.title}
+				</Link>
+			) : savedTitle ? (
+				<span className='font-medium text-foreground'>{savedTitle}</span>
+			) : null}
+		</span>
+	);
 }
 
 const PRIORITY_DOT_CLASS: Record<string, string> = {

@@ -30,6 +30,8 @@ export type FeedbackEventData = {
 		| 'status_changed'
 		| 'title_changed'
 		| 'unassigned'
+		| 'imported_from_forum'
+		| 'moved_to_forum'
 		| string;
 	id: string;
 	metadata?: {
@@ -37,6 +39,8 @@ export type FeedbackEventData = {
 		oldValue?: string | null;
 	} | null;
 	targetProfile?: ProfileSummary | null;
+	// Topic of an `imported_from_forum` or `moved_to_forum` event, while it exists.
+	topic?: { slug: string; title: string } | null;
 };
 
 export type TimelineItem =

@@ -4,6 +4,7 @@ import { internal } from './_generated/api';
 import { internalMutation, mutation } from './_generated/server';
 import { requireProjectAccess } from './access';
 import { deleteChildBatch } from './feedback';
+import { deleteTopicBatch } from './forum';
 
 // The same request resumes an interrupted cascade. The project remains as a
 // fenced authorization anchor until every storage job has acknowledged cleanup.
@@ -88,6 +89,26 @@ export const batch = internalMutation({
 			await again();
 			return null;
 		}
+		const topic = await ctx.db
+			.query('forumTopics')
+			.withIndex('by_projectId_and_lastActivityAt', (q) => q.eq('projectId', args.projectId))
+			.first();
+		if (topic) {
+			await deleteTopicBatch(ctx, topic._id);
+			await again();
+			return null;
+		}
+		const categories = await ctx.db
+			.query('forumCategories')
+			.withIndex('by_projectId_and_position', (q) => q.eq('projectId', args.projectId))
+			.take(50);
+		for (const row of categories) await ctx.db.delete('forumCategories', row._id);
+		// Per-topic reads went with their topics; only the "mark all" markers remain.
+		const readMarkers = await ctx.db
+			.query('forumReadMarkers')
+			.withIndex('by_projectId', (q) => q.eq('projectId', args.projectId))
+			.take(50);
+		for (const row of readMarkers) await ctx.db.delete('forumReadMarkers', row._id);
 		const boards = await ctx.db
 			.query('feedbackBoards')
 			.withIndex('by_projectId', (q) => q.eq('projectId', args.projectId))
@@ -103,7 +124,12 @@ export const batch = internalMutation({
 			.withIndex('by_projectId_and_userId', (q) => q.eq('projectId', args.projectId))
 			.take(50);
 		for (const row of members) await ctx.db.delete('projectMembers', row._id);
-		if (boards.length === 50 || assignments.length === 50 || members.length === 50) {
+		if (
+			readMarkers.length === 50 ||
+			boards.length === 50 ||
+			assignments.length === 50 ||
+			members.length === 50
+		) {
 			await again();
 			return null;
 		}

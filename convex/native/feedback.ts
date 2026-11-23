@@ -1,5 +1,6 @@
 import type { Doc, Id } from './_generated/dataModel';
 import type { MutationCtx, QueryCtx } from './_generated/server';
+import type { CommentAuthors } from './commentAuthors';
 
 import { paginationOptsValidator, paginationResultValidator } from 'convex/server';
 import { ConvexError, v } from 'convex/values';
@@ -8,6 +9,7 @@ import { sanitizeStoredContent } from '../shared/rich-text';
 import { internal } from './_generated/api';
 import { internalMutation, mutation, query } from './_generated/server';
 import { assertProjectWritable, requireProjectAccess, resolveProjectAccess } from './access';
+import { commentAuthors } from './commentAuthors';
 import { isFeedbackLive } from './feedbackLifecycle';
 import { requireCurrentUser } from './identity';
 import { feedbackPriority, feedbackStatus, targetGranularity } from './schema';
@@ -42,7 +44,14 @@ const enrichedCommentValidator = v.object({
 		v.object({ content: v.string(), authorProfileIds: v.array(v.string()), count: v.number() })
 	),
 	initial: v.boolean(),
+	// The author belongs to the project's organization.
+	isTeamMember: v.boolean(),
 	replyFeedbackCommentId: v.union(v.id('feedbackComments'), v.null()),
+	// The comment this one replies to, while it still exists.
+	replyTo: v.union(
+		v.null(),
+		v.object({ id: v.id('feedbackComments'), author: profileSummaryValidator })
+	),
 	updatedTime: v.union(v.number(), v.null()),
 });
 const timelineItemValidator = v.union(
@@ -65,7 +74,9 @@ const timelineItemValidator = v.union(
 				v.literal('answer_marked'),
 				v.literal('answer_unmarked'),
 				v.literal('assigned'),
-				v.literal('unassigned')
+				v.literal('unassigned'),
+				v.literal('imported_from_forum'),
+				v.literal('moved_to_forum')
 			),
 			metadata: v.union(
 				v.null(),
@@ -73,8 +84,11 @@ const timelineItemValidator = v.union(
 					oldValue: v.optional(v.string()),
 					newValue: v.optional(v.string()),
 					targetProfileId: v.optional(v.id('profiles')),
+					topicId: v.optional(v.id('forumTopics')),
 				})
 			),
+			// The topic of an import or move, while it still exists.
+			topic: v.union(v.null(), v.object({ slug: v.string(), title: v.string() })),
 		}),
 	})
 );
@@ -120,14 +134,32 @@ function profileSummary(profile: Doc<'profiles'> | null) {
 		: null;
 }
 
+// What enriching a thread's comments shares across one query call.
+type CommentScope = {
+	authors: CommentAuthors;
+	canManageContent: boolean;
+	viewerProfileId: Id<'profiles'> | null;
+};
+
+async function replyTarget(
+	ctx: QueryCtx,
+	comment: Doc<'feedbackComments'>,
+	authors: CommentAuthors
+) {
+	if (!comment.replyFeedbackCommentId) return null;
+	const target = await ctx.db.get('feedbackComments', comment.replyFeedbackCommentId);
+	if (!target) return null;
+	return { id: target._id, author: profileSummary(await authors.profile(target.authorProfileId)) };
+}
+
 async function enrichComment(
 	ctx: QueryCtx,
 	comment: Doc<'feedbackComments'>,
-	viewerProfileId: Id<'profiles'> | null,
-	canManageContent: boolean
+	{ authors, canManageContent, viewerProfileId }: CommentScope
 ) {
-	const [author, emotes] = await Promise.all([
-		ctx.db.get('profiles', comment.authorProfileId),
+	const [author, replyTo, emotes] = await Promise.all([
+		authors.profile(comment.authorProfileId),
+		replyTarget(ctx, comment, authors),
 		ctx.db
 			.query('feedbackCommentEmotes')
 			.withIndex('by_feedbackCommentId', (q) => q.eq('feedbackCommentId', comment._id))
@@ -150,7 +182,9 @@ async function enrichComment(
 		content: comment.content,
 		emotes: Array.from(emoteCounts, ([content, value]) => ({ content, ...value })),
 		initial: comment.initial,
+		isTeamMember: await authors.isTeamMember(author),
 		replyFeedbackCommentId: comment.replyFeedbackCommentId ?? null,
+		replyTo,
 		updatedTime: comment.updatedAt ?? null,
 	};
 }
@@ -165,7 +199,7 @@ async function feedbackWriteAccess(ctx: MutationCtx, feedbackId: Id<'feedback'>)
 	return { access, feedback, isOwner: feedback.authorProfileId === profile._id, profile };
 }
 
-async function recordEvent(
+export async function recordEvent(
 	ctx: MutationCtx,
 	args: {
 		actorProfileId: Id<'profiles'>;
@@ -175,6 +209,7 @@ async function recordEvent(
 			oldValue?: string;
 			newValue?: string;
 			targetProfileId?: Id<'profiles'>;
+			topicId?: Id<'forumTopics'>;
 		};
 	}
 ) {
@@ -189,8 +224,7 @@ async function recordEvent(
 async function enrichTimelineEntry(
 	ctx: QueryCtx,
 	entry: Doc<'feedbackTimelineEntries'>,
-	viewerProfileId: Id<'profiles'> | null,
-	canManageContent: boolean
+	scope: CommentScope
 ) {
 	if (entry.kind === 'comment' && entry.commentId) {
 		const comment = await ctx.db.get('feedbackComments', entry.commentId);
@@ -198,12 +232,15 @@ async function enrichTimelineEntry(
 		return {
 			type: 'comment' as const,
 			creationTime: entry._creationTime,
-			data: await enrichComment(ctx, comment, viewerProfileId, canManageContent),
+			data: await enrichComment(ctx, comment, scope),
 		};
 	}
 	if (entry.kind === 'event' && entry.eventId) {
 		const event = await ctx.db.get('feedbackEvents', entry.eventId);
 		if (!event) return null;
+		const topic = event.metadata?.topicId
+			? await ctx.db.get('forumTopics', event.metadata.topicId)
+			: null;
 		return {
 			type: 'event' as const,
 			creationTime: entry._creationTime,
@@ -212,6 +249,8 @@ async function enrichTimelineEntry(
 				actor: profileSummary(await ctx.db.get('profiles', event.actorProfileId)),
 				eventType: event.eventType,
 				metadata: event.metadata ?? null,
+				topic:
+					topic && topic.deletingAt === undefined ? { slug: topic.slug, title: topic.title } : null,
 			},
 		};
 	}
@@ -237,6 +276,49 @@ async function uniqueSlug(ctx: MutationCtx, projectId: Id<'projects'>) {
 	throw new ConvexError('SLUG_GENERATION_FAILED');
 }
 
+/** Inserts a feedback item and its opening comment. Callers validate access. */
+export async function insertFeedback(
+	ctx: MutationCtx,
+	args: {
+		projectId: Id<'projects'>;
+		boardId: Id<'feedbackBoards'>;
+		authorProfileId: Id<'profiles'>;
+		title: string;
+		firstComment: string;
+	}
+) {
+	const board = await ctx.db.get('feedbackBoards', args.boardId);
+	if (!board || board.projectId !== args.projectId || board.deletingAt !== undefined)
+		throw new ConvexError('INVALID_BOARD');
+	const title = args.title.trim();
+	const firstComment = sanitizeStoredContent(args.firstComment);
+	if (!title || title.length > 200) throw new ConvexError('INVALID_TITLE');
+	if (!firstComment || firstComment.length > 50_000) throw new ConvexError('INVALID_COMMENT');
+	const slug = await uniqueSlug(ctx, args.projectId);
+	const now = Date.now();
+	const feedbackId = await ctx.db.insert('feedback', {
+		projectId: args.projectId,
+		boardId: args.boardId,
+		authorProfileId: args.authorProfileId,
+		slug,
+		title,
+		status: 'open',
+		priority: 'none',
+		upvotes: 0,
+		tags: [],
+		searchContent: `${title} ${firstComment}`,
+		updatedAt: now,
+	});
+	const feedbackCommentId = await ctx.db.insert('feedbackComments', {
+		feedbackId,
+		authorProfileId: args.authorProfileId,
+		content: firstComment,
+		initial: true,
+	});
+	await ctx.db.patch('feedback', feedbackId, { firstCommentId: feedbackCommentId });
+	return { feedbackCommentId, feedbackId, slug };
+}
+
 export const create = mutation({
 	args: {
 		boardId: v.id('feedbackBoards'),
@@ -253,36 +335,7 @@ export const create = mutation({
 		const profile = await currentProfile(ctx);
 		const access = await requireProjectAccess(ctx, args.projectId);
 		assertProjectWritable(access);
-		const board = await ctx.db.get('feedbackBoards', args.boardId);
-		if (!board || board.projectId !== args.projectId || board.deletingAt !== undefined)
-			throw new ConvexError('INVALID_BOARD');
-		const title = args.title.trim();
-		const firstComment = sanitizeStoredContent(args.firstComment);
-		if (!title || title.length > 200) throw new ConvexError('INVALID_TITLE');
-		if (!firstComment || firstComment.length > 50_000) throw new ConvexError('INVALID_COMMENT');
-		const slug = await uniqueSlug(ctx, args.projectId);
-		const now = Date.now();
-		const feedbackId = await ctx.db.insert('feedback', {
-			projectId: args.projectId,
-			boardId: args.boardId,
-			authorProfileId: profile._id,
-			slug,
-			title,
-			status: 'open',
-			priority: 'none',
-			upvotes: 0,
-			tags: [],
-			searchContent: `${title} ${firstComment}`,
-			updatedAt: now,
-		});
-		const feedbackCommentId = await ctx.db.insert('feedbackComments', {
-			feedbackId,
-			authorProfileId: profile._id,
-			content: firstComment,
-			initial: true,
-		});
-		await ctx.db.patch('feedback', feedbackId, { firstCommentId: feedbackCommentId });
-		return { feedbackCommentId, feedbackId, slug };
+		return insertFeedback(ctx, { ...args, authorProfileId: profile._id });
 	},
 });
 
@@ -415,6 +468,8 @@ export const getDetail = query({
 			firstComment: v.union(enrichedCommentValidator, v.null()),
 			following: v.boolean(),
 			hasUpvoted: v.boolean(),
+			// The forum topic this feedback was moved to, while it still exists.
+			movedTo: v.union(v.null(), v.object({ slug: v.string(), title: v.string() })),
 			permissions: projectPermissionsValidator,
 			related: v.array(relatedFeedbackValidator),
 			timeline: v.array(timelineItemValidator),
@@ -443,6 +498,7 @@ export const getDetail = query({
 			watcher,
 			watchers,
 			relations,
+			movedTopic,
 		] = await Promise.all([
 			ctx.db.get('profiles', feedback.authorProfileId),
 			ctx.db.get('feedbackBoards', feedback.boardId),
@@ -481,19 +537,18 @@ export const getDetail = query({
 				.query('feedbackRelations')
 				.withIndex('by_feedbackId', (q) => q.eq('feedbackId', feedback._id))
 				.take(50),
+			feedback.movedToTopicId
+				? ctx.db.get('forumTopics', feedback.movedToTopicId)
+				: Promise.resolve(null),
 		]);
+		const scope = {
+			authors: commentAuthors(ctx, access.project.organizationId),
+			canManageContent: access.permissions.canManageContent,
+			viewerProfileId: viewer?._id ?? null,
+		};
 		const timeline = (
 			await Promise.all(
-				[...timelinePage.page]
-					.reverse()
-					.map((entry) =>
-						enrichTimelineEntry(
-							ctx,
-							entry,
-							viewer?._id ?? null,
-							access.permissions.canManageContent
-						)
-					)
+				[...timelinePage.page].reverse().map((entry) => enrichTimelineEntry(ctx, entry, scope))
 			)
 		).filter((item) => item !== null);
 		const related = (
@@ -528,16 +583,13 @@ export const getDetail = query({
 				title: feedback.title,
 				upvotes: feedback.upvotes,
 			},
-			firstComment: firstComment
-				? await enrichComment(
-						ctx,
-						firstComment,
-						viewer?._id ?? null,
-						access.permissions.canManageContent
-					)
-				: null,
+			firstComment: firstComment ? await enrichComment(ctx, firstComment, scope) : null,
 			following: !!watcher,
 			hasUpvoted: !!upvote,
+			movedTo:
+				movedTopic && movedTopic.deletingAt === undefined
+					? { slug: movedTopic.slug, title: movedTopic.title }
+					: null,
 			permissions: access.permissions,
 			related,
 			timeline,
@@ -558,6 +610,11 @@ export const listTimelinePage = query({
 		const access = await resolveProjectAccess(ctx, feedback.projectId);
 		if (!access.project) return null;
 		const viewer = await currentProfile(ctx).catch(() => null);
+		const scope = {
+			authors: commentAuthors(ctx, access.project.organizationId),
+			canManageContent: access.permissions.canManageContent,
+			viewerProfileId: viewer?._id ?? null,
+		};
 		const page = await ctx.db
 			.query('feedbackTimelineEntries')
 			.withIndex('by_feedbackId', (q) => q.eq('feedbackId', feedback._id))
@@ -565,21 +622,38 @@ export const listTimelinePage = query({
 			.paginate(args.paginationOpts);
 		const items = (
 			await Promise.all(
-				[...page.page]
-					.reverse()
-					.map((entry) =>
-						enrichTimelineEntry(
-							ctx,
-							entry,
-							viewer?._id ?? null,
-							access.permissions.canManageContent
-						)
-					)
+				[...page.page].reverse().map((entry) => enrichTimelineEntry(ctx, entry, scope))
 			)
 		).filter((item) => item !== null);
 		return { ...page, page: items };
 	},
 });
+
+async function liveOnly(ctx: QueryCtx, items: Array<Doc<'feedback'>>) {
+	const live = await Promise.all(items.map((item) => isFeedbackLive(ctx, item)));
+	return items.filter((_item, index) => live[index]);
+}
+
+/**
+ * Live feedback in a project matching `search`, in relevance order. Reads at
+ * most `scan` rows, so fewer may come back. Callers check project access.
+ */
+export async function searchLiveFeedback(
+	ctx: QueryCtx,
+	projectId: Id<'projects'>,
+	search: string,
+	scan: number
+) {
+	return liveOnly(
+		ctx,
+		await ctx.db
+			.query('feedback')
+			.withSearchIndex('search_by_searchContent', (q) =>
+				q.search('searchContent', search).eq('projectId', projectId)
+			)
+			.take(scan)
+	);
+}
 
 export const searchForLinking = query({
 	args: { projectId: v.id('projects'), search: v.string() },
@@ -589,26 +663,21 @@ export const searchForLinking = query({
 		if (!access.project) return [];
 		const search = args.search.trim();
 		const items = search
-			? await ctx.db
-					.query('feedback')
-					.withSearchIndex('search_by_searchContent', (q) =>
-						q.search('searchContent', search).eq('projectId', args.projectId)
-					)
-					.take(20)
-			: await ctx.db
-					.query('feedback')
-					.withIndex('by_projectId', (q) => q.eq('projectId', args.projectId))
-					.order('desc')
-					.take(20);
-		const live = await Promise.all(items.map((item) => isFeedbackLive(ctx, item)));
-		return items
-			.filter((_item, index) => live[index])
-			.map((item) => ({
-				id: item._id,
-				slug: item.slug,
-				status: item.status,
-				title: item.title,
-			}));
+			? await searchLiveFeedback(ctx, args.projectId, search, 20)
+			: await liveOnly(
+					ctx,
+					await ctx.db
+						.query('feedback')
+						.withIndex('by_projectId', (q) => q.eq('projectId', args.projectId))
+						.order('desc')
+						.take(20)
+				);
+		return items.map((item) => ({
+			id: item._id,
+			slug: item.slug,
+			status: item.status,
+			title: item.title,
+		}));
 	},
 });
 

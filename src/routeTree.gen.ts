@@ -55,9 +55,9 @@ import { Route as CreateTeamIndexRouteImport } from './routes/create/team/index'
 import { Route as OrgSettingsIndexRouteImport } from './routes/org/settings/index'
 import { Route as UUsernameIndexRouteImport } from './routes/u/$username/index'
 import { Route as AtChar123orgChar125ProjectAssetLibraryIndexRouteImport } from './routes/@{$org}/$project/asset-library/index'
-import { Route as AtChar123orgChar125ProjectDiscussionsIndexRouteImport } from './routes/@{$org}/$project/discussions/index'
 import { Route as AtChar123orgChar125ProjectFeedbackIndexRouteImport } from './routes/@{$org}/$project/feedback/index'
 import { Route as AtChar123orgChar125ProjectFilesIndexRouteImport } from './routes/@{$org}/$project/files/index'
+import { Route as AtChar123orgChar125ProjectForumIndexRouteImport } from './routes/@{$org}/$project/forum/index'
 import { Route as AtChar123orgChar125ProjectRoadmapIndexRouteImport } from './routes/@{$org}/$project/roadmap/index'
 import { Route as AtChar123orgChar125ProjectSettingsIndexRouteImport } from './routes/@{$org}/$project/settings/index'
 import { Route as AtChar123orgChar125ProjectUpdatesIndexRouteImport } from './routes/@{$org}/$project/updates/index'
@@ -72,10 +72,13 @@ import { Route as AtChar123orgChar125ProjectFeedbackBoardsIndexRouteImport } fro
 import { Route as AtChar123orgChar125ProjectFeedbackBoardsNewRouteImport } from './routes/@{$org}/$project/feedback/boards/new'
 import { Route as AtChar123orgChar125ProjectFeedbackNewIndexRouteImport } from './routes/@{$org}/$project/feedback/new/index'
 import { Route as AtChar123orgChar125ProjectFilesSearchIndexRouteImport } from './routes/@{$org}/$project/files/search/index'
+import { Route as AtChar123orgChar125ProjectForumSlugIndexRouteImport } from './routes/@{$org}/$project/forum/$slug/index'
+import { Route as AtChar123orgChar125ProjectForumNewIndexRouteImport } from './routes/@{$org}/$project/forum/new/index'
 import { Route as AtChar123orgChar125ProjectIntegrationsGithubIndexRouteImport } from './routes/@{$org}/$project/integrations/github/index'
 import { Route as AtChar123orgChar125ProjectSettingsAppearanceIndexRouteImport } from './routes/@{$org}/$project/settings/appearance/index'
 import { Route as AtChar123orgChar125ProjectSettingsBoardsIndexRouteImport } from './routes/@{$org}/$project/settings/boards/index'
 import { Route as AtChar123orgChar125ProjectSettingsDangerIndexRouteImport } from './routes/@{$org}/$project/settings/danger/index'
+import { Route as AtChar123orgChar125ProjectSettingsForumIndexRouteImport } from './routes/@{$org}/$project/settings/forum/index'
 import { Route as AtChar123orgChar125ProjectSettingsGeneralIndexRouteImport } from './routes/@{$org}/$project/settings/general/index'
 import { Route as AtChar123orgChar125ProjectSettingsIntegrationsIndexRouteImport } from './routes/@{$org}/$project/settings/integrations/index'
 import { Route as AtChar123orgChar125ProjectSettingsMembersIndexRouteImport } from './routes/@{$org}/$project/settings/members/index'
@@ -329,12 +332,6 @@ const AtChar123orgChar125ProjectAssetLibraryIndexRoute =
     path: '/asset-library/',
     getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
   } as any)
-const AtChar123orgChar125ProjectDiscussionsIndexRoute =
-  AtChar123orgChar125ProjectDiscussionsIndexRouteImport.update({
-    id: '/discussions/',
-    path: '/discussions/',
-    getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
-  } as any)
 const AtChar123orgChar125ProjectFeedbackIndexRoute =
   AtChar123orgChar125ProjectFeedbackIndexRouteImport.update({
     id: '/',
@@ -346,6 +343,12 @@ const AtChar123orgChar125ProjectFilesIndexRoute =
     id: '/',
     path: '/',
     getParentRoute: () => AtChar123orgChar125ProjectFilesRouteRoute,
+  } as any)
+const AtChar123orgChar125ProjectForumIndexRoute =
+  AtChar123orgChar125ProjectForumIndexRouteImport.update({
+    id: '/forum/',
+    path: '/forum/',
+    getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
   } as any)
 const AtChar123orgChar125ProjectRoadmapIndexRoute =
   AtChar123orgChar125ProjectRoadmapIndexRouteImport.update({
@@ -428,6 +431,18 @@ const AtChar123orgChar125ProjectFilesSearchIndexRoute =
     path: '/search/',
     getParentRoute: () => AtChar123orgChar125ProjectFilesRouteRoute,
   } as any)
+const AtChar123orgChar125ProjectForumSlugIndexRoute =
+  AtChar123orgChar125ProjectForumSlugIndexRouteImport.update({
+    id: '/forum/$slug/',
+    path: '/forum/$slug/',
+    getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
+  } as any)
+const AtChar123orgChar125ProjectForumNewIndexRoute =
+  AtChar123orgChar125ProjectForumNewIndexRouteImport.update({
+    id: '/forum/new/',
+    path: '/forum/new/',
+    getParentRoute: () => AtChar123orgChar125ProjectRouteRoute,
+  } as any)
 const AtChar123orgChar125ProjectIntegrationsGithubIndexRoute =
   AtChar123orgChar125ProjectIntegrationsGithubIndexRouteImport.update({
     id: '/integrations/github/',
@@ -450,6 +465,12 @@ const AtChar123orgChar125ProjectSettingsDangerIndexRoute =
   AtChar123orgChar125ProjectSettingsDangerIndexRouteImport.update({
     id: '/danger/',
     path: '/danger/',
+    getParentRoute: () => AtChar123orgChar125ProjectSettingsRouteRoute,
+  } as any)
+const AtChar123orgChar125ProjectSettingsForumIndexRoute =
+  AtChar123orgChar125ProjectSettingsForumIndexRouteImport.update({
+    id: '/forum/',
+    path: '/forum/',
     getParentRoute: () => AtChar123orgChar125ProjectSettingsRouteRoute,
   } as any)
 const AtChar123orgChar125ProjectSettingsGeneralIndexRoute =
@@ -577,9 +598,9 @@ export interface FileRoutesByFullPath {
   '/org/settings/': typeof OrgSettingsIndexRoute
   '/u/$username/': typeof UUsernameIndexRoute
   '/@{$org}/$project/asset-library/': typeof AtChar123orgChar125ProjectAssetLibraryIndexRoute
-  '/@{$org}/$project/discussions/': typeof AtChar123orgChar125ProjectDiscussionsIndexRoute
   '/@{$org}/$project/feedback/': typeof AtChar123orgChar125ProjectFeedbackIndexRoute
   '/@{$org}/$project/files/': typeof AtChar123orgChar125ProjectFilesIndexRoute
+  '/@{$org}/$project/forum/': typeof AtChar123orgChar125ProjectForumIndexRoute
   '/@{$org}/$project/roadmap/': typeof AtChar123orgChar125ProjectRoadmapIndexRoute
   '/@{$org}/$project/settings/': typeof AtChar123orgChar125ProjectSettingsIndexRoute
   '/@{$org}/$project/updates/': typeof AtChar123orgChar125ProjectUpdatesIndexRoute
@@ -595,10 +616,13 @@ export interface FileRoutesByFullPath {
   '/@{$org}/$project/feedback/boards/': typeof AtChar123orgChar125ProjectFeedbackBoardsIndexRoute
   '/@{$org}/$project/feedback/new/': typeof AtChar123orgChar125ProjectFeedbackNewIndexRoute
   '/@{$org}/$project/files/search/': typeof AtChar123orgChar125ProjectFilesSearchIndexRoute
+  '/@{$org}/$project/forum/$slug/': typeof AtChar123orgChar125ProjectForumSlugIndexRoute
+  '/@{$org}/$project/forum/new/': typeof AtChar123orgChar125ProjectForumNewIndexRoute
   '/@{$org}/$project/integrations/github/': typeof AtChar123orgChar125ProjectIntegrationsGithubIndexRoute
   '/@{$org}/$project/settings/appearance/': typeof AtChar123orgChar125ProjectSettingsAppearanceIndexRoute
   '/@{$org}/$project/settings/boards/': typeof AtChar123orgChar125ProjectSettingsBoardsIndexRoute
   '/@{$org}/$project/settings/danger/': typeof AtChar123orgChar125ProjectSettingsDangerIndexRoute
+  '/@{$org}/$project/settings/forum/': typeof AtChar123orgChar125ProjectSettingsForumIndexRoute
   '/@{$org}/$project/settings/general/': typeof AtChar123orgChar125ProjectSettingsGeneralIndexRoute
   '/@{$org}/$project/settings/integrations/': typeof AtChar123orgChar125ProjectSettingsIntegrationsIndexRoute
   '/@{$org}/$project/settings/members/': typeof AtChar123orgChar125ProjectSettingsMembersIndexRoute
@@ -650,9 +674,9 @@ export interface FileRoutesByTo {
   '/org/settings': typeof OrgSettingsIndexRoute
   '/u/$username': typeof UUsernameIndexRoute
   '/@{$org}/$project/asset-library': typeof AtChar123orgChar125ProjectAssetLibraryIndexRoute
-  '/@{$org}/$project/discussions': typeof AtChar123orgChar125ProjectDiscussionsIndexRoute
   '/@{$org}/$project/feedback': typeof AtChar123orgChar125ProjectFeedbackIndexRoute
   '/@{$org}/$project/files': typeof AtChar123orgChar125ProjectFilesIndexRoute
+  '/@{$org}/$project/forum': typeof AtChar123orgChar125ProjectForumIndexRoute
   '/@{$org}/$project/roadmap': typeof AtChar123orgChar125ProjectRoadmapIndexRoute
   '/@{$org}/$project/settings': typeof AtChar123orgChar125ProjectSettingsIndexRoute
   '/@{$org}/$project/updates': typeof AtChar123orgChar125ProjectUpdatesIndexRoute
@@ -668,10 +692,13 @@ export interface FileRoutesByTo {
   '/@{$org}/$project/feedback/boards': typeof AtChar123orgChar125ProjectFeedbackBoardsIndexRoute
   '/@{$org}/$project/feedback/new': typeof AtChar123orgChar125ProjectFeedbackNewIndexRoute
   '/@{$org}/$project/files/search': typeof AtChar123orgChar125ProjectFilesSearchIndexRoute
+  '/@{$org}/$project/forum/$slug': typeof AtChar123orgChar125ProjectForumSlugIndexRoute
+  '/@{$org}/$project/forum/new': typeof AtChar123orgChar125ProjectForumNewIndexRoute
   '/@{$org}/$project/integrations/github': typeof AtChar123orgChar125ProjectIntegrationsGithubIndexRoute
   '/@{$org}/$project/settings/appearance': typeof AtChar123orgChar125ProjectSettingsAppearanceIndexRoute
   '/@{$org}/$project/settings/boards': typeof AtChar123orgChar125ProjectSettingsBoardsIndexRoute
   '/@{$org}/$project/settings/danger': typeof AtChar123orgChar125ProjectSettingsDangerIndexRoute
+  '/@{$org}/$project/settings/forum': typeof AtChar123orgChar125ProjectSettingsForumIndexRoute
   '/@{$org}/$project/settings/general': typeof AtChar123orgChar125ProjectSettingsGeneralIndexRoute
   '/@{$org}/$project/settings/integrations': typeof AtChar123orgChar125ProjectSettingsIntegrationsIndexRoute
   '/@{$org}/$project/settings/members': typeof AtChar123orgChar125ProjectSettingsMembersIndexRoute
@@ -733,9 +760,9 @@ export interface FileRoutesById {
   '/org/settings/': typeof OrgSettingsIndexRoute
   '/u/$username/': typeof UUsernameIndexRoute
   '/@{$org}/$project/asset-library/': typeof AtChar123orgChar125ProjectAssetLibraryIndexRoute
-  '/@{$org}/$project/discussions/': typeof AtChar123orgChar125ProjectDiscussionsIndexRoute
   '/@{$org}/$project/feedback/': typeof AtChar123orgChar125ProjectFeedbackIndexRoute
   '/@{$org}/$project/files/': typeof AtChar123orgChar125ProjectFilesIndexRoute
+  '/@{$org}/$project/forum/': typeof AtChar123orgChar125ProjectForumIndexRoute
   '/@{$org}/$project/roadmap/': typeof AtChar123orgChar125ProjectRoadmapIndexRoute
   '/@{$org}/$project/settings/': typeof AtChar123orgChar125ProjectSettingsIndexRoute
   '/@{$org}/$project/updates/': typeof AtChar123orgChar125ProjectUpdatesIndexRoute
@@ -751,10 +778,13 @@ export interface FileRoutesById {
   '/@{$org}/$project/feedback/boards/': typeof AtChar123orgChar125ProjectFeedbackBoardsIndexRoute
   '/@{$org}/$project/feedback/new/': typeof AtChar123orgChar125ProjectFeedbackNewIndexRoute
   '/@{$org}/$project/files/search/': typeof AtChar123orgChar125ProjectFilesSearchIndexRoute
+  '/@{$org}/$project/forum/$slug/': typeof AtChar123orgChar125ProjectForumSlugIndexRoute
+  '/@{$org}/$project/forum/new/': typeof AtChar123orgChar125ProjectForumNewIndexRoute
   '/@{$org}/$project/integrations/github/': typeof AtChar123orgChar125ProjectIntegrationsGithubIndexRoute
   '/@{$org}/$project/settings/appearance/': typeof AtChar123orgChar125ProjectSettingsAppearanceIndexRoute
   '/@{$org}/$project/settings/boards/': typeof AtChar123orgChar125ProjectSettingsBoardsIndexRoute
   '/@{$org}/$project/settings/danger/': typeof AtChar123orgChar125ProjectSettingsDangerIndexRoute
+  '/@{$org}/$project/settings/forum/': typeof AtChar123orgChar125ProjectSettingsForumIndexRoute
   '/@{$org}/$project/settings/general/': typeof AtChar123orgChar125ProjectSettingsGeneralIndexRoute
   '/@{$org}/$project/settings/integrations/': typeof AtChar123orgChar125ProjectSettingsIntegrationsIndexRoute
   '/@{$org}/$project/settings/members/': typeof AtChar123orgChar125ProjectSettingsMembersIndexRoute
@@ -816,9 +846,9 @@ export interface FileRouteTypes {
     | '/org/settings/'
     | '/u/$username/'
     | '/@{$org}/$project/asset-library/'
-    | '/@{$org}/$project/discussions/'
     | '/@{$org}/$project/feedback/'
     | '/@{$org}/$project/files/'
+    | '/@{$org}/$project/forum/'
     | '/@{$org}/$project/roadmap/'
     | '/@{$org}/$project/settings/'
     | '/@{$org}/$project/updates/'
@@ -834,10 +864,13 @@ export interface FileRouteTypes {
     | '/@{$org}/$project/feedback/boards/'
     | '/@{$org}/$project/feedback/new/'
     | '/@{$org}/$project/files/search/'
+    | '/@{$org}/$project/forum/$slug/'
+    | '/@{$org}/$project/forum/new/'
     | '/@{$org}/$project/integrations/github/'
     | '/@{$org}/$project/settings/appearance/'
     | '/@{$org}/$project/settings/boards/'
     | '/@{$org}/$project/settings/danger/'
+    | '/@{$org}/$project/settings/forum/'
     | '/@{$org}/$project/settings/general/'
     | '/@{$org}/$project/settings/integrations/'
     | '/@{$org}/$project/settings/members/'
@@ -889,9 +922,9 @@ export interface FileRouteTypes {
     | '/org/settings'
     | '/u/$username'
     | '/@{$org}/$project/asset-library'
-    | '/@{$org}/$project/discussions'
     | '/@{$org}/$project/feedback'
     | '/@{$org}/$project/files'
+    | '/@{$org}/$project/forum'
     | '/@{$org}/$project/roadmap'
     | '/@{$org}/$project/settings'
     | '/@{$org}/$project/updates'
@@ -907,10 +940,13 @@ export interface FileRouteTypes {
     | '/@{$org}/$project/feedback/boards'
     | '/@{$org}/$project/feedback/new'
     | '/@{$org}/$project/files/search'
+    | '/@{$org}/$project/forum/$slug'
+    | '/@{$org}/$project/forum/new'
     | '/@{$org}/$project/integrations/github'
     | '/@{$org}/$project/settings/appearance'
     | '/@{$org}/$project/settings/boards'
     | '/@{$org}/$project/settings/danger'
+    | '/@{$org}/$project/settings/forum'
     | '/@{$org}/$project/settings/general'
     | '/@{$org}/$project/settings/integrations'
     | '/@{$org}/$project/settings/members'
@@ -971,9 +1007,9 @@ export interface FileRouteTypes {
     | '/org/settings/'
     | '/u/$username/'
     | '/@{$org}/$project/asset-library/'
-    | '/@{$org}/$project/discussions/'
     | '/@{$org}/$project/feedback/'
     | '/@{$org}/$project/files/'
+    | '/@{$org}/$project/forum/'
     | '/@{$org}/$project/roadmap/'
     | '/@{$org}/$project/settings/'
     | '/@{$org}/$project/updates/'
@@ -989,10 +1025,13 @@ export interface FileRouteTypes {
     | '/@{$org}/$project/feedback/boards/'
     | '/@{$org}/$project/feedback/new/'
     | '/@{$org}/$project/files/search/'
+    | '/@{$org}/$project/forum/$slug/'
+    | '/@{$org}/$project/forum/new/'
     | '/@{$org}/$project/integrations/github/'
     | '/@{$org}/$project/settings/appearance/'
     | '/@{$org}/$project/settings/boards/'
     | '/@{$org}/$project/settings/danger/'
+    | '/@{$org}/$project/settings/forum/'
     | '/@{$org}/$project/settings/general/'
     | '/@{$org}/$project/settings/integrations/'
     | '/@{$org}/$project/settings/members/'
@@ -1349,13 +1388,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AtChar123orgChar125ProjectAssetLibraryIndexRouteImport
       parentRoute: typeof AtChar123orgChar125ProjectRouteRoute
     }
-    '/@{$org}/$project/discussions/': {
-      id: '/@{$org}/$project/discussions/'
-      path: '/discussions'
-      fullPath: '/@{$org}/$project/discussions/'
-      preLoaderRoute: typeof AtChar123orgChar125ProjectDiscussionsIndexRouteImport
-      parentRoute: typeof AtChar123orgChar125ProjectRouteRoute
-    }
     '/@{$org}/$project/feedback/': {
       id: '/@{$org}/$project/feedback/'
       path: '/'
@@ -1369,6 +1401,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/@{$org}/$project/files/'
       preLoaderRoute: typeof AtChar123orgChar125ProjectFilesIndexRouteImport
       parentRoute: typeof AtChar123orgChar125ProjectFilesRouteRoute
+    }
+    '/@{$org}/$project/forum/': {
+      id: '/@{$org}/$project/forum/'
+      path: '/forum'
+      fullPath: '/@{$org}/$project/forum/'
+      preLoaderRoute: typeof AtChar123orgChar125ProjectForumIndexRouteImport
+      parentRoute: typeof AtChar123orgChar125ProjectRouteRoute
     }
     '/@{$org}/$project/roadmap/': {
       id: '/@{$org}/$project/roadmap/'
@@ -1468,6 +1507,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AtChar123orgChar125ProjectFilesSearchIndexRouteImport
       parentRoute: typeof AtChar123orgChar125ProjectFilesRouteRoute
     }
+    '/@{$org}/$project/forum/$slug/': {
+      id: '/@{$org}/$project/forum/$slug/'
+      path: '/forum/$slug'
+      fullPath: '/@{$org}/$project/forum/$slug/'
+      preLoaderRoute: typeof AtChar123orgChar125ProjectForumSlugIndexRouteImport
+      parentRoute: typeof AtChar123orgChar125ProjectRouteRoute
+    }
+    '/@{$org}/$project/forum/new/': {
+      id: '/@{$org}/$project/forum/new/'
+      path: '/forum/new'
+      fullPath: '/@{$org}/$project/forum/new/'
+      preLoaderRoute: typeof AtChar123orgChar125ProjectForumNewIndexRouteImport
+      parentRoute: typeof AtChar123orgChar125ProjectRouteRoute
+    }
     '/@{$org}/$project/integrations/github/': {
       id: '/@{$org}/$project/integrations/github/'
       path: '/integrations/github'
@@ -1494,6 +1547,13 @@ declare module '@tanstack/react-router' {
       path: '/danger'
       fullPath: '/@{$org}/$project/settings/danger/'
       preLoaderRoute: typeof AtChar123orgChar125ProjectSettingsDangerIndexRouteImport
+      parentRoute: typeof AtChar123orgChar125ProjectSettingsRouteRoute
+    }
+    '/@{$org}/$project/settings/forum/': {
+      id: '/@{$org}/$project/settings/forum/'
+      path: '/forum'
+      fullPath: '/@{$org}/$project/settings/forum/'
+      preLoaderRoute: typeof AtChar123orgChar125ProjectSettingsForumIndexRouteImport
       parentRoute: typeof AtChar123orgChar125ProjectSettingsRouteRoute
     }
     '/@{$org}/$project/settings/general/': {
@@ -1652,6 +1712,7 @@ interface AtChar123orgChar125ProjectSettingsRouteRouteChildren {
   AtChar123orgChar125ProjectSettingsAppearanceIndexRoute: typeof AtChar123orgChar125ProjectSettingsAppearanceIndexRoute
   AtChar123orgChar125ProjectSettingsBoardsIndexRoute: typeof AtChar123orgChar125ProjectSettingsBoardsIndexRoute
   AtChar123orgChar125ProjectSettingsDangerIndexRoute: typeof AtChar123orgChar125ProjectSettingsDangerIndexRoute
+  AtChar123orgChar125ProjectSettingsForumIndexRoute: typeof AtChar123orgChar125ProjectSettingsForumIndexRoute
   AtChar123orgChar125ProjectSettingsGeneralIndexRoute: typeof AtChar123orgChar125ProjectSettingsGeneralIndexRoute
   AtChar123orgChar125ProjectSettingsIntegrationsIndexRoute: typeof AtChar123orgChar125ProjectSettingsIntegrationsIndexRoute
   AtChar123orgChar125ProjectSettingsMembersIndexRoute: typeof AtChar123orgChar125ProjectSettingsMembersIndexRoute
@@ -1668,6 +1729,8 @@ const AtChar123orgChar125ProjectSettingsRouteRouteChildren: AtChar123orgChar125P
       AtChar123orgChar125ProjectSettingsBoardsIndexRoute,
     AtChar123orgChar125ProjectSettingsDangerIndexRoute:
       AtChar123orgChar125ProjectSettingsDangerIndexRoute,
+    AtChar123orgChar125ProjectSettingsForumIndexRoute:
+      AtChar123orgChar125ProjectSettingsForumIndexRoute,
     AtChar123orgChar125ProjectSettingsGeneralIndexRoute:
       AtChar123orgChar125ProjectSettingsGeneralIndexRoute,
     AtChar123orgChar125ProjectSettingsIntegrationsIndexRoute:
@@ -1689,11 +1752,13 @@ interface AtChar123orgChar125ProjectRouteRouteChildren {
   AtChar123orgChar125ProjectSettingsRouteRoute: typeof AtChar123orgChar125ProjectSettingsRouteRouteWithChildren
   AtChar123orgChar125ProjectIndexRoute: typeof AtChar123orgChar125ProjectIndexRoute
   AtChar123orgChar125ProjectAssetLibraryIndexRoute: typeof AtChar123orgChar125ProjectAssetLibraryIndexRoute
-  AtChar123orgChar125ProjectDiscussionsIndexRoute: typeof AtChar123orgChar125ProjectDiscussionsIndexRoute
+  AtChar123orgChar125ProjectForumIndexRoute: typeof AtChar123orgChar125ProjectForumIndexRoute
   AtChar123orgChar125ProjectRoadmapIndexRoute: typeof AtChar123orgChar125ProjectRoadmapIndexRoute
   AtChar123orgChar125ProjectUpdatesIndexRoute: typeof AtChar123orgChar125ProjectUpdatesIndexRoute
   AtChar123orgChar125ProjectUpdatesSlugEditRoute: typeof AtChar123orgChar125ProjectUpdatesSlugEditRoute
   AtChar123orgChar125ProjectAssetLibraryFileIdIndexRoute: typeof AtChar123orgChar125ProjectAssetLibraryFileIdIndexRoute
+  AtChar123orgChar125ProjectForumSlugIndexRoute: typeof AtChar123orgChar125ProjectForumSlugIndexRoute
+  AtChar123orgChar125ProjectForumNewIndexRoute: typeof AtChar123orgChar125ProjectForumNewIndexRoute
   AtChar123orgChar125ProjectIntegrationsGithubIndexRoute: typeof AtChar123orgChar125ProjectIntegrationsGithubIndexRoute
   AtChar123orgChar125ProjectUpdatesSlugIndexRoute: typeof AtChar123orgChar125ProjectUpdatesSlugIndexRoute
   AtChar123orgChar125ProjectUpdatesEditIndexRoute: typeof AtChar123orgChar125ProjectUpdatesEditIndexRoute
@@ -1712,8 +1777,8 @@ const AtChar123orgChar125ProjectRouteRouteChildren: AtChar123orgChar125ProjectRo
     AtChar123orgChar125ProjectIndexRoute: AtChar123orgChar125ProjectIndexRoute,
     AtChar123orgChar125ProjectAssetLibraryIndexRoute:
       AtChar123orgChar125ProjectAssetLibraryIndexRoute,
-    AtChar123orgChar125ProjectDiscussionsIndexRoute:
-      AtChar123orgChar125ProjectDiscussionsIndexRoute,
+    AtChar123orgChar125ProjectForumIndexRoute:
+      AtChar123orgChar125ProjectForumIndexRoute,
     AtChar123orgChar125ProjectRoadmapIndexRoute:
       AtChar123orgChar125ProjectRoadmapIndexRoute,
     AtChar123orgChar125ProjectUpdatesIndexRoute:
@@ -1722,6 +1787,10 @@ const AtChar123orgChar125ProjectRouteRouteChildren: AtChar123orgChar125ProjectRo
       AtChar123orgChar125ProjectUpdatesSlugEditRoute,
     AtChar123orgChar125ProjectAssetLibraryFileIdIndexRoute:
       AtChar123orgChar125ProjectAssetLibraryFileIdIndexRoute,
+    AtChar123orgChar125ProjectForumSlugIndexRoute:
+      AtChar123orgChar125ProjectForumSlugIndexRoute,
+    AtChar123orgChar125ProjectForumNewIndexRoute:
+      AtChar123orgChar125ProjectForumNewIndexRoute,
     AtChar123orgChar125ProjectIntegrationsGithubIndexRoute:
       AtChar123orgChar125ProjectIntegrationsGithubIndexRoute,
     AtChar123orgChar125ProjectUpdatesSlugIndexRoute:

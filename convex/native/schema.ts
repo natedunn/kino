@@ -43,6 +43,33 @@ export const updateCategory = v.union(
 	v.literal('announcement')
 );
 export const updateStatus = v.union(v.literal('draft'), v.literal('published'));
+export const forumPostingPolicy = v.union(v.literal('everyone'), v.literal('team'));
+// `qa` categories let the author or a moderator mark one reply as the answer.
+export const forumCategoryFormat = v.union(v.literal('open'), v.literal('qa'));
+export const forumEventType = v.union(
+	v.literal('title_changed'),
+	v.literal('category_changed'),
+	v.literal('pinned'),
+	v.literal('unpinned'),
+	v.literal('locked'),
+	v.literal('unlocked'),
+	v.literal('answer_marked'),
+	v.literal('answer_unmarked'),
+	v.literal('converted_to_feedback'),
+	v.literal('imported_from_feedback')
+);
+export const emoteReaction = v.union(
+	v.literal('heart'),
+	v.literal('thumbsUp'),
+	v.literal('thumbsDown'),
+	v.literal('laugh'),
+	v.literal('questionMark'),
+	v.literal('sad'),
+	v.literal('tada'),
+	v.literal('eyes'),
+	v.literal('skull'),
+	v.literal('explodingHead')
+);
 export const operationalJobKind = v.union(
 	v.literal('storage_cleanup'),
 	v.literal('project_deletion'),
@@ -195,6 +222,8 @@ export default defineSchema({
 		deletingAt: v.optional(v.number()),
 		storageDeletingAt: v.optional(v.number()),
 		updatesFeaturedMode: v.optional(v.union(v.literal('latest'), v.literal('manual'))),
+		// Unset means enabled; projects can hide the forum entirely.
+		forumEnabled: v.optional(v.boolean()),
 		organizationId: v.id('organizations'),
 		name: v.string(),
 		slug: v.string(),
@@ -295,6 +324,8 @@ export default defineSchema({
 		searchContent: v.string(),
 		updatedAt: v.number(),
 		deletingAt: v.optional(v.number()),
+		// Set when a moderator moves the feedback into a forum topic.
+		movedToTopicId: v.optional(v.id('forumTopics')),
 	})
 		.index('by_projectId', ['projectId'])
 		.index('by_projectId_and_slug', ['projectId', 'slug'])
@@ -348,13 +379,16 @@ export default defineSchema({
 			v.literal('answer_marked'),
 			v.literal('answer_unmarked'),
 			v.literal('assigned'),
-			v.literal('unassigned')
+			v.literal('unassigned'),
+			v.literal('imported_from_forum'),
+			v.literal('moved_to_forum')
 		),
 		metadata: v.optional(
 			v.object({
 				oldValue: v.optional(v.string()),
 				newValue: v.optional(v.string()),
 				targetProfileId: v.optional(v.id('profiles')),
+				topicId: v.optional(v.id('forumTopics')),
 			})
 		),
 	}).index('by_feedbackId', ['feedbackId']),
@@ -450,6 +484,160 @@ export default defineSchema({
 			'authorProfileId',
 			'content',
 		]),
+	// One poll per topic, created with it. Option labels are fixed once posted;
+	// `votes` and `voterCount` are kept in step with forumPollVotes.
+	forumPolls: defineTable({
+		projectId: v.id('projects'),
+		topicId: v.id('forumTopics'),
+		options: v.array(v.object({ id: v.string(), label: v.string(), votes: v.number() })),
+		multiple: v.boolean(),
+		voterCount: v.number(),
+		closedAt: v.optional(v.number()),
+	}).index('by_topicId', ['topicId']),
+	// A voter's current choices; one row per voter, replaced when they change it.
+	forumPollVotes: defineTable({
+		pollId: v.id('forumPolls'),
+		topicId: v.id('forumTopics'),
+		profileId: v.id('profiles'),
+		optionIds: v.array(v.string()),
+	})
+		.index('by_pollId_and_profileId', ['pollId', 'profileId'])
+		.index('by_topicId', ['topicId']),
+	// Categories a project's topics are filed under. Each carries its own
+	// posting policy (Announcements are team-only) and format (Q&A answers).
+	forumCategories: defineTable({
+		projectId: v.id('projects'),
+		name: v.string(),
+		slug: v.string(),
+		description: v.optional(v.string()),
+		icon: v.optional(v.string()),
+		format: forumCategoryFormat,
+		postingPolicy: forumPostingPolicy,
+		position: v.number(),
+		// Live (not deleting) topics filed here. Unset until backfilled; read as 0.
+		topicCount: v.optional(v.number()),
+		updatedAt: v.optional(v.number()),
+		deletingAt: v.optional(v.number()),
+	})
+		.index('by_projectId_and_position', ['projectId', 'position'])
+		.index('by_projectId_and_slug', ['projectId', 'slug']),
+	// A topic's body is its `initial` comment so it renders and reacts like
+	// every reply. `commentCount` excludes that initial comment.
+	forumTopics: defineTable({
+		projectId: v.id('projects'),
+		// Optional only for topics created before categories existed.
+		categoryId: v.optional(v.id('forumCategories')),
+		authorProfileId: v.id('profiles'),
+		firstCommentId: v.optional(v.id('forumComments')),
+		answerCommentId: v.optional(v.id('forumComments')),
+		slug: v.string(),
+		title: v.string(),
+		searchContent: v.string(),
+		commentCount: v.number(),
+		// Ranks the "Top" view: replies, reactions on the opening post and poll
+		// voters. Unset until backfilled; read as 0.
+		score: v.optional(v.number()),
+		lastActivityAt: v.number(),
+		pinnedAt: v.optional(v.number()),
+		lockedAt: v.optional(v.number()),
+		// Set when a moderator converts the topic into feedback.
+		convertedFeedbackId: v.optional(v.id('feedback')),
+		deletingAt: v.optional(v.number()),
+	})
+		.index('by_projectId', ['projectId'])
+		.index('by_projectId_and_slug', ['projectId', 'slug'])
+		.index('by_projectId_and_lastActivityAt', ['projectId', 'lastActivityAt'])
+		.index('by_projectId_and_commentCount', ['projectId', 'commentCount'])
+		.index('by_projectId_and_score', ['projectId', 'score'])
+		.index('by_projectId_and_pinnedAt', ['projectId', 'pinnedAt'])
+		.index('by_projectId_and_authorProfileId_and_lastActivityAt', [
+			'projectId',
+			'authorProfileId',
+			'lastActivityAt',
+		])
+		.index('by_categoryId', ['categoryId'])
+		.index('by_categoryId_and_lastActivityAt', ['categoryId', 'lastActivityAt'])
+		.index('by_categoryId_and_commentCount', ['categoryId', 'commentCount'])
+		.index('by_categoryId_and_score', ['categoryId', 'score'])
+		.searchIndex('search_by_searchContent', {
+			searchField: 'searchContent',
+			filterFields: ['projectId', 'categoryId'],
+		}),
+	forumComments: defineTable({
+		topicId: v.id('forumTopics'),
+		authorProfileId: v.id('profiles'),
+		// The reply this one answers. Threads stay flat; this only links back.
+		replyToCommentId: v.optional(v.id('forumComments')),
+		content: v.string(),
+		initial: v.boolean(),
+		updatedAt: v.optional(v.number()),
+	})
+		.index('by_topicId_and_initial', ['topicId', 'initial'])
+		.index('by_authorProfileId', ['authorProfileId'])
+		.index('by_replyToCommentId', ['replyToCommentId']),
+	forumCommentEmotes: defineTable({
+		topicId: v.id('forumTopics'),
+		commentId: v.id('forumComments'),
+		authorProfileId: v.id('profiles'),
+		content: emoteReaction,
+	})
+		.index('by_topicId', ['topicId'])
+		.index('by_commentId_and_authorProfileId_and_content', [
+			'commentId',
+			'authorProfileId',
+			'content',
+		]),
+	// Following records interest today; notifications will read it later.
+	forumWatchers: defineTable({
+		projectId: v.id('projects'),
+		topicId: v.id('forumTopics'),
+		profileId: v.id('profiles'),
+	})
+		.index('by_topicId_and_profileId', ['topicId', 'profileId'])
+		.index('by_profileId_and_projectId', ['profileId', 'projectId']),
+	// Moderation and housekeeping changes, shown between replies in the thread.
+	forumEvents: defineTable({
+		topicId: v.id('forumTopics'),
+		actorProfileId: v.id('profiles'),
+		eventType: forumEventType,
+		metadata: v.optional(
+			v.object({
+				oldValue: v.optional(v.string()),
+				newValue: v.optional(v.string()),
+				feedbackId: v.optional(v.id('feedback')),
+			})
+		),
+	}).index('by_topicId', ['topicId']),
+	// Links from a topic to feedback or an update in the same project.
+	forumLinks: defineTable({
+		projectId: v.id('projects'),
+		topicId: v.id('forumTopics'),
+		feedbackId: v.optional(v.id('feedback')),
+		updateId: v.optional(v.id('updates')),
+		createdByProfileId: v.id('profiles'),
+	})
+		.index('by_topicId', ['topicId'])
+		.index('by_feedbackId', ['feedbackId'])
+		.index('by_updateId', ['updateId']),
+	// What a signed-in viewer has read in a topic: when, and how many replies
+	// it had then. Written only when something changed since the last read.
+	forumReads: defineTable({
+		projectId: v.id('projects'),
+		topicId: v.id('forumTopics'),
+		profileId: v.id('profiles'),
+		lastReadAt: v.number(),
+		readCommentCount: v.number(),
+	})
+		.index('by_profileId_and_topicId', ['profileId', 'topicId'])
+		.index('by_topicId', ['topicId']),
+	// "Mark all as read": topics with no activity after `readAllAt` count as read.
+	forumReadMarkers: defineTable({
+		projectId: v.id('projects'),
+		profileId: v.id('profiles'),
+		readAllAt: v.number(),
+	})
+		.index('by_profileId_and_projectId', ['profileId', 'projectId'])
+		.index('by_projectId', ['projectId']),
 	updateDeletionJobs: defineTable({ updateId: v.id('updates') }).index('by_updateId', ['updateId']),
 	projectModeratorAssignments: defineTable({
 		membershipId: v.id('memberships'),

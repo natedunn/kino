@@ -17,6 +17,10 @@ import {
 	writeEditorDraft,
 } from './local-draft';
 
+function escapeText(value: string) {
+	return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
 function createExtensions(getPlaceholder: () => string) {
 	return [
 		StarterKit.configure({
@@ -47,7 +51,8 @@ export type MarkdownEditorRef = {
 	focus: () => void;
 	getHTML: () => string;
 	getText: () => string;
-	insertBlockquote: (content?: string, preserveHtml?: boolean) => void;
+	/** `attribution` is plain text placed in a paragraph just above the quote. */
+	insertBlockquote: (content?: string, preserveHtml?: boolean, attribution?: string) => void;
 	insertText: (text: string) => void;
 };
 
@@ -217,13 +222,18 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
 			focus: () => editor?.chain().focus().run(),
 			getHTML: () => editor?.getHTML() ?? '',
 			getText: () => editor?.getText() ?? '',
-			insertBlockquote: (content?: string, preserveHtml = false) => {
+			insertBlockquote: (content?: string, preserveHtml = false, attribution?: string) => {
 				if (!editor) return;
 				if (content) {
 					const blockquoteContent = preserveHtml
 						? `<blockquote>${content}</blockquote><p></p>`
 						: `<blockquote><p>${content}</p></blockquote><p></p>`;
-					editor.chain().focus().insertContent(blockquoteContent).run();
+					const header = attribution ? `<p>${escapeText(attribution)}</p>` : '';
+					editor
+						.chain()
+						.focus()
+						.insertContent(header + blockquoteContent)
+						.run();
 				} else {
 					editor.chain().focus().toggleBlockquote().run();
 				}

@@ -3,14 +3,18 @@ import type { EmoteContent } from '@/components/emote';
 import type { ReactNode, RefObject } from 'react';
 
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
+import { isRichTextHtml } from '@convex/rich-text';
 import { Link, useLocation } from '@tanstack/react-router';
 import {
+	CornerUpLeft,
 	Link as LinkIcon,
 	MessageCircle,
 	MoreHorizontal,
 	Pencil,
 	Quote,
+	Reply,
 	Trash2,
+	Users,
 } from 'lucide-react';
 
 import { EditorContentDisplay } from '@/components/editor';
@@ -34,14 +38,30 @@ import { FORM_LIMITS } from '@/lib/validation';
 import * as m from '@/paraglide/messages.js';
 
 const COLLAPSED_MAX_HEIGHT = 600;
+const REVEAL_EVENT = 'comment-reveal';
+// Block elements a cloned selection may contain; anything else is inline text
+// that needs a paragraph around it.
+const BLOCK_SELECTOR = 'p, pre, ul, ol, blockquote, h1, h2, h3, h4, h5, h6, hr';
 
 const CommentEditorContext = createContext<RefObject<MarkdownEditorRef | null> | null>(null);
+// How a page brings a comment into view. Paginated threads override it so a
+// target that isn't loaded yet can be paged in first.
+const CommentJumpContext = createContext<(commentId: string) => void>(revealComment);
+// The `#comment-<id>` hash a card already revealed. Cards that remount (or a
+// re-render) must not scroll the page back to it again.
+let revealedHash: string | null = null;
 
 export type CommentAuthor = {
 	id?: string;
 	imageUrl?: string | null;
 	name?: string | null;
 	username?: string | null;
+};
+
+// The comment a reply answers. Threads stay flat; this only links back to it.
+export type CommentReplyTo = {
+	author: CommentAuthor | null;
+	id: string;
 };
 
 export type ThreadComment = {
@@ -52,13 +72,68 @@ export type ThreadComment = {
 	createdAt: Date | number | string;
 	emoteCounts?: Record<string, { authorProfileIds: Array<string>; count: number }>;
 	id: string;
+	replyTo?: CommentReplyTo | null;
 	updatedTime?: Date | number | string | null;
 };
 
-export function CommentEditorProvider({ children }: { children: ReactNode }) {
+// "@username", or the unknown-user label for deleted accounts.
+function authorHandle(author: CommentAuthor | null | undefined) {
+	return author?.username ? `@${author.username}` : (author?.name ?? m.feedback_unknown_user());
+}
+
+/**
+ * Scrolls to and highlights a rendered comment and points the URL at it.
+ * Returns false when the comment isn't on the page (the hash is still set, so
+ * the card highlights itself once it mounts).
+ */
+export function revealComment(commentId: string) {
+	const hash = `comment-${commentId}`;
+	window.history.replaceState(window.history.state, '', `#${hash}`);
+	if (!document.getElementById(hash)) return false;
+	revealedHash = `#${hash}`;
+	window.dispatchEvent(new CustomEvent(REVEAL_EVENT, { detail: commentId }));
+	return true;
+}
+
+export function CommentEditorProvider({
+	children,
+	onJumpToComment = revealComment,
+}: {
+	children: ReactNode;
+	onJumpToComment?: (commentId: string) => void;
+}) {
 	const editorRef = useRef<MarkdownEditorRef>(null);
 	return (
-		<CommentEditorContext.Provider value={editorRef}>{children}</CommentEditorContext.Provider>
+		<CommentEditorContext.Provider value={editorRef}>
+			<CommentJumpContext.Provider value={onJumpToComment}>{children}</CommentJumpContext.Provider>
+		</CommentEditorContext.Provider>
+	);
+}
+
+// Marks authors who belong to the project's organization.
+export function TeamBadge() {
+	return (
+		<span className='inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'>
+			<Users className='size-3' />
+			{m.feedback_team()}
+		</span>
+	);
+}
+
+// Links to the comment a reply answers; clicking scrolls to and highlights it.
+function ReplyToLink({ children, commentId }: { children: ReactNode; commentId: string }) {
+	const jumpToComment = useContext(CommentJumpContext);
+	return (
+		<a
+			className='link-text'
+			href={`#comment-${commentId}`}
+			onClick={(event) => {
+				event.preventDefault();
+				jumpToComment(commentId);
+			}}
+		>
+			{children}
+		</a>
 	);
 }
 
@@ -73,6 +148,7 @@ export function CommentList<TComment extends ThreadComment>({
 	isDeleting,
 	isUpdating,
 	onDelete,
+	onReply,
 	onToggleEmote,
 	onUpdate,
 }: {
@@ -86,6 +162,7 @@ export function CommentList<TComment extends ThreadComment>({
 	isDeleting?: boolean;
 	isUpdating?: boolean;
 	onDelete?: (commentId: string) => void;
+	onReply?: (commentId: string) => void;
 	onToggleEmote?: (commentId: string, content: EmoteContent) => void;
 	onUpdate?: (commentId: string, content: string) => void | Promise<unknown>;
 }) {
@@ -111,6 +188,7 @@ export function CommentList<TComment extends ThreadComment>({
 					isUpdating={isUpdating}
 					key={comment.id}
 					onDelete={onDelete}
+					onReply={onReply}
 					onToggleEmote={onToggleEmote}
 					onUpdate={onUpdate}
 					railClassName={getRailClassName?.(comment)}
@@ -129,7 +207,10 @@ export function CommentCard({
 	dropdownItems,
 	isDeleting,
 	isUpdating,
+	maxLength = FORM_LIMITS.comment,
 	onDelete,
+	onQuote,
+	onReply,
 	onToggleEmote,
 	onUnauthenticated,
 	onUpdate,
@@ -144,7 +225,13 @@ export function CommentCard({
 	dropdownItems?: ReactNode;
 	isDeleting?: boolean;
 	isUpdating?: boolean;
+	// Visible-text limit for edits; topic bodies allow more than replies.
+	maxLength?: number;
 	onDelete?: (commentId: string) => void;
+	// Called after the comment (or the selected part of it) is quoted into the composer.
+	onQuote?: (commentId: string) => void;
+	// Shows a Reply action; pages set their composer's reply target here.
+	onReply?: (commentId: string) => void;
 	onToggleEmote?: (commentId: string, content: EmoteContent) => void;
 	// Called when a signed-out visitor tries to react, so callers can prompt them
 	// to sign in instead of the emote controls being disabled.
@@ -156,6 +243,10 @@ export function CommentCard({
 	const location = useLocation();
 	const editorRef = useContext(CommentEditorContext);
 	const commentRef = useRef<HTMLLIElement>(null);
+	const bodyRef = useRef<HTMLDivElement>(null);
+	// The selected part of the body, captured as the menu opens (opening it can
+	// move focus and drop the selection before Quote is chosen).
+	const selectionRef = useRef<string | null>(null);
 	const editEditorRef = useRef<MarkdownEditorRef>(null);
 	const commentHashId = `comment-${comment.id}`;
 	const [isEditing, setIsEditing] = useState(false);
@@ -169,22 +260,56 @@ export function CommentCard({
 
 	useEffect(() => {
 		if (typeof window === 'undefined') return;
-		if (window.location.hash !== `#${commentHashId}`) return;
-
-		setTimeout(() => {
-			commentRef.current?.scrollIntoView({
-				behavior: 'smooth',
-				block: 'center',
-			});
-			setIsHighlighted(true);
-			setTimeout(() => setIsHighlighted(false), 2000);
-		}, 100);
+		const timers: Array<ReturnType<typeof setTimeout>> = [];
+		function reveal() {
+			timers.push(
+				setTimeout(() => {
+					commentRef.current?.scrollIntoView({
+						behavior: 'smooth',
+						block: 'center',
+					});
+					setIsHighlighted(true);
+					timers.push(setTimeout(() => setIsHighlighted(false), 2000));
+				}, 100)
+			);
+		}
+		if (window.location.hash === `#${commentHashId}` && revealedHash !== `#${commentHashId}`) {
+			revealedHash = `#${commentHashId}`;
+			reveal();
+		}
+		function handleReveal(event: Event) {
+			if (`comment-${(event as CustomEvent<string>).detail}` === commentHashId) reveal();
+		}
+		window.addEventListener(REVEAL_EVENT, handleReveal);
+		return () => {
+			window.removeEventListener(REVEAL_EVENT, handleReveal);
+			for (const timer of timers) clearTimeout(timer);
+		};
 	}, [commentHashId]);
+
+	function captureSelection() {
+		selectionRef.current = selectedHtml(bodyRef.current);
+	}
 
 	function handleQuote() {
 		if (!editorRef?.current) return;
-		editorRef.current.insertBlockquote(comment.content, true);
+		const selected = selectionRef.current;
+		selectionRef.current = null;
+		const content = isRichTextHtml(comment.content)
+			? comment.content
+			: `<p>${escapeText(comment.content)}</p>`;
+		editorRef.current.insertBlockquote(
+			selected ?? content,
+			true,
+			m.comment_quote_attribution({ name: authorHandle(comment.author) })
+		);
 		editorRef.current.focus();
+		onQuote?.(comment.id);
+	}
+
+	function handleReply() {
+		onReply?.(comment.id);
+		editorRef?.current?.focus();
 	}
 
 	async function handlePermalink() {
@@ -209,8 +334,8 @@ export function CommentCard({
 		const sanitizedContent = sanitizeEditorContent(html);
 		if (!sanitizedContent) return;
 		// Count visible text, not HTML markup (see CommentForm.handleSubmit).
-		if (text.length > FORM_LIMITS.comment) {
-			setEditError(m.feedback_comment_too_long({ count: FORM_LIMITS.comment }));
+		if (text.length > maxLength) {
+			setEditError(m.feedback_comment_too_long({ count: maxLength }));
 			return;
 		}
 
@@ -348,7 +473,7 @@ export function CommentCard({
 													className='cursor-pointer border-b border-dotted border-foreground/50 text-foreground/70'
 													suppressHydrationWarning
 												>
-													edited
+													{m.comment_edited()}
 												</span>
 											</TooltipTrigger>
 											<TooltipContent>
@@ -359,13 +484,26 @@ export function CommentCard({
 										</Tooltip>
 									</>
 								) : null}
+								{comment.replyTo ? (
+									<>
+										{' • '}
+										<ReplyToLink commentId={comment.replyTo.id}>
+											<CornerUpLeft className='mr-1 inline size-3.5 align-[-2px]' />
+											{m.comment_in_reply_to({ name: authorHandle(comment.replyTo.author) })}
+										</ReplyToLink>
+									</>
+								) : null}
 							</span>
 						</span>
-						{badges ? <div className='flex items-center gap-2'>{badges}</div> : null}
+						{badges ? (
+							<div className='flex shrink-0 flex-wrap items-center justify-end gap-2'>{badges}</div>
+						) : null}
 					</div>
 					<div className='flex min-w-0 flex-col gap-4 overflow-hidden p-6'>
 						<CollapsibleContent>
-							<EditorContentDisplay content={comment.content} />
+							<div ref={bodyRef}>
+								<EditorContentDisplay content={comment.content} />
+							</div>
 						</CollapsibleContent>
 						<div className='flex items-center justify-between gap-4'>
 							<div className='flex flex-wrap items-center gap-2'>
@@ -397,8 +535,18 @@ export function CommentCard({
 							</div>
 							<div className='flex items-center gap-2'>
 								{action}
+								{onReply ? (
+									<Button onClick={handleReply} size='sm' type='button' variant='ghost'>
+										<Reply className='size-4' />
+										{m.feedback_reply()}
+									</Button>
+								) : null}
 								<DropdownMenu>
-									<DropdownMenuTrigger asChild>
+									<DropdownMenuTrigger
+										asChild
+										onKeyDown={captureSelection}
+										onPointerDown={captureSelection}
+									>
 										<Button disabled={isDeleting} size='sm' variant='ghost'>
 											<MoreHorizontal className='h-4 w-4' />
 											<span className='sr-only'>{m.feedback_more_actions()}</span>
@@ -454,17 +602,22 @@ export function CommentCard({
 export function CommentForm({
 	isAuthenticated,
 	isSubmitting,
+	onCancelReply,
 	onSubmit,
 	placeholder = m.feedback_write_comment(),
 	redirectTo,
+	replyTo,
 	signedOut = 'simple',
 	submitLabel = m.feedback_post_comment(),
 }: {
 	isAuthenticated: boolean;
 	isSubmitting?: boolean;
+	onCancelReply?: () => void;
 	onSubmit: (content: string) => Promise<void>;
 	placeholder?: string;
 	redirectTo: string;
+	// The comment the next post answers, shown as a chip above the editor.
+	replyTo?: CommentReplyTo | null;
 	signedOut?: 'rich' | 'simple';
 	submitLabel?: string;
 }) {
@@ -548,6 +701,24 @@ export function CommentForm({
 
 	return (
 		<div className='mt-6'>
+			{replyTo ? (
+				<div className='ml-6 flex'>
+					<div className='inline-flex min-w-0 items-center gap-1.5 rounded-t-md border border-b-0 bg-muted px-2.5 py-1 text-sm text-muted-foreground'>
+						<CornerUpLeft className='size-3.5 shrink-0' />
+						<ReplyToLink commentId={replyTo.id}>
+							{m.comment_replying_to({ name: authorHandle(replyTo.author) })}
+						</ReplyToLink>
+						{onCancelReply ? (
+							<>
+								<span aria-hidden>·</span>
+								<button className='link-text' onClick={onCancelReply} type='button'>
+									{m.common_cancel()}
+								</button>
+							</>
+						) : null}
+					</div>
+				</div>
+			) : null}
 			<LazyMarkdownEditor
 				ariaLabel={placeholder}
 				className='rounded-b-none'
@@ -603,12 +774,29 @@ function CollapsibleContent({ children }: { children: ReactNode }) {
 			{isOverflowing && !isExpanded ? (
 				<div className='absolute inset-x-0 bottom-0 flex h-20 items-end justify-center bg-gradient-to-t from-background to-transparent'>
 					<Button className='mb-2' onClick={() => setIsExpanded(true)} size='sm' variant='outline'>
-						Show more
+						{m.comment_show_more()}
 					</Button>
 				</div>
 			) : null}
 		</div>
 	);
+}
+
+function escapeText(value: string) {
+	return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+// The HTML of a non-empty selection that lies inside `container`, or null.
+function selectedHtml(container: HTMLElement | null) {
+	const selection = window.getSelection();
+	if (!container || !selection || selection.isCollapsed || !selection.rangeCount) return null;
+	const range = selection.getRangeAt(0);
+	if (!container.contains(range.commonAncestorContainer)) return null;
+	const wrapper = document.createElement('div');
+	wrapper.append(range.cloneContents());
+	if (!wrapper.textContent.trim()) return null;
+	// A selection within one paragraph clones only its inline content.
+	return wrapper.querySelector(BLOCK_SELECTOR) ? wrapper.innerHTML : `<p>${wrapper.innerHTML}</p>`;
 }
 
 function hasEditorText(value: string) {

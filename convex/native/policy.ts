@@ -12,6 +12,7 @@ import {
 	resolveOrganizationAccess,
 	resolveProjectAccess,
 } from './access';
+import { seedDefaultCategories } from './forumCategories';
 import { canUseReservedProjectSlugs, requireCurrentUser } from './identity';
 import schema, { organizationRole, projectVisibility } from './schema';
 
@@ -105,6 +106,7 @@ async function insertProject(
 	]) {
 		await ctx.db.insert('feedbackBoards', { projectId, ...board });
 	}
+	await seedDefaultCategories(ctx, projectId);
 	return { id: projectId, slug };
 }
 

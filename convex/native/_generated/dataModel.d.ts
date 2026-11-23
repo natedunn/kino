@@ -61,6 +61,7 @@ export type DataModel = {
       boardId: Id<"feedbackBoards">;
       deletingAt?: number;
       firstCommentId?: Id<"feedbackComments">;
+      movedToTopicId?: Id<"forumTopics">;
       priority: "none" | "low" | "medium" | "high" | "urgent";
       projectId: Id<"projects">;
       searchContent: string;
@@ -84,6 +85,7 @@ export type DataModel = {
       | "boardId"
       | "deletingAt"
       | "firstCommentId"
+      | "movedToTopicId"
       | "priority"
       | "projectId"
       | "searchContent"
@@ -248,12 +250,15 @@ export type DataModel = {
         | "answer_marked"
         | "answer_unmarked"
         | "assigned"
-        | "unassigned";
+        | "unassigned"
+        | "imported_from_forum"
+        | "moved_to_forum";
       feedbackId: Id<"feedback">;
       metadata?: {
         newValue?: string;
         oldValue?: string;
         targetProfileId?: Id<"profiles">;
+        topicId?: Id<"forumTopics">;
       };
       _id: Id<"feedbackEvents">;
       _creationTime: number;
@@ -267,7 +272,8 @@ export type DataModel = {
       | "metadata"
       | "metadata.newValue"
       | "metadata.oldValue"
-      | "metadata.targetProfileId";
+      | "metadata.targetProfileId"
+      | "metadata.topicId";
     indexes: {
       by_id: ["_id"];
       by_creation_time: ["_creationTime"];
@@ -596,6 +602,387 @@ export type DataModel = {
       by_creation_time: ["_creationTime"];
       by_assetId: ["assetId", "_creationTime"];
       by_updateId: ["updateId", "_creationTime"];
+    };
+    searchIndexes: {};
+    vectorIndexes: {};
+  };
+  forumCategories: {
+    document: {
+      deletingAt?: number;
+      description?: string;
+      format: "open" | "qa";
+      icon?: string;
+      name: string;
+      position: number;
+      postingPolicy: "everyone" | "team";
+      projectId: Id<"projects">;
+      slug: string;
+      topicCount?: number;
+      updatedAt?: number;
+      _id: Id<"forumCategories">;
+      _creationTime: number;
+    };
+    fieldPaths:
+      | "_creationTime"
+      | "_id"
+      | "deletingAt"
+      | "description"
+      | "format"
+      | "icon"
+      | "name"
+      | "position"
+      | "postingPolicy"
+      | "projectId"
+      | "slug"
+      | "topicCount"
+      | "updatedAt";
+    indexes: {
+      by_id: ["_id"];
+      by_creation_time: ["_creationTime"];
+      by_projectId_and_position: ["projectId", "position", "_creationTime"];
+      by_projectId_and_slug: ["projectId", "slug", "_creationTime"];
+    };
+    searchIndexes: {};
+    vectorIndexes: {};
+  };
+  forumCommentEmotes: {
+    document: {
+      authorProfileId: Id<"profiles">;
+      commentId: Id<"forumComments">;
+      content:
+        | "heart"
+        | "thumbsUp"
+        | "thumbsDown"
+        | "laugh"
+        | "questionMark"
+        | "sad"
+        | "tada"
+        | "eyes"
+        | "skull"
+        | "explodingHead";
+      topicId: Id<"forumTopics">;
+      _id: Id<"forumCommentEmotes">;
+      _creationTime: number;
+    };
+    fieldPaths:
+      | "_creationTime"
+      | "_id"
+      | "authorProfileId"
+      | "commentId"
+      | "content"
+      | "topicId";
+    indexes: {
+      by_id: ["_id"];
+      by_creation_time: ["_creationTime"];
+      by_commentId_and_authorProfileId_and_content: [
+        "commentId",
+        "authorProfileId",
+        "content",
+        "_creationTime",
+      ];
+      by_topicId: ["topicId", "_creationTime"];
+    };
+    searchIndexes: {};
+    vectorIndexes: {};
+  };
+  forumComments: {
+    document: {
+      authorProfileId: Id<"profiles">;
+      content: string;
+      initial: boolean;
+      replyToCommentId?: Id<"forumComments">;
+      topicId: Id<"forumTopics">;
+      updatedAt?: number;
+      _id: Id<"forumComments">;
+      _creationTime: number;
+    };
+    fieldPaths:
+      | "_creationTime"
+      | "_id"
+      | "authorProfileId"
+      | "content"
+      | "initial"
+      | "replyToCommentId"
+      | "topicId"
+      | "updatedAt";
+    indexes: {
+      by_id: ["_id"];
+      by_creation_time: ["_creationTime"];
+      by_authorProfileId: ["authorProfileId", "_creationTime"];
+      by_replyToCommentId: ["replyToCommentId", "_creationTime"];
+      by_topicId_and_initial: ["topicId", "initial", "_creationTime"];
+    };
+    searchIndexes: {};
+    vectorIndexes: {};
+  };
+  forumEvents: {
+    document: {
+      actorProfileId: Id<"profiles">;
+      eventType:
+        | "title_changed"
+        | "category_changed"
+        | "pinned"
+        | "unpinned"
+        | "locked"
+        | "unlocked"
+        | "answer_marked"
+        | "answer_unmarked"
+        | "converted_to_feedback"
+        | "imported_from_feedback";
+      metadata?: {
+        feedbackId?: Id<"feedback">;
+        newValue?: string;
+        oldValue?: string;
+      };
+      topicId: Id<"forumTopics">;
+      _id: Id<"forumEvents">;
+      _creationTime: number;
+    };
+    fieldPaths:
+      | "_creationTime"
+      | "_id"
+      | "actorProfileId"
+      | "eventType"
+      | "metadata"
+      | "metadata.feedbackId"
+      | "metadata.newValue"
+      | "metadata.oldValue"
+      | "topicId";
+    indexes: {
+      by_id: ["_id"];
+      by_creation_time: ["_creationTime"];
+      by_topicId: ["topicId", "_creationTime"];
+    };
+    searchIndexes: {};
+    vectorIndexes: {};
+  };
+  forumLinks: {
+    document: {
+      createdByProfileId: Id<"profiles">;
+      feedbackId?: Id<"feedback">;
+      projectId: Id<"projects">;
+      topicId: Id<"forumTopics">;
+      updateId?: Id<"updates">;
+      _id: Id<"forumLinks">;
+      _creationTime: number;
+    };
+    fieldPaths:
+      | "_creationTime"
+      | "_id"
+      | "createdByProfileId"
+      | "feedbackId"
+      | "projectId"
+      | "topicId"
+      | "updateId";
+    indexes: {
+      by_id: ["_id"];
+      by_creation_time: ["_creationTime"];
+      by_feedbackId: ["feedbackId", "_creationTime"];
+      by_topicId: ["topicId", "_creationTime"];
+      by_updateId: ["updateId", "_creationTime"];
+    };
+    searchIndexes: {};
+    vectorIndexes: {};
+  };
+  forumPolls: {
+    document: {
+      closedAt?: number;
+      multiple: boolean;
+      options: Array<{ id: string; label: string; votes: number }>;
+      projectId: Id<"projects">;
+      topicId: Id<"forumTopics">;
+      voterCount: number;
+      _id: Id<"forumPolls">;
+      _creationTime: number;
+    };
+    fieldPaths:
+      | "_creationTime"
+      | "_id"
+      | "closedAt"
+      | "multiple"
+      | "options"
+      | "projectId"
+      | "topicId"
+      | "voterCount";
+    indexes: {
+      by_id: ["_id"];
+      by_creation_time: ["_creationTime"];
+      by_topicId: ["topicId", "_creationTime"];
+    };
+    searchIndexes: {};
+    vectorIndexes: {};
+  };
+  forumPollVotes: {
+    document: {
+      optionIds: Array<string>;
+      pollId: Id<"forumPolls">;
+      profileId: Id<"profiles">;
+      topicId: Id<"forumTopics">;
+      _id: Id<"forumPollVotes">;
+      _creationTime: number;
+    };
+    fieldPaths:
+      | "_creationTime"
+      | "_id"
+      | "optionIds"
+      | "pollId"
+      | "profileId"
+      | "topicId";
+    indexes: {
+      by_id: ["_id"];
+      by_creation_time: ["_creationTime"];
+      by_pollId_and_profileId: ["pollId", "profileId", "_creationTime"];
+      by_topicId: ["topicId", "_creationTime"];
+    };
+    searchIndexes: {};
+    vectorIndexes: {};
+  };
+  forumReadMarkers: {
+    document: {
+      profileId: Id<"profiles">;
+      projectId: Id<"projects">;
+      readAllAt: number;
+      _id: Id<"forumReadMarkers">;
+      _creationTime: number;
+    };
+    fieldPaths:
+      | "_creationTime"
+      | "_id"
+      | "profileId"
+      | "projectId"
+      | "readAllAt";
+    indexes: {
+      by_id: ["_id"];
+      by_creation_time: ["_creationTime"];
+      by_profileId_and_projectId: ["profileId", "projectId", "_creationTime"];
+      by_projectId: ["projectId", "_creationTime"];
+    };
+    searchIndexes: {};
+    vectorIndexes: {};
+  };
+  forumReads: {
+    document: {
+      lastReadAt: number;
+      profileId: Id<"profiles">;
+      projectId: Id<"projects">;
+      readCommentCount: number;
+      topicId: Id<"forumTopics">;
+      _id: Id<"forumReads">;
+      _creationTime: number;
+    };
+    fieldPaths:
+      | "_creationTime"
+      | "_id"
+      | "lastReadAt"
+      | "profileId"
+      | "projectId"
+      | "readCommentCount"
+      | "topicId";
+    indexes: {
+      by_id: ["_id"];
+      by_creation_time: ["_creationTime"];
+      by_profileId_and_topicId: ["profileId", "topicId", "_creationTime"];
+      by_topicId: ["topicId", "_creationTime"];
+    };
+    searchIndexes: {};
+    vectorIndexes: {};
+  };
+  forumTopics: {
+    document: {
+      answerCommentId?: Id<"forumComments">;
+      authorProfileId: Id<"profiles">;
+      categoryId?: Id<"forumCategories">;
+      commentCount: number;
+      convertedFeedbackId?: Id<"feedback">;
+      deletingAt?: number;
+      firstCommentId?: Id<"forumComments">;
+      lastActivityAt: number;
+      lockedAt?: number;
+      pinnedAt?: number;
+      projectId: Id<"projects">;
+      score?: number;
+      searchContent: string;
+      slug: string;
+      title: string;
+      _id: Id<"forumTopics">;
+      _creationTime: number;
+    };
+    fieldPaths:
+      | "_creationTime"
+      | "_id"
+      | "answerCommentId"
+      | "authorProfileId"
+      | "categoryId"
+      | "commentCount"
+      | "convertedFeedbackId"
+      | "deletingAt"
+      | "firstCommentId"
+      | "lastActivityAt"
+      | "lockedAt"
+      | "pinnedAt"
+      | "projectId"
+      | "score"
+      | "searchContent"
+      | "slug"
+      | "title";
+    indexes: {
+      by_id: ["_id"];
+      by_creation_time: ["_creationTime"];
+      by_categoryId: ["categoryId", "_creationTime"];
+      by_categoryId_and_commentCount: [
+        "categoryId",
+        "commentCount",
+        "_creationTime",
+      ];
+      by_categoryId_and_lastActivityAt: [
+        "categoryId",
+        "lastActivityAt",
+        "_creationTime",
+      ];
+      by_categoryId_and_score: ["categoryId", "score", "_creationTime"];
+      by_projectId: ["projectId", "_creationTime"];
+      by_projectId_and_authorProfileId_and_lastActivityAt: [
+        "projectId",
+        "authorProfileId",
+        "lastActivityAt",
+        "_creationTime",
+      ];
+      by_projectId_and_commentCount: [
+        "projectId",
+        "commentCount",
+        "_creationTime",
+      ];
+      by_projectId_and_lastActivityAt: [
+        "projectId",
+        "lastActivityAt",
+        "_creationTime",
+      ];
+      by_projectId_and_pinnedAt: ["projectId", "pinnedAt", "_creationTime"];
+      by_projectId_and_score: ["projectId", "score", "_creationTime"];
+      by_projectId_and_slug: ["projectId", "slug", "_creationTime"];
+    };
+    searchIndexes: {
+      search_by_searchContent: {
+        searchField: "searchContent";
+        filterFields: "categoryId" | "projectId";
+      };
+    };
+    vectorIndexes: {};
+  };
+  forumWatchers: {
+    document: {
+      profileId: Id<"profiles">;
+      projectId: Id<"projects">;
+      topicId: Id<"forumTopics">;
+      _id: Id<"forumWatchers">;
+      _creationTime: number;
+    };
+    fieldPaths: "_creationTime" | "_id" | "profileId" | "projectId" | "topicId";
+    indexes: {
+      by_id: ["_id"];
+      by_creation_time: ["_creationTime"];
+      by_profileId_and_projectId: ["profileId", "projectId", "_creationTime"];
+      by_topicId_and_profileId: ["topicId", "profileId", "_creationTime"];
     };
     searchIndexes: {};
     vectorIndexes: {};
@@ -975,6 +1362,7 @@ export type DataModel = {
     document: {
       deletingAt?: number;
       description?: string;
+      forumEnabled?: boolean;
       name: string;
       organizationId: Id<"organizations">;
       slug: string;
@@ -995,6 +1383,7 @@ export type DataModel = {
       | "_id"
       | "deletingAt"
       | "description"
+      | "forumEnabled"
       | "name"
       | "organizationId"
       | "slug"

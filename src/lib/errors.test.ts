@@ -59,5 +59,8 @@ describe('localizeError', () => {
 		expect(localizeError({ data: 'FORBIDDEN' })).toBe(m.server_error_permission_denied());
 		expect(localizeError({ data: 'FEEDBACK_NOT_FOUND' })).toBe(m.server_error_not_found());
 		expect(localizeError({ data: 'INVALID_COMMENT' })).toBe(m.server_error_invalid_request());
+		expect(localizeError({ data: 'TOPIC_LOCKED' })).toBe(m.server_error_forum_locked());
+		expect(localizeError({ data: 'PIN_LIMIT' })).toBe(m.server_error_forum_pin_limit());
+		expect(localizeError({ data: 'POLL_CLOSED' })).toBe(m.server_error_forum_poll_closed());
 	});
 });

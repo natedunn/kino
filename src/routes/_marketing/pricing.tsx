@@ -109,7 +109,7 @@ const FEATURE_GROUPS: Array<FeatureGroup> = [
 				values: { free: 'Unlimited', plus: 'Unlimited', pro: 'Unlimited', max: 'Unlimited' },
 			},
 			{
-				label: 'Discussions',
+				label: 'Forum',
 				values: { free: 'Unlimited', plus: 'Unlimited', pro: 'Unlimited', max: 'Unlimited' },
 			},
 			{ label: 'Wiki', values: { free: true, plus: true, pro: true, max: true }, soon: true },
