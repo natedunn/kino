@@ -1,12 +1,13 @@
 // @vitest-environment edge-runtime
 import type { Id } from './_generated/dataModel';
 
+import { registerCore } from '@convex-dev/auth/test';
 import { register as registerRateLimiter } from '@convex-dev/rate-limiter/test';
 import { convexTest } from 'convex-test';
 import { makeFunctionReference } from 'convex/server';
 import { beforeEach, describe, expect, test } from 'vitest';
 
-import { configureTestAuth, issuer } from '../testing/setup.testing';
+import { configureTestAuth, sessionFor } from '../testing/setup.testing';
 import schema from './schema';
 
 const modules = import.meta.glob(['./**/*.ts', '!./**/*.test.ts', '!./**/*.testing.ts']);
@@ -51,6 +52,7 @@ beforeEach(configureTestAuth);
 
 function setup() {
 	const t = convexTest(schema, modules);
+	registerCore(t);
 	registerRateLimiter(t, 'authLimits');
 	return t;
 }
@@ -73,7 +75,7 @@ async function addUser(t: Backend, name: string, email = `${name}@example.test`)
 		await ctx.db.patch('users', userId, { profileId });
 		return { profileId, userId };
 	});
-	return { ...ids, caller: t.withIdentity({ issuer, subject: ids.userId }) };
+	return { ...ids, caller: t.withIdentity(await sessionFor(t, ids.userId)) };
 }
 
 async function addProject(

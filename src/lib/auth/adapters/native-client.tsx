@@ -1,7 +1,7 @@
 'use client';
 
 import type { AuthClient as AuthClientType } from '@convex-dev/auth/browser';
-import type { SlimTokenBundle } from '@convex-dev/auth/server';
+import type { SlimTokenBundle } from '@convex-dev/auth/ssr';
 import type { ConvexReactClient } from 'convex/react';
 import type { ReactNode } from 'react';
 

@@ -1,11 +1,11 @@
 // @vitest-environment edge-runtime
-import { registerCore } from '@convex-dev/auth/providers/testing/core';
-import { registerPasswordProvider } from '@convex-dev/auth/providers/testing/password';
+import { registerPassword } from '@convex-dev/auth/components/password/test';
+import { registerCore, sessionIdentity } from '@convex-dev/auth/test';
 import { register as registerRateLimiter } from '@convex-dev/rate-limiter/test';
 import { convexTest } from 'convex-test';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { configureTestAuth, issuer } from '../testing/setup.testing';
+import { configureTestAuth } from '../testing/setup.testing';
 import { api, internal } from './_generated/api';
 import schema from './schema';
 
@@ -39,7 +39,7 @@ afterEach(() => {
 function setup() {
 	const t = convexTest(schema, modules);
 	registerCore(t);
-	registerPasswordProvider(t, 'password');
+	registerPassword(t, 'password');
 	registerRateLimiter(t, 'authLimits');
 	return t;
 }
@@ -77,7 +77,7 @@ describe('native verified password lifecycle', () => {
 				userError: { error: 'INVALID_CREDENTIALS' },
 			});
 			const result = await t.mutation(api.password.verifyEmail, { code: proof });
-			const caller = t.withIdentity({ issuer, subject: result.tokens.userId });
+			const caller = t.withIdentity(sessionIdentity(result.tokens));
 			expect(await caller.query(api.profiles.me, {})).toMatchObject({
 				name: 'Native User',
 				email,
@@ -150,6 +150,11 @@ describe('native verified password lifecycle', () => {
 				kind: 'noSession',
 			});
 		}
+		// Unexpired access tokens of the revoked sessions stop working at once.
+		for (const tokens of [initial.tokens, second.tokens])
+			expect(
+				await t.withIdentity(sessionIdentity(tokens)).query(api.auth.isAuthenticated, {})
+			).toBe(false);
 		await expect(t.mutation(api.password.resetPassword, { code: proof, password })).rejects.toThrow(
 			'INVALID_PROOF'
 		);
@@ -160,7 +165,7 @@ describe('native verified password lifecycle', () => {
 			status: 'complete',
 		});
 	});
-	test('a lost refresh response can recover the exact successor once', async () => {
+	test('a lost refresh response is recovered by retrying the redeemed token', async () => {
 		const t = setup();
 		const initial = await verified(t);
 		const first = await t.mutation(api.auth.refreshSession, {
@@ -169,34 +174,25 @@ describe('native verified password lifecycle', () => {
 		if (first.kind !== 'rotated') throw new Error('Expected initial rotation');
 
 		// Simulate the first response being lost: the browser retries the token it
-		// still has and must receive the exact same successor, not a second rotation.
+		// still has. Upstream keeps the redeemed token valid and issues a sibling.
 		const recovered = await t.mutation(api.auth.refreshSession, {
 			refreshToken: initial.tokens.refreshToken,
 		});
-		expect(recovered).toMatchObject({ kind: 'rotated' });
 		if (recovered.kind !== 'rotated') throw new Error('Expected recovered rotation');
-		expect(recovered.tokens.refreshToken).toBe(first.tokens.refreshToken);
+		expect(recovered.tokens.refreshToken).not.toBe(first.tokens.refreshToken);
 
 		const second = await t.mutation(api.auth.refreshSession, {
 			refreshToken: recovered.tokens.refreshToken,
 		});
-		expect(second).toMatchObject({ kind: 'rotated' });
+		if (second.kind !== 'rotated') throw new Error('Expected second rotation');
 
-		// Once the session has advanced again, the older token cannot reconstruct
-		// the current credential and retains upstream's access-only grace behavior.
+		// The lost sibling was dropped when the recovered token was redeemed, so
+		// presenting it looks like a forked session and revokes the session.
 		expect(
 			await t.mutation(api.auth.refreshSession, {
-				refreshToken: initial.tokens.refreshToken,
-			})
-		).toMatchObject({ kind: 'reused' });
-
-		vi.advanceTimersByTime(31_000);
-		expect(
-			await t.mutation(api.auth.refreshSession, {
-				refreshToken: recovered.tokens.refreshToken,
+				refreshToken: first.tokens.refreshToken,
 			})
 		).toEqual({ kind: 'noSession' });
-		if (second.kind !== 'rotated') throw new Error('Expected second rotation');
 		expect(
 			await t.mutation(api.auth.refreshSession, {
 				refreshToken: second.tokens.refreshToken,

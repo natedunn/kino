@@ -1,6 +1,5 @@
 import { createElement } from 'react';
 import { Analytics } from '@bentonow/bento-node-sdk';
-import { sha256Hex } from '@convex-dev/auth/lib/crypto';
 import { v } from 'convex/values';
 import { renderToStaticMarkup } from 'react-dom/server.edge';
 
@@ -13,6 +12,7 @@ import {
 import { internal } from './_generated/api';
 import { env, internalAction, internalMutation, internalQuery } from './_generated/server';
 import { emailCredentials } from './mailConfig';
+import { sha256Hex } from './relayClient';
 import { assignableOrganizationRole, challengePurpose, localeValidator } from './schema';
 
 export const pending = internalQuery({

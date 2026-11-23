@@ -1,10 +1,11 @@
 // @vitest-environment edge-runtime
 import type { Id } from './_generated/dataModel';
 
+import { registerCore } from '@convex-dev/auth/test';
 import { convexTest } from 'convex-test';
 import { beforeEach, expect, test } from 'vitest';
 
-import { configureTestAuth, issuer } from '../testing/setup.testing';
+import { configureTestAuth, sessionFor } from '../testing/setup.testing';
 import { api, internal } from './_generated/api';
 import schema from './schema';
 
@@ -14,6 +15,7 @@ beforeEach(configureTestAuth);
 
 async function fixture() {
 	const t = convexTest(schema, modules);
+	registerCore(t);
 	const ids = await t.run(async (ctx) => {
 		const owner = await ctx.db.insert('users', {
 			githubEmail: 'github@example.test',
@@ -60,8 +62,8 @@ async function fixture() {
 	});
 	return {
 		ids,
-		other: t.withIdentity({ issuer, subject: ids.other }),
-		owner: t.withIdentity({ issuer, subject: ids.owner }),
+		other: t.withIdentity(await sessionFor(t, ids.other)),
+		owner: t.withIdentity(await sessionFor(t, ids.owner)),
 		t,
 	};
 }

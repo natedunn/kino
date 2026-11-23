@@ -264,9 +264,10 @@ curl -H "Authorization: Bearer $GATEWAY_ADMIN_TOKEN" https://gateway-dev.usekino
 ### Native app (Convex deployments: dev, preview defaults, prod)
 
 The native backend requires these values on every target before deployment:
-`AUTH_PRIVATE_KEY`, `AUTH_JWKS`, `AUTH_GITHUB_CLIENT_ID`,
-`AUTH_GITHUB_CLIENT_SECRET`, `AUTH_GITHUB_CALLBACK_URL`, and
-`AUTH_APP_ORIGIN`. Preview deployments inherit the shared credentials from the
+`AUTH_GITHUB_CLIENT_ID`, `AUTH_GITHUB_CLIENT_SECRET`,
+`AUTH_GITHUB_CALLBACK_URL`, and `AUTH_APP_ORIGIN`. Convex Auth 2.0 signs
+access tokens with the deployment's own key, so `AUTH_PRIVATE_KEY` and
+`AUTH_JWKS` are no longer read and can be removed. Preview deployments inherit the shared credentials from the
 Convex project's preview defaults when they are created. The build then writes
 the branch-specific `AUTH_APP_ORIGIN` and the tier callback directly to that
 preview before pushing application code. This ordering matters: an origin from
@@ -346,9 +347,8 @@ gateway URL and route ID as runtime variables and the route key through
 release. The production gateway's static `NATIVE_GITHUB_ROUTES` entry must use
 the same route ID/key and exact native Convex/app callbacks.
 
-Set the preview defaults for `AUTH_PRIVATE_KEY`, `AUTH_JWKS`,
-`AUTH_GITHUB_CLIENT_ID`, and `AUTH_GITHUB_CLIENT_SECRET` before enabling the
-build. `AUTH_GITHUB_CALLBACK_URL` may also have the dev gateway value as a
+Set the preview defaults for `AUTH_GITHUB_CLIENT_ID` and
+`AUTH_GITHUB_CLIENT_SECRET` before enabling the build. `AUTH_GITHUB_CALLBACK_URL` may also have the dev gateway value as a
 default, but CI overwrites it on the exact target. Do not set
 `AUTH_APP_ORIGIN` as a shared preview default; every branch has a different
 Cloudflare alias.

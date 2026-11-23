@@ -1,8 +1,9 @@
 // @vitest-environment edge-runtime
+import { registerCore } from '@convex-dev/auth/test';
 import { convexTest } from 'convex-test';
 import { expect, test } from 'vitest';
 
-import { configureTestAuth, issuer } from '../testing/setup.testing';
+import { configureTestAuth, sessionFor } from '../testing/setup.testing';
 import { api } from './_generated/api';
 import schema from './schema';
 
@@ -11,6 +12,7 @@ const modules = import.meta.glob(['./**/*.ts', '!./**/*.test.ts', '!./**/*.testi
 test('only managers replace moderator grants; zero revokes access and invalid grants roll back', async () => {
 	await configureTestAuth();
 	const t = convexTest(schema, modules);
+	registerCore(t);
 	const fixture = await t.run(async (ctx) => {
 		const owner = await ctx.db.insert('users', { status: 'active', systemRole: 'user' });
 		const moderator = await ctx.db.insert('users', { status: 'active', systemRole: 'user' });
@@ -49,8 +51,8 @@ test('only managers replace moderator grants; zero revokes access and invalid gr
 		await ctx.db.insert('projectModeratorAssignments', { membershipId: memberId, projectId });
 		return { owner, moderator, ownerMember, memberId, projectId, foreignProject };
 	});
-	const owner = t.withIdentity({ issuer, subject: fixture.owner });
-	const moderator = t.withIdentity({ issuer, subject: fixture.moderator });
+	const owner = t.withIdentity(await sessionFor(t, fixture.owner));
+	const moderator = t.withIdentity(await sessionFor(t, fixture.moderator));
 	const args = { memberId: fixture.memberId };
 	await expect(
 		moderator.query(api.organizationMembers.getModeratorProjectAccess, args)

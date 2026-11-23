@@ -5,35 +5,31 @@ import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const packageJson = JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8'));
-const expectedSpec =
-	'github:get-convex/convex-auth#1d105a04d124785441ce655cef33b54103c7bc2e&path:packages/core';
+// Kino follows npm beta and stable releases of Convex Auth v2, pinned exactly
+// (docs/convex-auth-v2-maintenance.md, "Release policy").
+const expectedVersion = '2.0.0';
 
 assert.equal(
 	packageJson.dependencies?.['@convex-dev/auth'],
-	expectedSpec,
-	'@convex-dev/auth must stay pinned to the source revision proven by the migration harness'
+	expectedVersion,
+	'@convex-dev/auth must be pinned to the exact reviewed npm release'
 );
 assert.equal(
 	packageJson.dependencies?.convex,
-	'1.46.0',
-	'Convex Auth v2 requires the tested Convex 1.46.0 runtime'
+	'1.48.0',
+	'Convex Auth 2.0 requires Convex 1.48.0 or later; Kino pins the tested 1.48.0'
 );
 
 const authPackageJsonPath = import.meta.resolve('@convex-dev/auth/package.json');
 const authRoot = path.dirname(fileURLToPath(authPackageJsonPath));
 const installedPackage = JSON.parse(await readFile(fileURLToPath(authPackageJsonPath), 'utf8'));
 
-assert.equal(installedPackage.version, '2.0.0-alpha.2');
+assert.equal(installedPackage.version, expectedVersion);
 
 const requiredMarkers = [
-	['dist/components/core/schema.js', 'sessionGenerations'],
-	['dist/components/core/public.js', 'revokeUserSessions'],
-	['dist/components/core/_generated/component.d.ts', 'revokeUserSessions'],
-	['dist/components/core/public.js', 'currentGeneration'],
-	['dist/components/core/public.js', 'kino-convex-auth-refresh-recovery-v1'],
-	['dist/components/core/public.js', 'deriveRotatedRefreshToken'],
-	['dist/oauth/component/convex.config.js', 'CALLBACK_URL'],
-	['dist/oauth/shared/dbHelpers.js', 'process.env.CALLBACK_URL'],
+	['dist/components/github/convex.config.js', 'CALLBACK_URL'],
+	['dist/lib/oauth/dbHelpers.js', 'process.env.CALLBACK_URL'],
+	['package.json', '"./components/password/validation"'],
 ];
 
 for (const [relativePath, marker] of requiredMarkers) {
@@ -44,4 +40,4 @@ for (const [relativePath, marker] of requiredMarkers) {
 	);
 }
 
-console.log('Pinned Convex Auth v2 source and runtime patches verified.');
+console.log('Pinned Convex Auth v2 release and runtime patches verified.');
