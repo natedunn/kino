@@ -586,6 +586,25 @@ export default defineSchema({
 		.index('by_topicId', ['topicId'])
 		.index('by_feedbackId', ['feedbackId'])
 		.index('by_updateId', ['updateId']),
+	// What a signed-in viewer has read in a topic: when, and how many replies
+	// it had then. Written only when something changed since the last read.
+	forumReads: defineTable({
+		projectId: v.id('projects'),
+		topicId: v.id('forumTopics'),
+		profileId: v.id('profiles'),
+		lastReadAt: v.number(),
+		readCommentCount: v.number(),
+	})
+		.index('by_profileId_and_topicId', ['profileId', 'topicId'])
+		.index('by_topicId', ['topicId']),
+	// "Mark all as read": topics with no activity after `readAllAt` count as read.
+	forumReadMarkers: defineTable({
+		projectId: v.id('projects'),
+		profileId: v.id('profiles'),
+		readAllAt: v.number(),
+	})
+		.index('by_profileId_and_projectId', ['profileId', 'projectId'])
+		.index('by_projectId', ['projectId']),
 	updateDeletionJobs: defineTable({ updateId: v.id('updates') }).index('by_updateId', ['updateId']),
 	projectModeratorAssignments: defineTable({
 		membershipId: v.id('memberships'),

@@ -14,6 +14,7 @@ import { assertProjectWritable, requireProjectAccess, resolveProjectAccess } fro
 import { insertFeedback, recordEvent as recordFeedbackEvent } from './feedback';
 import { isFeedbackLive } from './feedbackLifecycle';
 import { categoryView, liveCategories, toCategoryView } from './forumCategories';
+import { forumReader, recordRead, topicUnread, unreadValidator } from './forumReads';
 import { getCurrentUser, requireCurrentUser } from './identity';
 import { emoteReaction, feedbackStatus, forumEventType } from './schema';
 import { profileValidator, summary } from './updates';
@@ -75,6 +76,8 @@ const listItemValidator = v.object({
 	pinned: v.boolean(),
 	locked: v.boolean(),
 	answered: v.boolean(),
+	// Null for signed-out viewers.
+	unread: unreadValidator,
 });
 const linkValidator = v.union(
 	v.object({
@@ -365,6 +368,8 @@ type ListItemSource = Doc<'forumTopics'>;
 
 async function toListItems(ctx: QueryCtx, items: Array<ListItemSource>) {
 	const categories = new Map<Id<'forumCategories'>, Doc<'forumCategories'> | null>();
+	// Every caller lists topics from a single project.
+	const reader = items.length ? await forumReader(ctx, items[0].projectId) : null;
 	return Promise.all(
 		items
 			.filter((item) => item.deletingAt === undefined)
@@ -375,9 +380,10 @@ async function toListItems(ctx: QueryCtx, items: Array<ListItemSource>) {
 						categories.set(item.categoryId, await ctx.db.get('forumCategories', item.categoryId));
 					category = categories.get(item.categoryId) ?? null;
 				}
-				const [author, first] = await Promise.all([
+				const [author, first, unread] = await Promise.all([
 					ctx.db.get('profiles', item.authorProfileId),
 					item.firstCommentId ? ctx.db.get('forumComments', item.firstCommentId) : null,
+					topicUnread(ctx, reader, item),
 				]);
 				const text = first ? plainText(first.content) : '';
 				return {
@@ -402,6 +408,7 @@ async function toListItems(ctx: QueryCtx, items: Array<ListItemSource>) {
 					pinned: item.pinnedAt !== undefined,
 					locked: item.lockedAt !== undefined,
 					answered: item.answerCommentId !== undefined,
+					unread,
 				};
 			})
 	);
@@ -749,6 +756,11 @@ export const create = mutation({
 			topicId: id,
 			profileId,
 		});
+		await recordRead(
+			ctx,
+			{ _id: id, projectId: args.projectId, commentCount: 0, lastActivityAt: now },
+			profileId
+		);
 		return { id, slug };
 	},
 });
@@ -789,11 +801,11 @@ export const addComment = mutation({
 			content: validateContent(args.content, VALIDATION_LIMITS.comment),
 			initial: false,
 		});
-		await ctx.db.patch('forumTopics', topic._id, {
-			commentCount: topic.commentCount + 1,
-			lastActivityAt: Date.now(),
-		});
+		const activity = { commentCount: topic.commentCount + 1, lastActivityAt: Date.now() };
+		await ctx.db.patch('forumTopics', topic._id, activity);
 		await follow(ctx, topic, profileId);
+		// Repliers have read the thread up to their own reply.
+		await recordRead(ctx, { ...topic, ...activity }, profileId);
 		return id;
 	},
 });
@@ -1195,7 +1207,7 @@ export const remove = mutation({
 // Deletes one bounded batch of a topic's children, then the topic.
 // Returns true while more work remains.
 export async function deleteTopicBatch(ctx: MutationCtx, id: Id<'forumTopics'>) {
-	const [comments, emotes, watchers, links, forumEvents] = await Promise.all([
+	const [comments, emotes, watchers, links, forumEvents, reads] = await Promise.all([
 		ctx.db
 			.query('forumComments')
 			.withIndex('by_topicId_and_initial', (q) => q.eq('topicId', id))
@@ -1216,14 +1228,19 @@ export async function deleteTopicBatch(ctx: MutationCtx, id: Id<'forumTopics'>) 
 			.query('forumEvents')
 			.withIndex('by_topicId', (q) => q.eq('topicId', id))
 			.take(DELETE_BATCH_SIZE),
+		ctx.db
+			.query('forumReads')
+			.withIndex('by_topicId', (q) => q.eq('topicId', id))
+			.take(DELETE_BATCH_SIZE),
 	]);
 	for (const row of comments) await ctx.db.delete('forumComments', row._id);
 	for (const row of emotes) await ctx.db.delete('forumCommentEmotes', row._id);
 	for (const row of watchers) await ctx.db.delete('forumWatchers', row._id);
 	for (const row of links) await ctx.db.delete('forumLinks', row._id);
 	for (const row of forumEvents) await ctx.db.delete('forumEvents', row._id);
+	for (const row of reads) await ctx.db.delete('forumReads', row._id);
 	if (
-		[comments, emotes, watchers, links, forumEvents].some(
+		[comments, emotes, watchers, links, forumEvents, reads].some(
 			(rows) => rows.length === DELETE_BATCH_SIZE
 		)
 	)
