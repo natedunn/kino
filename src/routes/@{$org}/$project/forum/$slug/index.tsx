@@ -40,6 +40,7 @@ import * as m from '@/paraglide/messages.js';
 
 import { DetailAnswer } from '../-components/detail-answer';
 import { DetailEventItem } from '../-components/detail-event-item';
+import { DetailPoll } from '../-components/detail-poll';
 import { DetailFollowButton, DetailSidebarSections } from '../-components/detail-sidebar';
 import { CommentCard, CommentEditorProvider, CommentForm } from '../../-components/comment-thread';
 import { api as nativeApi } from '../../../../../../convex/native/_generated/api';
@@ -64,6 +65,9 @@ export const Route = createFileRoute('/@{$org}/$project/forum/$slug/')({
 			context.queryClient.ensureQueryData(convexQuery(nativeApi.forum.viewerAccess, { projectId })),
 		]);
 		if (!detail) throw notFound();
+		await context.queryClient.ensureQueryData(
+			convexQuery(nativeApi.forumPolls.get, { topicId: detail.topic.id })
+		);
 		return { title: detail.topic.title };
 	},
 	head: ({ loaderData, params }) => ({
@@ -385,6 +389,11 @@ function TopicDetailRoute() {
 											{...commentHandlers}
 										/>
 									) : null}
+									<DetailPoll
+										onError={setError}
+										redirectTo={`/@${params.org}/${params.project}/forum/${params.slug}`}
+										topicId={topic.id}
+									/>
 									{detail.answer ? (
 										<DetailAnswer answer={detail.answer} onJump={jumpToAnswer} />
 									) : null}

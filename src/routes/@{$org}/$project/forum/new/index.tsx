@@ -1,5 +1,6 @@
 import type { MarkdownEditorRef } from '@/components/editor/markdown-editor';
 import type { FunctionReturnType } from 'convex/server';
+import type { PollDraft } from '../-components/new-poll-fields';
 import type { Id } from '../../../../../../convex/native/_generated/dataModel';
 
 import { useRef, useState } from 'react';
@@ -29,6 +30,7 @@ import { cn } from '@/lib/utils';
 import { FORM_LIMITS } from '@/lib/validation';
 import * as m from '@/paraglide/messages.js';
 
+import { NewPollFields, pollDraftError } from '../-components/new-poll-fields';
 import { api as nativeApi } from '../../../../../../convex/native/_generated/api';
 
 type NewTopicSearch = { category?: string };
@@ -134,6 +136,7 @@ function NewTopicForm({
 	const category = categories.find((item) => item.id === categoryId);
 	const [title, setTitle] = useState('');
 	const [body, setBody] = useState('');
+	const [poll, setPoll] = useState<PollDraft | null>(null);
 	const [error, setError] = useState<string | null>(null);
 	const [submitting, setSubmitting] = useState(false);
 
@@ -151,6 +154,8 @@ function NewTopicForm({
 		// Count visible text, not HTML markup; the server caps stored HTML length.
 		if (text.length > FORM_LIMITS.forumTopicBody)
 			return setError(m.forum_body_too_long({ count: FORM_LIMITS.forumTopicBody }));
+		const pollError = poll && pollDraftError(poll);
+		if (pollError) return setError(pollError);
 		setSubmitting(true);
 		try {
 			const result = await create({
@@ -158,6 +163,14 @@ function NewTopicForm({
 				categoryId: category.id,
 				title: trimmedTitle,
 				body: content,
+				...(poll
+					? {
+							poll: {
+								options: poll.options.map((option) => option.label.trim()),
+								multiple: poll.multiple,
+							},
+						}
+					: {}),
 			});
 			editorRef.current?.clearLocalDraft();
 			await navigate({
@@ -242,6 +255,7 @@ function NewTopicForm({
 							value={body}
 						/>
 					</div>
+					<NewPollFields disabled={submitting} draft={poll} onChange={setPoll} />
 					{error ? <InlineAlert variant='danger'>{error}</InlineAlert> : null}
 					<div className='flex justify-end gap-2'>
 						<Button asChild type='button' variant='ghost'>
