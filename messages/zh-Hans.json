@@ -1192,6 +1192,25 @@
 	"forum_list_pinned": "已置顶",
 	"forum_list_locked": "已锁定",
 	"forum_list_answered": "已解答",
+	"forum_unread_new": "新",
+	"forum_unread_new_label": "新主题",
+	"forum_unread_replies": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": { "countPlural=one": "{count} 条新回复", "countPlural=other": "{count} 条新回复" }
+		}
+	],
+	"forum_unread_replies_label": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": { "countPlural=one": "{count} 条新回复", "countPlural=other": "{count} 条新回复" }
+		}
+	],
+	"forum_unread_mark_all": "全部标为已读",
+	"forum_unread_divider": "新回复",
+	"forum_unread_jump": "跳到第一条未读",
 	"forum_list_empty_category": "{category} 中还没有主题。",
 	"forum_list_empty_mine": "你还没有在这里发起任何主题。",
 	"forum_list_empty_following": "你还没有关注这里的任何主题。",

@@ -1252,6 +1252,28 @@
 	"forum_list_pinned": "Fijados",
 	"forum_list_locked": "Bloqueado",
 	"forum_list_answered": "Respondido",
+	"forum_unread_new": "Nuevo",
+	"forum_unread_new_label": "Tema nuevo",
+	"forum_unread_replies": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": { "countPlural=one": "{count} nueva", "countPlural=other": "{count} nuevas" }
+		}
+	],
+	"forum_unread_replies_label": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} respuesta nueva",
+				"countPlural=other": "{count} respuestas nuevas"
+			}
+		}
+	],
+	"forum_unread_mark_all": "Marcar todo como leído",
+	"forum_unread_divider": "Respuestas nuevas",
+	"forum_unread_jump": "Ir a la primera sin leer",
 	"forum_list_empty_category": "Todavía no hay temas en {category}.",
 	"forum_list_empty_mine": "Todavía no has iniciado ningún tema aquí.",
 	"forum_list_empty_following": "Todavía no sigues ningún tema aquí.",
