@@ -1,9 +1,10 @@
 // @vitest-environment edge-runtime
+import { registerCore } from '@convex-dev/auth/test';
 import { register as registerRateLimiter } from '@convex-dev/rate-limiter/test';
 import { convexTest } from 'convex-test';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { configureTestAuth, issuer } from '../testing/setup.testing';
+import { configureTestAuth, sessionFor } from '../testing/setup.testing';
 import { api, internal } from './_generated/api';
 import schema from './schema';
 
@@ -23,6 +24,7 @@ afterEach(() => {
 
 async function fixture() {
 	const t = convexTest(schema, modules);
+	registerCore(t);
 	registerRateLimiter(t, 'authLimits');
 	const createUser = async (label: string) => {
 		const ids = await t.run(async (ctx) => {
@@ -36,7 +38,7 @@ async function fixture() {
 			await ctx.db.patch('users', userId, { profileId });
 			return { profileId, userId };
 		});
-		return { ...ids, caller: t.withIdentity({ issuer, subject: ids.userId }) };
+		return { ...ids, caller: t.withIdentity(await sessionFor(t, ids.userId)) };
 	};
 	const owner = await createUser('owner');
 	const visitor = await createUser('visitor');
@@ -259,7 +261,7 @@ describe('native project discussions', () => {
 			return { profileId: profile!._id, userId: profile!.userId };
 		});
 		const detail = await s.t
-			.withIdentity({ issuer, subject: viewer.userId })
+			.withIdentity(await sessionFor(s.t, viewer.userId))
 			.query(api.discussions.detail, { projectId: s.projectId, slug });
 		const heart = detail!.firstComment!.emotes.find((emote) => emote.content === 'heart');
 		expect(heart?.authorProfileIds).toContain(viewer.profileId);
