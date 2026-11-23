@@ -31,7 +31,17 @@ import { feedbackFormSchema, FORM_LIMITS, validationMessage } from '@/lib/valida
 
 import { api as nativeApi } from '../../../../../../convex/native/_generated/api';
 
+type NewFeedbackSearch = { title?: string };
+
 export const Route = createFileRoute('/@{$org}/$project/feedback/new/')({
+	// `title` prefills the form, e.g. from the forum's "post as feedback" hint.
+	validateSearch: (search: Record<string, unknown>): NewFeedbackSearch => {
+		const title =
+			typeof search.title === 'string'
+				? search.title.trim().slice(0, FORM_LIMITS.feedbackTitle)
+				: '';
+		return title ? { title } : {};
+	},
 	head: ({ params }) => ({
 		meta: [titleMeta(['New Feedback', projectTitle(params.org, params.project)])],
 	}),
@@ -50,6 +60,7 @@ function NewFeedbackRoute() {
 
 function NativeNewFeedbackRoute() {
 	const params = Route.useParams();
+	const search = Route.useSearch();
 	const session = useAuthSession();
 	const projectQuery = useQuery(
 		convexQuery(nativeApi.projects.getBySlugs, {
@@ -76,13 +87,21 @@ function NativeNewFeedbackRoute() {
 				description='The selected project cannot be loaded for feedback creation.'
 			/>
 		);
-	return <NativeNewFeedbackForm params={params} projectId={projectId} />;
+	return (
+		<NativeNewFeedbackForm
+			initialTitle={search.title ?? ''}
+			params={params}
+			projectId={projectId}
+		/>
+	);
 }
 
 function NativeNewFeedbackForm({
+	initialTitle,
 	params,
 	projectId,
 }: {
+	initialTitle: string;
 	params: { org: string; project: string };
 	projectId: Id<'projects'>;
 }) {
@@ -93,7 +112,7 @@ function NativeNewFeedbackForm({
 	const boardsQuery = useQuery(convexQuery(nativeApi.feedbackBoards.list, { projectId }));
 	const createFeedback = useConvexMutation(nativeApi.feedback.create);
 	const form = useForm({
-		defaultValues: { boardId: '', firstComment: '', title: '' },
+		defaultValues: { boardId: '', firstComment: '', title: initialTitle },
 		onSubmit: async ({ value }) => {
 			if (!projectId) return;
 			setFormError(null);

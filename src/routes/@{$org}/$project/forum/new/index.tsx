@@ -3,13 +3,19 @@ import type { FunctionReturnType } from 'convex/server';
 import type { PollDraft } from '../-components/new-poll-fields';
 import type { Id } from '../../../../../../convex/native/_generated/dataModel';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { convexQuery } from '@convex-dev/react-query';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, Link, notFound, useNavigate } from '@tanstack/react-router';
 import { useMutation } from 'convex/react';
 
 import { BoardIcon } from '@/components/board-icon';
+import {
+	getEditorDraftStorageKey,
+	readEditorDraft,
+	removeEditorDraft,
+	writeEditorDraft,
+} from '@/components/editor/local-draft';
 import { LazyMarkdownEditor } from '@/components/editor/markdown-editor.lazy';
 import { sanitizeEditorContent } from '@/components/editor/sanitize-content';
 import { InlineAlert } from '@/components/inline-alert';
@@ -31,6 +37,7 @@ import { FORM_LIMITS } from '@/lib/validation';
 import * as m from '@/paraglide/messages.js';
 
 import { NewPollFields, pollDraftError } from '../-components/new-poll-fields';
+import { NewTopicSuggestions } from '../-components/new-topic-suggestions';
 import { api as nativeApi } from '../../../../../../convex/native/_generated/api';
 
 type NewTopicSearch = { category?: string };
@@ -135,10 +142,27 @@ function NewTopicForm({
 	// A category can be removed (or locked to the team) while the form is open.
 	const category = categories.find((item) => item.id === categoryId);
 	const [title, setTitle] = useState('');
+	// The body editor keeps its own local draft; keep the title beside it so
+	// following the "post as feedback" link and coming back loses neither.
+	const titleDraftKey = `topic-new-title:${projectId}`;
 	const [body, setBody] = useState('');
 	const [poll, setPoll] = useState<PollDraft | null>(null);
 	const [error, setError] = useState<string | null>(null);
 	const [submitting, setSubmitting] = useState(false);
+
+	useEffect(() => {
+		const key = getEditorDraftStorageKey(titleDraftKey);
+		const draft = key ? readEditorDraft(key) : null;
+		if (draft) setTitle((current) => current || draft);
+	}, [titleDraftKey]);
+
+	function changeTitle(value: string) {
+		setTitle(value);
+		const key = getEditorDraftStorageKey(titleDraftKey);
+		if (!key) return;
+		if (value.trim()) writeEditorDraft(key, value);
+		else removeEditorDraft(key);
+	}
 
 	async function submit() {
 		if (submitting) return;
@@ -173,6 +197,8 @@ function NewTopicForm({
 					: {}),
 			});
 			editorRef.current?.clearLocalDraft();
+			const titleKey = getEditorDraftStorageKey(titleDraftKey);
+			if (titleKey) removeEditorDraft(titleKey);
 			await navigate({
 				params: { ...params, slug: result.slug },
 				to: '/@{$org}/$project/forum/$slug',
@@ -236,9 +262,15 @@ function NewTopicForm({
 							disabled={submitting}
 							id='topic-title'
 							maxLength={FORM_LIMITS.forumTopicTitle}
-							onChange={(event) => setTitle(event.target.value)}
+							onChange={(event) => changeTitle(event.target.value)}
 							placeholder={m.forum_title_placeholder()}
 							value={title}
+						/>
+						<NewTopicSuggestions
+							categoryFormat={category?.format}
+							params={params}
+							projectId={projectId}
+							title={title}
 						/>
 					</div>
 					<div className='flex flex-col gap-2'>

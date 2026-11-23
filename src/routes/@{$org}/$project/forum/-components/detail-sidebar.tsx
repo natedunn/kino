@@ -2,6 +2,8 @@ import type { FunctionReturnType } from 'convex/server';
 import type { Id } from '../../../../../../convex/native/_generated/dataModel';
 
 import { useState } from 'react';
+import { convexQuery } from '@convex-dev/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from '@tanstack/react-router';
 import { useMutation } from 'convex/react';
 import {
@@ -12,6 +14,7 @@ import {
 	Link as LinkIcon,
 	Lock,
 	LockOpen,
+	MessagesSquare,
 	Pin,
 	PinOff,
 	ShieldCheck,
@@ -42,6 +45,7 @@ import * as m from '@/paraglide/messages.js';
 import { api as nativeApi } from '../../../../../../convex/native/_generated/api';
 import { DetailConvertDialog } from './detail-convert-dialog';
 import { DetailLinks } from './detail-links';
+import { SimilarTopicList } from './similar-topics';
 
 const ROUTE = '/@{$org}/$project/forum/$slug/' as const;
 const SIDEBAR_STORAGE_KEY = 'topic-detail-sidebar-state';
@@ -49,6 +53,7 @@ const DEFAULT_SIDEBAR_STATE = {
 	details: true,
 	participants: true,
 	related: true,
+	similar: true,
 	moderation: true,
 };
 
@@ -144,6 +149,9 @@ export function DetailSidebarSections({
 	);
 	const [convertOpen, setConvertOpen] = useState(false);
 	const topic = detail.topic;
+	const similar = useQuery(
+		convexQuery(nativeApi.forumSimilar.similarTopics, { topicId: topic.id })
+	).data;
 	// Authors can only move into categories they can post in; keep the current
 	// one listed so the Select always shows it.
 	const categoryOptions = categories.filter(
@@ -302,6 +310,16 @@ export function DetailSidebarSections({
 					title={m.forum_detail_related()}
 				>
 					<DetailLinks canManage={detail.canModerate} topicId={topic.id} links={detail.links} />
+				</SidebarSection>
+			) : null}
+			{similar?.length ? (
+				<SidebarSection
+					icon={<MessagesSquare className='size-3.5' />}
+					onOpenChange={(open) => setSidebarSection('similar', open)}
+					open={sidebarState.similar}
+					title={m.forum_similar_topics()}
+				>
+					<SimilarTopicList items={similar} params={{ org: params.org, project: params.project }} />
 				</SidebarSection>
 			) : null}
 			{detail.canModerate || detail.canDelete ? (

@@ -1831,6 +1831,48 @@ export declare const api: {
       null | { lastReadAt: number | null; unread: boolean; upToDate: boolean }
     >;
   };
+  forumSimilar: {
+    similarTopics: FunctionReference<
+      "query",
+      "public",
+      { topicId: Id<"forumTopics"> },
+      Array<{
+        category: null | {
+          format: "open" | "qa";
+          icon: string | null;
+          name: string;
+        };
+        commentCount: number;
+        id: Id<"forumTopics">;
+        slug: string;
+        title: string;
+      }>
+    >;
+    suggestions: FunctionReference<
+      "query",
+      "public",
+      { projectId: Id<"projects">; title: string },
+      {
+        feedback: Array<{
+          id: Id<"feedback">;
+          slug: string;
+          status: "open" | "in-progress" | "closed" | "completed" | "paused";
+          title: string;
+        }>;
+        topics: Array<{
+          category: null | {
+            format: "open" | "qa";
+            icon: string | null;
+            name: string;
+          };
+          commentCount: number;
+          id: Id<"forumTopics">;
+          slug: string;
+          title: string;
+        }>;
+      }
+    >;
+  };
   github: {
     completeSignInGithub: FunctionReference<
       "mutation",
