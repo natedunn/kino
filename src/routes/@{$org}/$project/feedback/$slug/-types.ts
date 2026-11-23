@@ -30,7 +30,7 @@ export type FeedbackEventData = {
 		| 'status_changed'
 		| 'title_changed'
 		| 'unassigned'
-		| 'imported_from_discussion'
+		| 'imported_from_forum'
 		| string;
 	id: string;
 	metadata?: {
@@ -38,8 +38,8 @@ export type FeedbackEventData = {
 		oldValue?: string | null;
 	} | null;
 	targetProfile?: ProfileSummary | null;
-	// Source discussion of an `imported_from_discussion` event, while it exists.
-	discussion?: { slug: string; title: string } | null;
+	// Source topic of an `imported_from_forum` event, while it exists.
+	topic?: { slug: string; title: string } | null;
 };
 
 export type TimelineItem =

@@ -122,32 +122,32 @@ async function updateCommentContext(ctx: QueryCtx, comment: Doc<'updateComments'
 	};
 }
 
-async function discussionCommentContext(ctx: QueryCtx, comment: Doc<'discussionComments'>) {
-	const discussion = await ctx.db.get('discussions', comment.discussionId);
-	if (!discussion || discussion.deletingAt !== undefined) {
-		return { contextAccess: 'missing' as const, discussionId: comment.discussionId };
+async function topicCommentContext(ctx: QueryCtx, comment: Doc<'forumComments'>) {
+	const topic = await ctx.db.get('forumTopics', comment.topicId);
+	if (!topic || topic.deletingAt !== undefined) {
+		return { contextAccess: 'missing' as const, topicId: comment.topicId };
 	}
 
-	const access = await resolveProjectAccess(ctx, discussion.projectId);
+	const access = await resolveProjectAccess(ctx, topic.projectId);
 	const organization =
 		access.project && (await ctx.db.get('organizations', access.project.organizationId));
 	if (!access.project || !organization) {
 		return {
 			contextAccess: 'inaccessible' as const,
-			discussionId: discussion._id,
-			projectId: discussion.projectId,
+			topicId: topic._id,
+			projectId: topic.projectId,
 		};
 	}
 	return {
 		contextAccess: 'visible' as const,
-		discussion: { id: discussion._id, slug: discussion.slug, title: discussion.title },
+		topic: { id: topic._id, slug: topic.slug, title: topic.title },
 		organization: await visibleOrganizationSummary(ctx, organization._id),
 		project: projectSummary(access.project, organization),
 	};
 }
 
 export async function buildCommentsSection(ctx: QueryCtx, profile: Doc<'profiles'>) {
-	const [feedbackComments, updateComments, discussionComments] = await Promise.all([
+	const [feedbackComments, updateComments, forumComments] = await Promise.all([
 		ctx.db
 			.query('feedbackComments')
 			.withIndex('by_authorProfileId', (q) => q.eq('authorProfileId', profile._id))
@@ -159,7 +159,7 @@ export async function buildCommentsSection(ctx: QueryCtx, profile: Doc<'profiles
 			.order('asc')
 			.take(MAX_COMMENTS_PER_SOURCE + 1),
 		ctx.db
-			.query('discussionComments')
+			.query('forumComments')
 			.withIndex('by_authorProfileId', (q) => q.eq('authorProfileId', profile._id))
 			.order('asc')
 			.take(MAX_COMMENTS_PER_SOURCE + 1),
@@ -168,7 +168,7 @@ export async function buildCommentsSection(ctx: QueryCtx, profile: Doc<'profiles
 	if (
 		feedbackComments.length > MAX_COMMENTS_PER_SOURCE ||
 		updateComments.length > MAX_COMMENTS_PER_SOURCE ||
-		discussionComments.length > MAX_COMMENTS_PER_SOURCE
+		forumComments.length > MAX_COMMENTS_PER_SOURCE
 	) {
 		throw new ConvexError({
 			code: 'BAD_REQUEST',
@@ -182,8 +182,8 @@ export async function buildCommentsSection(ctx: QueryCtx, profile: Doc<'profiles
 		counts: {
 			feedbackComments: feedbackComments.length,
 			updateComments: updateComments.length,
-			discussionComments: discussionComments.length,
-			total: feedbackComments.length + updateComments.length + discussionComments.length,
+			forumComments: forumComments.length,
+			total: feedbackComments.length + updateComments.length + forumComments.length,
 		},
 		feedbackComments: await Promise.all(
 			feedbackComments.map(async (comment) => ({
@@ -209,16 +209,16 @@ export async function buildCommentsSection(ctx: QueryCtx, profile: Doc<'profiles
 				context: await updateCommentContext(ctx, comment),
 			}))
 		),
-		discussionComments: await Promise.all(
-			discussionComments.map(async (comment) => ({
+		forumComments: await Promise.all(
+			forumComments.map(async (comment) => ({
 				id: comment._id,
 				content: comment.content,
 				createdAt: toExportDate(comment._creationTime),
 				updatedAt: toExportDate(comment.updatedAt),
-				discussionId: comment.discussionId,
+				topicId: comment.topicId,
 				initial: comment.initial,
-				source: 'discussion' as const,
-				context: await discussionCommentContext(ctx, comment),
+				source: 'forum' as const,
+				context: await topicCommentContext(ctx, comment),
 			}))
 		),
 	};

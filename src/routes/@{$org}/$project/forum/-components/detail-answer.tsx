@@ -1,4 +1,4 @@
-import type { DiscussionDetail } from './detail-sidebar';
+import type { TopicDetail } from './detail-sidebar';
 
 import { Link } from '@tanstack/react-router';
 import { ArrowDown, CircleCheck } from 'lucide-react';
@@ -16,7 +16,7 @@ export function DetailAnswer({
 	answer,
 	onJump,
 }: {
-	answer: NonNullable<DiscussionDetail['answer']>;
+	answer: NonNullable<TopicDetail['answer']>;
 	onJump: () => void;
 }) {
 	const username = answer.author?.username;
@@ -27,7 +27,7 @@ export function DetailAnswer({
 				<div className='flex min-w-0 items-center gap-2 text-sm'>
 					<span className='inline-flex items-center gap-1 rounded-full bg-green-500/15 px-2 py-0.5 text-xs font-medium text-green-700 dark:text-green-400'>
 						<CircleCheck className='size-3' />
-						{m.discussions_detail_answer()}
+						{m.forum_detail_answer()}
 					</span>
 					<Avatar className='size-5' fallbackName={username ?? m.feedback_unknown_user()}>
 						<AvatarImage
@@ -49,7 +49,7 @@ export function DetailAnswer({
 				</div>
 				<Button onClick={onJump} size='sm' variant='ghost'>
 					<ArrowDown className='size-3.5' />
-					{m.discussions_detail_jump_to_answer()}
+					{m.forum_detail_jump_to_answer()}
 				</Button>
 			</div>
 			<div className='min-w-0 p-6'>

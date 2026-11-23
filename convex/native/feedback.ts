@@ -66,7 +66,7 @@ const timelineItemValidator = v.union(
 				v.literal('answer_unmarked'),
 				v.literal('assigned'),
 				v.literal('unassigned'),
-				v.literal('imported_from_discussion')
+				v.literal('imported_from_forum')
 			),
 			metadata: v.union(
 				v.null(),
@@ -74,11 +74,11 @@ const timelineItemValidator = v.union(
 					oldValue: v.optional(v.string()),
 					newValue: v.optional(v.string()),
 					targetProfileId: v.optional(v.id('profiles')),
-					discussionId: v.optional(v.id('discussions')),
+					topicId: v.optional(v.id('forumTopics')),
 				})
 			),
-			// The source discussion of an import, while it still exists.
-			discussion: v.union(v.null(), v.object({ slug: v.string(), title: v.string() })),
+			// The source topic of an import, while it still exists.
+			topic: v.union(v.null(), v.object({ slug: v.string(), title: v.string() })),
 		}),
 	})
 );
@@ -179,7 +179,7 @@ export async function recordEvent(
 			oldValue?: string;
 			newValue?: string;
 			targetProfileId?: Id<'profiles'>;
-			discussionId?: Id<'discussions'>;
+			topicId?: Id<'forumTopics'>;
 		};
 	}
 ) {
@@ -209,8 +209,8 @@ async function enrichTimelineEntry(
 	if (entry.kind === 'event' && entry.eventId) {
 		const event = await ctx.db.get('feedbackEvents', entry.eventId);
 		if (!event) return null;
-		const discussion = event.metadata?.discussionId
-			? await ctx.db.get('discussions', event.metadata.discussionId)
+		const topic = event.metadata?.topicId
+			? await ctx.db.get('forumTopics', event.metadata.topicId)
 			: null;
 		return {
 			type: 'event' as const,
@@ -220,10 +220,8 @@ async function enrichTimelineEntry(
 				actor: profileSummary(await ctx.db.get('profiles', event.actorProfileId)),
 				eventType: event.eventType,
 				metadata: event.metadata ?? null,
-				discussion:
-					discussion && discussion.deletingAt === undefined
-						? { slug: discussion.slug, title: discussion.title }
-						: null,
+				topic:
+					topic && topic.deletingAt === undefined ? { slug: topic.slug, title: topic.title } : null,
 			},
 		};
 	}

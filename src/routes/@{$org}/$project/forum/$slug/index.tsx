@@ -1,5 +1,5 @@
 import type { EmoteContent } from '@/components/emote';
-import type { DiscussionDetail } from '../-components/detail-sidebar';
+import type { TopicDetail } from '../-components/detail-sidebar';
 import type { ThreadComment } from '../../-components/comment-thread';
 import type { Id } from '../../../../../../convex/native/_generated/dataModel';
 
@@ -46,7 +46,7 @@ import { api as nativeApi } from '../../../../../../convex/native/_generated/api
 
 const REPLIES_PAGE_SIZE = 30;
 
-export const Route = createFileRoute('/@{$org}/$project/discussions/$slug/')({
+export const Route = createFileRoute('/@{$org}/$project/forum/$slug/')({
 	loader: async ({ context, params }) => {
 		const projectData = await context.queryClient.ensureQueryData(
 			convexQuery(nativeApi.projects.getBySlugs, {
@@ -56,17 +56,15 @@ export const Route = createFileRoute('/@{$org}/$project/discussions/$slug/')({
 		);
 		if (!projectData?.project) throw notFound();
 		const projectId = projectData.project.id;
-		// `detail` is null when the discussion is missing or Discussions is off.
+		// `detail` is null when the topic is missing or the forum is off.
 		const [detail] = await Promise.all([
 			context.queryClient.ensureQueryData(
-				convexQuery(nativeApi.discussions.detail, { projectId, slug: params.slug })
+				convexQuery(nativeApi.forum.detail, { projectId, slug: params.slug })
 			),
-			context.queryClient.ensureQueryData(
-				convexQuery(nativeApi.discussions.viewerAccess, { projectId })
-			),
+			context.queryClient.ensureQueryData(convexQuery(nativeApi.forum.viewerAccess, { projectId })),
 		]);
 		if (!detail) throw notFound();
-		return { title: detail.discussion.title };
+		return { title: detail.topic.title };
 	},
 	head: ({ loaderData, params }) => ({
 		meta: [
@@ -76,12 +74,12 @@ export const Route = createFileRoute('/@{$org}/$project/discussions/$slug/')({
 			]),
 		],
 	}),
-	component: DiscussionDetailRoute,
+	component: TopicDetailRoute,
 });
 
-type DiscussionComment = NonNullable<DiscussionDetail['firstComment']>;
+type TopicComment = NonNullable<TopicDetail['firstComment']>;
 
-function toThreadComment(comment: DiscussionComment): ThreadComment {
+function toThreadComment(comment: TopicComment): ThreadComment {
 	return {
 		id: comment.id,
 		author: comment.author,
@@ -99,7 +97,7 @@ function toThreadComment(comment: DiscussionComment): ThreadComment {
 	};
 }
 
-function DiscussionDetailRoute() {
+function TopicDetailRoute() {
 	const params = Route.useParams();
 	const router = useRouter();
 	const session = useAuthSession();
@@ -112,32 +110,32 @@ function DiscussionDetailRoute() {
 	if (!projectData?.project) throw notFound();
 	const projectId = projectData.project.id;
 	const { data: detail } = useSuspenseQuery(
-		convexQuery(nativeApi.discussions.detail, { projectId, slug: params.slug })
+		convexQuery(nativeApi.forum.detail, { projectId, slug: params.slug })
 	);
 	const { data: access } = useSuspenseQuery(
-		convexQuery(nativeApi.discussions.viewerAccess, { projectId })
+		convexQuery(nativeApi.forum.viewerAccess, { projectId })
 	);
 	if (!detail) throw notFound();
-	const discussion = detail.discussion;
-	const answerId = discussion.answerCommentId;
+	const topic = detail.topic;
+	const answerId = topic.answerCommentId;
 
 	const replies = usePaginatedQuery(
-		nativeApi.discussions.replies,
-		{ discussionId: discussion.id },
+		nativeApi.forum.replies,
+		{ topicId: topic.id },
 		{ initialNumItems: REPLIES_PAGE_SIZE }
 	);
 	const mutations = {
-		addComment: useMutation(nativeApi.discussions.addComment),
-		updateComment: useMutation(nativeApi.discussions.updateComment),
-		removeComment: useMutation(nativeApi.discussions.removeComment),
-		toggleReaction: useMutation(nativeApi.discussions.toggleReaction),
-		updateTitle: useMutation(nativeApi.discussions.updateTitle),
-		setAnswer: useMutation(nativeApi.discussions.setAnswer),
+		addComment: useMutation(nativeApi.forum.addComment),
+		updateComment: useMutation(nativeApi.forum.updateComment),
+		removeComment: useMutation(nativeApi.forum.removeComment),
+		toggleReaction: useMutation(nativeApi.forum.toggleReaction),
+		updateTitle: useMutation(nativeApi.forum.updateTitle),
+		setAnswer: useMutation(nativeApi.forum.setAnswer),
 	};
 	const [busy, setBusy] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [editingTitle, setEditingTitle] = useState(false);
-	const [titleDraft, setTitleDraft] = useState(discussion.title);
+	const [titleDraft, setTitleDraft] = useState(topic.title);
 	const [detailsDrawerOpen, setDetailsDrawerOpen] = useState(false);
 	// Set when "Jump to reply" targets an answer that isn't loaded yet.
 	const [pendingJump, setPendingJump] = useState(false);
@@ -187,8 +185,8 @@ function DiscussionDetailRoute() {
 
 	async function saveTitle() {
 		await run(
-			() => mutations.updateTitle({ discussionId: discussion.id, title: titleDraft }),
-			m.discussions_title_save_failed()
+			() => mutations.updateTitle({ topicId: topic.id, title: titleDraft }),
+			m.forum_title_save_failed()
 		)
 			.then(() => {
 				setEditingTitle(false);
@@ -204,30 +202,30 @@ function DiscussionDetailRoute() {
 		isUpdating: busy,
 		onDelete: (commentId: string) =>
 			void run(() =>
-				mutations.removeComment({ commentId: commentId as Id<'discussionComments'> })
+				mutations.removeComment({ commentId: commentId as Id<'forumComments'> })
 			).catch(() => undefined),
 		onToggleEmote: detail.writable
 			? (commentId: string, content: EmoteContent) =>
 					void run(() =>
 						mutations.toggleReaction({
-							commentId: commentId as Id<'discussionComments'>,
+							commentId: commentId as Id<'forumComments'>,
 							content,
 						})
 					).catch(() => undefined)
 			: undefined,
 		onUpdate: (commentId: string, content: string) =>
-			mutations.updateComment({ commentId: commentId as Id<'discussionComments'>, content }),
+			mutations.updateComment({ commentId: commentId as Id<'forumComments'>, content }),
 	};
 	const authorBadge = (
 		<span className='inline-flex items-center gap-1 rounded-full bg-secondary px-2 py-0.5 text-xs font-medium'>
 			<Check className='size-3' />
-			{m.discussions_author_badge()}
+			{m.forum_author_badge()}
 		</span>
 	);
 	const answerBadge = (
 		<span className='inline-flex items-center gap-1 rounded-full bg-green-500/15 px-2 py-0.5 text-xs font-medium text-green-700 dark:text-green-400'>
 			<CircleCheck className='size-3' />
-			{m.discussions_detail_answer()}
+			{m.forum_detail_answer()}
 		</span>
 	);
 	const chipClassName =
@@ -248,12 +246,12 @@ function DiscussionDetailRoute() {
 						className='link-text inline-flex w-fit items-center gap-1.5 text-sm'
 						params={{ org: params.org, project: params.project }}
 						search={detail.category ? { category: detail.category.slug } : {}}
-						to='/@{$org}/$project/discussions'
+						to='/@{$org}/$project/forum'
 					>
 						<ArrowLeft className='size-3.5' />
-						{m.discussions_detail_back()}
+						{m.forum_detail_back()}
 					</Link>
-					{detail.category || discussion.pinned || discussion.locked ? (
+					{detail.category || topic.pinned || topic.locked ? (
 						<div className='flex flex-wrap items-center gap-2'>
 							{detail.category ? (
 								<span className={chipClassName}>
@@ -265,16 +263,16 @@ function DiscussionDetailRoute() {
 									{detail.category.name}
 								</span>
 							) : null}
-							{discussion.pinned ? (
+							{topic.pinned ? (
 								<span className={chipClassName}>
 									<Pin className='size-3' />
-									{m.discussions_detail_pinned()}
+									{m.forum_detail_pinned()}
 								</span>
 							) : null}
-							{discussion.locked ? (
+							{topic.locked ? (
 								<span className={`${chipClassName} text-muted-foreground`}>
 									<Lock className='size-3' />
-									{m.discussions_detail_locked()}
+									{m.forum_detail_locked()}
 								</span>
 							) : null}
 						</div>
@@ -288,10 +286,10 @@ function DiscussionDetailRoute() {
 							}}
 						>
 							<Input
-								aria-label={m.discussions_field_title()}
+								aria-label={m.forum_field_title()}
 								autoFocus
 								disabled={busy}
-								maxLength={FORM_LIMITS.discussionTitle}
+								maxLength={FORM_LIMITS.forumTopicTitle}
 								onChange={(event) => setTitleDraft(event.target.value)}
 								value={titleDraft}
 							/>
@@ -301,7 +299,7 @@ function DiscussionDetailRoute() {
 							<Button
 								disabled={busy}
 								onClick={() => {
-									setTitleDraft(discussion.title);
+									setTitleDraft(topic.title);
 									setEditingTitle(false);
 								}}
 								type='button'
@@ -312,13 +310,13 @@ function DiscussionDetailRoute() {
 						</form>
 					) : (
 						<div className='flex items-start justify-between gap-4'>
-							<h1 className='text-2xl font-bold break-words md:text-3xl'>{discussion.title}</h1>
+							<h1 className='text-2xl font-bold break-words md:text-3xl'>{topic.title}</h1>
 							{detail.canEditTitle ? (
 								<Button
-									aria-label={m.discussions_edit_title()}
+									aria-label={m.forum_edit_title()}
 									className='shrink-0'
 									onClick={() => {
-										setTitleDraft(discussion.title);
+										setTitleDraft(topic.title);
 										setEditingTitle(true);
 									}}
 									size='icon'
@@ -330,9 +328,9 @@ function DiscussionDetailRoute() {
 						</div>
 					)}
 					<p className='text-sm text-muted-foreground' suppressHydrationWarning>
-						{m.discussions_started_on({ time: formatRelativeDay(discussion.createdAt) })}
+						{m.forum_started_on({ time: formatRelativeDay(topic.createdAt) })}
 						{' · '}
-						{m.discussions_reply_count({ count: discussion.commentCount })}
+						{m.forum_reply_count({ count: topic.commentCount })}
 					</p>
 				</div>
 			</div>
@@ -354,13 +352,10 @@ function DiscussionDetailRoute() {
 									render={<Button className='ml-auto' size='lg' variant='outline' />}
 								>
 									<Info className='size-4' />
-									{m.discussions_detail_details()}
+									{m.forum_detail_details()}
 								</ResponsiveSideDrawerTrigger>
 								<ResponsiveSideDrawerContent>
-									<ResponsiveSideDrawerHeader
-										icon={<Info />}
-										title={m.discussions_detail_details()}
-									/>
+									<ResponsiveSideDrawerHeader icon={<Info />} title={m.forum_detail_details()} />
 									<ResponsiveSideDrawerBody className='flex flex-col gap-6'>
 										{sidebarSections}
 									</ResponsiveSideDrawerBody>
@@ -385,8 +380,8 @@ function DiscussionDetailRoute() {
 										<CommentCard
 											badges={authorBadge}
 											comment={toThreadComment(detail.firstComment)}
-											maxLength={FORM_LIMITS.discussionBody}
-											verb={m.discussions_started_verb()}
+											maxLength={FORM_LIMITS.forumTopicBody}
+											verb={m.forum_started_verb()}
 											{...commentHandlers}
 										/>
 									) : null}
@@ -396,7 +391,7 @@ function DiscussionDetailRoute() {
 									{replies.results.length ? (
 										<li className='relative z-10 flex items-center gap-1.5 bg-background py-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase'>
 											<MessageSquare className='size-3.5' />
-											{m.discussions_replies_heading()}
+											{m.forum_replies_heading()}
 										</li>
 									) : null}
 									{timeline.map((item, index) => {
@@ -435,22 +430,22 @@ function DiscussionDetailRoute() {
 																void run(
 																	() =>
 																		mutations.setAnswer({
-																			discussionId: discussion.id,
+																			topicId: topic.id,
 																			commentId: isAnswer ? null : reply.id,
 																		}),
-																	m.discussions_detail_answer_failed()
+																	m.forum_detail_answer_failed()
 																).catch(() => undefined)
 															}
 														>
 															<CircleCheck className='size-3.5' />
 															{isAnswer
-																? m.discussions_detail_unmark_answer()
-																: m.discussions_detail_mark_answer()}
+																? m.forum_detail_unmark_answer()
+																: m.forum_detail_mark_answer()}
 														</DropdownMenuItem>
 													) : undefined
 												}
 												key={reply.id}
-												verb={m.discussions_replied_verb()}
+												verb={m.forum_replied_verb()}
 												{...commentHandlers}
 											/>
 										);
@@ -463,18 +458,18 @@ function DiscussionDetailRoute() {
 												variant='outline'
 											>
 												{replies.status === 'LoadingMore'
-													? m.discussions_loading_replies()
-													: m.discussions_show_more_replies()}
+													? m.forum_loading_replies()
+													: m.forum_show_more_replies()}
 											</Button>
 										</li>
 									) : null}
 								</ul>
-								{discussion.locked && detail.writable ? (
+								{topic.locked && detail.writable ? (
 									<InlineAlert className='flex items-center gap-2'>
 										<Lock className='size-4 shrink-0' />
 										{detail.canReply
-											? m.discussions_detail_locked_notice_team()
-											: m.discussions_detail_locked_notice()}
+											? m.forum_detail_locked_notice_team()
+											: m.forum_detail_locked_notice()}
 									</InlineAlert>
 								) : null}
 								{detail.canReply ? (
@@ -485,15 +480,15 @@ function DiscussionDetailRoute() {
 											// CommentForm reports its own failure and keeps the draft.
 											setBusy(true);
 											try {
-												await mutations.addComment({ discussionId: discussion.id, content });
+												await mutations.addComment({ topicId: topic.id, content });
 											} finally {
 												setBusy(false);
 											}
 										}}
-										placeholder={m.discussions_reply_placeholder()}
-										redirectTo={`/@${params.org}/${params.project}/discussions/${params.slug}`}
+										placeholder={m.forum_reply_placeholder()}
+										redirectTo={`/@${params.org}/${params.project}/topics/${params.slug}`}
 										signedOut='rich'
-										submitLabel={m.discussions_reply_submit()}
+										submitLabel={m.forum_reply_submit()}
 									/>
 								) : null}
 							</CommentEditorProvider>

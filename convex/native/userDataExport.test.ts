@@ -175,27 +175,27 @@ async function addUpdateComment(
 	});
 }
 
-async function addDiscussionComment(
+async function addTopicComment(
 	t: Backend,
 	args: { authorProfileId: Id<'profiles'>; projectId: Id<'projects'>; content: string }
 ) {
 	return t.run(async (ctx) => {
-		const discussionId = await ctx.db.insert('discussions', {
+		const topicId = await ctx.db.insert('forumTopics', {
 			projectId: args.projectId,
 			authorProfileId: args.authorProfileId,
-			slug: `discussion-${Math.random().toString(36).slice(2)}`,
-			title: 'Discussion title',
-			searchContent: 'Discussion title',
+			slug: `topic-${Math.random().toString(36).slice(2)}`,
+			title: 'Topic title',
+			searchContent: 'Topic title',
 			commentCount: 0,
 			lastActivityAt: Date.now(),
 		});
-		await ctx.db.insert('discussionComments', {
-			discussionId,
+		await ctx.db.insert('forumComments', {
+			topicId,
 			authorProfileId: args.authorProfileId,
 			content: args.content,
 			initial: true,
 		});
-		return discussionId;
+		return topicId;
 	});
 }
 
@@ -242,7 +242,7 @@ describe('native user data export', () => {
 			projectId: project.projectId,
 			content: 'Looks good',
 		});
-		await addDiscussionComment(t, {
+		await addTopicComment(t, {
 			authorProfileId: owner.profileId,
 			projectId: project.projectId,
 			content: 'Has anyone tried this?',
@@ -253,15 +253,15 @@ describe('native user data export', () => {
 		expect(comments.counts).toEqual({
 			feedbackComments: 1,
 			updateComments: 1,
-			discussionComments: 1,
+			forumComments: 1,
 			total: 3,
 		});
-		expect(comments.discussionComments[0]).toMatchObject({
+		expect(comments.forumComments[0]).toMatchObject({
 			content: 'Has anyone tried this?',
 			initial: true,
 			context: {
 				contextAccess: 'visible',
-				discussion: { title: 'Discussion title' },
+				topic: { title: 'Topic title' },
 				project: { slug: 'roadmap' },
 			},
 		});

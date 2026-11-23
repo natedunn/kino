@@ -1,5 +1,5 @@
 import type { MouseEvent } from 'react';
-import type { DiscussionsFilter, DiscussionsSort } from './-components/list-search';
+import type { ForumFilter, ForumSort } from './-components/list-search';
 
 import { useEffect, useRef, useState } from 'react';
 import { convexQuery } from '@convex-dev/react-query';
@@ -31,18 +31,18 @@ import * as m from '@/paraglide/messages.js';
 
 import { api as nativeApi } from '../../../../../convex/native/_generated/api';
 import { CategoriesNav } from './-components/categories-nav';
-import { DiscussionListSkeleton, DiscussionRow, PinnedDiscussions } from './-components/list-items';
-import { validateDiscussionsSearch } from './-components/list-search';
+import { PinnedTopics, TopicListSkeleton, TopicRow } from './-components/list-items';
+import { validateForumSearch } from './-components/list-search';
 
 const PAGE_SIZE = 25;
 const SORT_OPTIONS = [
-	{ label: m.discussions_list_sort_activity, value: 'activity' },
-	{ label: m.discussions_list_sort_newest, value: 'newest' },
-	{ label: m.discussions_list_sort_replies, value: 'replies' },
+	{ label: m.forum_list_sort_activity, value: 'activity' },
+	{ label: m.forum_list_sort_newest, value: 'newest' },
+	{ label: m.forum_list_sort_replies, value: 'replies' },
 ] as const;
 
-export const Route = createFileRoute('/@{$org}/$project/discussions/')({
-	validateSearch: validateDiscussionsSearch,
+export const Route = createFileRoute('/@{$org}/$project/forum/')({
+	validateSearch: validateForumSearch,
 	loaderDeps: ({ search }) => ({ category: search.category }),
 	loader: async ({ context, deps, params }) => {
 		const projectData = await context.queryClient.ensureQueryData(
@@ -54,12 +54,12 @@ export const Route = createFileRoute('/@{$org}/$project/discussions/')({
 		if (!projectData?.project) throw notFound();
 		const projectId = projectData.project.id;
 		const access = await context.queryClient.ensureQueryData(
-			convexQuery(nativeApi.discussions.viewerAccess, { projectId })
+			convexQuery(nativeApi.forum.viewerAccess, { projectId })
 		);
-		// Discussions can be switched off per project; the whole section 404s then.
+		// The forum can be switched off per project; the whole section 404s then.
 		if (!access?.enabled) throw notFound();
 		const categoryId = access.categories.find((item) => item.slug === deps.category)?.id;
-		const pinned = convexQuery(nativeApi.discussions.pinned, {
+		const pinned = convexQuery(nativeApi.forum.pinned, {
 			projectId,
 			...(categoryId ? { categoryId } : {}),
 		});
@@ -70,12 +70,12 @@ export const Route = createFileRoute('/@{$org}/$project/discussions/')({
 		}
 	},
 	head: ({ params }) => ({
-		meta: [titleMeta([m.discussions_heading(), projectTitle(params.org, params.project)])],
+		meta: [titleMeta([m.forum_heading(), projectTitle(params.org, params.project)])],
 	}),
-	component: DiscussionsRoute,
+	component: ForumRoute,
 });
 
-function DiscussionsRoute() {
+function ForumRoute() {
 	const params = Route.useParams();
 	const searchParams = Route.useSearch();
 	const { search } = searchParams;
@@ -90,13 +90,13 @@ function DiscussionsRoute() {
 	if (!projectData?.project) throw notFound();
 	const projectId = projectData.project.id;
 	const { data: access } = useSuspenseQuery(
-		convexQuery(nativeApi.discussions.viewerAccess, { projectId })
+		convexQuery(nativeApi.forum.viewerAccess, { projectId })
 	);
 	if (!access?.enabled) throw notFound();
 
 	// Unknown slugs fall back to "All"; filters that can't apply are ignored.
 	const category = access.categories.find((item) => item.slug === searchParams.category);
-	const filter: DiscussionsFilter | undefined =
+	const filter: ForumFilter | undefined =
 		searchParams.filter === 'unanswered'
 			? category?.format === 'qa'
 				? 'unanswered'
@@ -105,11 +105,11 @@ function DiscussionsRoute() {
 				? searchParams.filter
 				: undefined;
 	// Search results are relevance-ordered, so sort only applies without one.
-	const sort: DiscussionsSort = searchParams.sort ?? 'activity';
+	const sort: ForumSort = searchParams.sort ?? 'activity';
 	const showCategory = !category;
 
 	const { results, status, loadMore } = usePaginatedQuery(
-		nativeApi.discussions.list,
+		nativeApi.forum.list,
 		{
 			projectId,
 			...(category ? { categoryId: category.id } : {}),
@@ -119,7 +119,7 @@ function DiscussionsRoute() {
 		{ initialNumItems: PAGE_SIZE }
 	);
 	const { data: pinned } = useQuery(
-		convexQuery(nativeApi.discussions.pinned, {
+		convexQuery(nativeApi.forum.pinned, {
 			projectId,
 			...(category ? { categoryId: category.id } : {}),
 		})
@@ -148,15 +148,15 @@ function DiscussionsRoute() {
 	const filters = [
 		...(access.signedIn
 			? [
-					{ icon: SquarePen, label: m.discussions_list_filter_mine(), value: 'mine' as const },
-					{ icon: Bell, label: m.discussions_list_filter_following(), value: 'following' as const },
+					{ icon: SquarePen, label: m.forum_list_filter_mine(), value: 'mine' as const },
+					{ icon: Bell, label: m.forum_list_filter_following(), value: 'following' as const },
 				]
 			: []),
 		...(category?.format === 'qa'
 			? [
 					{
 						icon: CircleQuestionMark,
-						label: m.discussions_list_filter_unanswered(),
+						label: m.forum_list_filter_unanswered(),
 						value: 'unanswered' as const,
 					},
 				]
@@ -168,10 +168,10 @@ function DiscussionsRoute() {
 			<Link
 				params={params}
 				search={category?.canPost ? { category: category.slug } : {}}
-				to='/@{$org}/$project/discussions/new'
+				to='/@{$org}/$project/forum/new'
 			>
 				<CirclePlusOutline size='16px' />
-				{m.discussions_list_start()}
+				{m.forum_list_start()}
 			</Link>
 		</Button>
 	) : null;
@@ -180,7 +180,7 @@ function DiscussionsRoute() {
 		<>
 			<div className='-mr-5 border-b pr-5 pb-6'>
 				<h2 className='mx-2 text-sm font-bold text-muted-foreground'>
-					{m.discussions_list_categories()}
+					{m.forum_list_categories()}
 				</h2>
 				<div className='mt-2'>
 					<CategoriesNav
@@ -193,9 +193,7 @@ function DiscussionsRoute() {
 			</div>
 			{filters.length ? (
 				<div className='mt-6 pb-6'>
-					<h2 className='mx-2 text-sm font-bold text-muted-foreground'>
-						{m.discussions_list_filters()}
-					</h2>
+					<h2 className='mx-2 text-sm font-bold text-muted-foreground'>{m.forum_list_filters()}</h2>
 					<SidebarNavGroup className='mt-2'>
 						{filters.map(({ icon: Icon, label, value }) => (
 							// Quick filters toggle: clicking the active one clears it.
@@ -203,7 +201,7 @@ function DiscussionsRoute() {
 								key={value}
 								params={params}
 								search={(prev) => ({ ...prev, filter: filter === value ? undefined : value })}
-								to='/@{$org}/$project/discussions'
+								to='/@{$org}/$project/forum'
 							>
 								<SidebarNavItem
 									active={filter === value}
@@ -239,7 +237,7 @@ function DiscussionsRoute() {
 							<div className='flex h-[81px] shrink-0 items-center justify-between gap-4 lg:pl-7'>
 								<div className='flex min-w-0 flex-col gap-0.5'>
 									<h1 className='truncate text-xl font-bold md:text-2xl'>
-										{category?.name ?? m.discussions_heading()}
+										{category?.name ?? m.forum_heading()}
 									</h1>
 									{category ? (
 										category.description ? (
@@ -252,12 +250,12 @@ function DiscussionsRoute() {
 										) : null
 									) : (
 										<p className='truncate text-sm text-muted-foreground'>
-											{m.discussions_description()}
+											{m.forum_description()}
 										</p>
 									)}
 								</div>
 								<Button
-									aria-label={m.discussions_list_browse()}
+									aria-label={m.forum_list_browse()}
 									className='lg:hidden'
 									onClick={() => setMobileSidebarOpen(true)}
 									size='icon'
@@ -273,24 +271,24 @@ function DiscussionsRoute() {
 								{category?.postingPolicy === 'team' && !category.canPost && access.writable ? (
 									<p className='-mb-2 flex items-center gap-2 text-sm text-muted-foreground'>
 										<Lock aria-hidden='true' className='size-3.5 shrink-0' />
-										{m.discussions_category_team_only_notice()}
+										{m.forum_category_team_only_notice()}
 									</p>
 								) : null}
 								<div className='flex items-center gap-2'>
 									<div className='relative min-w-0 flex-1'>
 										<Search className='pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground' />
 										<Input
-											aria-label={m.discussions_search_placeholder()}
+											aria-label={m.forum_search_placeholder()}
 											className='pr-10 pl-9'
-											maxLength={FORM_LIMITS.discussionSearch}
+											maxLength={FORM_LIMITS.forumSearch}
 											onChange={(event) => updateSearch(event.target.value)}
-											placeholder={m.discussions_search_placeholder()}
+											placeholder={m.forum_search_placeholder()}
 											type='search'
 											value={searchTerm}
 										/>
 										{searchTerm ? (
 											<Button
-												aria-label={m.discussions_clear_search()}
+												aria-label={m.forum_clear_search()}
 												className='absolute top-1/2 right-1 -translate-y-1/2'
 												onClick={() => updateSearch('')}
 												size='icon'
@@ -315,33 +313,33 @@ function DiscussionsRoute() {
 									)}
 								</div>
 								{showPinned ? (
-									<PinnedDiscussions items={pinned} params={params} showCategory={showCategory} />
+									<PinnedTopics items={pinned} params={params} showCategory={showCategory} />
 								) : null}
 								{status === 'LoadingFirstPage' ? (
-									<DiscussionListSkeleton />
+									<TopicListSkeleton />
 								) : results.length === 0 ? (
 									<div className='flex flex-col items-center gap-3 rounded-lg border border-dashed bg-muted/25 p-10 text-center text-muted-foreground'>
 										<p>
 											{search
-												? m.discussions_empty_search()
+												? m.forum_empty_search()
 												: filter === 'mine'
-													? m.discussions_list_empty_mine()
+													? m.forum_list_empty_mine()
 													: filter === 'following'
-														? m.discussions_list_empty_following()
+														? m.forum_list_empty_following()
 														: filter === 'unanswered'
-															? m.discussions_list_empty_unanswered()
+															? m.forum_list_empty_unanswered()
 															: category
-																? m.discussions_list_empty_category({ category: category.name })
-																: m.discussions_empty()}
+																? m.forum_list_empty_category({ category: category.name })
+																: m.forum_empty()}
 										</p>
 										{filter && !search ? (
 											<Button asChild size='sm' variant='outline'>
 												<Link
 													params={params}
 													search={(prev) => ({ ...prev, filter: undefined })}
-													to='/@{$org}/$project/discussions'
+													to='/@{$org}/$project/forum'
 												>
-													{m.discussions_list_clear_filter()}
+													{m.forum_list_clear_filter()}
 												</Link>
 											</Button>
 										) : null}
@@ -349,7 +347,7 @@ function DiscussionsRoute() {
 								) : (
 									<ul className='flex flex-col divide-y overflow-hidden rounded-lg border bg-card'>
 										{results.map((item) => (
-											<DiscussionRow
+											<TopicRow
 												item={item}
 												key={item.id}
 												params={params}
@@ -365,9 +363,7 @@ function DiscussionsRoute() {
 											onClick={() => loadMore(PAGE_SIZE)}
 											variant='outline'
 										>
-											{status === 'LoadingMore'
-												? m.discussions_loading()
-												: m.discussions_load_more()}
+											{status === 'LoadingMore' ? m.forum_loading() : m.forum_load_more()}
 										</Button>
 									</div>
 								) : null}
@@ -382,7 +378,7 @@ function DiscussionsRoute() {
 					dialogClassName='sm:max-w-md'
 					showCloseButton={false}
 				>
-					<ResponsiveDialogHeader icon={<PanelLeftOpen />} title={m.discussions_list_browse()} />
+					<ResponsiveDialogHeader icon={<PanelLeftOpen />} title={m.forum_list_browse()} />
 					{/* Any link inside closes the dialog once it navigates. */}
 					<ResponsiveDialogBody className='p-3' onClick={closeOnLinkClick(setMobileSidebarOpen)}>
 						{startButton ? <div className='mb-3 border-b pb-3'>{startButton}</div> : null}
@@ -404,8 +400,8 @@ function SortSelect({
 	onChange,
 	value,
 }: {
-	onChange: (value: DiscussionsSort) => void;
-	value: DiscussionsSort;
+	onChange: (value: ForumSort) => void;
+	value: ForumSort;
 }) {
 	const options = SORT_OPTIONS.map((option) => ({ ...option, label: option.label() }));
 	return (
@@ -416,7 +412,7 @@ function SortSelect({
 			}}
 			value={value}
 		>
-			<SelectTrigger aria-label={m.discussions_list_sort_label()} className='w-40 shrink-0'>
+			<SelectTrigger aria-label={m.forum_list_sort_label()} className='w-40 shrink-0'>
 				<SelectValue />
 			</SelectTrigger>
 			<SelectContent>

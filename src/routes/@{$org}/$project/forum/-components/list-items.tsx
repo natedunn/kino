@@ -13,18 +13,16 @@ import { cn } from '@/lib/utils';
 import { formatRelativeDay } from '@/lib/utils/format-timestamp';
 import * as m from '@/paraglide/messages.js';
 
-export type DiscussionListItem = FunctionReturnType<
-	typeof nativeApi.discussions.list
->['page'][number];
+export type TopicListItem = FunctionReturnType<typeof nativeApi.forum.list>['page'][number];
 
 type RouteParams = { org: string; project: string };
 
-export function DiscussionRow({
+export function TopicRow({
 	item,
 	params,
 	showCategory,
 }: {
-	item: DiscussionListItem;
+	item: TopicListItem;
 	params: RouteParams;
 	/** Category chips are only useful when the list spans every category. */
 	showCategory: boolean;
@@ -42,11 +40,11 @@ export function DiscussionRow({
 						className='link-text text-lg font-medium after:absolute after:inset-0'
 						params={{ ...params, slug: item.slug }}
 						preload='intent'
-						to='/@{$org}/$project/discussions/$slug'
+						to='/@{$org}/$project/forum/$slug'
 					>
 						{item.title}
 					</Link>
-					<DiscussionMarkers item={item} />
+					<TopicMarkers item={item} />
 				</div>
 				{item.excerpt ? (
 					<p className='line-clamp-2 text-sm text-muted-foreground'>{item.excerpt}</p>
@@ -63,13 +61,11 @@ export function DiscussionRow({
 					) : null}
 					{username ? (
 						<>
-							<span>{m.discussions_started_by({ username })}</span>
+							<span>{m.forum_started_by({ username })}</span>
 							<span aria-hidden='true'>·</span>
 						</>
 					) : null}
-					<span>
-						{m.discussions_last_activity({ time: formatRelativeDay(item.lastActivityAt) })}
-					</span>
+					<span>{m.forum_last_activity({ time: formatRelativeDay(item.lastActivityAt) })}</span>
 				</p>
 			</div>
 			<ReplyCount className='pt-1' count={item.commentCount} />
@@ -77,24 +73,24 @@ export function DiscussionRow({
 	);
 }
 
-/** Compact cards for the pinned discussions shown above the list. */
-export function PinnedDiscussions({
+/** Compact cards for the pinned topics shown above the list. */
+export function PinnedTopics({
 	items,
 	params,
 	showCategory,
 }: {
-	items: Array<DiscussionListItem>;
+	items: Array<TopicListItem>;
 	params: RouteParams;
 	showCategory: boolean;
 }) {
 	return (
-		<section aria-labelledby='pinned-discussions' className='flex flex-col gap-2'>
+		<section aria-labelledby='pinned-topics' className='flex flex-col gap-2'>
 			<h2
 				className='flex items-center gap-1.5 text-sm font-bold text-muted-foreground'
-				id='pinned-discussions'
+				id='pinned-topics'
 			>
 				<Pin aria-hidden='true' className='size-3.5' />
-				{m.discussions_list_pinned()}
+				{m.forum_list_pinned()}
 			</h2>
 			<ul className='grid gap-3 sm:grid-cols-2'>
 				{items.map((item) => (
@@ -106,7 +102,7 @@ export function PinnedDiscussions({
 							className='link-text line-clamp-2 font-medium after:absolute after:inset-0'
 							params={{ ...params, slug: item.slug }}
 							preload='intent'
-							to='/@{$org}/$project/discussions/$slug'
+							to='/@{$org}/$project/forum/$slug'
 						>
 							{item.title}
 						</Link>
@@ -124,16 +120,16 @@ export function PinnedDiscussions({
 	);
 }
 
-function DiscussionMarkers({ item }: { item: DiscussionListItem }) {
+function TopicMarkers({ item }: { item: TopicListItem }) {
 	return (
 		<>
 			{item.pinned ? (
-				<Marker label={m.discussions_list_pinned()}>
+				<Marker label={m.forum_list_pinned()}>
 					<Pin aria-hidden='true' className='size-3.5' />
 				</Marker>
 			) : null}
 			{item.locked ? (
-				<Marker label={m.discussions_list_locked()}>
+				<Marker label={m.forum_list_locked()}>
 					<Lock aria-hidden='true' className='size-3.5' />
 				</Marker>
 			) : null}
@@ -158,12 +154,12 @@ function AnsweredBadge() {
 			variant='outline'
 		>
 			<CircleCheck aria-hidden='true' />
-			{m.discussions_list_answered()}
+			{m.forum_list_answered()}
 		</Badge>
 	);
 }
 
-function CategoryChip({ category }: { category: NonNullable<DiscussionListItem['category']> }) {
+function CategoryChip({ category }: { category: NonNullable<TopicListItem['category']> }) {
 	return (
 		<span className='inline-flex min-w-0 items-center gap-1'>
 			<BoardIcon icon={category.icon} name={category.name} size='12px' />
@@ -178,13 +174,13 @@ function ReplyCount({ className, count }: { className?: string; count: number })
 			className={cn('flex shrink-0 items-start gap-1.5 text-sm text-muted-foreground', className)}
 		>
 			<MessageSquare aria-hidden='true' className='size-4' />
-			<span className='sr-only'>{m.discussions_reply_count({ count })}</span>
+			<span className='sr-only'>{m.forum_reply_count({ count })}</span>
 			<span aria-hidden='true'>{count}</span>
 		</div>
 	);
 }
 
-export function DiscussionListSkeleton() {
+export function TopicListSkeleton() {
 	return (
 		<div aria-hidden='true' className='flex flex-col divide-y rounded-lg border'>
 			{Array.from({ length: 4 }).map((_, index) => (

@@ -40,39 +40,39 @@ import * as m from '@/paraglide/messages.js';
 
 import { api } from '../../../../../../../convex/native/_generated/api';
 
-export type DiscussionCategory = NonNullable<
-	FunctionReturnType<typeof api.discussionCategories.list>
+export type ForumCategory = NonNullable<
+	FunctionReturnType<typeof api.forumCategories.list>
 >[number];
 
-type CategoryFormat = DiscussionCategory['format'];
-type CategoryPostingPolicy = DiscussionCategory['postingPolicy'];
+type CategoryFormat = ForumCategory['format'];
+type CategoryPostingPolicy = ForumCategory['postingPolicy'];
 
 // Matches the server's category slug rule (1-64 chars).
 const CATEGORY_SLUG_MAX = 64;
 
 const FORMAT_LABELS: Record<CategoryFormat, () => string> = {
-	open: m.settings_discussions_format_open,
-	qa: m.settings_discussions_format_qa,
+	open: m.settings_forum_format_open,
+	qa: m.settings_forum_format_qa,
 };
 
 const FORMAT_HELP: Record<CategoryFormat, () => string> = {
-	open: m.settings_discussions_format_open_help,
-	qa: m.settings_discussions_format_qa_help,
+	open: m.settings_forum_format_open_help,
+	qa: m.settings_forum_format_qa_help,
 };
 
 const POSTING_LABELS: Record<CategoryPostingPolicy, () => string> = {
-	everyone: m.settings_discussions_posting_everyone,
-	team: m.settings_discussions_posting_team,
+	everyone: m.settings_forum_posting_everyone,
+	team: m.settings_forum_posting_team,
 };
 
 const POSTING_HELP: Record<CategoryPostingPolicy, () => string> = {
-	everyone: m.settings_discussions_posting_everyone_help,
-	team: m.settings_discussions_posting_team_help,
+	everyone: m.settings_forum_posting_everyone_help,
+	team: m.settings_forum_posting_team_help,
 };
 
 type CategoryDialogProps = {
 	// `null` creates a new category; otherwise edits the given one.
-	category: DiscussionCategory | null;
+	category: ForumCategory | null;
 	onOpenChange: (open: boolean) => void;
 	open: boolean;
 	projectId: Id<'projects'>;
@@ -90,14 +90,10 @@ export function CategoryDialog({ category, onOpenChange, open, projectId }: Cate
 					icon={category ? <Pen /> : <FolderPlus />}
 					subtitle={
 						category
-							? m.settings_discussions_category_edit_subtitle()
-							: m.settings_discussions_category_new_subtitle()
+							? m.settings_forum_category_edit_subtitle()
+							: m.settings_forum_category_new_subtitle()
 					}
-					title={
-						category
-							? m.settings_discussions_category_edit()
-							: m.settings_discussions_category_new()
-					}
+					title={category ? m.settings_forum_category_edit() : m.settings_forum_category_new()}
 				/>
 				{/* Keyed so reopening for another category starts from fresh values. */}
 				<CategoryForm
@@ -116,12 +112,12 @@ function CategoryForm({
 	onDone,
 	projectId,
 }: {
-	category: DiscussionCategory | null;
+	category: ForumCategory | null;
 	onDone: () => void;
 	projectId: Id<'projects'>;
 }) {
-	const createCategory = useMutation(api.discussionCategories.create);
-	const updateCategory = useMutation(api.discussionCategories.update);
+	const createCategory = useMutation(api.forumCategories.create);
+	const updateCategory = useMutation(api.forumCategories.update);
 	const [formError, setFormError] = useState<string | null>(null);
 	// New categories derive their slug from the name until the slug is edited.
 	const [slugEdited, setSlugEdited] = useState(category !== null);
@@ -140,11 +136,11 @@ function CategoryForm({
 			const name = value.name.trim();
 			const slug = value.slug.trim();
 			if (!name) {
-				setFormError(m.settings_discussions_name_required());
+				setFormError(m.settings_forum_name_required());
 				return;
 			}
 			if (!SLUG_PATTERN.test(slug)) {
-				setFormError(m.settings_discussions_slug_invalid());
+				setFormError(m.settings_forum_slug_invalid());
 				return;
 			}
 
@@ -161,7 +157,7 @@ function CategoryForm({
 				else await createCategory({ projectId, ...fields });
 				onDone();
 			} catch (error) {
-				setFormError(localizeError(error, m.settings_discussions_category_save_failed()));
+				setFormError(localizeError(error, m.settings_forum_category_save_failed()));
 			}
 		},
 	});
@@ -179,11 +175,11 @@ function CategoryForm({
 				<form.Field name='name'>
 					{(field) => (
 						<div className='grid gap-2'>
-							<Label htmlFor='category-name'>{m.settings_discussions_field_name()}</Label>
+							<Label htmlFor='category-name'>{m.settings_forum_field_name()}</Label>
 							<Input
 								autoFocus
 								id='category-name'
-								maxLength={FORM_LIMITS.discussionCategoryName}
+								maxLength={FORM_LIMITS.forumCategoryName}
 								onChange={(event) => {
 									field.handleChange(event.target.value);
 									if (!slugEdited)
@@ -201,8 +197,8 @@ function CategoryForm({
 					{(field) => (
 						<div className='grid gap-2'>
 							<LabelWrapper className='mb-0'>
-								<Label htmlFor='category-slug'>{m.settings_discussions_field_slug()}</Label>
-								<LabelDescription>{m.settings_discussions_field_slug_help()}</LabelDescription>
+								<Label htmlFor='category-slug'>{m.settings_forum_field_slug()}</Label>
+								<LabelDescription>{m.settings_forum_field_slug_help()}</LabelDescription>
 							</LabelWrapper>
 							<Input
 								autoCapitalize='none'
@@ -223,16 +219,12 @@ function CategoryForm({
 					{(field) => (
 						<div className='grid gap-2'>
 							<LabelWrapper className='mb-0'>
-								<Label htmlFor='category-description'>
-									{m.settings_discussions_field_description()}
-								</Label>
-								<LabelDescription>
-									{m.settings_discussions_field_description_help()}
-								</LabelDescription>
+								<Label htmlFor='category-description'>{m.settings_forum_field_description()}</Label>
+								<LabelDescription>{m.settings_forum_field_description_help()}</LabelDescription>
 							</LabelWrapper>
 							<Textarea
 								id='category-description'
-								maxLength={FORM_LIMITS.discussionCategoryDescription}
+								maxLength={FORM_LIMITS.forumCategoryDescription}
 								onChange={(event) => field.handleChange(event.target.value)}
 								value={field.state.value}
 							/>
@@ -242,7 +234,7 @@ function CategoryForm({
 				<form.Field name='icon'>
 					{(field) => (
 						<div className='grid gap-2'>
-							<Label>{m.settings_discussions_field_icon()}</Label>
+							<Label>{m.settings_forum_field_icon()}</Label>
 							<IconSelector
 								contentClassName='w-96'
 								onValueChange={(value) => field.handleChange(value)}
@@ -255,7 +247,7 @@ function CategoryForm({
 				<form.Field name='format'>
 					{(field) => (
 						<div className='grid gap-2'>
-							<Label>{m.settings_discussions_field_format()}</Label>
+							<Label>{m.settings_forum_field_format()}</Label>
 							<Select
 								onValueChange={(value) => field.handleChange(value as CategoryFormat)}
 								value={field.state.value}
@@ -264,8 +256,8 @@ function CategoryForm({
 									<SelectValue>{(value) => FORMAT_LABELS[value as CategoryFormat]()}</SelectValue>
 								</SelectTrigger>
 								<SelectContent>
-									<SelectItem value='open'>{m.settings_discussions_format_open()}</SelectItem>
-									<SelectItem value='qa'>{m.settings_discussions_format_qa()}</SelectItem>
+									<SelectItem value='open'>{m.settings_forum_format_open()}</SelectItem>
+									<SelectItem value='qa'>{m.settings_forum_format_qa()}</SelectItem>
 								</SelectContent>
 							</Select>
 							<p className='text-xs text-muted-foreground'>{FORMAT_HELP[field.state.value]()}</p>
@@ -275,7 +267,7 @@ function CategoryForm({
 				<form.Field name='postingPolicy'>
 					{(field) => (
 						<div className='grid gap-2'>
-							<Label>{m.settings_discussions_field_posting()}</Label>
+							<Label>{m.settings_forum_field_posting()}</Label>
 							<Select
 								onValueChange={(value) => field.handleChange(value as CategoryPostingPolicy)}
 								value={field.state.value}
@@ -286,10 +278,8 @@ function CategoryForm({
 									</SelectValue>
 								</SelectTrigger>
 								<SelectContent>
-									<SelectItem value='everyone'>
-										{m.settings_discussions_posting_everyone()}
-									</SelectItem>
-									<SelectItem value='team'>{m.settings_discussions_posting_team()}</SelectItem>
+									<SelectItem value='everyone'>{m.settings_forum_posting_everyone()}</SelectItem>
+									<SelectItem value='team'>{m.settings_forum_posting_team()}</SelectItem>
 								</SelectContent>
 							</Select>
 							<p className='text-xs text-muted-foreground'>{POSTING_HELP[field.state.value]()}</p>
@@ -327,8 +317,8 @@ function CategoryForm({
 										? m.common_saving()
 										: m.common_save()
 									: isSubmitting
-										? m.settings_discussions_category_creating()
-										: m.settings_discussions_category_create()}
+										? m.settings_forum_category_creating()
+										: m.settings_forum_category_create()}
 							</Button>
 						</>
 					)}

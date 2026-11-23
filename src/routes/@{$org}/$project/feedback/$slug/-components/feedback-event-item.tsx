@@ -100,7 +100,7 @@ function getEventIcon(eventType: FeedbackEventData['eventType']) {
 			return CheckCircle2;
 		case 'answer_unmarked':
 			return CircleX;
-		case 'imported_from_discussion':
+		case 'imported_from_forum':
 			return MessagesSquare;
 		default:
 			return Check;
@@ -185,37 +185,34 @@ function getEventDescription(event: FeedbackEventData) {
 			return <span>{m.feedback_marked_comment_answer()}</span>;
 		case 'answer_unmarked':
 			return <span>{m.feedback_unmarked_answer()}</span>;
-		case 'imported_from_discussion':
+		case 'imported_from_forum':
 			return (
-				<ImportedFromDiscussion
-					discussion={event.discussion ?? null}
-					savedTitle={metadata?.newValue ?? null}
-				/>
+				<ImportedFromForum topic={event.topic ?? null} savedTitle={metadata?.newValue ?? null} />
 			);
 		default:
 			return <span>{m.feedback_made_change()}</span>;
 	}
 }
 
-function ImportedFromDiscussion({
-	discussion,
+function ImportedFromForum({
+	topic,
 	savedTitle,
 }: {
-	discussion: { slug: string; title: string } | null;
-	// Title at import time, shown unlinked once the discussion is deleted.
+	topic: { slug: string; title: string } | null;
+	// Title at import time, shown unlinked once the topic is deleted.
 	savedTitle: string | null;
 }) {
 	const params = useParams({ from: '/@{$org}/$project/feedback/$slug/' });
 	return (
 		<span className='inline-flex flex-wrap items-center gap-1'>
-			{m.feedback_imported_from_discussion()}
-			{discussion ? (
+			{m.feedback_imported_from_forum()}
+			{topic ? (
 				<Link
 					className='link-text font-medium'
-					params={{ org: params.org, project: params.project, slug: discussion.slug }}
-					to='/@{$org}/$project/discussions/$slug'
+					params={{ org: params.org, project: params.project, slug: topic.slug }}
+					to='/@{$org}/$project/forum/$slug'
 				>
-					{discussion.title}
+					{topic.title}
 				</Link>
 			) : savedTitle ? (
 				<span className='font-medium text-foreground'>{savedTitle}</span>

@@ -72,7 +72,7 @@ export function CommandProvider({ children }: { children: ReactNode }) {
 			orgSlug && projectSlug ? { organizationSlug: orgSlug, projectSlug } : 'skip'
 		)
 	);
-	const discussionsEnabled = projectData?.project.discussionsEnabled !== false;
+	const forumEnabled = projectData?.project.forumEnabled !== false;
 	const isAuthenticated = !!session.user;
 	const preloadPalette = useCallback(() => {
 		void loadCommandPaletteModule().then((module) => {
@@ -196,19 +196,19 @@ export function CommandProvider({ children }: { children: ReactNode }) {
 					run: () => navigate({ params, to: '/@{$org}/$project/files' }),
 				}
 			);
-			if (discussionsEnabled)
+			if (forumEnabled)
 				commands.push({
 					group: 'Navigation',
 					icon: InterviewOutline18,
-					id: 'project.discussions',
-					keywords: ['project', 'discussions'],
-					title: m.command_go_discussions(),
-					run: () => navigate({ params, to: '/@{$org}/$project/discussions' }),
+					id: 'project.topics',
+					keywords: ['project', 'forumTopics'],
+					title: m.command_go_forum(),
+					run: () => navigate({ params, to: '/@{$org}/$project/forum' }),
 				});
 		}
 
 		return commands;
-	}, [discussionsEnabled, isAuthenticated, navigate, orgSlug, projectSlug]);
+	}, [forumEnabled, isAuthenticated, navigate, orgSlug, projectSlug]);
 
 	const commands = useMemo(
 		() => [

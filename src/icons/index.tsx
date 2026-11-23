@@ -141,7 +141,7 @@ export const iconRegistryOptions: Array<IconRegistryOption> = [
 	},
 	{
 		icon: iconRegistry.chat['glyph-duo'],
-		keywords: ['discussion', 'conversation', 'messages', 'general'],
+		keywords: ['topic', 'conversation', 'messages', 'general'],
 		label: 'Chat',
 		tone: 'glyph-duo',
 		value: 'chat',

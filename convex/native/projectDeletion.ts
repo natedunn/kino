@@ -3,8 +3,8 @@ import { ConvexError, v } from 'convex/values';
 import { internal } from './_generated/api';
 import { internalMutation, mutation } from './_generated/server';
 import { requireProjectAccess } from './access';
-import { deleteDiscussionBatch } from './discussions';
 import { deleteChildBatch } from './feedback';
+import { deleteTopicBatch } from './forum';
 
 // The same request resumes an interrupted cascade. The project remains as a
 // fenced authorization anchor until every storage job has acknowledged cleanup.
@@ -89,20 +89,20 @@ export const batch = internalMutation({
 			await again();
 			return null;
 		}
-		const discussion = await ctx.db
-			.query('discussions')
+		const topic = await ctx.db
+			.query('forumTopics')
 			.withIndex('by_projectId_and_lastActivityAt', (q) => q.eq('projectId', args.projectId))
 			.first();
-		if (discussion) {
-			await deleteDiscussionBatch(ctx, discussion._id);
+		if (topic) {
+			await deleteTopicBatch(ctx, topic._id);
 			await again();
 			return null;
 		}
 		const categories = await ctx.db
-			.query('discussionCategories')
+			.query('forumCategories')
 			.withIndex('by_projectId_and_position', (q) => q.eq('projectId', args.projectId))
 			.take(50);
-		for (const row of categories) await ctx.db.delete('discussionCategories', row._id);
+		for (const row of categories) await ctx.db.delete('forumCategories', row._id);
 		const boards = await ctx.db
 			.query('feedbackBoards')
 			.withIndex('by_projectId', (q) => q.eq('projectId', args.projectId))

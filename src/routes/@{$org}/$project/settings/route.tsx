@@ -89,8 +89,8 @@ function ProjectSettingsRoute() {
 		},
 		{
 			icon: MessagesSquare,
-			label: m.settings_discussions(),
-			to: '/@{$org}/$project/settings/discussions' as const,
+			label: m.settings_forum(),
+			to: '/@{$org}/$project/settings/forum' as const,
 			visible: permissions?.canEditSettings || permissions?.canManageContent,
 		},
 		{

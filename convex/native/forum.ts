@@ -11,11 +11,11 @@ import { VALIDATION_LIMITS } from '../shared/validation';
 import { components, internal } from './_generated/api';
 import { internalMutation, mutation, query } from './_generated/server';
 import { assertProjectWritable, requireProjectAccess, resolveProjectAccess } from './access';
-import { categoryView, liveCategories, toCategoryView } from './discussionCategories';
 import { insertFeedback, recordEvent as recordFeedbackEvent } from './feedback';
 import { isFeedbackLive } from './feedbackLifecycle';
+import { categoryView, liveCategories, toCategoryView } from './forumCategories';
 import { getCurrentUser, requireCurrentUser } from './identity';
-import { discussionEventType, emoteReaction, feedbackStatus } from './schema';
+import { emoteReaction, feedbackStatus, forumEventType } from './schema';
 import { profileValidator, summary } from './updates';
 
 // Hard cap on stored HTML; visible-text limits are checked separately in validateContent.
@@ -29,15 +29,15 @@ const MAX_PARTICIPANTS = 12;
 // Comments scanned for the participant list; long threads show a lower bound.
 const PARTICIPANT_SCAN = 200;
 const LINK_CANDIDATES = 8;
-// Events returned with a discussion; older ones are dropped from the thread.
+// Events returned with a topic; older ones are dropped from the thread.
 const MAX_EVENTS = 100;
 
 const limits = new RateLimiter(components.authLimits, {
-	discussionWrite: { kind: 'token bucket', rate: 30, period: 60_000, capacity: 30 },
+	forumWrite: { kind: 'token bucket', rate: 30, period: 60_000, capacity: 30 },
 });
 
 const commentValidator = v.object({
-	id: v.id('discussionComments'),
+	id: v.id('forumComments'),
 	creationTime: v.number(),
 	updatedTime: v.union(v.number(), v.null()),
 	author: profileValidator,
@@ -55,7 +55,7 @@ const commentValidator = v.object({
 const categorySummaryValidator = v.union(
 	v.null(),
 	v.object({
-		id: v.id('discussionCategories'),
+		id: v.id('forumCategories'),
 		name: v.string(),
 		slug: v.string(),
 		icon: v.union(v.string(), v.null()),
@@ -63,7 +63,7 @@ const categorySummaryValidator = v.union(
 	})
 );
 const listItemValidator = v.object({
-	id: v.id('discussions'),
+	id: v.id('forumTopics'),
 	slug: v.string(),
 	title: v.string(),
 	excerpt: v.string(),
@@ -78,7 +78,7 @@ const listItemValidator = v.object({
 });
 const linkValidator = v.union(
 	v.object({
-		id: v.id('discussionLinks'),
+		id: v.id('forumLinks'),
 		kind: v.literal('feedback'),
 		targetId: v.id('feedback'),
 		slug: v.string(),
@@ -86,7 +86,7 @@ const linkValidator = v.union(
 		status: feedbackStatus,
 	}),
 	v.object({
-		id: v.id('discussionLinks'),
+		id: v.id('forumLinks'),
 		kind: v.literal('update'),
 		targetId: v.id('updates'),
 		slug: v.string(),
@@ -99,10 +99,10 @@ const feedbackSummaryValidator = v.object({
 	status: feedbackStatus,
 });
 const eventValidator = v.object({
-	id: v.id('discussionEvents'),
+	id: v.id('forumEvents'),
 	createdAt: v.number(),
 	actor: profileValidator,
-	eventType: discussionEventType,
+	eventType: forumEventType,
 	oldValue: v.union(v.string(), v.null()),
 	newValue: v.union(v.string(), v.null()),
 	feedback: v.union(feedbackSummaryValidator, v.null()),
@@ -112,12 +112,12 @@ const filterValidator = v.union(v.literal('unanswered'), v.literal('mine'), v.li
 
 type Access = Awaited<ReturnType<typeof resolveProjectAccess>>;
 
-export function discussionsEnabled(project: Doc<'projects'>) {
-	return project.discussionsEnabled !== false;
+export function forumEnabled(project: Doc<'projects'>) {
+	return project.forumEnabled !== false;
 }
 
-function canPostIn(access: Access, category: Doc<'discussionCategories'>) {
-	if (!access.project || access.isArchived || !discussionsEnabled(access.project)) return false;
+function canPostIn(access: Access, category: Doc<'forumCategories'>) {
+	if (!access.project || access.isArchived || !forumEnabled(access.project)) return false;
 	return category.postingPolicy === 'everyone' || access.permissions.canManageContent;
 }
 
@@ -128,61 +128,61 @@ function isManager(access: Access) {
 async function actor(ctx: MutationCtx) {
 	const user = await requireCurrentUser(ctx);
 	if (!user.profileId) throw new ConvexError('PROFILE_NOT_FOUND');
-	const result = await limits.limit(ctx, 'discussionWrite', { key: user._id });
+	const result = await limits.limit(ctx, 'forumWrite', { key: user._id });
 	if (!result.ok) throw new ConvexError('RATE_LIMITED');
 	return user.profileId;
 }
 
-async function readableDiscussion(ctx: QueryCtx, discussion: Doc<'discussions'> | null) {
-	if (!discussion || discussion.deletingAt !== undefined) return null;
-	const access = await resolveProjectAccess(ctx, discussion.projectId);
-	return access.project && discussionsEnabled(access.project) ? access : null;
+async function readableTopic(ctx: QueryCtx, topic: Doc<'forumTopics'> | null) {
+	if (!topic || topic.deletingAt !== undefined) return null;
+	const access = await resolveProjectAccess(ctx, topic.projectId);
+	return access.project && forumEnabled(access.project) ? access : null;
 }
 
-async function writableDiscussion(ctx: MutationCtx, discussionId: Id<'discussions'>) {
+async function writableTopic(ctx: MutationCtx, topicId: Id<'forumTopics'>) {
 	const profileId = await actor(ctx);
-	const discussion = await ctx.db.get('discussions', discussionId);
-	const access = await readableDiscussion(ctx, discussion);
-	if (!discussion || !access) throw new ConvexError('DISCUSSION_NOT_FOUND');
+	const topic = await ctx.db.get('forumTopics', topicId);
+	const access = await readableTopic(ctx, topic);
+	if (!topic || !access) throw new ConvexError('TOPIC_NOT_FOUND');
 	assertProjectWritable(access);
-	return { access, discussion, profileId };
+	return { access, topic, profileId };
 }
 
 async function liveCategory(
 	ctx: QueryCtx,
 	projectId: Id<'projects'>,
-	categoryId: Id<'discussionCategories'>
+	categoryId: Id<'forumCategories'>
 ) {
-	const category = await ctx.db.get('discussionCategories', categoryId);
+	const category = await ctx.db.get('forumCategories', categoryId);
 	if (!category || category.projectId !== projectId || category.deletingAt !== undefined)
 		throw new ConvexError('INVALID_CATEGORY');
 	return category;
 }
 
-async function follow(ctx: MutationCtx, discussion: Doc<'discussions'>, profileId: Id<'profiles'>) {
+async function follow(ctx: MutationCtx, topic: Doc<'forumTopics'>, profileId: Id<'profiles'>) {
 	const existing = await ctx.db
-		.query('discussionWatchers')
-		.withIndex('by_discussionId_and_profileId', (q) =>
-			q.eq('discussionId', discussion._id).eq('profileId', profileId)
+		.query('forumWatchers')
+		.withIndex('by_topicId_and_profileId', (q) =>
+			q.eq('topicId', topic._id).eq('profileId', profileId)
 		)
 		.unique();
 	if (!existing)
-		await ctx.db.insert('discussionWatchers', {
-			projectId: discussion.projectId,
-			discussionId: discussion._id,
+		await ctx.db.insert('forumWatchers', {
+			projectId: topic.projectId,
+			topicId: topic._id,
 			profileId,
 		});
 }
 
 async function recordEvent(
 	ctx: MutationCtx,
-	discussionId: Id<'discussions'>,
+	topicId: Id<'forumTopics'>,
 	actorProfileId: Id<'profiles'>,
-	eventType: Doc<'discussionEvents'>['eventType'],
-	metadata?: Doc<'discussionEvents'>['metadata']
+	eventType: Doc<'forumEvents'>['eventType'],
+	metadata?: Doc<'forumEvents'>['metadata']
 ) {
-	await ctx.db.insert('discussionEvents', {
-		discussionId,
+	await ctx.db.insert('forumEvents', {
+		topicId,
 		actorProfileId,
 		eventType,
 		...(metadata ? { metadata } : {}),
@@ -196,10 +196,10 @@ async function liveFeedbackSummary(ctx: QueryCtx, feedbackId: Id<'feedback'> | u
 	return { slug: feedback.slug, title: feedback.title, status: feedback.status };
 }
 
-async function events(ctx: QueryCtx, discussionId: Id<'discussions'>) {
+async function events(ctx: QueryCtx, topicId: Id<'forumTopics'>) {
 	const rows = await ctx.db
-		.query('discussionEvents')
-		.withIndex('by_discussionId', (q) => q.eq('discussionId', discussionId))
+		.query('forumEvents')
+		.withIndex('by_topicId', (q) => q.eq('topicId', topicId))
 		.order('desc')
 		.take(MAX_EVENTS);
 	return Promise.all(
@@ -217,21 +217,21 @@ async function events(ctx: QueryCtx, discussionId: Id<'discussions'>) {
 
 async function isFollowing(
 	ctx: QueryCtx,
-	discussionId: Id<'discussions'>,
+	topicId: Id<'forumTopics'>,
 	profileId: Id<'profiles'> | null
 ) {
 	if (!profileId) return false;
 	return !!(await ctx.db
-		.query('discussionWatchers')
-		.withIndex('by_discussionId_and_profileId', (q) =>
-			q.eq('discussionId', discussionId).eq('profileId', profileId)
+		.query('forumWatchers')
+		.withIndex('by_topicId_and_profileId', (q) =>
+			q.eq('topicId', topicId).eq('profileId', profileId)
 		)
 		.unique());
 }
 
 function validateTitle(value: string) {
 	const title = value.trim();
-	if (!title || title.length > VALIDATION_LIMITS.discussionTitle)
+	if (!title || title.length > VALIDATION_LIMITS.forumTopicTitle)
 		throw new ConvexError('INVALID_TITLE');
 	return title;
 }
@@ -246,7 +246,7 @@ function visibleText(content: string) {
 
 // Every stored body and reply passes through here, so editor HTML is
 // allowlist-sanitized before the empty and length checks run on the result.
-// `maxVisible` mirrors the client limit: discussionBody for the opening post,
+// `maxVisible` mirrors the client limit: forumTopicBody for the opening post,
 // comment for replies.
 function validateContent(value: string, maxVisible: number) {
 	const content = sanitizeStoredContent(value);
@@ -268,7 +268,7 @@ async function uniqueSlug(ctx: MutationCtx, projectId: Id<'projects'>) {
 	for (let attempt = 0; attempt < 5; attempt += 1) {
 		const slug = crypto.randomUUID().replaceAll('-', '').slice(0, 10);
 		const existing = await ctx.db
-			.query('discussions')
+			.query('forumTopics')
 			.withIndex('by_projectId_and_slug', (q) => q.eq('projectId', projectId).eq('slug', slug))
 			.unique();
 		if (!existing) return slug;
@@ -278,14 +278,14 @@ async function uniqueSlug(ctx: MutationCtx, projectId: Id<'projects'>) {
 
 async function enrichComment(
 	ctx: QueryCtx,
-	comment: Doc<'discussionComments'>,
+	comment: Doc<'forumComments'>,
 	viewerProfileId: Id<'profiles'> | null,
 	access: Access
 ) {
 	const [author, emotes] = await Promise.all([
 		ctx.db.get('profiles', comment.authorProfileId),
 		ctx.db
-			.query('discussionCommentEmotes')
+			.query('forumCommentEmotes')
 			.withIndex('by_commentId_and_authorProfileId_and_content', (q) =>
 				q.eq('commentId', comment._id)
 			)
@@ -296,7 +296,7 @@ async function enrichComment(
 	// Counts past the cap are a lower bound.
 	if (viewerProfileId && emotes.length === MAX_COMMENT_EMOTES) {
 		const own = await ctx.db
-			.query('discussionCommentEmotes')
+			.query('forumCommentEmotes')
 			.withIndex('by_commentId_and_authorProfileId_and_content', (q) =>
 				q.eq('commentId', comment._id).eq('authorProfileId', viewerProfileId)
 			)
@@ -305,7 +305,7 @@ async function enrichComment(
 		emotes.push(...own.filter((emote) => !seen.has(emote._id)));
 	}
 	const grouped = new Map<
-		Doc<'discussionCommentEmotes'>['content'],
+		Doc<'forumCommentEmotes'>['content'],
 		{ count: number; authorProfileIds: Array<Id<'profiles'>> }
 	>();
 	for (const emote of emotes) {
@@ -350,7 +350,7 @@ export const viewerAccess = query({
 			canPost: canPostIn(access, category),
 		}));
 		return {
-			enabled: discussionsEnabled(access.project),
+			enabled: forumEnabled(access.project),
 			// Signed-out visitors see the button so it can route them through sign-in.
 			canCreate: categories.some((category) => category.canPost) && (!user || !!user.profileId),
 			canManage: isManager(access),
@@ -361,26 +361,23 @@ export const viewerAccess = query({
 	},
 });
 
-type ListItemSource = Doc<'discussions'>;
+type ListItemSource = Doc<'forumTopics'>;
 
 async function toListItems(ctx: QueryCtx, items: Array<ListItemSource>) {
-	const categories = new Map<Id<'discussionCategories'>, Doc<'discussionCategories'> | null>();
+	const categories = new Map<Id<'forumCategories'>, Doc<'forumCategories'> | null>();
 	return Promise.all(
 		items
 			.filter((item) => item.deletingAt === undefined)
 			.map(async (item) => {
-				let category: Doc<'discussionCategories'> | null = null;
+				let category: Doc<'forumCategories'> | null = null;
 				if (item.categoryId) {
 					if (!categories.has(item.categoryId))
-						categories.set(
-							item.categoryId,
-							await ctx.db.get('discussionCategories', item.categoryId)
-						);
+						categories.set(item.categoryId, await ctx.db.get('forumCategories', item.categoryId));
 					category = categories.get(item.categoryId) ?? null;
 				}
 				const [author, first] = await Promise.all([
 					ctx.db.get('profiles', item.authorProfileId),
-					item.firstCommentId ? ctx.db.get('discussionComments', item.firstCommentId) : null,
+					item.firstCommentId ? ctx.db.get('forumComments', item.firstCommentId) : null,
 				]);
 				const text = first ? plainText(first.content) : '';
 				return {
@@ -413,7 +410,7 @@ async function toListItems(ctx: QueryCtx, items: Array<ListItemSource>) {
 export const list = query({
 	args: {
 		projectId: v.id('projects'),
-		categoryId: v.optional(v.id('discussionCategories')),
+		categoryId: v.optional(v.id('forumCategories')),
 		search: v.optional(v.string()),
 		sort: v.optional(sortValidator),
 		filter: v.optional(filterValidator),
@@ -423,9 +420,9 @@ export const list = query({
 	handler: async (ctx, args) => {
 		const empty = { page: [], isDone: true, continueCursor: '' };
 		const access = await resolveProjectAccess(ctx, args.projectId);
-		if (!access.project || !discussionsEnabled(access.project)) return empty;
+		if (!access.project || !forumEnabled(access.project)) return empty;
 		const search = args.search?.trim();
-		if (search && search.length > VALIDATION_LIMITS.discussionSearch)
+		if (search && search.length > VALIDATION_LIMITS.forumSearch)
 			throw new ConvexError('INVALID_SEARCH');
 		const categoryId = args.categoryId;
 		if (categoryId) await liveCategory(ctx, args.projectId, categoryId);
@@ -438,7 +435,7 @@ export const list = query({
 
 		if (search) {
 			const result = await ctx.db
-				.query('discussions')
+				.query('forumTopics')
 				.withSearchIndex('search_by_searchContent', (q) => {
 					const scoped = q.search('searchContent', search).eq('projectId', args.projectId);
 					return categoryId ? scoped.eq('categoryId', categoryId) : scoped;
@@ -457,28 +454,28 @@ export const list = query({
 
 		if (args.filter === 'following' && viewer) {
 			const result = await ctx.db
-				.query('discussionWatchers')
+				.query('forumWatchers')
 				.withIndex('by_profileId_and_projectId', (q) =>
 					q.eq('profileId', viewer).eq('projectId', args.projectId)
 				)
 				.order('desc')
 				.paginate(args.paginationOpts);
-			const discussions = await Promise.all(
-				result.page.map((row) => ctx.db.get('discussions', row.discussionId))
+			const topics = await Promise.all(
+				result.page.map((row) => ctx.db.get('forumTopics', row.topicId))
 			);
 			return {
 				...result,
 				page: await toListItems(
 					ctx,
-					discussions.filter(
-						(item): item is Doc<'discussions'> =>
+					topics.filter(
+						(item): item is Doc<'forumTopics'> =>
 							!!item && (!categoryId || item.categoryId === categoryId)
 					)
 				),
 			};
 		}
 
-		const base = ctx.db.query('discussions');
+		const base = ctx.db.query('forumTopics');
 		let query;
 		if (args.filter === 'mine' && viewer) {
 			query = base
@@ -517,15 +514,15 @@ export const list = query({
 	},
 });
 
-// Up to MAX_PINNED discussions shown above the list, newest pin first.
+// Up to MAX_PINNED topics shown above the list, newest pin first.
 export const pinned = query({
-	args: { projectId: v.id('projects'), categoryId: v.optional(v.id('discussionCategories')) },
+	args: { projectId: v.id('projects'), categoryId: v.optional(v.id('forumCategories')) },
 	returns: v.array(listItemValidator),
 	handler: async (ctx, args) => {
 		const access = await resolveProjectAccess(ctx, args.projectId);
-		if (!access.project || !discussionsEnabled(access.project)) return [];
+		if (!access.project || !forumEnabled(access.project)) return [];
 		const rows = await ctx.db
-			.query('discussions')
+			.query('forumTopics')
 			.withIndex('by_projectId_and_pinnedAt', (q) =>
 				q.eq('projectId', args.projectId).gte('pinnedAt', 0)
 			)
@@ -540,10 +537,10 @@ export const pinned = query({
 	},
 });
 
-async function participants(ctx: QueryCtx, discussionId: Id<'discussions'>) {
+async function participants(ctx: QueryCtx, topicId: Id<'forumTopics'>) {
 	const comments = await ctx.db
-		.query('discussionComments')
-		.withIndex('by_discussionId_and_initial', (q) => q.eq('discussionId', discussionId))
+		.query('forumComments')
+		.withIndex('by_topicId_and_initial', (q) => q.eq('topicId', topicId))
 		.take(PARTICIPANT_SCAN);
 	const ids = [...new Set(comments.map((comment) => comment.authorProfileId))];
 	const profiles = await Promise.all(
@@ -555,10 +552,10 @@ async function participants(ctx: QueryCtx, discussionId: Id<'discussions'>) {
 	};
 }
 
-async function links(ctx: QueryCtx, discussionId: Id<'discussions'>) {
+async function links(ctx: QueryCtx, topicId: Id<'forumTopics'>) {
 	const rows = await ctx.db
-		.query('discussionLinks')
-		.withIndex('by_discussionId', (q) => q.eq('discussionId', discussionId))
+		.query('forumLinks')
+		.withIndex('by_topicId', (q) => q.eq('topicId', topicId))
 		.take(MAX_LINKS);
 	const resolved = await Promise.all(
 		rows.map(async (row) => {
@@ -597,8 +594,8 @@ export const detail = query({
 	returns: v.union(
 		v.null(),
 		v.object({
-			discussion: v.object({
-				id: v.id('discussions'),
+			topic: v.object({
+				id: v.id('forumTopics'),
 				slug: v.string(),
 				title: v.string(),
 				commentCount: v.number(),
@@ -606,7 +603,7 @@ export const detail = query({
 				lastActivityAt: v.number(),
 				pinned: v.boolean(),
 				locked: v.boolean(),
-				answerCommentId: v.union(v.id('discussionComments'), v.null()),
+				answerCommentId: v.union(v.id('forumComments'), v.null()),
 			}),
 			category: v.union(categoryView, v.null()),
 			author: profileValidator,
@@ -618,7 +615,7 @@ export const detail = query({
 			}),
 			links: v.array(linkValidator),
 			events: v.array(eventValidator),
-			// The feedback this discussion was converted into, while it still exists.
+			// The feedback this topic was converted into, while it still exists.
 			convertedTo: v.union(feedbackSummaryValidator, v.null()),
 			viewerProfileId: v.union(v.id('profiles'), v.null()),
 			viewerFollowing: v.boolean(),
@@ -632,40 +629,36 @@ export const detail = query({
 		})
 	),
 	handler: async (ctx, args) => {
-		const discussion = await ctx.db
-			.query('discussions')
+		const topic = await ctx.db
+			.query('forumTopics')
 			.withIndex('by_projectId_and_slug', (q) =>
 				q.eq('projectId', args.projectId).eq('slug', args.slug)
 			)
 			.unique();
-		const access = await readableDiscussion(ctx, discussion);
-		if (!discussion || !access) return null;
+		const access = await readableTopic(ctx, topic);
+		if (!topic || !access) return null;
 		const user = await getCurrentUser(ctx);
 		const viewerProfileId = user?.profileId ?? null;
 		const [author, first, answer, category] = await Promise.all([
-			ctx.db.get('profiles', discussion.authorProfileId),
-			discussion.firstCommentId
-				? ctx.db.get('discussionComments', discussion.firstCommentId)
-				: null,
-			discussion.answerCommentId
-				? ctx.db.get('discussionComments', discussion.answerCommentId)
-				: null,
-			discussion.categoryId ? ctx.db.get('discussionCategories', discussion.categoryId) : null,
+			ctx.db.get('profiles', topic.authorProfileId),
+			topic.firstCommentId ? ctx.db.get('forumComments', topic.firstCommentId) : null,
+			topic.answerCommentId ? ctx.db.get('forumComments', topic.answerCommentId) : null,
+			topic.categoryId ? ctx.db.get('forumCategories', topic.categoryId) : null,
 		]);
 		const writable = !access.isArchived;
 		const manager = isManager(access);
-		const isAuthor = !!viewerProfileId && viewerProfileId === discussion.authorProfileId;
+		const isAuthor = !!viewerProfileId && viewerProfileId === topic.authorProfileId;
 		const liveCategoryDoc = category && category.deletingAt === undefined ? category : null;
-		const locked = discussion.lockedAt !== undefined;
+		const locked = topic.lockedAt !== undefined;
 		return {
-			discussion: {
-				id: discussion._id,
-				slug: discussion.slug,
-				title: discussion.title,
-				commentCount: discussion.commentCount,
-				createdAt: discussion._creationTime,
-				lastActivityAt: discussion.lastActivityAt,
-				pinned: discussion.pinnedAt !== undefined,
+			topic: {
+				id: topic._id,
+				slug: topic.slug,
+				title: topic.title,
+				commentCount: topic.commentCount,
+				createdAt: topic._creationTime,
+				lastActivityAt: topic.lastActivityAt,
+				pinned: topic.pinnedAt !== undefined,
 				locked,
 				answerCommentId: answer ? answer._id : null,
 			},
@@ -673,12 +666,12 @@ export const detail = query({
 			author: summary(author),
 			firstComment: first ? await enrichComment(ctx, first, viewerProfileId, access) : null,
 			answer: answer ? await enrichComment(ctx, answer, viewerProfileId, access) : null,
-			participants: await participants(ctx, discussion._id),
-			links: await links(ctx, discussion._id),
-			events: await events(ctx, discussion._id),
-			convertedTo: await liveFeedbackSummary(ctx, discussion.convertedFeedbackId),
+			participants: await participants(ctx, topic._id),
+			links: await links(ctx, topic._id),
+			events: await events(ctx, topic._id),
+			convertedTo: await liveFeedbackSummary(ctx, topic.convertedFeedbackId),
 			viewerProfileId,
-			viewerFollowing: await isFollowing(ctx, discussion._id, viewerProfileId),
+			viewerFollowing: await isFollowing(ctx, topic._id, viewerProfileId),
 			canEditTitle: writable && (manager || isAuthor),
 			canDelete: writable && manager,
 			// Signed-out visitors get the sign-in prompt, so only locking hides the form.
@@ -693,19 +686,16 @@ export const detail = query({
 
 // Replies in conversation order. The initial comment is served by `detail`.
 export const replies = query({
-	args: { discussionId: v.id('discussions'), paginationOpts: paginationOptsValidator },
+	args: { topicId: v.id('forumTopics'), paginationOpts: paginationOptsValidator },
 	returns: paginationResultValidator(commentValidator),
 	handler: async (ctx, args) => {
-		const access = await readableDiscussion(
-			ctx,
-			await ctx.db.get('discussions', args.discussionId)
-		);
+		const access = await readableTopic(ctx, await ctx.db.get('forumTopics', args.topicId));
 		if (!access) return { page: [], isDone: true, continueCursor: '' };
 		const user = await getCurrentUser(ctx);
 		const result = await ctx.db
-			.query('discussionComments')
-			.withIndex('by_discussionId_and_initial', (q) =>
-				q.eq('discussionId', args.discussionId).eq('initial', false)
+			.query('forumComments')
+			.withIndex('by_topicId_and_initial', (q) =>
+				q.eq('topicId', args.topicId).eq('initial', false)
 			)
 			.order('asc')
 			.paginate(args.paginationOpts);
@@ -721,23 +711,23 @@ export const replies = query({
 export const create = mutation({
 	args: {
 		projectId: v.id('projects'),
-		categoryId: v.id('discussionCategories'),
+		categoryId: v.id('forumCategories'),
 		title: v.string(),
 		body: v.string(),
 	},
-	returns: v.object({ id: v.id('discussions'), slug: v.string() }),
+	returns: v.object({ id: v.id('forumTopics'), slug: v.string() }),
 	handler: async (ctx, args) => {
 		const profileId = await actor(ctx);
 		const access = await requireProjectAccess(ctx, args.projectId);
 		assertProjectWritable(access);
-		if (!discussionsEnabled(access.project)) throw new ConvexError('DISCUSSIONS_DISABLED');
+		if (!forumEnabled(access.project)) throw new ConvexError('FORUM_DISABLED');
 		const category = await liveCategory(ctx, args.projectId, args.categoryId);
-		if (!canPostIn(access, category)) throw new ConvexError('DISCUSSIONS_TEAM_ONLY');
+		if (!canPostIn(access, category)) throw new ConvexError('FORUM_TEAM_ONLY');
 		const title = validateTitle(args.title);
-		const body = validateContent(args.body, VALIDATION_LIMITS.discussionBody);
+		const body = validateContent(args.body, VALIDATION_LIMITS.forumTopicBody);
 		const slug = await uniqueSlug(ctx, args.projectId);
 		const now = Date.now();
-		const id = await ctx.db.insert('discussions', {
+		const id = await ctx.db.insert('forumTopics', {
 			projectId: args.projectId,
 			categoryId: category._id,
 			authorProfileId: profileId,
@@ -747,16 +737,16 @@ export const create = mutation({
 			commentCount: 0,
 			lastActivityAt: now,
 		});
-		const firstCommentId = await ctx.db.insert('discussionComments', {
-			discussionId: id,
+		const firstCommentId = await ctx.db.insert('forumComments', {
+			topicId: id,
 			authorProfileId: profileId,
 			content: body,
 			initial: true,
 		});
-		await ctx.db.patch('discussions', id, { firstCommentId });
-		await ctx.db.insert('discussionWatchers', {
+		await ctx.db.patch('forumTopics', id, { firstCommentId });
+		await ctx.db.insert('forumWatchers', {
 			projectId: args.projectId,
-			discussionId: id,
+			topicId: id,
 			profileId,
 		});
 		return { id, slug };
@@ -764,23 +754,23 @@ export const create = mutation({
 });
 
 export const updateTitle = mutation({
-	args: { discussionId: v.id('discussions'), title: v.string() },
+	args: { topicId: v.id('forumTopics'), title: v.string() },
 	returns: v.null(),
 	handler: async (ctx, args) => {
-		const { access, discussion, profileId } = await writableDiscussion(ctx, args.discussionId);
-		if (discussion.authorProfileId !== profileId && !access.permissions.canManageContent)
+		const { access, topic, profileId } = await writableTopic(ctx, args.topicId);
+		if (topic.authorProfileId !== profileId && !access.permissions.canManageContent)
 			throw new ConvexError('FORBIDDEN');
 		const title = validateTitle(args.title);
-		if (title === discussion.title) return null;
-		const first = discussion.firstCommentId
-			? await ctx.db.get('discussionComments', discussion.firstCommentId)
+		if (title === topic.title) return null;
+		const first = topic.firstCommentId
+			? await ctx.db.get('forumComments', topic.firstCommentId)
 			: null;
-		await ctx.db.patch('discussions', discussion._id, {
+		await ctx.db.patch('forumTopics', topic._id, {
 			title,
 			searchContent: searchContent(title, first?.content ?? ''),
 		});
-		await recordEvent(ctx, discussion._id, profileId, 'title_changed', {
-			oldValue: discussion.title,
+		await recordEvent(ctx, topic._id, profileId, 'title_changed', {
+			oldValue: topic.title,
 			newValue: title,
 		});
 		return null;
@@ -788,113 +778,110 @@ export const updateTitle = mutation({
 });
 
 export const addComment = mutation({
-	args: { discussionId: v.id('discussions'), content: v.string() },
-	returns: v.id('discussionComments'),
+	args: { topicId: v.id('forumTopics'), content: v.string() },
+	returns: v.id('forumComments'),
 	handler: async (ctx, args) => {
-		const { access, discussion, profileId } = await writableDiscussion(ctx, args.discussionId);
-		if (discussion.lockedAt !== undefined && !isManager(access))
-			throw new ConvexError('DISCUSSION_LOCKED');
-		const id = await ctx.db.insert('discussionComments', {
-			discussionId: discussion._id,
+		const { access, topic, profileId } = await writableTopic(ctx, args.topicId);
+		if (topic.lockedAt !== undefined && !isManager(access)) throw new ConvexError('TOPIC_LOCKED');
+		const id = await ctx.db.insert('forumComments', {
+			topicId: topic._id,
 			authorProfileId: profileId,
 			content: validateContent(args.content, VALIDATION_LIMITS.comment),
 			initial: false,
 		});
-		await ctx.db.patch('discussions', discussion._id, {
-			commentCount: discussion.commentCount + 1,
+		await ctx.db.patch('forumTopics', topic._id, {
+			commentCount: topic.commentCount + 1,
 			lastActivityAt: Date.now(),
 		});
-		await follow(ctx, discussion, profileId);
+		await follow(ctx, topic, profileId);
 		return id;
 	},
 });
 
 export const updateComment = mutation({
-	args: { commentId: v.id('discussionComments'), content: v.string() },
+	args: { commentId: v.id('forumComments'), content: v.string() },
 	returns: v.null(),
 	handler: async (ctx, args) => {
-		const comment = await ctx.db.get('discussionComments', args.commentId);
+		const comment = await ctx.db.get('forumComments', args.commentId);
 		if (!comment) throw new ConvexError('COMMENT_NOT_FOUND');
-		const { discussion, profileId } = await writableDiscussion(ctx, comment.discussionId);
+		const { topic, profileId } = await writableTopic(ctx, comment.topicId);
 		if (comment.authorProfileId !== profileId) throw new ConvexError('FORBIDDEN');
 		const content = validateContent(
 			args.content,
-			comment.initial ? VALIDATION_LIMITS.discussionBody : VALIDATION_LIMITS.comment
+			comment.initial ? VALIDATION_LIMITS.forumTopicBody : VALIDATION_LIMITS.comment
 		);
-		await ctx.db.patch('discussionComments', comment._id, { content, updatedAt: Date.now() });
+		await ctx.db.patch('forumComments', comment._id, { content, updatedAt: Date.now() });
 		if (comment.initial)
-			await ctx.db.patch('discussions', discussion._id, {
-				searchContent: searchContent(discussion.title, content),
+			await ctx.db.patch('forumTopics', topic._id, {
+				searchContent: searchContent(topic.title, content),
 			});
 		return null;
 	},
 });
 
 export const removeComment = mutation({
-	args: { commentId: v.id('discussionComments') },
+	args: { commentId: v.id('forumComments') },
 	returns: v.null(),
 	handler: async (ctx, args) => {
-		const comment = await ctx.db.get('discussionComments', args.commentId);
+		const comment = await ctx.db.get('forumComments', args.commentId);
 		if (!comment) throw new ConvexError('COMMENT_NOT_FOUND');
-		const { access, discussion, profileId } = await writableDiscussion(ctx, comment.discussionId);
+		const { access, topic, profileId } = await writableTopic(ctx, comment.topicId);
 		if (comment.initial) throw new ConvexError('INITIAL_COMMENT_REQUIRED');
 		if (comment.authorProfileId !== profileId && !access.permissions.canManageContent)
 			throw new ConvexError('FORBIDDEN');
-		await ctx.db.delete('discussionComments', comment._id);
-		// Activity falls back to the newest remaining reply, or the discussion itself.
+		await ctx.db.delete('forumComments', comment._id);
+		// Activity falls back to the newest remaining reply, or the topic itself.
 		const latest = await ctx.db
-			.query('discussionComments')
-			.withIndex('by_discussionId_and_initial', (q) =>
-				q.eq('discussionId', discussion._id).eq('initial', false)
-			)
+			.query('forumComments')
+			.withIndex('by_topicId_and_initial', (q) => q.eq('topicId', topic._id).eq('initial', false))
 			.order('desc')
 			.first();
-		await ctx.db.patch('discussions', discussion._id, {
-			commentCount: Math.max(0, discussion.commentCount - 1),
-			lastActivityAt: latest?._creationTime ?? discussion._creationTime,
-			...(discussion.answerCommentId === comment._id ? { answerCommentId: undefined } : {}),
+		await ctx.db.patch('forumTopics', topic._id, {
+			commentCount: Math.max(0, topic.commentCount - 1),
+			lastActivityAt: latest?._creationTime ?? topic._creationTime,
+			...(topic.answerCommentId === comment._id ? { answerCommentId: undefined } : {}),
 		});
-		await ctx.scheduler.runAfter(0, internal.discussions.cleanComment, { commentId: comment._id });
+		await ctx.scheduler.runAfter(0, internal.forum.cleanComment, { commentId: comment._id });
 		return null;
 	},
 });
 
 export const cleanComment = internalMutation({
-	args: { commentId: v.id('discussionComments') },
+	args: { commentId: v.id('forumComments') },
 	returns: v.null(),
 	handler: async (ctx, args) => {
 		const emotes = await ctx.db
-			.query('discussionCommentEmotes')
+			.query('forumCommentEmotes')
 			.withIndex('by_commentId_and_authorProfileId_and_content', (q) =>
 				q.eq('commentId', args.commentId)
 			)
 			.take(DELETE_BATCH_SIZE);
-		for (const emote of emotes) await ctx.db.delete('discussionCommentEmotes', emote._id);
+		for (const emote of emotes) await ctx.db.delete('forumCommentEmotes', emote._id);
 		if (emotes.length === DELETE_BATCH_SIZE)
-			await ctx.scheduler.runAfter(0, internal.discussions.cleanComment, args);
+			await ctx.scheduler.runAfter(0, internal.forum.cleanComment, args);
 		return null;
 	},
 });
 
 export const toggleReaction = mutation({
-	args: { commentId: v.id('discussionComments'), content: emoteReaction },
+	args: { commentId: v.id('forumComments'), content: emoteReaction },
 	returns: v.boolean(),
 	handler: async (ctx, args) => {
-		const comment = await ctx.db.get('discussionComments', args.commentId);
+		const comment = await ctx.db.get('forumComments', args.commentId);
 		if (!comment) throw new ConvexError('COMMENT_NOT_FOUND');
-		const { discussion, profileId } = await writableDiscussion(ctx, comment.discussionId);
+		const { topic, profileId } = await writableTopic(ctx, comment.topicId);
 		const existing = await ctx.db
-			.query('discussionCommentEmotes')
+			.query('forumCommentEmotes')
 			.withIndex('by_commentId_and_authorProfileId_and_content', (q) =>
 				q.eq('commentId', comment._id).eq('authorProfileId', profileId).eq('content', args.content)
 			)
 			.unique();
 		if (existing) {
-			await ctx.db.delete('discussionCommentEmotes', existing._id);
+			await ctx.db.delete('forumCommentEmotes', existing._id);
 			return false;
 		}
-		await ctx.db.insert('discussionCommentEmotes', {
-			discussionId: discussion._id,
+		await ctx.db.insert('forumCommentEmotes', {
+			topicId: topic._id,
 			commentId: comment._id,
 			authorProfileId: profileId,
 			content: args.content,
@@ -904,25 +891,25 @@ export const toggleReaction = mutation({
 });
 
 export const setCategory = mutation({
-	args: { discussionId: v.id('discussions'), categoryId: v.id('discussionCategories') },
+	args: { topicId: v.id('forumTopics'), categoryId: v.id('forumCategories') },
 	returns: v.null(),
 	handler: async (ctx, args) => {
-		const { access, discussion, profileId } = await writableDiscussion(ctx, args.discussionId);
-		if (discussion.authorProfileId !== profileId && !isManager(access))
+		const { access, topic, profileId } = await writableTopic(ctx, args.topicId);
+		if (topic.authorProfileId !== profileId && !isManager(access))
 			throw new ConvexError('FORBIDDEN');
-		const category = await liveCategory(ctx, discussion.projectId, args.categoryId);
-		// Authors can't move their discussion into a team-only category.
-		if (!canPostIn(access, category)) throw new ConvexError('DISCUSSIONS_TEAM_ONLY');
-		if (category._id === discussion.categoryId) return null;
-		const previous = discussion.categoryId
-			? await ctx.db.get('discussionCategories', discussion.categoryId)
+		const category = await liveCategory(ctx, topic.projectId, args.categoryId);
+		// Authors can't move their topic into a team-only category.
+		if (!canPostIn(access, category)) throw new ConvexError('FORUM_TEAM_ONLY');
+		if (category._id === topic.categoryId) return null;
+		const previous = topic.categoryId
+			? await ctx.db.get('forumCategories', topic.categoryId)
 			: null;
-		await ctx.db.patch('discussions', discussion._id, {
+		await ctx.db.patch('forumTopics', topic._id, {
 			categoryId: category._id,
 			// Answers only exist in Q&A categories.
 			...(category.format === 'qa' ? {} : { answerCommentId: undefined }),
 		});
-		await recordEvent(ctx, discussion._id, profileId, 'category_changed', {
+		await recordEvent(ctx, topic._id, profileId, 'category_changed', {
 			...(previous ? { oldValue: previous.name } : {}),
 			newValue: category.name,
 		});
@@ -932,31 +919,31 @@ export const setCategory = mutation({
 
 export const setAnswer = mutation({
 	args: {
-		discussionId: v.id('discussions'),
-		commentId: v.union(v.id('discussionComments'), v.null()),
+		topicId: v.id('forumTopics'),
+		commentId: v.union(v.id('forumComments'), v.null()),
 	},
 	returns: v.null(),
 	handler: async (ctx, args) => {
-		const { access, discussion, profileId } = await writableDiscussion(ctx, args.discussionId);
-		if (discussion.authorProfileId !== profileId && !isManager(access))
+		const { access, topic, profileId } = await writableTopic(ctx, args.topicId);
+		if (topic.authorProfileId !== profileId && !isManager(access))
 			throw new ConvexError('FORBIDDEN');
-		const category = discussion.categoryId
-			? await ctx.db.get('discussionCategories', discussion.categoryId)
+		const category = topic.categoryId
+			? await ctx.db.get('forumCategories', topic.categoryId)
 			: null;
 		if (!category || category.deletingAt !== undefined || category.format !== 'qa')
 			throw new ConvexError('ANSWERS_NOT_ENABLED');
 		if (args.commentId) {
-			const comment = await ctx.db.get('discussionComments', args.commentId);
-			if (!comment || comment.discussionId !== discussion._id || comment.initial)
+			const comment = await ctx.db.get('forumComments', args.commentId);
+			if (!comment || comment.topicId !== topic._id || comment.initial)
 				throw new ConvexError('COMMENT_NOT_FOUND');
 		}
-		if ((args.commentId ?? undefined) === discussion.answerCommentId) return null;
-		await ctx.db.patch('discussions', discussion._id, {
+		if ((args.commentId ?? undefined) === topic.answerCommentId) return null;
+		await ctx.db.patch('forumTopics', topic._id, {
 			answerCommentId: args.commentId ?? undefined,
 		});
 		await recordEvent(
 			ctx,
-			discussion._id,
+			topic._id,
 			profileId,
 			args.commentId ? 'answer_marked' : 'answer_unmarked'
 		);
@@ -965,74 +952,74 @@ export const setAnswer = mutation({
 });
 
 export const setPinned = mutation({
-	args: { discussionId: v.id('discussions'), pinned: v.boolean() },
+	args: { topicId: v.id('forumTopics'), pinned: v.boolean() },
 	returns: v.null(),
 	handler: async (ctx, args) => {
-		const { access, discussion, profileId } = await writableDiscussion(ctx, args.discussionId);
+		const { access, topic, profileId } = await writableTopic(ctx, args.topicId);
 		if (!isManager(access)) throw new ConvexError('FORBIDDEN');
-		if (args.pinned === (discussion.pinnedAt !== undefined)) return null;
+		if (args.pinned === (topic.pinnedAt !== undefined)) return null;
 		if (args.pinned) {
 			const pinnedNow = await ctx.db
-				.query('discussions')
+				.query('forumTopics')
 				.withIndex('by_projectId_and_pinnedAt', (q) =>
-					q.eq('projectId', discussion.projectId).gte('pinnedAt', 0)
+					q.eq('projectId', topic.projectId).gte('pinnedAt', 0)
 				)
 				.take(MAX_PINNED + 1);
 			if (pinnedNow.filter((row) => row.deletingAt === undefined).length >= MAX_PINNED)
 				throw new ConvexError('PIN_LIMIT');
 		}
-		await ctx.db.patch('discussions', discussion._id, {
+		await ctx.db.patch('forumTopics', topic._id, {
 			pinnedAt: args.pinned ? Date.now() : undefined,
 		});
-		await recordEvent(ctx, discussion._id, profileId, args.pinned ? 'pinned' : 'unpinned');
+		await recordEvent(ctx, topic._id, profileId, args.pinned ? 'pinned' : 'unpinned');
 		return null;
 	},
 });
 
 export const setLocked = mutation({
-	args: { discussionId: v.id('discussions'), locked: v.boolean() },
+	args: { topicId: v.id('forumTopics'), locked: v.boolean() },
 	returns: v.null(),
 	handler: async (ctx, args) => {
-		const { access, discussion, profileId } = await writableDiscussion(ctx, args.discussionId);
+		const { access, topic, profileId } = await writableTopic(ctx, args.topicId);
 		if (!isManager(access)) throw new ConvexError('FORBIDDEN');
-		if (args.locked === (discussion.lockedAt !== undefined)) return null;
-		await ctx.db.patch('discussions', discussion._id, {
+		if (args.locked === (topic.lockedAt !== undefined)) return null;
+		await ctx.db.patch('forumTopics', topic._id, {
 			lockedAt: args.locked ? Date.now() : undefined,
 		});
-		await recordEvent(ctx, discussion._id, profileId, args.locked ? 'locked' : 'unlocked');
+		await recordEvent(ctx, topic._id, profileId, args.locked ? 'locked' : 'unlocked');
 		return null;
 	},
 });
 
 export const toggleFollow = mutation({
-	args: { discussionId: v.id('discussions') },
+	args: { topicId: v.id('forumTopics') },
 	returns: v.object({ following: v.boolean() }),
 	handler: async (ctx, args) => {
-		const { discussion, profileId } = await writableDiscussion(ctx, args.discussionId);
+		const { topic, profileId } = await writableTopic(ctx, args.topicId);
 		const existing = await ctx.db
-			.query('discussionWatchers')
-			.withIndex('by_discussionId_and_profileId', (q) =>
-				q.eq('discussionId', discussion._id).eq('profileId', profileId)
+			.query('forumWatchers')
+			.withIndex('by_topicId_and_profileId', (q) =>
+				q.eq('topicId', topic._id).eq('profileId', profileId)
 			)
 			.unique();
 		if (existing) {
-			await ctx.db.delete('discussionWatchers', existing._id);
+			await ctx.db.delete('forumWatchers', existing._id);
 			return { following: false };
 		}
-		await follow(ctx, discussion, profileId);
+		await follow(ctx, topic, profileId);
 		return { following: true };
 	},
 });
 
 async function addLinkRow(
 	ctx: MutationCtx,
-	discussion: Doc<'discussions'>,
+	topic: Doc<'forumTopics'>,
 	profileId: Id<'profiles'>,
 	target: { feedbackId: Id<'feedback'> } | { updateId: Id<'updates'> }
 ) {
 	const existing = await ctx.db
-		.query('discussionLinks')
-		.withIndex('by_discussionId', (q) => q.eq('discussionId', discussion._id))
+		.query('forumLinks')
+		.withIndex('by_topicId', (q) => q.eq('topicId', topic._id))
 		.take(MAX_LINKS);
 	if (
 		existing.some((row) =>
@@ -1043,9 +1030,9 @@ async function addLinkRow(
 	)
 		return;
 	if (existing.length >= MAX_LINKS) throw new ConvexError('LINK_LIMIT');
-	await ctx.db.insert('discussionLinks', {
-		projectId: discussion.projectId,
-		discussionId: discussion._id,
+	await ctx.db.insert('forumLinks', {
+		projectId: topic.projectId,
+		topicId: topic._id,
 		createdByProfileId: profileId,
 		...target,
 	});
@@ -1053,7 +1040,7 @@ async function addLinkRow(
 
 export const addLink = mutation({
 	args: {
-		discussionId: v.id('discussions'),
+		topicId: v.id('forumTopics'),
 		target: v.union(
 			v.object({ kind: v.literal('feedback'), id: v.id('feedback') }),
 			v.object({ kind: v.literal('update'), id: v.id('updates') })
@@ -1061,48 +1048,48 @@ export const addLink = mutation({
 	},
 	returns: v.null(),
 	handler: async (ctx, args) => {
-		const { access, discussion, profileId } = await writableDiscussion(ctx, args.discussionId);
+		const { access, topic, profileId } = await writableTopic(ctx, args.topicId);
 		if (!isManager(access)) throw new ConvexError('FORBIDDEN');
 		if (args.target.kind === 'feedback') {
 			const feedback = await ctx.db.get('feedback', args.target.id);
 			if (
 				!feedback ||
-				feedback.projectId !== discussion.projectId ||
+				feedback.projectId !== topic.projectId ||
 				!(await isFeedbackLive(ctx, feedback))
 			)
 				throw new ConvexError('INVALID_LINK');
-			await addLinkRow(ctx, discussion, profileId, { feedbackId: feedback._id });
+			await addLinkRow(ctx, topic, profileId, { feedbackId: feedback._id });
 		} else {
 			const update = await ctx.db.get('updates', args.target.id);
 			if (
 				!update ||
-				update.projectId !== discussion.projectId ||
+				update.projectId !== topic.projectId ||
 				update.deletingAt !== undefined ||
 				update.status !== 'published'
 			)
 				throw new ConvexError('INVALID_LINK');
-			await addLinkRow(ctx, discussion, profileId, { updateId: update._id });
+			await addLinkRow(ctx, topic, profileId, { updateId: update._id });
 		}
 		return null;
 	},
 });
 
 export const removeLink = mutation({
-	args: { linkId: v.id('discussionLinks') },
+	args: { linkId: v.id('forumLinks') },
 	returns: v.null(),
 	handler: async (ctx, args) => {
-		const link = await ctx.db.get('discussionLinks', args.linkId);
+		const link = await ctx.db.get('forumLinks', args.linkId);
 		if (!link) return null;
-		const { access } = await writableDiscussion(ctx, link.discussionId);
+		const { access } = await writableTopic(ctx, link.topicId);
 		if (!isManager(access)) throw new ConvexError('FORBIDDEN');
-		await ctx.db.delete('discussionLinks', link._id);
+		await ctx.db.delete('forumLinks', link._id);
 		return null;
 	},
 });
 
 // Feedback and published updates a moderator can link, matched by title/content.
 export const linkCandidates = query({
-	args: { discussionId: v.id('discussions'), search: v.string() },
+	args: { topicId: v.id('forumTopics'), search: v.string() },
 	returns: v.array(
 		v.union(
 			v.object({
@@ -1115,16 +1102,16 @@ export const linkCandidates = query({
 		)
 	),
 	handler: async (ctx, args) => {
-		const discussion = await ctx.db.get('discussions', args.discussionId);
-		const access = await readableDiscussion(ctx, discussion);
-		if (!discussion || !access || !isManager(access)) return [];
-		const search = args.search.trim().slice(0, VALIDATION_LIMITS.discussionSearch);
+		const topic = await ctx.db.get('forumTopics', args.topicId);
+		const access = await readableTopic(ctx, topic);
+		if (!topic || !access || !isManager(access)) return [];
+		const search = args.search.trim().slice(0, VALIDATION_LIMITS.forumSearch);
 		if (!search) return [];
 		const [feedback, updates] = await Promise.all([
 			ctx.db
 				.query('feedback')
 				.withSearchIndex('search_by_searchContent', (q) =>
-					q.search('searchContent', search).eq('projectId', discussion.projectId)
+					q.search('searchContent', search).eq('projectId', topic.projectId)
 				)
 				.take(LINK_CANDIDATES),
 			ctx.db
@@ -1132,7 +1119,7 @@ export const linkCandidates = query({
 				.withSearchIndex('search_by_searchContent', (q) =>
 					q
 						.search('searchContent', search)
-						.eq('projectId', discussion.projectId)
+						.eq('projectId', topic.projectId)
 						.eq('status', 'published')
 				)
 				.take(LINK_CANDIDATES),
@@ -1153,107 +1140,106 @@ export const linkCandidates = query({
 	},
 });
 
-// Turns a discussion into actionable feedback: the feedback copies the title
+// Turns a topic into actionable feedback: the feedback copies the title
 // and opening post (credited to the original author), both are linked, and the
-// discussion is locked so the conversation continues on the feedback item.
+// topic is locked so the conversation continues on the feedback item.
 export const convertToFeedback = mutation({
-	args: { discussionId: v.id('discussions'), boardId: v.id('feedbackBoards') },
+	args: { topicId: v.id('forumTopics'), boardId: v.id('feedbackBoards') },
 	returns: v.object({ feedbackSlug: v.string() }),
 	handler: async (ctx, args) => {
-		const { access, discussion, profileId } = await writableDiscussion(ctx, args.discussionId);
+		const { access, topic, profileId } = await writableTopic(ctx, args.topicId);
 		if (!isManager(access)) throw new ConvexError('FORBIDDEN');
-		const first = discussion.firstCommentId
-			? await ctx.db.get('discussionComments', discussion.firstCommentId)
+		const first = topic.firstCommentId
+			? await ctx.db.get('forumComments', topic.firstCommentId)
 			: null;
 		if (!first) throw new ConvexError('COMMENT_NOT_FOUND');
 		const created = await insertFeedback(ctx, {
-			projectId: discussion.projectId,
+			projectId: topic.projectId,
 			boardId: args.boardId,
-			authorProfileId: discussion.authorProfileId,
-			title: discussion.title.slice(0, 100),
+			authorProfileId: topic.authorProfileId,
+			title: topic.title.slice(0, 100),
 			firstComment: first.content,
 		});
-		await addLinkRow(ctx, discussion, profileId, { feedbackId: created.feedbackId });
-		await ctx.db.patch('discussions', discussion._id, {
-			lockedAt: discussion.lockedAt ?? Date.now(),
+		await addLinkRow(ctx, topic, profileId, { feedbackId: created.feedbackId });
+		await ctx.db.patch('forumTopics', topic._id, {
+			lockedAt: topic.lockedAt ?? Date.now(),
 			convertedFeedbackId: created.feedbackId,
 		});
-		await recordEvent(ctx, discussion._id, profileId, 'converted_to_feedback', {
+		await recordEvent(ctx, topic._id, profileId, 'converted_to_feedback', {
 			feedbackId: created.feedbackId,
 		});
-		// Converting locks the discussion; record it like a manual lock.
-		if (discussion.lockedAt === undefined)
-			await recordEvent(ctx, discussion._id, profileId, 'locked');
+		// Converting locks the topic; record it like a manual lock.
+		if (topic.lockedAt === undefined) await recordEvent(ctx, topic._id, profileId, 'locked');
 		await recordFeedbackEvent(ctx, {
 			actorProfileId: profileId,
 			feedbackId: created.feedbackId,
-			eventType: 'imported_from_discussion',
-			metadata: { discussionId: discussion._id, newValue: discussion.title },
+			eventType: 'imported_from_forum',
+			metadata: { topicId: topic._id, newValue: topic.title },
 		});
 		return { feedbackSlug: created.slug };
 	},
 });
 
 export const remove = mutation({
-	args: { discussionId: v.id('discussions') },
+	args: { topicId: v.id('forumTopics') },
 	returns: v.null(),
 	handler: async (ctx, args) => {
-		const { access, discussion } = await writableDiscussion(ctx, args.discussionId);
+		const { access, topic } = await writableTopic(ctx, args.topicId);
 		if (!access.permissions.canManageContent) throw new ConvexError('FORBIDDEN');
-		await ctx.db.patch('discussions', discussion._id, { deletingAt: Date.now() });
-		await ctx.scheduler.runAfter(0, internal.discussions.deleteBatch, { id: discussion._id });
+		await ctx.db.patch('forumTopics', topic._id, { deletingAt: Date.now() });
+		await ctx.scheduler.runAfter(0, internal.forum.deleteBatch, { id: topic._id });
 		return null;
 	},
 });
 
-// Deletes one bounded batch of a discussion's children, then the discussion.
+// Deletes one bounded batch of a topic's children, then the topic.
 // Returns true while more work remains.
-export async function deleteDiscussionBatch(ctx: MutationCtx, id: Id<'discussions'>) {
-	const [comments, emotes, watchers, links, discussionEvents] = await Promise.all([
+export async function deleteTopicBatch(ctx: MutationCtx, id: Id<'forumTopics'>) {
+	const [comments, emotes, watchers, links, forumEvents] = await Promise.all([
 		ctx.db
-			.query('discussionComments')
-			.withIndex('by_discussionId_and_initial', (q) => q.eq('discussionId', id))
+			.query('forumComments')
+			.withIndex('by_topicId_and_initial', (q) => q.eq('topicId', id))
 			.take(DELETE_BATCH_SIZE),
 		ctx.db
-			.query('discussionCommentEmotes')
-			.withIndex('by_discussionId', (q) => q.eq('discussionId', id))
+			.query('forumCommentEmotes')
+			.withIndex('by_topicId', (q) => q.eq('topicId', id))
 			.take(DELETE_BATCH_SIZE),
 		ctx.db
-			.query('discussionWatchers')
-			.withIndex('by_discussionId_and_profileId', (q) => q.eq('discussionId', id))
+			.query('forumWatchers')
+			.withIndex('by_topicId_and_profileId', (q) => q.eq('topicId', id))
 			.take(DELETE_BATCH_SIZE),
 		ctx.db
-			.query('discussionLinks')
-			.withIndex('by_discussionId', (q) => q.eq('discussionId', id))
+			.query('forumLinks')
+			.withIndex('by_topicId', (q) => q.eq('topicId', id))
 			.take(DELETE_BATCH_SIZE),
 		ctx.db
-			.query('discussionEvents')
-			.withIndex('by_discussionId', (q) => q.eq('discussionId', id))
+			.query('forumEvents')
+			.withIndex('by_topicId', (q) => q.eq('topicId', id))
 			.take(DELETE_BATCH_SIZE),
 	]);
-	for (const row of comments) await ctx.db.delete('discussionComments', row._id);
-	for (const row of emotes) await ctx.db.delete('discussionCommentEmotes', row._id);
-	for (const row of watchers) await ctx.db.delete('discussionWatchers', row._id);
-	for (const row of links) await ctx.db.delete('discussionLinks', row._id);
-	for (const row of discussionEvents) await ctx.db.delete('discussionEvents', row._id);
+	for (const row of comments) await ctx.db.delete('forumComments', row._id);
+	for (const row of emotes) await ctx.db.delete('forumCommentEmotes', row._id);
+	for (const row of watchers) await ctx.db.delete('forumWatchers', row._id);
+	for (const row of links) await ctx.db.delete('forumLinks', row._id);
+	for (const row of forumEvents) await ctx.db.delete('forumEvents', row._id);
 	if (
-		[comments, emotes, watchers, links, discussionEvents].some(
+		[comments, emotes, watchers, links, forumEvents].some(
 			(rows) => rows.length === DELETE_BATCH_SIZE
 		)
 	)
 		return true;
-	await ctx.db.delete('discussions', id);
+	await ctx.db.delete('forumTopics', id);
 	return false;
 }
 
 export const deleteBatch = internalMutation({
-	args: { id: v.id('discussions') },
+	args: { id: v.id('forumTopics') },
 	returns: v.null(),
 	handler: async (ctx, args) => {
-		const discussion = await ctx.db.get('discussions', args.id);
-		if (!discussion || discussion.deletingAt === undefined) return null;
-		if (await deleteDiscussionBatch(ctx, args.id))
-			await ctx.scheduler.runAfter(0, internal.discussions.deleteBatch, args);
+		const topic = await ctx.db.get('forumTopics', args.id);
+		if (!topic || topic.deletingAt === undefined) return null;
+		if (await deleteTopicBatch(ctx, args.id))
+			await ctx.scheduler.runAfter(0, internal.forum.deleteBatch, args);
 		return null;
 	},
 });

@@ -12,9 +12,9 @@ import {
 	resolveOrganizationAccess,
 	resolveProjectAccess,
 } from './access';
+import { seedDefaultCategories } from './forumCategories';
 import { canUseReservedProjectSlugs, requireCurrentUser } from './identity';
 import schema, { organizationRole, projectVisibility } from './schema';
-import { seedDefaultCategories } from './discussionCategories';
 
 const PROJECT_LIMITS = { user: 1, 'system:admin': 100 } as const;
 const organizationPermissionsValidator = v.object({

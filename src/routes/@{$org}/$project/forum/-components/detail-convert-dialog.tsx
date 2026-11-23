@@ -29,16 +29,16 @@ import * as m from '@/paraglide/messages.js';
 
 import { api as nativeApi } from '../../../../../../convex/native/_generated/api';
 
-const ROUTE = '/@{$org}/$project/discussions/$slug/' as const;
+const ROUTE = '/@{$org}/$project/forum/$slug/' as const;
 
-// Turns the discussion into a feedback item on the chosen board, then opens it.
+// Turns the topic into a feedback item on the chosen board, then opens it.
 export function DetailConvertDialog({
-	discussionId,
+	topicId,
 	onOpenChange,
 	open,
 	projectId,
 }: {
-	discussionId: Id<'discussions'>;
+	topicId: Id<'forumTopics'>;
 	onOpenChange: (open: boolean) => void;
 	open: boolean;
 	projectId: Id<'projects'>;
@@ -52,13 +52,13 @@ export function DetailConvertDialog({
 			>
 				<ResponsiveDialogHeader
 					icon={<ArrowRightLeft />}
-					subtitle={m.discussions_detail_convert_description()}
-					title={m.discussions_detail_convert()}
+					subtitle={m.forum_detail_convert_description()}
+					title={m.forum_detail_convert()}
 				/>
 				{/* Only mounted while open, so closing resets the board choice. */}
 				{open ? (
 					<ConvertDialogBody
-						discussionId={discussionId}
+						topicId={topicId}
 						onClose={() => onOpenChange(false)}
 						projectId={projectId}
 					/>
@@ -69,17 +69,17 @@ export function DetailConvertDialog({
 }
 
 function ConvertDialogBody({
-	discussionId,
+	topicId,
 	onClose,
 	projectId,
 }: {
-	discussionId: Id<'discussions'>;
+	topicId: Id<'forumTopics'>;
 	onClose: () => void;
 	projectId: Id<'projects'>;
 }) {
 	const params = useParams({ from: ROUTE });
 	const navigate = useNavigate();
-	const convert = useMutation(nativeApi.discussions.convertToFeedback);
+	const convert = useMutation(nativeApi.forum.convertToFeedback);
 	const boardsQuery = useQuery(convexQuery(nativeApi.feedbackBoards.list, { projectId }));
 	const boards = boardsQuery.data ?? [];
 	const [boardId, setBoardId] = useState('');
@@ -92,7 +92,7 @@ function ConvertDialogBody({
 		setBusy(true);
 		try {
 			const { feedbackSlug } = await convert({
-				discussionId,
+				topicId,
 				boardId: boardId as Id<'feedbackBoards'>,
 			});
 			onClose();
@@ -101,7 +101,7 @@ function ConvertDialogBody({
 				to: '/@{$org}/$project/feedback/$slug',
 			});
 		} catch (mutationError) {
-			setError(localizeError(mutationError, m.discussions_detail_convert_failed()));
+			setError(localizeError(mutationError, m.forum_detail_convert_failed()));
 		} finally {
 			setBusy(false);
 		}
@@ -112,10 +112,10 @@ function ConvertDialogBody({
 			<ResponsiveDialogBody className='flex flex-col gap-3'>
 				<div className='space-y-2'>
 					<p className='text-xs font-medium tracking-wide text-muted-foreground uppercase'>
-						{m.discussions_detail_convert_board()}
+						{m.forum_detail_convert_board()}
 					</p>
 					{boardsQuery.isPending ? (
-						<p className='text-sm text-muted-foreground'>{m.discussions_loading()}</p>
+						<p className='text-sm text-muted-foreground'>{m.forum_loading()}</p>
 					) : boards.length ? (
 						<Select
 							disabled={busy}
@@ -124,7 +124,7 @@ function ConvertDialogBody({
 							value={boardId}
 						>
 							<SelectTrigger className='w-full'>
-								<SelectValue placeholder={m.discussions_detail_convert_board_placeholder()} />
+								<SelectValue placeholder={m.forum_detail_convert_board_placeholder()} />
 							</SelectTrigger>
 							<SelectContent>
 								{boards.map((board) => (
@@ -136,9 +136,7 @@ function ConvertDialogBody({
 							</SelectContent>
 						</Select>
 					) : (
-						<p className='text-sm text-muted-foreground'>
-							{m.discussions_detail_convert_no_boards()}
-						</p>
+						<p className='text-sm text-muted-foreground'>{m.forum_detail_convert_no_boards()}</p>
 					)}
 				</div>
 				{error ? <InlineAlert variant='danger'>{error}</InlineAlert> : null}
@@ -149,7 +147,7 @@ function ConvertDialogBody({
 				</Button>
 				<Button disabled={!boardId || busy} onClick={() => void submit()} size='sm'>
 					<ArrowRightLeft />
-					{busy ? m.discussions_detail_converting() : m.discussions_detail_convert_submit()}
+					{busy ? m.forum_detail_converting() : m.forum_detail_convert_submit()}
 				</Button>
 			</ResponsiveDialogFooter>
 		</>

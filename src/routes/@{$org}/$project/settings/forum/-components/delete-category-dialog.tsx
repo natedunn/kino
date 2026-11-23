@@ -1,5 +1,5 @@
 import type { Id } from '../../../../../../../convex/native/_generated/dataModel';
-import type { DiscussionCategory } from './category-dialog';
+import type { ForumCategory } from './category-dialog';
 
 import { useState } from 'react';
 import { useMutation } from 'convex/react';
@@ -29,13 +29,13 @@ import * as m from '@/paraglide/messages.js';
 import { api } from '../../../../../../../convex/native/_generated/api';
 
 type DeleteCategoryDialogProps = {
-	categories: Array<DiscussionCategory>;
-	category: DiscussionCategory | null;
+	categories: Array<ForumCategory>;
+	category: ForumCategory | null;
 	onOpenChange: (open: boolean) => void;
 	open: boolean;
 };
 
-// Deleting a category moves its discussions into another one, so the dialog
+// Deleting a category moves its topics into another one, so the dialog
 // asks where they should go before confirming.
 export function DeleteCategoryDialog({
 	categories,
@@ -52,8 +52,8 @@ export function DeleteCategoryDialog({
 			>
 				<ResponsiveDialogHeader
 					icon={<Trash2 />}
-					subtitle={m.settings_discussions_delete_description()}
-					title={m.settings_discussions_delete_title({ name: category?.name ?? '' })}
+					subtitle={m.settings_forum_delete_description()}
+					title={m.settings_forum_delete_title({ name: category?.name ?? '' })}
 				/>
 				{category ? (
 					<DeleteCategoryForm
@@ -73,14 +73,12 @@ function DeleteCategoryForm({
 	category,
 	onDone,
 }: {
-	categories: Array<DiscussionCategory>;
-	category: DiscussionCategory;
+	categories: Array<ForumCategory>;
+	category: ForumCategory;
 	onDone: () => void;
 }) {
-	const removeCategory = useMutation(api.discussionCategories.remove);
-	const [moveToId, setMoveToId] = useState<Id<'discussionCategories'> | null>(
-		categories[0]?.id ?? null
-	);
+	const removeCategory = useMutation(api.forumCategories.remove);
+	const [moveToId, setMoveToId] = useState<Id<'forumCategories'> | null>(categories[0]?.id ?? null);
 	const [pending, setPending] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const target = categories.find((entry) => entry.id === moveToId);
@@ -93,7 +91,7 @@ function DeleteCategoryForm({
 			await removeCategory({ categoryId: category.id, moveToCategoryId: target.id });
 			onDone();
 		} catch (removeError) {
-			setError(localizeError(removeError, m.settings_discussions_delete_failed()));
+			setError(localizeError(removeError, m.settings_forum_delete_failed()));
 		} finally {
 			setPending(false);
 		}
@@ -103,7 +101,7 @@ function DeleteCategoryForm({
 		<>
 			<ResponsiveDialogBody className='space-y-4'>
 				<div className='grid gap-2'>
-					<Label>{m.settings_discussions_delete_move_to()}</Label>
+					<Label>{m.settings_forum_delete_move_to()}</Label>
 					<Select onValueChange={(value) => setMoveToId(value)} value={moveToId}>
 						<SelectTrigger className='w-full'>
 							<SelectValue>
@@ -136,7 +134,7 @@ function DeleteCategoryForm({
 				</Button>
 				<Button disabled={!target || pending} onClick={confirm} size='sm' variant='destructive'>
 					<Trash2 />
-					{pending ? m.common_deleting() : m.settings_discussions_delete_confirm()}
+					{pending ? m.common_deleting() : m.settings_forum_delete_confirm()}
 				</Button>
 			</ResponsiveDialogFooter>
 		</>

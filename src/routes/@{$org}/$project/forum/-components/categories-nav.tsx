@@ -13,7 +13,7 @@ import { withCategory } from './list-search';
 // position in the list below (1 = All), mirroring the Feedback boards nav.
 const CATEGORY_SELECT_KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9'];
 
-export type DiscussionCategoryNavItem = {
+export type ForumCategoryNavItem = {
 	id: string;
 	name: string;
 	slug: string;
@@ -28,7 +28,7 @@ export function CategoriesNav({
 	project,
 	selectedSlug,
 }: {
-	categories: Array<DiscussionCategoryNavItem>;
+	categories: Array<ForumCategoryNavItem>;
 	org: string;
 	project: string;
 	/** The resolved category slug; `undefined` means "All". */
@@ -42,7 +42,7 @@ export function CategoriesNav({
 				format: undefined,
 				icon: 'box',
 				id: 'all',
-				name: m.discussions_category_all(),
+				name: m.forum_category_all(),
 				postingPolicy: 'everyone' as const,
 				slug: undefined,
 			},
@@ -55,17 +55,17 @@ export function CategoriesNav({
 		() => [
 			{
 				group: 'Navigation' as const,
-				id: 'discussions.select-category',
+				id: 'topics.select-category',
 				keys: CATEGORY_SELECT_KEYS,
 				label: '1–9',
-				description: m.discussions_category_select_shortcut(),
+				description: m.forum_category_select_shortcut(),
 				run: ({ key }: { key: string }) => {
 					const target = entries.at(Number(key) - 1);
 					if (!target) return;
 					void navigate({
 						params: { org, project },
 						search: (prev) => withCategory(prev, target),
-						to: '/@{$org}/$project/discussions',
+						to: '/@{$org}/$project/forum',
 					});
 				},
 			},
@@ -73,7 +73,7 @@ export function CategoriesNav({
 		[entries, navigate, org, project]
 	);
 
-	useRegisterShortcuts('discussions-categories', shortcuts);
+	useRegisterShortcuts('topics-categories', shortcuts);
 
 	return (
 		<SidebarNavGroup>
@@ -82,7 +82,7 @@ export function CategoriesNav({
 					key={category.id}
 					params={{ org, project }}
 					search={(prev) => withCategory(prev, category)}
-					to='/@{$org}/$project/discussions'
+					to='/@{$org}/$project/forum'
 				>
 					<SidebarNavItem
 						active={category.slug === selectedSlug}
@@ -91,9 +91,9 @@ export function CategoriesNav({
 						<span className='inline-flex items-center gap-2'>
 							{category.name}
 							{category.postingPolicy === 'team' ? (
-								<span className='text-muted-foreground' title={m.discussions_category_team_only()}>
+								<span className='text-muted-foreground' title={m.forum_category_team_only()}>
 									<Lock aria-hidden='true' className='size-3' />
-									<span className='sr-only'>{m.discussions_category_team_only()}</span>
+									<span className='sr-only'>{m.forum_category_team_only()}</span>
 								</span>
 							) : null}
 						</span>

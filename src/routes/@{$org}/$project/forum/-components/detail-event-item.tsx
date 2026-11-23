@@ -21,8 +21,8 @@ import { StatusIcon } from '@/icons';
 import { formatFullDate, formatRelativeDay } from '@/lib/utils/format-timestamp';
 import * as m from '@/paraglide/messages.js';
 
-export type DiscussionEvent = NonNullable<
-	FunctionReturnType<typeof nativeApi.discussions.detail>
+export type TopicEvent = NonNullable<
+	FunctionReturnType<typeof nativeApi.forum.detail>
 >['events'][number];
 
 // Mirrors the Feedback timeline event row so both threads read the same way.
@@ -31,7 +31,7 @@ export const DetailEventItem = memo(function ({
 	isLast = false,
 	params,
 }: {
-	event: DiscussionEvent;
+	event: TopicEvent;
 	isLast?: boolean;
 	params: { org: string; project: string };
 }) {
@@ -91,13 +91,13 @@ const EVENT_ICONS = {
 	answer_marked: CircleCheck,
 	answer_unmarked: CircleX,
 	converted_to_feedback: ArrowRightLeft,
-} satisfies Record<DiscussionEvent['eventType'], unknown>;
+} satisfies Record<TopicEvent['eventType'], unknown>;
 
 function Pill({ children }: { children: ReactNode }) {
 	return <span className='rounded bg-muted px-1.5 py-0.5 text-xs font-medium'>{children}</span>;
 }
 
-function describe(event: DiscussionEvent, params: { org: string; project: string }) {
+function describe(event: TopicEvent, params: { org: string; project: string }) {
 	switch (event.eventType) {
 		case 'title_changed':
 			return (
@@ -109,31 +109,30 @@ function describe(event: DiscussionEvent, params: { org: string; project: string
 		case 'category_changed':
 			return event.oldValue ? (
 				<span>
-					{m.discussions_detail_event_moved_from()} <Pill>{event.oldValue}</Pill> {m.feedback_to()}{' '}
+					{m.forum_detail_event_moved_from()} <Pill>{event.oldValue}</Pill> {m.feedback_to()}{' '}
 					<Pill>{event.newValue ?? m.feedback_unknown()}</Pill>
 				</span>
 			) : (
 				<span>
-					{m.discussions_detail_event_moved_to()}{' '}
-					<Pill>{event.newValue ?? m.feedback_unknown()}</Pill>
+					{m.forum_detail_event_moved_to()} <Pill>{event.newValue ?? m.feedback_unknown()}</Pill>
 				</span>
 			);
 		case 'pinned':
-			return <span>{m.discussions_detail_event_pinned()}</span>;
+			return <span>{m.forum_detail_event_pinned()}</span>;
 		case 'unpinned':
-			return <span>{m.discussions_detail_event_unpinned()}</span>;
+			return <span>{m.forum_detail_event_unpinned()}</span>;
 		case 'locked':
-			return <span>{m.discussions_detail_event_locked()}</span>;
+			return <span>{m.forum_detail_event_locked()}</span>;
 		case 'unlocked':
-			return <span>{m.discussions_detail_event_unlocked()}</span>;
+			return <span>{m.forum_detail_event_unlocked()}</span>;
 		case 'answer_marked':
-			return <span>{m.discussions_detail_event_answer_marked()}</span>;
+			return <span>{m.forum_detail_event_answer_marked()}</span>;
 		case 'answer_unmarked':
-			return <span>{m.discussions_detail_event_answer_unmarked()}</span>;
+			return <span>{m.forum_detail_event_answer_unmarked()}</span>;
 		case 'converted_to_feedback':
 			return (
 				<span className='inline-flex flex-wrap items-center gap-1'>
-					{m.discussions_detail_event_converted()}
+					{m.forum_detail_event_converted()}
 					{event.feedback ? (
 						<Link
 							className='link-text inline-flex items-center gap-1 font-medium'

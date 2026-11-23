@@ -31,17 +31,17 @@ import * as m from '@/paraglide/messages.js';
 
 import { api as nativeApi } from '../../../../../../convex/native/_generated/api';
 
-type NewDiscussionSearch = { category?: string };
+type NewTopicSearch = { category?: string };
 
-export const Route = createFileRoute('/@{$org}/$project/discussions/new/')({
-	validateSearch: (search: Record<string, unknown>): NewDiscussionSearch => {
+export const Route = createFileRoute('/@{$org}/$project/forum/new/')({
+	validateSearch: (search: Record<string, unknown>): NewTopicSearch => {
 		const category = typeof search.category === 'string' ? search.category.trim() : '';
 		return category ? { category } : {};
 	},
 	head: ({ params }) => ({
-		meta: [titleMeta([m.discussions_new_heading(), projectTitle(params.org, params.project)])],
+		meta: [titleMeta([m.forum_new_heading(), projectTitle(params.org, params.project)])],
 	}),
-	// Starting a discussion requires a signed-in user; `discussions.create`
+	// Starting a topic requires a signed-in user; `forum.create`
 	// remains the real boundary (including each category's posting policy).
 	loader: async ({ context, location, params }) => {
 		requireAuth(context, location);
@@ -53,18 +53,18 @@ export const Route = createFileRoute('/@{$org}/$project/discussions/new/')({
 		);
 		if (!projectData?.project) throw notFound();
 		const access = await context.queryClient.ensureQueryData(
-			convexQuery(nativeApi.discussions.viewerAccess, { projectId: projectData.project.id })
+			convexQuery(nativeApi.forum.viewerAccess, { projectId: projectData.project.id })
 		);
 		if (!access?.enabled) throw notFound();
 	},
-	component: NewDiscussionRoute,
+	component: NewTopicRoute,
 });
 
 type PostableCategory = NonNullable<
-	FunctionReturnType<typeof nativeApi.discussions.viewerAccess>
+	FunctionReturnType<typeof nativeApi.forum.viewerAccess>
 >['categories'][number];
 
-function NewDiscussionRoute() {
+function NewTopicRoute() {
 	const params = Route.useParams();
 	const search = Route.useSearch();
 	const projectQuery = useQuery(
@@ -75,7 +75,7 @@ function NewDiscussionRoute() {
 	);
 	const projectId = projectQuery.data?.project.id;
 	const accessQuery = useQuery(
-		convexQuery(nativeApi.discussions.viewerAccess, projectId ? { projectId } : 'skip')
+		convexQuery(nativeApi.forum.viewerAccess, projectId ? { projectId } : 'skip')
 	);
 
 	const access = accessQuery.data;
@@ -88,22 +88,22 @@ function NewDiscussionRoute() {
 				<EmptyState
 					action={
 						<Button asChild variant='outline'>
-							<Link params={params} to='/@{$org}/$project/discussions'>
-								{m.discussions_back()}
+							<Link params={params} to='/@{$org}/$project/forum'>
+								{m.forum_back()}
 							</Link>
 						</Button>
 					}
 					description={
 						access?.writable === false
-							? m.discussions_cannot_create_archived_description()
-							: m.discussions_new_cannot_create_description()
+							? m.forum_cannot_create_archived_description()
+							: m.forum_new_cannot_create_description()
 					}
-					title={m.discussions_cannot_create_title()}
+					title={m.forum_cannot_create_title()}
 				/>
 			</div>
 		);
 	return (
-		<NewDiscussionForm
+		<NewTopicForm
 			categories={categories}
 			initialCategorySlug={search.category}
 			params={params}
@@ -112,7 +112,7 @@ function NewDiscussionRoute() {
 	);
 }
 
-function NewDiscussionForm({
+function NewTopicForm({
 	categories,
 	initialCategorySlug,
 	params,
@@ -125,7 +125,7 @@ function NewDiscussionForm({
 	projectId: Id<'projects'>;
 }) {
 	const navigate = useNavigate();
-	const create = useMutation(nativeApi.discussions.create);
+	const create = useMutation(nativeApi.forum.create);
 	const editorRef = useRef<MarkdownEditorRef>(null);
 	const [categoryId, setCategoryId] = useState(
 		() => (categories.find((category) => category.slug === initialCategorySlug) ?? categories[0]).id
@@ -143,14 +143,14 @@ function NewDiscussionForm({
 		const trimmedTitle = title.trim();
 		const text = editorRef.current?.getText() ?? '';
 		const content = sanitizeEditorContent(editorRef.current?.getHTML() ?? body);
-		if (!category) return setError(m.discussions_new_category_required());
-		if (!trimmedTitle) return setError(m.discussions_title_required());
-		if (trimmedTitle.length > FORM_LIMITS.discussionTitle)
-			return setError(m.discussions_title_too_long({ count: FORM_LIMITS.discussionTitle }));
-		if (!text.trim() || !content) return setError(m.discussions_body_required());
+		if (!category) return setError(m.forum_new_category_required());
+		if (!trimmedTitle) return setError(m.forum_title_required());
+		if (trimmedTitle.length > FORM_LIMITS.forumTopicTitle)
+			return setError(m.forum_title_too_long({ count: FORM_LIMITS.forumTopicTitle }));
+		if (!text.trim() || !content) return setError(m.forum_body_required());
 		// Count visible text, not HTML markup; the server caps stored HTML length.
-		if (text.length > FORM_LIMITS.discussionBody)
-			return setError(m.discussions_body_too_long({ count: FORM_LIMITS.discussionBody }));
+		if (text.length > FORM_LIMITS.forumTopicBody)
+			return setError(m.forum_body_too_long({ count: FORM_LIMITS.forumTopicBody }));
 		setSubmitting(true);
 		try {
 			const result = await create({
@@ -162,10 +162,10 @@ function NewDiscussionForm({
 			editorRef.current?.clearLocalDraft();
 			await navigate({
 				params: { ...params, slug: result.slug },
-				to: '/@{$org}/$project/discussions/$slug',
+				to: '/@{$org}/$project/forum/$slug',
 			});
 		} catch (createError) {
-			setError(localizeError(createError, m.discussions_create_failed()));
+			setError(localizeError(createError, m.forum_create_failed()));
 		} finally {
 			setSubmitting(false);
 		}
@@ -175,7 +175,7 @@ function NewDiscussionForm({
 		<div>
 			<div className='border-b bg-muted/50'>
 				<div className='container pt-12 pb-6'>
-					<h1 className='text-2xl font-bold md:text-3xl'>{m.discussions_new_heading()}</h1>
+					<h1 className='text-2xl font-bold md:text-3xl'>{m.forum_new_heading()}</h1>
 				</div>
 			</div>
 			<div className='container py-6'>
@@ -187,8 +187,8 @@ function NewDiscussionForm({
 					}}
 				>
 					<div className='flex flex-col gap-2'>
-						<label className='text-sm font-medium' htmlFor='discussion-category'>
-							{m.discussions_new_field_category()}
+						<label className='text-sm font-medium' htmlFor='topic-category'>
+							{m.forum_new_field_category()}
 						</label>
 						<Select
 							disabled={submitting}
@@ -198,8 +198,8 @@ function NewDiscussionForm({
 							}}
 							value={category?.id ?? null}
 						>
-							<SelectTrigger className='w-64 max-w-full' id='discussion-category'>
-								<SelectValue placeholder={m.discussions_new_category_placeholder()} />
+							<SelectTrigger className='w-64 max-w-full' id='topic-category'>
+								<SelectValue placeholder={m.forum_new_category_placeholder()} />
 							</SelectTrigger>
 							<SelectContent>
 								{categories.map((item) => (
@@ -215,29 +215,29 @@ function NewDiscussionForm({
 						) : null}
 					</div>
 					<div className='flex flex-col gap-2'>
-						<label className='text-sm font-medium' htmlFor='discussion-title'>
-							{m.discussions_field_title()}
+						<label className='text-sm font-medium' htmlFor='topic-title'>
+							{m.forum_field_title()}
 						</label>
 						<Input
 							autoFocus
 							disabled={submitting}
-							id='discussion-title'
-							maxLength={FORM_LIMITS.discussionTitle}
+							id='topic-title'
+							maxLength={FORM_LIMITS.forumTopicTitle}
 							onChange={(event) => setTitle(event.target.value)}
-							placeholder={m.discussions_title_placeholder()}
+							placeholder={m.forum_title_placeholder()}
 							value={title}
 						/>
 					</div>
 					<div className='flex flex-col gap-2'>
-						<span className='text-sm font-medium'>{m.discussions_field_body()}</span>
+						<span className='text-sm font-medium'>{m.forum_field_body()}</span>
 						<LazyMarkdownEditor
-							ariaLabel={m.discussions_field_body()}
+							ariaLabel={m.forum_field_body()}
 							disabled={submitting}
-							localDraftKey={`discussion-new:${projectId}`}
+							localDraftKey={`topic-new:${projectId}`}
 							minHeight='160px'
 							onChange={setBody}
 							onSubmitShortcut={() => void submit()}
-							placeholder={m.discussions_body_placeholder()}
+							placeholder={m.forum_body_placeholder()}
 							ref={editorRef}
 							value={body}
 						/>
@@ -245,12 +245,12 @@ function NewDiscussionForm({
 					{error ? <InlineAlert variant='danger'>{error}</InlineAlert> : null}
 					<div className='flex justify-end gap-2'>
 						<Button asChild type='button' variant='ghost'>
-							<Link params={params} to='/@{$org}/$project/discussions'>
+							<Link params={params} to='/@{$org}/$project/forum'>
 								{m.common_cancel()}
 							</Link>
 						</Button>
 						<Button disabled={submitting} type='submit'>
-							{submitting ? m.discussions_creating() : m.discussions_create()}
+							{submitting ? m.forum_creating() : m.forum_create()}
 						</Button>
 					</div>
 				</form>

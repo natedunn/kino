@@ -43,10 +43,10 @@ export const updateCategory = v.union(
 	v.literal('announcement')
 );
 export const updateStatus = v.union(v.literal('draft'), v.literal('published'));
-export const discussionsPostingPolicy = v.union(v.literal('everyone'), v.literal('team'));
+export const forumPostingPolicy = v.union(v.literal('everyone'), v.literal('team'));
 // `qa` categories let the author or a moderator mark one reply as the answer.
-export const discussionCategoryFormat = v.union(v.literal('open'), v.literal('qa'));
-export const discussionEventType = v.union(
+export const forumCategoryFormat = v.union(v.literal('open'), v.literal('qa'));
+export const forumEventType = v.union(
 	v.literal('title_changed'),
 	v.literal('category_changed'),
 	v.literal('pinned'),
@@ -221,8 +221,8 @@ export default defineSchema({
 		deletingAt: v.optional(v.number()),
 		storageDeletingAt: v.optional(v.number()),
 		updatesFeaturedMode: v.optional(v.union(v.literal('latest'), v.literal('manual'))),
-		// Unset means enabled; projects can hide Discussions entirely.
-		discussionsEnabled: v.optional(v.boolean()),
+		// Unset means enabled; projects can hide the forum entirely.
+		forumEnabled: v.optional(v.boolean()),
 		organizationId: v.id('organizations'),
 		name: v.string(),
 		slug: v.string(),
@@ -377,14 +377,14 @@ export default defineSchema({
 			v.literal('answer_unmarked'),
 			v.literal('assigned'),
 			v.literal('unassigned'),
-			v.literal('imported_from_discussion')
+			v.literal('imported_from_forum')
 		),
 		metadata: v.optional(
 			v.object({
 				oldValue: v.optional(v.string()),
 				newValue: v.optional(v.string()),
 				targetProfileId: v.optional(v.id('profiles')),
-				discussionId: v.optional(v.id('discussions')),
+				topicId: v.optional(v.id('forumTopics')),
 			})
 		),
 	}).index('by_feedbackId', ['feedbackId']),
@@ -480,31 +480,31 @@ export default defineSchema({
 			'authorProfileId',
 			'content',
 		]),
-	// Topics a project's discussions are filed under. Each carries its own
+	// Categories a project's topics are filed under. Each carries its own
 	// posting policy (Announcements are team-only) and format (Q&A answers).
-	discussionCategories: defineTable({
+	forumCategories: defineTable({
 		projectId: v.id('projects'),
 		name: v.string(),
 		slug: v.string(),
 		description: v.optional(v.string()),
 		icon: v.optional(v.string()),
-		format: discussionCategoryFormat,
-		postingPolicy: discussionsPostingPolicy,
+		format: forumCategoryFormat,
+		postingPolicy: forumPostingPolicy,
 		position: v.number(),
 		updatedAt: v.optional(v.number()),
 		deletingAt: v.optional(v.number()),
 	})
 		.index('by_projectId_and_position', ['projectId', 'position'])
 		.index('by_projectId_and_slug', ['projectId', 'slug']),
-	// A discussion's body is its `initial` comment so it renders and reacts like
+	// A topic's body is its `initial` comment so it renders and reacts like
 	// every reply. `commentCount` excludes that initial comment.
-	discussions: defineTable({
+	forumTopics: defineTable({
 		projectId: v.id('projects'),
-		// Optional only for discussions created before categories existed.
-		categoryId: v.optional(v.id('discussionCategories')),
+		// Optional only for topics created before categories existed.
+		categoryId: v.optional(v.id('forumCategories')),
 		authorProfileId: v.id('profiles'),
-		firstCommentId: v.optional(v.id('discussionComments')),
-		answerCommentId: v.optional(v.id('discussionComments')),
+		firstCommentId: v.optional(v.id('forumComments')),
+		answerCommentId: v.optional(v.id('forumComments')),
 		slug: v.string(),
 		title: v.string(),
 		searchContent: v.string(),
@@ -512,7 +512,7 @@ export default defineSchema({
 		lastActivityAt: v.number(),
 		pinnedAt: v.optional(v.number()),
 		lockedAt: v.optional(v.number()),
-		// Set when a moderator converts the discussion into feedback.
+		// Set when a moderator converts the topic into feedback.
 		convertedFeedbackId: v.optional(v.id('feedback')),
 		deletingAt: v.optional(v.number()),
 	})
@@ -533,40 +533,40 @@ export default defineSchema({
 			searchField: 'searchContent',
 			filterFields: ['projectId', 'categoryId'],
 		}),
-	discussionComments: defineTable({
-		discussionId: v.id('discussions'),
+	forumComments: defineTable({
+		topicId: v.id('forumTopics'),
 		authorProfileId: v.id('profiles'),
 		content: v.string(),
 		initial: v.boolean(),
 		updatedAt: v.optional(v.number()),
 	})
-		.index('by_discussionId_and_initial', ['discussionId', 'initial'])
+		.index('by_topicId_and_initial', ['topicId', 'initial'])
 		.index('by_authorProfileId', ['authorProfileId']),
-	discussionCommentEmotes: defineTable({
-		discussionId: v.id('discussions'),
-		commentId: v.id('discussionComments'),
+	forumCommentEmotes: defineTable({
+		topicId: v.id('forumTopics'),
+		commentId: v.id('forumComments'),
 		authorProfileId: v.id('profiles'),
 		content: emoteReaction,
 	})
-		.index('by_discussionId', ['discussionId'])
+		.index('by_topicId', ['topicId'])
 		.index('by_commentId_and_authorProfileId_and_content', [
 			'commentId',
 			'authorProfileId',
 			'content',
 		]),
 	// Following records interest today; notifications will read it later.
-	discussionWatchers: defineTable({
+	forumWatchers: defineTable({
 		projectId: v.id('projects'),
-		discussionId: v.id('discussions'),
+		topicId: v.id('forumTopics'),
 		profileId: v.id('profiles'),
 	})
-		.index('by_discussionId_and_profileId', ['discussionId', 'profileId'])
+		.index('by_topicId_and_profileId', ['topicId', 'profileId'])
 		.index('by_profileId_and_projectId', ['profileId', 'projectId']),
 	// Moderation and housekeeping changes, shown between replies in the thread.
-	discussionEvents: defineTable({
-		discussionId: v.id('discussions'),
+	forumEvents: defineTable({
+		topicId: v.id('forumTopics'),
 		actorProfileId: v.id('profiles'),
-		eventType: discussionEventType,
+		eventType: forumEventType,
 		metadata: v.optional(
 			v.object({
 				oldValue: v.optional(v.string()),
@@ -574,16 +574,16 @@ export default defineSchema({
 				feedbackId: v.optional(v.id('feedback')),
 			})
 		),
-	}).index('by_discussionId', ['discussionId']),
-	// Links from a discussion to feedback or an update in the same project.
-	discussionLinks: defineTable({
+	}).index('by_topicId', ['topicId']),
+	// Links from a topic to feedback or an update in the same project.
+	forumLinks: defineTable({
 		projectId: v.id('projects'),
-		discussionId: v.id('discussions'),
+		topicId: v.id('forumTopics'),
 		feedbackId: v.optional(v.id('feedback')),
 		updateId: v.optional(v.id('updates')),
 		createdByProfileId: v.id('profiles'),
 	})
-		.index('by_discussionId', ['discussionId'])
+		.index('by_topicId', ['topicId'])
 		.index('by_feedbackId', ['feedbackId'])
 		.index('by_updateId', ['updateId']),
 	updateDeletionJobs: defineTable({ updateId: v.id('updates') }).index('by_updateId', ['updateId']),

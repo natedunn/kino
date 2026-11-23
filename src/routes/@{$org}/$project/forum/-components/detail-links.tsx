@@ -19,37 +19,35 @@ import * as m from '@/paraglide/messages.js';
 
 import { api as nativeApi } from '../../../../../../convex/native/_generated/api';
 
-const ROUTE = '/@{$org}/$project/discussions/$slug/' as const;
+const ROUTE = '/@{$org}/$project/forum/$slug/' as const;
 // Wait for a pause in typing before hitting the search index.
 const SEARCH_DEBOUNCE_MS = 250;
 
-type DiscussionLink = NonNullable<
-	FunctionReturnType<typeof nativeApi.discussions.detail>
->['links'][number];
+type TopicLink = NonNullable<FunctionReturnType<typeof nativeApi.forum.detail>>['links'][number];
 
-// Feedback and updates linked to a discussion. Moderators can add links from a
+// Feedback and updates linked to a topic. Moderators can add links from a
 // search popover and remove them inline.
 export function DetailLinks({
 	canManage,
-	discussionId,
+	topicId,
 	links,
 }: {
 	canManage: boolean;
-	discussionId: Id<'discussions'>;
-	links: Array<DiscussionLink>;
+	topicId: Id<'forumTopics'>;
+	links: Array<TopicLink>;
 }) {
 	const params = useParams({ from: ROUTE });
-	const removeLink = useMutation(nativeApi.discussions.removeLink);
+	const removeLink = useMutation(nativeApi.forum.removeLink);
 	const [busy, setBusy] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
-	async function remove(linkId: Id<'discussionLinks'>) {
+	async function remove(linkId: Id<'forumLinks'>) {
 		setError(null);
 		setBusy(true);
 		try {
 			await removeLink({ linkId });
 		} catch (mutationError) {
-			setError(localizeError(mutationError, m.discussions_detail_link_failed()));
+			setError(localizeError(mutationError, m.forum_detail_link_failed()));
 		} finally {
 			setBusy(false);
 		}
@@ -84,7 +82,7 @@ export function DetailLinks({
 							)}
 							{canManage ? (
 								<Button
-									aria-label={m.discussions_detail_link_remove()}
+									aria-label={m.forum_detail_link_remove()}
 									disabled={busy}
 									onClick={() => void remove(link.id)}
 									size='icon-sm'
@@ -97,7 +95,7 @@ export function DetailLinks({
 					))}
 				</div>
 			) : (
-				<p className='text-sm text-muted-foreground'>{m.discussions_detail_related_empty()}</p>
+				<p className='text-sm text-muted-foreground'>{m.forum_detail_related_empty()}</p>
 			)}
 			{error ? (
 				<InlineAlert size='sm' variant='danger'>
@@ -105,20 +103,17 @@ export function DetailLinks({
 				</InlineAlert>
 			) : null}
 			{canManage ? (
-				<AddLinkPopover
-					discussionId={discussionId}
-					linkedIds={new Set(links.map((link) => link.targetId))}
-				/>
+				<AddLinkPopover topicId={topicId} linkedIds={new Set(links.map((link) => link.targetId))} />
 			) : null}
 		</div>
 	);
 }
 
 function AddLinkPopover({
-	discussionId,
+	topicId,
 	linkedIds,
 }: {
-	discussionId: Id<'discussions'>;
+	topicId: Id<'forumTopics'>;
 	linkedIds: Set<string>;
 }) {
 	const [open, setOpen] = useState(false);
@@ -128,17 +123,13 @@ function AddLinkPopover({
 			<PopoverTrigger asChild>
 				<Button className='w-fit' size='sm' variant='outline'>
 					<Plus className='size-3.5' />
-					{m.discussions_detail_link_add()}
+					{m.forum_detail_link_add()}
 				</Button>
 			</PopoverTrigger>
 			<PopoverContent align='start' className='w-80 p-2'>
 				{/* Only mounted while open, so closing resets the search. */}
 				{open ? (
-					<AddLinkSearch
-						discussionId={discussionId}
-						linkedIds={linkedIds}
-						onAdded={() => setOpen(false)}
-					/>
+					<AddLinkSearch topicId={topicId} linkedIds={linkedIds} onAdded={() => setOpen(false)} />
 				) : null}
 			</PopoverContent>
 		</Popover>
@@ -146,25 +137,22 @@ function AddLinkPopover({
 }
 
 function AddLinkSearch({
-	discussionId,
+	topicId,
 	linkedIds,
 	onAdded,
 }: {
-	discussionId: Id<'discussions'>;
+	topicId: Id<'forumTopics'>;
 	linkedIds: Set<string>;
 	onAdded: () => void;
 }) {
-	const addLink = useMutation(nativeApi.discussions.addLink);
+	const addLink = useMutation(nativeApi.forum.addLink);
 	const [search, setSearch] = useState('');
 	const [debouncedSearch, setDebouncedSearch] = useState('');
 	const [busy, setBusy] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const term = debouncedSearch.trim();
 	const candidates = useQuery(
-		convexQuery(
-			nativeApi.discussions.linkCandidates,
-			term ? { discussionId, search: term } : 'skip'
-		)
+		convexQuery(nativeApi.forum.linkCandidates, term ? { topicId, search: term } : 'skip')
 	);
 	const results = (candidates.data ?? []).filter((item) => !linkedIds.has(item.id));
 
@@ -179,10 +167,10 @@ function AddLinkSearch({
 		setError(null);
 		setBusy(true);
 		try {
-			await addLink({ discussionId, target });
+			await addLink({ topicId, target });
 			onAdded();
 		} catch (mutationError) {
-			setError(localizeError(mutationError, m.discussions_detail_link_failed()));
+			setError(localizeError(mutationError, m.forum_detail_link_failed()));
 		} finally {
 			setBusy(false);
 		}
@@ -193,12 +181,12 @@ function AddLinkSearch({
 			<div className='relative'>
 				<Search className='pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground' />
 				<Input
-					aria-label={m.discussions_detail_link_search_placeholder()}
+					aria-label={m.forum_detail_link_search_placeholder()}
 					autoFocus
 					className='pl-8'
-					maxLength={FORM_LIMITS.discussionSearch}
+					maxLength={FORM_LIMITS.forumSearch}
 					onChange={(event) => setSearch(event.target.value)}
-					placeholder={m.discussions_detail_link_search_placeholder()}
+					placeholder={m.forum_detail_link_search_placeholder()}
 					value={search}
 				/>
 			</div>
@@ -209,10 +197,10 @@ function AddLinkSearch({
 			) : null}
 			{!term ? (
 				<p className='px-1 py-2 text-xs text-muted-foreground'>
-					{m.discussions_detail_link_search_hint()}
+					{m.forum_detail_link_search_hint()}
 				</p>
 			) : candidates.isPending ? (
-				<p className='px-1 py-2 text-xs text-muted-foreground'>{m.discussions_loading()}</p>
+				<p className='px-1 py-2 text-xs text-muted-foreground'>{m.forum_loading()}</p>
 			) : results.length ? (
 				<ul className='flex max-h-72 flex-col overflow-y-auto'>
 					{results.map((item) => (
@@ -237,8 +225,8 @@ function AddLinkSearch({
 								<span className='flex-1 truncate'>{item.title}</span>
 								<span className='shrink-0 text-xs text-muted-foreground'>
 									{item.kind === 'feedback'
-										? m.discussions_detail_link_kind_feedback()
-										: m.discussions_detail_link_kind_update()}
+										? m.forum_detail_link_kind_feedback()
+										: m.forum_detail_link_kind_update()}
 								</span>
 							</button>
 						</li>
@@ -246,7 +234,7 @@ function AddLinkSearch({
 				</ul>
 			) : (
 				<p className='px-1 py-2 text-xs text-muted-foreground'>
-					{m.discussions_detail_link_no_results()}
+					{m.forum_detail_link_no_results()}
 				</p>
 			)}
 		</div>

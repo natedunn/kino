@@ -684,8 +684,8 @@ function DialogDemo() {
 					<DialogHeader>
 						<DialogTitle>Delete this project?</DialogTitle>
 						<DialogDescription>
-							This permanently removes the project and all of its feedback, updates and discussions.
-							This action cannot be undone.
+							This permanently removes the project and all of its feedback, updates and forum
+							topics. This action cannot be undone.
 						</DialogDescription>
 					</DialogHeader>
 					<DialogFooter>

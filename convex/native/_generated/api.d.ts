@@ -224,518 +224,6 @@ export declare const api: {
       null
     >;
   };
-  discussionCategories: {
-    create: FunctionReference<
-      "mutation",
-      "public",
-      {
-        description?: string;
-        format: "open" | "qa";
-        icon?: string;
-        name: string;
-        postingPolicy: "everyone" | "team";
-        projectId: Id<"projects">;
-        slug: string;
-      },
-      Id<"discussionCategories">
-    >;
-    list: FunctionReference<
-      "query",
-      "public",
-      { projectId: Id<"projects"> },
-      null | Array<{
-        description: string | null;
-        format: "open" | "qa";
-        icon: string | null;
-        id: Id<"discussionCategories">;
-        name: string;
-        postingPolicy: "everyone" | "team";
-        slug: string;
-      }>
-    >;
-    remove: FunctionReference<
-      "mutation",
-      "public",
-      {
-        categoryId: Id<"discussionCategories">;
-        moveToCategoryId: Id<"discussionCategories">;
-      },
-      null
-    >;
-    reorder: FunctionReference<
-      "mutation",
-      "public",
-      {
-        categoryIds: Array<Id<"discussionCategories">>;
-        projectId: Id<"projects">;
-      },
-      null
-    >;
-    update: FunctionReference<
-      "mutation",
-      "public",
-      {
-        categoryId: Id<"discussionCategories">;
-        description?: string;
-        format: "open" | "qa";
-        icon?: string;
-        name: string;
-        postingPolicy: "everyone" | "team";
-        slug: string;
-      },
-      null
-    >;
-  };
-  discussions: {
-    addComment: FunctionReference<
-      "mutation",
-      "public",
-      { content: string; discussionId: Id<"discussions"> },
-      Id<"discussionComments">
-    >;
-    addLink: FunctionReference<
-      "mutation",
-      "public",
-      {
-        discussionId: Id<"discussions">;
-        target:
-          | { id: Id<"feedback">; kind: "feedback" }
-          | { id: Id<"updates">; kind: "update" };
-      },
-      null
-    >;
-    convertToFeedback: FunctionReference<
-      "mutation",
-      "public",
-      { boardId: Id<"feedbackBoards">; discussionId: Id<"discussions"> },
-      { feedbackSlug: string }
-    >;
-    create: FunctionReference<
-      "mutation",
-      "public",
-      {
-        body: string;
-        categoryId: Id<"discussionCategories">;
-        projectId: Id<"projects">;
-        title: string;
-      },
-      { id: Id<"discussions">; slug: string }
-    >;
-    detail: FunctionReference<
-      "query",
-      "public",
-      { projectId: Id<"projects">; slug: string },
-      null | {
-        answer: {
-          author: null | {
-            id: Id<"profiles">;
-            imageUrl: string | null;
-            name: string;
-            username: string;
-          };
-          canDelete: boolean;
-          canEdit: boolean;
-          content: string;
-          creationTime: number;
-          emotes: Array<{
-            authorProfileIds: Array<Id<"profiles">>;
-            content:
-              | "heart"
-              | "thumbsUp"
-              | "thumbsDown"
-              | "laugh"
-              | "questionMark"
-              | "sad"
-              | "tada"
-              | "eyes"
-              | "skull"
-              | "explodingHead";
-            count: number;
-          }>;
-          id: Id<"discussionComments">;
-          updatedTime: number | null;
-        } | null;
-        author: null | {
-          id: Id<"profiles">;
-          imageUrl: string | null;
-          name: string;
-          username: string;
-        };
-        canDelete: boolean;
-        canEditTitle: boolean;
-        canMarkAnswer: boolean;
-        canModerate: boolean;
-        canMove: boolean;
-        canReply: boolean;
-        category: {
-          description: string | null;
-          format: "open" | "qa";
-          icon: string | null;
-          id: Id<"discussionCategories">;
-          name: string;
-          postingPolicy: "everyone" | "team";
-          slug: string;
-        } | null;
-        convertedTo: {
-          slug: string;
-          status: "open" | "in-progress" | "closed" | "completed" | "paused";
-          title: string;
-        } | null;
-        discussion: {
-          answerCommentId: Id<"discussionComments"> | null;
-          commentCount: number;
-          createdAt: number;
-          id: Id<"discussions">;
-          lastActivityAt: number;
-          locked: boolean;
-          pinned: boolean;
-          slug: string;
-          title: string;
-        };
-        events: Array<{
-          actor: null | {
-            id: Id<"profiles">;
-            imageUrl: string | null;
-            name: string;
-            username: string;
-          };
-          createdAt: number;
-          eventType:
-            | "title_changed"
-            | "category_changed"
-            | "pinned"
-            | "unpinned"
-            | "locked"
-            | "unlocked"
-            | "answer_marked"
-            | "answer_unmarked"
-            | "converted_to_feedback";
-          feedback: {
-            slug: string;
-            status: "open" | "in-progress" | "closed" | "completed" | "paused";
-            title: string;
-          } | null;
-          id: Id<"discussionEvents">;
-          newValue: string | null;
-          oldValue: string | null;
-        }>;
-        firstComment: {
-          author: null | {
-            id: Id<"profiles">;
-            imageUrl: string | null;
-            name: string;
-            username: string;
-          };
-          canDelete: boolean;
-          canEdit: boolean;
-          content: string;
-          creationTime: number;
-          emotes: Array<{
-            authorProfileIds: Array<Id<"profiles">>;
-            content:
-              | "heart"
-              | "thumbsUp"
-              | "thumbsDown"
-              | "laugh"
-              | "questionMark"
-              | "sad"
-              | "tada"
-              | "eyes"
-              | "skull"
-              | "explodingHead";
-            count: number;
-          }>;
-          id: Id<"discussionComments">;
-          updatedTime: number | null;
-        } | null;
-        links: Array<
-          | {
-              id: Id<"discussionLinks">;
-              kind: "feedback";
-              slug: string;
-              status:
-                | "open"
-                | "in-progress"
-                | "closed"
-                | "completed"
-                | "paused";
-              targetId: Id<"feedback">;
-              title: string;
-            }
-          | {
-              id: Id<"discussionLinks">;
-              kind: "update";
-              slug: string;
-              targetId: Id<"updates">;
-              title: string;
-            }
-        >;
-        participants: {
-          profiles: Array<null | {
-            id: Id<"profiles">;
-            imageUrl: string | null;
-            name: string;
-            username: string;
-          }>;
-          total: number;
-        };
-        viewerFollowing: boolean;
-        viewerProfileId: Id<"profiles"> | null;
-        writable: boolean;
-      }
-    >;
-    linkCandidates: FunctionReference<
-      "query",
-      "public",
-      { discussionId: Id<"discussions">; search: string },
-      Array<
-        | {
-            id: Id<"feedback">;
-            kind: "feedback";
-            status: "open" | "in-progress" | "closed" | "completed" | "paused";
-            title: string;
-          }
-        | { id: Id<"updates">; kind: "update"; title: string }
-      >
-    >;
-    list: FunctionReference<
-      "query",
-      "public",
-      {
-        categoryId?: Id<"discussionCategories">;
-        filter?: "unanswered" | "mine" | "following";
-        paginationOpts: {
-          cursor: string | null;
-          endCursor?: string | null;
-          id?: number;
-          maximumBytesRead?: number;
-          maximumRowsRead?: number;
-          numItems: number;
-        };
-        projectId: Id<"projects">;
-        search?: string;
-        sort?: "activity" | "newest" | "replies";
-      },
-      {
-        continueCursor: string;
-        isDone: boolean;
-        page: Array<{
-          answered: boolean;
-          author: null | {
-            id: Id<"profiles">;
-            imageUrl: string | null;
-            name: string;
-            username: string;
-          };
-          category: null | {
-            format: "open" | "qa";
-            icon: string | null;
-            id: Id<"discussionCategories">;
-            name: string;
-            slug: string;
-          };
-          commentCount: number;
-          createdAt: number;
-          excerpt: string;
-          id: Id<"discussions">;
-          lastActivityAt: number;
-          locked: boolean;
-          pinned: boolean;
-          slug: string;
-          title: string;
-        }>;
-        pageStatus?: "SplitRecommended" | "SplitRequired" | null;
-        splitCursor?: string | null;
-      }
-    >;
-    pinned: FunctionReference<
-      "query",
-      "public",
-      { categoryId?: Id<"discussionCategories">; projectId: Id<"projects"> },
-      Array<{
-        answered: boolean;
-        author: null | {
-          id: Id<"profiles">;
-          imageUrl: string | null;
-          name: string;
-          username: string;
-        };
-        category: null | {
-          format: "open" | "qa";
-          icon: string | null;
-          id: Id<"discussionCategories">;
-          name: string;
-          slug: string;
-        };
-        commentCount: number;
-        createdAt: number;
-        excerpt: string;
-        id: Id<"discussions">;
-        lastActivityAt: number;
-        locked: boolean;
-        pinned: boolean;
-        slug: string;
-        title: string;
-      }>
-    >;
-    remove: FunctionReference<
-      "mutation",
-      "public",
-      { discussionId: Id<"discussions"> },
-      null
-    >;
-    removeComment: FunctionReference<
-      "mutation",
-      "public",
-      { commentId: Id<"discussionComments"> },
-      null
-    >;
-    removeLink: FunctionReference<
-      "mutation",
-      "public",
-      { linkId: Id<"discussionLinks"> },
-      null
-    >;
-    replies: FunctionReference<
-      "query",
-      "public",
-      {
-        discussionId: Id<"discussions">;
-        paginationOpts: {
-          cursor: string | null;
-          endCursor?: string | null;
-          id?: number;
-          maximumBytesRead?: number;
-          maximumRowsRead?: number;
-          numItems: number;
-        };
-      },
-      {
-        continueCursor: string;
-        isDone: boolean;
-        page: Array<{
-          author: null | {
-            id: Id<"profiles">;
-            imageUrl: string | null;
-            name: string;
-            username: string;
-          };
-          canDelete: boolean;
-          canEdit: boolean;
-          content: string;
-          creationTime: number;
-          emotes: Array<{
-            authorProfileIds: Array<Id<"profiles">>;
-            content:
-              | "heart"
-              | "thumbsUp"
-              | "thumbsDown"
-              | "laugh"
-              | "questionMark"
-              | "sad"
-              | "tada"
-              | "eyes"
-              | "skull"
-              | "explodingHead";
-            count: number;
-          }>;
-          id: Id<"discussionComments">;
-          updatedTime: number | null;
-        }>;
-        pageStatus?: "SplitRecommended" | "SplitRequired" | null;
-        splitCursor?: string | null;
-      }
-    >;
-    setAnswer: FunctionReference<
-      "mutation",
-      "public",
-      {
-        commentId: Id<"discussionComments"> | null;
-        discussionId: Id<"discussions">;
-      },
-      null
-    >;
-    setCategory: FunctionReference<
-      "mutation",
-      "public",
-      {
-        categoryId: Id<"discussionCategories">;
-        discussionId: Id<"discussions">;
-      },
-      null
-    >;
-    setLocked: FunctionReference<
-      "mutation",
-      "public",
-      { discussionId: Id<"discussions">; locked: boolean },
-      null
-    >;
-    setPinned: FunctionReference<
-      "mutation",
-      "public",
-      { discussionId: Id<"discussions">; pinned: boolean },
-      null
-    >;
-    toggleFollow: FunctionReference<
-      "mutation",
-      "public",
-      { discussionId: Id<"discussions"> },
-      { following: boolean }
-    >;
-    toggleReaction: FunctionReference<
-      "mutation",
-      "public",
-      {
-        commentId: Id<"discussionComments">;
-        content:
-          | "heart"
-          | "thumbsUp"
-          | "thumbsDown"
-          | "laugh"
-          | "questionMark"
-          | "sad"
-          | "tada"
-          | "eyes"
-          | "skull"
-          | "explodingHead";
-      },
-      boolean
-    >;
-    updateComment: FunctionReference<
-      "mutation",
-      "public",
-      { commentId: Id<"discussionComments">; content: string },
-      null
-    >;
-    updateTitle: FunctionReference<
-      "mutation",
-      "public",
-      { discussionId: Id<"discussions">; title: string },
-      null
-    >;
-    viewerAccess: FunctionReference<
-      "query",
-      "public",
-      { projectId: Id<"projects"> },
-      null | {
-        canCreate: boolean;
-        canManage: boolean;
-        categories: Array<{
-          canPost: boolean;
-          description: string | null;
-          format: "open" | "qa";
-          icon: string | null;
-          id: Id<"discussionCategories">;
-          name: string;
-          postingPolicy: "everyone" | "team";
-          slug: string;
-        }>;
-        enabled: boolean;
-        signedIn: boolean;
-        writable: boolean;
-      }
-    >;
-  };
   feedback: {
     addRelation: FunctionReference<
       "mutation",
@@ -874,7 +362,6 @@ export declare const api: {
                   name: string;
                   username: string;
                 };
-                discussion: null | { slug: string; title: string };
                 eventType:
                   | "status_changed"
                   | "priority_changed"
@@ -884,14 +371,15 @@ export declare const api: {
                   | "answer_unmarked"
                   | "assigned"
                   | "unassigned"
-                  | "imported_from_discussion";
+                  | "imported_from_forum";
                 id: Id<"feedbackEvents">;
                 metadata: null | {
-                  discussionId?: Id<"discussions">;
                   newValue?: string;
                   oldValue?: string;
                   targetProfileId?: Id<"profiles">;
+                  topicId?: Id<"forumTopics">;
                 };
+                topic: null | { slug: string; title: string };
               };
               type: "event";
             }
@@ -1008,7 +496,6 @@ export declare const api: {
                   name: string;
                   username: string;
                 };
-                discussion: null | { slug: string; title: string };
                 eventType:
                   | "status_changed"
                   | "priority_changed"
@@ -1018,14 +505,15 @@ export declare const api: {
                   | "answer_unmarked"
                   | "assigned"
                   | "unassigned"
-                  | "imported_from_discussion";
+                  | "imported_from_forum";
                 id: Id<"feedbackEvents">;
                 metadata: null | {
-                  discussionId?: Id<"discussions">;
                   newValue?: string;
                   oldValue?: string;
                   targetProfileId?: Id<"profiles">;
+                  topicId?: Id<"forumTopics">;
                 };
+                topic: null | { slug: string; title: string };
               };
               type: "event";
             }
@@ -1704,6 +1192,509 @@ export declare const api: {
       }
     >;
   };
+  forum: {
+    addComment: FunctionReference<
+      "mutation",
+      "public",
+      { content: string; topicId: Id<"forumTopics"> },
+      Id<"forumComments">
+    >;
+    addLink: FunctionReference<
+      "mutation",
+      "public",
+      {
+        target:
+          | { id: Id<"feedback">; kind: "feedback" }
+          | { id: Id<"updates">; kind: "update" };
+        topicId: Id<"forumTopics">;
+      },
+      null
+    >;
+    convertToFeedback: FunctionReference<
+      "mutation",
+      "public",
+      { boardId: Id<"feedbackBoards">; topicId: Id<"forumTopics"> },
+      { feedbackSlug: string }
+    >;
+    create: FunctionReference<
+      "mutation",
+      "public",
+      {
+        body: string;
+        categoryId: Id<"forumCategories">;
+        projectId: Id<"projects">;
+        title: string;
+      },
+      { id: Id<"forumTopics">; slug: string }
+    >;
+    detail: FunctionReference<
+      "query",
+      "public",
+      { projectId: Id<"projects">; slug: string },
+      null | {
+        answer: {
+          author: null | {
+            id: Id<"profiles">;
+            imageUrl: string | null;
+            name: string;
+            username: string;
+          };
+          canDelete: boolean;
+          canEdit: boolean;
+          content: string;
+          creationTime: number;
+          emotes: Array<{
+            authorProfileIds: Array<Id<"profiles">>;
+            content:
+              | "heart"
+              | "thumbsUp"
+              | "thumbsDown"
+              | "laugh"
+              | "questionMark"
+              | "sad"
+              | "tada"
+              | "eyes"
+              | "skull"
+              | "explodingHead";
+            count: number;
+          }>;
+          id: Id<"forumComments">;
+          updatedTime: number | null;
+        } | null;
+        author: null | {
+          id: Id<"profiles">;
+          imageUrl: string | null;
+          name: string;
+          username: string;
+        };
+        canDelete: boolean;
+        canEditTitle: boolean;
+        canMarkAnswer: boolean;
+        canModerate: boolean;
+        canMove: boolean;
+        canReply: boolean;
+        category: {
+          description: string | null;
+          format: "open" | "qa";
+          icon: string | null;
+          id: Id<"forumCategories">;
+          name: string;
+          postingPolicy: "everyone" | "team";
+          slug: string;
+        } | null;
+        convertedTo: {
+          slug: string;
+          status: "open" | "in-progress" | "closed" | "completed" | "paused";
+          title: string;
+        } | null;
+        events: Array<{
+          actor: null | {
+            id: Id<"profiles">;
+            imageUrl: string | null;
+            name: string;
+            username: string;
+          };
+          createdAt: number;
+          eventType:
+            | "title_changed"
+            | "category_changed"
+            | "pinned"
+            | "unpinned"
+            | "locked"
+            | "unlocked"
+            | "answer_marked"
+            | "answer_unmarked"
+            | "converted_to_feedback";
+          feedback: {
+            slug: string;
+            status: "open" | "in-progress" | "closed" | "completed" | "paused";
+            title: string;
+          } | null;
+          id: Id<"forumEvents">;
+          newValue: string | null;
+          oldValue: string | null;
+        }>;
+        firstComment: {
+          author: null | {
+            id: Id<"profiles">;
+            imageUrl: string | null;
+            name: string;
+            username: string;
+          };
+          canDelete: boolean;
+          canEdit: boolean;
+          content: string;
+          creationTime: number;
+          emotes: Array<{
+            authorProfileIds: Array<Id<"profiles">>;
+            content:
+              | "heart"
+              | "thumbsUp"
+              | "thumbsDown"
+              | "laugh"
+              | "questionMark"
+              | "sad"
+              | "tada"
+              | "eyes"
+              | "skull"
+              | "explodingHead";
+            count: number;
+          }>;
+          id: Id<"forumComments">;
+          updatedTime: number | null;
+        } | null;
+        links: Array<
+          | {
+              id: Id<"forumLinks">;
+              kind: "feedback";
+              slug: string;
+              status:
+                | "open"
+                | "in-progress"
+                | "closed"
+                | "completed"
+                | "paused";
+              targetId: Id<"feedback">;
+              title: string;
+            }
+          | {
+              id: Id<"forumLinks">;
+              kind: "update";
+              slug: string;
+              targetId: Id<"updates">;
+              title: string;
+            }
+        >;
+        participants: {
+          profiles: Array<null | {
+            id: Id<"profiles">;
+            imageUrl: string | null;
+            name: string;
+            username: string;
+          }>;
+          total: number;
+        };
+        topic: {
+          answerCommentId: Id<"forumComments"> | null;
+          commentCount: number;
+          createdAt: number;
+          id: Id<"forumTopics">;
+          lastActivityAt: number;
+          locked: boolean;
+          pinned: boolean;
+          slug: string;
+          title: string;
+        };
+        viewerFollowing: boolean;
+        viewerProfileId: Id<"profiles"> | null;
+        writable: boolean;
+      }
+    >;
+    linkCandidates: FunctionReference<
+      "query",
+      "public",
+      { search: string; topicId: Id<"forumTopics"> },
+      Array<
+        | {
+            id: Id<"feedback">;
+            kind: "feedback";
+            status: "open" | "in-progress" | "closed" | "completed" | "paused";
+            title: string;
+          }
+        | { id: Id<"updates">; kind: "update"; title: string }
+      >
+    >;
+    list: FunctionReference<
+      "query",
+      "public",
+      {
+        categoryId?: Id<"forumCategories">;
+        filter?: "unanswered" | "mine" | "following";
+        paginationOpts: {
+          cursor: string | null;
+          endCursor?: string | null;
+          id?: number;
+          maximumBytesRead?: number;
+          maximumRowsRead?: number;
+          numItems: number;
+        };
+        projectId: Id<"projects">;
+        search?: string;
+        sort?: "activity" | "newest" | "replies";
+      },
+      {
+        continueCursor: string;
+        isDone: boolean;
+        page: Array<{
+          answered: boolean;
+          author: null | {
+            id: Id<"profiles">;
+            imageUrl: string | null;
+            name: string;
+            username: string;
+          };
+          category: null | {
+            format: "open" | "qa";
+            icon: string | null;
+            id: Id<"forumCategories">;
+            name: string;
+            slug: string;
+          };
+          commentCount: number;
+          createdAt: number;
+          excerpt: string;
+          id: Id<"forumTopics">;
+          lastActivityAt: number;
+          locked: boolean;
+          pinned: boolean;
+          slug: string;
+          title: string;
+        }>;
+        pageStatus?: "SplitRecommended" | "SplitRequired" | null;
+        splitCursor?: string | null;
+      }
+    >;
+    pinned: FunctionReference<
+      "query",
+      "public",
+      { categoryId?: Id<"forumCategories">; projectId: Id<"projects"> },
+      Array<{
+        answered: boolean;
+        author: null | {
+          id: Id<"profiles">;
+          imageUrl: string | null;
+          name: string;
+          username: string;
+        };
+        category: null | {
+          format: "open" | "qa";
+          icon: string | null;
+          id: Id<"forumCategories">;
+          name: string;
+          slug: string;
+        };
+        commentCount: number;
+        createdAt: number;
+        excerpt: string;
+        id: Id<"forumTopics">;
+        lastActivityAt: number;
+        locked: boolean;
+        pinned: boolean;
+        slug: string;
+        title: string;
+      }>
+    >;
+    remove: FunctionReference<
+      "mutation",
+      "public",
+      { topicId: Id<"forumTopics"> },
+      null
+    >;
+    removeComment: FunctionReference<
+      "mutation",
+      "public",
+      { commentId: Id<"forumComments"> },
+      null
+    >;
+    removeLink: FunctionReference<
+      "mutation",
+      "public",
+      { linkId: Id<"forumLinks"> },
+      null
+    >;
+    replies: FunctionReference<
+      "query",
+      "public",
+      {
+        paginationOpts: {
+          cursor: string | null;
+          endCursor?: string | null;
+          id?: number;
+          maximumBytesRead?: number;
+          maximumRowsRead?: number;
+          numItems: number;
+        };
+        topicId: Id<"forumTopics">;
+      },
+      {
+        continueCursor: string;
+        isDone: boolean;
+        page: Array<{
+          author: null | {
+            id: Id<"profiles">;
+            imageUrl: string | null;
+            name: string;
+            username: string;
+          };
+          canDelete: boolean;
+          canEdit: boolean;
+          content: string;
+          creationTime: number;
+          emotes: Array<{
+            authorProfileIds: Array<Id<"profiles">>;
+            content:
+              | "heart"
+              | "thumbsUp"
+              | "thumbsDown"
+              | "laugh"
+              | "questionMark"
+              | "sad"
+              | "tada"
+              | "eyes"
+              | "skull"
+              | "explodingHead";
+            count: number;
+          }>;
+          id: Id<"forumComments">;
+          updatedTime: number | null;
+        }>;
+        pageStatus?: "SplitRecommended" | "SplitRequired" | null;
+        splitCursor?: string | null;
+      }
+    >;
+    setAnswer: FunctionReference<
+      "mutation",
+      "public",
+      { commentId: Id<"forumComments"> | null; topicId: Id<"forumTopics"> },
+      null
+    >;
+    setCategory: FunctionReference<
+      "mutation",
+      "public",
+      { categoryId: Id<"forumCategories">; topicId: Id<"forumTopics"> },
+      null
+    >;
+    setLocked: FunctionReference<
+      "mutation",
+      "public",
+      { locked: boolean; topicId: Id<"forumTopics"> },
+      null
+    >;
+    setPinned: FunctionReference<
+      "mutation",
+      "public",
+      { pinned: boolean; topicId: Id<"forumTopics"> },
+      null
+    >;
+    toggleFollow: FunctionReference<
+      "mutation",
+      "public",
+      { topicId: Id<"forumTopics"> },
+      { following: boolean }
+    >;
+    toggleReaction: FunctionReference<
+      "mutation",
+      "public",
+      {
+        commentId: Id<"forumComments">;
+        content:
+          | "heart"
+          | "thumbsUp"
+          | "thumbsDown"
+          | "laugh"
+          | "questionMark"
+          | "sad"
+          | "tada"
+          | "eyes"
+          | "skull"
+          | "explodingHead";
+      },
+      boolean
+    >;
+    updateComment: FunctionReference<
+      "mutation",
+      "public",
+      { commentId: Id<"forumComments">; content: string },
+      null
+    >;
+    updateTitle: FunctionReference<
+      "mutation",
+      "public",
+      { title: string; topicId: Id<"forumTopics"> },
+      null
+    >;
+    viewerAccess: FunctionReference<
+      "query",
+      "public",
+      { projectId: Id<"projects"> },
+      null | {
+        canCreate: boolean;
+        canManage: boolean;
+        categories: Array<{
+          canPost: boolean;
+          description: string | null;
+          format: "open" | "qa";
+          icon: string | null;
+          id: Id<"forumCategories">;
+          name: string;
+          postingPolicy: "everyone" | "team";
+          slug: string;
+        }>;
+        enabled: boolean;
+        signedIn: boolean;
+        writable: boolean;
+      }
+    >;
+  };
+  forumCategories: {
+    create: FunctionReference<
+      "mutation",
+      "public",
+      {
+        description?: string;
+        format: "open" | "qa";
+        icon?: string;
+        name: string;
+        postingPolicy: "everyone" | "team";
+        projectId: Id<"projects">;
+        slug: string;
+      },
+      Id<"forumCategories">
+    >;
+    list: FunctionReference<
+      "query",
+      "public",
+      { projectId: Id<"projects"> },
+      null | Array<{
+        description: string | null;
+        format: "open" | "qa";
+        icon: string | null;
+        id: Id<"forumCategories">;
+        name: string;
+        postingPolicy: "everyone" | "team";
+        slug: string;
+      }>
+    >;
+    remove: FunctionReference<
+      "mutation",
+      "public",
+      {
+        categoryId: Id<"forumCategories">;
+        moveToCategoryId: Id<"forumCategories">;
+      },
+      null
+    >;
+    reorder: FunctionReference<
+      "mutation",
+      "public",
+      { categoryIds: Array<Id<"forumCategories">>; projectId: Id<"projects"> },
+      null
+    >;
+    update: FunctionReference<
+      "mutation",
+      "public",
+      {
+        categoryId: Id<"forumCategories">;
+        description?: string;
+        format: "open" | "qa";
+        icon?: string;
+        name: string;
+        postingPolicy: "everyone" | "team";
+        slug: string;
+      },
+      null
+    >;
+  };
   github: {
     completeSignInGithub: FunctionReference<
       "mutation",
@@ -2131,7 +2122,7 @@ export declare const api: {
           _id: Id<"projects">;
           deletingAt?: number;
           description?: string;
-          discussionsEnabled?: boolean;
+          forumEnabled?: boolean;
           name: string;
           organizationId: Id<"organizations">;
           slug: string;
@@ -2502,7 +2493,7 @@ export declare const api: {
         project: {
           createdAt: number;
           description: string;
-          discussionsEnabled: boolean;
+          forumEnabled: boolean;
           id: Id<"projects">;
           name: string;
           slug: string;
@@ -2763,7 +2754,7 @@ export declare const api: {
       "public",
       {
         description: string;
-        discussionsEnabled?: boolean;
+        forumEnabled?: boolean;
         id: Id<"projects">;
         name: string;
         slug: string;
@@ -2773,7 +2764,7 @@ export declare const api: {
       },
       {
         description: string;
-        discussionsEnabled: boolean;
+        forumEnabled: boolean;
         id: Id<"projects">;
         name: string;
         slug: string;
@@ -3393,47 +3384,11 @@ export declare const api: {
         sections: {
           comments?: {
             counts: {
-              discussionComments: number;
               feedbackComments: number;
+              forumComments: number;
               total: number;
               updateComments: number;
             };
-            discussionComments: Array<{
-              content: string;
-              context:
-                | { contextAccess: "missing"; discussionId: Id<"discussions"> }
-                | {
-                    contextAccess: "inaccessible";
-                    discussionId: Id<"discussions">;
-                    projectId: Id<"projects">;
-                  }
-                | {
-                    contextAccess: "visible";
-                    discussion: {
-                      id: Id<"discussions">;
-                      slug: string;
-                      title: string;
-                    };
-                    organization: null | {
-                      id: Id<"organizations">;
-                      name: string;
-                      slug: string;
-                    };
-                    project: {
-                      id: Id<"projects">;
-                      name: string;
-                      orgSlug: string;
-                      slug: string;
-                      visibility: "public" | "private" | "archived";
-                    };
-                  };
-              createdAt: string | null;
-              discussionId: Id<"discussions">;
-              id: Id<"discussionComments">;
-              initial: boolean;
-              source: "discussion";
-              updatedAt: string | null;
-            }>;
             feedbackComments: Array<{
               content: string;
               context:
@@ -3480,6 +3435,42 @@ export declare const api: {
               initial: boolean;
               replyFeedbackCommentId: Id<"feedbackComments"> | null;
               source: "feedback";
+              updatedAt: string | null;
+            }>;
+            forumComments: Array<{
+              content: string;
+              context:
+                | { contextAccess: "missing"; topicId: Id<"forumTopics"> }
+                | {
+                    contextAccess: "inaccessible";
+                    projectId: Id<"projects">;
+                    topicId: Id<"forumTopics">;
+                  }
+                | {
+                    contextAccess: "visible";
+                    organization: null | {
+                      id: Id<"organizations">;
+                      name: string;
+                      slug: string;
+                    };
+                    project: {
+                      id: Id<"projects">;
+                      name: string;
+                      orgSlug: string;
+                      slug: string;
+                      visibility: "public" | "private" | "archived";
+                    };
+                    topic: {
+                      id: Id<"forumTopics">;
+                      slug: string;
+                      title: string;
+                    };
+                  };
+              createdAt: string | null;
+              id: Id<"forumComments">;
+              initial: boolean;
+              source: "forum";
+              topicId: Id<"forumTopics">;
               updatedAt: string | null;
             }>;
             updateComments: Array<{
@@ -3549,43 +3540,6 @@ export declare const api: {
  * ```
  */
 export declare const internal: {
-  discussionCategories: {
-    backfillDefaults: FunctionReference<
-      "mutation",
-      "internal",
-      { cursor?: string | null },
-      null
-    >;
-    fileUncategorized: FunctionReference<
-      "mutation",
-      "internal",
-      { projectId: Id<"projects"> },
-      null
-    >;
-    reassignBatch: FunctionReference<
-      "mutation",
-      "internal",
-      {
-        categoryId: Id<"discussionCategories">;
-        moveToCategoryId: Id<"discussionCategories">;
-      },
-      null
-    >;
-  };
-  discussions: {
-    cleanComment: FunctionReference<
-      "mutation",
-      "internal",
-      { commentId: Id<"discussionComments"> },
-      null
-    >;
-    deleteBatch: FunctionReference<
-      "mutation",
-      "internal",
-      { id: Id<"discussions"> },
-      null
-    >;
-  };
   feedback: {
     processDeletionJob: FunctionReference<
       "mutation",
@@ -3774,6 +3728,43 @@ export declare const internal: {
       "action",
       "internal",
       { jobId: Id<"storageCleanupJobs"> },
+      null
+    >;
+  };
+  forum: {
+    cleanComment: FunctionReference<
+      "mutation",
+      "internal",
+      { commentId: Id<"forumComments"> },
+      null
+    >;
+    deleteBatch: FunctionReference<
+      "mutation",
+      "internal",
+      { id: Id<"forumTopics"> },
+      null
+    >;
+  };
+  forumCategories: {
+    backfillDefaults: FunctionReference<
+      "mutation",
+      "internal",
+      { cursor?: string | null },
+      null
+    >;
+    fileUncategorized: FunctionReference<
+      "mutation",
+      "internal",
+      { projectId: Id<"projects"> },
+      null
+    >;
+    reassignBatch: FunctionReference<
+      "mutation",
+      "internal",
+      {
+        categoryId: Id<"forumCategories">;
+        moveToCategoryId: Id<"forumCategories">;
+      },
       null
     >;
   };

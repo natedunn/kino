@@ -1,4 +1,4 @@
-import type { DiscussionCategory } from './-components/category-dialog';
+import type { ForumCategory } from './-components/category-dialog';
 
 import { useState } from 'react';
 import { convexQuery } from '@convex-dev/react-query';
@@ -26,12 +26,12 @@ import { CategoryDialog } from './-components/category-dialog';
 import { DeleteCategoryDialog } from './-components/delete-category-dialog';
 import { Switch } from './-components/switch';
 
-// Mirrors MAX_CATEGORIES in convex/native/discussionCategories.ts.
+// Mirrors MAX_CATEGORIES in convex/native/forumCategories.ts.
 const MAX_CATEGORIES = 25;
 
-export const Route = createFileRoute('/@{$org}/$project/settings/discussions/')({
+export const Route = createFileRoute('/@{$org}/$project/settings/forum/')({
 	head: () => ({
-		meta: [titleMeta([m.settings_discussions()])],
+		meta: [titleMeta([m.settings_forum()])],
 	}),
 	loader: async ({ context, params }) => {
 		const details = await context.queryClient.ensureQueryData(
@@ -43,14 +43,14 @@ export const Route = createFileRoute('/@{$org}/$project/settings/discussions/')(
 		const projectId = details?.project.id;
 		if (projectId) {
 			await context.queryClient.ensureQueryData(
-				convexQuery(api.discussionCategories.list, { projectId })
+				convexQuery(api.forumCategories.list, { projectId })
 			);
 		}
 	},
-	component: DiscussionsSettingsRoute,
+	component: ForumSettingsRoute,
 });
 
-function DiscussionsSettingsRoute() {
+function ForumSettingsRoute() {
 	const params = Route.useParams();
 	const crpc = useSettingsAPI();
 
@@ -62,17 +62,17 @@ function DiscussionsSettingsRoute() {
 	);
 	const project = detailsQuery.data?.project;
 	const categoriesQuery = useQuery(
-		convexQuery(api.discussionCategories.list, project ? { projectId: project.id } : 'skip')
+		convexQuery(api.forumCategories.list, project ? { projectId: project.id } : 'skip')
 	);
 
 	const updateProject = useTanstackMutation(crpc.project.update.mutationOptions());
-	const reorderCategories = useMutation(api.discussionCategories.reorder).withOptimisticUpdate(
+	const reorderCategories = useMutation(api.forumCategories.reorder).withOptimisticUpdate(
 		(store, { categoryIds, projectId }) => {
-			const current = store.getQuery(api.discussionCategories.list, { projectId });
+			const current = store.getQuery(api.forumCategories.list, { projectId });
 			if (!current) return;
 			const byId = new Map(current.map((category) => [category.id, category]));
 			store.setQuery(
-				api.discussionCategories.list,
+				api.forumCategories.list,
 				{ projectId },
 				categoryIds.flatMap((id) => byId.get(id) ?? [])
 			);
@@ -81,11 +81,11 @@ function DiscussionsSettingsRoute() {
 
 	// Dialogs keep their last category while closing so the content doesn't
 	// change mid-animation; `category: null` in the editor means "new category".
-	const [editor, setEditor] = useState<{ category: DiscussionCategory | null; open: boolean }>({
+	const [editor, setEditor] = useState<{ category: ForumCategory | null; open: boolean }>({
 		category: null,
 		open: false,
 	});
-	const [deleter, setDeleter] = useState<{ category: DiscussionCategory | null; open: boolean }>({
+	const [deleter, setDeleter] = useState<{ category: ForumCategory | null; open: boolean }>({
 		category: null,
 		open: false,
 	});
@@ -98,8 +98,8 @@ function DiscussionsSettingsRoute() {
 	if (!project || !(permissions?.canEditSettings || permissions?.canManageContent)) {
 		return (
 			<EmptyState
-				title={m.settings_discussions_unavailable()}
-				description={m.settings_discussions_unavailable_description()}
+				title={m.settings_forum_unavailable()}
+				description={m.settings_forum_unavailable_description()}
 			/>
 		);
 	}
@@ -110,14 +110,14 @@ function DiscussionsSettingsRoute() {
 	const categories = categoriesQuery.data ?? [];
 	// Reflect the pending value so the switch responds before the save lands.
 	const enabled = updateProject.isPending
-		? (updateProject.variables.discussionsEnabled ?? project.discussionsEnabled)
-		: project.discussionsEnabled;
+		? (updateProject.variables.forumEnabled ?? project.forumEnabled)
+		: project.forumEnabled;
 
-	const setEnabled = (discussionsEnabled: boolean) => {
+	const setEnabled = (forumEnabled: boolean) => {
 		// updateProject replaces every editable field, so resend the current ones.
 		updateProject.mutate({
 			description: project.description,
-			discussionsEnabled,
+			forumEnabled,
 			id: project.id,
 			name: project.name,
 			slug: project.slug,
@@ -135,7 +135,7 @@ function DiscussionsSettingsRoute() {
 		try {
 			await reorderCategories({ categoryIds: ids, projectId: project.id });
 		} catch (error) {
-			await toast.error(localizeError(error, m.settings_discussions_reorder_failed()));
+			await toast.error(localizeError(error, m.settings_forum_reorder_failed()));
 		}
 	};
 
@@ -143,39 +143,39 @@ function DiscussionsSettingsRoute() {
 		<section className='space-y-6'>
 			{isArchived ? <ArchivedSettingsNotice /> : null}
 			<header className='border-b pb-4'>
-				<h2 className='text-xl font-semibold'>{m.settings_discussions()}</h2>
-				<p className='mt-1 text-sm text-muted-foreground'>{m.settings_discussions_description()}</p>
+				<h2 className='text-xl font-semibold'>{m.settings_forum()}</h2>
+				<p className='mt-1 text-sm text-muted-foreground'>{m.settings_forum_description()}</p>
 			</header>
 
 			<div className='flex items-start justify-between gap-6 rounded-xl border bg-card p-5'>
 				<LabelWrapper className='mb-0'>
-					<Label htmlFor='discussions-enabled'>{m.settings_discussions_enable_label()}</Label>
-					<LabelDescription>{m.settings_discussions_enable_description()}</LabelDescription>
+					<Label htmlFor='topics-enabled'>{m.settings_forum_enable_label()}</Label>
+					<LabelDescription>{m.settings_forum_enable_description()}</LabelDescription>
 					{permissions.canEditSettings ? null : (
-						<LabelDescription>{m.settings_discussions_enable_read_only()}</LabelDescription>
+						<LabelDescription>{m.settings_forum_enable_read_only()}</LabelDescription>
 					)}
 				</LabelWrapper>
 				<Switch
 					checked={enabled}
 					disabled={!canToggle || updateProject.isPending}
-					id='discussions-enabled'
+					id='topics-enabled'
 					onCheckedChange={setEnabled}
 				/>
 			</div>
 			{updateProject.error ? (
 				<InlineAlert variant='danger'>
-					{localizeError(updateProject.error, m.settings_discussions_toggle_failed())}
+					{localizeError(updateProject.error, m.settings_forum_toggle_failed())}
 				</InlineAlert>
 			) : null}
 
 			<div className='space-y-4'>
 				<div className='flex flex-col items-start gap-4 sm:flex-row sm:items-end sm:justify-between'>
 					<div>
-						<h3 className='text-base font-semibold'>{m.settings_discussions_categories()}</h3>
+						<h3 className='text-base font-semibold'>{m.settings_forum_categories()}</h3>
 						<p className='mt-1 text-sm text-muted-foreground'>
 							{permissions.canManageContent
-								? m.settings_discussions_categories_description()
-								: m.settings_discussions_categories_read_only()}
+								? m.settings_forum_categories_description()
+								: m.settings_forum_categories_read_only()}
 						</p>
 					</div>
 					{canManage ? (
@@ -184,12 +184,12 @@ function DiscussionsSettingsRoute() {
 							onClick={() => setEditor({ category: null, open: true })}
 							title={
 								categories.length >= MAX_CATEGORIES
-									? m.settings_discussions_category_limit({ count: MAX_CATEGORIES })
+									? m.settings_forum_category_limit({ count: MAX_CATEGORIES })
 									: undefined
 							}
 						>
 							<Plus className='size-4' />
-							{m.settings_discussions_category_new()}
+							{m.settings_forum_category_new()}
 						</Button>
 					) : null}
 				</div>
@@ -207,16 +207,16 @@ function DiscussionsSettingsRoute() {
 									<div className='flex flex-wrap items-center gap-2'>
 										<span className='truncate font-semibold'>{category.name}</span>
 										{category.format === 'qa' ? (
-											<Badge variant='secondary'>{m.settings_discussions_badge_qa()}</Badge>
+											<Badge variant='secondary'>{m.settings_forum_badge_qa()}</Badge>
 										) : null}
 										{category.postingPolicy === 'team' ? (
-											<Badge variant='outline'>{m.settings_discussions_badge_team()}</Badge>
+											<Badge variant='outline'>{m.settings_forum_badge_team()}</Badge>
 										) : null}
 									</div>
 									<div className='mt-1 text-sm text-muted-foreground'>
 										{category.description ?? (
 											<span className='italic opacity-60'>
-												{m.settings_discussions_category_no_description()}
+												{m.settings_forum_category_no_description()}
 											</span>
 										)}
 									</div>
@@ -224,7 +224,7 @@ function DiscussionsSettingsRoute() {
 								{canManage ? (
 									<div className='flex shrink-0 items-center gap-0.5'>
 										<Button
-											aria-label={m.settings_discussions_category_move_up({ name: category.name })}
+											aria-label={m.settings_forum_category_move_up({ name: category.name })}
 											disabled={index === 0}
 											onClick={() => void move(index, -1)}
 											size='icon-sm'
@@ -233,7 +233,7 @@ function DiscussionsSettingsRoute() {
 											<ArrowUp className='size-4' />
 										</Button>
 										<Button
-											aria-label={m.settings_discussions_category_move_down({
+											aria-label={m.settings_forum_category_move_down({
 												name: category.name,
 											})}
 											disabled={index === categories.length - 1}
@@ -244,7 +244,7 @@ function DiscussionsSettingsRoute() {
 											<ArrowDown className='size-4' />
 										</Button>
 										<Button
-											aria-label={m.settings_discussions_category_edit_name({
+											aria-label={m.settings_forum_category_edit_name({
 												name: category.name,
 											})}
 											onClick={() => setEditor({ category, open: true })}
@@ -254,15 +254,13 @@ function DiscussionsSettingsRoute() {
 											<Pen size='14px' />
 										</Button>
 										<Button
-											aria-label={m.settings_discussions_category_delete_name({
+											aria-label={m.settings_forum_category_delete_name({
 												name: category.name,
 											})}
 											disabled={categories.length <= 1}
 											onClick={() => setDeleter({ category, open: true })}
 											size='icon-sm'
-											title={
-												categories.length <= 1 ? m.settings_discussions_delete_last() : undefined
-											}
+											title={categories.length <= 1 ? m.settings_forum_delete_last() : undefined}
 											variant='ghost'
 										>
 											<Trash2 className='size-4' />

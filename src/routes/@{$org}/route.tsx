@@ -106,7 +106,7 @@ function NativeProjectShell({
 								orgSlug={organization.slug}
 								projectSlug={projectSlug}
 								canManageSettings={projectDetails.permissions.canEditSettings}
-								discussionsEnabled={projectDetails.project.discussionsEnabled}
+								forumEnabled={projectDetails.project.forumEnabled}
 							/>
 						}
 						user={profile}

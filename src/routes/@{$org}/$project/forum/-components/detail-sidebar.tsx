@@ -43,8 +43,8 @@ import { api as nativeApi } from '../../../../../../convex/native/_generated/api
 import { DetailConvertDialog } from './detail-convert-dialog';
 import { DetailLinks } from './detail-links';
 
-const ROUTE = '/@{$org}/$project/discussions/$slug/' as const;
-const SIDEBAR_STORAGE_KEY = 'discussion-detail-sidebar-state';
+const ROUTE = '/@{$org}/$project/forum/$slug/' as const;
+const SIDEBAR_STORAGE_KEY = 'topic-detail-sidebar-state';
 const DEFAULT_SIDEBAR_STATE = {
 	details: true,
 	participants: true,
@@ -52,9 +52,9 @@ const DEFAULT_SIDEBAR_STATE = {
 	moderation: true,
 };
 
-export type DiscussionDetail = NonNullable<FunctionReturnType<typeof nativeApi.discussions.detail>>;
+export type TopicDetail = NonNullable<FunctionReturnType<typeof nativeApi.forum.detail>>;
 type CategoryOption = NonNullable<
-	FunctionReturnType<typeof nativeApi.discussions.viewerAccess>
+	FunctionReturnType<typeof nativeApi.forum.viewerAccess>
 >['categories'][number];
 
 // Follow/unfollow for signed-in viewers; signed-out viewers get a sign-in link
@@ -65,16 +65,14 @@ export function DetailFollowButton({
 	onError,
 }: {
 	className?: string;
-	detail: DiscussionDetail;
+	detail: TopicDetail;
 	onError: (message: string | null) => void;
 }) {
 	const params = useParams({ from: ROUTE });
 	const session = useAuthSession();
-	const toggleFollow = useMutation(nativeApi.discussions.toggleFollow);
+	const toggleFollow = useMutation(nativeApi.forum.toggleFollow);
 	const [busy, setBusy] = useState(false);
-	const label = detail.viewerFollowing
-		? m.discussions_detail_unfollow()
-		: m.discussions_detail_follow();
+	const label = detail.viewerFollowing ? m.forum_detail_unfollow() : m.forum_detail_follow();
 
 	if (!session.user) {
 		return (
@@ -82,13 +80,13 @@ export function DetailFollowButton({
 				<Link
 					search={
 						{
-							redirect: `/@${params.org}/${params.project}/discussions/${params.slug}`,
+							redirect: `/@${params.org}/${params.project}/topics/${params.slug}`,
 						} as never
 					}
 					to='/auth'
 				>
 					<Bell className='size-4' />
-					{m.discussions_detail_follow()}
+					{m.forum_detail_follow()}
 				</Link>
 			</Button>
 		);
@@ -102,9 +100,9 @@ export function DetailFollowButton({
 				onError(null);
 				setBusy(true);
 				try {
-					await toggleFollow({ discussionId: detail.discussion.id });
+					await toggleFollow({ topicId: detail.topic.id });
 				} catch (mutationError) {
-					onError(localizeError(mutationError, m.discussions_detail_follow_failed()));
+					onError(localizeError(mutationError, m.forum_detail_follow_failed()));
 				} finally {
 					setBusy(false);
 				}
@@ -124,7 +122,7 @@ export function DetailSidebarSections({
 	projectId,
 }: {
 	categories: Array<CategoryOption>;
-	detail: DiscussionDetail;
+	detail: TopicDetail;
 	projectId: Id<'projects'>;
 }) {
 	const params = useParams({ from: ROUTE });
@@ -134,10 +132,10 @@ export function DetailSidebarSections({
 		DEFAULT_SIDEBAR_STATE
 	);
 	const mutations = {
-		remove: useMutation(nativeApi.discussions.remove),
-		setCategory: useMutation(nativeApi.discussions.setCategory),
-		setLocked: useMutation(nativeApi.discussions.setLocked),
-		setPinned: useMutation(nativeApi.discussions.setPinned),
+		remove: useMutation(nativeApi.forum.remove),
+		setCategory: useMutation(nativeApi.forum.setCategory),
+		setLocked: useMutation(nativeApi.forum.setLocked),
+		setPinned: useMutation(nativeApi.forum.setPinned),
 	};
 	const [busy, setBusy] = useState(false);
 	// Shown inside the section the failed action lives in.
@@ -145,7 +143,7 @@ export function DetailSidebarSections({
 		null
 	);
 	const [convertOpen, setConvertOpen] = useState(false);
-	const discussion = detail.discussion;
+	const topic = detail.topic;
 	// Authors can only move into categories they can post in; keep the current
 	// one listed so the Select always shows it.
 	const categoryOptions = categories.filter(
@@ -175,17 +173,17 @@ export function DetailSidebarSections({
 		}
 	}
 
-	async function deleteDiscussion() {
-		if (!window.confirm(m.discussions_delete_confirm())) return;
+	async function deleteTopic() {
+		if (!window.confirm(m.forum_delete_confirm())) return;
 		const removed = await run(
 			'moderation',
-			() => mutations.remove({ discussionId: discussion.id }),
-			m.discussions_delete_failed()
+			() => mutations.remove({ topicId: topic.id }),
+			m.forum_delete_failed()
 		);
 		if (removed)
 			await navigate({
 				params: { org: params.org, project: params.project },
-				to: '/@{$org}/$project/discussions',
+				to: '/@{$org}/$project/forum',
 			});
 	}
 
@@ -195,11 +193,11 @@ export function DetailSidebarSections({
 				icon={<Info className='size-3.5' />}
 				onOpenChange={(open) => setSidebarSection('details', open)}
 				open={sidebarState.details}
-				title={m.discussions_detail_details()}
+				title={m.forum_detail_details()}
 			>
 				<div className='flex flex-col'>
 					<div className='flex min-w-0 items-center justify-between gap-2 py-1.5'>
-						<span className='text-sm text-muted-foreground'>{m.discussions_detail_category()}</span>
+						<span className='text-sm text-muted-foreground'>{m.forum_detail_category()}</span>
 						{detail.canMove && categoryOptions.length ? (
 							<Select
 								disabled={busy}
@@ -213,16 +211,16 @@ export function DetailSidebarSections({
 										'details',
 										() =>
 											mutations.setCategory({
-												discussionId: discussion.id,
-												categoryId: next as Id<'discussionCategories'>,
+												topicId: topic.id,
+												categoryId: next as Id<'forumCategories'>,
 											}),
-										m.discussions_detail_category_failed()
+										m.forum_detail_category_failed()
 									);
 								}}
 								value={detail.category?.id ?? ''}
 							>
 								<SelectTrigger className='min-w-32'>
-									<SelectValue placeholder={m.discussions_detail_category_none()} />
+									<SelectValue placeholder={m.forum_detail_category_none()} />
 								</SelectTrigger>
 								<SelectContent>
 									{categoryOptions.map((category) => (
@@ -244,18 +242,16 @@ export function DetailSidebarSections({
 							</span>
 						) : (
 							<span className='text-sm text-muted-foreground'>
-								{m.discussions_detail_category_none()}
+								{m.forum_detail_category_none()}
 							</span>
 						)}
 					</div>
 					<div className='flex items-center justify-between gap-2 py-1.5'>
-						<span className='text-sm text-muted-foreground'>
-							{m.discussions_detail_started_by()}
-						</span>
+						<span className='text-sm text-muted-foreground'>{m.forum_detail_started_by()}</span>
 						<ProfileLinkOrUnknown profile={detail.author} showAt />
 					</div>
-					<DateRow label={m.discussions_detail_created()} value={discussion.createdAt} />
-					<DateRow label={m.discussions_detail_last_activity()} value={discussion.lastActivityAt} />
+					<DateRow label={m.forum_detail_created()} value={topic.createdAt} />
+					<DateRow label={m.forum_detail_last_activity()} value={topic.lastActivityAt} />
 					{error?.section === 'details' ? (
 						<InlineAlert className='mt-2' size='sm' variant='danger'>
 							{error.message}
@@ -267,7 +263,7 @@ export function DetailSidebarSections({
 				icon={<Users className='size-3.5' />}
 				onOpenChange={(open) => setSidebarSection('participants', open)}
 				open={sidebarState.participants}
-				title={m.discussions_detail_participants()}
+				title={m.forum_detail_participants()}
 			>
 				<div className='flex flex-wrap items-center gap-1'>
 					{participants.map((profile) => (
@@ -303,13 +299,9 @@ export function DetailSidebarSections({
 					icon={<LinkIcon className='size-3.5' />}
 					onOpenChange={(open) => setSidebarSection('related', open)}
 					open={sidebarState.related}
-					title={m.discussions_detail_related()}
+					title={m.forum_detail_related()}
 				>
-					<DetailLinks
-						canManage={detail.canModerate}
-						discussionId={discussion.id}
-						links={detail.links}
-					/>
+					<DetailLinks canManage={detail.canModerate} topicId={topic.id} links={detail.links} />
 				</SidebarSection>
 			) : null}
 			{detail.canModerate || detail.canDelete ? (
@@ -317,7 +309,7 @@ export function DetailSidebarSections({
 					icon={<ShieldCheck className='size-3.5' />}
 					onOpenChange={(open) => setSidebarSection('moderation', open)}
 					open={sidebarState.moderation}
-					title={m.discussions_detail_moderation()}
+					title={m.forum_detail_moderation()}
 				>
 					<div className='flex flex-col gap-2'>
 						{detail.canModerate ? (
@@ -330,16 +322,16 @@ export function DetailSidebarSections({
 											'moderation',
 											() =>
 												mutations.setPinned({
-													discussionId: discussion.id,
-													pinned: !discussion.pinned,
+													topicId: topic.id,
+													pinned: !topic.pinned,
 												}),
-											m.discussions_detail_pin_failed()
+											m.forum_detail_pin_failed()
 										)
 									}
 									variant='outline'
 								>
-									{discussion.pinned ? <PinOff className='size-4' /> : <Pin className='size-4' />}
-									{discussion.pinned ? m.discussions_detail_unpin() : m.discussions_detail_pin()}
+									{topic.pinned ? <PinOff className='size-4' /> : <Pin className='size-4' />}
+									{topic.pinned ? m.forum_detail_unpin() : m.forum_detail_pin()}
 								</Button>
 								<Button
 									className='justify-start'
@@ -349,20 +341,16 @@ export function DetailSidebarSections({
 											'moderation',
 											() =>
 												mutations.setLocked({
-													discussionId: discussion.id,
-													locked: !discussion.locked,
+													topicId: topic.id,
+													locked: !topic.locked,
 												}),
-											m.discussions_detail_lock_failed()
+											m.forum_detail_lock_failed()
 										)
 									}
 									variant='outline'
 								>
-									{discussion.locked ? (
-										<LockOpen className='size-4' />
-									) : (
-										<Lock className='size-4' />
-									)}
-									{discussion.locked ? m.discussions_detail_unlock() : m.discussions_detail_lock()}
+									{topic.locked ? <LockOpen className='size-4' /> : <Lock className='size-4' />}
+									{topic.locked ? m.forum_detail_unlock() : m.forum_detail_lock()}
 								</Button>
 								{/* Already converted: the notice in the thread links to the feedback. */}
 								{detail.convertedTo ? null : (
@@ -374,10 +362,10 @@ export function DetailSidebarSections({
 											variant='outline'
 										>
 											<ArrowRightLeft className='size-4' />
-											{m.discussions_detail_convert()}
+											{m.forum_detail_convert()}
 										</Button>
 										<DetailConvertDialog
-											discussionId={discussion.id}
+											topicId={topic.id}
 											onOpenChange={setConvertOpen}
 											open={convertOpen}
 											projectId={projectId}
@@ -390,11 +378,11 @@ export function DetailSidebarSections({
 							<Button
 								className='justify-start text-destructive'
 								disabled={busy}
-								onClick={() => void deleteDiscussion()}
+								onClick={() => void deleteTopic()}
 								variant='outline'
 							>
 								<Trash2 className='size-4' />
-								{m.discussions_delete()}
+								{m.forum_delete()}
 							</Button>
 						) : null}
 						{error?.section === 'moderation' ? (

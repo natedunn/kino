@@ -145,7 +145,7 @@ export function CommentCard({
 	dropdownItems?: ReactNode;
 	isDeleting?: boolean;
 	isUpdating?: boolean;
-	// Visible-text limit for edits; discussion bodies allow more than replies.
+	// Visible-text limit for edits; topic bodies allow more than replies.
 	maxLength?: number;
 	onDelete?: (commentId: string) => void;
 	onToggleEmote?: (commentId: string, content: EmoteContent) => void;
