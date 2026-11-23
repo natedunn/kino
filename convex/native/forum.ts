@@ -19,7 +19,7 @@ import { emoteReaction, feedbackStatus, forumEventType } from './schema';
 import { profileValidator, summary } from './updates';
 
 // Hard cap on stored HTML; visible-text limits are checked separately in validateContent.
-const MAX_CONTENT = 50_000;
+export const MAX_CONTENT = 50_000;
 const MAX_COMMENT_EMOTES = 100;
 const EXCERPT_CHARS = 300;
 const DELETE_BATCH_SIZE = 100;
@@ -125,7 +125,7 @@ function isManager(access: Access) {
 	return access.permissions.canManageContent;
 }
 
-async function actor(ctx: MutationCtx) {
+export async function actor(ctx: MutationCtx) {
 	const user = await requireCurrentUser(ctx);
 	if (!user.profileId) throw new ConvexError('PROFILE_NOT_FOUND');
 	const result = await limits.limit(ctx, 'forumWrite', { key: user._id });
@@ -148,7 +148,7 @@ async function writableTopic(ctx: MutationCtx, topicId: Id<'forumTopics'>) {
 	return { access, topic, profileId };
 }
 
-async function liveCategory(
+export async function liveCategory(
 	ctx: QueryCtx,
 	projectId: Id<'projects'>,
 	categoryId: Id<'forumCategories'>
@@ -174,7 +174,7 @@ async function follow(ctx: MutationCtx, topic: Doc<'forumTopics'>, profileId: Id
 		});
 }
 
-async function recordEvent(
+export async function recordEvent(
 	ctx: MutationCtx,
 	topicId: Id<'forumTopics'>,
 	actorProfileId: Id<'profiles'>,
@@ -229,7 +229,7 @@ async function isFollowing(
 		.unique());
 }
 
-function validateTitle(value: string) {
+export function validateTitle(value: string) {
 	const title = value.trim();
 	if (!title || title.length > VALIDATION_LIMITS.forumTopicTitle)
 		throw new ConvexError('INVALID_TITLE');
@@ -248,7 +248,7 @@ function visibleText(content: string) {
 // allowlist-sanitized before the empty and length checks run on the result.
 // `maxVisible` mirrors the client limit: forumTopicBody for the opening post,
 // comment for replies.
-function validateContent(value: string, maxVisible: number) {
+export function validateContent(value: string, maxVisible: number) {
 	const content = sanitizeStoredContent(value);
 	const text = visibleText(content);
 	if (!content || content.length > MAX_CONTENT || !text.trim() || text.length > maxVisible)
@@ -708,6 +708,46 @@ export const replies = query({
 	},
 });
 
+/**
+ * Inserts a topic, its opening post and the author's follow. Callers check
+ * access and the category, and pass a validated title and body.
+ */
+export async function insertTopic(
+	ctx: MutationCtx,
+	args: {
+		projectId: Id<'projects'>;
+		categoryId: Id<'forumCategories'>;
+		authorProfileId: Id<'profiles'>;
+		title: string;
+		body: string;
+	}
+) {
+	const slug = await uniqueSlug(ctx, args.projectId);
+	const id = await ctx.db.insert('forumTopics', {
+		projectId: args.projectId,
+		categoryId: args.categoryId,
+		authorProfileId: args.authorProfileId,
+		slug,
+		title: args.title,
+		searchContent: searchContent(args.title, args.body),
+		commentCount: 0,
+		lastActivityAt: Date.now(),
+	});
+	const firstCommentId = await ctx.db.insert('forumComments', {
+		topicId: id,
+		authorProfileId: args.authorProfileId,
+		content: args.body,
+		initial: true,
+	});
+	await ctx.db.patch('forumTopics', id, { firstCommentId });
+	await ctx.db.insert('forumWatchers', {
+		projectId: args.projectId,
+		topicId: id,
+		profileId: args.authorProfileId,
+	});
+	return { id, slug };
+}
+
 export const create = mutation({
 	args: {
 		projectId: v.id('projects'),
@@ -723,33 +763,13 @@ export const create = mutation({
 		if (!forumEnabled(access.project)) throw new ConvexError('FORUM_DISABLED');
 		const category = await liveCategory(ctx, args.projectId, args.categoryId);
 		if (!canPostIn(access, category)) throw new ConvexError('FORUM_TEAM_ONLY');
-		const title = validateTitle(args.title);
-		const body = validateContent(args.body, VALIDATION_LIMITS.forumTopicBody);
-		const slug = await uniqueSlug(ctx, args.projectId);
-		const now = Date.now();
-		const id = await ctx.db.insert('forumTopics', {
+		return insertTopic(ctx, {
 			projectId: args.projectId,
 			categoryId: category._id,
 			authorProfileId: profileId,
-			slug,
-			title,
-			searchContent: searchContent(title, body),
-			commentCount: 0,
-			lastActivityAt: now,
+			title: validateTitle(args.title),
+			body: validateContent(args.body, VALIDATION_LIMITS.forumTopicBody),
 		});
-		const firstCommentId = await ctx.db.insert('forumComments', {
-			topicId: id,
-			authorProfileId: profileId,
-			content: body,
-			initial: true,
-		});
-		await ctx.db.patch('forumTopics', id, { firstCommentId });
-		await ctx.db.insert('forumWatchers', {
-			projectId: args.projectId,
-			topicId: id,
-			profileId,
-		});
-		return { id, slug };
 	},
 });
 

@@ -313,6 +313,7 @@ export declare const api: {
         } | null;
         following: boolean;
         hasUpvoted: boolean;
+        movedTo: null | { slug: string; title: string };
         permissions: {
           canDelete: boolean;
           canEditSettings: boolean;
@@ -371,7 +372,8 @@ export declare const api: {
                   | "answer_unmarked"
                   | "assigned"
                   | "unassigned"
-                  | "imported_from_forum";
+                  | "imported_from_forum"
+                  | "moved_to_forum";
                 id: Id<"feedbackEvents">;
                 metadata: null | {
                   newValue?: string;
@@ -505,7 +507,8 @@ export declare const api: {
                   | "answer_unmarked"
                   | "assigned"
                   | "unassigned"
-                  | "imported_from_forum";
+                  | "imported_from_forum"
+                  | "moved_to_forum";
                 id: Id<"feedbackEvents">;
                 metadata: null | {
                   newValue?: string;
@@ -1304,7 +1307,8 @@ export declare const api: {
             | "unlocked"
             | "answer_marked"
             | "answer_unmarked"
-            | "converted_to_feedback";
+            | "converted_to_feedback"
+            | "imported_from_feedback";
           feedback: {
             slug: string;
             status: "open" | "in-progress" | "closed" | "completed" | "paused";
@@ -1693,6 +1697,14 @@ export declare const api: {
         slug: string;
       },
       null
+    >;
+  };
+  forumMoves: {
+    moveFromFeedback: FunctionReference<
+      "mutation",
+      "public",
+      { categoryId: Id<"forumCategories">; feedbackId: Id<"feedback"> },
+      { topicSlug: string }
     >;
   };
   github: {

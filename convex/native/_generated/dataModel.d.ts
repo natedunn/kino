@@ -61,6 +61,7 @@ export type DataModel = {
       boardId: Id<"feedbackBoards">;
       deletingAt?: number;
       firstCommentId?: Id<"feedbackComments">;
+      movedToTopicId?: Id<"forumTopics">;
       priority: "none" | "low" | "medium" | "high" | "urgent";
       projectId: Id<"projects">;
       searchContent: string;
@@ -84,6 +85,7 @@ export type DataModel = {
       | "boardId"
       | "deletingAt"
       | "firstCommentId"
+      | "movedToTopicId"
       | "priority"
       | "projectId"
       | "searchContent"
@@ -249,7 +251,8 @@ export type DataModel = {
         | "answer_unmarked"
         | "assigned"
         | "unassigned"
-        | "imported_from_forum";
+        | "imported_from_forum"
+        | "moved_to_forum";
       feedbackId: Id<"feedback">;
       metadata?: {
         newValue?: string;
@@ -719,7 +722,8 @@ export type DataModel = {
         | "unlocked"
         | "answer_marked"
         | "answer_unmarked"
-        | "converted_to_feedback";
+        | "converted_to_feedback"
+        | "imported_from_feedback";
       metadata?: {
         feedbackId?: Id<"feedback">;
         newValue?: string;
