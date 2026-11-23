@@ -1261,6 +1261,28 @@
 	"forum_list_pinned": "Pinned",
 	"forum_list_locked": "Locked",
 	"forum_list_answered": "Answered",
+	"forum_unread_new": "New",
+	"forum_unread_new_label": "New topic",
+	"forum_unread_replies": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": { "countPlural=one": "{count} new", "countPlural=other": "{count} new" }
+		}
+	],
+	"forum_unread_replies_label": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} new reply",
+				"countPlural=other": "{count} new replies"
+			}
+		}
+	],
+	"forum_unread_mark_all": "Mark all as read",
+	"forum_unread_divider": "New replies",
+	"forum_unread_jump": "Jump to first unread",
 	"forum_list_empty_category": "No topics in {category} yet.",
 	"forum_list_empty_mine": "You haven't started any topics here yet.",
 	"forum_list_empty_following": "You aren't following any topics here yet.",

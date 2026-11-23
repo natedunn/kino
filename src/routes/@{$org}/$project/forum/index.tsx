@@ -5,8 +5,17 @@ import { useEffect, useRef, useState } from 'react';
 import { convexQuery } from '@convex-dev/react-query';
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
 import { createFileRoute, Link, notFound } from '@tanstack/react-router';
-import { usePaginatedQuery } from 'convex/react';
-import { Bell, CircleQuestionMark, Lock, PanelLeftOpen, Search, SquarePen, X } from 'lucide-react';
+import { useMutation, usePaginatedQuery } from 'convex/react';
+import {
+	Bell,
+	CheckCheck,
+	CircleQuestionMark,
+	Lock,
+	PanelLeftOpen,
+	Search,
+	SquarePen,
+	X,
+} from 'lucide-react';
 
 import { SidebarNavGroup, SidebarNavItem } from '@/components/sidebar-nav';
 import { Button } from '@/components/ui/button';
@@ -25,7 +34,9 @@ import {
 	SelectValue,
 } from '@/components/ui/select';
 import CirclePlusOutline from '@/icons/circle-plus-outline';
+import { localizeError } from '@/lib/errors';
 import { projectTitle, titleMeta } from '@/lib/seo';
+import { toast } from '@/lib/toast';
 import { FORM_LIMITS } from '@/lib/validation';
 import * as m from '@/paraglide/messages.js';
 
@@ -125,6 +136,7 @@ function ForumRoute() {
 		})
 	);
 	const showPinned = !search && !filter && !!pinned?.length;
+	const markAllRead = useMutation(nativeApi.forumReads.markAllRead);
 
 	const [searchTerm, setSearchTerm] = useState(search ?? '');
 	const searchTimeout = useRef<number | null>(null);
@@ -212,6 +224,24 @@ function ForumRoute() {
 								</SidebarNavItem>
 							</Link>
 						))}
+						{access.signedIn ? (
+							<Button
+								className='group w-full justify-start'
+								onClick={() =>
+									void markAllRead({ projectId }).catch(
+										(error: unknown) => void toast.error(localizeError(error))
+									)
+								}
+								variant='ghost'
+							>
+								<span className='inline-flex items-center gap-3'>
+									<span className='opacity-60 transition-opacity group-hover:opacity-100'>
+										<CheckCheck className='size-4' />
+									</span>
+									{m.forum_unread_mark_all()}
+								</span>
+							</Button>
+						) : null}
 					</SidebarNavGroup>
 				</div>
 			) : null}

@@ -3,12 +3,13 @@ import type { TopicDetail } from '../-components/detail-sidebar';
 import type { ThreadComment } from '../../-components/comment-thread';
 import type { Id } from '../../../../../../convex/native/_generated/dataModel';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { convexQuery } from '@convex-dev/react-query';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { createFileRoute, Link, notFound, useRouter } from '@tanstack/react-router';
 import { useMutation, usePaginatedQuery } from 'convex/react';
 import {
+	ArrowDown,
 	ArrowLeft,
 	Check,
 	CircleCheck,
@@ -42,6 +43,7 @@ import { DetailAnswer } from '../-components/detail-answer';
 import { DetailEventItem } from '../-components/detail-event-item';
 import { DetailPoll } from '../-components/detail-poll';
 import { DetailFollowButton, DetailSidebarSections } from '../-components/detail-sidebar';
+import { firstUnreadReply, UnreadDivider, useTopicVisit } from '../-components/detail-unread';
 import { CommentCard, CommentEditorProvider, CommentForm } from '../../-components/comment-thread';
 import { api as nativeApi } from '../../../../../../convex/native/_generated/api';
 
@@ -101,6 +103,14 @@ function toThreadComment(comment: TopicComment): ThreadComment {
 	};
 }
 
+// For replies that are already rendered: their CommentCard only reads the hash on mount.
+function scrollToComment(commentId: string) {
+	window.history.replaceState(window.history.state, '', `#comment-${commentId}`);
+	document
+		.getElementById(`comment-${commentId}`)
+		?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
 function TopicDetailRoute() {
 	const params = Route.useParams();
 	const router = useRouter();
@@ -151,11 +161,19 @@ function TopicDetailRoute() {
 			replies.status === 'Exhausted' ||
 			(lastReplyTime !== undefined && event.createdAt <= lastReplyTime)
 	);
+	const visit = useTopicVisit(topic.id, !!detail.viewerProfileId);
+	const firstUnread = firstUnreadReply(replies.results, visit, detail.viewerProfileId);
 	const timeline = [
+		// Listed first so the stable sort keeps it just above its reply.
+		...(firstUnread ? [{ kind: 'divider' as const, at: firstUnread.creationTime }] : []),
 		...replies.results.map((reply) => ({ kind: 'reply' as const, at: reply.creationTime, reply })),
 		...visibleEvents.map((event) => ({ kind: 'event' as const, at: event.createdAt, event })),
 	].sort((a, b) => a.at - b.at);
 	const answerLoaded = !!answerId && replies.results.some((reply) => reply.id === answerId);
+	// Set while paging replies to find the first unread one.
+	const [pendingUnreadJump, setPendingUnreadJump] = useState(false);
+	const showUnreadJump =
+		!!visit?.unread && topic.commentCount > 0 && (!!firstUnread || replies.status !== 'Exhausted');
 
 	// Page through replies until the answer is rendered. Its CommentCard reads
 	// the `#comment-<id>` hash on mount, then scrolls to and highlights itself.
@@ -164,6 +182,23 @@ function TopicDetailRoute() {
 		if (answerLoaded || replies.status === 'Exhausted') setPendingJump(false);
 		else if (replies.status === 'CanLoadMore') replies.loadMore(REPLIES_PAGE_SIZE);
 	}, [answerLoaded, pendingJump, replies]);
+
+	useEffect(() => {
+		if (!pendingUnreadJump) return;
+		if (firstUnread) {
+			setPendingUnreadJump(false);
+			scrollToComment(firstUnread.id);
+		} else if (replies.status === 'Exhausted') setPendingUnreadJump(false);
+		else if (replies.status === 'CanLoadMore') replies.loadMore(REPLIES_PAGE_SIZE);
+	}, [firstUnread, pendingUnreadJump, replies]);
+
+	// Unread topics in the list link here with `#unread`; land on the first one.
+	const autoJumped = useRef<Id<'forumTopics'> | null>(null);
+	useEffect(() => {
+		if (!visit || autoJumped.current === topic.id) return;
+		autoJumped.current = topic.id;
+		if (visit.unread && window.location.hash === '#unread') setPendingUnreadJump(true);
+	}, [topic.id, visit]);
 
 	function jumpToAnswer() {
 		if (!answerId) return;
@@ -336,6 +371,19 @@ function TopicDetailRoute() {
 						{' · '}
 						{m.forum_reply_count({ count: topic.commentCount })}
 					</p>
+					{showUnreadJump ? (
+						<div>
+							<Button
+								disabled={pendingUnreadJump}
+								onClick={() => setPendingUnreadJump(true)}
+								size='sm'
+								variant='outline'
+							>
+								<ArrowDown className='size-3.5' />
+								{m.forum_unread_jump()}
+							</Button>
+						</div>
+					) : null}
 				</div>
 			</div>
 			<div className='container flex flex-1 flex-col [--max-width:52rem] lg:[--max-width:75rem]'>
@@ -404,6 +452,7 @@ function TopicDetailRoute() {
 										</li>
 									) : null}
 									{timeline.map((item, index) => {
+										if (item.kind === 'divider') return <UnreadDivider key='unread-divider' />;
 										if (item.kind === 'event')
 											return (
 												<DetailEventItem

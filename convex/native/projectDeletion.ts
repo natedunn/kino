@@ -103,6 +103,12 @@ export const batch = internalMutation({
 			.withIndex('by_projectId_and_position', (q) => q.eq('projectId', args.projectId))
 			.take(50);
 		for (const row of categories) await ctx.db.delete('forumCategories', row._id);
+		// Per-topic reads went with their topics; only the "mark all" markers remain.
+		const readMarkers = await ctx.db
+			.query('forumReadMarkers')
+			.withIndex('by_projectId', (q) => q.eq('projectId', args.projectId))
+			.take(50);
+		for (const row of readMarkers) await ctx.db.delete('forumReadMarkers', row._id);
 		const boards = await ctx.db
 			.query('feedbackBoards')
 			.withIndex('by_projectId', (q) => q.eq('projectId', args.projectId))
@@ -118,7 +124,12 @@ export const batch = internalMutation({
 			.withIndex('by_projectId_and_userId', (q) => q.eq('projectId', args.projectId))
 			.take(50);
 		for (const row of members) await ctx.db.delete('projectMembers', row._id);
-		if (boards.length === 50 || assignments.length === 50 || members.length === 50) {
+		if (
+			readMarkers.length === 50 ||
+			boards.length === 50 ||
+			assignments.length === 50 ||
+			members.length === 50
+		) {
 			await again();
 			return null;
 		}

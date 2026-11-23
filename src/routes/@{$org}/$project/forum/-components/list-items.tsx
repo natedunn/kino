@@ -2,6 +2,7 @@ import type { FunctionReturnType } from 'convex/server';
 import type { ReactNode } from 'react';
 import type { api as nativeApi } from '../../../../../../convex/native/_generated/api';
 
+import { useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { ChartBar, CircleCheck, Lock, MessageSquare, Pin } from 'lucide-react';
 
@@ -17,6 +18,32 @@ export type TopicListItem = FunctionReturnType<typeof nativeApi.forum.list>['pag
 
 type RouteParams = { org: string; project: string };
 
+// Unopened topics stop counting as new once they've been idle this long.
+// Applied here because Convex queries can't read the clock.
+const NEW_TOPIC_WINDOW = 14 * 24 * 60 * 60 * 1000;
+
+type Unread = NonNullable<TopicListItem['unread']>;
+
+function useNow() {
+	const [now] = useState(() => Date.now());
+	return now;
+}
+
+/** The viewer's unread state worth showing, or null when read or signed out. */
+function visibleUnread(item: TopicListItem, now: number) {
+	const unread = item.unread;
+	if (!unread || unread.state === 'read') return null;
+	if (unread.state === 'new' && item.lastActivityAt < now - NEW_TOPIC_WINDOW) return null;
+	return unread;
+}
+
+// Signed-out viewers keep the default weight; signed-in ones see unread topics
+// bold and read ones regular.
+function titleWeight(item: TopicListItem, unread: Unread | null) {
+	if (!item.unread) return 'font-medium';
+	return unread ? 'font-semibold text-foreground' : 'font-normal';
+}
+
 export function TopicRow({
 	item,
 	params,
@@ -28,6 +55,7 @@ export function TopicRow({
 	showCategory: boolean;
 }) {
 	const username = item.author?.username;
+	const unread = visibleUnread(item, useNow());
 	return (
 		<li className='group relative flex gap-4 p-5 transition-colors focus-within:bg-accent/50 hover:bg-accent/50'>
 			<Avatar className='mt-0.5 size-8 shrink-0 border' fallbackName={username ?? '?'}>
@@ -37,13 +65,19 @@ export function TopicRow({
 			<div className='flex min-w-0 flex-1 flex-col gap-1'>
 				<div className='flex flex-wrap items-center gap-x-2 gap-y-1'>
 					<Link
-						className='link-text text-lg font-medium after:absolute after:inset-0'
+						className={cn(
+							'link-text text-lg after:absolute after:inset-0',
+							titleWeight(item, unread)
+						)}
+						// The topic page jumps to the first unread reply.
+						hash={unread?.state === 'replies' ? 'unread' : undefined}
 						params={{ ...params, slug: item.slug }}
 						preload='intent'
 						to='/@{$org}/$project/forum/$slug'
 					>
 						{item.title}
 					</Link>
+					{unread ? <UnreadBadge unread={unread} /> : null}
 					<TopicMarkers item={item} />
 				</div>
 				{item.excerpt ? (
@@ -83,6 +117,7 @@ export function PinnedTopics({
 	params: RouteParams;
 	showCategory: boolean;
 }) {
+	const now = useNow();
 	return (
 		<section aria-labelledby='pinned-topics' className='flex flex-col gap-2'>
 			<h2
@@ -93,30 +128,59 @@ export function PinnedTopics({
 				{m.forum_list_pinned()}
 			</h2>
 			<ul className='grid gap-3 sm:grid-cols-2'>
-				{items.map((item) => (
-					<li
-						className='relative flex flex-col gap-2 rounded-lg border bg-card p-4 transition-colors focus-within:bg-accent/50 hover:bg-accent/50'
-						key={item.id}
-					>
-						<Link
-							className='link-text line-clamp-2 font-medium after:absolute after:inset-0'
-							params={{ ...params, slug: item.slug }}
-							preload='intent'
-							to='/@{$org}/$project/forum/$slug'
+				{items.map((item) => {
+					const unread = visibleUnread(item, now);
+					return (
+						<li
+							className='relative flex flex-col gap-2 rounded-lg border bg-card p-4 transition-colors focus-within:bg-accent/50 hover:bg-accent/50'
+							key={item.id}
 						>
-							{item.title}
-						</Link>
-						<div className='mt-auto flex items-center justify-between gap-2 text-xs text-muted-foreground'>
-							<span className='flex min-w-0 items-center gap-2'>
-								{showCategory && item.category ? <CategoryChip category={item.category} /> : null}
-								{item.answered && item.category?.format === 'qa' ? <AnsweredBadge /> : null}
-							</span>
-							<ReplyCount className='text-xs [&_svg]:size-3.5' count={item.commentCount} />
-						</div>
-					</li>
-				))}
+							<Link
+								className={cn(
+									'link-text line-clamp-2 after:absolute after:inset-0',
+									titleWeight(item, unread)
+								)}
+								hash={unread?.state === 'replies' ? 'unread' : undefined}
+								params={{ ...params, slug: item.slug }}
+								preload='intent'
+								to='/@{$org}/$project/forum/$slug'
+							>
+								{item.title}
+							</Link>
+							<div className='mt-auto flex items-center justify-between gap-2 text-xs text-muted-foreground'>
+								<span className='flex min-w-0 items-center gap-2'>
+									{unread ? <UnreadBadge unread={unread} /> : null}
+									{showCategory && item.category ? <CategoryChip category={item.category} /> : null}
+									{item.answered && item.category?.format === 'qa' ? <AnsweredBadge /> : null}
+								</span>
+								<ReplyCount className='text-xs [&_svg]:size-3.5' count={item.commentCount} />
+							</div>
+						</li>
+					);
+				})}
 			</ul>
 		</section>
+	);
+}
+
+function UnreadBadge({ unread }: { unread: Unread }) {
+	const label =
+		unread.state === 'new'
+			? m.forum_unread_new_label()
+			: m.forum_unread_replies_label({ count: unread.newReplies });
+	return (
+		<Badge
+			className='border-primary/30 bg-primary/10 text-foreground'
+			title={label}
+			variant='outline'
+		>
+			<span aria-hidden='true'>
+				{unread.state === 'new'
+					? m.forum_unread_new()
+					: m.forum_unread_replies({ count: unread.newReplies })}
+			</span>
+			<span className='sr-only'>{label}</span>
+		</Badge>
 	);
 }
 

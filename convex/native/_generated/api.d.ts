@@ -1455,6 +1455,10 @@ export declare const api: {
           pinned: boolean;
           slug: string;
           title: string;
+          unread: null | {
+            newReplies: number;
+            state: "new" | "replies" | "read";
+          };
         }>;
         pageStatus?: "SplitRecommended" | "SplitRequired" | null;
         splitCursor?: string | null;
@@ -1489,6 +1493,10 @@ export declare const api: {
         pinned: boolean;
         slug: string;
         title: string;
+        unread: null | {
+          newReplies: number;
+          state: "new" | "replies" | "read";
+        };
       }>
     >;
     remove: FunctionReference<
@@ -1737,6 +1745,26 @@ export declare const api: {
       "public",
       { optionIds: Array<string>; pollId: Id<"forumPolls"> },
       null
+    >;
+  };
+  forumReads: {
+    markAllRead: FunctionReference<
+      "mutation",
+      "public",
+      { projectId: Id<"projects"> },
+      null
+    >;
+    markRead: FunctionReference<
+      "mutation",
+      "public",
+      { topicId: Id<"forumTopics"> },
+      null
+    >;
+    topicState: FunctionReference<
+      "query",
+      "public",
+      { topicId: Id<"forumTopics"> },
+      null | { lastReadAt: number | null; unread: boolean; upToDate: boolean }
     >;
   };
   github: {
