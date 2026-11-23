@@ -66,7 +66,8 @@ const timelineItemValidator = v.union(
 				v.literal('answer_unmarked'),
 				v.literal('assigned'),
 				v.literal('unassigned'),
-				v.literal('imported_from_forum')
+				v.literal('imported_from_forum'),
+				v.literal('moved_to_forum')
 			),
 			metadata: v.union(
 				v.null(),
@@ -77,7 +78,7 @@ const timelineItemValidator = v.union(
 					topicId: v.optional(v.id('forumTopics')),
 				})
 			),
-			// The source topic of an import, while it still exists.
+			// The topic of an import or move, while it still exists.
 			topic: v.union(v.null(), v.object({ slug: v.string(), title: v.string() })),
 		}),
 	})
@@ -439,6 +440,8 @@ export const getDetail = query({
 			firstComment: v.union(enrichedCommentValidator, v.null()),
 			following: v.boolean(),
 			hasUpvoted: v.boolean(),
+			// The forum topic this feedback was moved to, while it still exists.
+			movedTo: v.union(v.null(), v.object({ slug: v.string(), title: v.string() })),
 			permissions: projectPermissionsValidator,
 			related: v.array(relatedFeedbackValidator),
 			timeline: v.array(timelineItemValidator),
@@ -467,6 +470,7 @@ export const getDetail = query({
 			watcher,
 			watchers,
 			relations,
+			movedTopic,
 		] = await Promise.all([
 			ctx.db.get('profiles', feedback.authorProfileId),
 			ctx.db.get('feedbackBoards', feedback.boardId),
@@ -505,6 +509,9 @@ export const getDetail = query({
 				.query('feedbackRelations')
 				.withIndex('by_feedbackId', (q) => q.eq('feedbackId', feedback._id))
 				.take(50),
+			feedback.movedToTopicId
+				? ctx.db.get('forumTopics', feedback.movedToTopicId)
+				: Promise.resolve(null),
 		]);
 		const timeline = (
 			await Promise.all(
@@ -562,6 +569,10 @@ export const getDetail = query({
 				: null,
 			following: !!watcher,
 			hasUpvoted: !!upvote,
+			movedTo:
+				movedTopic && movedTopic.deletingAt === undefined
+					? { slug: movedTopic.slug, title: movedTopic.title }
+					: null,
 			permissions: access.permissions,
 			related,
 			timeline,

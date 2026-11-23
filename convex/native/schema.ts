@@ -55,7 +55,8 @@ export const forumEventType = v.union(
 	v.literal('unlocked'),
 	v.literal('answer_marked'),
 	v.literal('answer_unmarked'),
-	v.literal('converted_to_feedback')
+	v.literal('converted_to_feedback'),
+	v.literal('imported_from_feedback')
 );
 export const emoteReaction = v.union(
 	v.literal('heart'),
@@ -323,6 +324,8 @@ export default defineSchema({
 		searchContent: v.string(),
 		updatedAt: v.number(),
 		deletingAt: v.optional(v.number()),
+		// Set when a moderator moves the feedback into a forum topic.
+		movedToTopicId: v.optional(v.id('forumTopics')),
 	})
 		.index('by_projectId', ['projectId'])
 		.index('by_projectId_and_slug', ['projectId', 'slug'])
@@ -377,7 +380,8 @@ export default defineSchema({
 			v.literal('answer_unmarked'),
 			v.literal('assigned'),
 			v.literal('unassigned'),
-			v.literal('imported_from_forum')
+			v.literal('imported_from_forum'),
+			v.literal('moved_to_forum')
 		),
 		metadata: v.optional(
 			v.object({

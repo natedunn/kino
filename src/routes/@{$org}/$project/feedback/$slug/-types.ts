@@ -31,6 +31,7 @@ export type FeedbackEventData = {
 		| 'title_changed'
 		| 'unassigned'
 		| 'imported_from_forum'
+		| 'moved_to_forum'
 		| string;
 	id: string;
 	metadata?: {
@@ -38,7 +39,7 @@ export type FeedbackEventData = {
 		oldValue?: string | null;
 	} | null;
 	targetProfile?: ProfileSummary | null;
-	// Source topic of an `imported_from_forum` event, while it exists.
+	// Topic of an `imported_from_forum` or `moved_to_forum` event, while it exists.
 	topic?: { slug: string; title: string } | null;
 };
 

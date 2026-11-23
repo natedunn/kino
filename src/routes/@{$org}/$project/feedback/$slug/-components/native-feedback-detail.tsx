@@ -14,6 +14,8 @@ import {
 	Info,
 	Link as LinkIcon,
 	MessageSquare,
+	MessagesSquare,
+	ShieldCheck,
 	Tag,
 	Users,
 } from 'lucide-react';
@@ -52,6 +54,7 @@ import {
 import { api as nativeApi } from '../../../../../../../convex/native/_generated/api';
 import { FeedbackEventItem } from './feedback-event-item';
 import { FeedbackTargetDrawer, formatFeedbackTarget } from './feedback-target-drawer';
+import { MoveToForumDialog } from './move-to-forum-dialog';
 import { NativeGithubConnections } from './native-github-connections';
 
 const ROUTE = '/@{$org}/$project/feedback/$slug/' as const;
@@ -116,6 +119,7 @@ type Detail = {
 	firstComment: Comment | null;
 	following: boolean;
 	hasUpvoted: boolean;
+	movedTo: { slug: string; title: string } | null;
 	permissions: { canManageContent: boolean };
 	related: Array<{ id: Id<'feedback'>; slug: string; status: string; title: string }>;
 	timeline: Array<Timeline>;
@@ -209,8 +213,16 @@ export function NativeFeedbackDetailRoute() {
 		people: true,
 		labels: true,
 		related: true,
+		moderation: true,
 	});
 	const [metadataDrawerOpen, setMetadataDrawerOpen] = useState(false);
+	const [moveOpen, setMoveOpen] = useState(false);
+	// Already moved: the event in the timeline links to the topic.
+	const canMoveToForum =
+		detail.permissions.canManageContent &&
+		projectData.project.forumEnabled &&
+		projectData.project.visibility !== 'archived' &&
+		!detail.movedTo;
 	const timeline = mergeNativeFeedbackTimeline(extraTimeline, detail.timeline);
 
 	async function performMutation<T>(
@@ -631,6 +643,24 @@ export function NativeFeedbackDetailRoute() {
 					) : null}
 				</div>
 			</SidebarSection>
+			{canMoveToForum ? (
+				<SidebarSection
+					icon={<ShieldCheck className='size-3.5' />}
+					title={m.feedback_moderation()}
+					open={sidebarOpen.moderation}
+					onOpenChange={sectionChange('moderation')}
+				>
+					<Button
+						className='w-full justify-start'
+						disabled={busy}
+						onClick={() => setMoveOpen(true)}
+						variant='outline'
+					>
+						<MessagesSquare className='size-4' />
+						{m.feedback_move_to_forum()}
+					</Button>
+				</SidebarSection>
+			) : null}
 		</>
 	);
 	const deleteButton = detail.permissions.canManageContent ? (
@@ -675,6 +705,15 @@ export function NativeFeedbackDetailRoute() {
 				}}
 				open={targetDrawerOpen}
 			/>
+			{/* Stays mounted while the move lands, so it can navigate to the new topic. */}
+			{detail.permissions.canManageContent ? (
+				<MoveToForumDialog
+					feedbackId={feedback.id}
+					onOpenChange={setMoveOpen}
+					open={moveOpen}
+					projectId={projectData.project.id}
+				/>
+			) : null}
 			<div className='border-b'>
 				<div className='container flex items-start gap-4 pt-10 pb-6 [--max-width:52rem] lg:[--max-width:75rem]'>
 					<div className='mt-1'>
