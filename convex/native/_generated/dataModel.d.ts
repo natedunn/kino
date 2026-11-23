@@ -688,6 +688,7 @@ export type DataModel = {
       authorProfileId: Id<"profiles">;
       content: string;
       initial: boolean;
+      replyToCommentId?: Id<"forumComments">;
       topicId: Id<"forumTopics">;
       updatedAt?: number;
       _id: Id<"forumComments">;
@@ -699,12 +700,14 @@ export type DataModel = {
       | "authorProfileId"
       | "content"
       | "initial"
+      | "replyToCommentId"
       | "topicId"
       | "updatedAt";
     indexes: {
       by_id: ["_id"];
       by_creation_time: ["_creationTime"];
       by_authorProfileId: ["authorProfileId", "_creationTime"];
+      by_replyToCommentId: ["replyToCommentId", "_creationTime"];
       by_topicId_and_initial: ["topicId", "initial", "_creationTime"];
     };
     searchIndexes: {};

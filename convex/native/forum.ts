@@ -1,5 +1,6 @@
 import type { Doc, Id } from './_generated/dataModel';
 import type { MutationCtx, QueryCtx } from './_generated/server';
+import type { CommentAuthors } from './commentAuthors';
 
 import { RateLimiter } from '@convex-dev/rate-limiter';
 import { paginationOptsValidator, paginationResultValidator } from 'convex/server';
@@ -11,6 +12,7 @@ import { VALIDATION_LIMITS } from '../shared/validation';
 import { components, internal } from './_generated/api';
 import { internalMutation, mutation, query } from './_generated/server';
 import { assertProjectWritable, requireProjectAccess, resolveProjectAccess } from './access';
+import { commentAuthors } from './commentAuthors';
 import { insertFeedback, recordEvent as recordFeedbackEvent } from './feedback';
 import { isFeedbackLive } from './feedbackLifecycle';
 import { categoryView, liveCategories, toCategoryView } from './forumCategories';
@@ -46,6 +48,10 @@ const commentValidator = v.object({
 	content: v.string(),
 	canEdit: v.boolean(),
 	canDelete: v.boolean(),
+	// The author belongs to the project's organization.
+	isTeamMember: v.boolean(),
+	// The reply this one answers, while it still exists.
+	replyTo: v.union(v.null(), v.object({ id: v.id('forumComments'), author: profileValidator })),
 	emotes: v.array(
 		v.object({
 			content: emoteReaction,
@@ -116,6 +122,12 @@ const sortValidator = v.union(v.literal('activity'), v.literal('newest'), v.lite
 const filterValidator = v.union(v.literal('unanswered'), v.literal('mine'), v.literal('following'));
 
 type Access = Awaited<ReturnType<typeof resolveProjectAccess>>;
+// What enriching a thread's comments shares across one query call.
+type CommentScope = {
+	access: Access;
+	authors: CommentAuthors;
+	viewerProfileId: Id<'profiles'> | null;
+};
 
 export function forumEnabled(project: Doc<'projects'>) {
 	return project.forumEnabled !== false;
@@ -281,14 +293,33 @@ async function uniqueSlug(ctx: MutationCtx, projectId: Id<'projects'>) {
 	throw new ConvexError('SLUG_GENERATION_FAILED');
 }
 
+function commentScope(
+	ctx: QueryCtx,
+	access: Access,
+	viewerProfileId: Id<'profiles'> | null
+): CommentScope {
+	return {
+		access,
+		authors: commentAuthors(ctx, access.project?.organizationId ?? null),
+		viewerProfileId,
+	};
+}
+
+async function replyTarget(ctx: QueryCtx, comment: Doc<'forumComments'>, authors: CommentAuthors) {
+	if (!comment.replyToCommentId) return null;
+	const target = await ctx.db.get('forumComments', comment.replyToCommentId);
+	if (!target) return null;
+	return { id: target._id, author: summary(await authors.profile(target.authorProfileId)) };
+}
+
 async function enrichComment(
 	ctx: QueryCtx,
 	comment: Doc<'forumComments'>,
-	viewerProfileId: Id<'profiles'> | null,
-	access: Access
+	{ access, authors, viewerProfileId }: CommentScope
 ) {
-	const [author, emotes] = await Promise.all([
-		ctx.db.get('profiles', comment.authorProfileId),
+	const [author, replyTo, emotes] = await Promise.all([
+		authors.profile(comment.authorProfileId),
+		replyTarget(ctx, comment, authors),
 		ctx.db
 			.query('forumCommentEmotes')
 			.withIndex('by_commentId_and_authorProfileId_and_content', (q) =>
@@ -329,6 +360,8 @@ async function enrichComment(
 		canEdit: isAuthor && !access.isArchived,
 		canDelete:
 			!comment.initial && !access.isArchived && (isAuthor || access.permissions.canManageContent),
+		isTeamMember: await authors.isTeamMember(author),
+		replyTo,
 		emotes: Array.from(grouped, ([content, value]) => ({ content, ...value })),
 	};
 }
@@ -661,6 +694,7 @@ export const detail = query({
 		const isAuthor = !!viewerProfileId && viewerProfileId === topic.authorProfileId;
 		const liveCategoryDoc = category && category.deletingAt === undefined ? category : null;
 		const locked = topic.lockedAt !== undefined;
+		const scope = commentScope(ctx, access, viewerProfileId);
 		return {
 			topic: {
 				id: topic._id,
@@ -675,8 +709,8 @@ export const detail = query({
 			},
 			category: liveCategoryDoc ? toCategoryView(liveCategoryDoc) : null,
 			author: summary(author),
-			firstComment: first ? await enrichComment(ctx, first, viewerProfileId, access) : null,
-			answer: answer ? await enrichComment(ctx, answer, viewerProfileId, access) : null,
+			firstComment: first ? await enrichComment(ctx, first, scope) : null,
+			answer: answer ? await enrichComment(ctx, answer, scope) : null,
 			participants: await participants(ctx, topic._id),
 			links: await links(ctx, topic._id),
 			events: await events(ctx, topic._id),
@@ -710,11 +744,10 @@ export const replies = query({
 			)
 			.order('asc')
 			.paginate(args.paginationOpts);
+		const scope = commentScope(ctx, access, user?.profileId ?? null);
 		return {
 			...result,
-			page: await Promise.all(
-				result.page.map((comment) => enrichComment(ctx, comment, user?.profileId ?? null, access))
-			),
+			page: await Promise.all(result.page.map((comment) => enrichComment(ctx, comment, scope))),
 		};
 	},
 });
@@ -815,16 +848,28 @@ export const updateTitle = mutation({
 });
 
 export const addComment = mutation({
-	args: { topicId: v.id('forumTopics'), content: v.string() },
+	args: {
+		topicId: v.id('forumTopics'),
+		content: v.string(),
+		replyToCommentId: v.optional(v.id('forumComments')),
+	},
 	returns: v.id('forumComments'),
 	handler: async (ctx, args) => {
 		const { access, topic, profileId } = await writableTopic(ctx, args.topicId);
 		if (topic.lockedAt !== undefined && !isManager(access)) throw new ConvexError('TOPIC_LOCKED');
+		// Replies answer another reply in the same topic; the opening post is
+		// what every reply answers, so it is never a target.
+		if (args.replyToCommentId) {
+			const target = await ctx.db.get('forumComments', args.replyToCommentId);
+			if (!target || target.topicId !== topic._id || target.initial)
+				throw new ConvexError('INVALID_REPLY');
+		}
 		const id = await ctx.db.insert('forumComments', {
 			topicId: topic._id,
 			authorProfileId: profileId,
 			content: validateContent(args.content, VALIDATION_LIMITS.comment),
 			initial: false,
+			...(args.replyToCommentId ? { replyToCommentId: args.replyToCommentId } : {}),
 		});
 		const activity = { commentCount: topic.commentCount + 1, lastActivityAt: Date.now() };
 		await ctx.db.patch('forumTopics', topic._id, activity);
@@ -887,14 +932,23 @@ export const cleanComment = internalMutation({
 	args: { commentId: v.id('forumComments') },
 	returns: v.null(),
 	handler: async (ctx, args) => {
-		const emotes = await ctx.db
-			.query('forumCommentEmotes')
-			.withIndex('by_commentId_and_authorProfileId_and_content', (q) =>
-				q.eq('commentId', args.commentId)
-			)
-			.take(DELETE_BATCH_SIZE);
+		const [emotes, answeredBy] = await Promise.all([
+			ctx.db
+				.query('forumCommentEmotes')
+				.withIndex('by_commentId_and_authorProfileId_and_content', (q) =>
+					q.eq('commentId', args.commentId)
+				)
+				.take(DELETE_BATCH_SIZE),
+			ctx.db
+				.query('forumComments')
+				.withIndex('by_replyToCommentId', (q) => q.eq('replyToCommentId', args.commentId))
+				.take(DELETE_BATCH_SIZE),
+		]);
 		for (const emote of emotes) await ctx.db.delete('forumCommentEmotes', emote._id);
-		if (emotes.length === DELETE_BATCH_SIZE)
+		// Replies to a deleted comment stay in the thread without the link back.
+		for (const reply of answeredBy)
+			await ctx.db.patch('forumComments', reply._id, { replyToCommentId: undefined });
+		if (emotes.length === DELETE_BATCH_SIZE || answeredBy.length === DELETE_BATCH_SIZE)
 			await ctx.scheduler.runAfter(0, internal.forum.cleanComment, args);
 		return null;
 	},

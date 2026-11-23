@@ -1,8 +1,8 @@
 import type { TargetGranularity } from '@convex/target';
-import type { ThreadComment } from '../../../-components/comment-thread';
+import type { CommentReplyTo, ThreadComment } from '../../../-components/comment-thread';
 import type { Id } from '../../../../../../../convex/native/_generated/dataModel';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { convexQuery } from '@convex-dev/react-query';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { Link, notFound, useNavigate, useParams } from '@tanstack/react-router';
@@ -49,6 +49,8 @@ import { UpvoteButton } from '../../-components/upvote-button';
 import {
 	CommentEditorProvider,
 	CommentForm,
+	revealComment,
+	TeamBadge,
 	CommentCard as ThreadCommentCard,
 } from '../../../-components/comment-thread';
 import { api as nativeApi } from '../../../../../../../convex/native/_generated/api';
@@ -82,7 +84,9 @@ type Comment = {
 	content: string;
 	updatedTime?: number | null;
 	emotes: Array<{ authorProfileIds: Array<string>; content: string; count: number }>;
+	isTeamMember: boolean;
 	replyFeedbackCommentId: Id<'feedbackComments'> | null;
+	replyTo: { id: Id<'feedbackComments'>; author: Comment['author'] } | null;
 };
 type Timeline =
 	| { type: 'comment'; creationTime: number; data: Comment }
@@ -198,7 +202,9 @@ export function NativeFeedbackDetailRoute() {
 		updateTarget: useConvexMutation(nativeApi.feedback.updateTarget),
 		updateTitle: useConvexMutation(nativeApi.feedback.updateTitle),
 	};
-	const [replyTo, setReplyTo] = useState<Id<'feedbackComments'> | null>(null);
+	const [replyTo, setReplyTo] = useState<CommentReplyTo | null>(null);
+	// A comment to bring into view once older timeline pages bring it in.
+	const [pendingJump, setPendingJump] = useState<string | null>(null);
 	const [title, setTitle] = useState(feedback.title);
 	const [editTitle, setEditTitle] = useState(false);
 	const [tags, setTags] = useState(feedback.tags.join(', '));
@@ -224,6 +230,9 @@ export function NativeFeedbackDetailRoute() {
 		projectData.project.visibility !== 'archived' &&
 		!detail.movedTo;
 	const timeline = mergeNativeFeedbackTimeline(extraTimeline, detail.timeline);
+	const pendingLoaded =
+		!!pendingJump &&
+		timeline.some((item) => item.type === 'comment' && item.data.id === pendingJump);
 
 	async function performMutation<T>(
 		operation: () => Promise<T>,
@@ -251,7 +260,7 @@ export function NativeFeedbackDetailRoute() {
 			await mutations.createComment({
 				feedbackId: feedback.id,
 				content,
-				...(replyTo ? { replyFeedbackCommentId: replyTo } : {}),
+				...(replyTo ? { replyFeedbackCommentId: replyTo.id as Id<'feedbackComments'> } : {}),
 			});
 			setReplyTo(null);
 		} catch (mutationError) {
@@ -282,6 +291,21 @@ export function NativeFeedbackDetailRoute() {
 		}
 	}
 
+	// Load older timeline pages until the target renders; its card reads the
+	// `#comment-<id>` hash on mount, then scrolls to and highlights itself.
+	// A failed page stops the search rather than retrying in a loop.
+	useEffect(() => {
+		if (!pendingJump) return;
+		if (pendingLoaded || !cursor || error) setPendingJump(null);
+		else if (!busy) void loadMore();
+		// loadMore is recreated every render; the state it reads is listed.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [busy, cursor, error, pendingJump, pendingLoaded]);
+
+	function jumpToComment(commentId: string) {
+		if (!revealComment(commentId)) setPendingJump(commentId);
+	}
+
 	function NativeCommentCard({ item, initial = false }: { item: Comment; initial?: boolean }) {
 		const emoteCounts = Object.fromEntries(
 			item.emotes.flatMap((emote) => {
@@ -301,6 +325,7 @@ export function NativeFeedbackDetailRoute() {
 								{m.feedback_author()}
 							</span>
 						) : null}
+						{item.isTeamMember ? <TeamBadge /> : null}
 						{feedback.answerCommentId === item.id ? (
 							<span className='inline-flex items-center gap-1 rounded-full bg-green-500/15 px-2 py-0.5 text-xs font-medium text-green-700 dark:text-green-400'>
 								<Check className='size-3' />
@@ -323,15 +348,11 @@ export function NativeFeedbackDetailRoute() {
 					canDelete: item.canDelete,
 					canEdit: item.canEdit,
 					emoteCounts,
+					replyTo: item.replyTo,
 				}}
 				currentProfileId={detail.currentProfile?.id}
 				dropdownItems={
 					<>
-						{session.user && !item.replyFeedbackCommentId && !initial ? (
-							<DropdownMenuItem onClick={() => setReplyTo(item.id)}>
-								{m.feedback_reply()}
-							</DropdownMenuItem>
-						) : null}
 						{canEdit && !item.replyFeedbackCommentId && !initial ? (
 							<DropdownMenuItem
 								onClick={() =>
@@ -354,9 +375,17 @@ export function NativeFeedbackDetailRoute() {
 				isDeleting={busy}
 				isUpdating={busy}
 				onDelete={(commentId) =>
-					void performMutation(() =>
-						mutations.removeComment({ commentId: commentId as Id<'feedbackComments'> })
+					void performMutation(
+						() => mutations.removeComment({ commentId: commentId as Id<'feedbackComments'> }),
+						() => {
+							if (replyTo?.id === commentId) setReplyTo(null);
+						}
 					)
+				}
+				onReply={
+					session.user && !item.replyFeedbackCommentId && !initial
+						? () => setReplyTo({ id: item.id, author: item.author })
+						: undefined
 				}
 				onToggleEmote={(commentId, content) =>
 					void performMutation(() =>
@@ -811,7 +840,7 @@ export function NativeFeedbackDetailRoute() {
 									{m.feedback_discussion()}
 								</h2>
 							</div>
-							<CommentEditorProvider>
+							<CommentEditorProvider onJumpToComment={jumpToComment}>
 								<ul
 									className={`relative flex flex-col gap-6 ${timeline.length ? 'before:absolute before:top-0 before:bottom-0 before:left-[33px] before:z-0 before:border-r before:border-border' : ''}`}
 								>
@@ -844,20 +873,14 @@ export function NativeFeedbackDetailRoute() {
 										)
 									)}
 								</ul>
-								{replyTo ? (
-									<div className='flex items-center gap-2 text-sm'>
-										{m.feedback_reply()}
-										<Button size='sm' variant='ghost' onClick={() => setReplyTo(null)}>
-											{m.common_cancel()}
-										</Button>
-									</div>
-								) : null}
 								<CommentForm
 									isAuthenticated={!!session.user}
 									isSubmitting={busy}
+									onCancelReply={() => setReplyTo(null)}
 									onSubmit={submitComment}
 									placeholder={m.feedback_leave_comment()}
 									redirectTo={`/@${params.org}/${params.project}/feedback/${params.slug}`}
+									replyTo={replyTo}
 									signedOut='rich'
 									submitLabel={m.feedback_post_comment()}
 								/>
