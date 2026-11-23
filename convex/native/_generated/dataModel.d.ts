@@ -617,6 +617,7 @@ export type DataModel = {
       postingPolicy: "everyone" | "team";
       projectId: Id<"projects">;
       slug: string;
+      topicCount?: number;
       updatedAt?: number;
       _id: Id<"forumCategories">;
       _creationTime: number;
@@ -633,6 +634,7 @@ export type DataModel = {
       | "postingPolicy"
       | "projectId"
       | "slug"
+      | "topicCount"
       | "updatedAt";
     indexes: {
       by_id: ["_id"];
@@ -898,6 +900,7 @@ export type DataModel = {
       lockedAt?: number;
       pinnedAt?: number;
       projectId: Id<"projects">;
+      score?: number;
       searchContent: string;
       slug: string;
       title: string;
@@ -918,6 +921,7 @@ export type DataModel = {
       | "lockedAt"
       | "pinnedAt"
       | "projectId"
+      | "score"
       | "searchContent"
       | "slug"
       | "title";
@@ -935,6 +939,7 @@ export type DataModel = {
         "lastActivityAt",
         "_creationTime",
       ];
+      by_categoryId_and_score: ["categoryId", "score", "_creationTime"];
       by_projectId: ["projectId", "_creationTime"];
       by_projectId_and_authorProfileId_and_lastActivityAt: [
         "projectId",
@@ -953,6 +958,7 @@ export type DataModel = {
         "_creationTime",
       ];
       by_projectId_and_pinnedAt: ["projectId", "pinnedAt", "_creationTime"];
+      by_projectId_and_score: ["projectId", "score", "_creationTime"];
       by_projectId_and_slug: ["projectId", "slug", "_creationTime"];
     };
     searchIndexes: {

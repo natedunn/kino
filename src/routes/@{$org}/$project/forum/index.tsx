@@ -1,5 +1,5 @@
 import type { MouseEvent } from 'react';
-import type { ForumFilter, ForumSort } from './-components/list-search';
+import type { ForumFilter, ForumPeriod, ForumSort } from './-components/list-search';
 
 import { useEffect, useRef, useState } from 'react';
 import { convexQuery } from '@convex-dev/react-query';
@@ -42,14 +42,22 @@ import * as m from '@/paraglide/messages.js';
 
 import { api as nativeApi } from '../../../../../convex/native/_generated/api';
 import { CategoriesNav } from './-components/categories-nav';
+import { CategoryOverview } from './-components/category-overview';
 import { PinnedTopics, TopicListSkeleton, TopicRow } from './-components/list-items';
-import { validateForumSearch } from './-components/list-search';
+import { DEFAULT_PERIOD, periodStart, validateForumSearch } from './-components/list-search';
 
 const PAGE_SIZE = 25;
 const SORT_OPTIONS = [
 	{ label: m.forum_list_sort_activity, value: 'activity' },
 	{ label: m.forum_list_sort_newest, value: 'newest' },
 	{ label: m.forum_list_sort_replies, value: 'replies' },
+	{ label: m.forum_list_sort_top, value: 'top' },
+] as const;
+const PERIOD_OPTIONS = [
+	{ label: m.forum_list_period_week, value: 'week' },
+	{ label: m.forum_list_period_month, value: 'month' },
+	{ label: m.forum_list_period_year, value: 'year' },
+	{ label: m.forum_list_period_all, value: 'all' },
 ] as const;
 
 export const Route = createFileRoute('/@{$org}/$project/forum/')({
@@ -74,10 +82,16 @@ export const Route = createFileRoute('/@{$org}/$project/forum/')({
 			projectId,
 			...(categoryId ? { categoryId } : {}),
 		});
+		// The categories overview only shows on "All".
+		const overview = categoryId ? null : convexQuery(nativeApi.forumStats.overview, { projectId });
 		if (typeof window === 'undefined') {
-			await context.queryClient.ensureQueryData(pinned).catch(() => undefined);
+			await Promise.all([
+				context.queryClient.ensureQueryData(pinned).catch(() => undefined),
+				overview ? context.queryClient.ensureQueryData(overview).catch(() => undefined) : undefined,
+			]);
 		} else {
 			void context.queryClient.prefetchQuery(pinned);
+			if (overview) void context.queryClient.prefetchQuery(overview);
 		}
 	},
 	head: ({ params }) => ({
@@ -117,18 +131,46 @@ function ForumRoute() {
 				: undefined;
 	// Search results are relevance-ordered, so sort only applies without one.
 	const sort: ForumSort = searchParams.sort ?? 'activity';
+	const period: ForumPeriod = searchParams.period ?? DEFAULT_PERIOD;
 	const showCategory = !category;
+	// Captured once: queries can't read the clock, and a fixed, hour-rounded
+	// cutoff keeps the paginated query's args stable.
+	const [now] = useState(() => Date.now());
+	// The server ignores the window for "Mine" and "Following", which keep their own order.
+	const since =
+		!search && sort === 'top' && filter !== 'mine' && filter !== 'following'
+			? periodStart(period, now)
+			: undefined;
 
-	const { results, status, loadMore } = usePaginatedQuery(
-		nativeApi.forum.list,
-		{
-			projectId,
-			...(category ? { categoryId: category.id } : {}),
-			...(search ? { search } : { sort }),
-			...(filter ? { filter } : {}),
-		},
-		{ initialNumItems: PAGE_SIZE }
-	);
+	const listArgs = {
+		projectId,
+		...(category ? { categoryId: category.id } : {}),
+		...(search ? { search } : { sort }),
+		...(since !== undefined ? { since } : {}),
+		...(filter ? { filter } : {}),
+	};
+	const { results, status, loadMore } = usePaginatedQuery(nativeApi.forum.list, listArgs, {
+		initialNumItems: PAGE_SIZE,
+	});
+	// Windowed "Top" pages skip older topics within a read budget, so a page can
+	// come back short. Keep loading until the requested count is on screen.
+	const listKey = JSON.stringify(listArgs);
+	const [wanted, setWanted] = useState({ key: listKey, count: PAGE_SIZE });
+	const wantedCount = wanted.key === listKey ? wanted.count : PAGE_SIZE;
+	const windowed = since !== undefined;
+	useEffect(() => {
+		if (windowed && status === 'CanLoadMore' && results.length < wantedCount) loadMore(PAGE_SIZE);
+	}, [windowed, status, results.length, wantedCount, loadMore]);
+	const filling = windowed && results.length < wantedCount && status !== 'Exhausted';
+	function showMore() {
+		setWanted({ key: listKey, count: wantedCount + PAGE_SIZE });
+		loadMore(PAGE_SIZE);
+	}
+	const showOverview = !category && !search && !filter;
+	const { data: overview } = useQuery({
+		...convexQuery(nativeApi.forumStats.overview, { projectId }),
+		enabled: showOverview,
+	});
 	const { data: pinned } = useQuery(
 		convexQuery(nativeApi.forum.pinned, {
 			projectId,
@@ -304,8 +346,8 @@ function ForumRoute() {
 										{m.forum_category_team_only_notice()}
 									</p>
 								) : null}
-								<div className='flex items-center gap-2'>
-									<div className='relative min-w-0 flex-1'>
+								<div className='flex flex-wrap items-center gap-2'>
+									<div className='relative min-w-48 flex-1'>
 										<Search className='pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground' />
 										<Input
 											aria-label={m.forum_search_placeholder()}
@@ -335,17 +377,41 @@ function ForumRoute() {
 													search: (prev) => ({
 														...prev,
 														sort: value === 'activity' ? undefined : value,
+														period: value === 'top' ? prev.period : undefined,
 													}),
 												})
 											}
 											value={sort}
 										/>
 									)}
+									{!search && sort === 'top' ? (
+										<PeriodSelect
+											onChange={(value) =>
+												void navigate({
+													search: (prev) => ({
+														...prev,
+														period: value === DEFAULT_PERIOD ? undefined : value,
+													}),
+												})
+											}
+											value={period}
+										/>
+									) : null}
 								</div>
 								{showPinned ? (
 									<PinnedTopics items={pinned} params={params} showCategory={showCategory} />
 								) : null}
-								{status === 'LoadingFirstPage' ? (
+								{showOverview ? (
+									<>
+										<CategoryOverview categories={overview ?? undefined} params={params} />
+										<h2 className='-mb-4 text-sm font-bold text-muted-foreground'>
+											{sort === 'activity'
+												? m.forum_overview_latest()
+												: SORT_OPTIONS.find((option) => option.value === sort)?.label()}
+										</h2>
+									</>
+								) : null}
+								{status === 'LoadingFirstPage' || (filling && results.length === 0) ? (
 									<TopicListSkeleton />
 								) : results.length === 0 ? (
 									<div className='flex flex-col items-center gap-3 rounded-lg border border-dashed bg-muted/25 p-10 text-center text-muted-foreground'>
@@ -358,9 +424,11 @@ function ForumRoute() {
 														? m.forum_list_empty_following()
 														: filter === 'unanswered'
 															? m.forum_list_empty_unanswered()
-															: category
-																? m.forum_list_empty_category({ category: category.name })
-																: m.forum_empty()}
+															: windowed
+																? m.forum_list_empty_period()
+																: category
+																	? m.forum_list_empty_category({ category: category.name })
+																	: m.forum_empty()}
 										</p>
 										{filter && !search ? (
 											<Button asChild size='sm' variant='outline'>
@@ -382,18 +450,22 @@ function ForumRoute() {
 												key={item.id}
 												params={params}
 												showCategory={showCategory}
+												showScore={!search && sort === 'top'}
 											/>
 										))}
 									</ul>
 								)}
-								{status === 'CanLoadMore' || status === 'LoadingMore' ? (
+								{(status === 'CanLoadMore' || status === 'LoadingMore') &&
+								!(filling && results.length === 0) ? (
 									<div>
 										<Button
-											disabled={status === 'LoadingMore'}
-											onClick={() => loadMore(PAGE_SIZE)}
+											disabled={status === 'LoadingMore' || filling}
+											onClick={showMore}
 											variant='outline'
 										>
-											{status === 'LoadingMore' ? m.forum_loading() : m.forum_load_more()}
+											{status === 'LoadingMore' || filling
+												? m.forum_loading()
+												: m.forum_load_more()}
 										</Button>
 									</div>
 								) : null}
@@ -443,6 +515,36 @@ function SortSelect({
 			value={value}
 		>
 			<SelectTrigger aria-label={m.forum_list_sort_label()} className='w-40 shrink-0'>
+				<SelectValue />
+			</SelectTrigger>
+			<SelectContent>
+				{options.map((option) => (
+					<SelectItem key={option.value} value={option.value}>
+						{option.label}
+					</SelectItem>
+				))}
+			</SelectContent>
+		</Select>
+	);
+}
+
+function PeriodSelect({
+	onChange,
+	value,
+}: {
+	onChange: (value: ForumPeriod) => void;
+	value: ForumPeriod;
+}) {
+	const options = PERIOD_OPTIONS.map((option) => ({ ...option, label: option.label() }));
+	return (
+		<Select
+			items={options}
+			onValueChange={(next) => {
+				if (next) onChange(next);
+			}}
+			value={value}
+		>
+			<SelectTrigger aria-label={m.forum_list_period_label()} className='w-36 shrink-0'>
 				<SelectValue />
 			</SelectTrigger>
 			<SelectContent>

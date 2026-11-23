@@ -4,7 +4,7 @@ import type { api as nativeApi } from '../../../../../../convex/native/_generate
 
 import { useState } from 'react';
 import { Link } from '@tanstack/react-router';
-import { ChartBar, CircleCheck, Lock, MessageSquare, Pin } from 'lucide-react';
+import { ChartBar, CircleCheck, Lock, MessageSquare, Pin, TrendingUp } from 'lucide-react';
 
 import { BoardIcon } from '@/components/board-icon';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -48,11 +48,14 @@ export function TopicRow({
 	item,
 	params,
 	showCategory,
+	showScore = false,
 }: {
 	item: TopicListItem;
 	params: RouteParams;
 	/** Category chips are only useful when the list spans every category. */
 	showCategory: boolean;
+	/** The "Top" view shows the score it ranks by. */
+	showScore?: boolean;
 }) {
 	const username = item.author?.username;
 	const unread = visibleUnread(item, useNow());
@@ -102,7 +105,10 @@ export function TopicRow({
 					<span>{m.forum_last_activity({ time: formatRelativeDay(item.lastActivityAt) })}</span>
 				</p>
 			</div>
-			<ReplyCount className='pt-1' count={item.commentCount} />
+			<div className='flex shrink-0 items-start gap-3 pt-1'>
+				{showScore ? <ScoreCount score={item.score} /> : null}
+				<ReplyCount count={item.commentCount} />
+			</div>
 		</li>
 	);
 }
@@ -245,6 +251,17 @@ function ReplyCount({ className, count }: { className?: string; count: number })
 			<MessageSquare aria-hidden='true' className='size-4' />
 			<span className='sr-only'>{m.forum_reply_count({ count })}</span>
 			<span aria-hidden='true'>{count}</span>
+		</div>
+	);
+}
+
+function ScoreCount({ score }: { score: number }) {
+	const label = m.forum_list_score({ count: score });
+	return (
+		<div className='flex items-start gap-1.5 text-sm text-muted-foreground' title={label}>
+			<TrendingUp aria-hidden='true' className='size-4' />
+			<span className='sr-only'>{label}</span>
+			<span aria-hidden='true'>{score}</span>
 		</div>
 	);
 }

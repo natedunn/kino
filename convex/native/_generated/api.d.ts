@@ -1479,7 +1479,8 @@ export declare const api: {
         };
         projectId: Id<"projects">;
         search?: string;
-        sort?: "activity" | "newest" | "replies";
+        since?: number;
+        sort?: "activity" | "newest" | "replies" | "top";
       },
       {
         continueCursor: string;
@@ -1507,6 +1508,7 @@ export declare const api: {
           lastActivityAt: number;
           locked: boolean;
           pinned: boolean;
+          score: number;
           slug: string;
           title: string;
           unread: null | {
@@ -1545,6 +1547,7 @@ export declare const api: {
         lastActivityAt: number;
         locked: boolean;
         pinned: boolean;
+        score: number;
         slug: string;
         title: string;
         unread: null | {
@@ -1871,6 +1874,29 @@ export declare const api: {
           title: string;
         }>;
       }
+    >;
+  };
+  forumStats: {
+    overview: FunctionReference<
+      "query",
+      "public",
+      { projectId: Id<"projects"> },
+      null | Array<{
+        description: string | null;
+        format: "open" | "qa";
+        icon: string | null;
+        id: Id<"forumCategories">;
+        latest: null | {
+          id: Id<"forumTopics">;
+          lastActivityAt: number;
+          slug: string;
+          title: string;
+        };
+        name: string;
+        postingPolicy: "everyone" | "team";
+        slug: string;
+        topicCount: number;
+      }>
     >;
   };
   github: {
@@ -3942,6 +3968,30 @@ export declare const internal: {
       {
         categoryId: Id<"forumCategories">;
         moveToCategoryId: Id<"forumCategories">;
+      },
+      null
+    >;
+  };
+  forumStats: {
+    backfill: FunctionReference<
+      "mutation",
+      "internal",
+      { cursor?: string | null },
+      null
+    >;
+    backfillCategories: FunctionReference<
+      "mutation",
+      "internal",
+      { cursor?: string | null },
+      null
+    >;
+    countCategoryTopics: FunctionReference<
+      "mutation",
+      "internal",
+      {
+        categoryId: Id<"forumCategories">;
+        count: number;
+        cursor?: string | null;
       },
       null
     >;
