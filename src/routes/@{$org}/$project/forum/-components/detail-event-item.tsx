@@ -91,6 +91,7 @@ const EVENT_ICONS = {
 	answer_marked: CircleCheck,
 	answer_unmarked: CircleX,
 	converted_to_feedback: ArrowRightLeft,
+	imported_from_feedback: ArrowRightLeft,
 } satisfies Record<TopicEvent['eventType'], unknown>;
 
 function Pill({ children }: { children: ReactNode }) {
@@ -130,9 +131,12 @@ function describe(event: TopicEvent, params: { org: string; project: string }) {
 		case 'answer_unmarked':
 			return <span>{m.forum_detail_event_answer_unmarked()}</span>;
 		case 'converted_to_feedback':
+		case 'imported_from_feedback':
 			return (
 				<span className='inline-flex flex-wrap items-center gap-1'>
-					{m.forum_detail_event_converted()}
+					{event.eventType === 'converted_to_feedback'
+						? m.forum_detail_event_converted()
+						: m.forum_detail_event_imported_from_feedback()}
 					{event.feedback ? (
 						<Link
 							className='link-text inline-flex items-center gap-1 font-medium'

@@ -101,6 +101,7 @@ function getEventIcon(eventType: FeedbackEventData['eventType']) {
 		case 'answer_unmarked':
 			return CircleX;
 		case 'imported_from_forum':
+		case 'moved_to_forum':
 			return MessagesSquare;
 		default:
 			return Check;
@@ -186,26 +187,38 @@ function getEventDescription(event: FeedbackEventData) {
 		case 'answer_unmarked':
 			return <span>{m.feedback_unmarked_answer()}</span>;
 		case 'imported_from_forum':
+		case 'moved_to_forum':
 			return (
-				<ImportedFromForum topic={event.topic ?? null} savedTitle={metadata?.newValue ?? null} />
+				<ForumTopicEvent
+					label={
+						eventType === 'imported_from_forum'
+							? m.feedback_imported_from_forum()
+							: m.feedback_moved_to_forum()
+					}
+					topic={event.topic ?? null}
+					savedTitle={metadata?.newValue ?? null}
+				/>
 			);
 		default:
 			return <span>{m.feedback_made_change()}</span>;
 	}
 }
 
-function ImportedFromForum({
+// An import from, or a move to, a forum topic.
+function ForumTopicEvent({
+	label,
 	topic,
 	savedTitle,
 }: {
+	label: string;
 	topic: { slug: string; title: string } | null;
-	// Title at import time, shown unlinked once the topic is deleted.
+	// Title at import/move time, shown unlinked once the topic is deleted.
 	savedTitle: string | null;
 }) {
 	const params = useParams({ from: '/@{$org}/$project/feedback/$slug/' });
 	return (
 		<span className='inline-flex flex-wrap items-center gap-1'>
-			{m.feedback_imported_from_forum()}
+			{label}
 			{topic ? (
 				<Link
 					className='link-text font-medium'
