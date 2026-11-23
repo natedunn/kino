@@ -541,11 +541,7 @@ export const getDetail = query({
 		};
 		const timeline = (
 			await Promise.all(
-				[...timelinePage.page]
-					.reverse()
-					.map((entry) =>
-enrichTimelineEntry(ctx, entry, scope)
-					)
+				[...timelinePage.page].reverse().map((entry) => enrichTimelineEntry(ctx, entry, scope))
 			)
 		).filter((item) => item !== null);
 		const related = (
@@ -580,9 +576,7 @@ enrichTimelineEntry(ctx, entry, scope)
 				title: feedback.title,
 				upvotes: feedback.upvotes,
 			},
-			firstComment: firstComment
-				? await enrichComment(ctx, firstComment, scope)
-				: null,
+			firstComment: firstComment ? await enrichComment(ctx, firstComment, scope) : null,
 			following: !!watcher,
 			hasUpvoted: !!upvote,
 			permissions: access.permissions,
@@ -617,11 +611,7 @@ export const listTimelinePage = query({
 			.paginate(args.paginationOpts);
 		const items = (
 			await Promise.all(
-				[...page.page]
-					.reverse()
-					.map((entry) =>
-enrichTimelineEntry(ctx, entry, scope)
-					)
+				[...page.page].reverse().map((entry) => enrichTimelineEntry(ctx, entry, scope))
 			)
 		).filter((item) => item !== null);
 		return { ...page, page: items };

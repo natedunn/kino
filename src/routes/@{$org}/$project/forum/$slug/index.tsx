@@ -1,6 +1,6 @@
 import type { EmoteContent } from '@/components/emote';
 import type { TopicDetail } from '../-components/detail-sidebar';
-import type { ThreadComment } from '../../-components/comment-thread';
+import type { CommentReplyTo, ThreadComment } from '../../-components/comment-thread';
 import type { Id } from '../../../../../../convex/native/_generated/dataModel';
 
 import { useEffect, useState } from 'react';
@@ -41,7 +41,13 @@ import * as m from '@/paraglide/messages.js';
 import { DetailAnswer } from '../-components/detail-answer';
 import { DetailEventItem } from '../-components/detail-event-item';
 import { DetailFollowButton, DetailSidebarSections } from '../-components/detail-sidebar';
-import { CommentCard, CommentEditorProvider, CommentForm } from '../../-components/comment-thread';
+import {
+	CommentCard,
+	CommentEditorProvider,
+	CommentForm,
+	revealComment,
+	TeamBadge,
+} from '../../-components/comment-thread';
 import { api as nativeApi } from '../../../../../../convex/native/_generated/api';
 
 const REPLIES_PAGE_SIZE = 30;
@@ -88,6 +94,7 @@ function toThreadComment(comment: TopicComment): ThreadComment {
 		updatedTime: comment.updatedTime,
 		canEdit: comment.canEdit,
 		canDelete: comment.canDelete,
+		replyTo: comment.replyTo,
 		emoteCounts: Object.fromEntries(
 			comment.emotes.map((emote) => [
 				emote.content,
@@ -137,8 +144,11 @@ function TopicDetailRoute() {
 	const [editingTitle, setEditingTitle] = useState(false);
 	const [titleDraft, setTitleDraft] = useState(topic.title);
 	const [detailsDrawerOpen, setDetailsDrawerOpen] = useState(false);
-	// Set when "Jump to reply" targets an answer that isn't loaded yet.
-	const [pendingJump, setPendingJump] = useState(false);
+	// The reply the composer answers, set by Reply or Quote on a reply.
+	const [replyTo, setReplyTo] = useState<CommentReplyTo | null>(null);
+	// A reply to bring into view once it's loaded (the answer, or the comment
+	// a reply answers).
+	const [pendingJump, setPendingJump] = useState<string | null>(null);
 	// Events sit between replies by time. Only show the ones up to the newest
 	// loaded reply, so older pages never slot in under later events.
 	const lastReplyTime = replies.results.at(-1)?.creationTime;
@@ -151,23 +161,30 @@ function TopicDetailRoute() {
 		...replies.results.map((reply) => ({ kind: 'reply' as const, at: reply.creationTime, reply })),
 		...visibleEvents.map((event) => ({ kind: 'event' as const, at: event.createdAt, event })),
 	].sort((a, b) => a.at - b.at);
-	const answerLoaded = !!answerId && replies.results.some((reply) => reply.id === answerId);
+	const pendingLoaded = !!pendingJump && replies.results.some((reply) => reply.id === pendingJump);
+	const replyToLoaded = !!replyTo && replies.results.some((reply) => reply.id === replyTo.id);
 
-	// Page through replies until the answer is rendered. Its CommentCard reads
+	// Page through replies until the target is rendered. Its CommentCard reads
 	// the `#comment-<id>` hash on mount, then scrolls to and highlights itself.
 	useEffect(() => {
 		if (!pendingJump) return;
-		if (answerLoaded || replies.status === 'Exhausted') setPendingJump(false);
+		if (pendingLoaded || replies.status === 'Exhausted') setPendingJump(null);
 		else if (replies.status === 'CanLoadMore') replies.loadMore(REPLIES_PAGE_SIZE);
-	}, [answerLoaded, pendingJump, replies]);
+	}, [pendingJump, pendingLoaded, replies]);
 
-	function jumpToAnswer() {
-		if (!answerId) return;
-		const hash = `comment-${answerId}`;
-		window.history.replaceState(window.history.state, '', `#${hash}`);
-		const element = document.getElementById(hash);
-		if (element) element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-		else setPendingJump(true);
+	// Replies are only picked from the loaded thread, so a target that left it
+	// was deleted; drop the chip instead of failing the post.
+	useEffect(() => {
+		if (replyTo && !replyToLoaded) setReplyTo(null);
+	}, [replyTo, replyToLoaded]);
+
+	function jumpToComment(commentId: string) {
+		if (!revealComment(commentId)) setPendingJump(commentId);
+	}
+
+	function replyToComment(commentId: string) {
+		const reply = replies.results.find((item) => item.id === commentId);
+		if (reply) setReplyTo({ id: reply.id, author: reply.author });
 	}
 
 	async function run<T>(operation: () => Promise<T>, fallback = m.common_something_went_wrong()) {
@@ -216,6 +233,8 @@ function TopicDetailRoute() {
 		onUpdate: (commentId: string, content: string) =>
 			mutations.updateComment({ commentId: commentId as Id<'forumComments'>, content }),
 	};
+	// People who can't reply (signed out, or a locked topic) get no Reply action.
+	const canReplyTo = detail.canReply && !!session.user;
 	const authorBadge = (
 		<span className='inline-flex items-center gap-1 rounded-full bg-secondary px-2 py-0.5 text-xs font-medium'>
 			<Check className='size-3' />
@@ -372,13 +391,18 @@ function TopicDetailRoute() {
 									{error}
 								</p>
 							) : null}
-							<CommentEditorProvider>
+							<CommentEditorProvider onJumpToComment={jumpToComment}>
 								<ul
 									className={`relative flex flex-col gap-6 ${timeline.length || detail.answer ? 'before:absolute before:top-0 before:bottom-0 before:left-[33px] before:z-0 before:border-r before:border-border' : ''}`}
 								>
 									{detail.firstComment ? (
 										<CommentCard
-											badges={authorBadge}
+											badges={
+												<>
+													{authorBadge}
+													{detail.firstComment.isTeamMember ? <TeamBadge /> : null}
+												</>
+											}
 											comment={toThreadComment(detail.firstComment)}
 											maxLength={FORM_LIMITS.forumTopicBody}
 											verb={m.forum_started_verb()}
@@ -386,7 +410,12 @@ function TopicDetailRoute() {
 										/>
 									) : null}
 									{detail.answer ? (
-										<DetailAnswer answer={detail.answer} onJump={jumpToAnswer} />
+										<DetailAnswer
+											answer={detail.answer}
+											onJump={() => {
+												if (answerId) jumpToComment(answerId);
+											}}
+										/>
 									) : null}
 									{replies.results.length ? (
 										<li className='relative z-10 flex items-center gap-1.5 bg-background py-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase'>
@@ -414,9 +443,10 @@ function TopicDetailRoute() {
 										return (
 											<CommentCard
 												badges={
-													isAuthor || isAnswer ? (
+													isAuthor || reply.isTeamMember || isAnswer ? (
 														<>
 															{isAuthor ? authorBadge : null}
+															{reply.isTeamMember ? <TeamBadge /> : null}
 															{isAnswer ? answerBadge : null}
 														</>
 													) : undefined
@@ -445,6 +475,8 @@ function TopicDetailRoute() {
 													) : undefined
 												}
 												key={reply.id}
+												onQuote={canReplyTo ? replyToComment : undefined}
+												onReply={canReplyTo ? replyToComment : undefined}
 												verb={m.forum_replied_verb()}
 												{...commentHandlers}
 											/>
@@ -476,17 +508,26 @@ function TopicDetailRoute() {
 									<CommentForm
 										isAuthenticated={!!session.user}
 										isSubmitting={busy}
+										onCancelReply={() => setReplyTo(null)}
 										onSubmit={async (content) => {
 											// CommentForm reports its own failure and keeps the draft.
 											setBusy(true);
 											try {
-												await mutations.addComment({ topicId: topic.id, content });
+												await mutations.addComment({
+													topicId: topic.id,
+													content,
+													...(replyTo
+														? { replyToCommentId: replyTo.id as Id<'forumComments'> }
+														: {}),
+												});
+												setReplyTo(null);
 											} finally {
 												setBusy(false);
 											}
 										}}
 										placeholder={m.forum_reply_placeholder()}
 										redirectTo={`/@${params.org}/${params.project}/topics/${params.slug}`}
+										replyTo={replyTo}
 										signedOut='rich'
 										submitLabel={m.forum_reply_submit()}
 									/>

@@ -300,11 +300,7 @@ function commentScope(
 	};
 }
 
-async function replyTarget(
-	ctx: QueryCtx,
-	comment: Doc<'forumComments'>,
-	authors: CommentAuthors
-) {
+async function replyTarget(ctx: QueryCtx, comment: Doc<'forumComments'>, authors: CommentAuthors) {
 	if (!comment.replyToCommentId) return null;
 	const target = await ctx.db.get('forumComments', comment.replyToCommentId);
 	if (!target) return null;
@@ -899,7 +895,7 @@ export const cleanComment = internalMutation({
 	args: { commentId: v.id('forumComments') },
 	returns: v.null(),
 	handler: async (ctx, args) => {
-		const [emotes, replies] = await Promise.all([
+		const [emotes, answeredBy] = await Promise.all([
 			ctx.db
 				.query('forumCommentEmotes')
 				.withIndex('by_commentId_and_authorProfileId_and_content', (q) =>
@@ -913,9 +909,9 @@ export const cleanComment = internalMutation({
 		]);
 		for (const emote of emotes) await ctx.db.delete('forumCommentEmotes', emote._id);
 		// Replies to a deleted comment stay in the thread without the link back.
-		for (const reply of replies)
+		for (const reply of answeredBy)
 			await ctx.db.patch('forumComments', reply._id, { replyToCommentId: undefined });
-		if (emotes.length === DELETE_BATCH_SIZE || replies.length === DELETE_BATCH_SIZE)
+		if (emotes.length === DELETE_BATCH_SIZE || answeredBy.length === DELETE_BATCH_SIZE)
 			await ctx.scheduler.runAfter(0, internal.forum.cleanComment, args);
 		return null;
 	},
